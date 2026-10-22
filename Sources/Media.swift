@@ -745,50 +745,61 @@ enum VideoPipeline {
             var failed: String? = nil
             var videoDone = false, audioDone = false
         }
+        /// Gli oggetti di AVFoundation usati dalle code di lavoro (ognuno da una sola coda alla volta).
+        final class Parts: @unchecked Sendable {
+            let vIn: AVAssetWriterInput, vOut: AVAssetReaderTrackOutput
+            let adaptor: AVAssetWriterInputPixelBufferAdaptor, writer: AVAssetWriter
+            let aIn: AVAssetWriterInput?, aOut: AVAssetReaderTrackOutput?
+            init(vIn: AVAssetWriterInput, vOut: AVAssetReaderTrackOutput, adaptor: AVAssetWriterInputPixelBufferAdaptor,
+                 writer: AVAssetWriter, aIn: AVAssetWriterInput?, aOut: AVAssetReaderTrackOutput?) {
+                self.vIn = vIn; self.vOut = vOut; self.adaptor = adaptor; self.writer = writer; self.aIn = aIn; self.aOut = aOut
+            }
+        }
         let box = Box()
+        let pp = Parts(vIn: vIn, vOut: vOut, adaptor: adaptor, writer: writer, aIn: aIn, aOut: aOut)
 
         group.enter()
-        vIn.requestMediaDataWhenReady(on: vQueue) {
+        pp.vIn.requestMediaDataWhenReady(on: vQueue) {
             // Chiude una volta sola (il blocco può essere richiamato)
             func end(_ problem: String? = nil) {
                 guard !box.videoDone else { return }
                 box.videoDone = true
                 if let problem { box.failed = problem }
-                vIn.markAsFinished()
+                pp.vIn.markAsFinished()
                 group.leave()
             }
             guard !box.videoDone else { return }
-            while vIn.isReadyForMoreMediaData {
+            while pp.vIn.isReadyForMoreMediaData {
                 if job.cancelRequested { end(); return }
-                guard let sb = vOut.copyNextSampleBuffer() else { end(); return }
+                guard let sb = pp.vOut.copyNextSampleBuffer() else { end(); return }
                 guard let pb = CMSampleBufferGetImageBuffer(sb) else { continue }
                 let pts = CMSampleBufferGetPresentationTimeStamp(sb)
                 let img = frame(CIImage(cvPixelBuffer: pb), pts.seconds)
-                guard let pool = adaptor.pixelBufferPool else { end("memoria video non disponibile"); return }
+                guard let pool = pp.adaptor.pixelBufferPool else { end("memoria video non disponibile"); return }
                 var outBuf: CVPixelBuffer?
                 CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &outBuf)
                 guard let ob = outBuf else { continue }
                 Media.ci.render(img, to: ob, bounds: CGRect(x: 0, y: 0, width: w, height: h), colorSpace: cs)
-                if !adaptor.append(ob, withPresentationTime: pts) {
-                    end(writer.error?.localizedDescription ?? "scrittura del video non riuscita"); return
+                if !pp.adaptor.append(ob, withPresentationTime: pts) {
+                    end(pp.writer.error?.localizedDescription ?? "scrittura del video non riuscita"); return
                 }
                 progress(min(1, max(0, (pts.seconds - start) / total)))
             }
         }
-        if let aIn, let aOut {
+        if let aIn = pp.aIn, pp.aOut != nil {
             group.enter()
             aIn.requestMediaDataWhenReady(on: aQueue) {
                 func end() {
                     guard !box.audioDone else { return }
                     box.audioDone = true
-                    aIn.markAsFinished()
+                    pp.aIn?.markAsFinished()
                     group.leave()
                 }
-                guard !box.audioDone else { return }
-                while aIn.isReadyForMoreMediaData {
+                guard !box.audioDone, let input = pp.aIn, let output = pp.aOut else { return }
+                while input.isReadyForMoreMediaData {
                     if job.cancelRequested { end(); return }
-                    guard let sb = aOut.copyNextSampleBuffer() else { end(); return }
-                    if !aIn.append(sb) { end(); return }
+                    guard let sb = output.copyNextSampleBuffer() else { end(); return }
+                    if !input.append(sb) { end(); return }
                 }
             }
         }
