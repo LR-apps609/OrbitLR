@@ -964,6 +964,9 @@ final class SpeechFileWriter: NSObject, AVSpeechSynthesizerDelegate, @unchecked 
                 self.lock.lock(); let empty = self.file == nil && !self.finished; self.lock.unlock()
                 if empty { self.finish(error: "la voce non è disponibile: prova un’altra voce") }
             }
+            // E se la voce non dice mai di aver finito, dopo un tempo largo si salva quello che ha letto
+            let limit = max(60, Double(total) * 0.12 + 30)
+            DispatchQueue.global().asyncAfter(deadline: .now() + limit) { [weak self] in self?.finish(error: nil) }
         }
         _ = self        // tiene in vita il sintetizzatore fino alla fine
     }

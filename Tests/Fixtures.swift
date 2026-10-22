@@ -35,7 +35,10 @@ enum Fixtures {
         p.executableURL = URL(fileURLWithPath: "/usr/bin/say")
         p.arguments = ["-o", aiff.path, text]
         try p.run()
-        p.waitUntilExit()
+        // Mai bloccare i test: al massimo 30 secondi
+        let deadline = Date().addingTimeInterval(30)
+        while p.isRunning && Date() < deadline { Thread.sleep(forTimeInterval: 0.1) }
+        if p.isRunning { p.terminate(); throw FixtureError(description: "say non risponde") }
         guard p.terminationStatus == 0 else { throw FixtureError(description: "say non ha funzionato") }
         return try readMono(aiff)
     }

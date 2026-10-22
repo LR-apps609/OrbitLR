@@ -15,7 +15,7 @@ jobs:
   build:
     # I Mac Apple Silicon di GitHub sono spesso esauriti: si usa il Mac Intel, che compila lo stesso per entrambi
     runs-on: macos-15-intel
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
 
@@ -77,12 +77,21 @@ jobs:
           du -sh "$APP"
 
       - name: Test automatici (video, musica, voci, audio)
+        timeout-minutes: 25
         run: |
           status=0
-          xcodebuild test -project OrbitLR.xcodeproj -scheme OrbitLRTests -destination 'platform=macOS' \
+          # Ogni test ha al massimo 3 minuti: uno bloccato fallisce con il suo nome, invece di fermare tutto
+          # perl alarm: se tutto si blocca, dopo 20 minuti si ferma e si vede dove
+          perl -e 'alarm shift; exec @ARGV' 1200 xcodebuild test -project OrbitLR.xcodeproj -scheme OrbitLRTests -destination 'platform=macOS' \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 180 -maximum-test-execution-time-allowance 240 \
             -derivedDataPath build-test CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= \
             > test.log 2>&1 || status=$?
           grep -E "Test Case .*(passed|failed)|Executed|\*\* TEST" test.log | tail -n 80 || true
+          if [ $status -ne 0 ] && ! grep -q "Executed [0-9]* tests" test.log; then
+            last=$(grep -E "Test Case .* started" test.log | tail -n 1)
+            echo "::error::Test interrotti (bloccati o app non avviata). Ultimo test partito: ${last:-nessuno}"
+            tail -n 30 test.log | sed 's/^/  /'
+          fi
           # Un test fallito diventa un errore leggibile dalla pagina della compilazione e dall'API
           grep -E "^/.*:[0-9]+: error: -\[" test.log | sort -u | head -n 20 | while IFS= read -r l; do
             f=$(echo "$l" | cut -d: -f1); n=$(echo "$l" | cut -d: -f2); m=$(echo "$l" | cut -d: -f4-)
