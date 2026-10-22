@@ -826,9 +826,21 @@ private struct FormatFrame: View {
 
 // MARK: - Sequenza: righello, clip, musica, indicatore
 
+/// Solo la linea dell'indicatore si ridisegna mentre il video scorre (non tutta la sequenza).
+private struct PlayheadLine: View {
+    @ObservedObject var clock: PlayClock
+    let pps: CGFloat
+    let size: CGSize
+    var body: some View {
+        Rectangle().fill(Theme.ink)
+            .frame(width: 2, height: size.height)
+            .offset(x: min(max(0, CGFloat(clock.time) * pps - 1), max(0, size.width - 2)))
+    }
+}
+
 private struct ProjectTimeline: View {
     @ObservedObject var s: VideoProjectStore
-    @ObservedObject var clock: PlayClock
+    let clock: PlayClock
     let tint: Color
     let openMusic: () -> Void
     @Environment(\.undoManager) private var undo
@@ -848,9 +860,7 @@ private struct ProjectTimeline: View {
                     musicRow(total: total, pps: pps, width: g.size.width)
                         .frame(height: 28)
                 }
-                Rectangle().fill(Theme.ink)
-                    .frame(width: 2, height: g.size.height)
-                    .offset(x: min(max(0, CGFloat(clock.time) * pps - 1), g.size.width - 2))
+                PlayheadLine(clock: clock, pps: pps, size: g.size)
                     .allowsHitTesting(false)
             }
         }
