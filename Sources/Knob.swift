@@ -39,7 +39,7 @@ struct Knob<Value: Hashable>: View {
 
     private func labelPoint(_ i: Int) -> CGPoint {
         let a = CGFloat(angle(for: i) * .pi / 180)
-        return CGPoint(x: box / 2 + labelRadius * sin(a), y: box / 2 - labelRadius * cos(a))
+        return CGPoint(x: box / 2 + labelRadius * CGFloat(sin(Double(a))), y: box / 2 - labelRadius * CGFloat(cos(Double(a))))
     }
 
     var body: some View {

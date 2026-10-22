@@ -73,9 +73,10 @@ final class MenuBarIcon: ObservableObject, @unchecked Sendable {
 
             // Tacche, come i numeri di una radio
             for k in 0..<6 {
-                let a = (Double(k) * 60 + 30) * .pi / 180
-                let p1 = NSPoint(x: c.x + 5.6 * sin(a), y: c.y + 5.6 * cos(a))
-                let p2 = NSPoint(x: c.x + 6.6 * sin(a), y: c.y + 6.6 * cos(a))
+                let a = CGFloat((Double(k) * 60 + 30) * .pi / 180)
+                let sa: CGFloat = CGFloat(sin(Double(a))), ca: CGFloat = CGFloat(cos(Double(a)))
+                let p1 = NSPoint(x: c.x + 5.6 * sa, y: c.y + 5.6 * ca)
+                let p2 = NSPoint(x: c.x + 6.6 * sa, y: c.y + 6.6 * ca)
                 let mark = NSBezierPath()
                 mark.move(to: p1)
                 mark.line(to: p2)

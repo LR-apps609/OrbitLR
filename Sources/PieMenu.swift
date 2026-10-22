@@ -158,13 +158,13 @@ struct WedgeShape: Shape {
         let a0 = -90 + Double(index) * step - step / 2, a1 = a0 + step
         var p = Path()
         for k in 0...24 {
-            let a = (a0 + (a1 - a0) * Double(k) / 24) * .pi / 180
-            let pt = CGPoint(x: c.x + outer * cos(a), y: c.y + outer * sin(a))
+            let a = CGFloat((a0 + (a1 - a0) * Double(k) / 24) * .pi / 180)
+            let pt = CGPoint(x: c.x + outer * CGFloat(cos(Double(a))), y: c.y + outer * CGFloat(sin(Double(a))))
             if k == 0 { p.move(to: pt) } else { p.addLine(to: pt) }
         }
         for k in 0...24 {
-            let a = (a1 - (a1 - a0) * Double(k) / 24) * .pi / 180
-            p.addLine(to: CGPoint(x: c.x + inner * cos(a), y: c.y + inner * sin(a)))
+            let a = CGFloat((a1 - (a1 - a0) * Double(k) / 24) * .pi / 180)
+            p.addLine(to: CGPoint(x: c.x + inner * CGFloat(cos(Double(a))), y: c.y + inner * CGFloat(sin(Double(a)))))
         }
         p.closeSubpath()
         return p
@@ -424,7 +424,7 @@ struct PetalPlacement: ViewModifier, Animatable {
         let a = CGFloat((-90 + Double(index) * step - 70 * Double(1 - min(o, 1))) * .pi / 180)
         let r0: CGFloat = inner * 0.55, r1: CGFloat = (inner + outer) / 2
         let r: CGFloat = r0 + (r1 - r0) * o
-        let p = CGPoint(x: mid.x + r * cos(a), y: mid.y + r * sin(a))
+        let p = CGPoint(x: mid.x + r * CGFloat(cos(Double(a))), y: mid.y + r * CGFloat(sin(Double(a))))
         return content
             .scaleEffect(0.3 + 0.7 * o)
             .opacity(Double(min(1, o * 1.4)))
