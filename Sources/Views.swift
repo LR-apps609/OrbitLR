@@ -71,8 +71,27 @@ struct MainWindow: View {
                     Section("Attività") {
                         ForEach(SidebarItem.activities) { item in sidebarRow(item) }
                     }
-                    Section("Avanzate", isExpanded: $advancedOpen) {
-                        ForEach(SidebarItem.advanced) { item in sidebarRow(item) }
+                    // 2.7.2 · «Avanzate» si vede che è un pulsante: icona, freccia che gira, sfondo leggero
+                    Section {
+                        if advancedOpen { ForEach(SidebarItem.advanced) { item in sidebarRow(item) } }
+                    } header: {
+                        Button {
+                            withAnimation(.easeOut(duration: 0.18)) { advancedOpen.toggle() }
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "slider.horizontal.3").font(.system(size: 11, weight: .semibold))
+                                Text("Avanzate").font(.system(size: 12, weight: .semibold))
+                                Spacer(minLength: 4)
+                                Image(systemName: "chevron.right").font(.system(size: 10, weight: .bold))
+                                    .rotationEffect(.degrees(advancedOpen ? 90 : 0))
+                            }
+                            .foregroundStyle(Theme.ink.opacity(0.75))
+                            .padding(.horizontal, 8).padding(.vertical, 5)
+                            .background(RoundedRectangle(cornerRadius: 7).fill(Theme.cream.opacity(0.35)))
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .help(advancedOpen ? "Nascondi Automazione, Preset e Componenti" : "Mostra Automazione, Preset e Componenti")
                     }
                 }
                 .listStyle(.sidebar)
@@ -134,10 +153,10 @@ struct MainWindow: View {
                 }
                 .id(app.selection ?? .workspace)
                 // 2.7: la pagina nuova entra con una molla leggera (sale un poco e si posa), come una manopola che scatta
-                .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: 10)).combined(with: .scale(scale: 0.985)),
-                                        removal: .opacity))
+                // 2.7.2 · più rapida: la pagina vecchia sparisce subito, la nuova entra in 0,2 s (niente zoom, che rallentava)
+                .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: 6)), removal: .identity))
             }
-            .animation(.spring(response: 0.34, dampingFraction: 0.86), value: app.selection)
+            .animation(.spring(response: 0.2, dampingFraction: 0.9), value: app.selection)
         }
         .background(WindowReader { w in
             // Una sola finestra principale: se ne nasce un'altra mentre la prima è aperta, si chiude subito

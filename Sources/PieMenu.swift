@@ -282,7 +282,10 @@ struct PieView: View {
                 let target = atan2(Double(p.y - mid.y), Double(p.x - mid.x)) * 180 / .pi
                 var delta = (target - sheen).truncatingRemainder(dividingBy: 360)
                 if delta > 180 { delta -= 360 } else if delta < -180 { delta += 360 }
-                if abs(delta) > 2, !reduceMotion { withAnimation(.easeOut(duration: 0.35)) { sheen += delta } }
+                // 2.7.2 · più leggero: si muove solo per spostamenti visibili, spento in risparmio energetico
+                if abs(delta) > 8, !reduceMotion, !ProcessInfo.processInfo.isLowPowerModeEnabled {
+                    withAnimation(.easeOut(duration: 0.35)) { sheen += delta }
+                }
                 let i = model.index(at: p, center: mid, inner: inner, outer: outer)
                 if i != model.hover {
                     if i != nil { Sounds.tick() }

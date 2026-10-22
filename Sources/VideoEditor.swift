@@ -631,6 +631,7 @@ struct VideoEditorView: View {
             Button { s.move(1, undo) } label: { Image(systemName: "arrow.right") }.help("Sposta la clip dopo")
             Button("Intera") { s.restoreClip(undo) }.help("Riporta la clip alla sua durata intera")
             Button(role: .destructive) { s.deleteClip(undo) } label: { Image(systemName: "trash") }
+                .keyboardShortcut(.delete, modifiers: [])
                 .help("Elimina la clip (si può annullare)")
         }
         .fixedSize()
@@ -957,6 +958,20 @@ private struct ProjectTimeline: View {
                     }
                     .overlay(alignment: .trailing) {
                         if s.selected == c.id { trimHandle(c, start: start, left: false, pps: pps) }
+                    }
+                    // 2.7.2 · ✕ sulla clip selezionata: la togli senza cercare il comando
+                    .overlay(alignment: .topTrailing) {
+                        if s.selected == c.id && w > 40 {
+                            Button { s.deleteClip(undo) } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 15, weight: .bold))
+                                    .symbolRenderingMode(.palette)
+                                    .foregroundStyle(Color.white, Color.black.opacity(0.65))
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.top, 3).padding(.trailing, 12)
+                            .help("Togli la clip (⌫) · si può annullare con ⌘Z")
+                        }
                     }
                     .offset(x: moving == c.id ? moveDX : 0)
                     .zIndex(moving == c.id ? 1 : 0)
