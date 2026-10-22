@@ -68,3 +68,25 @@ final class MonthStatsTests: XCTestCase {
         XCTAssertEqual(s.topAction, "In JPG")
     }
 }
+
+/// 2.7.1 · Il progetto ritrova i file spostati.
+final class BookmarkTests: XCTestCase {
+    func testMovedClipIsFound() throws {
+        let src = try Fixtures.wav(Fixtures.tone(seconds: 1, freq: 440), name: "da-spostare.wav")
+        var p = VideoProject()
+        p.clips = [VPClip(path: src.path, inPoint: 0, outPoint: 1)]
+        let saved = VideoProjectStore.withBookmarks(p)
+        XCTAssertNotNil(saved.clips[0].bookmark)
+        let moved = Fixtures.dir.appendingPathComponent("spostato-\(UUID().uuidString).wav")
+        try FileManager.default.moveItem(at: src, to: moved)
+        XCTAssertEqual(VideoProjectStore.resolve(saved.clips[0].bookmark).map { URL(fileURLWithPath: $0).resolvingSymlinksInPath().path },
+                       moved.resolvingSymlinksInPath().path)
+    }
+
+    func testImageEstimateIsCached() throws {
+        let src = try Fixtures.photo(name: "cache.jpg", width: 600, height: 400)
+        let a = SizeEstimate.imageBytes(src, to: "png")
+        XCTAssertNotNil(a)
+        XCTAssertEqual(SizeEstimate.imageBytes(src, to: "png"), a)
+    }
+}

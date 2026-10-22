@@ -19,12 +19,15 @@ struct VPClip: Codable, Equatable, Identifiable, Sendable {
     var path: String
     var inPoint: Double
     var outPoint: Double
+    /// 2.7.1 · Segnalibro di macOS: ritrova il file anche se lo sposti o lo rinomini.
+    var bookmark: Data? = nil
     var url: URL { URL(fileURLWithPath: path) }
     var length: Double { max(0, outPoint - inPoint) }
 }
 
 struct VPMusic: Codable, Equatable, Sendable {
     var path: String
+    var bookmark: Data? = nil
     /// Dove parte nel video (secondi del montaggio).
     var offset: Double = 0
     /// Da che punto della canzone parte.

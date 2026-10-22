@@ -11,7 +11,13 @@ import ImageIO
 // ════════════════════════════════════════════════════════════════════
 
 enum SizeEstimate {
-    static let imageFormats: Set<String> = ["jpg", "png", "heic", "tiff"]
+    /// TIFF escluso: pesa così tanto che convertirlo solo per stimarlo costa più della stima.
+    static let imageFormats: Set<String> = ["jpg", "png", "heic"]
+    /// 2.7.1 · Stime già fatte (file + data di modifica + formato): riaprire la torta non riconverte niente.
+    nonisolated(unsafe) private static var cache: [String: Int64] = [:]
+    private static let lock = NSLock()
+    /// Foto più grandi di così: si stima su una sola, non su tre.
+    static let bigPixels = 20_000_000
     /// Bit al secondo dell'audio che OrbitLR scrive per ogni formato.
     /// M4A resta fuori: il preset di Apple è a qualità variabile e il peso cambia troppo da file a file.
     static let audioBitrate: [String: Double] = ["mp3": 190_000, "wav": 1_411_200, "flac": 800_000,
@@ -26,7 +32,8 @@ enum SizeEstimate {
             let targets = ids.filter { $0.hasPrefix("to:") && imageFormats.contains(String($0.dropFirst(3))) }
             guard !targets.isEmpty else { return [:] }
             // Fino a 4 file si convertono tutti; con di più, si provano i primi 3 e si proporziona sul peso totale
-            let sample = Array(files.prefix(files.count <= 4 ? 4 : 3))
+            let big = files.prefix(4).contains { pixels($0) > bigPixels }
+            let sample = Array(files.prefix(big ? 1 : (files.count <= 4 ? 4 : 3)))
             let sampleBytes = sample.reduce(Int64(0)) { $0 + Job.size(of: $1) }
             let totalBytes = files.reduce(Int64(0)) { $0 + Job.size(of: $1) }
             for id in targets {
@@ -35,6 +42,7 @@ enum SizeEstimate {
                 var sum: Int64 = 0
                 var ok = true
                 for f in sample {
+                    if Task.isCancelled { return out }
                     guard NativeEngine.imageIn.contains(Catalog.norm(f.pathExtension)), let b = imageBytes(f, to: t) else { ok = false; break }
                     sum += b
                 }
@@ -62,6 +70,22 @@ enum SizeEstimate {
 
     /// Converte davvero l'immagine in una cartella temporanea e ne misura il peso.
     static func imageBytes(_ src: URL, to t: String) -> Int64? {
+        let date = (try? src.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate?.timeIntervalSince1970) ?? 0
+        let key = "\(src.path)|\(date)|\(t)"
+        lock.lock(); let hit = cache[key]; lock.unlock()
+        if let hit { return hit }
+        guard let b = convertAndMeasure(src, to: t) else { return nil }
+        lock.lock(); if cache.count > 500 { cache.removeAll() }; cache[key] = b; lock.unlock()
+        return b
+    }
+
+    static func pixels(_ url: URL) -> Int {
+        guard let s = CGImageSourceCreateWithURL(url as CFURL, nil),
+              let p = CGImageSourceCopyPropertiesAtIndex(s, 0, nil) as? [CFString: Any] else { return 0 }
+        return ((p[kCGImagePropertyPixelWidth] as? Int) ?? 0) * ((p[kCGImagePropertyPixelHeight] as? Int) ?? 0)
+    }
+
+    private static func convertAndMeasure(_ src: URL, to t: String) -> Int64? {
         let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("orbitlr-stima-\(UUID().uuidString).\(t)")
         defer { try? FileManager.default.removeItem(at: tmp) }
         guard (try? NativeEngine.convertImage(src, to: t, resize: nil, out: tmp)) != nil else { return nil }

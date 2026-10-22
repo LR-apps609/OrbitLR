@@ -426,17 +426,44 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         let p = project, url = saveURL
         let w = DispatchWorkItem {
             try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-            if let d = try? JSONEncoder().encode(p) { try? d.write(to: url, options: .atomic) }
+            if let d = try? JSONEncoder().encode(VideoProjectStore.withBookmarks(p)) { try? d.write(to: url, options: .atomic) }
         }
         saveWork = w
         DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.6, execute: w)
     }
 
+    /// Aggiunge (o rinfresca) i segnalibri prima di salvare.
+    static func withBookmarks(_ p: VideoProject) -> VideoProject {
+        var p = p
+        for i in p.clips.indices { p.clips[i].bookmark = (try? p.clips[i].url.bookmarkData()) ?? p.clips[i].bookmark }
+        if let m = p.music { p.music?.bookmark = (try? URL(fileURLWithPath: m.path).bookmarkData()) ?? m.bookmark }
+        return p
+    }
+
+    static func resolve(_ data: Data?) -> String? {
+        guard let data else { return nil }
+        var stale = false
+        guard let u = try? URL(resolvingBookmarkData: data, options: [.withoutUI], bookmarkDataIsStale: &stale),
+              FileManager.default.fileExists(atPath: u.path) else { return nil }
+        return u.path
+    }
+
     private func restore() {
         guard let d = try? Data(contentsOf: saveURL), var p = try? JSONDecoder().decode(VideoProject.self, from: d) else { return }
         let fm = FileManager.default
+        let before = p.clips.count
+        // File spostati o rinominati: li ritrova il segnalibro
+        for i in p.clips.indices where !fm.fileExists(atPath: p.clips[i].path) {
+            if let found = Self.resolve(p.clips[i].bookmark) { p.clips[i].path = found }
+        }
+        if let m = p.music, !fm.fileExists(atPath: m.path) { p.music?.path = Self.resolve(m.bookmark) ?? m.path }
         p.clips = p.clips.filter { fm.fileExists(atPath: $0.path) && $0.length > 0.05 }
-        if let m = p.music, !fm.fileExists(atPath: m.path) { p.music = nil }
+        var lost: [String] = []
+        if p.clips.count < before { lost.append(before - p.clips.count == 1 ? "1 clip" : "\(before - p.clips.count) clip") }
+        if let m = p.music, !fm.fileExists(atPath: m.path) { p.music = nil; lost.append("la musica") }
+        if !lost.isEmpty {
+            notice = "Non trovo più \(lost.joined(separator: " e ")) del progetto: il file è stato cancellato o è su un disco scollegato."
+        }
         project = p
         ensureLoaded()
         scheduleRebuild()
@@ -515,8 +542,16 @@ struct VideoEditorView: View {
                 Button { undo?.redo() } label: { Image(systemName: "arrow.uturn.forward") }
                     .help("Ripeti (⇧⌘Z)")
                 Button("Aggiungi video…") { choose(audio: false) }
-                Button("Nuovo progetto") { s.newProject(undo) }
-                    .help("Ricomincia da capo (si può annullare con ⌘Z)")
+                Button("Nuovo progetto") {
+                    // 2.7.1 · Il progetto c'è uno solo: prima di cancellarlo si chiede.
+                    let a = NSAlert()
+                    a.messageText = "Iniziare un nuovo progetto?"
+                    a.informativeText = "Il montaggio attuale verrà tolto. Puoi recuperarlo con ⌘Z finché OrbitLR resta aperta. I tuoi file originali non vengono toccati."
+                    a.addButton(withTitle: "Nuovo progetto")
+                    a.addButton(withTitle: "Annulla")
+                    if a.runModal() == .alertFirstButtonReturn { s.newProject(undo) }
+                }
+                .help("Ricomincia da capo")
             }
         }
     }

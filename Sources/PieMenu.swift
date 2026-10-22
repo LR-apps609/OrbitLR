@@ -618,6 +618,7 @@ final class PieController: @unchecked Sendable {
 
     /// Chiude il menu: gli spicchi rientrano al centro (0,14 s), poi la finestrella sparisce.
     func close() {
+        model?.estimateTask?.cancel()          // 2.7.1 · scelta fatta o torta chiusa: la stima non serve più
         for m in monitors { NSEvent.removeMonitor(m) }
         monitors = []
         guard let p = panel else { return }

@@ -143,6 +143,7 @@ final class Workspace: ObservableObject, @unchecked Sendable {
     }
 
     private func picked(_ chosen: Action, in gr: FileGroup) {
+        gr.pie.estimateTask?.cancel()          // 2.7.1 · si sceglie: la stima si ferma e lascia la macchina alla conversione
         var a = chosen
         var presetParam: String? = nil
         if let r = PresetStore.shared.resolve(chosen) { a = r.0; presetParam = r.1 }

@@ -1,3 +1,9 @@
+Novità della 2.7.1:
+• Il progetto video ritrova le clip e la musica anche se sposti o rinomini i file; se un file non c'è più, te lo dice invece di toglierlo in silenzio
+• «Nuovo progetto» chiede conferma prima di togliere il montaggio
+• Peso previsto più leggero: niente conversioni ripetute quando riapri la torta, una sola prova sulle foto molto grandi, si ferma appena scegli
+• Peso previsto mostrato solo dove è affidabile (tolto per M4A e TIFF)
+
 Novità della 2.7 «Wow»:
 • Icona nuova: il quadrante colorato con la ghiera d'ottone
 • Trascina un file nella finestra: la torta nasce da dove l'hai lasciato e si apre al centro
