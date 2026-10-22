@@ -8,6 +8,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write        # per pubblicare la «Release» con il file .orbitlr
+
 jobs:
   build:
     # I Mac Apple Silicon di GitHub sono spesso esauriti: si usa il Mac Intel, che compila lo stesso per entrambi
@@ -65,7 +68,12 @@ jobs:
           test -d "$APP"
           test -d "$APP/Contents/PlugIns/OrbitLRShare.appex"
           test -d "$APP/Contents/Resources/Models/RealESRNet.mlpackage"
+          test -f "$APP/Contents/Resources/NOVITA.txt"
           plutil -p "$APP/Contents/Info.plist" | grep -E "CFBundleShortVersionString|CFBundleVersion"
+          # Deve girare sia sui Mac Apple Silicon sia sugli Intel
+          ARCHS=$(lipo -archs "$APP/Contents/MacOS/OrbitLR"); echo "Architetture: $ARCHS"
+          echo "$ARCHS" | grep -q arm64 && echo "$ARCHS" | grep -q x86_64
+          codesign --verify --deep "$APP"
           du -sh "$APP"
 
       - name: Pacchetto .orbitlr
@@ -74,13 +82,31 @@ jobs:
           mkdir -p dist/OrbitLR
           git archive HEAD | tar -x -C dist/OrbitLR
           rm -rf dist/OrbitLR/.github
-          (cd dist && zip -r -X -q "OrbitLR $VERSION.orbitlr" OrbitLR)
+          # L'app già compilata: dalla 2.5.3 l'aggiornamento la installa direttamente (pochi secondi).
+          # I sorgenti restano nel pacchetto per le versioni precedenti, che compilano da sé.
+          mkdir -p dist/OrbitLR/Prebuilt
+          ditto build/Build/Products/Release/OrbitLR.app dist/OrbitLR/Prebuilt/OrbitLR.app
+          ditto -c -k --keepParent dist/OrbitLR "dist/OrbitLR $VERSION.orbitlr"
+          du -h "dist/OrbitLR $VERSION.orbitlr"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - uses: actions/upload-artifact@v6
         with:
           name: OrbitLR-${{ env.VERSION }}
           path: dist/*.orbitlr
+
+      - name: Release su GitHub
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v$VERSION"
+          FILE="dist/OrbitLR $VERSION.orbitlr"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$FILE" --clobber
+          else
+            gh release create "$TAG" "$FILE" --title "OrbitLR $VERSION" --notes-file NOVITA.txt
+          fi
 
       - uses: actions/upload-artifact@v6
         if: always()

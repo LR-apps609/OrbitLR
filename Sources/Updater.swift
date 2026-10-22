@@ -38,6 +38,8 @@ final class Updater: ObservableObject, @unchecked Sendable {
     /// Durate attese per fase: quelle misurate all'ultimo aggiornamento su questo Mac.
     @Published var expected: [Double] = Updater.defaultTimes
     private var measured: [Double] = []
+    /// Installazione dell'app già pronta: i suoi tempi non vanno a sporcare quelli della compilazione.
+    private var fast = false
     private var window: NSWindow?
     private var hidden: [NSWindow] = []
 
@@ -82,7 +84,13 @@ final class Updater: ObservableObject, @unchecked Sendable {
         toVersion = version
         closeEverythingElse()
         showWindow()
-        build(project)
+        // Dalla 2.5.3 l'aggiornamento contiene l'app già pronta: si installa in pochi secondi, senza Xcode
+        let prebuilt = project.appendingPathComponent("Prebuilt/OrbitLR.app")
+        if fm.fileExists(atPath: prebuilt.path) {
+            installPrebuilt(project, app: prebuilt)
+        } else {
+            build(project)
+        }
     }
 
     private func findProject(_ dir: URL) -> URL? {
@@ -128,7 +136,7 @@ final class Updater: ObservableObject, @unchecked Sendable {
             if self.stage != .done { self.measured.append(max(1, now.timeIntervalSince(self.stageStart))) }
             self.stage = s
             self.stageStart = now
-            if s == .done, self.measured.count == Self.defaultTimes.count {
+            if s == .done, !self.fast, self.measured.count == Self.defaultTimes.count {
                 UserDefaults.standard.set(self.measured, forKey: "updateTimes")
             }
         }
@@ -170,37 +178,74 @@ final class Updater: ObservableObject, @unchecked Sendable {
             let built = buildDir.appendingPathComponent("Build/Products/Release/OrbitLR.app")
             guard FileManager.default.fileExists(atPath: built.path) else { return fail("Non trovo l’app compilata.") }
 
-            enter(.install)
-            // L'app nuova viene preparata accanto: quella attuale resta intatta finché non è tutto pronto
-            let staged = work.appendingPathComponent("OrbitLR.app")
-            try? FileManager.default.removeItem(at: staged)
-            if sh("/bin/cp", ["-R", built.path, staged.path]) != 0 { return fail("Non riesco a preparare l’installazione.") }
-            // La copia compilata non deve risultare come una seconda OrbitLR
-            _ = sh(Self.lsregister, ["-u", built.path])
-            Thread.sleep(forTimeInterval: 0.5)
-
-            enter(.done)
-            // La barra si riempie; poi OrbitLR si chiude e uno script la sostituisce e la riapre
-            Thread.sleep(forTimeInterval: 1.4)
-            let pid = ProcessInfo.processInfo.processIdentifier
-            let script = """
-            while kill -0 \(pid) 2>/dev/null; do sleep 0.2; done
-            rm -rf /Applications/OrbitLR.app
-            mv \(q(staged.path)) /Applications/OrbitLR.app || cp -R \(q(built.path)) /Applications/ || exit 1
-            xattr -dr com.apple.quarantine /Applications/OrbitLR.app 2>/dev/null
-            \(Self.lsregister) -f /Applications/OrbitLR.app >/dev/null 2>&1
-            /System/Library/CoreServices/pbs -update >/dev/null 2>&1
-            # Tiene aggiornata anche la cartella in Documenti, così «Costruisci e installa» rifà sempre l'ultima versione
-            [ -d "$HOME/Documents/OrbitLR" ] && /usr/bin/ditto \(q(project.path)) "$HOME/Documents/OrbitLR" 2>/dev/null
-            rm -rf \(q(buildDir.path))
-            open /Applications/OrbitLR.app
-            """
-            let p = Process()
-            p.executableURL = URL(fileURLWithPath: "/bin/zsh")
-            p.arguments = ["-c", script]
-            try? p.run()
-            DispatchQueue.main.async { NSApp.terminate(nil) }
+            install(built, project: project)
         }
+    }
+
+
+    /// L'app arriva già compilata (dalla 2.5.3): controllo che sia integra e adatta a questo Mac, poi la installo.
+    /// Se qualcosa non torna, ricado sulla compilazione classica.
+    private func installPrebuilt(_ project: URL, app: URL) {
+        busy = true
+        error = nil
+        lines = []
+        measured = []
+        fast = true
+        expected = [2, 1, 1, 3]
+        stage = .prepare
+        stageStart = Date()
+        DispatchQueue.global(qos: .userInitiated).async { [self] in
+            _ = sh("/usr/bin/xattr", ["-cr", project.path])
+            let exe = app.appendingPathComponent("Contents/MacOS/OrbitLR").path
+            let archOK = shOut("/usr/bin/lipo", ["-archs", exe]).contains(shOut("/usr/bin/uname", ["-m"]).trimmingCharacters(in: .whitespacesAndNewlines))
+            let signOK = sh("/usr/bin/codesign", ["--verify", "--deep", app.path]) == 0
+            guard archOK, signOK else {
+                DispatchQueue.main.async {
+                    self.fast = false
+                    self.loadTimes()
+                    self.lines.append("App pronta non adatta a questo Mac: la compilo.")
+                    self.build(project)
+                }
+                return
+            }
+            enter(.project)
+            enter(.compile)
+            install(app, project: project)
+        }
+    }
+
+    /// Prepara l'app nuova accanto a quella attuale, poi chiude OrbitLR e uno script la sostituisce e la riapre.
+    private func install(_ built: URL, project: URL) {
+        enter(.install)
+        // L'app nuova viene preparata accanto: quella attuale resta intatta finché non è tutto pronto
+        let staged = work.appendingPathComponent("OrbitLR.app")
+        try? FileManager.default.removeItem(at: staged)
+        if sh("/bin/cp", ["-R", built.path, staged.path]) != 0 { return fail("Non riesco a preparare l’installazione.") }
+        // La copia compilata non deve risultare come una seconda OrbitLR
+        _ = sh(Self.lsregister, ["-u", built.path])
+        Thread.sleep(forTimeInterval: 0.5)
+
+        enter(.done)
+        // La barra si riempie; poi OrbitLR si chiude e uno script la sostituisce e la riapre
+        Thread.sleep(forTimeInterval: 1.4)
+        let pid = ProcessInfo.processInfo.processIdentifier
+        let script = """
+        while kill -0 \(pid) 2>/dev/null; do sleep 0.2; done
+        rm -rf /Applications/OrbitLR.app
+        mv \(q(staged.path)) /Applications/OrbitLR.app || cp -R \(q(built.path)) /Applications/ || exit 1
+        xattr -dr com.apple.quarantine /Applications/OrbitLR.app 2>/dev/null
+        \(Self.lsregister) -f /Applications/OrbitLR.app >/dev/null 2>&1
+        /System/Library/CoreServices/pbs -update >/dev/null 2>&1
+        # Tiene aggiornata anche la cartella in Documenti, così «Costruisci e installa» rifà sempre l'ultima versione
+        [ -d "$HOME/Documents/OrbitLR" ] && /usr/bin/ditto \(q(project.path)) "$HOME/Documents/OrbitLR" 2>/dev/null && rm -rf "$HOME/Documents/OrbitLR/Prebuilt"
+        rm -rf \(q(buildDir.path))
+        open /Applications/OrbitLR.app
+        """
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/bin/zsh")
+        p.arguments = ["-c", script]
+        try? p.run()
+        DispatchQueue.main.async { NSApp.terminate(nil) }
     }
 
     // MARK: - Finestre
@@ -257,6 +302,19 @@ final class Updater: ObservableObject, @unchecked Sendable {
         let a = NSAlert()
         a.messageText = s
         a.runModal()
+    }
+
+    private func shOut(_ exe: String, _ args: [String]) -> String {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: exe)
+        p.arguments = args
+        let pipe = Pipe()
+        p.standardOutput = pipe
+        p.standardError = Pipe()
+        do { try p.run() } catch { return "" }
+        let d = pipe.fileHandleForReading.readDataToEndOfFile()
+        p.waitUntilExit()
+        return String(data: d, encoding: .utf8) ?? ""
     }
 
     @discardableResult

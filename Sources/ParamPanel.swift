@@ -274,19 +274,39 @@ struct ParamView: View {
         case .unlock:
             SecureField("Password attuale", text: $password)
         case .aienhance:
-            HStack(alignment: .top, spacing: 8) {
-                Knob(title: "Dimensione", options: [
-                    KnobOption(value: "1", short: "1×", label: "Stessa dimensione"),
-                    KnobOption(value: "2", short: "2×", label: "Il doppio"),
-                    KnobOption(value: "4", short: "4×", label: "Quattro volte"),
-                ], selection: $aiSize, tint: tint, size: 86)
-                Knob(title: "Intensità", options: [
-                    KnobOption(value: "0", short: "0", label: "Fedele: non inventa"),
-                    KnobOption(value: "25", short: "25", label: "Fedele, un po’ più incisivo"),
-                    KnobOption(value: "50", short: "50", label: "Metà e metà"),
-                    KnobOption(value: "75", short: "75", label: "Quasi tutto Più nitido"),
-                    KnobOption(value: "100", short: "100", label: "Più nitido: ricostruisce texture"),
-                ], selection: $aiStrength, tint: tint, size: 86)
+            // Con le manopole stanno affiancate; come elenco, una sotto l'altra (altrimenti le scritte si tagliano)
+            if UserDefaults.standard.string(forKey: "controlStyle") == "knob" {
+                HStack(alignment: .top, spacing: 8) {
+
+                    Knob(title: "Dimensione", options: [
+                        KnobOption(value: "1", short: "1×", label: "Stessa dimensione"),
+                        KnobOption(value: "2", short: "2×", label: "Il doppio"),
+                        KnobOption(value: "4", short: "4×", label: "Quattro volte"),
+                    ], selection: $aiSize, tint: tint, size: 86)
+                    Knob(title: "Intensità", options: [
+                        KnobOption(value: "0", short: "0", label: "Fedele: non inventa"),
+                        KnobOption(value: "25", short: "25", label: "Fedele, un po’ più incisivo"),
+                        KnobOption(value: "50", short: "50", label: "Metà e metà"),
+                        KnobOption(value: "75", short: "75", label: "Quasi tutto Più nitido"),
+                        KnobOption(value: "100", short: "100", label: "Più nitido: ricostruisce texture"),
+                    ], selection: $aiStrength, tint: tint, size: 86)
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 12) {
+
+                    Knob(title: "Dimensione", options: [
+                        KnobOption(value: "1", short: "1×", label: "Stessa dimensione"),
+                        KnobOption(value: "2", short: "2×", label: "Il doppio"),
+                        KnobOption(value: "4", short: "4×", label: "Quattro volte"),
+                    ], selection: $aiSize, tint: tint, size: 86)
+                    Knob(title: "Intensità", options: [
+                        KnobOption(value: "0", short: "0", label: "Fedele: non inventa"),
+                        KnobOption(value: "25", short: "25", label: "Fedele, un po’ più incisivo"),
+                        KnobOption(value: "50", short: "50", label: "Metà e metà"),
+                        KnobOption(value: "75", short: "75", label: "Quasi tutto Più nitido"),
+                        KnobOption(value: "100", short: "100", label: "Più nitido: ricostruisce texture"),
+                    ], selection: $aiStrength, tint: tint, size: 86)
+                }
             }
             note("Intensità 0 = Fedele: pulisce e rende nitido senza inventare. Più sali, più il risultato è incisivo, ma il modello ricostruisce texture che nella foto non c’erano. Tra 1 e 99 si usano tutti e due i modelli (tempo doppio).")
         case .removebg, .straighten, .upscale, .stack:

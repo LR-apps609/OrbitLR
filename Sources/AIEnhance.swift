@@ -55,7 +55,13 @@ enum AIEnhance {
         // Dimensione finale e dimensione su cui lavora il modello (che ingrandisce sempre di 4×).
         // «Stessa dimensione» su foto grandi: si lavora a metà e poi si torna alla misura originale,
         // così ci vuole un quarto del tempo e il risultato è comunque più pulito e nitido.
-        let target = CGSize(width: ow * CGFloat(factor), height: oh * CGFloat(factor))
+        var target = CGSize(width: ow * CGFloat(factor), height: oh * CGFloat(factor))
+        // Anche il risultato finale resta sotto i 100 megapixel: oltre, il file diventa enorme e la memoria non basta
+        let targetPixels = target.width * target.height
+        if targetPixels > CGFloat(maxOutputPixels) {
+            let k = sqrt(CGFloat(maxOutputPixels) / targetPixels)
+            target = CGSize(width: (target.width * k).rounded(), height: (target.height * k).rounded())
+        }
         var work = CGSize(width: ow, height: oh)
         if factor == 1 && ow * oh > 2_000_000 { work = CGSize(width: ow / 2, height: oh / 2) }
         let outPixels = work.width * work.height * CGFloat(scale * scale)

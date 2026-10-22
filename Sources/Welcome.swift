@@ -12,7 +12,7 @@ import AppKit
 final class WelcomeController: ObservableObject, @unchecked Sendable {
     static let shared = WelcomeController()
 
-    enum Phase: Equatable { case loading, page(Int), tip }
+    enum Phase: Equatable { case loading, page(Int), tip, news }
 
     struct Step: Identifiable {
         let id: Int
@@ -32,6 +32,9 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
     @Published var componentsFound = 0
     @Published var firstLaunch = false
     @Published var tip: Tip = Tip.all[0]
+    /// Dopo un aggiornamento: al posto del suggerimento compare «Cosa c'è di nuovo».
+    @Published var justUpdated = false
+    @Published var fromVersion = ""
     private var window: NSWindow?
     private var hidden: [NSWindow] = []
 
@@ -51,7 +54,8 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
         let current = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
         let last = UserDefaults.standard.string(forKey: "lastLaunchVersion")
         UserDefaults.standard.set(current, forKey: "lastLaunchVersion")
-        let justUpdated = last != nil && last != current
+        justUpdated = last != nil && last != current
+        fromVersion = last ?? ""
         if Self.isFirstLaunch {
             show(mode: .first)
         } else if (Self.splashEnabled || justUpdated) && !skipNextSplash {
@@ -124,6 +128,9 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
         guard window != nil else { return }
         if !quick {
             withAnimation(.easeInOut(duration: 0.35)) { phase = .page(0) }
+        } else if justUpdated && !News.items.isEmpty {
+            justUpdated = false
+            withAnimation(.easeInOut(duration: 0.35)) { phase = .news }
         } else if Self.tipsEnabled {
             tip = Tip.next()
             withAnimation(.easeInOut(duration: 0.35)) { phase = .tip }
@@ -167,6 +174,19 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
         hidden = []
         NSApp.activate()
     }
+}
+
+// MARK: - Novità della versione (NOVITA.txt, incluso nell'app)
+
+enum News {
+    static let items: [String] = {
+        guard let url = Bundle.main.url(forResource: "NOVITA", withExtension: "txt"),
+              let text = try? String(contentsOf: url, encoding: .utf8) else { return [] }
+        return text.split(separator: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { $0.hasPrefix("•") }
+            .map { String($0.dropFirst()).trimmingCharacters(in: .whitespaces) }
+    }()
 }
 
 // MARK: - Suggerimenti
@@ -226,6 +246,8 @@ struct WelcomeView: View {
                 loading.transition(.opacity)
             case .tip:
                 tipView.transition(.opacity)
+            case .news:
+                newsView.transition(.opacity)
             case .page(let n):
                 page(n).transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity),
                                                removal: .move(edge: .leading).combined(with: .opacity)))
@@ -294,6 +316,44 @@ struct WelcomeView: View {
                 Button("Non mostrare più") { ctl.stopTips() }
                     .help("Dalla prossima volta solo l’animazione. Si riattiva in Opzioni → Aspetto e suoni")
                 Button { ctl.anotherTip() } label: { Label("Un altro", systemImage: "arrow.right") }
+                Spacer()
+                Button("Inizia") { ctl.finish() }
+                    .keyboardShortcut(.defaultAction)
+                    .buttonStyle(.borderedProminent).tint(Theme.accent)
+            }
+            .padding(.horizontal, 28).padding(.bottom, 22)
+        }
+    }
+
+    // MARK: Cosa c'è di nuovo
+
+    private var newsView: some View {
+        VStack(spacing: 12) {
+            BrandAnimation(size: CGSize(width: 220, height: 110))
+                .padding(.top, 18)
+            VStack(spacing: 3) {
+                Text("COSA C’È DI NUOVO").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.brass)
+                Text("OrbitLR \(version)").font(.system(size: 19, weight: .bold, design: .rounded))
+                if !ctl.fromVersion.isEmpty {
+                    Text("aggiornata dalla \(ctl.fromVersion)").font(.system(size: 11)).foregroundStyle(.secondary)
+                }
+            }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 9) {
+                    ForEach(Array(News.items.enumerated()), id: \.offset) { _, item in
+                        HStack(alignment: .firstTextBaseline, spacing: 9) {
+                            Image(systemName: "sparkle").font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.accent)
+                            Text(item).font(.system(size: 12.5))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(14)
+            }
+            .background(RoundedRectangle(cornerRadius: 12).fill(Theme.ink.opacity(0.05)))
+            .padding(.horizontal, 28)
+            HStack {
                 Spacer()
                 Button("Inizia") { ctl.finish() }
                     .keyboardShortcut(.defaultAction)
