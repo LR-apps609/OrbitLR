@@ -299,6 +299,7 @@ struct VideoTabView: View {
             loadURLs(providers) { urls in m.load(urls, append: m.file != nil && tool == .merge) }
             return true
         }
+        .onDisappear { m.trim?.pause() }
         .navigationTitle("Video")
     }
 

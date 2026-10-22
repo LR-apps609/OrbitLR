@@ -709,6 +709,12 @@ enum VideoPipeline {
                 AVVideoAverageBitRateKey: bitrate,
                 AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel,
             ],
+            // Colori standard dei video HD: si vedono uguali su telefoni, Mac e social
+            AVVideoColorPropertiesKey: [
+                AVVideoColorPrimariesKey: AVVideoColorPrimaries_ITU_R_709_2,
+                AVVideoTransferFunctionKey: AVVideoTransferFunction_ITU_R_709_2,
+                AVVideoYCbCrMatrixKey: AVVideoYCbCrMatrix_ITU_R_709_2,
+            ],
         ])
         vIn.expectsMediaDataInRealTime = false
         let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: vIn, sourcePixelBufferAttributes: [
@@ -864,7 +870,7 @@ enum Speech {
 
 /// Raccoglie l'audio prodotto dalla sintesi vocale e lo salva. Resta in vita finché la voce non ha finito.
 final class SpeechFileWriter: NSObject, AVSpeechSynthesizerDelegate, @unchecked Sendable {
-    private let synth = AVSpeechSynthesizer()
+    private var synth: AVSpeechSynthesizer?
     private let out: URL
     private let tmp: URL
     private let total: Int
@@ -883,13 +889,18 @@ final class SpeechFileWriter: NSObject, AVSpeechSynthesizerDelegate, @unchecked 
         self.progress = progress
         self.job = job
         super.init()
-        synth.delegate = self
     }
 
     func run(_ u: AVSpeechUtterance) async throws {
         try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
             lock.lock(); cont = c; lock.unlock()
-            synth.write(u) { [weak self] buffer in self?.receive(buffer) }
+            // La sintesi vocale va avviata dal filo principale (lì arrivano anche le sue notifiche)
+            DispatchQueue.main.async {
+                let s = AVSpeechSynthesizer()
+                s.delegate = self
+                self.synth = s
+                s.write(u) { [weak self] buffer in self?.receive(buffer) }
+            }
             // Rete di sicurezza: se la voce non parte entro 30 secondi
             DispatchQueue.global().asyncAfter(deadline: .now() + 30) { [weak self] in
                 guard let self else { return }
@@ -902,7 +913,10 @@ final class SpeechFileWriter: NSObject, AVSpeechSynthesizerDelegate, @unchecked 
 
     private func receive(_ buffer: AVAudioBuffer) {
         guard let pcm = buffer as? AVAudioPCMBuffer else { return }
-        if job?.cancelRequested == true { synth.stopSpeaking(at: .immediate); finish(error: "annullato"); return }
+        if job?.cancelRequested == true {
+            DispatchQueue.main.async { self.synth?.stopSpeaking(at: .immediate) }
+            finish(error: "annullato"); return
+        }
         if pcm.frameLength == 0 { finish(error: nil); return }
         lock.lock(); defer { lock.unlock() }
         guard !finished else { return }

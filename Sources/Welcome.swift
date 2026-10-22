@@ -202,6 +202,12 @@ struct Tip: Equatable {
     let text: String
 
     static let all: [Tip] = [
+        Tip(symbol: "film.fill", title: "Scheda Video",
+            text: "Nella barra a sinistra apri Video: tagli, formato per Reels e TikTok che segue il soggetto, musica, unione di più video."),
+        Tip(symbol: "bell.and.waves.left.and.right", title: "Suonerie per iPhone",
+            text: "Nella scheda Audio scegli «Suoneria iPhone», sposta il riquadro sul pezzo che ti piace e crea il file .m4r."),
+        Tip(symbol: "text.bubble", title: "Testo in voce",
+            text: "Nella scheda Audio scrivi un testo e OrbitLR lo legge in un file audio. Le voci «Premium» di macOS sono le più naturali."),
         Tip(symbol: "space", title: "Anteprima con Spazio",
             text: "Con un file aperto nel menu, premi Spazio per vederlo grande, come nel Finder."),
         Tip(symbol: "star.circle.fill", title: "Preset con scorciatoia",

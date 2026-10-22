@@ -626,7 +626,8 @@ enum Fix: Equatable {
         }
         if text.contains("password") && job.kind == .pdf && job.action.id != "unprotect" { return .unlock }
         if text.contains("icloud") { return .icloud }
-        if job.native { return .classic }
+        // Gli strumenti che esistono solo con i motori di macOS non hanno un «altro motore»
+        if job.native && !Tools.ids.contains(job.action.id) && !Media.ids.contains(job.action.id) { return .classic }
         return .retry
     }
 }

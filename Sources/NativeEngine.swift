@@ -333,7 +333,12 @@ enum Verifier {
         case "pdf":
             guard let d = PDFDocument(url: url) else { return "il PDF creato non si apre" }
             if !d.isLocked && d.pageCount == 0 { return "il PDF creato non ha pagine" }
-        case "mp4", "mov", "m4v", "m4a", "m4r", "mp3", "wav", "aiff":
+        case "m4r":
+            // Suoneria iPhone: un normale MPEG-4 audio con un'altra estensione
+            guard let h = try? FileHandle(forReadingFrom: url), let d = try? h.read(upToCount: 12), d.count == 12,
+                  String(data: d.subdata(in: 4..<8), encoding: .ascii) == "ftyp" else { return "la suoneria creata è danneggiata" }
+            try? h.close()
+        case "mp4", "mov", "m4v", "m4a", "mp3", "wav", "aiff":
             let asset = AVURLAsset(url: url)
             let tracks = (try? await asset.load(.tracks)) ?? []
             if tracks.isEmpty { return "il file creato non contiene audio né video" }

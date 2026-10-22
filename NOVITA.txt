@@ -1,6 +1,8 @@
-Novità della 2.5.4:
-• Corretto: dopo un aggiornamento, «Inizia» nella schermata d'avvio poteva aprire la scelta dei file e lasciare l'app nascosta
-• La schermata d'avvio resta sempre sopra e la finestra principale ricompare sempre (anche con un clic sull'icona nel Dock)
-• Unisci più scatti: allineamento più sicuro, sceglie da solo la sovrapposizione migliore (niente doppi contorni)
-• PDF: oscuramento e PDF ricercabile rispettano il ritaglio della pagina, come si vede in Anteprima
-• Primo aggiornamento con l'app già pronta: si installa in pochi secondi
+Novità della 2.6:
+• Nuova barra a sinistra con le schede: Conversione (il menu a torta), Video e Audio. File e Immagini arrivano nella 2.7
+• Scheda Video: anteprima grande, sequenza da tagliare e una striscia con gli strumenti
+• Formato social: 9:16 per Reels e TikTok, 1:1, 4:5 e 16:9, con l'inquadratura che segue il soggetto
+• Unisci più video, aggiungi musica (sotto l'audio o al suo posto), estrai l'audio, GIF e compressione
+• Scheda Audio: suoneria per iPhone (fino a 40 secondi, con dissolvenze), vocale leggero per WhatsApp, unisci audio
+• Testo in voce: scrivi un testo e una voce di macOS lo legge in un file audio (anche dai documenti, dal menu a torta)
+• Le nuove azioni ci sono anche nel menu a torta, con l'etichetta «Nuovo»
