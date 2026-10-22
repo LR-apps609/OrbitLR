@@ -13,7 +13,8 @@ import ImageIO
 enum SizeEstimate {
     static let imageFormats: Set<String> = ["jpg", "png", "heic", "tiff"]
     /// Bit al secondo dell'audio che OrbitLR scrive per ogni formato.
-    static let audioBitrate: [String: Double] = ["mp3": 190_000, "m4a": 256_000, "wav": 1_411_200, "flac": 800_000,
+    /// M4A resta fuori: il preset di Apple è a qualità variabile e il peso cambia troppo da file a file.
+    static let audioBitrate: [String: Double] = ["mp3": 190_000, "wav": 1_411_200, "flac": 800_000,
                                                  "ogg": 160_000, "whatsapp": 64_000]
 
     /// Stime per le azioni di un menu: id dell'azione → byte previsti (somma di tutti i file).
@@ -50,7 +51,7 @@ enum SizeEstimate {
             for id in ids {
                 let key = id.hasPrefix("to:") ? String(id.dropFirst(3)) : id
                 guard let bps = audioBitrate[key] else { continue }
-                if kind == .video && key != "mp3" && key != "m4a" { continue }     // da un video: solo l'audio estratto
+                if kind == .video && key != "mp3" { continue }     // da un video: solo l'audio estratto
                 out[id] = Int64(bps * seconds / 8)
             }
         default:

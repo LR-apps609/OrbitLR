@@ -31,13 +31,13 @@ final class EstimateTests: XCTestCase {
     func testAudioEstimateIsClose() async throws {
         let src = try Fixtures.wav(Fixtures.tone(seconds: 20, freq: 330).enumerated().map { i, v in v + Float(i % 97) / 970 - 0.05 },
                                    name: "stima.wav")
-        let a = try XCTUnwrap(Catalog.action(id: "to:m4a", kind: .audio))
-        let e = await SizeEstimate.estimates(actions: [a], files: [src], kind: .audio)
-        let guess = try XCTUnwrap(e["to:m4a"])
-        let job = Job(files: [src], action: a, param: "")
-        let out = try await NativeEngine.run(job: job, file: src) { _ in }
-        let real = Double(Job.size(of: out))
-        XCTAssertEqual(Double(guess) / real, 1, accuracy: 0.35, "M4A: previsto \(guess), vero \(real)")
+        let a = try XCTUnwrap(Catalog.action(id: "to:wav", kind: .audio))
+        let m4a = try XCTUnwrap(Catalog.action(id: "to:m4a", kind: .audio))
+        let e = await SizeEstimate.estimates(actions: [a, m4a], files: [src], kind: .audio)
+        XCTAssertNil(e["to:m4a"], "M4A è a qualità variabile: nessuna stima")
+        let guess = try XCTUnwrap(e["to:wav"])
+        let real = 1_411_200.0 * 20 / 8                               // WAV 16 bit stereo 44,1 kHz: peso esatto
+        XCTAssertEqual(Double(guess) / real, 1, accuracy: 0.05, "WAV: previsto \(guess), vero \(real)")
     }
 
     func testNoEstimateWhenUnknown() async throws {
