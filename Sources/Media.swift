@@ -895,11 +895,13 @@ final class SpeechFileWriter: NSObject, AVSpeechSynthesizerDelegate, @unchecked 
         try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
             lock.lock(); cont = c; lock.unlock()
             // La sintesi vocale va avviata dal filo principale (lì arrivano anche le sue notifiche)
+            final class Holder: @unchecked Sendable { let u: AVSpeechUtterance; init(_ u: AVSpeechUtterance) { self.u = u } }
+            let held = Holder(u)
             DispatchQueue.main.async {
                 let s = AVSpeechSynthesizer()
                 s.delegate = self
                 self.synth = s
-                s.write(u) { [weak self] buffer in self?.receive(buffer) }
+                s.write(held.u) { [weak self] buffer in self?.receive(buffer) }
             }
             // Rete di sicurezza: se la voce non parte entro 30 secondi
             DispatchQueue.global().asyncAfter(deadline: .now() + 30) { [weak self] in
