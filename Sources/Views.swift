@@ -116,7 +116,7 @@ struct MainWindow: View {
                 Group {
                     switch app.selection ?? .workspace {
                     case .workspace, .files, .images: WorkspaceView(ws: app.workspace)
-                    case .video: VideoTabView(m: app.videoTab)
+                    case .video: VideoEditorView(s: VideoProjectStore.shared)
                     case .audio: AudioTabView(m: app.audioTab)
                     case .queue: QueueView()
                     case .history: HistoryView()

@@ -154,6 +154,7 @@ enum Catalog {
         "ringtone": Action(id: "ringtone", short: "Suoneria", title: "Suoneria iPhone", hint: "Fino a 40 secondi, pronta per iPhone", symbol: "bell.and.waves.left.and.right", param: .ringtone),
         "whatsapp": Action(id: "whatsapp", short: "WhatsApp", title: "Vocale leggero", hint: "Per WhatsApp e messaggi, voce chiara", symbol: "message"),
         "amerge": Action(id: "amerge", short: "Unisci", title: "Unisci gli audio", hint: "Uno dopo l’altro, in un solo file", symbol: "square.stack.3d.up"),
+        "vproject": Action(id: "vproject", short: "Montaggio", title: "Esporta il montaggio", hint: "Il progetto della scheda Video", symbol: "film.stack"),
         "tts": Action(id: "tts", short: "Leggi", title: "Testo in voce", hint: "Un file audio letto da una voce di macOS", symbol: "text.bubble"),
         "aienhance": Action(id: "aienhance", short: "Migliora IA", title: "Migliora con IA", hint: "Più nitida e pulita, anche ingrandita", symbol: "sparkles", param: .aienhance),
     ]

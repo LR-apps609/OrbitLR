@@ -17,9 +17,9 @@ import Vision
 // ════════════════════════════════════════════════════════════════════
 
 enum Media {
-    static let ids: Set<String> = ["social", "vmerge", "music", "ringtone", "whatsapp", "amerge", "tts"]
+    static let ids: Set<String> = ["social", "vmerge", "music", "ringtone", "whatsapp", "amerge", "tts", "vproject"]
     /// Azioni che usano tutti i file insieme e danno un solo risultato.
-    static let multi: Set<String> = ["vmerge", "amerge"]
+    static let multi: Set<String> = ["vmerge", "amerge", "vproject"]
 
     static let ci = CIContext(options: [.useSoftwareRenderer: false])
 
@@ -72,6 +72,10 @@ enum Media {
         guard let first = files.first else { throw NativeError("nessun file") }
         let base = first.deletingPathExtension().lastPathComponent
         switch job.action.id {
+        case "vproject":
+            let out = Destination.unique(dir, base: "\(base) (montaggio)", ext: "mp4")
+            try await VideoProjectExport.run(snapshot: URL(fileURLWithPath: job.param), out: out, job: job, progress: progress)
+            return out
         case "vmerge":
             let videos = files.filter { Catalog.kind(of: $0) == .video }
             guard videos.count >= 2 else { throw NativeError("servono almeno 2 video") }
@@ -137,7 +141,7 @@ enum Media {
                            end: CMTime(seconds: e, preferredTimescale: 600))
     }
 
-    private static func even(_ v: Double) -> Int { max(2, Int((v / 2).rounded()) * 2) }
+    static func even(_ v: Double) -> Int { max(2, Int((v / 2).rounded()) * 2) }
 
     // MARK: - Orientamento
 
@@ -246,9 +250,11 @@ enum Media {
     }
 
     /// Persone (o, se non ci sono, ciò che attira lo sguardo) ogni mezzo secondo.
-    private static func subjectPath(asset: AVURLAsset, range: CMTimeRange, progress: @escaping (Double) -> Void) async -> [SubjectPoint] {
+    static func subjectPath(asset: AVAsset, videoComposition: AVVideoComposition? = nil, range: CMTimeRange,
+                            progress: @escaping (Double) -> Void) async -> [SubjectPoint] {
         let gen = AVAssetImageGenerator(asset: asset)
         gen.appliesPreferredTrackTransform = true
+        if let videoComposition { gen.videoComposition = videoComposition }
         gen.maximumSize = CGSize(width: 640, height: 640)
         gen.requestedTimeToleranceBefore = CMTime(seconds: 0.2, preferredTimescale: 600)
         gen.requestedTimeToleranceAfter = CMTime(seconds: 0.2, preferredTimescale: 600)
@@ -316,7 +322,7 @@ enum Media {
             throw NativeError("non riesco a preparare il video")
         }
         let aComp = comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)
-        var segments: [(start: CMTime, transform: CGAffineTransform, size: CGSize)] = []
+        var segments: [(start: CMTime, transform: CGAffineTransform, size: CGSize, natural: CGSize)] = []
         var cursor = CMTime.zero
         var renderSize = CGSize.zero
         var maxFPS: Double = 24
@@ -339,7 +345,7 @@ enum Media {
             let shown = CGRect(origin: .zero, size: ns).applying(t)
             let size = CGSize(width: abs(shown.width), height: abs(shown.height))
             if renderSize == .zero { renderSize = size }
-            segments.append((cursor, t, size))
+            segments.append((cursor, t, size, ns))
             cursor = cursor + d
         }
         // Misura del primo video (lato lungo al massimo 1920), gli altri si adattano con le bande nere
@@ -349,8 +355,8 @@ enum Media {
         for s in segments {
             let fit = min(rs.width / s.size.width, rs.height / s.size.height)
             let tx = (rs.width - s.size.width * fit) / 2, ty = (rs.height - s.size.height * fit) / 2
-            // La traslazione di preferredTransform porta già l'immagine girata a partire da 0,0
-            let t = s.transform.concatenating(CGAffineTransform(scaleX: fit, y: fit)).concatenating(CGAffineTransform(translationX: tx, y: ty))
+            let t = VideoProjectBuilder.normalized(s.transform, natural: s.natural)
+                .concatenating(CGAffineTransform(scaleX: fit, y: fit)).concatenating(CGAffineTransform(translationX: tx, y: ty))
             layer.setTransform(t, at: s.start)
         }
         let instr = AVMutableVideoCompositionInstruction()
@@ -672,6 +678,18 @@ enum Media {
 // MARK: - Pipeline video: legge i fotogrammi, li trasforma con Core Image, li riscrive (H.264 + AAC)
 
 enum VideoPipeline {
+    static let bgra: [String: Any] = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
+    static let pcm: [String: Any] = [
+        AVFormatIDKey: kAudioFormatLinearPCM,
+        AVLinearPCMBitDepthKey: 16,
+        AVLinearPCMIsFloatKey: false,
+        AVLinearPCMIsBigEndianKey: false,
+        AVLinearPCMIsNonInterleaved: false,
+        AVSampleRateKey: 44_100,
+        AVNumberOfChannelsKey: 2,
+    ]
+
+    /// Un solo file: i fotogrammi «grezzi» della traccia video.
     static func process(asset: AVURLAsset, videoTrack: AVAssetTrack, range: CMTimeRange, size: CGSize, out: URL,
                         job: Job, progress: @escaping (Double) -> Void,
                         frame: @escaping (CIImage, Double) -> CIImage) async throws {
@@ -679,32 +697,50 @@ enum VideoPipeline {
         let audioTrack = try? await asset.loadTracks(withMediaType: .audio).first
         let reader = try AVAssetReader(asset: asset)
         reader.timeRange = range
-        let vOut = AVAssetReaderTrackOutput(track: videoTrack, outputSettings: [
-            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
-        ])
+        let vOut = AVAssetReaderTrackOutput(track: videoTrack, outputSettings: bgra)
+        var aOut: AVAssetReaderOutput? = nil
+        if let audioTrack { aOut = AVAssetReaderTrackOutput(track: audioTrack, outputSettings: pcm) }
+        try await run(reader: reader, vOut: vOut, aOut: aOut, range: range, fps: fps.isFinite && fps > 0 ? fps : 30,
+                      size: size, out: out, job: job, progress: progress, frame: frame)
+    }
+
+    /// Un montaggio: i fotogrammi già composti (clip in fila, girati e adattati) e l'audio già mixato
+    /// (musica, volumi, dissolvenze). I colori escono in SDR standard (Rec. 709) anche dai video HDR dell'iPhone.
+    static func processComposition(asset: AVAsset, videoComposition: AVVideoComposition, audioMix: AVAudioMix?,
+                                   range: CMTimeRange, fps: Double, size: CGSize, out: URL, job: Job,
+                                   progress: @escaping (Double) -> Void,
+                                   frame: @escaping (CIImage, Double) -> CIImage) async throws {
+        let reader = try AVAssetReader(asset: asset)
+        reader.timeRange = range
+        let vTracks = try await asset.loadTracks(withMediaType: .video)
+        guard !vTracks.isEmpty else { throw NativeError("il montaggio non contiene video") }
+        let vOut = AVAssetReaderVideoCompositionOutput(videoTracks: vTracks, videoSettings: bgra)
+        vOut.videoComposition = videoComposition
+        let aTracks = try await asset.loadTracks(withMediaType: .audio)
+        var aOut: AVAssetReaderOutput? = nil
+        if !aTracks.isEmpty {
+            let o = AVAssetReaderAudioMixOutput(audioTracks: aTracks, audioSettings: pcm)
+            o.audioMix = audioMix
+            aOut = o
+        }
+        try await run(reader: reader, vOut: vOut, aOut: aOut, range: range, fps: fps, size: size, out: out,
+                      job: job, progress: progress, frame: frame)
+    }
+
+    private static func run(reader: AVAssetReader, vOut: AVAssetReaderOutput, aOut proposedAudio: AVAssetReaderOutput?,
+                            range: CMTimeRange, fps: Double, size: CGSize, out: URL, job: Job,
+                            progress: @escaping (Double) -> Void,
+                            frame: @escaping (CIImage, Double) -> CIImage) async throws {
         vOut.alwaysCopiesSampleData = false
         guard reader.canAdd(vOut) else { throw NativeError("non riesco a leggere il video") }
         reader.add(vOut)
-        var aOut: AVAssetReaderTrackOutput? = nil
-        if let audioTrack {
-            let o = AVAssetReaderTrackOutput(track: audioTrack, outputSettings: [
-                AVFormatIDKey: kAudioFormatLinearPCM,
-                AVLinearPCMBitDepthKey: 16,
-                AVLinearPCMIsFloatKey: false,
-                AVLinearPCMIsBigEndianKey: false,
-                AVLinearPCMIsNonInterleaved: false,
-                AVSampleRateKey: 44_100,
-                AVNumberOfChannelsKey: 2,
-            ])
-            o.alwaysCopiesSampleData = false
-            if reader.canAdd(o) { reader.add(o); aOut = o }
-        }
 
         try? FileManager.default.removeItem(at: out)
         let writer = try AVAssetWriter(outputURL: out, fileType: .mp4)
         writer.shouldOptimizeForNetworkUse = true
         let w = Int(size.width), h = Int(size.height)
-        let bitrate = max(2_000_000, min(16_000_000, Int(Double(w * h) * max(fps, 24) * 0.13)))
+        guard w >= 2, h >= 2 else { throw NativeError("dimensioni del video non valide") }
+        let bitrate = max(2_000_000, min(50_000_000, Int(Double(w * h) * max(fps, 24) * 0.13)))
         let vIn = AVAssetWriterInput(mediaType: .video, outputSettings: [
             AVVideoCodecKey: AVVideoCodecType.h264,
             AVVideoWidthKey: w,
@@ -728,8 +764,10 @@ enum VideoPipeline {
         ])
         guard writer.canAdd(vIn) else { throw NativeError("non riesco a preparare il video") }
         writer.add(vIn)
+        // L'audio si legge solo se si può anche scrivere: un'uscita letta da nessuno bloccherebbe il video
         var aIn: AVAssetWriterInput? = nil
-        if aOut != nil {
+        var aOut: AVAssetReaderOutput? = nil
+        if let o = proposedAudio {
             let i = AVAssetWriterInput(mediaType: .audio, outputSettings: [
                 AVFormatIDKey: kAudioFormatMPEG4AAC,
                 AVSampleRateKey: 44_100,
@@ -737,7 +775,11 @@ enum VideoPipeline {
                 AVEncoderBitRateKey: 160_000,
             ])
             i.expectsMediaDataInRealTime = false
-            if writer.canAdd(i) { writer.add(i); aIn = i }
+            o.alwaysCopiesSampleData = false
+            if writer.canAdd(i), reader.canAdd(o) {
+                writer.add(i); reader.add(o)
+                aIn = i; aOut = o
+            }
         }
 
         guard reader.startReading() else { throw NativeError(reader.error?.localizedDescription ?? "non riesco a leggere il video") }
@@ -757,11 +799,11 @@ enum VideoPipeline {
         }
         /// Gli oggetti di AVFoundation usati dalle code di lavoro (ognuno da una sola coda alla volta).
         final class Parts: @unchecked Sendable {
-            let vIn: AVAssetWriterInput, vOut: AVAssetReaderTrackOutput
+            let vIn: AVAssetWriterInput, vOut: AVAssetReaderOutput
             let adaptor: AVAssetWriterInputPixelBufferAdaptor, writer: AVAssetWriter
-            let aIn: AVAssetWriterInput?, aOut: AVAssetReaderTrackOutput?
-            init(vIn: AVAssetWriterInput, vOut: AVAssetReaderTrackOutput, adaptor: AVAssetWriterInputPixelBufferAdaptor,
-                 writer: AVAssetWriter, aIn: AVAssetWriterInput?, aOut: AVAssetReaderTrackOutput?) {
+            let aIn: AVAssetWriterInput?, aOut: AVAssetReaderOutput?
+            init(vIn: AVAssetWriterInput, vOut: AVAssetReaderOutput, adaptor: AVAssetWriterInputPixelBufferAdaptor,
+                 writer: AVAssetWriter, aIn: AVAssetWriterInput?, aOut: AVAssetReaderOutput?) {
                 self.vIn = vIn; self.vOut = vOut; self.adaptor = adaptor; self.writer = writer; self.aIn = aIn; self.aOut = aOut
             }
         }

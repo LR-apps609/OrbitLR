@@ -8,8 +8,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
     static let shared = AppState()
     @Published var selection: SidebarItem? = .workspace
     let workspace = Workspace()
-    /// Le schede Video e Audio tengono il loro file anche quando si cambia scheda.
-    let videoTab = MediaTabModel(videoTab: true)
+    /// La scheda Audio tiene il suo file anche quando si cambia scheda (la scheda Video è un progetto a sé).
     let audioTab = MediaTabModel(videoTab: false)
     /// La finestra principale, per riportarla in primo piano senza aprirne una seconda.
     weak var mainWindow: NSWindow?

@@ -1,2 +1,9 @@
-Novità della 2.6.1:
-• Corretto Testo in voce: con alcune voci dava l'errore «com.apple.coreaudio.avfaudio». Ora la voce si registra così com'è e poi si converte, con qualsiasi voce
+Novità della 2.6.2:
+• Scheda Video come progetto: ogni modifica si vede subito nell'anteprima e il file si crea solo con «Esporta» (⌘E)
+• Clip in fila: taglia inizio e fine, dividi (S), sposta, elimina, riporta intera. Annulla e Ripeti con ⌘Z e ⇧⌘Z
+• Musica: trascinala per decidere dove parte, scegli da che punto della canzone, «Finale con il video», ripetizione, volume, dissolvenze
+• «Abbassa quando si parla»: macOS riconosce le voci nel video e lì la musica si abbassa da sola
+• Audio originale: volume e muto
+• Esportazione: formato (9:16, 1:1, 4:5, 16:9 con l'inquadratura che segue il soggetto), 720p, 1080p o 4K, 30 o 60 fps, peso stimato
+• Colori giusti anche dai video HDR dell'iPhone
+• Il progetto si salva da solo: chiudi l'app e lo ritrovi
