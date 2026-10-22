@@ -271,7 +271,7 @@ final class PDFEditorModel: ObservableObject, @unchecked Sendable {
                     if ocr, let lines = try? Tools.recognize(img) { Tools.drawInvisibleText(lines, in: ctx, size: size) }
                 }
             } else {
-                page.draw(with: .mediaBox, to: ctx)       // vettoriale, con campi compilati e firme
+                page.draw(with: .cropBox, to: ctx)        // vettoriale, con campi compilati e firme
             }
             ctx.endPage()
         }

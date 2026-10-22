@@ -357,6 +357,9 @@ enum LaunchGate {
     static func attach(_ w: NSWindow) {
         guard holding, !held.contains(where: { $0 === w }) else { return }
         w.alphaValue = 0
+        // Invisibile ma presente: senza questo i clic la «attraversano» e finiscono sui suoi pulsanti
+        // (es. clic su «Inizia» nella schedina → si apriva la scelta dei file e l'app restava nascosta)
+        w.ignoresMouseEvents = true
         held.append(w)
         // Durante un aggiornamento nessuna finestra deve comparire: resta solo la schedina
         if Updater.shared.busy { DispatchQueue.main.async { w.orderOut(nil) } }
@@ -365,7 +368,12 @@ enum LaunchGate {
     static func release() {
         guard !Updater.shared.busy else { return }
         holding = false
-        for w in held { w.alphaValue = 1 }
+        for w in held {
+            w.alphaValue = 1
+            w.ignoresMouseEvents = false
+            // Nascosta per un aggiornamento poi annullato: torna visibile
+            if !w.isVisible { w.orderFront(nil) }
+        }
         held = []
     }
 }

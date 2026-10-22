@@ -151,7 +151,7 @@ enum Tools {
 
     /// Dimensioni della pagina come si vede (con la rotazione applicata).
     static func visibleSize(_ page: PDFPage) -> CGSize {
-        let b = page.bounds(for: .mediaBox)
+        let b = page.bounds(for: .cropBox)
         return page.rotation % 180 == 0 ? b.size : CGSize(width: b.height, height: b.width)
     }
 
@@ -168,11 +168,11 @@ enum Tools {
         ctx.fill(CGRect(x: 0, y: 0, width: pw, height: ph))
         ctx.scaleBy(x: scale, y: scale)
         ctx.saveGState()
-        page.draw(with: .mediaBox, to: ctx)
+        page.draw(with: .cropBox, to: ctx)
         ctx.restoreGState()
         if let extra {
             ctx.saveGState()
-            page.transform(ctx, for: .mediaBox)
+            page.transform(ctx, for: .cropBox)
             extra(ctx)
             ctx.restoreGState()
         }
@@ -197,7 +197,7 @@ enum Tools {
             ctx.beginPage(mediaBox: &box)
             if hasText(page) {
                 // Pagina con testo vero: resta com'è (vettoriale)
-                page.draw(with: .mediaBox, to: ctx)
+                page.draw(with: .cropBox, to: ctx)
             } else if let img = render(page, dpi: 300) {
                 ctx.draw(img, in: box)
                 drawInvisibleText(try recognize(img), in: ctx, size: size)

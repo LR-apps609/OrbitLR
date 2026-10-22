@@ -1,5 +1,6 @@
-Novità della 2.5.3:
-• Aggiornamenti in pochi secondi: l'app arriva già pronta, senza più compilare (da questa versione in poi)
-• «Cosa c'è di nuovo»: dopo ogni aggiornamento vedi subito le novità
-• Migliora con IA 4× funziona anche con le foto grandi (il risultato si ferma a 100 megapixel)
-• Pannello di Migliora con IA ordinato anche nella vista a elenco
+Novità della 2.5.4:
+• Corretto: dopo un aggiornamento, «Inizia» nella schermata d'avvio poteva aprire la scelta dei file e lasciare l'app nascosta
+• La schermata d'avvio resta sempre sopra e la finestra principale ricompare sempre (anche con un clic sull'icona nel Dock)
+• Unisci più scatti: allineamento più sicuro, sceglie da solo la sovrapposizione migliore (niente doppi contorni)
+• PDF: oscuramento e PDF ricercabile rispettano il ritaglio della pagina, come si vede in Anteprima
+• Primo aggiornamento con l'app già pronta: si installa in pochi secondi

@@ -87,40 +87,85 @@ enum Stacker {
 
     /// Allinea un fotogramma al riferimento: prima con la prospettiva (mano che si muove un po'),
     /// poi, se il risultato non è credibile, con il solo spostamento.
+    /// Per non dipendere dal verso della trasformazione restituita da Vision, si provano sia la trasformazione
+    /// sia la sua inversa e si tiene quella che combacia meglio con il riferimento (così niente doppi contorni).
     private static func align(_ img: CIImage, to ref: CIImage) -> CIImage? {
         let handler = VNImageRequestHandler(ciImage: ref, options: [:])
         let w = ref.extent.width, h = ref.extent.height
+        let limit = max(w, h) * 0.15
+        var candidates: [CIImage] = []
 
         let homo = VNHomographicImageRegistrationRequest(targetedCIImage: img, options: [:])
         if (try? handler.perform([homo])) != nil, let obs = homo.results?.first {
             let m = obs.warpTransform
-            func map(_ p: CGPoint) -> CGPoint {
-                let v = m * SIMD3<Float>(Float(p.x), Float(p.y), 1)
-                return CGPoint(x: CGFloat(v.x / v.z), y: CGFloat(v.y / v.z))
-            }
-            let tl = map(CGPoint(x: 0, y: h)), tr = map(CGPoint(x: w, y: h))
-            let bl = map(CGPoint(x: 0, y: 0)), br = map(CGPoint(x: w, y: 0))
-            // Credibile se gli angoli si spostano poco (meno del 15% della foto)
-            let limit = max(w, h) * 0.15
-            let moved = [hypot(tl.x - 0, tl.y - h), hypot(tr.x - w, tr.y - h), hypot(bl.x, bl.y), hypot(br.x - w, br.y)].max() ?? .infinity
-            if moved.isFinite && moved < limit {
-                let p = CIFilter.perspectiveTransform()
-                p.inputImage = img
-                p.topLeft = tl
-                p.topRight = tr
-                p.bottomLeft = bl
-                p.bottomRight = br
-                if let out = p.outputImage { return out.cropped(to: ref.extent) }
+            for matrix in [m, m.inverse] {
+                if let warped = warp(img, matrix: matrix, w: w, h: h, limit: limit) {
+                    candidates.append(warped.cropped(to: ref.extent))
+                }
             }
         }
 
         let shift = VNTranslationalImageRegistrationRequest(targetedCIImage: img, options: [:])
         if (try? handler.perform([shift])) != nil, let obs = shift.results?.first {
             let t = obs.alignmentTransform
-            guard abs(t.tx) < w * 0.15, abs(t.ty) < h * 0.15 else { return nil }
-            return img.transformed(by: t).cropped(to: ref.extent)
+            if abs(t.tx) < w * 0.15, abs(t.ty) < h * 0.15 {
+                candidates.append(img.transformed(by: t).cropped(to: ref.extent))
+                candidates.append(img.transformed(by: t.inverted()).cropped(to: ref.extent))
+            }
         }
-        return nil
+        guard !candidates.isEmpty else { return nil }
+
+        // La più simile al riferimento; se nessuna migliora rispetto a non spostare, la foto si scarta
+        let baseline = difference(img.cropped(to: ref.extent), ref)
+        var best: CIImage? = nil
+        var bestScore = Float.greatestFiniteMagnitude
+        for c in candidates {
+            let d = difference(c, ref)
+            if d < bestScore { bestScore = d; best = c }
+        }
+        guard let best, bestScore <= baseline * 1.02 else { return nil }
+        return best
+    }
+
+    /// Applica una omografia ai quattro angoli; nil se gli angoli si spostano troppo (risultato non credibile).
+    private static func warp(_ img: CIImage, matrix m: simd_float3x3, w: CGFloat, h: CGFloat, limit: CGFloat) -> CIImage? {
+        func map(_ p: CGPoint) -> CGPoint? {
+            let v = m * SIMD3<Float>(Float(p.x), Float(p.y), 1)
+            guard abs(v.z) > 1e-6 else { return nil }
+            return CGPoint(x: CGFloat(v.x / v.z), y: CGFloat(v.y / v.z))
+        }
+        guard let tl = map(CGPoint(x: 0, y: h)), let tr = map(CGPoint(x: w, y: h)),
+              let bl = map(CGPoint(x: 0, y: 0)), let br = map(CGPoint(x: w, y: 0)) else { return nil }
+        let moves = [hypot(tl.x, tl.y - h), hypot(tr.x - w, tr.y - h), hypot(bl.x, bl.y), hypot(br.x - w, br.y)]
+        let moved = moves.max() ?? .infinity
+        guard moved.isFinite, moved < limit else { return nil }
+        let p = CIFilter.perspectiveTransform()
+        p.inputImage = img
+        p.topLeft = tl
+        p.topRight = tr
+        p.bottomLeft = bl
+        p.bottomRight = br
+        return p.outputImage
+    }
+
+    /// Quanto due immagini sono diverse (media della differenza, su una versione piccola della parte centrale).
+    private static func difference(_ a: CIImage, _ b: CIImage) -> Float {
+        let e = b.extent
+        let inner = e.insetBy(dx: e.width * 0.1, dy: e.height * 0.1)
+        let k = min(1, 320 / max(inner.width, inner.height))
+        let scale = CGAffineTransform(scaleX: k, y: k)
+        let diff = CIFilter.differenceBlendMode()
+        diff.inputImage = a.cropped(to: inner).transformed(by: scale)
+        diff.backgroundImage = b.cropped(to: inner).transformed(by: scale)
+        guard let d = diff.outputImage else { return .greatestFiniteMagnitude }
+        let avg = CIFilter.areaAverage()
+        avg.inputImage = d
+        avg.extent = inner.applying(scale)
+        guard let out = avg.outputImage else { return .greatestFiniteMagnitude }
+        var px = [Float](repeating: 0, count: 4)
+        ci.render(out, toBitmap: &px, rowBytes: 16, bounds: CGRect(origin: out.extent.origin, size: CGSize(width: 1, height: 1)),
+                  format: .RGBAf, colorSpace: nil)
+        return px[0] + px[1] + px[2]
     }
 
     /// Fotogrammi vicini tra loro, dal centro del video (al massimo 2 secondi): stessa scena, piccole differenze.

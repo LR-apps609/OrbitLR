@@ -40,6 +40,8 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
 
     /// Vero se l'app è stata aperta per dei file (Finder, ⌥⌘C, Dock) o all'accesso al Mac: niente schedina.
     var skipNextSplash = false
+    /// Vero mentre la schedina di avvio (o la guida) è aperta.
+    var isShowing: Bool { window != nil }
 
     static var isFirstLaunch: Bool { !UserDefaults.standard.bool(forKey: "welcomeDone") }
     /// Schermata a ogni apertura: spenta di base (per un'app di utilità l'attesa a ogni avvio stanca).
@@ -88,6 +90,7 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
         w.titleVisibility = .hidden
         w.titlebarAppearsTransparent = true
         w.isMovableByWindowBackground = true
+        w.level = .floating                 // sempre sopra la finestra principale, anche se macOS la crea dopo
         w.contentView = host
         w.isReleasedWhenClosed = false
         w.center()
@@ -172,6 +175,8 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
         LaunchGate.release()
         hidden.forEach { $0.alphaValue = 1; $0.makeKeyAndOrderFront(nil) }
         hidden = []
+        // La finestra principale potrebbe essere nata dopo la schedina: va mostrata comunque
+        AppDelegate.revealMainWindow()
         NSApp.activate()
     }
 }

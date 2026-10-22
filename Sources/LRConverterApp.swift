@@ -106,6 +106,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         // Schedina di avvio (o benvenuto al primo avvio). Aspetta un attimo: così la finestra principale esiste
         // già (per nasconderla) e si sa se l'app è stata aperta per dei file.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { WelcomeController.shared.showAtLaunch() }
+        // Rete di sicurezza: se per qualsiasi motivo la finestra resta nascosta, dopo 20 secondi si mostra
+        DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
+            guard LaunchGate.holding, !Updater.shared.busy, !WelcomeController.shared.isShowing else { return }
+            LaunchGate.release()
+            AppDelegate.revealMainWindow()
+        }
+    }
+
+    /// Clic sull'icona nel Dock: la finestra principale torna sempre visibile (mai bloccata invisibile).
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        guard !duplicate, !Updater.shared.busy else { return false }
+        if WelcomeController.shared.isShowing { return false }
+        LaunchGate.release()
+        if let w = AppState.shared.mainWindow {
+            w.alphaValue = 1
+            w.ignoresMouseEvents = false
+            if w.isMiniaturized { w.deminiaturize(nil) }
+            w.makeKeyAndOrderFront(nil)
+            return false
+        }
+        return true          // nessuna finestra: la ricrea SwiftUI
     }
 
     /// Pulizia automatica: cartelle temporanee rimaste da operazioni interrotte e log troppo lungo.
@@ -167,11 +188,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         bringMainWindow(attempt: 0)
     }
 
+    /// Mostra la finestra principale se esiste già (dopo la schedina di avvio); non ne crea di nuove.
+    static func revealMainWindow() {
+        guard let w = AppState.shared.mainWindow else { return }
+        w.alphaValue = 1
+        w.ignoresMouseEvents = false
+        if !w.isVisible || w.isMiniaturized {
+            if w.isMiniaturized { w.deminiaturize(nil) }
+        }
+        w.makeKeyAndOrderFront(nil)
+    }
+
     /// Porta davanti la finestra principale che c'è già. Se l'app si è appena aperta, aspetta che macOS la crei
     /// (così non ne nascono due); solo se è stata chiusa davvero, la riapre come col clic sull'icona nel Dock.
     private static func bringMainWindow(attempt: Int) {
         if let w = AppState.shared.mainWindow, w.isVisible || w.isMiniaturized {
             w.alphaValue = 1
+            w.ignoresMouseEvents = false
             if w.isMiniaturized { w.deminiaturize(nil) }
             w.makeKeyAndOrderFront(nil)
             return
