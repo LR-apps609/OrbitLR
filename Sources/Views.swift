@@ -10,8 +10,11 @@ enum SidebarItem: String, CaseIterable, Identifiable {
          queue = "Coda", history = "Cronologia", automation = "Automazioni", presets = "Preset", components = "Componenti"
     var id: String { rawValue }
     /// Le schede di lavoro (in alto) e le attività (sotto).
-    static let tabs: [SidebarItem] = [.workspace, .files, .images, .video, .audio]
-    static let activities: [SidebarItem] = [.queue, .history, .automation, .presets, .components]
+    /// Solo quello che c'è davvero: File e Immagini compariranno quando avranno la loro schermata.
+    static let tabs: [SidebarItem] = [.workspace, .video, .audio]
+    static let activities: [SidebarItem] = [.queue, .history]
+    /// Per chi vuole di più: chiuso di base, si apre con un clic.
+    static let advanced: [SidebarItem] = [.automation, .presets, .components]
     /// File e Immagini avranno la loro schermata nella 2.7: per ora si lavora da Conversione.
     var comingSoon: Bool { self == .files || self == .images }
     var symbol: String {
@@ -48,6 +51,7 @@ struct MainWindow: View {
     @EnvironmentObject var store: QueueStore
     @EnvironmentObject var app: AppState
     @AppStorage("palette") private var palette = "sage"
+    @AppStorage("sidebarAdvanced") private var advancedOpen = false
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
@@ -66,6 +70,9 @@ struct MainWindow: View {
                     }
                     Section("Attività") {
                         ForEach(SidebarItem.activities) { item in sidebarRow(item) }
+                    }
+                    Section("Avanzate", isExpanded: $advancedOpen) {
+                        ForEach(SidebarItem.advanced) { item in sidebarRow(item) }
                     }
                 }
                 .listStyle(.sidebar)
@@ -735,9 +742,8 @@ struct SettingsView: View {
                         Text("Elenco (più rapido)").tag("list")
                         Text("Manopole (stile radio)").tag("knob")
                     }
-                    Toggle("Schermata di avvio a ogni apertura", isOn: $draft.splash)
-                    Toggle("Un suggerimento nella schermata di avvio", isOn: $draft.tips)
-                    Text("Spenta, la schermata compare solo al primo avvio e dopo gli aggiornamenti. Mai quando OrbitLR si apre per dei file o all’accesso al Mac.")
+                    Toggle("Schermata di avvio mentre OrbitLR si prepara", isOn: $draft.splash)
+                    Text("Dura solo il tempo vero di avvio. Non compare quando OrbitLR si apre per dei file o all’accesso al Mac.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Section("Motori") {

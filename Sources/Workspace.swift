@@ -210,17 +210,13 @@ struct WorkspaceView: View {
     private var empty: some View {
         Button(action: { choose(append: false) }) {
             VStack(spacing: 18) {
-                ZStack {
-                    Circle().fill(Theme.accent.opacity(0.16)).frame(width: 120, height: 120)
-                    Circle().strokeBorder(Theme.accent.opacity(0.45), lineWidth: 1).frame(width: 120, height: 120)
-                    Image(systemName: "plus").font(.system(size: 44, weight: .semibold)).foregroundStyle(Theme.accent)
-                }
-                .scaleEffect(hoverDrop || targeted ? 1.06 : 1)
+                EmptyOrbit(open: hoverDrop || targeted)
                 VStack(spacing: 6) {
-                    Text(targeted ? "Rilascia per aprire" : "Trascina qui un file").font(.system(size: 22, weight: .bold))
-                    Text("oppure clicca per sceglierlo · fino a \(Workspace.maxPerKind) file dello stesso tipo, o \(Workspace.maxKinds) tipi diversi")
+                    Text(targeted ? "Rilascia: ti propongo cosa farne" : "Trascina qui i tuoi file").font(.system(size: 24, weight: .bold, design: .rounded))
+                    Text("oppure clicca per sceglierli · anche dal Finder: clic destro → OrbitLR")
                         .font(.system(size: 13)).foregroundStyle(.secondary)
                 }
+                .help("Fino a \(Workspace.maxPerKind) file dello stesso tipo, o \(Workspace.maxKinds) tipi diversi insieme")
                 HStack(spacing: 8) {
                     ForEach([Kind.pdf, .img, .video, .audio, .doc, .sheet], id: \.self) { k in
                         HStack(spacing: 5) {
@@ -526,3 +522,42 @@ struct KeyCatcher: NSViewRepresentable {
         deinit { if let m = monitor { NSEvent.removeMonitor(m) } }
     }
 }
+
+/// Il «quadrante» della pagina vuota: gli spicchi colorati dei tipi di file girano piano come una manopola;
+/// quando ci passi sopra (o trascini dei file) si aprono, come fa il menu a torta.
+struct EmptyOrbit: View {
+    let open: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private let kinds: [Kind] = [.img, .pdf, .video, .audio, .doc, .sheet, .slide, .text]
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: reduceMotion)) { tl in
+            let t = tl.date.timeIntervalSinceReferenceDate
+            let angle = reduceMotion ? 0 : (t * 9).truncatingRemainder(dividingBy: 360)
+            let breathe = reduceMotion ? 1 : 1 + 0.025 * sin(t * 1.6)
+            ZStack {
+                Circle().fill(Theme.accent.opacity(open ? 0.10 : 0.06)).frame(width: 168, height: 168)
+                    .scaleEffect(breathe)
+                ForEach(Array(kinds.enumerated()), id: \.offset) { i, k in
+                    let a = Double(i) / Double(kinds.count)
+                    Circle()
+                        .trim(from: a + 0.012, to: a + 1.0 / Double(kinds.count) - 0.012)
+                        .stroke(Theme.color(k).gradient, style: StrokeStyle(lineWidth: open ? 24 : 18, lineCap: .butt))
+                        .frame(width: open ? 148 : 128, height: open ? 148 : 128)
+                }
+                .rotationEffect(.degrees(angle))
+                Circle().fill(Theme.ivory).frame(width: 74, height: 74)
+                    .shadow(color: Theme.shadow.opacity(0.18), radius: 6, y: 2)
+                Circle().strokeBorder(Theme.brass, lineWidth: 2).frame(width: 74, height: 74)
+                Image(systemName: open ? "arrow.down" : "plus")
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundStyle(Theme.accent)
+                    .contentTransition(.symbolEffect(.replace))
+            }
+            .frame(width: 176, height: 176)
+            .animation(.spring(response: 0.35, dampingFraction: 0.7), value: open)
+        }
+        .accessibilityHidden(true)
+    }
+}
+

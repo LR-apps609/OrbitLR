@@ -2,7 +2,6 @@ import Foundation
 import AVFoundation
 import CoreVideo
 import CoreGraphics
-@testable import OrbitLR
 
 /// File di prova creati al momento: video con un quadrato che si muove, toni, silenzio e una voce vera (`say`).
 enum Fixtures {
@@ -87,7 +86,7 @@ enum Fixtures {
     /// Video H.264 con un quadrato chiaro che attraversa l'immagine. `portrait`: girato come quelli dell'iPhone
     /// (fotogrammi orizzontali + rotazione di 90° nei metadati). `audio`: campioni mono da mettere come traccia audio.
     static func video(name: String, width: Int, height: Int, seconds: Double, fps: Int = 30,
-                      portrait: Bool = false, audio: [Float]? = nil) async throws -> URL {
+                      portrait: Bool = false, audio: [Float]? = nil, noise: Bool = false) async throws -> URL {
         let u = url(name)
         try? FileManager.default.removeItem(at: u)
         let writer = try AVAssetWriter(outputURL: u, fileType: name.hasSuffix(".mov") ? .mov : .mp4)
@@ -135,7 +134,7 @@ enum Fixtures {
                 var pb: CVPixelBuffer?
                 CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &pb)
                 guard let pb else { continue }
-                drawFrame(pb, index: st.frame, of: frames, width: width, height: height)
+                drawFrame(pb, index: st.frame, of: frames, width: width, height: height, noise: noise)
                 adaptor.append(pb, withPresentationTime: CMTime(value: CMTimeValue(st.frame), timescale: CMTimeScale(fps)))
                 st.frame += 1
             }
@@ -159,9 +158,14 @@ enum Fixtures {
         return u
     }
 
-    private static func drawFrame(_ pb: CVPixelBuffer, index: Int, of total: Int, width: Int, height: Int) {
+    private static func drawFrame(_ pb: CVPixelBuffer, index: Int, of total: Int, width: Int, height: Int, noise: Bool) {
         CVPixelBufferLockBaseAddress(pb, [])
         defer { CVPixelBufferUnlockBaseAddress(pb, []) }
+        if noise, let base = CVPixelBufferGetBaseAddress(pb) {
+            // Rumore: un video «pesante», per provare la compressione
+            arc4random_buf(base, CVPixelBufferGetBytesPerRow(pb) * height)
+            return
+        }
         guard let base = CVPixelBufferGetBaseAddress(pb),
               let ctx = CGContext(data: base, width: width, height: height, bitsPerComponent: 8,
                                   bytesPerRow: CVPixelBufferGetBytesPerRow(pb), space: CGColorSpaceCreateDeviceRGB(),

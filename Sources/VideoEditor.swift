@@ -127,8 +127,26 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         }
         let okVideos = videos.filter { Self.readableVideo.contains(Catalog.norm($0.pathExtension)) }
         let okAudio = audios.first { Self.readableAudio.contains(Catalog.norm($0.pathExtension)) }
-        notice = (okVideos.count < videos.count || (!audios.isEmpty && okAudio == nil))
-            ? "Alcuni file sono in un formato che macOS non apre da solo: convertili prima dalla scheda Conversione." : nil
+        // Formati che macOS non apre da solo: si preparano in automatico e poi entrano nel progetto
+        let otherVideos = videos.filter { !Self.readableVideo.contains(Catalog.norm($0.pathExtension)) }
+        let otherAudio = okAudio == nil ? audios.first : nil
+        notice = nil
+        if !otherVideos.isEmpty {
+            notice = "Preparo \(otherVideos.count == 1 ? "«" + otherVideos[0].lastPathComponent + "»" : "\(otherVideos.count) video"): entrano nel progetto tra poco."
+            AutoConvert.prepare(otherVideos, to: "mp4", kind: .video) { [weak self] ready in
+                self?.notice = nil
+                self?.add(ready, undo: undo)
+            }
+        }
+        if let a = otherAudio {
+            notice = "Preparo «\(a.lastPathComponent)» per la musica…"
+            AutoConvert.prepare([a], to: "m4a", kind: .audio) { [weak self] ready in
+                guard let self, let r = ready.first else { return }
+                self.notice = nil
+                Task { @MainActor in await self.setMusic(r, undo: undo) }
+            }
+        }
+        guard !okVideos.isEmpty || okAudio != nil else { return }
         Task { @MainActor [weak self] in
             guard let self else { return }
             var loaded: [VPClip] = []
@@ -630,8 +648,7 @@ struct VideoEditorView: View {
             .fixedSize()
         } else {
             Button { choose(audio: true) } label: { Label("Scegli la musica…", systemImage: "music.note") }
-            Text("Puoi anche trascinare un brano sulla scheda. Poi lo sistemi qui: dove parte, da che punto della canzone, volume e dissolvenze.")
-                .font(.system(size: 12)).foregroundStyle(.secondary).frame(maxWidth: 420, alignment: .leading)
+            Text("oppure trascina un brano sulla scheda").font(.system(size: 12)).foregroundStyle(.secondary)
         }
     }
 
@@ -649,7 +666,6 @@ struct VideoEditorView: View {
                        text: "\(Int((s.project.originalVolume * 100).rounded()))%", width: 160, s: s, undo: undo,
                        name: "Volume dell’audio originale") { p, v in p.originalVolume = v }
                 .disabled(s.project.originalMuted)
-            Text("L’audio dei video, clip per clip").font(.system(size: 12)).foregroundStyle(.secondary)
         }
         .fixedSize()
     }
@@ -663,11 +679,11 @@ struct VideoEditorView: View {
                     }
                 }
             }
-            Toggle("Segui il soggetto", isOn: Binding(get: { s.project.follow },
-                                                       set: { v in s.change(undo, "Segui il soggetto") { $0.follow = v } }))
+            Toggle("Inquadra le persone", isOn: Binding(get: { s.project.follow },
+                                                       set: { v in s.change(undo, "Inquadra le persone") { $0.follow = v } }))
                 .toggleStyle(.checkbox).font(.system(size: 12))
                 .disabled(s.project.aspect == "orig")
-                .help("Nell’esportazione l’inquadratura segue le persone con calma; nell’anteprima il riquadro resta al centro")
+                .help("Nel video finale l’inquadratura segue le persone con calma (in anteprima resta al centro)")
         }
         .fixedSize()
     }
@@ -694,8 +710,6 @@ struct VideoEditorView: View {
                     }
                 }
             }
-            Text("Mai più grande dell’originale. Il video si salva accanto alla prima clip.")
-                .font(.system(size: 11.5)).foregroundStyle(.secondary).frame(maxWidth: 240, alignment: .leading)
         }
         .fixedSize(horizontal: true, vertical: false)
     }
@@ -846,6 +860,12 @@ private struct ProjectTimeline: View {
     @Environment(\.undoManager) private var undo
     @State private var dragBefore: VideoProject? = nil
     @State private var dragStartOffset: Double = 0
+    @State private var moving: UUID? = nil
+    @State private var moveDX: CGFloat = 0
+    @State private var trimBefore: VideoProject? = nil
+    @State private var trimIn: Double = 0
+    @State private var trimOut: Double = 0
+    @State private var frozenPPS: CGFloat = 1
 
     var body: some View {
         GeometryReader { g in
@@ -890,18 +910,89 @@ private struct ProjectTimeline: View {
         HStack(spacing: 2) {
             ForEach(slots) { slot in
                 let c = slot.clip, start = slot.start
+                let w = max(4, CGFloat(c.length) * pps - 2)
                 ClipBlock(clip: c, thumbs: s.thumbs[c.path] ?? [], fileDuration: s.infos[c.path]?.videoDuration ?? c.outPoint,
                           selected: s.selected == c.id, tint: tint,
                           speech: speechMarks(c, start: start))
-                    .frame(width: max(4, CGFloat(c.length) * pps - 2))
+                    .frame(width: w)
+                    .overlay(alignment: .leading) {
+                        if s.selected == c.id { trimHandle(c, start: start, left: true, pps: pps) }
+                    }
+                    .overlay(alignment: .trailing) {
+                        if s.selected == c.id { trimHandle(c, start: start, left: false, pps: pps) }
+                    }
+                    .offset(x: moving == c.id ? moveDX : 0)
+                    .zIndex(moving == c.id ? 1 : 0)
+                    .opacity(moving == c.id ? 0.85 : 1)
+                    .shadow(color: .black.opacity(moving == c.id ? 0.3 : 0), radius: 6, y: 2)
                     .contentShape(Rectangle())
                     .onTapGesture(count: 1, coordinateSpace: .local) { loc in
                         s.selected = s.selected == c.id ? nil : c.id
                         s.seek(start + Double(loc.x / pps))
                     }
-                    .help(c.url.lastPathComponent)
+                    // Trascina la clip per cambiarne il posto nella fila
+                    .gesture(DragGesture(minimumDistance: 8, coordinateSpace: .global)
+                        .onChanged { v in
+                            moving = c.id
+                            moveDX = v.translation.width
+                        }
+                        .onEnded { v in
+                            let center = CGFloat(start) * pps + w / 2 + v.translation.width
+                            let t = Double(center / max(pps, 0.0001))
+                            let others = slots.filter { $0.id != c.id }
+                            let newIndex = others.filter { $0.start + $0.clip.length / 2 < t }.count
+                            moving = nil
+                            moveDX = 0
+                            guard let old = s.project.clips.firstIndex(where: { $0.id == c.id }), newIndex != old else { return }
+                            s.change(undo, "Sposta la clip") { p in
+                                let moved = p.clips.remove(at: old)
+                                p.clips.insert(moved, at: min(newIndex, p.clips.count))
+                            }
+                            s.selected = c.id
+                        })
+                    .help(c.url.lastPathComponent + " · clic per sceglierla, trascina per spostarla")
             }
         }
+    }
+
+    /// Maniglia sul bordo della clip scelta: si trascina per tagliare inizio o fine, guardando l'anteprima.
+    private func trimHandle(_ c: VPClip, start: Double, left: Bool, pps: CGFloat) -> some View {
+        RoundedRectangle(cornerRadius: 3)
+            .fill(Theme.brass)
+            .frame(width: 10)
+            .overlay(Capsule().fill(Color.white.opacity(0.9)).frame(width: 2, height: 18))
+            .padding(.vertical, 1)
+            .contentShape(Rectangle().inset(by: -5))
+            .onHover { inside in
+                if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() }
+            }
+            .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                .onChanged { v in
+                    if trimBefore == nil {
+                        trimBefore = s.project
+                        trimIn = c.inPoint
+                        trimOut = c.outPoint
+                        frozenPPS = max(pps, 0.0001)
+                    }
+                    let delta = Double(v.translation.width / frozenPPS)
+                    let fileD = s.infos[c.path]?.videoDuration ?? c.outPoint
+                    var shown = start
+                    s.live { p in
+                        guard let i = p.clips.firstIndex(where: { $0.id == c.id }) else { return }
+                        if left {
+                            p.clips[i].inPoint = min(max(0, trimIn + delta), p.clips[i].outPoint - 0.2)
+                        } else {
+                            p.clips[i].outPoint = max(min(fileD, trimOut + delta), p.clips[i].inPoint + 0.2)
+                            shown = start + p.clips[i].length - 0.04
+                        }
+                    }
+                    s.seek(shown)
+                }
+                .onEnded { _ in
+                    if let b = trimBefore { s.commit(from: b, undo, left ? "Taglia l’inizio" : "Taglia la fine") }
+                    trimBefore = nil
+                })
+            .help(left ? "Trascina per tagliare l’inizio" : "Trascina per tagliare la fine")
     }
 
     private struct Slot: Identifiable {

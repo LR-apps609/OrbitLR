@@ -417,8 +417,13 @@ enum VideoProjectExport {
 
     static func run(snapshot: URL, out: URL, job: Job, progress: @escaping (Double) -> Void) async throws {
         let snap = try JSONDecoder().decode(VPSnapshot.self, from: Data(contentsOf: snapshot))
-        let p = snap.project
         let speech = snap.speech.mapValues { list in list.compactMap { $0.count == 2 && $0[1] > $0[0] ? $0[0]...$0[1] : nil } }
+        try await run(project: snap.project, speech: speech, out: out, job: job, progress: progress)
+        try? FileManager.default.removeItem(at: snapshot)
+    }
+
+    static func run(project p: VideoProject, speech: [String: [ClosedRange<Double>]], out: URL, job: Job,
+                    progress: @escaping (Double) -> Void) async throws {
         var infos: [String: VPMediaInfo] = [:]
         for path in Set(p.clips.map { $0.path } + (p.music.map { [$0.path] } ?? [])) {
             guard FileManager.default.fileExists(atPath: path) else {
@@ -454,6 +459,5 @@ enum VideoProjectExport {
                 .transformed(by: CGAffineTransform(translationX: -ox, y: -oy))
             return sx == 1 && sy == 1 ? frame : frame.transformed(by: CGAffineTransform(scaleX: sx, y: sy))
         }
-        try? FileManager.default.removeItem(at: snapshot)
     }
 }

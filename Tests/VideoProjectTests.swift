@@ -1,6 +1,5 @@
 import XCTest
 import AVFoundation
-@testable import OrbitLR
 
 /// Il montaggio della scheda Video: composizione, musica, voci, esportazione, annulla.
 final class VideoProjectTests: XCTestCase {
@@ -175,6 +174,16 @@ final class VideoProjectTests: XCTestCase {
         p.fps = 30
         let r2 = try await export(p, name: "4k-richiesto.mp4")
         XCTAssertEqual(r2.displaySize.height, 1080, "4K su un video Full HD resta Full HD")
+    }
+
+    func testSocialFromPieMenu() async throws {
+        let v = try await Fixtures.video(name: "torta-social.mp4", width: 1280, height: 720, seconds: 2)
+        let job = try Fixtures.job("social", kind: .video, files: [v], param: "1x1|0")
+        let out = try await Media.run(job: job, file: v, dir: Fixtures.dir) { _ in }
+        let r = try await Fixtures.probe(out)
+        XCTAssertEqual(r.displaySize.width, 720)
+        XCTAssertEqual(r.displaySize.height, 720)
+        XCTAssertEqual(r.duration, 2, accuracy: 0.2)
     }
 
     func testOutputSizeMath() {

@@ -56,6 +56,7 @@ enum NativeEngine {
         if Tools.ids.contains(job.action.id) { return true }
         if Media.ids.contains(job.action.id) { return true }        // 2.6: video e audio, solo con macOS
         guard enabled else { return false }
+        if QuickMedia.handles(job) { return true }                   // 2.6.3: taglia, comprimi, GIF, volume
         let files = job.mainFiles
         guard !files.isEmpty else { return false }
         let exts = files.map { Catalog.norm($0.pathExtension) }
@@ -80,6 +81,11 @@ enum NativeEngine {
         let dir = job.destOverride ?? Destination.dir(for: file)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
 
+        if QuickMedia.ids.contains(id) {
+            return try await Task.detached(priority: .userInitiated) {
+                try await QuickMedia.run(job: job, file: file, dir: dir, progress: progress)
+            }.value
+        }
         if Media.ids.contains(id) {
             return try await Task.detached(priority: .userInitiated) {
                 try await Media.run(job: job, file: file, dir: dir, progress: progress)

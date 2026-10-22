@@ -36,7 +36,7 @@ final class SettingsModel: ObservableObject {
         didSet { UserDefaults.standard.set(appearance, forKey: "appearance"); Appearance.apply(appearance) }
     }
     @Published var sounds: Bool { didSet { UserDefaults.standard.set(sounds, forKey: "sounds") } }
-    @Published var splash: Bool { didSet { UserDefaults.standard.set(splash, forKey: "splash") } }
+    @Published var splash: Bool { didSet { UserDefaults.standard.set(splash, forKey: "launchScreen") } }
     @Published var controlStyle: String { didSet { UserDefaults.standard.set(controlStyle, forKey: "controlStyle") } }   // list | knob
     @Published var tips: Bool { didSet { UserDefaults.standard.set(tips, forKey: "tips") } }
     @Published var palette: String {                                                          // sage | sky | terracotta
@@ -74,7 +74,7 @@ final class SettingsModel: ObservableObject {
         appearance = UserDefaults.standard.string(forKey: "appearance") ?? "auto"
         sounds = UserDefaults.standard.object(forKey: "sounds") as? Bool ?? true
         palette = UserDefaults.standard.string(forKey: "palette") ?? "sage"
-        splash = UserDefaults.standard.object(forKey: "splash") as? Bool ?? false
+        splash = UserDefaults.standard.object(forKey: "launchScreen") as? Bool ?? true
         controlStyle = UserDefaults.standard.string(forKey: "controlStyle") ?? "list"
         tips = UserDefaults.standard.object(forKey: "tips") as? Bool ?? true
         hotkey = UserDefaults.standard.object(forKey: "hotkey") as? Bool ?? true
@@ -95,7 +95,7 @@ struct SettingsDraft: Equatable {
     var appearance = "auto"
     var sounds = true
     var palette = "sage"
-    var splash = false
+    var splash = true
     var controlStyle = "list"
     var tips = true
     var hotkey = true

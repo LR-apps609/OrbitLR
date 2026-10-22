@@ -37,18 +37,27 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
         let right = PieController.expand(urls)
             .filter { u in Catalog.kind(of: u).map { accepted.contains($0) } ?? false }
             .filter { seenPaths.insert($0.standardizedFileURL.path).inserted }      // lo stesso file una volta sola
-        // Formati che macOS non sa leggere da solo: prima si convertono (in Conversione, con ffmpeg)
+        // Formati che macOS non sa leggere da solo: si preparano da soli e poi si aprono
         let ok = right.filter { Self.readable.contains(Catalog.norm($0.pathExtension)) }
-        guard !ok.isEmpty else {
-            if !right.isEmpty {
-                notice = "Questo formato non si apre qui: convertilo prima in " + (videoTab ? "MP4" : "M4A") + " dalla scheda Conversione."
-            } else {
-                notice = videoTab ? "Qui si aprono solo i video." : "Qui si aprono file audio (o video, per usarne l’audio)."
+        let other = right.filter { !Self.readable.contains(Catalog.norm($0.pathExtension)) }
+        if !other.isEmpty {
+            notice = other.count == 1 ? "Preparo «\(other[0].lastPathComponent)»: si apre tra poco." : "Preparo \(other.count) file: si aprono tra poco."
+            let target = videoTab ? "mp4" : "m4a"
+            let kind: Kind = videoTab ? .video : (Catalog.kind(of: other[0]) ?? .audio)
+            AutoConvert.prepare(other, to: target, kind: kind) { [weak self] ready in
+                guard let self else { return }
+                self.notice = nil
+                self.load(ready, append: self.file != nil)
             }
-            NSSound.beep()
+        }
+        guard !ok.isEmpty else {
+            if right.isEmpty {
+                notice = videoTab ? "Qui si aprono solo i video." : "Qui si aprono file audio (o video, per usarne l’audio)."
+                NSSound.beep()
+            }
             return
         }
-        notice = right.count > ok.count ? "Alcuni file sono in un formato che qui non si apre: convertili prima dalla scheda Conversione." : nil
+        if other.isEmpty { notice = nil }
         if append, file != nil {
             for u in ok where !allFiles.contains(u) { extra.append(u) }
             return
@@ -197,11 +206,29 @@ struct JobStrip: View {
         .card(radius: 12)
     }
 
+    static func folderName(_ u: URL) -> String {
+        let d = u.deletingLastPathComponent()
+        let home = Paths.home.path
+        switch d.path {
+        case home + "/Desktop": return "Scrivania"
+        case home + "/Downloads": return "Download"
+        case home + "/Documents": return "Documenti"
+        case home + "/Movies": return "Filmati"
+        case home + "/Music": return "Musica"
+        case home + "/Pictures": return "Immagini"
+        default: return "«" + d.lastPathComponent + "»"
+        }
+    }
+
     private var statusText: String {
         switch job.state {
         case .waiting: return "In attesa"
         case .running: return job.status
-        case .done: return job.outputs.count == 1 ? "Creato «\(job.outputs[0].lastPathComponent)»" : "Fatto"
+        case .done:
+            // Sempre anche la cartella: il file creato si trova subito
+            let folder = job.outputs.first.map { Self.folderName($0) } ?? ""
+            return job.outputs.count == 1 ? "«\(job.outputs[0].lastPathComponent)» in \(folder)"
+                : "\(job.outputs.count) file in \(folder)"
         case .failed: return job.failures.first ?? "Non riuscito"
         case .cancelled: return "Annullato"
         }
@@ -445,12 +472,12 @@ struct AudioTabView: View {
             .onChange(of: ringLength) { _, v in m.trim?.setLength(v); applyTrimRules() }
             Toggle("Dissolvenza all’inizio e alla fine", isOn: $fade).toggleStyle(.checkbox)
             Toggle("Volume uniforme", isOn: $normalize).toggleStyle(.checkbox)
-            hint("Sposta il riquadro sulla forma d’onda per scegliere il pezzo. Si crea un file .m4r: collega l’iPhone, aprilo nel Finder e trascinaci la suoneria.")
+            hint("Sposta il riquadro sul pezzo che ti piace. Poi trascina il file .m4r sull’iPhone nel Finder.")
         case .cut:
             if let trim = m.trim { SelectionText(trim: trim) }
-            hint("Trascina le maniglie sulla forma d’onda. I e O segnano inizio e fine mentre ascolti.")
+            hint("Trascina le maniglie. I e O mentre ascolti.")
         case .normalize:
-            hint("Alza le parti troppo basse e tiene sotto controllo i picchi: utile per vocali, lezioni e podcast. Il file resta nel suo formato.")
+            hint("Per vocali, lezioni e podcast: né troppo basso né distorto.")
         case .tts:
             Picker("Voce", selection: $voiceId) {
                 Text("La più naturale disponibile").tag("")
@@ -470,12 +497,12 @@ struct AudioTabView: View {
                 Button("Voci più naturali…") { openVoiceSettings() }
                     .help("Impostazioni di Sistema → Accessibilità → Contenuti letti → Voce di sistema → Gestisci voci")
             }
-            hint("Le voci «Premium» e «Migliorate» sono molto più naturali: si scaricano una volta dalle Impostazioni di Sistema. Il file si salva in Download.")
+            hint("Le voci «Premium» sono le più naturali. Il file va in Download.")
         case .whatsapp:
-            hint("Mono, voce chiara e volume uniforme, in un file M4A leggero: si manda in un attimo anche con poca rete.")
+            hint("Leggero e chiaro: parte subito anche con poca rete.")
         case .merge:
             if m.file == nil {
-                hint("Apri il primo file, poi aggiungi gli altri: si uniscono nell’ordine dell’elenco.")
+                hint("Apri il primo file, poi aggiungi gli altri.")
             } else {
                 MergeList(m: m, tint: tint)
             }

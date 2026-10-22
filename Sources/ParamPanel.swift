@@ -229,7 +229,7 @@ struct ParamView: View {
             note("Risoluzione e qualità vengono scelte da sole per stare sotto il peso indicato.")
         case .social:
             Knob(title: "Formato", options: ParamChoices.options(for: .social) ?? [], selection: $choice, tint: tint)
-            Toggle("Segui il soggetto", isOn: $follow)
+            Toggle("Inquadra le persone", isOn: $follow)
             note("L’inquadratura segue le persone (o ciò che si muove in primo piano) con calma, senza scatti. Con scene affollate resta al centro.")
         case .cut, .gifcut, .ringtone:
             HStack(spacing: 16) {

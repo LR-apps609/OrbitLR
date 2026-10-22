@@ -1,9 +1,10 @@
-Novità della 2.6.2:
-• Scheda Video come progetto: ogni modifica si vede subito nell'anteprima e il file si crea solo con «Esporta» (⌘E)
-• Clip in fila: taglia inizio e fine, dividi (S), sposta, elimina, riporta intera. Annulla e Ripeti con ⌘Z e ⇧⌘Z
-• Musica: trascinala per decidere dove parte, scegli da che punto della canzone, «Finale con il video», ripetizione, volume, dissolvenze
-• «Abbassa quando si parla»: macOS riconosce le voci nel video e lì la musica si abbassa da sola
-• Audio originale: volume e muto
-• Esportazione: formato (9:16, 1:1, 4:5, 16:9 con l'inquadratura che segue il soggetto), 720p, 1080p o 4K, 30 o 60 fps, peso stimato
-• Colori giusti anche dai video HDR dell'iPhone
-• Il progetto si salva da solo: chiudi l'app e lo ritrovi
+Novità della 2.6.3:
+• Avvio: una schermata breve con l'animazione che dura solo il tempo vero di caricamento, poi sfuma nella finestra
+• Pagina iniziale nuova: il quadrante colorato si apre quando ci passi sopra o trascini dei file
+• Barra laterale più semplice: Conversione, Video, Audio. Automazioni, Preset e Componenti stanno in «Avanzate»
+• Taglia, Comprimi (al peso esatto), GIF e Volume uniforme funzionano subito, senza programmi da installare
+• Formati che macOS non apre da solo: Video e Audio li preparano in automatico, niente più «convertilo prima»
+• Scheda Video: trascina le clip per riordinarle, trascina i bordi per tagliarle
+• Ogni risultato dice dove è stato salvato
+• Formato social dal menu a torta: colori giusti anche dai video HDR dell'iPhone
+• Meno testo, nomi più chiari («Inquadra le persone»)

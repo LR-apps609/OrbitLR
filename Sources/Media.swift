@@ -21,7 +21,8 @@ enum Media {
     /// Azioni che usano tutti i file insieme e danno un solo risultato.
     static let multi: Set<String> = ["vmerge", "amerge", "vproject"]
 
-    static let ci = CIContext(options: [.useSoftwareRenderer: false])
+    /// Nei test automatici (Mac virtuale di GitHub, senza una vera scheda grafica) si disegna con il processore.
+    static let ci = CIContext(options: [.useSoftwareRenderer: ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil])
 
     // MARK: - Ingresso
 
@@ -29,9 +30,18 @@ enum Media {
         let base = file.deletingPathExtension().lastPathComponent
         switch job.action.id {
         case "social":
+            // Dalla 2.6.3 passa dallo stesso motore del montaggio: colori giusti anche dai video HDR dell'iPhone
             let p = SocialParam(job.param)
             let out = Destination.unique(dir, base: "\(base) (\(p.label))", ext: "mp4")
-            try await social(file, param: p, out: out, job: job, progress: progress)
+            let info = try await VPMediaInfo.load(file)
+            guard info.hasVideo else { throw NativeError("il file non contiene video") }
+            var project = VideoProject()
+            project.clips = [VPClip(path: file.path, inPoint: max(0, p.start ?? 0), outPoint: min(info.videoDuration, p.end ?? info.videoDuration))]
+            project.aspect = "\(Int(p.aw))x\(Int(p.ah))"
+            project.follow = p.follow
+            project.resolution = 1080
+            project.fps = Int(min(60, max(24, info.fps.rounded())))
+            try await VideoProjectExport.run(project: project, speech: [:], out: out, job: job, progress: progress)
             return out
         case "music":
             let p = job.param
@@ -147,7 +157,7 @@ enum Media {
 
     /// L'orientamento giusto dei fotogrammi «grezzi»: si prova e si confronta con il fotogramma che macOS
     /// mostra già girato, così vale per qualunque telefono o videocamera.
-    private static func orientation(of asset: AVURLAsset, track: AVAssetTrack, at time: CMTime) async -> CGImagePropertyOrientation {
+    static func orientation(of asset: AVURLAsset, track: AVAssetTrack, at time: CMTime) async -> CGImagePropertyOrientation {
         let t = (try? await track.load(.preferredTransform)) ?? .identity
         var guess: CGImagePropertyOrientation = .up
         if t.a == 0 && t.b == 1 && t.c == -1 && t.d == 0 { guess = .right }
@@ -464,8 +474,11 @@ enum Media {
     static let rate: Double = 44_100
 
     /// Legge (anche dai video), applica dissolvenze e volume, scrive AAC. Più file = uno dopo l'altro.
+    enum AudioOut { case aac, wav, aiff }
+
     static func renderAudio(_ inputs: [(URL, Double?, Double?)], out: URL, bitrate: Int, channels: Int,
                             fadeIn: Double, fadeOut: Double, normalize: Bool, maxSeconds: Double?,
+                            format outFormat: AudioOut = .aac,
                             job: Job, progress: @escaping (Double) -> Void) async throws {
         // Tratti da leggere
         var parts: [(AVURLAsset, AVAssetTrack, CMTimeRange)] = []
@@ -512,15 +525,21 @@ enum Media {
         }
 
         // 2. Scrittura
-        let tmp = out.deletingLastPathComponent().appendingPathComponent(".orbitlr-\(UUID().uuidString).m4a")
+        let ext: String, fileType: AVFileType, settings: [String: Any]
+        switch outFormat {
+        case .aac:
+            ext = "m4a"; fileType = .m4a
+            settings = [AVFormatIDKey: kAudioFormatMPEG4AAC, AVSampleRateKey: rate, AVNumberOfChannelsKey: channels,
+                        AVEncoderBitRateKey: bitrate]
+        case .wav, .aiff:
+            ext = outFormat == .wav ? "wav" : "aiff"; fileType = outFormat == .wav ? .wav : .aiff
+            settings = [AVFormatIDKey: kAudioFormatLinearPCM, AVSampleRateKey: rate, AVNumberOfChannelsKey: channels,
+                        AVLinearPCMBitDepthKey: 16, AVLinearPCMIsFloatKey: false,
+                        AVLinearPCMIsBigEndianKey: outFormat == .aiff, AVLinearPCMIsNonInterleaved: false]
+        }
+        let tmp = out.deletingLastPathComponent().appendingPathComponent(".orbitlr-\(UUID().uuidString).\(ext)")
         try? FileManager.default.removeItem(at: tmp)
-        let writer = try AVAssetWriter(outputURL: tmp, fileType: .m4a)
-        let settings: [String: Any] = [
-            AVFormatIDKey: kAudioFormatMPEG4AAC,
-            AVSampleRateKey: rate,
-            AVNumberOfChannelsKey: channels,
-            AVEncoderBitRateKey: bitrate,
-        ]
+        let writer = try AVAssetWriter(outputURL: tmp, fileType: fileType)
         var asbd = AudioStreamBasicDescription(mSampleRate: rate, mFormatID: kAudioFormatLinearPCM,
                                                mFormatFlags: kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked,
                                                mBytesPerPacket: UInt32(4 * channels), mFramesPerPacket: 1,
@@ -691,7 +710,8 @@ enum VideoPipeline {
 
     /// Un solo file: i fotogrammi «grezzi» della traccia video.
     static func process(asset: AVURLAsset, videoTrack: AVAssetTrack, range: CMTimeRange, size: CGSize, out: URL,
-                        job: Job, progress: @escaping (Double) -> Void,
+                        job: Job, videoBitrate: Int? = nil, audioBitrate: Int = 160_000,
+                        progress: @escaping (Double) -> Void,
                         frame: @escaping (CIImage, Double) -> CIImage) async throws {
         let fps = Double((try? await videoTrack.load(.nominalFrameRate)) ?? 30)
         let audioTrack = try? await asset.loadTracks(withMediaType: .audio).first
@@ -701,7 +721,8 @@ enum VideoPipeline {
         var aOut: AVAssetReaderOutput? = nil
         if let audioTrack { aOut = AVAssetReaderTrackOutput(track: audioTrack, outputSettings: pcm) }
         try await run(reader: reader, vOut: vOut, aOut: aOut, range: range, fps: fps.isFinite && fps > 0 ? fps : 30,
-                      size: size, out: out, job: job, progress: progress, frame: frame)
+                      size: size, out: out, job: job, videoBitrate: videoBitrate, audioBitrate: audioBitrate,
+                      progress: progress, frame: frame)
     }
 
     /// Un montaggio: i fotogrammi già composti (clip in fila, girati e adattati) e l'audio già mixato
@@ -729,6 +750,7 @@ enum VideoPipeline {
 
     private static func run(reader: AVAssetReader, vOut: AVAssetReaderOutput, aOut proposedAudio: AVAssetReaderOutput?,
                             range: CMTimeRange, fps: Double, size: CGSize, out: URL, job: Job,
+                            videoBitrate: Int? = nil, audioBitrate: Int = 160_000,
                             progress: @escaping (Double) -> Void,
                             frame: @escaping (CIImage, Double) -> CIImage) async throws {
         vOut.alwaysCopiesSampleData = false
@@ -740,7 +762,7 @@ enum VideoPipeline {
         writer.shouldOptimizeForNetworkUse = true
         let w = Int(size.width), h = Int(size.height)
         guard w >= 2, h >= 2 else { throw NativeError("dimensioni del video non valide") }
-        let bitrate = max(2_000_000, min(50_000_000, Int(Double(w * h) * max(fps, 24) * 0.13)))
+        let bitrate = videoBitrate ?? max(2_000_000, min(50_000_000, Int(Double(w * h) * max(fps, 24) * 0.13)))
         let vIn = AVAssetWriterInput(mediaType: .video, outputSettings: [
             AVVideoCodecKey: AVVideoCodecType.h264,
             AVVideoWidthKey: w,
@@ -772,7 +794,7 @@ enum VideoPipeline {
                 AVFormatIDKey: kAudioFormatMPEG4AAC,
                 AVSampleRateKey: 44_100,
                 AVNumberOfChannelsKey: 2,
-                AVEncoderBitRateKey: 160_000,
+                AVEncoderBitRateKey: audioBitrate,
             ])
             i.expectsMediaDataInRealTime = false
             o.alwaysCopiesSampleData = false

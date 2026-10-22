@@ -1,6 +1,6 @@
 import XCTest
 import AVFoundation
-@testable import OrbitLR
+import ImageIO
 
 /// Strumenti della scheda Audio e unioni: suoneria, vocale per WhatsApp, unisci, testo in voce, unisci video.
 final class AudioToolsTests: XCTestCase {
@@ -84,4 +84,74 @@ final class AudioToolsTests: XCTestCase {
         try "   ".write(to: empty, atomically: true, encoding: .utf8)
         XCTAssertThrowsError(try Media.readText(empty))
     }
+
+    // MARK: 2.6.3 · Taglia, GIF, Comprimi, Volume uniforme senza programmi esterni
+
+    private func quick(_ id: String, kind: Kind, file: URL, param: String) async throws -> URL {
+        let job = try Fixtures.job(id, kind: kind, files: [file], param: param)
+        XCTAssertTrue(QuickMedia.handles(job), "\(id) deve funzionare con i motori di macOS")
+        let out = try await QuickMedia.run(job: job, file: file, dir: Fixtures.dir) { _ in }
+        let problem = await Verifier.problem(out)
+        XCTAssertNil(problem, "\(id): il controllo finale non deve trovare problemi")
+        return out
+    }
+
+    func testCutVideoNative() async throws {
+        let v = try await Fixtures.video(name: "taglia.mp4", width: 640, height: 360, seconds: 6, audio: Fixtures.tone(seconds: 6))
+        let out = try await quick("cut", kind: .video, file: v, param: "1.000|4.500")
+        let r = try await Fixtures.probe(out)
+        XCTAssertEqual(r.duration, 3.5, accuracy: 0.2)
+        XCTAssertTrue(r.hasAudio)
+    }
+
+    func testCutAudioKeepsWav() async throws {
+        let a = try Fixtures.wav(Fixtures.tone(seconds: 8), name: "taglia.wav")
+        let out = try await quick("cut", kind: .audio, file: a, param: "2.000|")
+        XCTAssertEqual(out.pathExtension, "wav", "un WAV resta WAV")
+        let r = try await Fixtures.probe(out)
+        XCTAssertEqual(r.duration, 6, accuracy: 0.15)
+    }
+
+    func testGifNative() async throws {
+        let v = try await Fixtures.video(name: "gif.mp4", width: 640, height: 360, seconds: 4)
+        let out = try await quick("gifcut", kind: .video, file: v, param: "0.500|2.500")
+        let src = try XCTUnwrap(CGImageSourceCreateWithURL(out as CFURL, nil))
+        XCTAssertGreaterThan(CGImageSourceGetCount(src), 15, "circa 12 fotogrammi al secondo")
+    }
+
+    func testCompressToExactSize() async throws {
+        let v = try await Fixtures.video(name: "pesante.mp4", width: 1280, height: 720, seconds: 4, noise: true)
+        let before = Job.size(of: v)
+        XCTAssertGreaterThan(before, 3 * 1_048_576, "il video di prova deve essere pesante")
+        let out = try await quick("vcompress", kind: .video, file: v, param: "2")
+        XCTAssertLessThanOrEqual(Job.size(of: out), 2 * 1_048_576, "sotto il peso scelto")
+        let r = try await Fixtures.probe(out)
+        XCTAssertEqual(r.duration, 4, accuracy: 0.2)
+    }
+
+    func testCompressAlreadySmallSaysSo() async throws {
+        let v = try await Fixtures.video(name: "leggero.mp4", width: 320, height: 180, seconds: 1)
+        let job = try Fixtures.job("vcompress", kind: .video, files: [v], param: "25")
+        do {
+            _ = try await QuickMedia.run(job: job, file: v, dir: Fixtures.dir) { _ in }
+            XCTFail("doveva dire che pesa già meno")
+        } catch {
+            XCTAssertTrue(error.localizedDescription.contains("pesa già meno"))
+        }
+    }
+
+    func testNormalizeRaisesQuietAudio() async throws {
+        let quiet = try Fixtures.wav(Fixtures.tone(seconds: 4, level: 0.03), name: "basso.wav")
+        let out = try await quick("normalize", kind: .audio, file: quiet, param: "")
+        let before = try Fixtures.readMono(quiet), after = try Fixtures.readMono(out)
+        func rms(_ x: [Float]) -> Float { sqrt(x.reduce(0) { $0 + $1 * $1 } / Float(max(1, x.count))) }
+        XCTAssertGreaterThan(rms(after), rms(before) * 3, "il volume si alza")
+        XCTAssertLessThanOrEqual(after.map { abs($0) }.max() ?? 0, 0.95, "senza distorcere")
+    }
+
+    func testOutputFolderNames() {
+        XCTAssertEqual(JobStrip.folderName(Paths.home.appendingPathComponent("Desktop/a.mp4")), "Scrivania")
+        XCTAssertEqual(JobStrip.folderName(URL(fileURLWithPath: "/tmp/Progetto/a.mp4")), "«Progetto»")
+    }
 }
+

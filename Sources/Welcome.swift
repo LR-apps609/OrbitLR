@@ -31,6 +31,9 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
     @Published var doneSteps = 0
     @Published var componentsFound = 0
     @Published var firstLaunch = false
+    /// Avvio normale: schedina compatta che sparisce da sola appena l'app è pronta.
+    @Published var quick = false
+    @Published var stepText = ""
     @Published var tip: Tip = Tip.all[0]
     /// Dopo un aggiornamento: al posto del suggerimento compare «Cosa c'è di nuovo».
     @Published var justUpdated = false
@@ -46,7 +49,8 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
     static var isFirstLaunch: Bool { !UserDefaults.standard.bool(forKey: "welcomeDone") }
     /// Schermata a ogni apertura: spenta di base (per un'app di utilità l'attesa a ogni avvio stanca).
     /// Compare comunque al primo avvio e dopo ogni aggiornamento.
-    static var splashEnabled: Bool { UserDefaults.standard.object(forKey: "splash") as? Bool ?? false }
+    /// Dalla 2.6.3 accesa di base: dura solo il tempo vero dell'avvio (niente attese finte, niente suggerimenti).
+    static var splashEnabled: Bool { UserDefaults.standard.object(forKey: "launchScreen") as? Bool ?? true }
     static var tipsEnabled: Bool { UserDefaults.standard.object(forKey: "tips") as? Bool ?? true }
 
     /// Chiamata all'avvio: decide se mostrare benvenuto, schedina con suggerimento, o niente.
@@ -76,6 +80,7 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
     private func show(mode: Mode) {
         guard window == nil else { window?.makeKeyAndOrderFront(nil); return }
         firstLaunch = mode == .first
+        quick = mode == .splash
         phase = mode == .guide ? .page(0) : .loading
         doneSteps = 0
         // Resta solo la schedina, come durante l'aggiornamento
@@ -113,16 +118,21 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
               DispatchQueue.main.async { self.componentsFound = n } },
             { DispatchQueue.main.sync { PresetStore.shared.registerHotkeys() } },
         ]
-        let minStep = quick ? 0.45 : 0.6
+        // Avvio normale: nessuna attesa finta, solo il minimo perché la barra si veda riempire (circa un secondo)
+        let minStep = quick ? 0.12 : 0.6
+        let started = Date()
         DispatchQueue.global(qos: .userInitiated).async {
             for (i, job) in work.enumerated() {
-                let start = Date()
+                let t0 = Date()
+                DispatchQueue.main.async { self.stepText = self.steps[i].title + "…" }
                 job()
-                let spent = Date().timeIntervalSince(start)
+                let spent = Date().timeIntervalSince(t0)
                 if spent < minStep { Thread.sleep(forTimeInterval: minStep - spent) }
-                DispatchQueue.main.async { withAnimation(.easeOut(duration: 0.3)) { self.doneSteps = i + 1 } }
+                DispatchQueue.main.async { withAnimation(.easeOut(duration: 0.25)) { self.doneSteps = i + 1 } }
             }
-            Thread.sleep(forTimeInterval: quick ? 0.5 : 0.7)
+            let total = Date().timeIntervalSince(started)
+            let tail = quick ? max(0.15, 0.9 - total) : 0.7
+            Thread.sleep(forTimeInterval: tail)
             DispatchQueue.main.async { self.afterLoading(quick: quick) }
         }
     }
@@ -134,11 +144,8 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
         } else if justUpdated && !News.items.isEmpty {
             justUpdated = false
             withAnimation(.easeInOut(duration: 0.35)) { phase = .news }
-        } else if Self.tipsEnabled {
-            tip = Tip.next()
-            withAnimation(.easeInOut(duration: 0.35)) { phase = .tip }
         } else {
-            finish()
+            finish()                 // pronta: la schedina sfuma e compare la finestra
         }
     }
 
@@ -163,9 +170,16 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
     }
 
     func finish() {
-        let w = window
+        guard let w = window else { return }
         finished()
-        w?.orderOut(nil)
+        // Dissolvenza morbida verso la finestra principale
+        NSAnimationContext.runAnimationGroup({ ctx in
+            ctx.duration = 0.28
+            w.animator().alphaValue = 0
+        }, completionHandler: {
+            w.orderOut(nil)
+            w.alphaValue = 1
+        })
     }
 
     private func finished() {
@@ -271,7 +285,30 @@ struct WelcomeView: View {
 
     // MARK: Caricamento
 
-    private var loading: some View {
+    @ViewBuilder private var loading: some View {
+        if ctl.quick { quickLoading } else { fullLoading }
+    }
+
+    /// Avvio normale: solo il marchio che si anima, il nome e la barra. Pochi elementi, niente da leggere.
+    private var quickLoading: some View {
+        VStack(spacing: 16) {
+            Spacer(minLength: 0)
+            BrandAnimation(size: CGSize(width: 320, height: 180))
+            VStack(spacing: 4) {
+                Text("OrbitLR").font(.system(size: 22, weight: .bold, design: .rounded))
+                Text("Versione \(version)").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Theme.brass)
+            }
+            VStack(spacing: 7) {
+                ProgressBar(value: Double(ctl.doneSteps) / Double(ctl.steps.count), tint: Theme.accent, height: 8)
+                Text(ctl.stepText).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+                    .contentTransition(.opacity)
+            }
+            .padding(.horizontal, 90)
+            Spacer(minLength: 0)
+        }
+    }
+
+    private var fullLoading: some View {
         VStack(spacing: 14) {
             BrandAnimation(size: CGSize(width: 300, height: 170))
                 .padding(.top, 22)
