@@ -866,9 +866,18 @@ enum Speech {
     }
 
     /// Scrive il parlato in un file .m4a.
-    static func write(text: String, voice: String?, rate: Float?, out: URL, job: Job?, progress: @escaping (Double) -> Void) async throws {
-        let writer = SpeechFileWriter(out: out, total: text.count, progress: progress, job: job)
+    /// Due passaggi: la voce si registra così com'è (PCM, il formato che produce lei, sempre accettato),
+    /// poi si converte in AAC con il convertitore dell'app. Scrivere l'AAC direttamente falliva con alcune voci
+    /// (errore «!dat»: le voci producono 22 kHz mono e l'encoder rifiutava quelle impostazioni).
+    static func write(text: String, voice: String?, rate: Float?, out: URL, job: Job, progress: @escaping (Double) -> Void) async throws {
+        let raw = FileManager.default.temporaryDirectory.appendingPathComponent("orbitlr-voce-\(UUID().uuidString).caf")
+        defer { try? FileManager.default.removeItem(at: raw) }
+        let writer = SpeechFileWriter(out: raw, total: text.count, progress: { p in progress(p * 0.8) }, job: job)
         try await writer.run(utterance(text, voice: voice, rate: rate))
+        if job.cancelRequested { throw NativeError("annullato") }
+        try await Media.renderAudio([(raw, nil, nil)], out: out, bitrate: 96_000, channels: 1,
+                                    fadeIn: 0, fadeOut: 0, normalize: false, maxSeconds: nil, job: job,
+                                    progress: { p in progress(0.8 + p * 0.2) })
     }
 }
 
@@ -888,7 +897,7 @@ final class SpeechFileWriter: NSObject, AVSpeechSynthesizerDelegate, @unchecked 
 
     init(out: URL, total: Int, progress: @escaping (Double) -> Void, job: Job?) {
         self.out = out
-        self.tmp = out.deletingLastPathComponent().appendingPathComponent(".orbitlr-\(UUID().uuidString).m4a")
+        self.tmp = out.deletingLastPathComponent().appendingPathComponent(".orbitlr-\(UUID().uuidString).caf")
         self.total = max(1, total)
         self.progress = progress
         self.job = job
@@ -933,13 +942,8 @@ final class SpeechFileWriter: NSObject, AVSpeechSynthesizerDelegate, @unchecked 
         guard !finished else { return }
         do {
             if file == nil {
-                let settings: [String: Any] = [
-                    AVFormatIDKey: kAudioFormatMPEG4AAC,
-                    AVSampleRateKey: pcm.format.sampleRate,
-                    AVNumberOfChannelsKey: pcm.format.channelCount,
-                    AVEncoderBitRateKey: 96_000,
-                ]
-                file = try AVAudioFile(forWriting: tmp, settings: settings, commonFormat: pcm.format.commonFormat,
+                // PCM nel formato esatto della voce: nessuna conversione qui, quindi nessun formato rifiutato
+                file = try AVAudioFile(forWriting: tmp, settings: pcm.format.settings, commonFormat: pcm.format.commonFormat,
                                        interleaved: pcm.format.isInterleaved)
             }
             try file?.write(from: pcm)

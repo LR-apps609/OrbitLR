@@ -1,8 +1,2 @@
-Novità della 2.6:
-• Nuova barra a sinistra con le schede: Conversione (il menu a torta), Video e Audio. File e Immagini arrivano nella 2.7
-• Scheda Video: anteprima grande, sequenza da tagliare e una striscia con gli strumenti
-• Formato social: 9:16 per Reels e TikTok, 1:1, 4:5 e 16:9, con l'inquadratura che segue il soggetto
-• Unisci più video, aggiungi musica (sotto l'audio o al suo posto), estrai l'audio, GIF e compressione
-• Scheda Audio: suoneria per iPhone (fino a 40 secondi, con dissolvenze), vocale leggero per WhatsApp, unisci audio
-• Testo in voce: scrivi un testo e una voce di macOS lo legge in un file audio (anche dai documenti, dal menu a torta)
-• Le nuove azioni ci sono anche nel menu a torta, con l'etichetta «Nuovo»
+Novità della 2.6.1:
+• Corretto Testo in voce: con alcune voci dava l'errore «com.apple.coreaudio.avfaudio». Ora la voce si registra così com'è e poi si converte, con qualsiasi voce
