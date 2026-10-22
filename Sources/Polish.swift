@@ -369,3 +369,16 @@ enum LaunchGate {
         held = []
     }
 }
+
+/// Osserva la chiusura di una finestra una sola volta, poi smette (niente osservatori dimenticati).
+enum WindowClose {
+    static func once(_ w: NSWindow, _ action: @escaping () -> Void) {
+        final class Box: @unchecked Sendable { var token: NSObjectProtocol? }
+        let box = Box()
+        box.token = NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: w, queue: .main) { _ in
+            if let t = box.token { NotificationCenter.default.removeObserver(t) }
+            box.token = nil
+            action()
+        }
+    }
+}

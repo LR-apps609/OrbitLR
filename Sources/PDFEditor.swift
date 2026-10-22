@@ -415,9 +415,7 @@ final class PDFEditorController: @unchecked Sendable {
         w.isReleasedWhenClosed = false
         w.center()
         model.close = { [weak w] in w?.close() }
-        var token: NSObjectProtocol?
-        token = NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: w, queue: .main) { [weak self] _ in
-            if let t = token { NotificationCenter.default.removeObserver(t) }
+        WindowClose.once(w) { [weak self] in
             self?.windows.removeAll { $0 === w }
         }
         windows.append(w)

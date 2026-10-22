@@ -51,10 +51,8 @@ final class CompareController: @unchecked Sendable {
         w.contentMinSize = NSSize(width: 560, height: 460)
         w.isReleasedWhenClosed = false
         w.center()
-        var token: NSObjectProtocol?
-        token = NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: w, queue: .main) { [weak self] _ in
+        WindowClose.once(w) { [weak self] in
             self?.windows.removeAll { $0 === w }
-            if let t = token { NotificationCenter.default.removeObserver(t) }
         }
         windows.append(w)
         NSApp.activate()

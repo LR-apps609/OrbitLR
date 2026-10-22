@@ -34,9 +34,7 @@ final class ParamController: @unchecked Sendable {
         }
         p.setFrameOrigin(origin)
         if isTrim { p.center() }
-        var token: NSObjectProtocol?
-        token = NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: p, queue: .main) { [weak self] _ in
-            if let t = token { NotificationCenter.default.removeObserver(t) }
+        WindowClose.once(p) { [weak self] in
             if self?.panel === p { self?.panel = nil; let cb = self?.callback; self?.callback = nil; cb?(nil) }
         }
         panel = p

@@ -77,12 +77,12 @@ jobs:
           (cd dist && zip -r -X -q "OrbitLR $VERSION.orbitlr" OrbitLR)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: OrbitLR-${{ env.VERSION }}
           path: dist/*.orbitlr
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: registro-compilazione

@@ -87,9 +87,7 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
         w.contentView = host
         w.isReleasedWhenClosed = false
         w.center()
-        var token: NSObjectProtocol?
-        token = NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: w, queue: .main) { [weak self] _ in
-            if let t = token { NotificationCenter.default.removeObserver(t) }
+        WindowClose.once(w) { [weak self] in
             self?.finished()
         }
         window = w
