@@ -10,7 +10,8 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15
+    # I Mac Apple Silicon di GitHub sono spesso esauriti: si usa il Mac Intel, che compila lo stesso per entrambi
+    runs-on: macos-15-intel
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
