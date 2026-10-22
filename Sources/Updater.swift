@@ -231,8 +231,14 @@ final class Updater: ObservableObject, @unchecked Sendable {
         let pid = ProcessInfo.processInfo.processIdentifier
         let script = """
         while kill -0 \(pid) 2>/dev/null; do sleep 0.2; done
-        rm -rf /Applications/OrbitLR.app
-        mv \(q(staged.path)) /Applications/OrbitLR.app || cp -R \(q(built.path)) /Applications/ || exit 1
+        # La versione attuale si mette da parte: se la nuova non si copia, torna al suo posto (mai senza app)
+        OLD="$HOME/Library/Caches/OrbitLR-precedente.app"
+        rm -rf "$OLD"; mv /Applications/OrbitLR.app "$OLD" 2>/dev/null
+        if mv \(q(staged.path)) /Applications/OrbitLR.app || cp -R \(q(built.path)) /Applications/OrbitLR.app; then
+          rm -rf "$OLD"
+        else
+          rm -rf /Applications/OrbitLR.app; mv "$OLD" /Applications/OrbitLR.app; open /Applications/OrbitLR.app; exit 1
+        fi
         xattr -dr com.apple.quarantine /Applications/OrbitLR.app 2>/dev/null
         \(Self.lsregister) -f /Applications/OrbitLR.app >/dev/null 2>&1
         /System/Library/CoreServices/pbs -update >/dev/null 2>&1
