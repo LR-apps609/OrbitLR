@@ -249,7 +249,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             let wasPlaying = self.clock.playing
             self.player.replaceCurrentItem(with: item)
             self.previewDuration = built.duration
-            self.player.seek(to: VideoProjectBuilder.cm(t), toleranceBefore: .zero, toleranceAfter: .zero)
+            self.player.seek(to: VideoProjectBuilder.cm(t), toleranceBefore: .zero, toleranceAfter: .zero) { _ in }
             self.clock.time = t
             if wasPlaying { self.player.play() }
         }

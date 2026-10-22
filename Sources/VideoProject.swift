@@ -238,13 +238,18 @@ enum VideoProjectBuilder {
             let song = AVURLAsset(url: m.url)
             if let st = try await song.loadTracks(withMediaType: .audio).first,
                let mT = comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) {
+                // La traccia audio può finire qualche millesimo prima del file: si usa la sua fine vera
+                let trackEnd = (try? await st.load(.timeRange))?.end.seconds ?? mi.duration
+                let songLen = min(mi.duration, trackEnd.isFinite && trackEnd > 0 ? trackEnd : mi.duration)
                 let start = min(max(0, m.offset), total)
-                let inP = min(max(0, m.inPoint), max(0, mi.duration - 0.2))
+                let inP = min(max(0, m.inPoint), max(0, songLen - 0.2))
                 var t = start
                 while t < total - 0.05 {
-                    let len = min(mi.duration - inP, total - t)
+                    let len = min(songLen - inP, total - t)
                     guard len > 0.05 else { break }
-                    try mT.insertTimeRange(CMTimeRange(start: cm(inP), duration: cm(len)), of: st, at: cm(t))
+                    do {
+                        try mT.insertTimeRange(CMTimeRange(start: cm(inP), duration: cm(len)), of: st, at: cm(t))
+                    } catch { break }          // la musica non deve mai impedire l'anteprima del video
                     t += len
                     if !m.loop { break }
                 }
@@ -329,6 +334,11 @@ enum SpeechDetector {
     private static func detect(_ url: URL) async throws -> [ClosedRange<Double>] {
         let asset = AVURLAsset(url: url)
         guard let track = try await asset.loadTracks(withMediaType: .audio).first else { return [] }
+        return try analyze(asset: asset, track: track)
+    }
+
+    /// Lettura e analisi (sincrone: girano già in sottofondo).
+    private static func analyze(asset: AVURLAsset, track: AVAssetTrack) throws -> [ClosedRange<Double>] {
         let rate = 16_000.0
         guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: rate, channels: 1, interleaved: false) else { return [] }
         let analyzer = SNAudioStreamAnalyzer(format: format)
