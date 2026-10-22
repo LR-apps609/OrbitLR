@@ -119,7 +119,7 @@ final class Workspace: ObservableObject, @unchecked Sendable {
     private func rebuild(_ gr: FileGroup) {
         let pie = gr.pie
         let exts = Set(gr.files.map { Catalog.norm($0.pathExtension) })
-        let base = Catalog.actions(for: gr.kind, exts: exts, mergeable: mergeable)
+        let base = Catalog.actions(for: gr.kind, exts: exts, mergeable: mergeable, count: gr.files.count)
         pie.setup(actions: PresetStore.shared.merged(base, kind: gr.kind))
         pie.tint = Theme.color(gr.kind)
         pie.suggestedId = Catalog.suggested(for: gr.kind, exts: exts)
@@ -194,7 +194,7 @@ struct WorkspaceView: View {
             return true
         }
         .sheet(item: $ws.pending) { p in
-            if (p.kind == .cut || p.kind == .gifcut), let url = p.mainFile {
+            if (p.kind == .cut || p.kind == .gifcut || p.kind == .ringtone), let url = p.mainFile {
                 TrimEditorView(url: url, mode: p.kind) { v in ws.confirm(p, value: v) }
             } else {
                 ParamView(kind: p.kind, action: p.action, files: p.files) { v in ws.confirm(p, value: v) }

@@ -316,6 +316,11 @@ enum ParamChoices {
         case .upscale: return [
             KnobOption(value: "2", short: "2×", label: "2× (il doppio)"),
             KnobOption(value: "4", short: "4×", label: "4× (quattro volte)")]
+        case .social: return [
+            KnobOption(value: "9x16", short: "9:16", label: "9:16 · Reels, TikTok, Storie"),
+            KnobOption(value: "1x1", short: "1:1", label: "1:1 · Post"),
+            KnobOption(value: "4x5", short: "4:5", label: "4:5 · Feed verticale"),
+            KnobOption(value: "16x9", short: "16:9", label: "16:9 · YouTube")]
         case .stack: return [
             KnobOption(value: "1", short: "1×", label: "Stessa dimensione, meno rumore"),
             KnobOption(value: "2", short: "2×", label: "2×, più dettagli")]
@@ -343,6 +348,7 @@ enum ParamChoices {
         case .upscale: return "2"
         case .aienhance: return "b0-2"
         case .stack: return "2"
+        case .social: return "9x16"
         default: return ""
         }
     }
@@ -362,6 +368,7 @@ struct NewWatchView: View {
     private let kinds: [Kind] = [.img, .pdf, .video, .audio, .doc, .sheet, .slide, .text]
     /// Azioni adatte a lavorare da sole (niente che chieda di scegliere pagine, tagli o password).
     private static let excluded: Set<String> = ["rename", "merge", "cut", "gifcut", "extract", "reorder", "protect", "unprotect", "subembed",
+                                                "ringtone", "vmerge", "amerge", "music",
                                                 "pdfedit", "redact"]
 
     private var actions: [Action] {

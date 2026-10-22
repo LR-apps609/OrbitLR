@@ -34,7 +34,7 @@ enum Kind: String, CaseIterable, Codable {
 }
 
 enum ParamKind { case resize, pdfcompress, vcompress, cut, gifcut, extract, vresize, speed, rotate, reorder, password, unlock, rename,
-                     removebg, straighten, upscale, aienhance, stack }
+                     removebg, straighten, upscale, aienhance, stack, social, ringtone }
 
 struct Action: Identifiable, Hashable {
     let id: String          // lo stesso identificativo dello script, es. "to:pdf" o "resize"
@@ -147,6 +147,14 @@ enum Catalog {
         "straighten": Action(id: "straighten", short: "Raddrizza", title: "Raddrizza il documento", hint: "Foto di un foglio → scansione pulita", symbol: "doc.viewfinder", param: .straighten),
         "upscale": Action(id: "upscale", short: "Ingrandisci", title: "Ingrandisci", hint: "2× o 4×, contorni nitidi", symbol: "plus.magnifyingglass", param: .upscale),
         "stack": Action(id: "stack", short: "Unisci scatti", title: "Unisci più scatti", hint: "Più foto della stessa scena → una più nitida e pulita", symbol: "square.stack.3d.down.right", param: .stack),
+        // 2.6 · video e audio
+        "social": Action(id: "social", short: "Social", title: "Formato social", hint: "9:16, 1:1, 4:5 per Reels, TikTok e post", symbol: "rectangle.portrait.on.rectangle.portrait", param: .social),
+        "vmerge": Action(id: "vmerge", short: "Unisci", title: "Unisci i video", hint: "Uno dopo l’altro, in un solo video", symbol: "film.stack"),
+        "music": Action(id: "music", short: "Musica", title: "Aggiungi musica", hint: "Sotto l’audio o al suo posto", symbol: "music.note"),
+        "ringtone": Action(id: "ringtone", short: "Suoneria", title: "Suoneria iPhone", hint: "Fino a 40 secondi, pronta per iPhone", symbol: "bell.and.waves.left.and.right", param: .ringtone),
+        "whatsapp": Action(id: "whatsapp", short: "WhatsApp", title: "Vocale leggero", hint: "Per WhatsApp e messaggi, voce chiara", symbol: "message"),
+        "amerge": Action(id: "amerge", short: "Unisci", title: "Unisci gli audio", hint: "Uno dopo l’altro, in un solo file", symbol: "square.stack.3d.up"),
+        "tts": Action(id: "tts", short: "Leggi", title: "Testo in voce", hint: "Un file audio letto da una voce di macOS", symbol: "text.bubble"),
         "aienhance": Action(id: "aienhance", short: "Migliora IA", title: "Migliora con IA", hint: "Più nitida e pulita, anche ingrandita", symbol: "sparkles", param: .aienhance),
     ]
 
@@ -173,7 +181,7 @@ enum Catalog {
 
     /// Azioni per un tipo di file, dalla più usata alla meno usata.
     /// Le prime 7 occupano gli spicchi fissi; le altre finiscono in «Altro».
-    static func actions(for kind: Kind, exts: Set<String>, mergeable: Int) -> [Action] {
+    static func actions(for kind: Kind, exts: Set<String>, mergeable: Int, count: Int = 99) -> [Action] {
         let order: [String]
         switch kind {
         case .pdf:   order = ["to:docx", "to:png", "to:jpg", "pdftext", "split", "extract", "pdfcompress",
@@ -182,14 +190,16 @@ enum Catalog {
         case .img:   order = ["to:jpg", "to:png", "to:heic", "resize", "strip", "ocr", "to:pdf",
                               "aienhance", "stack", "removebg", "straighten", "upscale", "searchable",
                               "to:webp", "to:tiff", "to:ico", "merge", "rename"]
-        case .doc:   order = ["to:pdf", "to:docx", "to:odt", "to:txt", "to:md", "to:html", "to:rtf", "rename"]
+        case .doc:   order = ["to:pdf", "to:docx", "to:odt", "to:txt", "to:md", "to:html", "to:rtf", "tts", "rename"]
         case .sheet: order = ["to:pdf", "to:xlsx", "to:csv", "to:ods", "to:html", "rename"]
         case .slide: order = ["to:pdf", "to:pptx", "to:odp", "rename"]
-        case .text:  order = ["to:pdf", "to:docx", "to:html", "to:md", "to:odt", "to:epub", "rename"]
+        case .text:  order = ["to:pdf", "to:docx", "to:html", "to:md", "to:odt", "to:epub", "tts", "rename"]
         case .audio: order = ["to:mp3", "to:m4a", "to:wav", "cut", "normalize", "transcribe", "silence",
+                              "ringtone", "whatsapp", "amerge",
                               "speed", "to:flac", "to:ogg", "rename"]
         case .video: order = ["to:mp4", "vcompress", "cut", "gifcut", "to:mp3", "transcribe", "vresize",
                               "speed", "to:mov", "to:mkv", "to:webm", "to:gif", "to:m4a", "normalize",
+                              "social", "vmerge",
                               "subextract", "subembed", "strip", "stack", "rename"]
         case .sub:   order = []
         }
@@ -203,6 +213,8 @@ enum Catalog {
                 out.append(conv(t, kind: kind))
             } else {
                 if id == "merge" && mergeable < 2 { continue }
+                if (id == "vmerge" || id == "amerge") && count < 2 { continue }   // servono almeno 2 file
+                if id == "tts" && !exts.isEmpty && exts.isDisjoint(with: ["txt", "md", "rtf", "docx", "doc", "odt", "html", "pages"]) { continue }
                 if id == "stack" && kind == .img && mergeable < 2 { continue }      // servono almeno 2 foto
                 if hasSvg && ["resize", "strip", "ocr", "removebg", "straighten", "upscale", "aienhance", "searchable"].contains(id) { continue }
                 if hasRaw && id == "strip" { continue }

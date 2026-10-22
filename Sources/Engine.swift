@@ -274,6 +274,25 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         job.native = true
         job.status = "Con i motori di macOS…"
         let files = job.mainFiles
+        if Media.multi.contains(job.action.id) {
+            // «Unisci i video» / «Unisci gli audio»: tutti i file insieme, un solo risultato
+            job.status = "Unisco i file…"
+            Task.detached(priority: .userInitiated) {
+                do {
+                    let dir = job.destOverride ?? Destination.dir(for: files[0])
+                    try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+                    let out = try await Media.runMulti(job: job, files: files, dir: dir) { p in
+                        DispatchQueue.main.async { job.progress = min(1, max(0, p)) }
+                    }
+                    await MainActor.run { job.outputs.append(out) }
+                } catch {
+                    let msg = error.localizedDescription
+                    await MainActor.run { if msg != "annullato" { job.failures.append(msg) } }
+                }
+                await MainActor.run { self.verifyThenFinish(job, code: 0) }
+            }
+            return
+        }
         if job.action.id == "stack" {
             // «Unisci più scatti»: tutti i file insieme danno un solo risultato
             job.status = "Allineo e unisco gli scatti…"

@@ -501,7 +501,7 @@ final class PieController: @unchecked Sendable {
             .filter { let k = Catalog.kind(of: $0); return k == .pdf || k == .img }.count
         let exts = Set(files.map { Catalog.norm($0.pathExtension) })
         let model = PieModel()
-        model.setup(actions: PresetStore.shared.merged(Catalog.actions(for: kind, exts: exts, mergeable: mergeable), kind: kind))
+        model.setup(actions: PresetStore.shared.merged(Catalog.actions(for: kind, exts: exts, mergeable: mergeable, count: files.count), kind: kind))
         model.tint = Theme.color(kind)
         model.suggestedId = Catalog.suggested(for: kind, exts: exts)
         model.fileName = files.count == 1 ? files[0].lastPathComponent : "\(files.count) \(kind.name)"

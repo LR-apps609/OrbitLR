@@ -9,7 +9,7 @@ final class ParamController: @unchecked Sendable {
     func ask(_ kind: ParamKind, action: Action, files: [URL], at point: NSPoint, done: @escaping (String?) -> Void) {
         close(nil)
         callback = done
-        let isTrim = kind == .cut || kind == .gifcut
+        let isTrim = kind == .cut || kind == .gifcut || kind == .ringtone
         let view: AnyView
         if isTrim, let url = files.first(where: { Catalog.kind(of: $0) != .sub }) {
             view = AnyView(TrimEditorView(url: url, mode: kind, onDone: { [weak self] v in self?.close(v) }))
@@ -94,8 +94,9 @@ struct ParamView: View {
     @State var aiSize = "2"         // Migliora con IA: dimensione
     @State var aiStrength = "0"     // Migliora con IA: quanto «Più nitido» mescolare (0 = tutto Fedele)
     @State var presetName = ""
+    @State var follow = true        // Formato social: segui il soggetto
 
-    private var presetable: Bool { [.resize, .pdfcompress, .vcompress, .vresize, .speed, .rotate, .removebg, .straighten, .upscale, .aienhance, .stack].contains(kind) }
+    private var presetable: Bool { [.resize, .pdfcompress, .vcompress, .vresize, .speed, .rotate, .removebg, .straighten, .upscale, .aienhance, .stack, .social].contains(kind) }
 
     private var fileKind: Kind? { files.first.flatMap { Catalog.kind(of: $0) } }
     private var tint: Color { Theme.color(fileKind) }
@@ -143,7 +144,7 @@ struct ParamView: View {
         .onAppear {
             if kind == .gifcut { end = "0:05" }
             if kind == .rename { baseName = Self.suggestedBase(files) }
-            if [.removebg, .straighten, .upscale, .stack].contains(kind) { choice = ParamChoices.defaultValue(for: kind) }
+            if [.removebg, .straighten, .upscale, .stack, .social].contains(kind) { choice = ParamChoices.defaultValue(for: kind) }
         }
     }
 
@@ -184,6 +185,8 @@ struct ParamView: View {
         case .upscale: return "Ingrandisci"
         case .aienhance: return "Migliora"
         case .stack: return "Unisci"
+        case .social: return "Esporta"
+        case .ringtone: return "Crea la suoneria"
         }
     }
 
@@ -224,7 +227,11 @@ struct ParamView: View {
                 }
             }
             note("Risoluzione e qualità vengono scelte da sole per stare sotto il peso indicato.")
-        case .cut, .gifcut:
+        case .social:
+            Knob(title: "Formato", options: ParamChoices.options(for: .social) ?? [], selection: $choice, tint: tint)
+            Toggle("Segui il soggetto", isOn: $follow)
+            note("L’inquadratura segue le persone (o ciò che si muove in primo piano) con calma, senza scatti. Con scene affollate resta al centro.")
+        case .cut, .gifcut, .ringtone:
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Inizio").font(.system(size: 11)).foregroundStyle(.secondary)
@@ -366,7 +373,9 @@ struct ParamView: View {
                 guard let n = Int(v), n >= 1 else { error = "Scrivi un numero intero, ad esempio 25."; return }
                 finish(String(n))
             } else { finish(mb) }
-        case .cut, .gifcut:
+        case .social:
+            finish("\(choice.isEmpty ? "9x16" : choice)|\(follow ? 1 : 0)")
+        case .cut, .gifcut, .ringtone:
             guard let s = parseTime(start) else { error = "Inizio non valido. Esempi: 45 · 1:30"; return }
             if end.trimmingCharacters(in: .whitespaces).isEmpty {
                 finish(String(format: "%.3f|", s))

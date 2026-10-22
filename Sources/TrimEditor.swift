@@ -18,6 +18,8 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
     @Published var peaks: [Float] = []
     @Published var thumbs: [NSImage] = []
     @Published var loading = true
+    /// Durata massima della selezione (es. 40 s per le suonerie), nil = libera.
+    var maxLength: Double? = nil
 
     private var observer: Any?
 
@@ -75,12 +77,22 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
 
     func setStart(_ t: Double) {
         start = min(max(0, t), max(0, end - 0.1))
+        if let maxL = maxLength, end - start > maxL { end = min(duration, start + maxL) }
         if !playing { seek(start) }
     }
 
     func setEnd(_ t: Double) {
         end = max(min(duration, t), start + 0.1)
+        if let maxL = maxLength, end - start > maxL { start = max(0, end - maxL) }
         if !playing { seek(max(start, end - 0.5)) }
+    }
+
+    /// Selezione di una durata precisa a partire dall'inizio attuale (es. suoneria da 30 s).
+    func setLength(_ seconds: Double) {
+        let s = min(start, max(0, duration - seconds))
+        start = max(0, s)
+        end = min(duration, start + seconds)
+        if !playing { seek(start) }
     }
 
     func markIn() { setStart(playhead) }
@@ -175,7 +187,10 @@ struct TrimEditorView: View {
 
     init(url: URL, mode: ParamKind, onDone: @escaping (String?) -> Void) {
         let kind = Catalog.kind(of: url)
-        _m = StateObject(wrappedValue: TrimModel(url: url, isVideo: kind == .video, defaultLength: mode == .gifcut ? 5 : nil))
+        let model = TrimModel(url: url, isVideo: kind == .video,
+                              defaultLength: mode == .gifcut ? 5 : (mode == .ringtone ? 30 : nil))
+        if mode == .ringtone { model.maxLength = 40 }
+        _m = StateObject(wrappedValue: model)
         self.mode = mode
         self.tint = Theme.color(kind)
         self.fileName = url.lastPathComponent
@@ -187,7 +202,7 @@ struct TrimEditorView: View {
             HStack(spacing: 12) {
                 KindBadge(kind: m.isVideo ? Kind.video : Kind.audio, size: 36)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(mode == .gifcut ? "GIF da un pezzo" : "Taglia").font(.system(size: 16, weight: .bold))
+                    Text(mode == .gifcut ? "GIF da un pezzo" : (mode == .ringtone ? "Suoneria iPhone" : "Taglia")).font(.system(size: 16, weight: .bold))
                     Text(fileName).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                 }
                 Spacer()
@@ -235,15 +250,17 @@ struct TrimEditorView: View {
                 Spacer()
             }
 
-            Text("Trascina le maniglie colorate, clicca sulla forma d’onda per spostarti. Spazio = riproduci, I/O = inizio/fine.")
+            Text(mode == .ringtone
+                 ? "Fino a 40 secondi. Si crea un file .m4r: collega l’iPhone, aprilo nel Finder e trascinaci la suoneria."
+                 : "Trascina le maniglie colorate, clicca sulla forma d’onda per spostarti. Spazio = riproduci, I/O = inizio/fine.")
                 .font(.system(size: 11)).foregroundStyle(.secondary)
 
             HStack {
                 Spacer()
                 Button("Annulla") { m.pause(); onDone(nil) }.keyboardShortcut(.cancelAction)
-                Button(mode == .gifcut ? "Crea la GIF" : "Taglia") {
+                Button(mode == .gifcut ? "Crea la GIF" : (mode == .ringtone ? "Crea la suoneria" : "Taglia")) {
                     m.pause()
-                    onDone(String(format: "%.3f|%.3f", m.start, m.end))
+                    onDone(String(format: "%.3f|%.3f", m.start, m.end) + (mode == .ringtone ? "|1|1" : ""))
                 }
                 .keyboardShortcut(.defaultAction)
                 .buttonStyle(.borderedProminent)

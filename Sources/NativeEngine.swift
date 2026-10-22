@@ -54,6 +54,7 @@ enum NativeEngine {
     static func supports(_ job: Job) -> Bool {
         // Gli strumenti della 2.5 esistono solo nei motori di macOS: valgono sempre
         if Tools.ids.contains(job.action.id) { return true }
+        if Media.ids.contains(job.action.id) { return true }        // 2.6: video e audio, solo con macOS
         guard enabled else { return false }
         let files = job.mainFiles
         guard !files.isEmpty else { return false }
@@ -79,6 +80,11 @@ enum NativeEngine {
         let dir = job.destOverride ?? Destination.dir(for: file)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
 
+        if Media.ids.contains(id) {
+            return try await Task.detached(priority: .userInitiated) {
+                try await Media.run(job: job, file: file, dir: dir, progress: progress)
+            }.value
+        }
         if Tools.ids.contains(id) {
             // Vision e Core Image lavorano in sottofondo, per non bloccare la finestra
             return try await Task.detached(priority: .userInitiated) {
@@ -327,7 +333,7 @@ enum Verifier {
         case "pdf":
             guard let d = PDFDocument(url: url) else { return "il PDF creato non si apre" }
             if !d.isLocked && d.pageCount == 0 { return "il PDF creato non ha pagine" }
-        case "mp4", "mov", "m4v", "m4a", "mp3", "wav", "aiff":
+        case "mp4", "mov", "m4v", "m4a", "m4r", "mp3", "wav", "aiff":
             let asset = AVURLAsset(url: url)
             let tracks = (try? await asset.load(.tracks)) ?? []
             if tracks.isEmpty { return "il file creato non contiene audio né video" }
