@@ -319,6 +319,7 @@ enum Media {
         var segments: [(start: CMTime, transform: CGAffineTransform, size: CGSize)] = []
         var cursor = CMTime.zero
         var renderSize = CGSize.zero
+        var maxFPS: Double = 24
         for f in files {
             let a = AVURLAsset(url: f)
             guard let v = try await a.loadTracks(withMediaType: .video).first else {
@@ -333,6 +334,8 @@ enum Media {
             }
             let ns = try await v.load(.naturalSize)
             let t = try await v.load(.preferredTransform)
+            let rate = Double((try? await v.load(.nominalFrameRate)) ?? 30)
+            if rate.isFinite, rate > maxFPS { maxFPS = min(60, rate) }
             let shown = CGRect(origin: .zero, size: ns).applying(t)
             let size = CGSize(width: abs(shown.width), height: abs(shown.height))
             if renderSize == .zero { renderSize = size }
@@ -355,7 +358,7 @@ enum Media {
         instr.layerInstructions = [layer]
         let vc = AVMutableVideoComposition()
         vc.renderSize = rs
-        vc.frameDuration = CMTime(value: 1, timescale: 30)
+        vc.frameDuration = CMTime(value: 1, timescale: CMTimeScale(max(24, maxFPS.rounded())))
         vc.instructions = [instr]
         if let aComp, aComp.segments.isEmpty { comp.removeTrack(aComp) }
         try await export(comp, videoComposition: vc, audioMix: nil, out: out, job: job, progress: progress)
@@ -399,7 +402,8 @@ enum Media {
             cursor = cursor + piece
         }
         let mp = AVMutableAudioMixInputParameters(track: mComp)
-        let level: Float = replace ? 1 : 0.3
+        // Sotto l'audio originale la musica resta bassa; se il video è muto (o la si mette al posto dell'audio), piena
+        let level: Float = (replace || params.isEmpty) ? 1 : 0.3
         mp.setVolume(level, at: .zero)
         let fade = min(2.0, d.seconds / 4)
         mp.setVolumeRamp(fromStartVolume: level, toEndVolume: 0,
@@ -919,7 +923,12 @@ final class SpeechFileWriter: NSObject, AVSpeechSynthesizerDelegate, @unchecked 
             DispatchQueue.main.async { self.synth?.stopSpeaking(at: .immediate) }
             finish(error: "annullato"); return
         }
-        if pcm.frameLength == 0 { finish(error: nil); return }
+        if pcm.frameLength == 0 {
+            // Un pezzo vuoto segna la fine, ma solo se è già arrivato dell'audio (alcune voci partono con un pezzo vuoto)
+            lock.lock(); let started = file != nil; lock.unlock()
+            if started { finish(error: nil) }
+            return
+        }
         lock.lock(); defer { lock.unlock() }
         guard !finished else { return }
         do {

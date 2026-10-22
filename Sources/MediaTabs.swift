@@ -33,7 +33,10 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
 
     /// File trascinati o scelti: il primo si apre, gli altri restano pronti per «Unisci».
     func load(_ urls: [URL], append: Bool = false) {
-        let right = PieController.expand(urls).filter { u in Catalog.kind(of: u).map { accepted.contains($0) } ?? false }
+        var seenPaths = Set<String>()
+        let right = PieController.expand(urls)
+            .filter { u in Catalog.kind(of: u).map { accepted.contains($0) } ?? false }
+            .filter { seenPaths.insert($0.standardizedFileURL.path).inserted }      // lo stesso file una volta sola
         // Formati che macOS non sa leggere da solo: prima si convertono (in Conversione, con ffmpeg)
         let ok = right.filter { Self.readable.contains(Catalog.norm($0.pathExtension)) }
         guard !ok.isEmpty else {
