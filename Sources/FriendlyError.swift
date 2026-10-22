@@ -39,8 +39,9 @@ enum FriendlyError {
         if has("-11838", "operation stopped", "operazione interrotta") {
             return "macOS ha interrotto il lavoro: riprova (se il Mac era in stop o sotto sforzo, ora dovrebbe andare)."
         }
-        if has("-11800", "-11828", "-11829", "-11833", "cannot decode", "impossibile decodificare", "media format", "formato multimediale",
-               "cannot open", "impossibile aprire", "not supported", "non supportat") {
+        // Solo i messaggi di macOS (in inglese o con il codice): quelli del motore classico sono già in italiano chiaro
+        if has("-11800", "-11828", "-11829", "-11833", "cannot decode", "impossibile decodificare", "media format",
+               "cannot open", "not supported") {
             return "macOS non riesce a leggere questo file: può essere danneggiato o in un formato insolito."
         }
         if has("-11847", "-11819", "media services were reset", "servizi multimediali") {
