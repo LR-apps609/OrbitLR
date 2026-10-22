@@ -7,3 +7,5 @@ dist/
 Sources/Info.plist
 ShareExtension/Info.plist
 ShareExtension/*.entitlements
+build-test/
+test.log

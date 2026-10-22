@@ -126,3 +126,34 @@ targets:
         ENABLE_HARDENED_RUNTIME: NO
         ENABLE_USER_SCRIPT_SANDBOXING: NO
         SKIP_INSTALL: YES
+
+  # Test automatici: creano video e audio di prova e controllano montaggio, musica, voci, esportazione e strumenti audio.
+  # Girano sul Mac di GitHub a ogni modifica; se uno fallisce, la versione non viene pubblicata.
+  OrbitLRTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: OrbitLR
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: it.ledion.OrbitLRTests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.0"
+        SWIFT_STRICT_CONCURRENCY: minimal
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/OrbitLR.app/Contents/MacOS/OrbitLR"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        CODE_SIGN_IDENTITY: "-"
+
+schemes:
+  OrbitLRTests:
+    build:
+      targets:
+        OrbitLR: all
+        OrbitLRTests: [test]
+    test:
+      config: Debug
+      targets:
+        - OrbitLRTests
+
