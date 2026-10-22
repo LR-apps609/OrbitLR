@@ -316,13 +316,16 @@ enum ParamChoices {
         case .upscale: return [
             KnobOption(value: "2", short: "2×", label: "2× (il doppio)"),
             KnobOption(value: "4", short: "4×", label: "4× (quattro volte)")]
+        case .stack: return [
+            KnobOption(value: "1", short: "1×", label: "Stessa dimensione, meno rumore"),
+            KnobOption(value: "2", short: "2×", label: "2×, più dettagli")]
         case .aienhance: return [
-            KnobOption(value: "f1", short: "Fedele", label: "Fedele · stessa dimensione"),
-            KnobOption(value: "f2", short: "F 2×", label: "Fedele · 2×"),
-            KnobOption(value: "f4", short: "F 4×", label: "Fedele · 4×"),
-            KnobOption(value: "n1", short: "Nitido", label: "Più nitido · stessa dimensione"),
-            KnobOption(value: "n2", short: "N 2×", label: "Più nitido · 2×"),
-            KnobOption(value: "n4", short: "N 4×", label: "Più nitido · 4×")]
+            KnobOption(value: "b0-1", short: "Fedele", label: "Fedele · stessa dimensione"),
+            KnobOption(value: "b0-2", short: "F 2×", label: "Fedele · 2×"),
+            KnobOption(value: "b0-4", short: "F 4×", label: "Fedele · 4×"),
+            KnobOption(value: "b30-2", short: "30% 2×", label: "Fedele con un po’ di nitidezza · 2×"),
+            KnobOption(value: "b100-2", short: "N 2×", label: "Più nitido · 2×"),
+            KnobOption(value: "b100-4", short: "N 4×", label: "Più nitido · 4×")]
         default: return nil
         }
     }
@@ -338,7 +341,8 @@ enum ParamChoices {
         case .removebg: return "transparent"
         case .straighten: return "color-jpg"
         case .upscale: return "2"
-        case .aienhance: return "f2"
+        case .aienhance: return "b0-2"
+        case .stack: return "2"
         default: return ""
         }
     }

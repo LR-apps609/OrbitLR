@@ -87,9 +87,11 @@ final class PresetStore: ObservableObject, @unchecked Sendable {
         case "rotate": return "\(title) · \(param)°"
         case "upscale": return "\(title) · \(param)×"
         case "aienhance":
-            let style: String = param.hasPrefix("n") ? "più nitido" : "fedele"
-            let size: String = param.hasSuffix("1") ? "stessa dimensione" : "\(param.dropFirst())×"
+            let p = AIEnhance.parse(param)
+            let style: String = p.strength == 0 ? "fedele" : (p.strength == 100 ? "più nitido" : "intensità \(p.strength)%")
+            let size: String = p.factor == 1 ? "stessa dimensione" : "\(p.factor)×"
             return "\(title) · \(style), \(size)"
+        case "stack": return "\(title) · " + (param == "1" ? "meno rumore" : "2×")
         case "removebg":
             let how: String = param == "white" ? "sfondo bianco" : (param == "crop" ? "ritagliato" : "trasparente")
             return "\(title) · \(how)"
@@ -124,6 +126,7 @@ final class PresetStore: ObservableObject, @unchecked Sendable {
 
 struct PresetsView: View {
     @ObservedObject var store = PresetStore.shared
+    @State private var customizing = false
 
     var body: some View {
         ZStack {
@@ -131,7 +134,9 @@ struct PresetsView: View {
             VStack(alignment: .leading, spacing: 18) {
                 PageHeader(title: "Preset e scorciatoie",
                            subtitle: "Le combinazioni che usi spesso. Compaiono come spicchi nel menu del loro tipo di file.",
-                           color: Theme.brass) { EmptyView() }
+                           color: Theme.brass) {
+                    Button { customizing = true } label: { Label("Personalizza il menu a torta", systemImage: "chart.pie") }
+                }
                 if store.presets.isEmpty {
                     EmptyState(symbol: "star.circle", color: Theme.brass, title: "Nessun preset salvato",
                                text: "Quando scegli un’azione con delle opzioni (ridimensiona, comprimi, velocità…), spunta «Salva come preset». La ritroverai qui e nel menu a torta.")
@@ -148,6 +153,7 @@ struct PresetsView: View {
             }
             .padding(28)
         }
+        .sheet(isPresented: $customizing) { PieCustomizeView { customizing = false } }
         .navigationTitle("Preset")
     }
 }

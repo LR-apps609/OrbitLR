@@ -1,5 +1,8 @@
-Novità della 2.5.1:
-• Migliora con IA (Real-ESRGAN, sul Mac): foto più nitide e pulite, anche ingrandite 2× o 4×
-  – Fedele: ripulisce e rende nitido senza inventare dettagli
-  – Più nitido: più incisivo, può ricostruire texture
-• La prima volta l'IA si prepara qualche secondo; le volte dopo parte subito
+Novità della 2.5.2:
+• Unisci più scatti: più foto della stessa scena (o un video breve) diventano una sola foto più nitida e pulita, con dettagli veri
+• Migliora con IA: nuova manopola «Intensità» per mescolare Fedele e Più nitido
+• Cerca un'azione: con il menu a torta aperto, scrivi («sfondo», «pdf», «firma»…) e scegli con ↑↓ e Invio
+• Personalizza il menu a torta: scegli l'ordine e quali azioni stanno nell'anello principale (pagina Preset)
+• Etichetta «Nuovo» sulle azioni appena arrivate, finché non le usi
+• Opzioni come elenco (più rapido) o come manopole, a scelta nelle Opzioni
+• La schermata di avvio compare solo al primo avvio e dopo gli aggiornamenti (si può riattivare sempre)

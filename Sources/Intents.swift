@@ -68,7 +68,7 @@ enum OrbitAction: String, AppEnum {
         case .removeBackground: return "transparent"
         case .straighten: return "color-jpg"
         case .upscale: return "2"
-        case .aiEnhance: return "f2"
+        case .aiEnhance: return "b0-2"
         default: return ""
         }
     }

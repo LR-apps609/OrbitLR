@@ -92,10 +92,12 @@ struct ParamView: View {
     @State var digits = 3
     @State var error = ""
     @State var savePreset = false
-    @State var choice = ""          // manopole delle azioni della 2.5 (sfondo, raddrizza, ingrandisci)
+    @State var choice = ""          // manopole delle azioni della 2.5 (sfondo, raddrizza, ingrandisci, scatti)
+    @State var aiSize = "2"         // Migliora con IA: dimensione
+    @State var aiStrength = "0"     // Migliora con IA: quanto «Più nitido» mescolare (0 = tutto Fedele)
     @State var presetName = ""
 
-    private var presetable: Bool { [.resize, .pdfcompress, .vcompress, .vresize, .speed, .rotate, .removebg, .straighten, .upscale, .aienhance].contains(kind) }
+    private var presetable: Bool { [.resize, .pdfcompress, .vcompress, .vresize, .speed, .rotate, .removebg, .straighten, .upscale, .aienhance, .stack].contains(kind) }
 
     private var fileKind: Kind? { files.first.flatMap { Catalog.kind(of: $0) } }
     private var tint: Color { Theme.color(fileKind) }
@@ -112,9 +114,11 @@ struct ParamView: View {
             }
             content
             if presetable {
-                note("Gira la manopola trascinandola, con la rotellina o con le frecce. Un clic passa alla posizione successiva.")
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .multilineTextAlignment(.center)
+                if UserDefaults.standard.string(forKey: "controlStyle") == "knob" {
+                    note("Gira la manopola trascinandola, con la rotellina o con le frecce. Un clic passa alla posizione successiva.")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .multilineTextAlignment(.center)
+                }
             }
             if presetable {
                 VStack(alignment: .leading, spacing: 6) {
@@ -141,7 +145,7 @@ struct ParamView: View {
         .onAppear {
             if kind == .gifcut { end = "0:05" }
             if kind == .rename { baseName = Self.suggestedBase(files) }
-            if [.removebg, .straighten, .upscale, .aienhance].contains(kind) { choice = ParamChoices.defaultValue(for: kind) }
+            if [.removebg, .straighten, .upscale, .stack].contains(kind) { choice = ParamChoices.defaultValue(for: kind) }
         }
     }
 
@@ -149,7 +153,7 @@ struct ParamView: View {
         switch kind {
         case .removebg: return "Risultato"
         case .straighten: return "Come salvarlo"
-        case .aienhance: return "Stile e dimensione"
+        case .stack: return "Risultato"
         default: return "Quanto"
         }
     }
@@ -158,7 +162,7 @@ struct ParamView: View {
         switch kind {
         case .removebg: return "Funziona meglio con persone, animali e oggetti ben distinti dallo sfondo."
         case .straighten: return "OrbitLR trova il foglio nella foto, corregge la prospettiva e lo pulisce come una scansione."
-        case .aienhance: return "Fedele: pulisce e rende nitido senza inventare. Più nitido: più incisivo, ma può ricostruire texture non presenti. Ci vuole da qualche secondo a qualche minuto."
+        case .stack: return "Seleziona 3–10 foto della stessa scena (una raffica va benissimo) oppure un video breve: OrbitLR le allinea e le unisce. I dettagli vengono dagli scatti veri."
         default: return "Contorni nitidi con la tecnologia di Apple. Non inventa dettagli che non ci sono."
         }
     }
@@ -181,6 +185,7 @@ struct ParamView: View {
         case .straighten: return "Raddrizza"
         case .upscale: return "Ingrandisci"
         case .aienhance: return "Migliora"
+        case .stack: return "Unisci"
         }
     }
 
@@ -270,7 +275,23 @@ struct ParamView: View {
             note("Senza questa password il PDF non si potrà aprire: conservala bene.")
         case .unlock:
             SecureField("Password attuale", text: $password)
-        case .removebg, .straighten, .upscale, .aienhance:
+        case .aienhance:
+            HStack(alignment: .top, spacing: 8) {
+                Knob(title: "Dimensione", options: [
+                    KnobOption(value: "1", short: "1×", label: "Stessa dimensione"),
+                    KnobOption(value: "2", short: "2×", label: "Il doppio"),
+                    KnobOption(value: "4", short: "4×", label: "Quattro volte"),
+                ], selection: $aiSize, tint: tint, size: 86)
+                Knob(title: "Intensità", options: [
+                    KnobOption(value: "0", short: "0", label: "Fedele: non inventa"),
+                    KnobOption(value: "25", short: "25", label: "Fedele, un po’ più incisivo"),
+                    KnobOption(value: "50", short: "50", label: "Metà e metà"),
+                    KnobOption(value: "75", short: "75", label: "Quasi tutto Più nitido"),
+                    KnobOption(value: "100", short: "100", label: "Più nitido: ricostruisce texture"),
+                ], selection: $aiStrength, tint: tint, size: 86)
+            }
+            note("Intensità 0 = Fedele: pulisce e rende nitido senza inventare. Più sali, più il risultato è incisivo, ma il modello ricostruisce texture che nella foto non c’erano. Tra 1 e 99 si usano tutti e due i modelli (tempo doppio).")
+        case .removebg, .straighten, .upscale, .stack:
             Knob(title: toolTitle, options: ParamChoices.options(for: kind) ?? [], selection: $choice, tint: tint)
             note(toolNote)
         case .rename:
@@ -358,7 +379,9 @@ struct ParamView: View {
         case .unlock:
             guard !password.isEmpty else { error = "Scrivi la password del PDF."; return }
             finish(password)
-        case .removebg, .straighten, .upscale, .aienhance:
+        case .aienhance:
+            finish("b\(aiStrength)-\(aiSize)")
+        case .removebg, .straighten, .upscale, .stack:
             finish(choice.isEmpty ? ParamChoices.defaultValue(for: kind) : choice)
         case .rename:
             let base = baseName.trimmingCharacters(in: .whitespaces)

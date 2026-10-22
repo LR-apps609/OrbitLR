@@ -20,7 +20,7 @@ import UniformTypeIdentifiers
 // ════════════════════════════════════════════════════════════════════
 
 enum Tools {
-    static let ids: Set<String> = ["searchable", "removebg", "straighten", "upscale", "aienhance"]
+    static let ids: Set<String> = ["searchable", "removebg", "straighten", "upscale", "aienhance", "stack"]
 
     /// Esegue uno strumento su un file e restituisce il file creato.
     static func run(job: Job, file: URL, dir: URL, progress: @escaping (Double) -> Void) async throws -> URL {
@@ -58,10 +58,11 @@ enum Tools {
             progress(1)
             return out
         case "aienhance":
-            let p = job.param.isEmpty ? "f2" : job.param
+            let p = job.param.isEmpty ? "b0-2" : job.param
             let e = Catalog.norm(file.pathExtension)
             let ext = ["jpg", "png", "heic", "tiff"].contains(e) ? e : "png"
-            let label = p.hasSuffix("1") ? "migliorata" : "IA \(p.dropFirst())×"
+            let parsed = AIEnhance.parse(p)
+            let label = parsed.factor == 1 ? "migliorata" : "IA \(parsed.factor)×"
             let out = Destination.unique(dir, base: "\(base) (\(label))", ext: ext)
             try AIEnhance.run(file, param: p, out: out, progress: progress)
             return out

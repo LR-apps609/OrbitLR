@@ -25,11 +25,27 @@ enum AIEnhance {
     private static var cache: [String: MLModel] = [:]
     private static let lock = NSLock()
 
-    /// param: «f1», «f2», «f4» (fedele) o «n1», «n2», «n4» (più nitido): modello + quanto ingrandire.
+    /// «b30-2» = 30% di «Più nitido» mescolato a «Fedele», ingrandimento 2×.
+    /// Accetta anche il formato della 2.5.1: «f2» (fedele 2×), «n4» (più nitido 4×).
+    static func parse(_ param: String) -> (strength: Int, factor: Int) {
+        if param.hasPrefix("b") {
+            let parts = param.dropFirst().split(separator: "-")
+            let st = Int(parts.first ?? "0") ?? 0
+            let f = parts.count > 1 ? (Int(parts[1]) ?? 2) : 2
+            return (max(0, min(100, st)), max(1, min(4, f)))
+        }
+        let f = max(1, min(4, Int(param.dropFirst()) ?? 2))
+        return (param.hasPrefix("n") ? 100 : 0, f)
+    }
+
     static func run(_ src: URL, param: String, out: URL, progress: @escaping (Double) -> Void) throws {
-        let sharp = param.hasPrefix("n")
-        let factor = max(1, min(4, Int(param.dropFirst()) ?? 2))
-        let model = try loadModel(sharp ? "RealESRGAN" : "RealESRNet")
+        let parsed = parse(param)
+        let factor = parsed.factor
+        let strength = Double(parsed.strength) / 100
+        // Uno o due modelli: con un'intensità intermedia si usano entrambi e si mescolano
+        let useFaithful = strength < 1, useSharp = strength > 0
+        let faithful: MLModel? = try useFaithful ? loadModel("RealESRNet") : nil
+        let sharpModel: MLModel? = try useSharp ? loadModel("RealESRGAN") : nil
 
         var input = try Tools.orientedImage(src)
         input = input.transformed(by: CGAffineTransform(translationX: -input.extent.minX, y: -input.extent.minY))
@@ -57,11 +73,26 @@ enum AIEnhance {
             source = (s.outputImage ?? input).cropped(to: CGRect(x: 0, y: 0, width: ww, height: wh))
         }
 
-        // Elaborazione a riquadri
-        let big = try upscale4(source, width: ww, height: wh, model: model, progress: progress)
+        // Elaborazione a riquadri (con due modelli, ognuno fa metà della barra)
+        let both = useFaithful && useSharp
+        var imgA: CGImage? = nil, imgB: CGImage? = nil
+        if let m = faithful {
+            imgA = try upscale4(source, width: ww, height: wh, model: m) { p in progress(both ? p / 2 : p) }
+        }
+        if let m = sharpModel {
+            imgB = try upscale4(source, width: ww, height: wh, model: m) { p in progress(both ? 0.5 + p / 2 : p) }
+        }
+        guard let big = imgA ?? imgB else { throw NativeError("Il modello di IA non ha prodotto un risultato") }
+        var result = CIImage(cgImage: big)
+        if let a = imgA, let b = imgB {
+            let mix = CIFilter.dissolveTransition()
+            mix.inputImage = CIImage(cgImage: a)
+            mix.targetImage = CIImage(cgImage: b)
+            mix.time = Float(strength)
+            result = mix.outputImage ?? result
+        }
 
         // Misura finale
-        var result = CIImage(cgImage: big)
         let bw = CGFloat(big.width), bh = CGFloat(big.height)
         let tw = min(target.width, bw * 4), th = min(target.height, bh * 4)
         if abs(bw - tw) > 1 || abs(bh - th) > 1 {

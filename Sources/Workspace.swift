@@ -281,7 +281,8 @@ struct WorkspaceView: View {
                 .padding(.bottom, 18)
         }
         .background(KeyCatcher { e in
-            if e.keyCode == 49 { ws.togglePreview(); return true }          // Spazio = anteprima
+            // Spazio = anteprima (ma non mentre si sta cercando un'azione)
+            if e.keyCode == 49 && (ws.single?.pie.query.isEmpty ?? true) { ws.togglePreview(); return true }
             guard let g = ws.single else { return false }
             return PieKeys.handle(e, model: g.pie, close: { ws.clear() })
         })
@@ -298,6 +299,7 @@ struct WorkspaceView: View {
                 hint("hand.tap", "Clic per confermare")
                 hint("space", "Spazio = anteprima")
                 if ws.single != nil { hint("keyboard", "Tasti 1–8 · Invio = ultima scelta") }
+                hint("magnifyingglass", "Scrivi per cercare")
             }
             .frame(maxWidth: .infinity)
         }

@@ -37,6 +37,7 @@ final class SettingsModel: ObservableObject {
     }
     @Published var sounds: Bool { didSet { UserDefaults.standard.set(sounds, forKey: "sounds") } }
     @Published var splash: Bool { didSet { UserDefaults.standard.set(splash, forKey: "splash") } }
+    @Published var controlStyle: String { didSet { UserDefaults.standard.set(controlStyle, forKey: "controlStyle") } }   // list | knob
     @Published var tips: Bool { didSet { UserDefaults.standard.set(tips, forKey: "tips") } }
     @Published var palette: String {                                                          // sage | sky | terracotta
         didSet {
@@ -73,7 +74,8 @@ final class SettingsModel: ObservableObject {
         appearance = UserDefaults.standard.string(forKey: "appearance") ?? "auto"
         sounds = UserDefaults.standard.object(forKey: "sounds") as? Bool ?? true
         palette = UserDefaults.standard.string(forKey: "palette") ?? "sage"
-        splash = UserDefaults.standard.object(forKey: "splash") as? Bool ?? true
+        splash = UserDefaults.standard.object(forKey: "splash") as? Bool ?? false
+        controlStyle = UserDefaults.standard.string(forKey: "controlStyle") ?? "list"
         tips = UserDefaults.standard.object(forKey: "tips") as? Bool ?? true
         hotkey = UserDefaults.standard.object(forKey: "hotkey") as? Bool ?? true
         launchAtLogin = SMAppService.mainApp.status == .enabled
@@ -93,7 +95,8 @@ struct SettingsDraft: Equatable {
     var appearance = "auto"
     var sounds = true
     var palette = "sage"
-    var splash = true
+    var splash = false
+    var controlStyle = "list"
     var tips = true
     var hotkey = true
     var launchAtLogin = false
@@ -109,7 +112,7 @@ extension SettingsModel {
     var draft: SettingsDraft {
         SettingsDraft(dest: dest, destPath: destPath, original: original, quality: quality, language: language,
                       quickActionMenu: quickActionMenu, keepDates: keepDates, useNative: useNative,
-                      appearance: appearance, sounds: sounds, palette: palette, splash: splash, tips: tips, hotkey: hotkey, launchAtLogin: launchAtLogin)
+                      appearance: appearance, sounds: sounds, palette: palette, splash: splash, controlStyle: controlStyle, tips: tips, hotkey: hotkey, launchAtLogin: launchAtLogin)
     }
 
     func apply(_ d: SettingsDraft) {
@@ -125,6 +128,7 @@ extension SettingsModel {
         if sounds != d.sounds { sounds = d.sounds }
         if palette != d.palette { palette = d.palette }
         if splash != d.splash { splash = d.splash }
+        if controlStyle != d.controlStyle { controlStyle = d.controlStyle }
         if tips != d.tips { tips = d.tips }
         if hotkey != d.hotkey { hotkey = d.hotkey }
         if launchAtLogin != d.launchAtLogin { launchAtLogin = d.launchAtLogin }

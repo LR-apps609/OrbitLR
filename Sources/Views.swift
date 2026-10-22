@@ -695,10 +695,13 @@ struct SettingsView: View {
                         }
                     }
                     Toggle("Suoni discreti (clic della manopola, scatto, fine lavoro)", isOn: $draft.sounds)
-                    Toggle("Schermata di avvio animata", isOn: $draft.splash)
-                    Toggle("Un suggerimento a ogni avvio", isOn: $draft.tips)
-                        .disabled(!draft.splash)
-                    Text("La schermata di avvio non compare quando OrbitLR si apre per dei file (Finder, ⌥⌘C) o all’accesso al Mac.")
+                    Picker("Opzioni nei pannelli", selection: $draft.controlStyle) {
+                        Text("Elenco (più rapido)").tag("list")
+                        Text("Manopole (stile radio)").tag("knob")
+                    }
+                    Toggle("Schermata di avvio a ogni apertura", isOn: $draft.splash)
+                    Toggle("Un suggerimento nella schermata di avvio", isOn: $draft.tips)
+                    Text("Spenta, la schermata compare solo al primo avvio e dopo gli aggiornamenti. Mai quando OrbitLR si apre per dei file o all’accesso al Mac.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Section("Motori") {

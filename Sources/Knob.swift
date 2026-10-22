@@ -20,6 +20,8 @@ struct Knob<Value: Hashable>: View {
     var size: CGFloat = 112
 
     @FocusState private var focused: Bool
+    /// «list» (elenco, predefinito) o «knob» (manopola): si sceglie nelle Opzioni.
+    @AppStorage("controlStyle") private var style = "list"
     @State private var dragStart: Int? = nil
     @State private var dragMoved = false
 
@@ -41,6 +43,23 @@ struct Knob<Value: Hashable>: View {
     }
 
     var body: some View {
+        if style == "knob" { knob } else { list }
+    }
+
+    /// Elenco: più rapido per scegliere tra opzioni scritte. Stessi valori della manopola.
+    private var list: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
+            Picker(title, selection: $selection) {
+                ForEach(options) { o in Text(o.label).tag(o.value) }
+            }
+            .pickerStyle(.radioGroup)
+            .labelsHidden()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var knob: some View {
         VStack(spacing: 6) {
             Text(title).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
             ZStack {

@@ -44,6 +44,7 @@ struct ShortcutsPanel: View {
                 Row(keys: ["↩"], text: "Ripete l’ultima scelta (o quella consigliata)"),
                 Row(keys: ["esc"], text: "Torna indietro o chiude"),
                 Row(keys: ["Spazio"], text: "Anteprima del file"),
+                Row(keys: ["a", "…", "z"], text: "Scrivi per cercare un’azione, ↑↓ e ↩ per sceglierla"),
             ]),
             KeyGroup(title: "Manopole", symbol: "dial.medium", rows: [
                 Row(keys: ["←", "→"], text: "Posizione precedente / successiva"),

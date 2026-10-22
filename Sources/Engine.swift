@@ -111,6 +111,7 @@ enum Estimator {
         if id == "searchable" { return job.kind == .pdf ? 3 : 2 }
         if id == "removebg" || id == "upscale" { return 1.2 }
         if id == "aienhance" { return 40 }
+        if id == "stack" { return 1.5 }
         if id == "straighten" { return 0.8 }
         if id == "vcompress" || id == "vresize" { return 2 }
         switch job.kind {
@@ -273,6 +274,25 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         job.native = true
         job.status = "Con i motori di macOS…"
         let files = job.mainFiles
+        if job.action.id == "stack" {
+            // «Unisci più scatti»: tutti i file insieme danno un solo risultato
+            job.status = "Allineo e unisco gli scatti…"
+            Task {
+                do {
+                    let dir = job.destOverride ?? Destination.dir(for: files[0])
+                    try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+                    let out = try await Stacker.run(files: files, param: job.param, dir: dir) { p in
+                        DispatchQueue.main.async { job.progress = min(1, max(0, p)) }
+                    }
+                    await MainActor.run { job.outputs.append(out) }
+                } catch {
+                    let msg = error.localizedDescription
+                    await MainActor.run { job.failures.append(msg) }
+                }
+                await MainActor.run { self.verifyThenFinish(job, code: 0) }
+            }
+            return
+        }
         Task {
             for (i, f) in files.enumerated() {
                 if job.cancelRequested { break }

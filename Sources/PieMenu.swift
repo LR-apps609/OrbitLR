@@ -17,6 +17,9 @@ final class PieModel: ObservableObject, @unchecked Sendable {
     @Published var shown = false
     /// Aumenta a ogni cambio d'anello («Altro» o ritorno): fa ripartire l'animazione.
     @Published var spin = 0
+    /// Ricerca: scrivendo con il menu aperto si filtrano tutte le azioni (anche quelle in «Altro»).
+    @Published var query = "" { didSet { resultIndex = 0 } }
+    @Published var resultIndex = 0
     var all: [Action] = []
     var pages: [[Action]] = []      // anello principale + anelli «Altro», 8 spicchi al massimo ciascuno
     var page = 0
@@ -41,6 +44,7 @@ final class PieModel: ObservableObject, @unchecked Sendable {
         guard items.indices.contains(i) else { return }
         let a = items[i]
         Sounds.select()
+        NewBadges.markSeen(a.id)
         if a.id == Action.more.id, page + 1 < pages.count {
             page += 1
             items = pages[page]
@@ -70,6 +74,35 @@ final class PieModel: ObservableObject, @unchecked Sendable {
         let step = 360 / Double(items.count)
         return Int((deg + step / 2).truncatingRemainder(dividingBy: 360) / step) % items.count
     }
+
+    /// Le azioni che corrispondono a ciò che si è scritto (titolo, testo breve o descrizione, senza accenti).
+    var results: [Action] {
+        let q = Self.fold(query.trimmingCharacters(in: .whitespaces))
+        guard !q.isEmpty else { return [] }
+        let words = q.split(separator: " ").map(String.init)
+        return all.filter { a in
+            guard a.id != Action.more.id else { return false }
+            let text = Self.fold(a.title + " " + a.short + " " + a.hint + " " + a.id.replacingOccurrences(of: "to:", with: ""))
+            return words.allSatisfy { text.contains($0) }
+        }
+    }
+
+    static func fold(_ s: String) -> String {
+        s.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "it_IT"))
+    }
+
+    func pickResult() {
+        let r = results
+        guard r.indices.contains(resultIndex) else { NSSound.beep(); return }
+        let a = r[resultIndex]
+        Sounds.select()
+        NewBadges.markSeen(a.id)
+        query = ""
+        onPick(a)
+    }
+
+    /// Ci sono azioni nuove, mai usate, negli anelli «Altro»?
+    var newInMore: Bool { pages.dropFirst().joined().contains { NewBadges.isNew($0.id) } }
 
     var lastAction: Action? { all.first { $0.id == lastId } }
     var suggestedAction: Action? { all.first { $0.id == suggestedId } }
@@ -262,6 +295,9 @@ struct PieView: View {
     private func petalView(_ a: Action, index i: Int) -> some View {
         let on = model.hover == i
         let suggested = a.id == model.suggestedId
+        let isNew: Bool = a.id == Action.more.id ? model.newInMore : NewBadges.isNew(a.id)
+        // Durante la ricerca restano accesi solo gli spicchi che corrispondono
+        let dimmed: Bool = !model.query.isEmpty && !model.results.contains { $0.id == a.id }
         return VStack(spacing: 4) {
             Image(systemName: a.symbol).font(.system(size: petal * 0.27, weight: .semibold))
             Text(a.short).font(.system(size: max(10, petal * 0.145), weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7)
@@ -281,6 +317,16 @@ struct PieView: View {
                 Circle().fill(Theme.brass).frame(width: 9, height: 9).offset(x: -10, y: 8)
             }
         }
+        .overlay(alignment: .top) {
+            if isNew && !on {
+                Text("NUOVO").font(.system(size: max(7, petal * 0.085), weight: .heavy, design: .rounded))
+                    .foregroundStyle(Color.white)
+                    .padding(.horizontal, 5).padding(.vertical, 1.5)
+                    .background(Capsule().fill(Theme.color(.pdf)))
+                    .offset(y: -petal * 0.08)
+            }
+        }
+        .opacity(dimmed ? 0.3 : 1)
         .scaleEffect(on ? 1.15 : 1)
         .shadow(color: on ? model.tint.opacity(0.6) : .clear, radius: 16, y: 6)
         .animation(.spring(response: 0.22, dampingFraction: 0.7), value: on)
@@ -290,7 +336,9 @@ struct PieView: View {
     }
 
     @ViewBuilder private var centerView: some View {
-        if let h = model.hover, model.items.indices.contains(h) {
+        if !model.query.isEmpty {
+            searchView
+        } else if let h = model.hover, model.items.indices.contains(h) {
             let a = model.items[h]
             VStack(spacing: 6) {
                 Image(systemName: a.symbol).font(.system(size: 22, weight: .semibold)).foregroundStyle(model.tint)
@@ -313,9 +361,44 @@ struct PieView: View {
                 Text(model.fileName).font(.system(size: 12, weight: .semibold)).lineLimit(2).truncationMode(.middle)
                     .multilineTextAlignment(.center)
                 Text(model.subtitle).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1)
+                if side >= 400 {
+                    Label("Scrivi per cercare", systemImage: "magnifyingglass")
+                        .font(.system(size: 9)).foregroundStyle(.tertiary)
+                }
             }
             .padding(14)
         }
+    }
+
+    /// Risultati della ricerca, al centro del menu: ↑↓ per scegliere, Invio per confermare.
+    private var searchView: some View {
+        let results = model.results
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 5) {
+                Image(systemName: "magnifyingglass").font(.system(size: 10, weight: .bold)).foregroundStyle(model.tint)
+                Text(model.query).font(.system(size: 13, weight: .bold)).lineLimit(1)
+                Rectangle().fill(model.tint).frame(width: 1.5, height: 13)
+            }
+            .padding(.bottom, 2)
+            if results.isEmpty {
+                Text("Nessuna azione").font(.system(size: 11)).foregroundStyle(.secondary)
+            } else {
+                ForEach(Array(results.prefix(5).enumerated()), id: \.element.id) { i, a in
+                    let on = i == model.resultIndex
+                    HStack(spacing: 5) {
+                        Image(systemName: a.symbol).font(.system(size: 9, weight: .semibold)).frame(width: 12)
+                        Text(a.title).font(.system(size: 11, weight: on ? .bold : .regular)).lineLimit(1)
+                    }
+                    .foregroundStyle(on ? Color.white : Theme.ink)
+                    .padding(.horizontal, 6).padding(.vertical, 2)
+                    .background(Capsule().fill(on ? AnyShapeStyle(model.tint.gradient) : AnyShapeStyle(Color.clear)))
+                    .onTapGesture { model.resultIndex = i; model.pickResult() }
+                }
+                Text("↩ per scegliere").font(.system(size: 9)).foregroundStyle(.tertiary)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: centerSize * 0.92)
     }
 }
 
@@ -508,6 +591,7 @@ final class PieController: @unchecked Sendable {
 /// Tastiera del menu: 1–8 sceglie, Invio = ultima scelta (o consigliata), Esc chiude o torna indietro.
 enum PieKeys {
     static func handle(_ e: NSEvent, model: PieModel, close: () -> Void) -> Bool {
+        if handleSearch(e, model: model) { return true }
         if e.keyCode == 53 {
             if model.inMore { model.back() } else { close() }
             return true
@@ -523,4 +607,50 @@ enum PieKeys {
         }
         return false
     }
+}
+
+extension PieKeys {
+    /// Ricerca: lettere (e, una volta iniziato, anche numeri e spazi) scrivono; ⌫ cancella; ↑↓ scelgono; Invio conferma; Esc svuota.
+    static func handleSearch(_ e: NSEvent, model: PieModel) -> Bool {
+        let mods = e.modifierFlags.intersection([.command, .control, .option])
+        guard mods.isEmpty else { return false }
+        let searching = !model.query.isEmpty
+        switch e.keyCode {
+        case 51:                                    // ⌫
+            guard searching else { return false }
+            model.query.removeLast()
+            return true
+        case 53:                                    // Esc
+            guard searching else { return false }
+            model.query = ""
+            return true
+        case 36, 76:                                // Invio
+            guard searching else { return false }
+            model.pickResult()
+            return true
+        case 125:                                   // ↓
+            guard searching else { return false }
+            model.resultIndex = min(model.resultIndex + 1, max(model.results.count - 1, 0))
+            return true
+        case 126:                                   // ↑
+            guard searching else { return false }
+            model.resultIndex = max(model.resultIndex - 1, 0)
+            return true
+        default:
+            break
+        }
+        guard let ch = e.characters, ch.count == 1, let c = ch.first else { return false }
+        if c.isLetter || (searching && (c.isNumber || c == " " || c == "-" || c == "×")) {
+            model.query.append(c)
+            return true
+        }
+        return false
+    }
+}
+
+/// Etichetta «Nuovo» sulle azioni appena arrivate, finché non le usi una volta.
+enum NewBadges {
+    static let ids: Set<String> = ["searchable", "pdfedit", "redact", "removebg", "straighten", "upscale", "aienhance", "stack"]
+    static func isNew(_ id: String) -> Bool { ids.contains(id) && !UserDefaults.standard.bool(forKey: "seen." + id) }
+    static func markSeen(_ id: String) { if ids.contains(id) { UserDefaults.standard.set(true, forKey: "seen." + id) } }
 }

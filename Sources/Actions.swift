@@ -34,7 +34,7 @@ enum Kind: String, CaseIterable, Codable {
 }
 
 enum ParamKind { case resize, pdfcompress, vcompress, cut, gifcut, extract, vresize, speed, rotate, reorder, password, unlock, rename,
-                     removebg, straighten, upscale, aienhance }
+                     removebg, straighten, upscale, aienhance, stack }
 
 struct Action: Identifiable, Hashable {
     let id: String          // lo stesso identificativo dello script, es. "to:pdf" o "resize"
@@ -146,6 +146,7 @@ enum Catalog {
         "removebg": Action(id: "removebg", short: "Scontorna", title: "Rimuovi lo sfondo", hint: "Il soggetto ritagliato, sfondo trasparente", symbol: "person.and.background.dotted", param: .removebg),
         "straighten": Action(id: "straighten", short: "Raddrizza", title: "Raddrizza il documento", hint: "Foto di un foglio → scansione pulita", symbol: "doc.viewfinder", param: .straighten),
         "upscale": Action(id: "upscale", short: "Ingrandisci", title: "Ingrandisci", hint: "2× o 4×, contorni nitidi", symbol: "plus.magnifyingglass", param: .upscale),
+        "stack": Action(id: "stack", short: "Unisci scatti", title: "Unisci più scatti", hint: "Più foto della stessa scena → una più nitida e pulita", symbol: "square.stack.3d.down.right", param: .stack),
         "aienhance": Action(id: "aienhance", short: "Migliora IA", title: "Migliora con IA", hint: "Più nitida e pulita, anche ingrandita", symbol: "sparkles", param: .aienhance),
     ]
 
@@ -179,7 +180,7 @@ enum Catalog {
                               "pdfedit", "redact", "searchable",
                               "merge", "rotate", "reorder", "protect", "unprotect", "rename"]
         case .img:   order = ["to:jpg", "to:png", "to:heic", "resize", "strip", "ocr", "to:pdf",
-                              "aienhance", "removebg", "straighten", "upscale", "searchable",
+                              "aienhance", "stack", "removebg", "straighten", "upscale", "searchable",
                               "to:webp", "to:tiff", "to:ico", "merge", "rename"]
         case .doc:   order = ["to:pdf", "to:docx", "to:odt", "to:txt", "to:md", "to:html", "to:rtf", "rename"]
         case .sheet: order = ["to:pdf", "to:xlsx", "to:csv", "to:ods", "to:html", "rename"]
@@ -189,7 +190,7 @@ enum Catalog {
                               "speed", "to:flac", "to:ogg", "rename"]
         case .video: order = ["to:mp4", "vcompress", "cut", "gifcut", "to:mp3", "transcribe", "vresize",
                               "speed", "to:mov", "to:mkv", "to:webm", "to:gif", "to:m4a", "normalize",
-                              "subextract", "subembed", "strip", "rename"]
+                              "subextract", "subembed", "strip", "stack", "rename"]
         case .sub:   order = []
         }
         let hasSvg = exts.contains("svg")
@@ -202,11 +203,12 @@ enum Catalog {
                 out.append(conv(t, kind: kind))
             } else {
                 if id == "merge" && mergeable < 2 { continue }
+                if id == "stack" && kind == .img && mergeable < 2 { continue }      // servono almeno 2 foto
                 if hasSvg && ["resize", "strip", "ocr", "removebg", "straighten", "upscale", "aienhance", "searchable"].contains(id) { continue }
                 if hasRaw && id == "strip" { continue }
                 if let a = tools[id] { out.append(a) }
             }
         }
-        return out
+        return PieCustom.apply(out, kind: kind)       // l'ordine scelto in «Personalizza il menu»
     }
 }

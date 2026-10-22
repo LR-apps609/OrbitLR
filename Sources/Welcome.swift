@@ -39,16 +39,22 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
     var skipNextSplash = false
 
     static var isFirstLaunch: Bool { !UserDefaults.standard.bool(forKey: "welcomeDone") }
-    static var splashEnabled: Bool { UserDefaults.standard.object(forKey: "splash") as? Bool ?? true }
+    /// Schermata a ogni apertura: spenta di base (per un'app di utilità l'attesa a ogni avvio stanca).
+    /// Compare comunque al primo avvio e dopo ogni aggiornamento.
+    static var splashEnabled: Bool { UserDefaults.standard.object(forKey: "splash") as? Bool ?? false }
     static var tipsEnabled: Bool { UserDefaults.standard.object(forKey: "tips") as? Bool ?? true }
 
     /// Chiamata all'avvio: decide se mostrare benvenuto, schedina con suggerimento, o niente.
     func showAtLaunch() {
         // Aperta con doppio clic su un aggiornamento: niente schedina e niente finestra, solo l'aggiornamento
         if Updater.shared.busy { skipNextSplash = false; return }
+        let current = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        let last = UserDefaults.standard.string(forKey: "lastLaunchVersion")
+        UserDefaults.standard.set(current, forKey: "lastLaunchVersion")
+        let justUpdated = last != nil && last != current
         if Self.isFirstLaunch {
             show(mode: .first)
-        } else if Self.splashEnabled && !skipNextSplash {
+        } else if (Self.splashEnabled || justUpdated) && !skipNextSplash {
             show(mode: .splash)
         } else {
             LaunchGate.release()          // niente schedina: la finestra compare subito
