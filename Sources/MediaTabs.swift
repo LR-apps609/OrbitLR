@@ -313,33 +313,58 @@ struct VideoTabView: View {
     }
 
     private var toolRow: some View {
-        HStack(spacing: 6) {
+        let row = HStack(spacing: 6) {
             ForEach(VideoTool.allCases) { t in
                 Chip(title: t.rawValue, selected: tool == t, tint: tint) { tool = t }
             }
             Spacer(minLength: 0)
         }
+        // Finestra stretta: gli strumenti scorrono invece di tagliarsi
+        return ViewThatFits(in: .horizontal) {
+            row
+            ScrollView(.horizontal, showsIndicators: false) { row }
+        }
     }
 
-    // La striscia: nome dello strumento · opzioni · riepilogo · pulsante
+    // La striscia: nome dello strumento · opzioni · riepilogo · pulsante (su due righe se la finestra è stretta)
     private func strip(_ trim: TrimModel) -> some View {
-        HStack(alignment: .center, spacing: 18) {
-            VStack(alignment: .leading, spacing: 2) {
-                SectionLabel(text: "Strumento")
-                Text(tool.rawValue).font(.system(size: 14.5, weight: .bold)).lineLimit(1).fixedSize()
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .center, spacing: 18) {
+                stripTitle
+                Divider().frame(height: 40)
+                options(trim)
+                Spacer(minLength: 8)
+                stripEnd(trim)
             }
-            .frame(minWidth: 120, alignment: .leading)
-            Divider().frame(height: 40)
-            options(trim)
-            Spacer(minLength: 8)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 14) {
+                    stripTitle
+                    Spacer(minLength: 8)
+                    stripEnd(trim)
+                }
+                HStack(spacing: 14) { options(trim) }
+            }
+        }
+        .padding(.horizontal, 16).padding(.vertical, 12)
+        .card(radius: 14)
+    }
+
+    private var stripTitle: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            SectionLabel(text: "Strumento")
+            Text(tool.rawValue).font(.system(size: 14.5, weight: .bold)).lineLimit(1).fixedSize()
+        }
+        .frame(minWidth: 110, alignment: .leading)
+    }
+
+    private func stripEnd(_ trim: TrimModel) -> some View {
+        HStack(spacing: 14) {
             VideoSummary(trim: trim, tool: tool, mb: mb, aspect: aspect, onlySelection: onlySelection, size: m.videoSize)
             Button(actionTitle) { start(trim) }
                 .buttonStyle(.borderedProminent).tint(Theme.accent).controlSize(.large)
                 .keyboardShortcut(.defaultAction)
                 .disabled(!canStart)
         }
-        .padding(.horizontal, 16).padding(.vertical, 12)
-        .card(radius: 14)
     }
 
     @ViewBuilder private func options(_ trim: TrimModel) -> some View {
@@ -348,7 +373,8 @@ struct VideoTabView: View {
             Text("Tieni il tratto tra le maniglie gialle").font(.system(size: 12)).foregroundStyle(.secondary)
         case .social:
             HStack(spacing: 6) {
-                Chip(title: "9:16 Reels, TikTok", selected: aspect == "9x16", tint: tint) { aspect = "9x16" }
+                Chip(title: "9:16 Reels", selected: aspect == "9x16", tint: tint) { aspect = "9x16" }
+                    .help("Reels, TikTok, Storie, Shorts")
                 Chip(title: "1:1 Post", selected: aspect == "1x1", tint: tint) { aspect = "1x1" }
                 Chip(title: "4:5 Feed", selected: aspect == "4x5", tint: tint) { aspect = "4x5" }
                 Chip(title: "16:9 YouTube", selected: aspect == "16x9", tint: tint) { aspect = "16x9" }
@@ -721,7 +747,8 @@ struct AudioTabView: View {
                 Text(actionTitle).font(.system(size: 13.5, weight: .bold)).frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent).tint(Theme.accent).controlSize(.large)
-            .keyboardShortcut(.defaultAction)
+            // Mentre si scrive il testo, Invio va a capo e non avvia
+            .keyboardShortcut(tool == .tts ? nil : KeyboardShortcut.defaultAction)
             .disabled(!canStart)
         }
         .padding(16)
