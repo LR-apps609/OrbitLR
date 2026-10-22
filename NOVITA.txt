@@ -1,10 +1,5 @@
-Novità della 2.6.3:
-• Avvio: una schermata breve con l'animazione che dura solo il tempo vero di caricamento, poi sfuma nella finestra
-• Pagina iniziale nuova: il quadrante colorato si apre quando ci passi sopra o trascini dei file
-• Barra laterale più semplice: Conversione, Video, Audio. Automazioni, Preset e Componenti stanno in «Avanzate»
-• Taglia, Comprimi (al peso esatto), GIF e Volume uniforme funzionano subito, senza programmi da installare
-• Formati che macOS non apre da solo: Video e Audio li preparano in automatico, niente più «convertilo prima»
-• Scheda Video: trascina le clip per riordinarle, trascina i bordi per tagliarle
-• Ogni risultato dice dove è stato salvato
-• Formato social dal menu a torta: colori giusti anche dai video HDR dell'iPhone
-• Meno testo, nomi più chiari («Inquadra le persone»)
+Novità della 2.6.4:
+• Messaggi d'errore chiari: niente più codici di macOS, ma cosa è successo e cosa fare
+• Nessuna cartella creata senza chiedere: i file ricevuti da Condividi e Comandi Rapidi vanno direttamente in Download
+• Comprimi: se il peso scelto non basta, propone subito di riprovare con il doppio
+• Pulizia interna: il formato social usa un solo motore, quello del montaggio

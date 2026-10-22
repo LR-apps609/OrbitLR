@@ -16,7 +16,13 @@ final class Job: ObservableObject, Identifiable, @unchecked Sendable {
     @Published var progress: Double = -1          // -1 = in corso senza percentuale
     @Published var status = "In attesa"
     @Published var outputs: [URL] = []
-    @Published var failures: [String] = []
+    /// Ogni errore entra già tradotto in una frase chiara con la soluzione (FriendlyError).
+    @Published var failures: [String] = [] {
+        didSet {
+            let friendly = failures.map(FriendlyError.text)
+            if friendly != failures { failures = friendly }
+        }
+    }
     @Published var notes: [String] = []
     @Published var info = ""
 
@@ -621,7 +627,7 @@ enum Fix: Equatable {
                        "gs": "gs", "whisper": "whisper", "magick": "magick", "exiftool": "exiftool"]
         let ids = Array(Set(job.missing.compactMap { toolMap[$0] }))
         if !ids.isEmpty { return .install(ids) }
-        if job.action.id == "vcompress", text.contains("troppo lungo"), let mb = Int(job.param) {
+        if job.action.id == "vcompress", text.contains("troppo lungo") || text.contains("farlo stare"), let mb = Int(job.param) {
             return .retryParam("Prova con \(mb * 2) MB", String(mb * 2))
         }
         if text.contains("password") && job.kind == .pdf && job.action.id != "unprotect" { return .unlock }

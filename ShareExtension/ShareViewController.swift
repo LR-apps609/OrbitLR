@@ -76,11 +76,11 @@ final class ShareViewController: NSViewController {
         }
     }
 
-    /// Download/OrbitLR, nella cartella vera dell'utente (l'estensione ha il permesso per Download).
+    /// Download, nella cartella vera dell'utente (l'estensione ha il permesso per Download). Nessuna sottocartella nuova.
     private static var inbox: URL {
         var home = NSHomeDirectory()
         if let pw = getpwuid(getuid()), let dir = pw.pointee.pw_dir { home = String(cString: dir) }
-        return URL(fileURLWithPath: home).appendingPathComponent("Downloads/OrbitLR")
+        return URL(fileURLWithPath: home).appendingPathComponent("Downloads")
     }
 
     private func add(_ path: String) {

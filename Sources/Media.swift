@@ -197,49 +197,6 @@ enum Media {
 
     // MARK: - Formato social
 
-    private static func social(_ file: URL, param: SocialParam, out: URL, job: Job, progress: @escaping (Double) -> Void) async throws {
-        let asset = AVURLAsset(url: file)
-        guard let vtrack = try await asset.loadTracks(withMediaType: .video).first else { throw NativeError("il file non contiene video") }
-        let duration = try await asset.load(.duration).seconds
-        guard duration.isFinite, duration > 0 else { throw NativeError("non riesco a leggere la durata") }
-        let tr = range(param.start, param.end, duration: duration)
-        let orient = await orientation(of: asset, track: vtrack, at: CMTime(seconds: min(1, duration / 2), preferredTimescale: 600))
-        let natural = try await vtrack.load(.naturalSize)
-        let sideways: [CGImagePropertyOrientation] = [.left, .right, .leftMirrored, .rightMirrored]
-        let rotated = sideways.contains(orient)
-        let W = Double(rotated ? natural.height : natural.width), H = Double(rotated ? natural.width : natural.height)
-        guard W > 0, H > 0 else { throw NativeError("dimensioni del video non valide") }
-
-        // Il riquadro più grande con le proporzioni scelte
-        var cw = W, ch = W * param.ah / param.aw
-        if ch > H { ch = H; cw = H * param.aw / param.ah }
-        // Uscita: lato lungo fino a 1920 (mai ingrandito)
-        let scale = min(1, 1920 / max(cw, ch))
-        let outW = even(cw * scale), outH = even(ch * scale)
-
-        progress(0.02)
-        var path: [SubjectPoint] = []
-        if param.follow && (cw < W - 2 || ch < H - 2) {
-            path = await subjectPath(asset: asset, range: tr) { p in progress(0.02 + p * 0.13) }
-        }
-        if job.cancelRequested { throw NativeError("annullato") }
-        let track = SubjectTrack(path)
-        let cropW = cw, cropH = ch
-        let sx = Double(outW) / cw, sy = Double(outH) / ch
-
-        try await VideoPipeline.process(asset: asset, videoTrack: vtrack, range: tr, size: CGSize(width: outW, height: outH),
-                                        out: out, job: job, progress: { p in progress(0.15 + p * 0.85) }) { raw, t in
-            var img = raw.oriented(orient)
-            img = img.transformed(by: CGAffineTransform(translationX: -img.extent.minX, y: -img.extent.minY))
-            let c = track.center(at: t)
-            let ox = min(max(c.x * W - cropW / 2, 0), W - cropW)
-            let oy = min(max(c.y * H - cropH / 2, 0), H - cropH)
-            return img.cropped(to: CGRect(x: ox, y: oy, width: cropW, height: cropH))
-                .transformed(by: CGAffineTransform(translationX: -ox, y: -oy))
-                .transformed(by: CGAffineTransform(scaleX: sx, y: sy))
-        }
-    }
-
     struct SubjectPoint { let t: Double; var x: Double; var y: Double }
 
     /// Il centro del soggetto lungo il video, già ammorbidito (niente scatti).

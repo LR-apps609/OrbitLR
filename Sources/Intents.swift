@@ -110,8 +110,8 @@ struct OrbitIntentError: Error, CustomLocalizedStringResourceConvertible {
 enum IntentRunner {
     /// Dove finiscono i file arrivati dai Comandi Rapidi senza un percorso (es. foto da Foto): Download/OrbitLR.
     static var inbox: URL {
-        let u = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first ?? Paths.home
-        return u.appendingPathComponent("OrbitLR")
+        // Direttamente in Download: nessuna cartella nuova creata senza chiedere (punto 24)
+        return FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first ?? Paths.home
     }
 
     /// File veri sul disco: se il Comando Rapido passa solo i dati, li salvo in Download/OrbitLR.
