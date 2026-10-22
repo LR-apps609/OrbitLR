@@ -6,12 +6,21 @@ import QuickLook
 // MARK: - Struttura della finestra
 
 enum SidebarItem: String, CaseIterable, Identifiable {
-    case workspace = "Modifica e converti", queue = "Coda", history = "Cronologia", presets = "Preset",
-         automation = "Cartelle automatiche", components = "Componenti"
+    case workspace = "Conversione", files = "File", images = "Immagini", video = "Video", audio = "Audio",
+         queue = "Coda", history = "Cronologia", automation = "Automazioni", presets = "Preset", components = "Componenti"
     var id: String { rawValue }
+    /// Le schede di lavoro (in alto) e le attività (sotto).
+    static let tabs: [SidebarItem] = [.workspace, .files, .images, .video, .audio]
+    static let activities: [SidebarItem] = [.queue, .history, .automation, .presets, .components]
+    /// File e Immagini avranno la loro schermata nella 2.7: per ora si lavora da Conversione.
+    var comingSoon: Bool { self == .files || self == .images }
     var symbol: String {
         switch self {
-        case .workspace: return "wand.and.stars"
+        case .workspace: return "chart.pie.fill"
+        case .files: return "doc.richtext.fill"
+        case .images: return "photo.fill"
+        case .video: return "film.fill"
+        case .audio: return "waveform"
         case .queue: return "tray.full.fill"
         case .history: return "clock.arrow.circlepath"
         case .presets: return "star.circle.fill"
@@ -22,6 +31,10 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     var color: Color {
         switch self {
         case .workspace: return Theme.accent
+        case .files: return Theme.color(.pdf)
+        case .images: return Theme.color(.img)
+        case .video: return Theme.color(.video)
+        case .audio: return Theme.color(.audio)
         case .queue: return Theme.brass
         case .history: return Theme.color(.video)
         case .presets: return Theme.brass
@@ -47,14 +60,13 @@ struct MainWindow: View {
                 }
                 .padding(.horizontal, 16).padding(.top, 6).padding(.bottom, 10)
 
-                List(SidebarItem.allCases, selection: $app.selection) { item in
-                    Label {
-                        Text(item.rawValue)
-                    } icon: {
-                        Image(systemName: item.symbol).foregroundStyle(item.color)
+                List(selection: $app.selection) {
+                    Section("Schede") {
+                        ForEach(SidebarItem.tabs) { item in sidebarRow(item) }
                     }
-                    .badge(item == .queue ? store.runningJobs.count : 0)
-                    .tag(item)
+                    Section("Attività") {
+                        ForEach(SidebarItem.activities) { item in sidebarRow(item) }
+                    }
                 }
                 .listStyle(.sidebar)
                 .scrollContentBackground(.hidden)
@@ -103,7 +115,9 @@ struct MainWindow: View {
             ZStack {
                 Group {
                     switch app.selection ?? .workspace {
-                    case .workspace: WorkspaceView(ws: app.workspace)
+                    case .workspace, .files, .images: WorkspaceView(ws: app.workspace)
+                    case .video: VideoTabView(m: app.videoTab)
+                    case .audio: AudioTabView(m: app.audioTab)
                     case .queue: QueueView()
                     case .history: HistoryView()
                     case .presets: PresetsView()
@@ -136,6 +150,28 @@ struct MainWindow: View {
         .tint(Theme.accent)
         .foregroundStyle(Theme.ink)
         .id(palette)                       // cambio di tema: tutta la finestra si ridisegna con i nuovi colori
+    }
+
+    @ViewBuilder private func sidebarRow(_ item: SidebarItem) -> some View {
+        HStack(spacing: 6) {
+            Label {
+                Text(item.rawValue)
+            } icon: {
+                Image(systemName: item.symbol).foregroundStyle(item.color)
+            }
+            if item.comingSoon {
+                Spacer(minLength: 4)
+                Text("2.7").font(.system(size: 9.5, weight: .bold, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 5).padding(.vertical, 1)
+                    .background(Capsule().strokeBorder(Theme.stroke))
+            }
+        }
+        .badge(item == .queue ? store.runningJobs.count : 0)
+        .tag(item)
+        .selectionDisabled(item.comingSoon)
+        .opacity(item.comingSoon ? 0.5 : 1)
+        .help(item.comingSoon ? "Schermata in arrivo nella 2.7: per ora usa Conversione" : "")
     }
 }
 

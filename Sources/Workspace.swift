@@ -8,6 +8,9 @@ final class AppState: ObservableObject, @unchecked Sendable {
     static let shared = AppState()
     @Published var selection: SidebarItem? = .workspace
     let workspace = Workspace()
+    /// Le schede Video e Audio tengono il loro file anche quando si cambia scheda.
+    let videoTab = MediaTabModel(videoTab: true)
+    let audioTab = MediaTabModel(videoTab: false)
     /// La finestra principale, per riportarla in primo piano senza aprirne una seconda.
     weak var mainWindow: NSWindow?
     @Published var showBugReport = false
@@ -201,7 +204,7 @@ struct WorkspaceView: View {
             }
         }
         .quickLookPreview($ws.preview, in: ws.allFiles)
-        .navigationTitle("Modifica e converti")
+        .navigationTitle("Conversione")
     }
 
     // Nessun file: grande area cliccabile

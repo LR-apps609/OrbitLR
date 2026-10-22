@@ -57,7 +57,11 @@ enum Media {
         case "tts":
             let text = try readText(file)
             let out = Destination.unique(dir, base: ttsName(text, fallback: base), ext: "m4a")
-            try await Speech.write(text: text, voice: job.param.isEmpty ? nil : job.param, rate: nil, out: out, job: job, progress: progress)
+            // Parametro «voce|velocità» (entrambi facoltativi)
+            let tp = job.param.components(separatedBy: "|")
+            let voice = tp.first.flatMap { $0.isEmpty ? nil : $0 }
+            let rate = tp.count > 1 ? Float(tp[1]) : nil
+            try await Speech.write(text: text, voice: voice, rate: rate, out: out, job: job, progress: progress)
             return out
         default:
             throw NativeError("azione sconosciuta")
