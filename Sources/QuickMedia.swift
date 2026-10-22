@@ -190,26 +190,30 @@ enum QuickMedia {
         guard W > 0, H > 0 else { throw NativeError("dimensioni del video non valide") }
         let full = CMTimeRange(start: .zero, duration: CMTime(seconds: d, preferredTimescale: 600))
 
-        // Due tentativi: se il primo supera di poco il peso, il secondo usa un po' meno dati
-        for attempt in 0..<2 {
-            let longSide: Double = vbps < 700_000 ? 854 : vbps < 1_800_000 ? 1280 : vbps < 4_500_000 ? 1920 : 3840
+        // Fino a tre tentativi: se il file supera il peso, il successivo corregge i dati in proporzione
+        // (e, se serve molto meno, scende anche di risoluzione). Così il peso scelto è garantito.
+        var shrink = 1.0
+        for attempt in 0..<3 {
+            let longSide: Double = (vbps < 700_000 ? 854 : vbps < 1_800_000 ? 1280 : vbps < 4_500_000 ? 1920 : 3840) * shrink
             let k = min(1, longSide / max(W, H))
             let outW = Media.even(W * k), outH = Media.even(H * k)
             let sx = Double(outW) / W, sy = Double(outH) / H
+            let base = Double(attempt) / 3
             try await VideoPipeline.process(asset: asset, videoTrack: vtrack, range: full, size: CGSize(width: outW, height: outH),
                                             out: out, job: job, videoBitrate: vbps, audioBitrate: abps,
-                                            progress: { p in progress(attempt == 0 ? p * 0.95 : 0.95 + p * 0.05) }) { raw, _ in
+                                            progress: { p in progress(base + p / 3) }) { raw, _ in
                 var img = raw.oriented(orient)
                 img = img.transformed(by: CGAffineTransform(translationX: -img.extent.minX, y: -img.extent.minY))
                 return img.transformed(by: CGAffineTransform(scaleX: sx, y: sy))
             }
-            if Job.size(of: out) <= limit { progress(1); return }
-            vbps = Int(Double(vbps) * 0.82)
+            let got = Job.size(of: out)
+            if got <= limit { progress(1); return }
+            let over = Double(got) / Double(limit)
+            vbps = max(80_000, Int(Double(vbps) / over * 0.9))
+            if over > 1.3 { shrink *= 0.75 }
         }
-        if Job.size(of: out) > limit {
-            try? FileManager.default.removeItem(at: out)
-            throw NativeError("non riesco a farlo stare in \(mb) MB: scegli un peso un po' maggiore")
-        }
+        try? FileManager.default.removeItem(at: out)
+        throw NativeError("non riesco a farlo stare in \(mb) MB: scegli un peso un po' maggiore")
     }
 }
 

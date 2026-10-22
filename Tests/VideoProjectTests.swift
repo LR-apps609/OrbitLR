@@ -165,10 +165,20 @@ final class VideoProjectTests: XCTestCase {
         p.clips = [clip(v, i)]
         p.resolution = 720
         p.fps = 60
-        let r = try await export(p, name: "720p60.mp4")
+        let r = try await export(p, name: "720p.mp4")
         XCTAssertEqual(r.displaySize.width, 1280)
         XCTAssertEqual(r.displaySize.height, 720)
-        XCTAssertGreaterThan(r.fps, 50, "60 fotogrammi al secondo")
+        XCTAssertEqual(r.fps, 30, accuracy: 2, "da un video a 30 fps non si inventano fotogrammi")
+
+        let fluid = try await Fixtures.video(name: "fluido.mp4", width: 640, height: 360, seconds: 2, fps: 60)
+        var q = VideoProject()
+        q.clips = [clip(fluid, try await info(fluid))]
+        q.fps = 60
+        let r60 = try await export(q, name: "60fps.mp4")
+        XCTAssertGreaterThan(r60.fps, 50, "un video a 60 fps resta a 60")
+        q.fps = 30
+        let r30 = try await export(q, name: "60-a-30.mp4")
+        XCTAssertEqual(r30.fps, 30, accuracy: 2)
 
         p.resolution = 2160
         p.fps = 30

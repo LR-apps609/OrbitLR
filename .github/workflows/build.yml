@@ -97,11 +97,15 @@ jobs:
             f=$(echo "$l" | cut -d: -f1); n=$(echo "$l" | cut -d: -f2); m=$(echo "$l" | cut -d: -f4-)
             echo "::error file=${f#$GITHUB_WORKSPACE/},line=$n::$m"
           done
-          grep -E "error:" test.log | grep -vE "^/.*:[0-9]+: error: -\[" | sort -u | head -n 5 | while IFS= read -r l; do
+          # Errori di compilazione dei test (non i messaggi di sistema che contengono la parola «error»)
+          grep -E "^/.*:[0-9]+:[0-9]+: error:" test.log | sort -u | head -n 5 | while IFS= read -r l; do
             echo "::error::$l"
           done
-          grep -E "Test Case .* passed" test.log | sed -E 's/.*-\[OrbitLRTests\.([A-Za-z]+) ([A-Za-z0-9_]+)\].*\(([0-9.]+) seconds\).*/::notice::OK \1.\2 (\3 s)/' | head -n 40
-          grep -E "Executed [0-9]+ tests" test.log | tail -n 1 | sed 's/^/::notice::/'
+          passed=$(grep -cE "Test Case .* passed" test.log || true)
+          failed=$(grep -cE "Test Case .* failed" test.log || true)
+          echo "::notice::Test superati: $passed · falliti: $failed"
+          echo "## Test automatici" >> $GITHUB_STEP_SUMMARY
+          echo "Superati: $passed · Falliti: $failed" >> $GITHUB_STEP_SUMMARY
           exit $status
 
       - uses: actions/upload-artifact@v6

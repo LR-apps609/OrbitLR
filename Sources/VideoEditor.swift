@@ -414,7 +414,8 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         let canvas = CGSize(width: base.width * k, height: base.height * k)
         let out = VideoProjectExport.outputSize(canvas: canvas, project: project).out
         let w = Double(out.width), h = Double(out.height)
-        let bits = max(2_000_000, min(50_000_000, w * h * Double(max(24, project.fps)) * 0.13)) + 160_000
+        let fps = Double(VideoProjectBuilder.effectiveFPS(project, infos: infos))
+        let bits = max(2_000_000, min(50_000_000, w * h * fps * 0.13)) + 160_000
         return (out, Int64(bits * project.duration / 8))
     }
 
@@ -707,6 +708,7 @@ struct VideoEditorView: View {
                         Chip(title: "\(f) fps", selected: s.project.fps == f, tint: tint) {
                             s.change(undo, "\(f) fotogrammi al secondo") { $0.fps = f }
                         }
+                        .help(f == 60 ? "Solo se i video sono girati a 60: non si inventano fotogrammi" : "")
                     }
                 }
             }

@@ -170,6 +170,12 @@ enum VideoProjectBuilder {
         return merged
     }
 
+    /// La fluidità scelta, ma mai più dei video di partenza (60 fps da un video a 30 sarebbero fotogrammi ripetuti).
+    static func effectiveFPS(_ p: VideoProject, infos: [String: VPMediaInfo]) -> Int {
+        let source = p.clips.compactMap { infos[$0.path]?.fps }.max() ?? 30
+        return max(24, min(60, min(p.fps, Int(source.rounded()))))
+    }
+
     static func build(_ p: VideoProject, infos: [String: VPMediaInfo], speech: [String: [ClosedRange<Double>]],
                       maxSide: CGFloat) async throws -> VPBuilt {
         let comp = AVMutableComposition()
@@ -217,7 +223,7 @@ enum VideoProjectBuilder {
         instr.layerInstructions = [layer]
         let vc = AVMutableVideoComposition()
         vc.renderSize = canvas
-        vc.frameDuration = CMTime(value: 1, timescale: CMTimeScale(max(24, min(60, p.fps))))
+        vc.frameDuration = CMTime(value: 1, timescale: CMTimeScale(effectiveFPS(p, infos: infos)))
         vc.instructions = [instr]
         // Uscita in SDR standard: i video HDR dell'iPhone vengono convertiti con i colori giusti
         vc.colorPrimaries = AVVideoColorPrimaries_ITU_R_709_2
@@ -448,7 +454,8 @@ enum VideoProjectExport {
         let track = Media.SubjectTrack(path)
         let sx = Double(sizes.out.width) / cropW, sy = Double(sizes.out.height) / cropH
         try await VideoPipeline.processComposition(asset: built.composition, videoComposition: built.videoComposition,
-                                                   audioMix: built.audioMix, range: full, fps: Double(p.fps),
+                                                   audioMix: built.audioMix, range: full,
+                                                   fps: Double(VideoProjectBuilder.effectiveFPS(p, infos: infos)),
                                                    size: sizes.out, out: out, job: job,
                                                    progress: { f in progress(0.15 + f * 0.85) }) { img, t in
             var frame = img.transformed(by: CGAffineTransform(translationX: -img.extent.minX, y: -img.extent.minY))
