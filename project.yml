@@ -1,0 +1,126 @@
+name: OrbitLR
+options:
+  bundleIdPrefix: it.ledion
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  developmentLanguage: it
+
+targets:
+  OrbitLR:
+    type: application
+    platform: macOS
+    scheme: {}
+    dependencies:
+      - target: OrbitLRShare        # estensione «Condividi», inclusa nell'app
+    sources:
+      - path: Sources
+      - path: Resources/Assets.xcassets
+      - path: Resources/LRConverter.zsh
+        buildPhase: resources
+      - path: Resources/Sounds
+        buildPhase: resources
+      # Modelli di IA (Real-ESRGAN, BSD-3): copiati così come sono, l'app li compila al primo uso
+      - path: Resources/Models
+        type: folder
+        buildPhase: resources
+    info:
+      path: Sources/Info.plist
+      properties:
+        CFBundleDisplayName: OrbitLR
+        CFBundleName: OrbitLR
+        CFBundleDevelopmentRegion: it
+        CFBundleShortVersionString: "2.5.1"
+        CFBundleVersion: "17"
+        LSMinimumSystemVersion: "14.0"
+        LSApplicationCategoryType: public.app-category.utilities
+        NSHumanReadableCopyright: "Uso personale di Ledion"
+        NSAppleEventsUsageDescription: "OrbitLR legge i file selezionati nel Finder quando usi la scorciatoia da tastiera."
+        # «Apri con → OrbitLR» per qualsiasi file
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: "Aggiornamento di OrbitLR"
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Owner
+            LSItemContentTypes: [it.ledion.orbitlr.update]
+          - CFBundleTypeName: "Tutti i file"
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes: [public.item]
+        # orbitlr://open?f=… — usato dall'estensione «Condividi» per passare i file all'app
+        CFBundleURLTypes:
+          - CFBundleURLName: it.ledion.OrbitLR
+            CFBundleURLSchemes: [orbitlr]
+        # I file .orbitlr sono gli aggiornamenti: doppio clic → si installano da soli
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: it.ledion.orbitlr.update
+            UTTypeDescription: "Aggiornamento di OrbitLR"
+            UTTypeConformsTo: [public.data, public.archive]
+            UTTypeTagSpecification:
+              public.filename-extension: [orbitlr]
+        # Voce «OrbitLR» nel tasto destro del Finder (Servizi / Azioni rapide)
+        NSServices:
+          - NSMenuItem:
+              default: OrbitLR
+            NSMessage: convertFiles
+            NSPortName: OrbitLR
+            NSRequiredContext: {}
+            NSSendFileTypes: [public.item]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: it.ledion.OrbitLR
+        PRODUCT_NAME: OrbitLR
+        MARKETING_VERSION: "2.5.1"
+        CURRENT_PROJECT_VERSION: "17"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Colore dei controlli di sistema (selezione nella barra laterale, interruttori…): salvia, non il blu di macOS
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        GENERATE_INFOPLIST_FILE: NO
+        SWIFT_VERSION: "5.0"
+        SWIFT_STRICT_CONCURRENCY: minimal
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        DEVELOPMENT_TEAM: ""
+        ENABLE_HARDENED_RUNTIME: NO
+        ENABLE_APP_SANDBOX: NO
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        COMBINE_HIDPI_IMAGES: YES
+
+  # Estensione «Condividi» (punto 13): Condividi → OrbitLR da Foto, Mail, Safari, Anteprima, Finder
+  OrbitLRShare:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: ShareExtension
+    info:
+      path: ShareExtension/Info.plist
+      properties:
+        CFBundleDisplayName: OrbitLR
+        CFBundleShortVersionString: "2.5.1"
+        CFBundleVersion: "17"
+        LSMinimumSystemVersion: "14.0"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule: 'SUBQUERY (extensionItems, $extensionItem, SUBQUERY ($extensionItem.attachments, $attachment, ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "public.file-url" || ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "public.image" || ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "public.movie" || ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "public.audio" || ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "com.adobe.pdf").@count >= 1).@count >= 1'
+    entitlements:
+      path: ShareExtension/OrbitLRShare.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.files.user-selected.read-only: true
+        com.apple.security.files.downloads.read-write: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: it.ledion.OrbitLR.Share
+        PRODUCT_NAME: OrbitLRShare
+        MARKETING_VERSION: "2.5.1"
+        CURRENT_PROJECT_VERSION: "17"
+        GENERATE_INFOPLIST_FILE: NO
+        SWIFT_VERSION: "5.0"
+        SWIFT_STRICT_CONCURRENCY: minimal
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        DEVELOPMENT_TEAM: ""
+        ENABLE_HARDENED_RUNTIME: NO
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        SKIP_INSTALL: YES

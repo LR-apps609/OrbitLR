@@ -1,0 +1,367 @@
+import SwiftUI
+import AppKit
+
+// ════════════════════════════════════════════════════════════════════
+//  Avvio di OrbitLR
+//  • Primo avvio: schedina di caricamento, poi tre schermate di benvenuto (punto 36).
+//  • Avvii successivi: 2–3 secondi di animazione, poi un suggerimento diverso ogni volta,
+//    con «Non mostrare più». Niente schedina se l'app si apre per un file o all'accesso al Mac.
+//  • «Guida rapida» (barra dei menu): le tre schermate, quando vuoi.
+// ════════════════════════════════════════════════════════════════════
+
+final class WelcomeController: ObservableObject, @unchecked Sendable {
+    static let shared = WelcomeController()
+
+    enum Phase: Equatable { case loading, page(Int), tip }
+
+    struct Step: Identifiable {
+        let id: Int
+        let title: String
+        let symbol: String
+    }
+
+    let steps = [
+        Step(id: 0, title: "Preparo il motore di conversione", symbol: "gearshape.2.fill"),
+        Step(id: 1, title: "Carico i suoni", symbol: "speaker.wave.2.fill"),
+        Step(id: 2, title: "Controllo i componenti", symbol: "shippingbox.fill"),
+        Step(id: 3, title: "Imposto le scorciatoie", symbol: "command"),
+    ]
+
+    @Published var phase: Phase = .loading
+    @Published var doneSteps = 0
+    @Published var componentsFound = 0
+    @Published var firstLaunch = false
+    @Published var tip: Tip = Tip.all[0]
+    private var window: NSWindow?
+    private var hidden: [NSWindow] = []
+
+    /// Vero se l'app è stata aperta per dei file (Finder, ⌥⌘C, Dock) o all'accesso al Mac: niente schedina.
+    var skipNextSplash = false
+
+    static var isFirstLaunch: Bool { !UserDefaults.standard.bool(forKey: "welcomeDone") }
+    static var splashEnabled: Bool { UserDefaults.standard.object(forKey: "splash") as? Bool ?? true }
+    static var tipsEnabled: Bool { UserDefaults.standard.object(forKey: "tips") as? Bool ?? true }
+
+    /// Chiamata all'avvio: decide se mostrare benvenuto, schedina con suggerimento, o niente.
+    func showAtLaunch() {
+        // Aperta con doppio clic su un aggiornamento: niente schedina e niente finestra, solo l'aggiornamento
+        if Updater.shared.busy { skipNextSplash = false; return }
+        if Self.isFirstLaunch {
+            show(mode: .first)
+        } else if Self.splashEnabled && !skipNextSplash {
+            show(mode: .splash)
+        } else {
+            LaunchGate.release()          // niente schedina: la finestra compare subito
+        }
+        skipNextSplash = false
+    }
+
+    enum Mode { case first, splash, guide }
+
+    /// «Guida rapida»: solo le tre schermate.
+    func showGuide() { show(mode: .guide) }
+
+    private func show(mode: Mode) {
+        guard window == nil else { window?.makeKeyAndOrderFront(nil); return }
+        firstLaunch = mode == .first
+        phase = mode == .guide ? .page(0) : .loading
+        doneSteps = 0
+        // Resta solo la schedina, come durante l'aggiornamento
+        hidden = NSApp.windows.filter { $0.isVisible && $0.canBecomeMain }
+        hidden.forEach { $0.orderOut(nil) }
+
+        let size = NSSize(width: 500, height: 470)
+        let host = NSHostingView(rootView: WelcomeView(ctl: self))
+        host.frame.size = size
+        let w = NSPanel(contentRect: NSRect(origin: .zero, size: size),
+                        styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: false)
+        w.titleVisibility = .hidden
+        w.titlebarAppearsTransparent = true
+        w.isMovableByWindowBackground = true
+        w.contentView = host
+        w.isReleasedWhenClosed = false
+        w.center()
+        var token: NSObjectProtocol?
+        token = NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: w, queue: .main) { [weak self] _ in
+            if let t = token { NotificationCenter.default.removeObserver(t) }
+            self?.finished()
+        }
+        window = w
+        NSApp.activate()
+        w.makeKeyAndOrderFront(nil)
+        if mode != .guide { runLoading(quick: mode == .splash) }
+    }
+
+    /// Lavori veri dell'avvio. Al primo avvio ogni passo resta visibile ~0,6 s; agli altri avvii è tutto più rapido
+    /// (in totale 2–3 secondi), giusto il tempo dell'animazione.
+    private func runLoading(quick: Bool) {
+        let work: [() -> Void] = [
+            { Paths.installScript() },
+            { DispatchQueue.main.sync { Sounds.shared.prepare() } },
+            { let n = Installer.shared.components.filter { $0.installed }.count
+              DispatchQueue.main.async { self.componentsFound = n } },
+            { DispatchQueue.main.sync { PresetStore.shared.registerHotkeys() } },
+        ]
+        let minStep = quick ? 0.45 : 0.6
+        DispatchQueue.global(qos: .userInitiated).async {
+            for (i, job) in work.enumerated() {
+                let start = Date()
+                job()
+                let spent = Date().timeIntervalSince(start)
+                if spent < minStep { Thread.sleep(forTimeInterval: minStep - spent) }
+                DispatchQueue.main.async { withAnimation(.easeOut(duration: 0.3)) { self.doneSteps = i + 1 } }
+            }
+            Thread.sleep(forTimeInterval: quick ? 0.5 : 0.7)
+            DispatchQueue.main.async { self.afterLoading(quick: quick) }
+        }
+    }
+
+    private func afterLoading(quick: Bool) {
+        guard window != nil else { return }
+        if !quick {
+            withAnimation(.easeInOut(duration: 0.35)) { phase = .page(0) }
+        } else if Self.tipsEnabled {
+            tip = Tip.next()
+            withAnimation(.easeInOut(duration: 0.35)) { phase = .tip }
+        } else {
+            finish()
+        }
+    }
+
+    func next() {
+        if case .page(let n) = phase {
+            if n >= 2 { finish() } else { withAnimation(.easeInOut(duration: 0.25)) { phase = .page(n + 1) } }
+        }
+    }
+
+    func back() {
+        if case .page(let n) = phase, n > 0 { withAnimation(.easeInOut(duration: 0.25)) { phase = .page(n - 1) } }
+    }
+
+    func anotherTip() {
+        withAnimation(.easeInOut(duration: 0.25)) { tip = Tip.next() }
+    }
+
+    /// «Non mostrare più»: dalla prossima volta, solo l'animazione (si riattiva dalle Opzioni).
+    func stopTips() {
+        UserDefaults.standard.set(false, forKey: "tips")
+        finish()
+    }
+
+    func finish() {
+        let w = window
+        finished()
+        w?.orderOut(nil)
+    }
+
+    private func finished() {
+        guard window != nil else { return }
+        UserDefaults.standard.set(true, forKey: "welcomeDone")
+        window = nil
+        LaunchGate.release()
+        hidden.forEach { $0.alphaValue = 1; $0.makeKeyAndOrderFront(nil) }
+        hidden = []
+        NSApp.activate()
+    }
+}
+
+// MARK: - Suggerimenti
+
+struct Tip: Equatable {
+    let symbol: String
+    let title: String
+    let text: String
+
+    static let all: [Tip] = [
+        Tip(symbol: "space", title: "Anteprima con Spazio",
+            text: "Con un file aperto nel menu, premi Spazio per vederlo grande, come nel Finder."),
+        Tip(symbol: "star.circle.fill", title: "Preset con scorciatoia",
+            text: "Spunta «Salva come preset» quando scegli le opzioni, poi assegnagli ⌃⌥1…9 nella pagina Preset: selezioni i file nel Finder e parte da solo."),
+        Tip(symbol: "square.split.2x1", title: "Confronta prima e dopo",
+            text: "Dopo una compressione, nella Coda premi Confronta e trascina la linea per vedere la differenza, anche ingrandita."),
+        Tip(symbol: "keyboard", title: "Tasti 1–8",
+            text: "Nel menu a torta ogni spicchio ha il suo numero. Invio ripete l’ultima scelta per quel tipo di file."),
+        Tip(symbol: "arrow.up.and.down.and.arrow.left.and.right", title: "Trascina il risultato",
+            text: "L’icona colorata del file creato si trascina dove vuoi: in Mail, in WhatsApp, in una cartella."),
+        Tip(symbol: "square.grid.2x2", title: "Tipi di file diversi",
+            text: "Apri insieme foto, PDF e audio: compare un piccolo menu per ogni tipo, fino a 6."),
+        Tip(symbol: "dial.medium", title: "Manopole",
+            text: "Le manopole si girano trascinando, con la rotellina o con le frecce. Un clic passa alla posizione successiva."),
+        Tip(symbol: "moon.stars.fill", title: "Radio di notte",
+            text: "In Opzioni → Aspetto e suoni scegli la modalità scura e il tema: salvia, celeste o terracotta."),
+        Tip(symbol: "command", title: "Tutte le scorciatoie",
+            text: "Il pulsante ⌘ in alto nella finestra mostra sempre l’elenco completo delle scorciatoie."),
+        Tip(symbol: "arrow.uturn.backward.circle.fill", title: "Si può sempre annullare",
+            text: "Nella Cronologia, «Annulla» sposta nel Cestino i file creati e rimette a posto le rinomine."),
+        Tip(symbol: "folder.fill", title: "Anche le cartelle",
+            text: "Trascina una cartella intera: OrbitLR prende tutti i file che contiene, divisi per tipo."),
+        Tip(symbol: "eye.slash", title: "Privacy delle foto",
+            text: "«Rimuovi i metadati» toglie posizione GPS, dispositivo e data prima di condividere una foto."),
+    ]
+
+    /// Un suggerimento diverso a ogni avvio, a giro.
+    static func next() -> Tip {
+        let i = UserDefaults.standard.integer(forKey: "tipIndex")
+        UserDefaults.standard.set(i + 1, forKey: "tipIndex")
+        return all[i % all.count]
+    }
+}
+
+// MARK: - Vista
+
+struct WelcomeView: View {
+    @ObservedObject var ctl: WelcomeController
+
+    private var version: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "" }
+
+    var body: some View {
+        ZStack {
+            GlowBackground(tint: Theme.accent)
+            switch ctl.phase {
+            case .loading:
+                loading.transition(.opacity)
+            case .tip:
+                tipView.transition(.opacity)
+            case .page(let n):
+                page(n).transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity),
+                                               removal: .move(edge: .leading).combined(with: .opacity)))
+                    .id(n)
+            }
+        }
+        .frame(width: 500, height: 470)
+        .foregroundStyle(Theme.ink)
+    }
+
+    // MARK: Caricamento
+
+    private var loading: some View {
+        VStack(spacing: 14) {
+            BrandAnimation(size: CGSize(width: 300, height: 170))
+                .padding(.top, 22)
+            VStack(spacing: 3) {
+                Text(ctl.firstLaunch ? "Benvenuto in OrbitLR" : "OrbitLR").font(.system(size: 19, weight: .bold, design: .rounded))
+                if !ctl.firstLaunch {
+                    Text("Versione \(version)").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Theme.brass)
+                }
+            }
+            ProgressBar(value: Double(ctl.doneSteps) / Double(ctl.steps.count), tint: Theme.accent, height: 10)
+                .padding(.horizontal, 40)
+            VStack(alignment: .leading, spacing: 7) {
+                ForEach(ctl.steps) { s in
+                    let done = s.id < ctl.doneSteps
+                    let current = s.id == ctl.doneSteps
+                    HStack(spacing: 10) {
+                        Image(systemName: done ? "checkmark.circle.fill" : s.symbol)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(done ? Theme.green : (current ? Theme.accent : Color.secondary))
+                            .frame(width: 18)
+                        Text(s.id == 2 && done ? "\(s.title) · \(ctl.componentsFound) di \(Installer.shared.components.count) pronti" : s.title)
+                            .font(.system(size: 12, weight: current ? .semibold : .regular))
+                            .foregroundStyle(done || current ? Theme.ink : Color.secondary)
+                        if current { ProgressView().controlSize(.mini) }
+                    }
+                }
+            }
+            .frame(width: 330, alignment: .leading)
+            Spacer(minLength: 0)
+        }
+    }
+
+    // MARK: Suggerimento
+
+    private var tipView: some View {
+        VStack(spacing: 14) {
+            BrandAnimation(size: CGSize(width: 240, height: 130))
+                .padding(.top, 20)
+            Text("LO SAPEVI?").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.brass)
+            VStack(spacing: 10) {
+                Image(systemName: ctl.tip.symbol).font(.system(size: 30, weight: .semibold)).foregroundStyle(Theme.accent)
+                    .frame(width: 64, height: 64)
+                    .background(Circle().fill(Theme.accent.opacity(0.14)))
+                Text(ctl.tip.title).font(.system(size: 18, weight: .bold, design: .rounded))
+                Text(ctl.tip.text).font(.system(size: 13)).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: 380)
+            }
+            .id(ctl.tip.title)
+            .transition(.opacity)
+            Spacer(minLength: 0)
+            HStack {
+                Button("Non mostrare più") { ctl.stopTips() }
+                    .help("Dalla prossima volta solo l’animazione. Si riattiva in Opzioni → Aspetto e suoni")
+                Button { ctl.anotherTip() } label: { Label("Un altro", systemImage: "arrow.right") }
+                Spacer()
+                Button("Inizia") { ctl.finish() }
+                    .keyboardShortcut(.defaultAction)
+                    .buttonStyle(.borderedProminent).tint(Theme.accent)
+            }
+            .padding(.horizontal, 28).padding(.bottom, 22)
+        }
+    }
+
+    // MARK: Le tre schermate
+
+    private struct PageInfo {
+        let symbol: String
+        let color: Color
+        let title: String
+        let text: String
+        let tips: [String]
+    }
+
+    private var pages: [PageInfo] {
+        [
+            PageInfo(symbol: "cursorarrow.click.2", color: Theme.color(.img), title: "Tasto destro nel Finder",
+                     text: "Clic destro su uno o più file, poi «OrbitLR»: lo trovi in fondo al menu o in «Servizi».",
+                     tips: ["Funziona anche con le cartelle", "Fino a 100 file dello stesso tipo"]),
+            PageInfo(symbol: "command", color: Theme.color(.pdf), title: "Seleziona e premi ⌥⌘C",
+                     text: "Seleziona i file nel Finder e premi ⌥⌘C: il menu a torta si apre accanto al puntatore.",
+                     tips: ["Muovi il mouse verso un’azione e fai clic", "Tasti 1–8 per scegliere, Invio = ultima scelta",
+                            "I tuoi preset partono con ⌃⌥1…9"]),
+            PageInfo(symbol: "hand.draw.fill", color: Theme.color(.video), title: "Trascina, oppure usa la finestra",
+                     text: "Trascina i file nella finestra di OrbitLR o sulla sua icona nel Dock. L’icona in alto a destra, nella barra dei menu, mostra i lavori in corso.",
+                     tips: ["Spazio = anteprima del file", "Il pulsante ⌘ in alto elenca tutte le scorciatoie",
+                            "Nella Coda: Confronta, per vedere prima e dopo"]),
+        ]
+    }
+
+    private func page(_ n: Int) -> some View {
+        let p = pages[min(n, pages.count - 1)]
+        return VStack(spacing: 16) {
+            ZStack {
+                Circle().fill(p.color.opacity(0.16)).frame(width: 120, height: 120)
+                Circle().strokeBorder(p.color.opacity(0.45), lineWidth: 1).frame(width: 120, height: 120)
+                Image(systemName: p.symbol).font(.system(size: 46, weight: .semibold)).foregroundStyle(p.color)
+            }
+            .padding(.top, 40)
+            Text(p.title).font(.system(size: 21, weight: .bold, design: .rounded))
+            Text(p.text).font(.system(size: 13)).foregroundStyle(.secondary)
+                .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 380)
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(p.tips, id: \.self) { t in
+                    Label(t, systemImage: "checkmark").font(.system(size: 12)).foregroundStyle(Theme.ink)
+                }
+            }
+            .padding(12)
+            .frame(width: 360, alignment: .leading)
+            .card(radius: 12)
+            Spacer(minLength: 0)
+            HStack {
+                HStack(spacing: 6) {
+                    ForEach(0..<pages.count, id: \.self) { i in
+                        Capsule().fill(i == n ? Theme.accent : Theme.ink.opacity(0.18))
+                            .frame(width: i == n ? 18 : 7, height: 7)
+                    }
+                }
+                Spacer()
+                if n > 0 { Button("Indietro") { ctl.back() } }
+                else { Button("Salta") { ctl.finish() } }
+                Button(n == pages.count - 1 ? "Inizia" : "Avanti") { ctl.next() }
+                    .keyboardShortcut(.defaultAction)
+                    .buttonStyle(.borderedProminent).tint(Theme.accent)
+            }
+            .padding(.horizontal, 28).padding(.bottom, 22)
+        }
+    }
+}

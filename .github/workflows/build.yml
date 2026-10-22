@@ -1,0 +1,76 @@
+# Compila OrbitLR su un Mac di GitHub a ogni modifica.
+# Se la compilazione fallisce, gli errori sono nel registro dell'«azione» e nessuna versione viene distribuita.
+# Se riesce, scarichi dagli «Artifacts» il file .orbitlr pronto per il doppio clic.
+name: Compila OrbitLR
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode più recente disponibile
+        run: |
+          XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -n 1)
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+
+      - name: XcodeGen
+        run: brew install xcodegen
+
+      - name: Progetto
+        run: xcodegen generate
+
+      - name: Compilazione (Release, Apple Silicon e Intel)
+        run: |
+          status=0
+          xcodebuild -project OrbitLR.xcodeproj -scheme OrbitLR -configuration Release \
+            -destination 'generic/platform=macOS' -derivedDataPath build \
+            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= \
+            build > build.log 2>&1 || status=$?
+          grep -E "(error|warning):|BUILD (SUCCEEDED|FAILED)" build.log | sort -u | head -n 200 || true
+          exit $status
+
+      - name: Riepilogo avvisi
+        if: always()
+        run: |
+          echo "## Compilazione" >> $GITHUB_STEP_SUMMARY
+          echo "Errori: $(grep -c 'error:' build.log || true) · Avvisi: $(grep -c 'warning:' build.log || true)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep -E "(error|warning):" build.log | sort -u | head -n 80 >> $GITHUB_STEP_SUMMARY || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Controllo dell'app
+        run: |
+          APP=build/Build/Products/Release/OrbitLR.app
+          test -d "$APP"
+          test -d "$APP/Contents/PlugIns/OrbitLRShare.appex"
+          test -d "$APP/Contents/Resources/Models/RealESRNet.mlpackage"
+          plutil -p "$APP/Contents/Info.plist" | grep -E "CFBundleShortVersionString|CFBundleVersion"
+          du -sh "$APP"
+
+      - name: Pacchetto .orbitlr
+        run: |
+          VERSION=$(cat version.txt)
+          mkdir -p dist/OrbitLR
+          git archive HEAD | tar -x -C dist/OrbitLR
+          rm -rf dist/OrbitLR/.github
+          (cd dist && zip -r -X -q "OrbitLR $VERSION.orbitlr" OrbitLR)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OrbitLR-${{ env.VERSION }}
+          path: dist/*.orbitlr
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: registro-compilazione
+          path: build.log

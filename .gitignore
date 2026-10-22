@@ -1,0 +1,9 @@
+# Generati dalla compilazione
+build/
+*.xcodeproj/
+build.log
+dist/
+.DS_Store
+Sources/Info.plist
+ShareExtension/Info.plist
+ShareExtension/*.entitlements

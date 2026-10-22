@@ -1,0 +1,5 @@
+Novità della 2.5.1:
+• Migliora con IA (Real-ESRGAN, sul Mac): foto più nitide e pulite, anche ingrandite 2× o 4×
+  – Fedele: ripulisce e rende nitido senza inventare dettagli
+  – Più nitido: più incisivo, può ricostruire texture
+• La prima volta l'IA si prepara qualche secondo; le volte dopo parte subito
