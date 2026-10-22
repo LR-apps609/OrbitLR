@@ -585,6 +585,18 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         }
     }
 
+    /// 2.7.2 · Toglie la voce dalla Cronologia. I file restano dove sono.
+    func forget(_ entry: HistoryEntry) {
+        history.removeAll { $0.id == entry.id }
+        saveHistory()
+    }
+
+    /// 2.7.2 · Svuota la Cronologia. I file restano dove sono.
+    func forgetAll() {
+        history.removeAll()
+        saveHistory()
+    }
+
     func reveal(_ paths: [String]) {
         let urls = paths.map { URL(fileURLWithPath: $0) }.filter { FileManager.default.fileExists(atPath: $0.path) }
         if !urls.isEmpty { NSWorkspace.shared.activateFileViewerSelecting(urls) }

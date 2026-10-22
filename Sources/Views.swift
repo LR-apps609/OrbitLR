@@ -380,7 +380,19 @@ struct HistoryView: View {
             VStack(alignment: .leading, spacing: 18) {
                 PageHeader(title: "Cronologia",
                            subtitle: "Questo mese: \(ByteCountFormatter.string(fromByteCount: store.savedThisMonth, countStyle: .file)) risparmiati",
-                           color: SidebarItem.history.color) { EmptyView() }
+                           color: SidebarItem.history.color) {
+                    if !store.history.isEmpty {
+                        Button(role: .destructive) {
+                            let a = NSAlert()
+                            a.messageText = "Cancellare tutta la Cronologia?"
+                            a.informativeText = "Spariscono tutte le voci dall’elenco. I file creati restano dove sono."
+                            a.addButton(withTitle: "Cancella tutto")
+                            a.addButton(withTitle: "Annulla")
+                            if a.runModal() == .alertFirstButtonReturn { withAnimation(.easeOut(duration: 0.2)) { store.forgetAll() } }
+                        } label: { Label("Cancella tutto", systemImage: "trash") }
+                        .help("Svuota la Cronologia (i file non vengono toccati)")
+                    }
+                }
                 if !store.history.isEmpty { MonthStatsRow(stats: MonthStats.of(store.history)) }
                 if store.history.isEmpty {
                     EmptyState(symbol: "clock", color: SidebarItem.history.color, title: "Ancora nessuna operazione",
@@ -432,6 +444,12 @@ struct HistoryRow: View {
                 Button("Mostra") { store.reveal(entry.outputs) }
                 Button("Annulla") { store.undo(entry) }.help("Sposta nel Cestino i file creati da questa operazione")
             }
+            // 2.7.2 · Cestino: toglie solo la voce dall'elenco
+            Button { withAnimation(.easeOut(duration: 0.2)) { store.forget(entry) } } label: {
+                Image(systemName: "trash").foregroundStyle(.secondary)
+            }
+            .buttonStyle(.borderless)
+            .help("Togli dalla Cronologia (il file resta dov’è)")
         }
         .padding(12)
         .card(radius: 12)
