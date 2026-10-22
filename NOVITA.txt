@@ -1,3 +1,10 @@
+Novità della 2.7.2:
+• Video: ✕ sulla clip selezionata e tasto ⌫ per toglierla (si annulla con ⌘Z)
+• Cronologia: cestino accanto a ogni voce e «Cancella tutto» (i file restano dove sono)
+• «Avanzate» nella barra laterale ora si vede che è un pulsante
+• Cambio scheda più rapido
+• Riflesso d'ottone più leggero, spento in risparmio energetico
+
 Novità della 2.7.1:
 • Il progetto video ritrova le clip e la musica anche se sposti o rinomini i file; se un file non c'è più, te lo dice invece di toglierlo in silenzio
 • «Nuovo progetto» chiede conferma prima di togliere il montaggio
