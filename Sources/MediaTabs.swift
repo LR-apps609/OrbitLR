@@ -25,18 +25,27 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
 
     init(videoTab: Bool) { self.videoTab = videoTab }
 
+    /// Formati che i motori di macOS leggono direttamente.
+    static let readable: Set<String> = ["mp4", "mov", "m4v", "3gp", "mp3", "m4a", "wav", "aiff", "aac", "flac", "caf"]
+
     var accepted: Set<Kind> { videoTab ? [.video] : [.audio, .video] }
     var allFiles: [URL] { (file.map { [$0] } ?? []) + extra }
 
     /// File trascinati o scelti: il primo si apre, gli altri restano pronti per «Unisci».
     func load(_ urls: [URL], append: Bool = false) {
-        let ok = PieController.expand(urls).filter { u in Catalog.kind(of: u).map { accepted.contains($0) } ?? false }
+        let right = PieController.expand(urls).filter { u in Catalog.kind(of: u).map { accepted.contains($0) } ?? false }
+        // Formati che macOS non sa leggere da solo: prima si convertono (in Conversione, con ffmpeg)
+        let ok = right.filter { Self.readable.contains(Catalog.norm($0.pathExtension)) }
         guard !ok.isEmpty else {
-            notice = videoTab ? "Qui si aprono solo i video." : "Qui si aprono file audio (o video, per usarne l’audio)."
+            if !right.isEmpty {
+                notice = "Questo formato non si apre qui: convertilo prima in " + (videoTab ? "MP4" : "M4A") + " dalla scheda Conversione."
+            } else {
+                notice = videoTab ? "Qui si aprono solo i video." : "Qui si aprono file audio (o video, per usarne l’audio)."
+            }
             NSSound.beep()
             return
         }
-        notice = nil
+        notice = right.count > ok.count ? "Alcuni file sono in un formato che qui non si apre: convertili prima dalla scheda Conversione." : nil
         if append, file != nil {
             for u in ok where !allFiles.contains(u) { extra.append(u) }
             return

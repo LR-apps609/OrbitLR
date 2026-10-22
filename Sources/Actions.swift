@@ -214,6 +214,8 @@ enum Catalog {
             } else {
                 if id == "merge" && mergeable < 2 { continue }
                 if (id == "vmerge" || id == "amerge") && count < 2 { continue }   // servono almeno 2 file
+                // Video e audio della 2.6 usano i motori di macOS: solo i formati che sa leggere
+                if Media.ids.contains(id) && id != "tts" && !exts.isEmpty && !exts.isSubset(of: MediaTabModel.readable) { continue }
                 if id == "tts" && !exts.isEmpty && exts.isDisjoint(with: ["txt", "md", "rtf", "docx", "doc", "odt", "html", "pages"]) { continue }
                 if id == "stack" && kind == .img && mergeable < 2 { continue }      // servono almeno 2 foto
                 if hasSvg && ["resize", "strip", "ocr", "removebg", "straighten", "upscale", "aienhance", "searchable"].contains(id) { continue }
