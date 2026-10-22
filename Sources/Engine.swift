@@ -157,6 +157,25 @@ struct HistoryEntry: Codable, Identifiable {
     var renames: [[String]]? = nil
 }
 
+/// 2.7 · Le statistiche del mese per la Cronologia: quanti file, quanto spazio risparmiato, l'azione preferita.
+struct MonthStats: Equatable {
+    var files = 0
+    var saved: Int64 = 0
+    var topAction: String? = nil
+
+    static func of(_ history: [HistoryEntry], now: Date = Date(), calendar: Calendar = .current) -> MonthStats {
+        var st = MonthStats()
+        var counts: [String: Int] = [:]
+        for e in history where !e.undone && calendar.isDate(e.date, equalTo: now, toGranularity: .month) {
+            st.files += e.outputs.count
+            if let b = e.before, let a = e.after, b > a { st.saved += b - a }
+            counts[e.action, default: 0] += 1
+        }
+        st.topAction = counts.max { $0.value == $1.value ? $0.key > $1.key : $0.value < $1.value }?.key
+        return st
+    }
+}
+
 final class QueueStore: ObservableObject, @unchecked Sendable {
     static let shared = QueueStore()
 

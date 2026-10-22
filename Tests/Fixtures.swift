@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import CoreVideo
 import CoreGraphics
+import ImageIO
 
 /// File di prova creati al momento: video con un quadrato che si muove, toni, silenzio e una voce vera (`say`).
 enum Fixtures {
@@ -78,6 +79,45 @@ enum Fixtures {
         if let ch = buf.floatChannelData?[0] { samples.withUnsafeBufferPointer { ch.update(from: $0.baseAddress!, count: samples.count) } }
         let file = try AVAudioFile(forWriting: u, settings: fmt.settings, commonFormat: .pcmFormatFloat32, interleaved: false)
         try file.write(from: buf)
+        return u
+    }
+
+    // MARK: Immagini
+
+    /// Una foto di prova: sfumatura, forme e un po' di grana (così pesa come una foto vera).
+    static func photo(name: String, width: Int = 1600, height: Int = 1200) throws -> URL {
+        let u = url(name)
+        try? FileManager.default.removeItem(at: u)
+        guard let ctx = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+                                  space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else {
+            throw FixtureError(description: "contesto grafico")
+        }
+        for y in stride(from: 0, to: height, by: 4) {
+            let k = CGFloat(y) / CGFloat(height)
+            ctx.setFillColor(CGColor(red: 0.3 + 0.5 * k, green: 0.5, blue: 0.8 - 0.4 * k, alpha: 1))
+            ctx.fill(CGRect(x: 0, y: y, width: width, height: 4))
+        }
+        for i in 0..<60 {
+            ctx.setFillColor(CGColor(red: CGFloat(i % 7) / 7, green: CGFloat(i % 5) / 5, blue: CGFloat(i % 3) / 3, alpha: 0.8))
+            ctx.fillEllipse(in: CGRect(x: (i * 97) % width, y: (i * 61) % height, width: 40 + i * 3, height: 30 + i * 2))
+        }
+        if let data = ctx.data {
+            // grana leggera
+            let n = ctx.bytesPerRow * height
+            let p = data.bindMemory(to: UInt8.self, capacity: n)
+            var seed: UInt32 = 12345
+            for i in stride(from: 0, to: n, by: 1) where i % 4 != 3 {
+                seed = seed &* 1103515245 &+ 12345
+                let d = Int((seed >> 16) % 13) - 6
+                p[i] = UInt8(max(0, min(255, Int(p[i]) + d)))
+            }
+        }
+        guard let img = ctx.makeImage(),
+              let dest = CGImageDestinationCreateWithURL(u as CFURL, (name.hasSuffix(".png") ? "public.png" : "public.jpeg") as CFString, 1, nil) else {
+            throw FixtureError(description: "immagine")
+        }
+        CGImageDestinationAddImage(dest, img, [kCGImageDestinationLossyCompressionQuality: 0.92] as CFDictionary)
+        guard CGImageDestinationFinalize(dest) else { throw FixtureError(description: "immagine non scritta") }
         return u
     }
 

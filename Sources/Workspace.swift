@@ -41,6 +41,8 @@ final class Workspace: ObservableObject, @unchecked Sendable {
     @Published var lastJob: Job? = nil
     @Published var notice: String? = nil
     @Published var preview: URL? = nil
+    /// 2.7: dove sono stati lasciati i file (la torta nasce da lì e vola al centro).
+    var dropPoint: CGPoint? = nil
     private var subs: [URL] = []
     private var closing: Set<UUID> = []      // menu che si stanno richiudendo dopo «Svuota»
 
@@ -123,6 +125,7 @@ final class Workspace: ObservableObject, @unchecked Sendable {
         let exts = Set(gr.files.map { Catalog.norm($0.pathExtension) })
         let base = Catalog.actions(for: gr.kind, exts: exts, mergeable: mergeable, count: gr.files.count)
         pie.setup(actions: PresetStore.shared.merged(base, kind: gr.kind))
+        pie.loadEstimates(files: gr.files, kind: gr.kind)
         pie.tint = Theme.color(gr.kind)
         pie.suggestedId = Catalog.suggested(for: gr.kind, exts: exts)
         pie.lastId = UserDefaults.standard.string(forKey: "last_" + gr.kind.rawValue)
@@ -191,8 +194,13 @@ struct WorkspaceView: View {
             GlowBackground(tint: ws.groups.isEmpty ? Theme.accent : ws.tint)
             if ws.groups.isEmpty { empty } else { loaded }
         }
-        .onDrop(of: [UTType.fileURL], isTargeted: $targeted) { providers in
-            loadURLs(providers) { urls in ws.load(urls, append: !ws.groups.isEmpty) }
+        .coordinateSpace(name: "workspace")
+        .onDrop(of: [UTType.fileURL], isTargeted: $targeted) { providers, location in
+            let wasEmpty = ws.groups.isEmpty
+            loadURLs(providers) { urls in
+                if wasEmpty { ws.dropPoint = location }
+                ws.load(urls, append: !ws.groups.isEmpty)
+            }
             return true
         }
         .sheet(item: $ws.pending) { p in
@@ -278,6 +286,8 @@ struct WorkspaceView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 18)
         }
+        // Il risultato arriva dal basso con un piccolo rimbalzo
+        .animation(.spring(response: 0.42, dampingFraction: 0.72), value: ws.lastJob?.id)
         .background(KeyCatcher { e in
             // Spazio = anteprima (ma non mentre si sta cercando un'azione)
             if e.keyCode == 49 && (ws.single?.pie.query.isEmpty ?? true) { ws.togglePreview(); return true }
@@ -292,11 +302,9 @@ struct WorkspaceView: View {
                          onClose: { withAnimation(.easeOut(duration: 0.2)) { ws.lastJob = nil } })
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         } else {
-            HStack(spacing: 16) {
-                hint("cursorarrow.motionlines", "Muovi il mouse verso un’azione")
-                hint("hand.tap", "Clic per confermare")
-                hint("space", "Spazio = anteprima")
-                if ws.single != nil { hint("keyboard", "Tasti 1–8 · Invio = ultima scelta") }
+            HStack(spacing: 18) {
+                hint("hand.tap", "Clic su un’azione")
+                if ws.single != nil { hint("keyboard", "1–8 · Invio = ultima scelta") }
                 hint("magnifyingglass", "Scrivi per cercare")
             }
             .frame(maxWidth: .infinity)
@@ -321,6 +329,17 @@ struct WorkspaceView: View {
 struct SinglePie: View {
     @ObservedObject var ws: Workspace
     @ObservedObject var group: FileGroup
+    /// 2.7: la torta parte dal punto in cui hai lasciato il file e arriva al centro (0 = là, 1 = al centro).
+    @State private var arrive: CGFloat = 1
+    @State private var from: CGSize = .zero
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    init(ws: Workspace, group: FileGroup) {
+        _ws = ObservedObject(wrappedValue: ws)
+        _group = ObservedObject(wrappedValue: group)
+        // Se arriva da un trascinamento parte piccola (niente lampo al centro prima del volo)
+        _arrive = State(initialValue: ws.dropPoint != nil ? 0 : 1)
+    }
 
     var body: some View {
         GeometryReader { g in
@@ -332,6 +351,21 @@ struct SinglePie: View {
                         removeHelp: group.files.count > 1 ? "Togli questo file" : "Togli il file",
                         onRemove: { ws.remove(group.files[0], from: group) })
                     .frame(width: side, height: side)
+                    .scaleEffect(0.3 + 0.7 * arrive)
+                    .offset(x: from.width * (1 - arrive), y: from.height * (1 - arrive))
+                    .onAppear {
+                        guard let p = ws.dropPoint, !reduceMotion else { arrive = 1; ws.dropPoint = nil; return }
+                        ws.dropPoint = nil
+                        let f = g.frame(in: .named("workspace"))
+                        let center = CGPoint(x: f.midX, y: f.midY - stripH / 2)
+                        from = CGSize(width: p.x - center.x, height: p.y - center.y)
+                        var t = Transaction()
+                        t.disablesAnimations = true
+                        withTransaction(t) { arrive = 0 }
+                        DispatchQueue.main.async {
+                            withAnimation(.spring(response: 0.55, dampingFraction: 0.78)) { arrive = 1 }
+                        }
+                    }
                 Spacer(minLength: 0)
                 if group.files.count > 1 {
                     ScrollView(.horizontal, showsIndicators: false) {

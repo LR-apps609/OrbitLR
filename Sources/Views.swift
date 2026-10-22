@@ -133,9 +133,11 @@ struct MainWindow: View {
                     }
                 }
                 .id(app.selection ?? .workspace)
-                .transition(.opacity)
+                // 2.7: la pagina nuova entra con una molla leggera (sale un poco e si posa), come una manopola che scatta
+                .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: 10)).combined(with: .scale(scale: 0.985)),
+                                        removal: .opacity))
             }
-            .animation(.easeInOut(duration: 0.18), value: app.selection)
+            .animation(.spring(response: 0.34, dampingFraction: 0.86), value: app.selection)
         }
         .background(WindowReader { w in
             // Una sola finestra principale: se ne nasce un'altra mentre la prima è aperta, si chiude subito
@@ -315,6 +317,41 @@ struct JobCard: View {
 
 // MARK: - Cronologia
 
+/// 2.7 · Tre numeri del mese, grandi e semplici.
+struct MonthStatsRow: View {
+    let stats: MonthStats
+    var body: some View {
+        HStack(spacing: 12) {
+            tile(symbol: "doc.on.doc.fill", color: Theme.accent, title: "File creati questo mese") {
+                Text("\(stats.files)").font(.system(size: 24, weight: .bold, design: .rounded)).monospacedDigit()
+                    .contentTransition(.numericText())
+            }
+            tile(symbol: "arrow.down.circle.fill", color: Theme.green, title: "Spazio risparmiato") {
+                CountingBytes(value: Double(stats.saved), font: .system(size: 24, weight: .bold, design: .rounded), color: Theme.green)
+            }
+            tile(symbol: "star.fill", color: Theme.brass, title: "L’azione che usi di più") {
+                Text(stats.topAction ?? "—").font(.system(size: 18, weight: .bold, design: .rounded)).lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+        }
+    }
+
+    private func tile<V: View>(symbol: String, color: Color, title: String, @ViewBuilder value: () -> V) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: symbol).font(.system(size: 18, weight: .semibold)).foregroundStyle(color)
+                .frame(width: 40, height: 40).background(Circle().fill(color.opacity(0.14)))
+            VStack(alignment: .leading, spacing: 2) {
+                value()
+                Text(title).font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(1)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity)
+        .card(radius: 14)
+    }
+}
+
 struct HistoryView: View {
     @EnvironmentObject var store: QueueStore
 
@@ -325,6 +362,7 @@ struct HistoryView: View {
                 PageHeader(title: "Cronologia",
                            subtitle: "Questo mese: \(ByteCountFormatter.string(fromByteCount: store.savedThisMonth, countStyle: .file)) risparmiati",
                            color: SidebarItem.history.color) { EmptyView() }
+                if !store.history.isEmpty { MonthStatsRow(stats: MonthStats.of(store.history)) }
                 if store.history.isEmpty {
                     EmptyState(symbol: "clock", color: SidebarItem.history.color, title: "Ancora nessuna operazione",
                                text: "Ogni file creato finisce qui: puoi ritrovarlo o annullare l’operazione.")

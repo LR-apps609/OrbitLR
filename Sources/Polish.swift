@@ -151,6 +151,15 @@ struct TunerBar: View {
                 let fillWidth: CGFloat = max(barHeight, w * CGFloat(v))
                 ZStack(alignment: .leading) {
                     Capsule().fill(Theme.green.opacity(0.18))
+                    // 2.7: la scala della radio, tacche ogni 10%
+                    HStack(spacing: 0) {
+                        ForEach(1..<10, id: \.self) { _ in
+                            Spacer(minLength: 0)
+                            Rectangle().fill(Theme.ink.opacity(0.16)).frame(width: 1)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.vertical, 1)
                     Capsule()
                         .fill(LinearGradient(colors: [Theme.green.opacity(0.85), Theme.green],
                                              startPoint: .leading, endPoint: .trailing))
@@ -166,6 +175,18 @@ struct TunerBar: View {
             }
             .frame(height: barHeight)
             .clipShape(Capsule())
+            // La lancetta d'ottone che corre con il riempimento (fuori dal ritaglio, così sporge un poco)
+            .overlay(alignment: .leading) {
+                GeometryReader { g in
+                    let x = max(barHeight / 2, g.size.width * CGFloat(v) - 1)
+                    RoundedRectangle(cornerRadius: 1)
+                        .fill(Theme.brass)
+                        .frame(width: 2.5, height: barHeight + 8)
+                        .shadow(color: Theme.shadow.opacity(0.3), radius: 1, y: 1)
+                        .offset(x: x - 1.25, y: -4)
+                        .opacity(v > 0.001 && !done ? 1 : 0)
+                }
+            }
 
             Group {
                 if done {

@@ -1,5 +1,8 @@
-Novità della 2.6.4:
-• Messaggi d'errore chiari: niente più codici di macOS, ma cosa è successo e cosa fare
-• Nessuna cartella creata senza chiedere: i file ricevuti da Condividi e Comandi Rapidi vanno direttamente in Download
-• Comprimi: se il peso scelto non basta, propone subito di riprovare con il doppio
-• Pulizia interna: il formato social usa un solo motore, quello del montaggio
+Novità della 2.7 «Wow»:
+• Icona nuova: il quadrante colorato con la ghiera d'ottone
+• Trascina un file nella finestra: la torta nasce da dove l'hai lasciato e si apre al centro
+• Peso previsto sugli spicchi: vedi quanto peserà il risultato prima di scegliere (verde se diventa più leggero)
+• Barra di avanzamento con la scala della radio e la lancetta d'ottone
+• Ghiera d'ottone con un riflesso che segue il mouse; di notte la torta si illumina di luce calda
+• Passaggi tra le schede con una molla leggera; il risultato arriva dal basso con un piccolo rimbalzo
+• Cronologia: file creati, spazio risparmiato e azione preferita del mese

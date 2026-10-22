@@ -20,6 +20,10 @@ final class PieModel: ObservableObject, @unchecked Sendable {
     /// Ricerca: scrivendo con il menu aperto si filtrano tutte le azioni (anche quelle in «Altro»).
     @Published var query = "" { didSet { resultIndex = 0 } }
     @Published var resultIndex = 0
+    /// 2.7: peso previsto per azione (solo dove la stima è affidabile) e peso attuale dei file.
+    @Published var estimates: [String: Int64] = [:]
+    var currentBytes: Int64 = 0
+    var estimateTask: Task<Void, Never>? = nil
     var all: [Action] = []
     var pages: [[Action]] = []      // anello principale + anelli «Altro», 8 spicchi al massimo ciascuno
     var page = 0
@@ -184,6 +188,9 @@ struct PieView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// 0 = chiuso al centro, 1 = aperto. Animato all'apertura, alla chiusura e a ogni cambio d'anello.
     @State private var bloom: CGFloat = 0
+    /// 2.7: il riflesso dell'ottone segue il mouse attorno all'anello (gradi, senza salti a ±180).
+    @State private var sheen: Double = -90
+    @Environment(\.colorScheme) private var scheme
 
     private var outer: CGFloat { side * 0.442 }
     private var inner: CGFloat { side * 0.185 }
@@ -207,12 +214,21 @@ struct PieView: View {
                         .allowsHitTesting(false)
                 )
                 .overlay(
+                    // Ghiera d'ottone con un riflesso chiaro che segue il mouse
                     Circle().strokeBorder(
-                        AngularGradient(colors: [Theme.sageDeep.opacity(0.7), Theme.brass.opacity(0.6), Theme.sageDeep.opacity(0.7),
-                                                 Theme.brass.opacity(0.6), Theme.sageDeep.opacity(0.7)], center: .center), lineWidth: 3)
+                        AngularGradient(gradient: Gradient(stops: [
+                            .init(color: Theme.sageDeep.opacity(0.7), location: 0),
+                            .init(color: Theme.brass.opacity(0.65), location: 0.36),
+                            .init(color: Theme.ivory.opacity(0.95), location: 0.5),
+                            .init(color: Theme.brass.opacity(0.65), location: 0.64),
+                            .init(color: Theme.sageDeep.opacity(0.7), location: 1),
+                        ]), center: .center, startAngle: .degrees(sheen - 180), endAngle: .degrees(sheen + 180)),
+                        lineWidth: 4)
                         .frame(width: outer * 2, height: outer * 2)
                 )
-                .shadow(color: Theme.shadow.opacity(0.25), radius: 24, y: 12)
+                // Di notte la scala si illumina di luce calda, come una radio accesa al buio
+                .shadow(color: scheme == .dark ? Theme.brass.opacity(0.38) : Theme.shadow.opacity(0.25),
+                        radius: scheme == .dark ? 34 : 24, y: scheme == .dark ? 0 : 12)
                 .scaleEffect(0.55 + 0.45 * bloom)
                 .opacity(Double(min(1, bloom * 1.6)))
 
@@ -262,6 +278,11 @@ struct PieView: View {
         .onContinuousHover { phase in
             switch phase {
             case .active(let p):
+                // Riflesso: si sposta per la via più breve verso l'angolo del mouse
+                let target = atan2(Double(p.y - mid.y), Double(p.x - mid.x)) * 180 / .pi
+                var delta = (target - sheen).truncatingRemainder(dividingBy: 360)
+                if delta > 180 { delta -= 360 } else if delta < -180 { delta += 360 }
+                if abs(delta) > 2, !reduceMotion { withAnimation(.easeOut(duration: 0.35)) { sheen += delta } }
                 let i = model.index(at: p, center: mid, inner: inner, outer: outer)
                 if i != model.hover {
                     if i != nil { Sounds.tick() }
@@ -301,7 +322,15 @@ struct PieView: View {
         return VStack(spacing: 4) {
             Image(systemName: a.symbol).font(.system(size: petal * 0.27, weight: .semibold))
             Text(a.short).font(.system(size: max(10, petal * 0.145), weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7)
+            // Peso previsto, piccolo, sotto il nome
+            if let b = model.estimates[a.id], petal >= 56 {
+                Text(SizeEstimate.label(b)).font(.system(size: max(8, petal * 0.105), weight: .medium, design: .rounded))
+                    .monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
+                    .foregroundStyle(on ? Color.white.opacity(0.9) : estimateColor(b))
+                    .transition(.opacity)
+            }
         }
+        .animation(.easeOut(duration: 0.25), value: model.estimates[a.id])
         .foregroundStyle(on ? Color.white : Theme.ink)
         .frame(width: petal, height: petal)
         .background(
@@ -344,6 +373,11 @@ struct PieView: View {
                 Image(systemName: a.symbol).font(.system(size: 22, weight: .semibold)).foregroundStyle(model.tint)
                 Text(a.title).font(.system(size: 14, weight: .bold)).multilineTextAlignment(.center).lineLimit(2)
                 Text(a.hint).font(.system(size: 11)).foregroundStyle(.secondary).multilineTextAlignment(.center).lineLimit(3)
+                if let b = model.estimates[a.id] {
+                    Text(SizeEstimate.label(b) + (model.currentBytes > 0 ? " (ora " + ByteCountFormatter.string(fromByteCount: model.currentBytes, countStyle: .file) + ")" : ""))
+                        .font(.system(size: 11, weight: .semibold, design: .rounded)).monospacedDigit()
+                        .foregroundStyle(estimateColor(b))
+                }
                 Text("Tasto \(h + 1)").font(.system(size: 10)).foregroundStyle(.tertiary)
             }
             .padding(16)
@@ -368,6 +402,12 @@ struct PieView: View {
             }
             .padding(14)
         }
+    }
+
+    /// Verde se il risultato pesa meno di adesso, ottone se pesa di più.
+    private func estimateColor(_ b: Int64) -> Color {
+        guard model.currentBytes > 0 else { return .secondary }
+        return b < model.currentBytes ? Theme.green : Theme.brass
     }
 
     /// Risultati della ricerca, al centro del menu: ↑↓ per scegliere, Invio per confermare.
@@ -506,6 +546,7 @@ final class PieController: @unchecked Sendable {
         model.suggestedId = Catalog.suggested(for: kind, exts: exts)
         model.fileName = files.count == 1 ? files[0].lastPathComponent : "\(files.count) \(kind.name)"
         model.icon = NSWorkspace.shared.icon(forFile: files[0].path)
+        model.loadEstimates(files: files, kind: kind)
         model.lastId = UserDefaults.standard.string(forKey: "last_" + kind.rawValue)
         if let a = model.lastAction { model.subtitle = "Invio: " + a.short }
         else if let s = model.suggestedAction { model.subtitle = "Consigliato: " + s.short }
