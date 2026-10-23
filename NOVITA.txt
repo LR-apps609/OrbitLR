@@ -1,3 +1,10 @@
+Novità della 3.0 «Il Cassetto»:
+• Nella barra laterale c'è il Cassetto: gli ultimi file creati con OrbitLR, sempre a portata di mano («Tutti» li mostra in griglia)
+• Trascina un file del Cassetto su una scheda (anche sulla sua riga nella barra laterale): Video lo aggiunge al montaggio, Audio lo apre, Immagini e File lo caricano, Conversione apre il menu a torta
+• «Usa in…» su ogni file del Cassetto e sotto ogni risultato appena pronto: Aggiungi al Video, Usa come musica, Apri in Audio, Apri in Immagini o File, Converti, Mostra nel Finder
+• Esempio: converti una canzone, «Usa in… → Apri in Audio» per tagliarla, poi «Usa in… → Usa come musica nel Video». Tre clic, senza passare dal Finder
+• Il riquadro «Risparmiati questo mese» lascia il posto al Cassetto: la cifra resta in Cronologia
+
 Novità della 2.9.10 «Video in ordine»:
 • Video: schermata nuova. Anteprima grande a sinistra, a destra un pannello con gli strumenti per categoria (Clip, Filtri, Effetti, Testi, Audio, Formato), le opzioni in colonna: niente più passi numerati né strisce da scorrere
 • Le modifiche si vedono subito e diventano definitive con «Applica»; «Annulla» torna a com'era, tieni premuto «Prima / dopo» per confrontare

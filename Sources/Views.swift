@@ -101,16 +101,8 @@ struct MainWindow: View {
                 .scrollContentBackground(.hidden)
 
                 VStack(alignment: .leading, spacing: 10) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("Risparmiati questo mese").font(.system(size: 11)).foregroundStyle(.secondary)
-                        // Sale contando, quando un lavoro finisce
-                        CountingBytes(value: Double(store.savedThisMonth),
-                                      font: .system(size: 20, weight: .bold, design: .rounded), color: Theme.green)
-                            .animation(.easeOut(duration: 1.0), value: store.savedThisMonth)
-                    }
-                    .padding(12)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .card(radius: 12)
+                    // 3.0 · Il Cassetto al posto di «Risparmiati questo mese» (la cifra resta in Cronologia)
+                    DrawerSidebar()
 
                     Button { openSettings() } label: {
                         Label("Opzioni", systemImage: "gearshape.fill")
@@ -222,6 +214,12 @@ struct MainWindow: View {
         }
         .badge(item == .queue ? store.runningJobs.count : 0)
         .tag(item)
+        // 3.0 · Un file del Cassetto (o del Finder) trascinato sulla riga di una scheda: si apre lì
+        .dropDestination(for: URL.self) { urls, _ in
+            guard let t = DrawerTarget.forSidebar(item), !urls.isEmpty else { return false }
+            Drawer.send(urls, to: t)
+            return true
+        }
         .selectionDisabled(item.comingSoon)
         .opacity(item.comingSoon ? 0.5 : 1)
         .help(item.comingSoon ? "Schermata in arrivo: per ora usa Conversione" : "")

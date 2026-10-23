@@ -264,6 +264,7 @@ struct JobStrip: View {
                 Button { QueueStore.shared.cancel(job) } label: { Image(systemName: "xmark") }
                     .buttonStyle(.borderless).help("Annulla")
             } else if job.state == .done, !job.outputs.isEmpty {
+                UseInMenu(url: job.outputs[0])          // 3.0 · il passo successivo, in un clic
                 Button("Mostra nel Finder") { NSWorkspace.shared.activateFileViewerSelecting(job.outputs) }
             }
             // 2.7.5 · Errore: il pulsante che lo risolve, subito accanto
