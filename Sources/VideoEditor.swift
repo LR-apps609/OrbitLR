@@ -44,8 +44,13 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     let folder: URL
 
     let clock = PlayClock()
-    let player = AVPlayer()
+    /// 3.4.6 · Il lettore dell'anteprima. Dopo una modifica se ne prepara uno nuovo e si scambia solo quando
+    /// è pronto sullo stesso punto: niente schermo nero tra la versione vecchia e quella nuova.
+    @Published private(set) var player = AVPlayer()
     private var observer: Any?
+    /// 3.4.6 · Spostamenti dell'indicatore «a inseguimento»: uno alla volta, sempre verso l'ultimo punto chiesto
+    private var seekTarget: Double? = nil
+    private var seeking = false
     private var rebuildTask: Task<Void, Never>?
     private var saveWork: DispatchWorkItem?
     private var loading: Set<String> = []
@@ -55,16 +60,24 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
 
     init(folder: URL = VideoProjectLibrary.folder) {
         self.folder = folder
-        observer = player.addPeriodicTimeObserver(forInterval: CMTime(value: 1, timescale: 20), queue: .main) { [weak self] t in
-            guard let self else { return }
+        attachObserver()
+        if folder == VideoProjectLibrary.folder { VideoProjectLibrary.migrateLegacy(to: folder) }
+        refreshLibrary()
+    }
+
+    /// L'indicatore segue la riproduzione a 60 immagini al secondo (prima 20: si muoveva a scatti).
+    private func attachObserver() {
+        if let o = observer { observerPlayer?.removeTimeObserver(o) }
+        observerPlayer = player
+        observer = player.addPeriodicTimeObserver(forInterval: CMTime(value: 1, timescale: 60), queue: .main) { [weak self] t in
+            guard let self, !self.seeking else { return }
             let s = t.seconds
             guard s.isFinite else { return }
             if abs(self.clock.time - s) > 0.001 { self.clock.time = s }
             if self.clock.playing, self.previewDuration > 0, s >= self.previewDuration - 0.04 { self.pause() }
         }
-        if folder == VideoProjectLibrary.folder { VideoProjectLibrary.migrateLegacy(to: folder) }
-        refreshLibrary()
     }
+    private weak var observerPlayer: AVPlayer?
 
     // MARK: Stato derivato
 
@@ -310,12 +323,23 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             item.audioMix = built.audioMix
             item.audioTimePitchAlgorithm = .spectral          // 2.9.8 · clip più veloci o lente: la voce non cambia tono
             let t = min(self.clock.time, max(0, built.duration - 0.05))
+            // 3.4.6 · Il lettore nuovo si prepara dietro le quinte, già sul punto giusto; poi si scambia
+            let next = AVPlayer(playerItem: item)
+            next.automaticallyWaitsToMinimizeStalling = false
+            _ = await next.seek(to: VideoProjectBuilder.cm(t), toleranceBefore: .zero, toleranceAfter: .zero)
+            guard !Task.isCancelled else { return }
             let wasPlaying = self.clock.playing
-            self.player.replaceCurrentItem(with: item)
+            let old = self.player
+            let now = min(self.clock.time, max(0, built.duration - 0.05))
+            if abs(now - t) > 0.02 { _ = await next.seek(to: VideoProjectBuilder.cm(now), toleranceBefore: .zero, toleranceAfter: .zero) }
+            guard !Task.isCancelled else { return }
+            old.pause()
+            self.player = next
+            self.attachObserver()
             self.previewDuration = built.duration
-            self.player.seek(to: VideoProjectBuilder.cm(t), toleranceBefore: .zero, toleranceAfter: .zero) { _ in }
-            self.clock.time = t
-            if wasPlaying { self.player.play() }
+            self.clock.time = now
+            if wasPlaying { next.play() }
+            old.replaceCurrentItem(with: nil)
             Perf.end(.previewRebuild)
         }
     }
@@ -337,8 +361,26 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     func seek(_ t: Double) {
         let limit = previewDuration > 0 ? previewDuration : project.duration
         let v = min(max(0, t), max(0, limit))
-        player.seek(to: VideoProjectBuilder.cm(v), toleranceBefore: .zero, toleranceAfter: .zero)
-        clock.time = v
+        clock.time = v                      // l'indicatore si sposta subito, l'immagine lo raggiunge
+        seekTarget = v
+        chaseSeek()
+    }
+
+    /// 3.4.6 · Un solo spostamento alla volta; quando finisce, se nel frattempo il dito è andato altrove, si va lì.
+    /// Così trascinando l'indicatore l'immagine segue senza accumulare ritardo.
+    private func chaseSeek() {
+        guard !seeking, let target = seekTarget else { return }
+        seekTarget = nil
+        seeking = true
+        let p = player
+        p.seek(to: VideoProjectBuilder.cm(target), toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.seeking = false
+                if self.player !== p, self.seekTarget == nil { self.seekTarget = target }      // lettore scambiato nel frattempo
+                self.chaseSeek()
+            }
+        }
     }
 
     // MARK: Comandi sulle clip
@@ -1254,6 +1296,32 @@ private struct PlayheadLine: View {
     }
 }
 
+/// 3.4.5 · Aggancio morbido nella sequenza: entro 6 punti da un bordo di clip, dall'inizio o dall'indicatore,
+/// il valore si ferma lì, con un piccolo colpo del trackpad (una volta sola per aggancio).
+enum Snap {
+    static let reach: CGFloat = 6
+    private static var engaged: [String: Double] = [:]
+
+    /// Inizio, fine di ogni clip e indicatore, in secondi del montaggio.
+    static func marks(_ p: VideoProject, playhead: Double) -> [Double] {
+        var m: [Double] = [0, playhead, p.duration]
+        for (c, st) in zip(p.clips, p.starts) { m.append(st); m.append(st + c.length) }
+        return m
+    }
+
+    static func to(_ value: Double, _ marks: [Double], pps: CGFloat, id: String) -> Double {
+        let near = marks.min { abs($0 - value) < abs($1 - value) }
+        guard let n = near, CGFloat(abs(n - value)) * pps <= reach else { engaged[id] = nil; return value }
+        if engaged[id] != n {
+            engaged[id] = n
+            NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+        }
+        return n
+    }
+
+    static func reset() { engaged = [:] }
+}
+
 private struct ProjectTimeline: View {
     @ObservedObject var s: VideoProjectStore
     let clock: PlayClock
@@ -1322,6 +1390,7 @@ private struct ProjectTimeline: View {
                 ClipBlock(clip: c, thumbs: s.thumbs[c.path] ?? [], fileDuration: s.infos[c.path]?.videoDuration ?? c.outPoint,
                           selected: s.selected == c.id, tint: tint,
                           speech: speechMarks(c, start: start))
+                    .equatable()
                     .frame(width: w)
                     // 2.7.7 · VoiceOver: «Clip 2 di 3, 0:05, senza audio»
                     .accessibilityElement(children: .ignore)
@@ -1523,21 +1592,31 @@ private struct ProjectTimeline: View {
         }
         guard let d = textDrag else { return }
         let delta = Double(dx / max(pps, 0.0001))
+        // 3.4.5 · Aggancio morbido: vicino all'inizio o alla fine di una clip, o all'indicatore, il testo si ferma lì
+        let marks = Snap.marks(s.project, playhead: clock.time)
+        let len = d.end - d.start
+        var start = d.start, end = d.end
+        switch mode {
+        case 1: start = min(max(0, Snap.to(d.start + delta, marks, pps: pps, id: "t1")), d.end - 0.3)
+        case 2: end = max(min(total, Snap.to(d.end + delta, marks, pps: pps, id: "t2")), d.start + 0.3)
+        default:
+            var st = min(max(0, d.start + delta), max(0, total - len))
+            let snappedStart = Snap.to(st, marks, pps: pps, id: "t0")
+            if snappedStart != st { st = snappedStart } else {
+                let snappedEnd = Snap.to(st + len, marks, pps: pps, id: "t3")
+                if snappedEnd != st + len { st = snappedEnd - len }
+            }
+            start = min(max(0, st), max(0, total - len)); end = start + len
+        }
         s.live { p in
             guard let i = p.texts?.firstIndex(where: { $0.id == d.id }) else { return }
-            let len = d.end - d.start
-            switch mode {
-            case 1: p.texts![i].start = min(max(0, d.start + delta), d.end - 0.3)
-            case 2: p.texts![i].end = max(min(total, d.end + delta), d.start + 0.3)
-            default:
-                let st = min(max(0, d.start + delta), max(0, total - len))
-                p.texts![i].start = st
-                p.texts![i].end = st + len
-            }
+            p.texts![i].start = start
+            p.texts![i].end = end
         }
     }
 
     private func endTextDrag() {
+        Snap.reset()
         if let b = dragBefore { s.commit(from: b, undo, "Sposta il testo") }
         dragBefore = nil
         textDrag = nil
@@ -1564,10 +1643,12 @@ private struct ProjectTimeline: View {
                 .gesture(DragGesture(minimumDistance: 2)
                     .onChanged { v in
                         if dragBefore == nil { dragBefore = s.project; dragStartOffset = m.offset }
-                        let o = min(max(0, dragStartOffset + Double(v.translation.width / pps)), max(0, total - 0.5))
+                        let raw = min(max(0, dragStartOffset + Double(v.translation.width / pps)), max(0, total - 0.5))
+                        let o = Snap.to(raw, Snap.marks(s.project, playhead: clock.time), pps: pps, id: "m")
                         s.live { $0.music?.offset = o }
                     }
                     .onEnded { _ in
+                        Snap.reset()
                         if let b = dragBefore { s.commit(from: b, undo, "Sposta la musica") }
                         dragBefore = nil
                     })
@@ -1589,7 +1670,13 @@ private struct ProjectTimeline: View {
     }
 }
 
-private struct ClipBlock: View {
+/// 3.4.5 · Una clip si ridisegna solo se cambia qualcosa di suo (non a ogni movimento delle altre).
+private struct ClipBlock: View, Equatable {
+    static func == (a: ClipBlock, b: ClipBlock) -> Bool {
+        a.clip == b.clip && a.selected == b.selected && a.fileDuration == b.fileDuration && a.speech == b.speech
+            && a.thumbs.count == b.thumbs.count && a.thumbs.first === b.thumbs.first
+    }
+
     let clip: VPClip
     let thumbs: [NSImage]
     let fileDuration: Double
