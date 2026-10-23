@@ -205,7 +205,7 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         job.cancelRequested = true
         job.exportSession?.cancelExport()
         if let p = job.process, p.isRunning { p.terminate() }   // lo script si ferma in modo pulito
-        else if job.state == .waiting { job.state = .cancelled; job.status = "Annullato"; objectWillChange.send() }
+        else if job.state == .waiting { job.state = .cancelled; job.status = "Interrotto"; objectWillChange.send() }
     }
 
     func retry(_ job: Job) {
@@ -457,7 +457,7 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         job.process = nil
         if job.cancelRequested {
             job.state = .cancelled
-            job.status = job.outputs.isEmpty ? "Annullato" : "Annullato (alcuni file sono pronti)"
+            job.status = job.outputs.isEmpty ? "Interrotto" : "Interrotto (alcuni file sono pronti)"
         } else if !job.outputs.isEmpty {
             job.state = .done
             job.status = job.failures.isEmpty ? (job.native ? "Completato con macOS · verificato" : "Completato · verificato") : "Completato in parte"

@@ -161,7 +161,11 @@ final class Workspace: ObservableObject, @unchecked Sendable {
         gr.pie.lastId = chosen.id
         var targets = gr.files + subs
         // 3.0 · «Modifica in…»: il file va nella sua scheda, con tutte le modifiche
-        if let t = Catalog.openTarget(a.id) { Drawer.send(gr.files, to: t); return }
+        if let t = Catalog.openTarget(a.id) {
+            let files = gr.files
+            Task { @MainActor in Drawer.send(files, to: t) }
+            return
+        }
         if Interactive.handles(a.id) { Interactive.open(a, files: gr.files); return }
         if a.id == "merge" {
             targets = groups.filter { $0.kind == .pdf || $0.kind == .img }.flatMap { $0.files }
@@ -247,8 +251,9 @@ struct WorkspaceView: View {
             VStack(spacing: 18) {
                 EmptyOrbit(open: hoverDrop || targeted)
                 VStack(spacing: 6) {
-                    Text(targeted ? "Rilascia: ti propongo cosa farne" : "Trascina qui i tuoi file").font(.system(size: 24, weight: .bold, design: .rounded))
-                    Text("oppure clicca per sceglierli · anche dal Finder: clic destro → OrbitLR")
+                    // 3.0 · La frase guida: due passi, niente di più
+                    Text(targeted ? "Rilascia qui" : "Trascina un file. Scegli cosa farne.").font(.system(size: 24, weight: .bold, design: .rounded))
+                    Text("oppure clicca per sceglierlo · dal Finder: clic destro → OrbitLR, oppure ⌥⌘C")
                         .font(.system(size: 13)).foregroundStyle(.secondary)
                 }
                 .help("Fino a \(Workspace.maxPerKind) file dello stesso tipo, o \(Workspace.maxKinds) tipi diversi insieme")
@@ -285,13 +290,14 @@ struct WorkspaceView: View {
             HStack(spacing: 8) {
                 if ws.groups.count > 1 {
                     Label("\(ws.groups.count) tipi di file · \(ws.allFiles.count) file", systemImage: "square.grid.2x2")
-                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary)
+                        .font(.system(size: 12.5, weight: .semibold)).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Button { ws.togglePreview() } label: { Label("Anteprima", systemImage: "eye") }
                     .help("Anteprima del file (Spazio)")
                 Button { choose(append: true) } label: { Label("Aggiungi file…", systemImage: "plus") }
-                Button { ws.clear() } label: { Label("Svuota", systemImage: "xmark") }
+                Button { ws.clear() } label: { Label("Togli tutto", systemImage: "xmark") }
+                    .help("Togli i file dalla scheda (restano dove sono)")
             }
             .padding(.horizontal, 24)
             .padding(.top, 16)
@@ -339,7 +345,7 @@ struct WorkspaceView: View {
     }
 
     private func hint(_ symbol: String, _ text: String) -> some View {
-        Label(text, systemImage: symbol).font(.system(size: 12)).foregroundStyle(.secondary)
+        Label(text, systemImage: symbol).font(.system(size: 12.5)).foregroundStyle(.secondary)
     }
 
     private func choose(append: Bool) {
@@ -499,7 +505,7 @@ struct JobStatusBar: View {
                     Text(job.action.title).font(.system(size: 13, weight: .semibold))
                     Spacer()
                     SavedBadge(job: job)
-                    Text(job.status).font(.system(size: 12)).foregroundStyle(job.state == .failed ? Theme.orange : .secondary).lineLimit(1)
+                    Text(job.status).font(.system(size: 12.5)).foregroundStyle(job.state == .failed ? Theme.orange : .secondary).lineLimit(1)
                 }
                 if job.state == .running || job.state == .waiting {
                     TunerBar(value: job.shownProgress, tint: Theme.color(job.kind), height: 20)
@@ -521,7 +527,7 @@ struct JobStatusBar: View {
                 UseInMenu(url: job.outputs[0])          // 3.0 · il passo successivo, in un clic
                 Button("Mostra") { store.reveal(job.outputs.map { $0.path }) }.buttonStyle(.borderedProminent).tint(Theme.green)
             } else if job.state == .running {
-                Button("Annulla") { store.cancel(job) }
+                Button("Interrompi") { store.cancel(job) }
             }
             Button("Coda") { openQueue() }
             if let onClose {

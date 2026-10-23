@@ -225,7 +225,7 @@ struct PresetEntity: AppEntity {
     let name: String
     let detail: String
 
-    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Preset di OrbitLR"
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Scorciatoia di OrbitLR"
     var displayRepresentation: DisplayRepresentation {
         DisplayRepresentation(title: "\(name)", subtitle: "\(detail)", image: .init(systemName: "star.circle.fill"))
     }
@@ -248,13 +248,13 @@ struct PresetQuery: EntityQuery {
 }
 
 struct RunPresetIntent: AppIntent {
-    static var title: LocalizedStringResource = "Usa un preset di OrbitLR"
-    static var description = IntentDescription("Applica uno dei tuoi preset ai file e restituisce i file creati.", categoryName: "File")
+    static var title: LocalizedStringResource = "Usa una scorciatoia di OrbitLR"
+    static var description = IntentDescription("Applica una delle tue scorciatoie ai file e restituisce i file creati.", categoryName: "File")
 
     @Parameter(title: "File", supportedTypeIdentifiers: ["public.item"])
     var files: [IntentFile]
 
-    @Parameter(title: "Preset")
+    @Parameter(title: "Scorciatoia")
     var preset: PresetEntity
 
     static var parameterSummary: some ParameterSummary {
@@ -315,8 +315,8 @@ struct OrbitShortcuts: AppShortcutsProvider {
                     shortTitle: "Converti file",
                     systemImageName: "arrow.triangle.2.circlepath")
         AppShortcut(intent: RunPresetIntent(),
-                    phrases: ["Usa un preset di \(.applicationName)"],
-                    shortTitle: "Usa un preset",
+                    phrases: ["Usa una scorciatoia di \(.applicationName)"],
+                    shortTitle: "Usa una scorciatoia",
                     systemImageName: "star.circle.fill")
     }
 }

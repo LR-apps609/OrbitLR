@@ -180,7 +180,7 @@ struct HideMarkEditor: View {
                 }
                 Spacer()
                 if !spec.rects.isEmpty {
-                    Button("Togli tutte le zone") { spec.rects = []; selected = nil }
+                    Button("Rimuovi tutte le zone") { spec.rects = []; selected = nil }
                         .controlSize(.small)
                 }
             }
@@ -257,7 +257,7 @@ struct HideMarkEditor: View {
                         .symbolRenderingMode(.palette).foregroundStyle(Color.white, Color.black.opacity(0.7))
                 }
                 .buttonStyle(.plain).offset(x: 7, y: -7)
-                .help("Togli questa zona")
+                .help("Rimuovi questa zona")
             }
             .offset(x: r.minX * size.width, y: r.minY * size.height)
     }

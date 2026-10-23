@@ -183,7 +183,7 @@ struct AudioProjectsRow: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 SectionLabel(text: "Progetti")
-                Text("si salvano da soli · clic per riprendere").font(.system(size: 11)).foregroundStyle(.secondary)
+                Text("si salvano da soli · clic per riprendere").font(.system(size: 11.5)).foregroundStyle(.secondary)
             }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
@@ -201,8 +201,8 @@ struct AudioProjectsRow: View {
                     .font(.system(size: 14, weight: .semibold)).foregroundStyle(tint)
                     .frame(width: 32, height: 32).background(Circle().fill(tint.opacity(0.15)))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(p.name).font(.system(size: 12.5, weight: .semibold)).lineLimit(1)
-                    Text(detail(p)).font(.system(size: 10.5)).foregroundStyle(.secondary).lineLimit(1)
+                    Text(title(p)).font(.system(size: 12.5, weight: .semibold)).lineLimit(1)
+                    Text(detail(p)).font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(1)
                 }
                 Spacer(minLength: 0)
             }
@@ -219,8 +219,23 @@ struct AudioProjectsRow: View {
             Divider()
             Button("Elimina…", role: .destructive) { delete(p) }
         }
-        .help("Riprendi «\(p.name)» · tasto destro per rinominare, duplicare o eliminare")
-        .accessibilityLabel("Progetto \(p.name), \(detail(p))")
+        .help("Riprendi «\(title(p))» · clic destro per rinominare, duplicare o eliminare")
+        .accessibilityLabel("Progetto \(title(p)), \(detail(p))")
+    }
+
+    /// 3.0 · Due progetti con lo stesso nome si distinguono dal punto di partenza: «On The Rope · 0:40».
+    private func title(_ p: AudioProject) -> String {
+        AudioProjectsRow.title(p, among: m.audioProjects)
+    }
+
+    static func title(_ p: AudioProject, among all: [AudioProject]) -> String {
+        let same = all.filter { $0.name == p.name }
+        guard same.count > 1 else { return p.name }
+        if Set(same.map { Int($0.start.rounded()) }).count == same.count, p.length > 0.1 {
+            return p.name + " · " + formatShort(p.start)
+        }
+        let n = (same.sorted { $0.modified < $1.modified }.firstIndex { $0.id == p.id } ?? 0) + 1
+        return p.name + " · \(n)"
     }
 
     private func detail(_ p: AudioProject) -> String {

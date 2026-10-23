@@ -310,7 +310,7 @@ private struct ActivityHeader: View {
     var body: some View {
         HStack(spacing: 10) {
             Text(title).font(.system(size: 13, weight: .bold, design: .rounded)).foregroundStyle(Theme.ink)
-            Text(detail).font(.system(size: 11.5)).foregroundStyle(.secondary)
+            Text(detail).font(.system(size: 12)).foregroundStyle(.secondary)
             Rectangle().fill(Theme.stroke).frame(height: 1)
         }
         .padding(.vertical, 6)
@@ -330,7 +330,7 @@ struct JobCard: View {
                 .fileDrag(job.outputs.first)
             VStack(alignment: .leading, spacing: 4) {
                 Text(job.title).font(.system(size: 13, weight: .semibold)).lineLimit(1).truncationMode(.middle)
-                Text(job.action.title).font(.system(size: 12)).foregroundStyle(.secondary)
+                Text(job.action.title).font(.system(size: 12.5)).foregroundStyle(.secondary)
             }
             .frame(minWidth: 170, maxWidth: .infinity, alignment: .leading)
             VStack(alignment: .leading, spacing: 6) {
@@ -347,7 +347,7 @@ struct JobCard: View {
             }
             .frame(width: 250, alignment: .leading)
             VStack(alignment: .leading, spacing: 4) {
-                Text(job.sizeText).font(.system(size: 12, design: .rounded)).foregroundStyle(.secondary)
+                Text(job.sizeText).font(.system(size: 12.5, design: .rounded)).foregroundStyle(.secondary)
                 SavedBadge(job: job)
             }
             .frame(width: 140, alignment: .leading)
@@ -401,7 +401,7 @@ struct JobCard: View {
         case .running, .waiting: Button("Interrompi") { store.cancel(job) }
         case .done:
             Button("Mostra nel Finder") { store.reveal(job.outputs.map { $0.path }) }
-                .buttonStyle(.borderedProminent).tint(Theme.green).disabled(job.outputs.isEmpty)
+                .disabled(job.outputs.isEmpty)
         case .failed, .cancelled: Button("Riprova") { store.retry(job) }
         }
     }
@@ -434,7 +434,7 @@ struct MonthStatsRow: View {
                 .frame(width: 40, height: 40).background(Circle().fill(color.opacity(0.14)))
             VStack(alignment: .leading, spacing: 2) {
                 value()
-                Text(title).font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(1)
+                Text(title).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer(minLength: 0)
         }
@@ -457,15 +457,15 @@ struct HistoryRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(entry.title).font(.system(size: 13, weight: .semibold)).lineLimit(1).truncationMode(.middle)
                 Text("\(entry.action) · \(entry.date.formatted(date: .omitted, time: .shortened))")
-                    .font(.system(size: 12)).foregroundStyle(.secondary)
+                    .font(.system(size: 12.5)).foregroundStyle(.secondary)
             }
             Spacer()
             if let b = entry.before, let a = entry.after, b > 0 {
                 Text(ByteCountFormatter.string(fromByteCount: b, countStyle: .file) + " → " + ByteCountFormatter.string(fromByteCount: a, countStyle: .file))
-                    .font(.system(size: 12, design: .rounded)).foregroundStyle(a < b ? Theme.green : .secondary)
+                    .font(.system(size: 12.5, design: .rounded)).foregroundStyle(a < b ? Theme.green : .secondary)
             }
             if entry.undone {
-                Text("Nel Cestino").font(.system(size: 12)).foregroundStyle(.secondary)
+                Text("Nel Cestino").font(.system(size: 12.5)).foregroundStyle(.secondary)
             } else {
                 if let first = entry.outputs.first, FileManager.default.fileExists(atPath: first) {
                     UseInMenu(url: URL(fileURLWithPath: first), compact: true)
@@ -543,7 +543,7 @@ struct DayHeader: View {
         HStack(spacing: 10) {
             Text(day.title).font(.system(size: 13, weight: .bold, design: .rounded)).foregroundStyle(Theme.ink)
             Text(day.entries.count == 1 ? "1 lavoro" : "\(day.entries.count) lavori")
-                .font(.system(size: 11)).foregroundStyle(.secondary)
+                .font(.system(size: 11.5)).foregroundStyle(.secondary)
             Rectangle().fill(Theme.stroke).frame(height: 1)
             if day.saved > 0 {
                 Label(ByteCountFormatter.string(fromByteCount: day.saved, countStyle: .file) + " risparmiati",
@@ -585,7 +585,7 @@ struct ComponentsView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Già incluso in macOS").font(.system(size: 13, weight: .semibold))
                             Text("JPG, PNG, HEIC, TIFF, ridimensionamento foto, MP4, MOV, M4A, HEVC, PDF e testo dalle immagini: funzionano senza installare nulla.")
-                                .font(.system(size: 12)).foregroundStyle(.secondary)
+                                .font(.system(size: 12.5)).foregroundStyle(.secondary)
                         }
                         Spacer()
                     }
@@ -598,7 +598,7 @@ struct ComponentsView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Manca Homebrew").font(.system(size: 13, weight: .semibold))
                                 Text("Serve per installare gli altri componenti. Si installa una volta sola nel Terminale, con la password del Mac.")
-                                    .font(.system(size: 12)).foregroundStyle(.secondary)
+                                    .font(.system(size: 12.5)).foregroundStyle(.secondary)
                             }
                             Spacer()
                             Button("Installa Homebrew") { installer.installHomebrewInTerminal() }
@@ -662,9 +662,9 @@ struct ComponentsView: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack {
                     Text(c.name).font(.system(size: 13, weight: .semibold))
-                    Text(c.purpose).font(.system(size: 11)).foregroundStyle(.secondary)
+                    Text(c.purpose).font(.system(size: 11.5)).foregroundStyle(.secondary)
                 }
-                Text(c.unlocks).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Text(c.unlocks).font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
             if !ok && installer.brewPath != nil {
@@ -697,6 +697,13 @@ struct ComponentsView: View {
 
 // MARK: - Elementi comuni
 
+extension View {
+    /// 3.0 · Il pulsante principale della schermata (uno solo): pieno se `on`, normale altrimenti.
+    @ViewBuilder func primaryButton(_ on: Bool = true) -> some View {
+        if on { self.buttonStyle(.borderedProminent).tint(Theme.accent) } else { self.buttonStyle(.bordered) }
+    }
+}
+
 struct PageHeader<Actions: View>: View {
     let title: String
     let subtitle: String
@@ -708,7 +715,7 @@ struct PageHeader<Actions: View>: View {
             RoundedRectangle(cornerRadius: 3).fill(color.gradient).frame(width: 5, height: 40)
             VStack(alignment: .leading, spacing: 3) {
                 Text(title).font(.system(size: 26, weight: .bold, design: .rounded))
-                Text(subtitle).font(.system(size: 12)).foregroundStyle(.secondary)
+                Text(subtitle).font(.system(size: 12.5)).foregroundStyle(.secondary)
                     .lineLimit(2)
             }
             Spacer()
@@ -757,13 +764,13 @@ struct MenuBarView: View {
                 Spacer()
             }
             if store.runningJobs.isEmpty {
-                Text("Nessuna operazione in corso").font(.system(size: 12)).foregroundStyle(.secondary)
+                Text("Nessuna operazione in corso").font(.system(size: 12.5)).foregroundStyle(.secondary)
             } else {
                 ForEach(store.runningJobs) { job in RunningRow(job: job) }
             }
             if !store.history.isEmpty {
                 Divider()
-                Text("Recenti").font(.system(size: 11)).foregroundStyle(.secondary)
+                Text("Recenti").font(.system(size: 11.5)).foregroundStyle(.secondary)
                 ForEach(store.history.prefix(4)) { e in
                     Button { store.reveal(e.outputs) } label: {
                         HStack(spacing: 8) {
@@ -799,7 +806,7 @@ struct RunningRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(job.title).font(.system(size: 12, weight: .semibold)).lineLimit(1).truncationMode(.middle)
                 ProgressBar(value: job.shownProgress, tint: Theme.color(job.kind))
-                Text(job.status).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+                Text(job.status).font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(1)
             }
         }
     }

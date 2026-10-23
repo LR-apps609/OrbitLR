@@ -124,8 +124,8 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
               DispatchQueue.main.async { self.componentsFound = n } },
             { DispatchQueue.main.sync { PresetStore.shared.registerHotkeys() } },
         ]
-        // Avvio normale: nessuna attesa finta, solo il minimo perché la barra si veda riempire (circa un secondo)
-        let minStep = quick ? 0.08 : 0.6
+        // 3.0 · Nessuna attesa finta: i lavori veri, poi il tempo giusto perché l'animazione del marchio si veda
+        let minStep = 0.0
         let started = Date()
         DispatchQueue.global(qos: .userInitiated).async {
             for (i, job) in work.enumerated() {
@@ -137,7 +137,7 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
                 DispatchQueue.main.async { withAnimation(.easeOut(duration: 0.25)) { self.doneSteps = i + 1 } }
             }
             let total = Date().timeIntervalSince(started)
-            let tail = quick ? max(0.1, 0.6 - total) : 0.7
+            let tail = quick ? max(0.1, 0.9 - total) : max(0.2, 1.4 - total)
             Thread.sleep(forTimeInterval: tail)
             DispatchQueue.main.async { self.afterLoading(quick: quick) }
         }
@@ -365,45 +365,20 @@ struct WelcomeView: View {
                 Text("OrbitLR").font(.system(size: 22, weight: .bold, design: .rounded))
                 Text("Versione \(version)").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Theme.brass)
             }
-            VStack(spacing: 7) {
-                ProgressBar(value: Double(ctl.doneSteps) / Double(ctl.steps.count), tint: Theme.accent, height: 8)
-                Text(ctl.stepText).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
-                    .contentTransition(.opacity)
-            }
-            .padding(.horizontal, 90)
             Spacer(minLength: 0)
         }
     }
 
+    /// 3.0 · Primo avvio: solo il marchio che si anima e il benvenuto, nessun elenco di passi.
     private var fullLoading: some View {
-        VStack(spacing: 14) {
-            BrandAnimation(size: CGSize(width: 300, height: 170))
-                .padding(.top, 22)
-            VStack(spacing: 3) {
-                Text(ctl.firstLaunch ? "Benvenuto in OrbitLR" : "OrbitLR").font(.system(size: 19, weight: .bold, design: .rounded))
-                if !ctl.firstLaunch {
-                    Text("Versione \(version)").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Theme.brass)
-                }
+        VStack(spacing: 16) {
+            Spacer(minLength: 0)
+            BrandAnimation(size: CGSize(width: 320, height: 180))
+            VStack(spacing: 4) {
+                Text(ctl.firstLaunch ? "Benvenuto in OrbitLR" : "OrbitLR").font(.system(size: 22, weight: .bold, design: .rounded))
+                Text(ctl.firstLaunch ? "Converti e modifica i tuoi file, in un clic" : "Versione \(version)")
+                    .font(.system(size: 12.5, weight: .semibold, design: .rounded)).foregroundStyle(Theme.brass)
             }
-            ProgressBar(value: Double(ctl.doneSteps) / Double(ctl.steps.count), tint: Theme.accent, height: 10)
-                .padding(.horizontal, 40)
-            VStack(alignment: .leading, spacing: 7) {
-                ForEach(ctl.steps) { s in
-                    let done = s.id < ctl.doneSteps
-                    let current = s.id == ctl.doneSteps
-                    HStack(spacing: 10) {
-                        Image(systemName: done ? "checkmark.circle.fill" : s.symbol)
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(done ? Theme.green : (current ? Theme.accent : Color.secondary))
-                            .frame(width: 18)
-                        Text(s.id == 2 && done ? "\(s.title) · \(ctl.componentsFound) di \(Installer.shared.components.count) pronti" : s.title)
-                            .font(.system(size: 12, weight: current ? .semibold : .regular))
-                            .foregroundStyle(done || current ? Theme.ink : Color.secondary)
-                        if current { ProgressView().controlSize(.mini) }
-                    }
-                }
-            }
-            .frame(width: 330, alignment: .leading)
             Spacer(minLength: 0)
         }
     }
@@ -429,7 +404,7 @@ struct WelcomeView: View {
             Spacer(minLength: 0)
             HStack {
                 Button("Non mostrare più") { ctl.stopTips() }
-                    .help("Dalla prossima volta solo l’animazione. Si riattiva in Opzioni → Aspetto e suoni")
+                    .help("Dalla prossima volta solo l’animazione")
                 Button { ctl.anotherTip() } label: { Label("Un altro", systemImage: "arrow.right") }
                 Spacer()
                 Button("Inizia") { ctl.finish() }
@@ -500,43 +475,51 @@ struct WelcomeView: View {
         let tips: [String]
     }
 
+    /// 3.0 · Tre passi: prova il menu a torta su un file di prova, poi dal Finder, poi le schede.
     private var pages: [PageInfo] {
         [
-            PageInfo(symbol: "cursorarrow.click.2", color: Theme.color(.img), title: "Tasto destro nel Finder",
-                     text: "Clic destro su uno o più file, poi «OrbitLR»: lo trovi in fondo al menu o in «Servizi».",
-                     tips: ["Funziona anche con le cartelle", "Fino a 100 file dello stesso tipo"]),
-            PageInfo(symbol: "command", color: Theme.color(.pdf), title: "Seleziona e premi ⌥⌘C",
-                     text: "Seleziona i file nel Finder e premi ⌥⌘C: il menu a torta si apre accanto al puntatore.",
-                     tips: ["Muovi il mouse verso un’azione e fai clic", "Tasti 1–8 per scegliere, Invio = ultima scelta",
-                            "Le tue scorciatoie partono con ⌃⌥1…9"]),
-            PageInfo(symbol: "hand.draw.fill", color: Theme.color(.video), title: "Trascina, oppure usa la finestra",
-                     text: "Trascina i file nella finestra di OrbitLR o sulla sua icona nel Dock. L’icona in alto a destra, nella barra dei menu, mostra i lavori in corso.",
-                     tips: ["Spazio = anteprima del file", "Il pulsante ⌘ in alto elenca tutte le scorciatoie",
-                            "In Attività: Confronta, per vedere prima e dopo"]),
+            PageInfo(symbol: "chart.pie.fill", color: Theme.accent, title: "Prova: scegli un formato",
+                     text: "Ecco una foto di prova. Clicca un formato, come faresti con un tuo file.", tips: []),
+            PageInfo(symbol: "cursorarrow.click.2", color: Theme.color(.img), title: "Anche dal Finder",
+                     text: "Seleziona i file nel Finder e premi ⌥⌘C, oppure clic destro → OrbitLR: lo stesso menu si apre lì dove sei.",
+                     tips: ["Funziona anche con le cartelle", "Tasti 1–8 per scegliere, Invio ripete l’ultima scelta",
+                            "Spazio mostra l’anteprima del file"]),
+            PageInfo(symbol: "square.grid.2x2.fill", color: Theme.color(.video), title: "Per modificare, le schede",
+                     text: "Conversione cambia il formato. Immagini, File, Video e Audio fanno tutto il resto: ritagli, suonerie, montaggi.",
+                     tips: ["Lo spicchio «Modifica» porta il file nella sua scheda",
+                            "Nel Cassetto ritrovi i file creati: trascinali su un’altra scheda",
+                            "Attività mostra i lavori in corso e quelli fatti"]),
         ]
     }
 
     private func page(_ n: Int) -> some View {
         let p = pages[min(n, pages.count - 1)]
-        return VStack(spacing: 16) {
-            ZStack {
-                Circle().fill(p.color.opacity(0.16)).frame(width: 120, height: 120)
-                Circle().strokeBorder(p.color.opacity(0.45), lineWidth: 1).frame(width: 120, height: 120)
-                Image(systemName: p.symbol).font(.system(size: 46, weight: .semibold)).foregroundStyle(p.color)
+        return VStack(spacing: 14) {
+            if n == 0 {
+                WelcomeTryPie()
+                    .padding(.top, 26)
+            } else {
+                ZStack {
+                    Circle().fill(p.color.opacity(0.16)).frame(width: 110, height: 110)
+                    Circle().strokeBorder(p.color.opacity(0.45), lineWidth: 1).frame(width: 110, height: 110)
+                    Image(systemName: p.symbol).font(.system(size: 42, weight: .semibold)).foregroundStyle(p.color)
+                }
+                .padding(.top, 36)
             }
-            .padding(.top, 40)
             Text(p.title).font(.system(size: 21, weight: .bold, design: .rounded))
             Text(p.text).font(.system(size: 13)).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: 380)
-            VStack(alignment: .leading, spacing: 6) {
-                ForEach(p.tips, id: \.self) { t in
-                    Label(t, systemImage: "checkmark").font(.system(size: 12)).foregroundStyle(Theme.ink)
+                .frame(maxWidth: 390)
+            if !p.tips.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(p.tips, id: \.self) { t in
+                        Label(t, systemImage: "checkmark").font(.system(size: 12.5)).foregroundStyle(Theme.ink)
+                    }
                 }
+                .padding(12)
+                .frame(width: 390, alignment: .leading)
+                .card(radius: 12)
             }
-            .padding(12)
-            .frame(width: 360, alignment: .leading)
-            .card(radius: 12)
             Spacer(minLength: 0)
             HStack {
                 HStack(spacing: 6) {
@@ -553,6 +536,63 @@ struct WelcomeView: View {
                     .buttonStyle(.borderedProminent).tint(Theme.accent)
             }
             .padding(.horizontal, 28).padding(.bottom, 22)
+        }
+    }
+}
+
+/// 3.0 · Il menu a torta vero, su una foto di prova disegnata dall'app (nessun file dell'utente).
+/// Scegliere un formato non crea niente: mostra solo cosa succederebbe.
+private struct WelcomeTryPie: View {
+    @StateObject private var model = WelcomeTryPie.makeModel()
+    @State private var picked: Action? = nil
+
+    var body: some View {
+        ZStack {
+            PieView(model: model, side: 210)
+                .opacity(picked == nil ? 1 : 0.25)
+            if let a = picked {
+                VStack(spacing: 6) {
+                    Image(systemName: "checkmark.circle.fill").font(.system(size: 34)).foregroundStyle(Theme.green)
+                    Text("Fatto: \(a.short)").font(.system(size: 15, weight: .bold, design: .rounded))
+                    Text("Con un tuo file, il nuovo file\nfinisce accanto all’originale.")
+                        .font(.system(size: 11.5)).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    Button("Riprova") { withAnimation(.easeOut(duration: 0.2)) { picked = nil } }
+                        .buttonStyle(.borderless).foregroundStyle(Theme.accent).font(.system(size: 12, weight: .semibold))
+                }
+                .transition(.scale(scale: 0.9).combined(with: .opacity))
+            }
+        }
+        .frame(width: 210, height: 210)
+        .onAppear {
+            model.onPick = { a in withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { picked = a } }
+            model.onClose = {}
+        }
+    }
+
+    static func makeModel() -> PieModel {
+        let m = PieModel()
+        m.setup(actions: Catalog.pieActions(for: .img, exts: ["heic"], mergeable: 1, count: 1).filter { !$0.id.hasPrefix("__") })
+        m.tint = Theme.color(.img)
+        m.suggestedId = "to:jpg"
+        m.fileName = "Foto di prova.heic"
+        m.subtitle = "Consigliato: JPG"
+        m.icon = WelcomeTryPie.sampleImage()
+        return m
+    }
+
+    /// Un piccolo paesaggio disegnato al momento: cielo, sole e colline.
+    static func sampleImage() -> NSImage {
+        NSImage(size: NSSize(width: 120, height: 90), flipped: false) { r in
+            NSGradient(colors: [NSColor(red: 0.55, green: 0.75, blue: 0.95, alpha: 1), NSColor(red: 0.95, green: 0.85, blue: 0.7, alpha: 1)])?
+                .draw(in: r, angle: -90)
+            NSColor(red: 1, green: 0.8, blue: 0.3, alpha: 1).setFill()
+            NSBezierPath(ovalIn: NSRect(x: 76, y: 52, width: 22, height: 22)).fill()
+            NSColor(red: 0.35, green: 0.6, blue: 0.4, alpha: 1).setFill()
+            let hill = NSBezierPath()
+            hill.move(to: NSPoint(x: 0, y: 0)); hill.line(to: NSPoint(x: 0, y: 34))
+            hill.curve(to: NSPoint(x: 120, y: 28), controlPoint1: NSPoint(x: 40, y: 60), controlPoint2: NSPoint(x: 80, y: 10))
+            hill.line(to: NSPoint(x: 120, y: 0)); hill.close(); hill.fill()
+            return true
         }
     }
 }

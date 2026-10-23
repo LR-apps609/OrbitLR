@@ -214,7 +214,7 @@ struct AutomationView: View {
                     }
                     Label("Le cartelle funzionano finché OrbitLR è aperta, anche solo nella barra dei menu. Per averle sempre attive: Opzioni → «Apri OrbitLR all’accesso».",
                           systemImage: "info.circle")
-                        .font(.system(size: 12)).foregroundStyle(.secondary)
+                        .font(.system(size: 12.5)).foregroundStyle(.secondary)
                 }
             }
             .padding(28)
@@ -239,7 +239,7 @@ struct WatchRow: View {
                 Text(rule.folderURL.lastPathComponent).font(.system(size: 13, weight: .semibold))
                 Text(rule.summary).font(.system(size: 12)).foregroundStyle(Theme.color(rule.fileKind))
                 Text("Risultati in: " + (rule.outputURL.path.replacingOccurrences(of: Paths.home.path, with: "~")))
-                    .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                    .font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 3) {
@@ -249,7 +249,7 @@ struct WatchRow: View {
                         .foregroundStyle(rule.enabled ? Theme.green : .secondary)
                 }
                 Text(rule.processed == 1 ? "1 file elaborato" : "\(rule.processed) file elaborati")
-                    .font(.system(size: 11)).foregroundStyle(.secondary)
+                    .font(.system(size: 11.5)).foregroundStyle(.secondary)
                 if let d = rule.lastRun {
                     Text("Ultimo: " + d.formatted(date: .abbreviated, time: .shortened)).font(.system(size: 10)).foregroundStyle(.tertiary)
                 }

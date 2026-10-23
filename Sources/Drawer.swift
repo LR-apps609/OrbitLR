@@ -181,7 +181,7 @@ struct DrawerSidebar: View {
             }
             if items.isEmpty {
                 Text("I file che crei finiscono qui: trascinali su una scheda o usa «Usa in…».")
-                    .font(.system(size: 10.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             } else {
                 ForEach(items.prefix(4), id: \.self) { u in DrawerRow(url: u) }
             }
@@ -230,7 +230,7 @@ private struct DrawerAll: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Cassetto").font(.headline)
             Text("Gli ultimi file creati con OrbitLR. Trascinali su una scheda, oppure clic destro per mandarli altrove.")
-                .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             ScrollView {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 10)], spacing: 10) {
                     ForEach(items, id: \.self) { u in

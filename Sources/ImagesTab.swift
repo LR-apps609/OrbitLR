@@ -212,7 +212,7 @@ struct KindTabView: View {
                     }
                 }
                 if let n = m.notice {
-                    Label(n, systemImage: "info.circle").font(.system(size: 12)).foregroundStyle(.secondary)
+                    Label(n, systemImage: "info.circle").font(.system(size: 12.5)).foregroundStyle(.secondary)
                 }
                 if let job = m.lastJob { JobStrip(job: job) }
             }
@@ -341,13 +341,13 @@ private struct ImagesInspector: View {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Cosa vuoi fare?").font(.system(size: 15, weight: .bold))
-                    Text(scope).font(.system(size: 12)).foregroundStyle(.secondary)
+                    Text(scope).font(.system(size: 12.5)).foregroundStyle(.secondary)
                 }
                 if m.kindCount > 1 {
                     // 2.8.2 · Tipi diversi insieme: si sceglie su quali lavorare
                     section("Tipi diversi") {
                         Text("Ogni tipo di file ha le sue azioni. Scegli su quali lavorare:")
-                            .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                            .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                         ForEach(kinds, id: \.self) { k in
                             Button { m.selectOnly(k) } label: {
                                 Label("Solo \(k.label)", systemImage: Theme.symbol(k))
@@ -432,7 +432,7 @@ private struct ImagesInspector: View {
                     Text(a.title).font(.system(size: 13, weight: .semibold)).lineLimit(1)
                     if !a.hint.isEmpty {
                         // 3.0 · La spiegazione intera, mai tagliata
-                        Text(a.hint).font(.system(size: 11.5)).foregroundStyle(.secondary)
+                        Text(a.hint).font(.system(size: 12)).foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }

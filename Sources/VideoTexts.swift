@@ -257,14 +257,14 @@ struct TextOptions: View {
                         .help("Il testo finisce nel punto dell’indicatore")
                     Spacer()
                     Button(role: .destructive) { remove() } label: { Image(systemName: "trash") }
-                        .help("Togli questo testo").accessibilityLabel("Togli il testo")
+                        .help("Rimuovi questo testo").accessibilityLabel("Rimuovi il testo")
                 }
                 .controlSize(.small)
                 Text("Per spostarlo, trascinalo sull’anteprima. Nella sequenza, sotto le clip, trascini il blocco o i suoi bordi.")
-                    .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             } else if texts.isEmpty {
                 Text("Il testo compare dal punto dell’indicatore per 3 secondi. Poi lo scrivi qui e lo trascini sull’anteprima.")
-                    .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .font(.system(size: 12.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
         }
         .onAppear {
@@ -293,7 +293,7 @@ struct TextOptions: View {
 
     private func remove() {
         guard let id = s.selectedText else { return }
-        s.change(undo, "Togli il testo") { p in
+        s.change(undo, "Rimuovi il testo") { p in
             p.texts?.removeAll { $0.id == id }
             if p.texts?.isEmpty == true { p.texts = nil }
         }

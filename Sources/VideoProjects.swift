@@ -192,7 +192,7 @@ struct VideoProjectsView: View {
                     .help("Inizia un nuovo montaggio (⇧⌘N)")
             }
             if let n = s.notice {
-                Label(n, systemImage: "info.circle").font(.system(size: 12)).foregroundStyle(.secondary)
+                Label(n, systemImage: "info.circle").font(.system(size: 12.5)).foregroundStyle(.secondary)
             }
             if s.library.isEmpty {
                 MediaDropZone(kind: .video, title: "Trascina qui i video",
@@ -264,7 +264,7 @@ private struct NewProjectCard: View {
                     Image(systemName: "plus").font(.system(size: 22, weight: .bold)).foregroundStyle(tint)
                 }
                 Text("Nuovo progetto").font(.system(size: 13, weight: .semibold))
-                Text("o trascina qui dei video").font(.system(size: 11)).foregroundStyle(.secondary)
+                Text("o trascina qui dei video").font(.system(size: 11.5)).foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity).frame(height: 178)
             .background(RoundedRectangle(cornerRadius: 14).fill(hover || targeted ? Theme.cardHover : Theme.card))
@@ -313,7 +313,7 @@ private struct ProjectCard: View {
             HStack(alignment: .top, spacing: 6) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(entry.name).font(.system(size: 13, weight: .semibold)).lineLimit(1).truncationMode(.tail)
-                    Text(detail).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+                    Text(detail).font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(1)
                 }
                 Spacer(minLength: 2)
                 Menu {

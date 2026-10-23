@@ -148,7 +148,7 @@ struct PresetsView: View {
                         .padding(.bottom, 20)
                     }
                     Text("Assegna dei tasti: selezioni i file nel Finder, premi ⌃⌥ e il numero, e la scorciatoia parte senza aprire il menu.")
-                        .font(.system(size: 12)).foregroundStyle(.secondary)
+                        .font(.system(size: 12.5)).foregroundStyle(.secondary)
                 }
             }
             .padding(28)
@@ -170,7 +170,7 @@ struct PresetRow: View {
                 TextField("Nome", text: $name, onCommit: { store.rename(preset, to: name) })
                     .textFieldStyle(.plain).font(.system(size: 13, weight: .semibold))
                 Text(PresetStore.describe(actionId: preset.actionId, param: preset.param, kind: Kind(rawValue: preset.kind)))
-                    .font(.system(size: 12)).foregroundStyle(.secondary)
+                    .font(.system(size: 12.5)).foregroundStyle(.secondary)
             }
             Spacer()
             Picker("Tasti", selection: Binding(get: { preset.hotkey ?? 0 },

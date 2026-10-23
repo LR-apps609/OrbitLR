@@ -48,7 +48,7 @@ struct FAQ: Identifiable, Equatable {
         FAQ(id: "vapply", section: "Video", question: "Cosa fanno «Applica» e «Scarta»?",
             answer: "Ogni modifica si vede subito nell’anteprima. «Applica» la rende definitiva, «Scarta» torna all’ultima versione applicata. Tieni premuto «Prima / dopo» per confrontare."),
         FAQ(id: "vmute", section: "Video", question: "Come tolgo l'audio da un pezzo del video?",
-            answer: "In «Clip» porta la linea dove deve finire l’audio e premi «Togli da qui». Per una clip intera usa «Togli»; per un tratto in mezzo, dividi prima con S."),
+            answer: "In «Clip» porta la linea dove deve finire l’audio e premi «Spegni da qui». Per una clip intera usa «Spegni»; per un tratto in mezzo, dividi prima con S."),
         FAQ(id: "vduck", section: "Video", question: "Come faccio abbassare la musica quando qualcuno parla?",
             answer: "In «Audio» attiva «Abbassa quando si parla»: OrbitLR trova le voci e abbassa la musica solo in quei momenti."),
         FAQ(id: "vformat", section: "Video", question: "Come faccio un video verticale per Reels o TikTok?",
@@ -167,7 +167,7 @@ struct HelpView: View {
                 HStack {
                     Text(f.question).font(.system(size: 13.5, weight: .semibold)).multilineTextAlignment(.leading)
                     Spacer()
-                    Image(systemName: "chevron.right").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary)
+                    Image(systemName: "chevron.right").font(.system(size: 10.5, weight: .bold)).foregroundStyle(.secondary)
                         .rotationEffect(.degrees(isOpen ? 90 : 0))
                 }
                 .contentShape(Rectangle())

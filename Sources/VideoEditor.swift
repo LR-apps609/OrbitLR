@@ -254,6 +254,9 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         guard thumbs[path] == nil else { return }
         thumbs[path] = []
         Task { @MainActor [weak self] in
+            // 3.0 · Prima un fotogramma solo, a metà clip: le miniature dei filtri sono pronte subito
+            let middle = await TrimModel.thumbnails(url: URL(fileURLWithPath: path), count: 1, duration: duration)
+            if let m = middle.first { self?.warmLooks(path, frame: m) }
             let imgs = await TrimModel.thumbnails(url: URL(fileURLWithPath: path), count: 16, duration: duration)
             self?.thumbs[path] = imgs
         }
@@ -404,7 +407,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     func toggleClipAudio(_ undo: UndoManager?) {
         guard let i = targetIndex else { NSSound.beep(); return }
         let off = !project.clips[i].isMuted
-        change(undo, off ? "Togli l’audio della clip" : "Rimetti l’audio della clip") { $0.clips[i].muted = off ? true : nil }
+        change(undo, off ? "Spegni l’audio della clip" : "Riaccendi l’audio della clip") { $0.clips[i].muted = off ? true : nil }
     }
 
     /// 2.7.4 · Toglie l'audio da qui alla fine della clip (divide nel punto dell'indicatore).
@@ -412,10 +415,10 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         guard let hit = project.clip(at: clock.time) else { NSSound.beep(); return }
         let c = project.clips[hit.index]
         guard hit.local - c.inPoint > 0.1, c.outPoint - hit.local > 0.1 else {
-            change(undo, "Togli l’audio della clip") { $0.clips[hit.index].muted = true }
+            change(undo, "Spegni l’audio della clip") { $0.clips[hit.index].muted = true }
             return
         }
-        change(undo, "Togli l’audio da qui") { p in
+        change(undo, "Spegni l’audio da qui") { p in
             var a = c, b = c
             a.outPoint = hit.local
             b.id = UUID()
@@ -520,15 +523,31 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     private var lookThumbCache: [String: NSImage] = [:]
 
     /// La miniatura della clip con un filtro pronto (fatta una volta, poi ricordata).
+    /// Il fotogramma usato per le miniature dei filtri, per ogni clip.
+    private var lookFrames: [String: NSImage] = [:]
+
+    /// 3.0 · Prepara tutte le miniature dei filtri appena c'è un fotogramma, prima che si apra «Filtri».
+    private func warmLooks(_ path: String, frame: NSImage) {
+        lookFrames[path] = frame
+        for p in VideoLooks.presets {
+            var look = VPLook()
+            look.preset = p.id
+            if lookThumbCache[path + "|" + p.id] == nil, let img = VideoLooks.thumbnail(frame, look: look) {
+                lookThumbCache[path + "|" + p.id] = img
+            }
+        }
+        objectWillChange.send()
+    }
+
     func lookThumbnail(_ preset: String, clip i: Int) -> NSImage? {
         guard project.clips.indices.contains(i) else { return nil }
         let path = project.clips[i].path
-        guard let list = thumbs[path], !list.isEmpty else { return nil }
         let key = path + "|" + preset
         if let hit = lookThumbCache[key] { return hit }
+        guard let source = lookFrames[path] ?? thumbs[path].flatMap({ $0.isEmpty ? nil : $0[$0.count / 2] }) else { return nil }
         var look = VPLook()
         look.preset = preset
-        guard let img = VideoLooks.thumbnail(list[list.count / 2], look: look) else { return nil }
+        guard let img = VideoLooks.thumbnail(source, look: look) else { return nil }
         if lookThumbCache.count > 400 { lookThumbCache.removeAll() }
         lookThumbCache[key] = img
         return img
@@ -552,7 +571,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     }
 
     func removeMusic(_ undo: UndoManager?) {
-        change(undo, "Togli la musica") { $0.music = nil }
+        change(undo, "Rimuovi la musica") { $0.music = nil }
     }
 
     // MARK: Esportazione
@@ -719,7 +738,7 @@ struct VideoEditorView: View {
                     .frame(height: 142)
             }
             if let n = s.notice {
-                Label(n, systemImage: "info.circle").font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(2)
+                Label(n, systemImage: "info.circle").font(.system(size: 12.5)).foregroundStyle(.secondary).lineLimit(2)
             }
             if let job = s.lastJob { JobStrip(job: job) }
         }
@@ -750,7 +769,7 @@ struct VideoEditorView: View {
                 if !s.project.clips.isEmpty {
                     Text("\(s.project.clips.count) clip · \(formatShort(s.project.duration))" + (s.project.music != nil ? " · con musica" : "")
                          + (s.estimate.map { " · ≈ " + ByteCountFormatter.string(fromByteCount: $0.bytes, countStyle: .file) } ?? ""))
-                        .font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1)
+                        .font(.system(size: 12.5)).foregroundStyle(.secondary).lineLimit(1)
                 }
             }
             if s.building { ProgressView().controlSize(.small).help("Preparo l’anteprima") }
@@ -763,7 +782,7 @@ struct VideoEditorView: View {
                 Button { choose(audio: false) } label: { Label("Video", systemImage: "plus") }
                     .help("Aggiungi altri video in fondo")
                 Button("Esporta") { s.export() }
-                    .buttonStyle(.borderedProminent).tint(Theme.accent)
+                    .primaryButton(!s.hasPending)      // 3.0 · un solo pulsante principale: con modifiche in sospeso è «Applica»
                     .keyboardShortcut("e", modifiers: .command)
                     .help("Crea il video finale (⌘E). Le modifiche in sospeso vengono applicate")
             }
@@ -793,7 +812,7 @@ struct VideoEditorView: View {
             Divider()
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text(tool.hint).font(.system(size: 11.5)).foregroundStyle(.secondary)
+                    Text(tool.hint).font(.system(size: 12)).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                     options
                 }
@@ -889,7 +908,7 @@ struct VideoEditorView: View {
             HStack(spacing: 6) { clipAudioButtons }
             if let i = s.targetIndex, i > 0, s.project.clips.indices.contains(i) {
                 SectionLabel(text: "Transizione prima di questa clip")
-                Text("Oppure clicca il pallino tra due clip nella sequenza.").font(.system(size: 11)).foregroundStyle(.secondary)
+                Text("Oppure clicca il pallino tra due clip nella sequenza.").font(.system(size: 11.5)).foregroundStyle(.secondary)
                 TransitionOptions(s: s, clipID: s.project.clips[i].id, tint: tint, undo: undo, compact: true)
             }
             SectionLabel(text: "Altro")
@@ -924,7 +943,7 @@ struct VideoEditorView: View {
                     Text(m.name).font(.system(size: 12, weight: .semibold)).lineLimit(1).truncationMode(.middle)
                     Spacer(minLength: 4)
                     Button("Cambia…") { choose(audio: true) }
-                    Button(role: .destructive) { s.removeMusic(undo) } label: { Image(systemName: "trash") }.help("Togli la musica")
+                    Button(role: .destructive) { s.removeMusic(undo) } label: { Image(systemName: "trash") }.help("Rimuovi la musica")
                 }
                 .controlSize(.small)
                 HStack(spacing: 6) {
@@ -952,16 +971,16 @@ struct VideoEditorView: View {
                     .font(.system(size: 12))
                 if !s.analyzing.isEmpty {
                     HStack(spacing: 5) { ProgressView().controlSize(.mini); Text("Cerco le voci…") }
-                        .font(.system(size: 11)).foregroundStyle(.secondary)
+                        .font(.system(size: 11.5)).foregroundStyle(.secondary)
                 } else if m.duck && !s.project.originalAudible {
-                    Text("L’audio originale è spento").font(.system(size: 11)).foregroundStyle(.secondary)
+                    Text("L’audio originale è spento").font(.system(size: 11.5)).foregroundStyle(.secondary)
                 } else if m.duck {
-                    Text("\(s.speechOnTimeline.count) tratti con voce").font(.system(size: 11)).foregroundStyle(.secondary)
+                    Text("\(s.speechOnTimeline.count) tratti con voce").font(.system(size: 11.5)).foregroundStyle(.secondary)
                 }
             }
         } else {
             Button { choose(audio: true) } label: { Label("Scegli la musica…", systemImage: "music.note") }
-            Text("oppure trascina un brano sulla scheda").font(.system(size: 11.5)).foregroundStyle(.secondary)
+            Text("oppure trascina un brano sulla scheda").font(.system(size: 12)).foregroundStyle(.secondary)
         }
     }
 
@@ -974,10 +993,10 @@ struct VideoEditorView: View {
     @ViewBuilder private var clipAudioButtons: some View {
         let muted = s.targetIndex.map { s.project.clips[$0].isMuted } ?? false
         Button { s.toggleClipAudio(undo) } label: {
-            Label(muted ? "Rimetti" : "Togli", systemImage: muted ? "speaker.wave.2" : "speaker.slash")
+            Label(muted ? "Riaccendi" : "Spegni", systemImage: muted ? "speaker.wave.2" : "speaker.slash")
         }
         .help(muted ? "Riaccende l’audio di questa clip" : "Spegne l’audio solo di questa clip (la musica resta)")
-        Button { s.muteFromHere(undo) } label: { Label("Togli da qui", systemImage: "speaker.slash.circle") }
+        Button { s.muteFromHere(undo) } label: { Label("Spegni da qui", systemImage: "speaker.slash.circle") }
             .help("Spegne l’audio dall’indicatore alla fine della clip. Per un tratto in mezzo: dividi (S) e togli l’audio solo da quel pezzo")
     }
 
@@ -1024,7 +1043,7 @@ struct VideoEditorView: View {
         }
         if let e = s.estimate {
             Text("\(Int(e.size.width)) × \(Int(e.size.height)) · circa " + ByteCountFormatter.string(fromByteCount: e.bytes, countStyle: .file))
-                .font(.system(size: 11.5)).foregroundStyle(.secondary)
+                .font(.system(size: 12)).foregroundStyle(.secondary)
         }
     }
 
@@ -1058,19 +1077,30 @@ struct VideoEditorView: View {
     }
 }
 
-/// 2.9.10 · Uno strumento del pannello: icona e nome, sempre visibili.
-private struct ToolTab: View {
-    let tool: VideoEditTool
+/// 2.9.10 · Uno strumento del pannello: icona e nome, sempre visibili (3.0: lo usano Video e Audio).
+struct ToolTab: View {
+    let title: String
+    let symbol: String
+    let hint: String
     let selected: Bool
-    let used: Bool
+    var used = false
     let tint: Color
     let action: () -> Void
+
+    init(tool: VideoEditTool, selected: Bool, used: Bool, tint: Color, action: @escaping () -> Void) {
+        self.init(title: tool.rawValue, symbol: tool.symbol, hint: tool.hint, selected: selected, used: used, tint: tint, action: action)
+    }
+
+    init(title: String, symbol: String, hint: String, selected: Bool, used: Bool = false, tint: Color, action: @escaping () -> Void) {
+        self.title = title; self.symbol = symbol; self.hint = hint
+        self.selected = selected; self.used = used; self.tint = tint; self.action = action
+    }
 
     var body: some View {
         Button(action: action) {
             VStack(spacing: 3) {
-                Image(systemName: tool.symbol).font(.system(size: 15, weight: .semibold))
-                Text(tool.rawValue).font(.system(size: 11, weight: .semibold)).lineLimit(1)
+                Image(systemName: symbol).font(.system(size: 15, weight: .semibold))
+                Text(title).font(.system(size: 11.5, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.85)
             }
             .frame(maxWidth: .infinity).frame(height: 46)
             .foregroundStyle(selected ? Color.white : Theme.ink)
@@ -1081,8 +1111,8 @@ private struct ToolTab: View {
             .contentShape(RoundedRectangle(cornerRadius: 9))
         }
         .buttonStyle(.plain)
-        .help(tool.hint)
-        .accessibilityLabel(tool.rawValue)
+        .help(hint)
+        .accessibilityLabel(title)
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
@@ -1103,7 +1133,7 @@ private struct EditSlider: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack {
-                Text(title).font(.system(size: 11)).foregroundStyle(.secondary)
+                Text(title).font(.system(size: 11.5)).foregroundStyle(.secondary)
                 Spacer(minLength: 4)
                 Text(text).font(.system(size: 11, weight: .semibold)).monospacedDigit()
             }
@@ -1696,7 +1726,7 @@ private struct LookOptions: View {
             adjust("Nitidezza", \.sharpness, range: 0...1)
             adjust("Vignetta", \.vignette, range: 0...1)
             Button("Ripristina") {
-                s.change(undo, "Togli il filtro") { p in
+                s.change(undo, "Rimuovi il filtro") { p in
                     if let i = clipIndex, p.clips.indices.contains(i) { p.clips[i].look = nil } else { p.look = nil }
                 }
             }
@@ -1788,7 +1818,7 @@ struct TransitionOptions: View {
     private func chip(_ id: String?, _ name: String, _ symbol: String) -> some View {
         let on = current?.kind == id
         return Button {
-            s.change(undo, id == nil ? "Togli la transizione" : "Transizione") { p in
+            s.change(undo, id == nil ? "Rimuovi la transizione" : "Transizione") { p in
                 guard let i = p.clips.firstIndex(where: { $0.id == clipID }) else { return }
                 if let id {
                     p.clips[i].transition = VPTransition(kind: id, duration: p.clips[i].transition?.duration ?? 0.6)
@@ -1902,13 +1932,13 @@ private struct EffectOptions: View {
                         }
                     }
                     .help("Copia questi effetti su tutte le clip")
-                    Button("Ripristina") { change("Togli gli effetti") { $0 = VPEffects() } }
+                    Button("Ripristina") { change("Rimuovi gli effetti") { $0 = VPEffects() } }
                         .disabled(fx.isIdentity)
                 }
                 .controlSize(.small)
             } else {
                 Text("Scegli una clip nella sequenza (clic sulla clip) per darle i suoi effetti.")
-                    .font(.system(size: 12)).foregroundStyle(.secondary)
+                    .font(.system(size: 12.5)).foregroundStyle(.secondary)
             }
             Divider()
             SectionLabel(text: "Su tutto il video")
@@ -1923,7 +1953,7 @@ private struct EffectOptions: View {
             Button { showHide = true } label: { Label(s.project.hide == nil ? "Nascondi un logo…" : "Logo nascosto ✓", systemImage: "eye.slash") }
                 .controlSize(.small).help("Sfoca o copri a pixel un logo o una scritta in tutto il video")
             if s.project.hide != nil {
-                Button("Togli") { s.change(undo, "Togli il logo nascosto") { $0.hide = nil } }.controlSize(.small)
+                Button("Rimuovi") { s.change(undo, "Rimuovi la copertura") { $0.hide = nil } }.controlSize(.small)
             }
         }
     }

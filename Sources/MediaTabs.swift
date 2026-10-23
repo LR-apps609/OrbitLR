@@ -198,25 +198,6 @@ func formatShort(_ t: Double) -> String {
 
 // MARK: - Pezzi comuni
 
-/// Intestazione della scheda: file aperto, dati, pulsanti.
-private struct MediaHeader<Trailing: View>: View {
-    let m: MediaTabModel
-    let tint: Color
-    @ViewBuilder let trailing: () -> Trailing
-    var body: some View {
-        HStack(spacing: 12) {
-            if let f = m.file {
-                Text(f.lastPathComponent).font(.system(size: 15, weight: .semibold)).lineLimit(1).truncationMode(.middle)
-                Text(m.info).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1)
-            } else {
-                Text(m.videoTab ? "Video" : "Audio").font(.system(size: 22, weight: .bold, design: .rounded))
-            }
-            Spacer(minLength: 8)
-            trailing()
-        }
-    }
-}
-
 /// Area vuota: trascina un file o clicca per sceglierlo.
 struct MediaDropZone: View {
     let kind: Kind
@@ -254,7 +235,7 @@ struct JobStrip: View {
                 HStack {
                     Text(job.action.title).font(.system(size: 12.5, weight: .semibold))
                     Spacer()
-                    Text(statusText).font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(1)
+                    Text(statusText).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1)
                 }
                 if job.state == .running || job.state == .waiting || job.state == .done {
                     TunerBar(value: job.shownProgress, tint: Theme.green, done: job.state == .done, height: 18)
@@ -262,7 +243,8 @@ struct JobStrip: View {
             }
             if job.state == .running || job.state == .waiting {
                 Button { QueueStore.shared.cancel(job) } label: { Image(systemName: "xmark") }
-                    .buttonStyle(.borderless).help("Annulla")
+                    .buttonStyle(.borderless).help("Interrompi")
+                    .accessibilityLabel("Interrompi")
             } else if job.state == .done, !job.outputs.isEmpty {
                 UseInMenu(url: job.outputs[0])          // 3.0 · il passo successivo, in un clic
                 Button("Mostra nel Finder") { NSWorkspace.shared.activateFileViewerSelecting(job.outputs) }
@@ -301,7 +283,7 @@ struct JobStrip: View {
             return job.outputs.count == 1 ? "«\(job.outputs[0].lastPathComponent)» in \(folder)"
                 : "\(job.outputs.count) file in \(folder)"
         case .failed: return job.failures.first ?? "Non riuscito"
-        case .cancelled: return "Annullato"
+        case .cancelled: return "Interrotto"
         }
     }
 }
@@ -331,7 +313,7 @@ struct Chip: View {
 struct SectionLabel: View {
     let text: String
     var body: some View {
-        Text(text.uppercased()).font(.system(size: 10.5, weight: .bold)).tracking(0.8).foregroundStyle(Theme.brass)
+        Text(text.uppercased()).font(.system(size: 11, weight: .bold)).tracking(0.8).foregroundStyle(Theme.brass)
     }
 }
 
@@ -358,41 +340,47 @@ private struct MergeList: View {
     }
 }
 
-// MARK: - Scheda Audio (C: schede strumento)
+// MARK: - Scheda Audio (3.0: come il Video, con il pannello degli strumenti a destra)
 
 enum AudioTool: String, CaseIterable, Identifiable {
-    case ringtone, cut, normalize, tts, whatsapp, merge
+    case ringtone, cut, normalize, speed, silence, transcribe, tts, whatsapp, merge
     var id: String { rawValue }
     var title: String {
         switch self {
         case .ringtone: return "Suoneria iPhone"
         case .cut: return "Taglia"
         case .normalize: return "Volume uniforme"
+        case .speed: return "Velocità"
+        case .silence: return "Rimuovi i silenzi"
+        case .transcribe: return "Trascrivi"
         case .tts: return "Testo in voce"
         case .whatsapp: return "Per WhatsApp"
-        case .merge: return "Unisci audio"
+        case .merge: return "Unisci"
+        }
+    }
+    /// Il nome breve, sul pulsante del pannello.
+    var short: String {
+        switch self {
+        case .ringtone: return "Suoneria"
+        case .normalize: return "Volume"
+        case .silence: return "Silenzi"
+        case .tts: return "Voce"
+        case .whatsapp: return "WhatsApp"
+        default: return title
         }
     }
     /// 2.8.4 · Cosa fare adesso, in una frase.
     var hint: String {
         switch self {
-        case .ringtone: return "Sposta il riquadro sul pezzo che ti piace (fino a 30 secondi) e premi il pulsante: ottieni il file .m4r per iPhone."
-        case .cut: return "Trascina le maniglie per tenere solo il pezzo che serve. ⌘Z annulla uno spostamento."
-        case .normalize: return "Rende il volume uniforme: né troppo basso né distorto. Va bene per vocali e registrazioni."
-        case .tts: return "Scrivi o incolla il testo, scegli la voce e ascolta l’anteprima prima di creare il file."
-        case .whatsapp: return "Crea un vocale leggero con la voce chiara, pronto da mandare."
-        case .merge: return "Trascina altri file audio: si uniscono in un solo file, nell’ordine in cui li aggiungi."
-        }
-    }
-
-    var subtitle: String {
-        switch self {
-        case .ringtone: return "Fino a 30 secondi, pronta per iPhone"
-        case .cut: return "Tieni solo la parte che serve"
-        case .normalize: return "Né troppo basso né distorto"
-        case .tts: return "Scrivi e OrbitLR legge"
-        case .whatsapp: return "Vocale leggero, voce chiara"
-        case .merge: return "Più file in uno"
+        case .ringtone: return "Sposta il riquadro sul pezzo che ti piace (fino a 30 secondi): ottieni la suoneria per iPhone."
+        case .cut: return "Trascina le maniglie per tenere solo il pezzo che serve. Tasti I e O mentre ascolti."
+        case .normalize: return "Rende il volume uniforme: né troppo basso né distorto. Per vocali, lezioni e podcast."
+        case .speed: return "Più lento o più veloce, su tutto il file. La voce mantiene il suo tono."
+        case .silence: return "Toglie le pause lunghe, su tutto il file. Ottimo per lezioni e registrazioni."
+        case .transcribe: return "Le parole diventano testo e sottotitoli, sul Mac, senza internet."
+        case .tts: return "Scrivi o incolla un testo: una voce naturale lo legge in un file audio."
+        case .whatsapp: return "Un vocale leggero con la voce chiara, che parte subito anche con poca rete."
+        case .merge: return "Più file audio in uno solo, nell’ordine dell’elenco."
         }
     }
     var symbol: String {
@@ -400,11 +388,16 @@ enum AudioTool: String, CaseIterable, Identifiable {
         case .ringtone: return "bell.and.waves.left.and.right"
         case .cut: return "scissors"
         case .normalize: return "speaker.wave.2"
+        case .speed: return "speedometer"
+        case .silence: return "waveform.badge.minus"
+        case .transcribe: return "captions.bubble"
         case .tts: return "text.bubble"
         case .whatsapp: return "message"
         case .merge: return "square.stack.3d.up"
         }
     }
+    /// Lavora sulla selezione (le maniglie) e non su tutto il file.
+    var usesSelection: Bool { self == .ringtone || self == .cut }
 }
 
 /// Ascolto di prova della sintesi vocale.
@@ -435,6 +428,7 @@ struct AudioTabView: View {
     @State private var ringLength: Double = 30
     @State private var fade = true
     @State private var normalize = true
+    @State private var speed = "1.25"
     @State private var text = ""
     @State private var voiceId = ""
     @State private var rate: Double = Double(AVSpeechUtteranceDefaultSpeechRate)
@@ -444,45 +438,28 @@ struct AudioTabView: View {
 
     private let tint = Theme.color(.audio)
 
-    /// 2.8.6 · Il contenuto, al centro e largo al massimo 1100 punti.
-    private var page: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            MediaHeader(m: m, tint: tint) {
-                if let trim = m.trim, tool != .tts {
-                    PlayButton(trim: trim, tint: tint)
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            header
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 12) {
+                    mainArea
+                    // 2.8.5 · I progetti audio, come i progetti del Video
+                    if m.file == nil && tool != .tts && !m.audioProjects.isEmpty { AudioProjectsRow(m: m, tint: tint) }
                 }
-                if m.file != nil {
-                    Button("Cambia file…") { m.choose(append: false) }
-                    Button { m.close() } label: { Image(systemName: "xmark") }.help("Chiudi il file")
-                }
+                .frame(minWidth: 280, maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                inspector.frame(width: 290)
             }
-            topArea.frame(height: 210)
-            // 2.8.5 · I progetti audio, come i Progetti del Video
-            if m.file == nil && tool != .tts && !m.audioProjects.isEmpty { AudioProjectsRow(m: m, tint: tint) }
-            HStack(alignment: .top, spacing: 16) {
-                cards
-                panel.frame(width: 310)
-            }
-            .frame(maxHeight: .infinity, alignment: .top)
+            .frame(maxHeight: .infinity)
             if let n = m.notice {
-                Label(n, systemImage: "info.circle").font(.system(size: 12)).foregroundStyle(.secondary)
+                Label(n, systemImage: "info.circle").font(.system(size: 12.5)).foregroundStyle(.secondary).lineLimit(2)
             }
             if let job = m.lastJob {
                 JobStrip(job: job)
                 SendToPhoneStrip(job: job)          // 2.9.5 · sotto la suoneria pronta
             }
         }
-        .padding(20)
-        .frame(maxWidth: 1100)
-        .frame(maxWidth: .infinity)
-    }
-
-    var body: some View {
-        // 2.8.6 · Se la finestra è bassa la pagina scorre, invece di uscire dai bordi
-        ViewThatFits(in: .vertical) {
-            page.frame(maxHeight: .infinity, alignment: .top)
-            ScrollView(.vertical) { page }
-        }
+        .padding(16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.background)
         .onDrop(of: [UTType.fileURL], isTargeted: $targeted) { providers in
@@ -508,16 +485,43 @@ struct AudioTabView: View {
         .navigationTitle("Audio")
     }
 
-    /// Suoneria: selezione di 20–30 secondi, anche per i file aperti dopo.
-    private func applyTrimRules() {
-        let ring = tool == .ringtone
-        m.trimDefaultLength = ring ? ringLength : nil
-        // 2.9.4 · Al massimo 30 s: è il limite di «Usa come suoneria» sull'iPhone (iOS 26)
-        m.trimMaxLength = ring ? 30 : nil
-        m.trim?.maxLength = ring ? 30 : nil
+    // MARK: Intestazione
+
+    private var header: some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                if tool == .tts {
+                    // 3.0 · In «Testo in voce» non c'è un file aperto: niente nome di file
+                    Text("Testo in voce").font(.system(size: 22, weight: .bold, design: .rounded))
+                    Text("Scrivi un testo: diventa un file audio").font(.system(size: 12.5)).foregroundStyle(.secondary)
+                } else if let f = m.file {
+                    Text(f.deletingPathExtension().lastPathComponent).font(.system(size: 15, weight: .bold)).lineLimit(1).truncationMode(.middle)
+                    Text(([Catalog.norm(f.pathExtension).uppercased()] + [m.info]).filter { !$0.isEmpty }.joined(separator: " · "))
+                        .font(.system(size: 12.5)).foregroundStyle(.secondary).lineLimit(1)
+                } else {
+                    Text("Audio").font(.system(size: 22, weight: .bold, design: .rounded))
+                    Text("Suonerie, tagli, volume, voce e altro").font(.system(size: 12.5)).foregroundStyle(.secondary)
+                }
+            }
+            Spacer(minLength: 8)
+            if let trim = m.trim, tool != .tts { PlayButton(trim: trim, tint: tint) }
+            if m.file != nil && tool != .tts {
+                Button("Apri un altro…") { m.choose(append: false) }
+                    .help("Apri un altro file audio (questo resta tra i progetti)")
+                Button { m.close() } label: {
+                    Image(systemName: "xmark").font(.system(size: 12, weight: .bold))
+                        .frame(width: 26, height: 26).background(Circle().fill(Theme.ink.opacity(0.08)))
+                }
+                .buttonStyle(.plain)
+                .help("Chiudi il file (resta tra i progetti)")
+                .accessibilityLabel("Chiudi il file")
+            }
+        }
     }
 
-    @ViewBuilder private var topArea: some View {
+    // MARK: A sinistra: l'onda, il testo o lo spazio per trascinare
+
+    @ViewBuilder private var mainArea: some View {
         if tool == .tts {
             VStack(alignment: .leading, spacing: 6) {
                 ZStack(alignment: .topLeading) {
@@ -533,40 +537,42 @@ struct AudioTabView: View {
                     }
                 }
                 .card(radius: 14)
-                Text("\(text.count) caratteri").font(.system(size: 11)).foregroundStyle(.secondary)
+                Text(text.count == 1 ? "1 carattere" : "\(text.count) caratteri").font(.system(size: 12)).foregroundStyle(.secondary)
             }
+            .frame(maxHeight: .infinity)
         } else if let trim = m.trim {
-            AudioWave(trim: trim, tint: tint)
+            AudioWave(trim: trim, tint: tint, selection: tool.usesSelection)
         } else {
             MediaDropZone(kind: .audio, title: "Trascina qui un file audio",
-                          subtitle: "oppure clicca per sceglierlo · MP3, M4A, WAV… anche un video, per usarne l’audio",
+                          subtitle: "oppure clicca per sceglierlo · MP3, M4A, WAV e altri · anche un video, per usarne l’audio",
                           targeted: targeted) { m.choose(append: false) }
+                .frame(minHeight: 200)
         }
     }
 
-    private var cards: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
+    // MARK: A destra: strumenti, opzioni, pulsante
+
+    private var inspector: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
                 ForEach(AudioTool.allCases) { t in
-                    ToolCard(title: t.title, subtitle: t.subtitle, symbol: t.symbol, tint: tint, selected: tool == t) { tool = t }
+                    ToolTab(title: t.short, symbol: t.symbol, hint: t.title + ": " + t.hint, selected: tool == t, tint: tint) { tool = t }
                 }
             }
-            // 2.8.4 · Come nel Video: una frase che dice cosa fare adesso
-            // 2.8.6 · Niente «fixedSize» qui: con la larghezza libera faceva crescere la finestra a dismisura
-            Label(tool.hint, systemImage: "lightbulb")
-                .font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(2)
+            .padding(10)
+            Divider()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    SectionLabel(text: tool.title)
+                    Text(tool.hint).font(.system(size: 12.5)).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    options
+                }
+                .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-
-    // Il riquadro con le opzioni dello strumento scelto e il pulsante finale
-    private var panel: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            SectionLabel(text: tool.title)
-            panelOptions
-            Spacer(minLength: 4)
+            }
+            .scrollIndicators(.visible)
+            Divider()
             Button(action: start) {
                 Text(actionTitle).font(.system(size: 13.5, weight: .bold)).frame(maxWidth: .infinity)
             }
@@ -574,73 +580,96 @@ struct AudioTabView: View {
             // Mentre si scrive il testo, Invio va a capo e non avvia
             .keyboardShortcut(tool == .tts ? nil : KeyboardShortcut.defaultAction)
             .disabled(!canStart)
+            .help(canStart ? "" : (tool == .tts ? "Scrivi prima un testo" : (tool == .merge ? "Servono almeno due file" : "Apri prima un file audio")))
+            .padding(10)
         }
-        .padding(16)
-        .frame(maxHeight: .infinity, alignment: .top)
-        .card(radius: 14)
+        .background(RoundedRectangle(cornerRadius: 14).fill(Theme.card))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Theme.stroke, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 
-    @ViewBuilder private var panelOptions: some View {
+    /// Suoneria: selezione di 20–30 secondi, anche per i file aperti dopo.
+    private func applyTrimRules() {
+        let ring = tool == .ringtone
+        m.trimDefaultLength = ring ? ringLength : nil
+        // 2.9.4 · Al massimo 30 s: è il limite di «Usa come suoneria» sull'iPhone (iOS 26)
+        m.trimMaxLength = ring ? 30 : nil
+        m.trim?.maxLength = ring ? 30 : nil
+    }
+
+    @ViewBuilder private var options: some View {
         switch tool {
         case .ringtone:
-            Text("Durata").font(.system(size: 11.5)).foregroundStyle(.secondary)
+            Text("Durata").font(.system(size: 12.5)).foregroundStyle(.secondary)
             Picker("", selection: $ringLength) {
-                Text("20 s").tag(20.0); Text("30 s").tag(30.0)
+                Text("20 secondi").tag(20.0); Text("30 secondi").tag(30.0)
             }
             .pickerStyle(.segmented).labelsHidden()
             .onChange(of: ringLength) { _, v in m.trim?.setLength(v); applyTrimRules() }
             Toggle("Dissolvenza all’inizio e alla fine", isOn: $fade).toggleStyle(.checkbox)
             Toggle("Volume uniforme", isOn: $normalize).toggleStyle(.checkbox)
-            hint("Sposta il riquadro sul pezzo che ti piace. Poi trascina il file .m4r sull’iPhone nel Finder.")
+            note("Alla fine puoi mandarla all’iPhone con AirDrop o con il codice QR.")
         case .cut:
             if let trim = m.trim { SelectionText(trim: trim) }
-            hint("Trascina le maniglie. I e O mentre ascolti.")
-        case .normalize:
-            hint("Per vocali, lezioni e podcast: né troppo basso né distorto.")
+        case .normalize, .silence, .whatsapp, .transcribe:
+            EmptyView()
+        case .speed:
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 70), spacing: 6)], alignment: .leading, spacing: 6) {
+                ForEach([("0.5", "0,5×"), ("0.75", "0,75×"), ("1.25", "1,25×"), ("1.5", "1,5×"), ("2", "2×")], id: \.0) { v in
+                    Chip(title: v.1, selected: speed == v.0, tint: tint) { speed = v.0 }
+                }
+            }
+            note(speedNote)
         case .tts:
             Picker("Voce", selection: $voiceId) {
-                Text("La più naturale disponibile").tag("")
+                Text("La più naturale").tag("")
                 ForEach(voices, id: \.identifier) { v in
                     Text("\(v.name) · \(Speech.qualityLabel(v))" + (allLanguages ? " · \(v.language)" : "")).tag(v.identifier)
                 }
             }
             Toggle("Mostra le voci di tutte le lingue", isOn: $allLanguages).toggleStyle(.checkbox)
             HStack {
-                Text("Velocità").font(.system(size: 11.5)).foregroundStyle(.secondary)
+                Text("Velocità").font(.system(size: 12.5)).foregroundStyle(.secondary)
                 Slider(value: $rate, in: Double(AVSpeechUtteranceMinimumSpeechRate + 0.25)...Double(AVSpeechUtteranceMaximumSpeechRate - 0.25))
             }
             HStack {
                 Button(preview.speaking ? "Ferma" : "Ascolta una prova") {
                     if preview.speaking { preview.stop() } else { preview.speak(text, voice: voiceId.isEmpty ? nil : voiceId, rate: Float(rate)) }
                 }
-                Button("Voci più naturali…") { openVoiceSettings() }
+                Button("Altre voci…") { openVoiceSettings() }
                     .help("Impostazioni di Sistema → Accessibilità → Contenuti letti → Voce di sistema → Gestisci voci")
             }
-            hint("Le voci «Premium» sono le più naturali. Il file va in Download.")
-        case .whatsapp:
-            hint("Leggero e chiaro: parte subito anche con poca rete.")
+            note("Le voci «Premium» sono le più naturali. Il file va in Download.")
         case .merge:
             if m.file == nil {
-                hint("Apri il primo file, poi aggiungi gli altri.")
+                note("Apri il primo file, poi aggiungi gli altri.")
             } else {
                 MergeList(m: m, tint: tint)
             }
         }
     }
 
+    private var speedNote: String {
+        guard let d = m.trim?.duration, d > 0, let v = Double(speed), v > 0 else { return "Su tutto il file." }
+        return "Su tutto il file: da \(formatShort(d)) a circa \(formatShort(d / v))."
+    }
+
     private var voices: [AVSpeechSynthesisVoice] {
         allLanguages ? Speech.voices(language: "") : Speech.voices(language: "it")
     }
 
-    private func hint(_ s: String) -> some View {
-        Text(s).font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+    private func note(_ s: String) -> some View {
+        Text(s).font(.system(size: 12.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
     }
 
     private var actionTitle: String {
         switch tool {
         case .ringtone: return "Crea la suoneria"
         case .cut: return "Taglia"
-        case .normalize: return "Uniforma il volume"
+        case .normalize: return "Rendi uniforme il volume"
+        case .speed: return "Cambia la velocità"
+        case .silence: return "Rimuovi i silenzi"
+        case .transcribe: return "Trascrivi"
         case .tts: return "Crea il file audio"
         case .whatsapp: return "Crea il vocale"
         case .merge: return m.allFiles.count >= 2 ? "Unisci \(m.allFiles.count) file" : "Unisci"
@@ -657,15 +686,16 @@ struct AudioTabView: View {
 
     private func start() {
         preview.stop()
-        guard let trim = m.trim else {
-            if tool == .tts { startTTS() }
-            return
-        }
+        if tool == .tts { startTTS(); return }
+        guard let trim = m.trim else { return }
         let sel = String(format: "%.3f|%.3f", trim.start, trim.end)
         switch tool {
         case .ringtone: m.run("ringtone", param: sel + "|\(fade ? 1 : 0)|\(normalize ? 1 : 0)")
         case .cut: m.run("cut", param: sel)
         case .normalize: m.run("normalize", param: "")
+        case .speed: m.run("speed", param: speed)
+        case .silence: m.run("silence", param: "")
+        case .transcribe: m.run("transcribe", param: "")
         case .tts: startTTS()
         case .whatsapp: m.run("whatsapp", param: "")
         case .merge: m.run("amerge", param: "", files: m.allFiles)
@@ -719,53 +749,32 @@ private struct SelectionText: View {
 private struct AudioWave: View {
     @ObservedObject var trim: TrimModel
     let tint: Color
+    /// 3.0 · Solo Suoneria e Taglia usano la selezione: gli altri strumenti lavorano su tutto il file.
+    var selection = true
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             TrimTimeline(m: trim, tint: tint)
                 .overlay { if trim.loading { ProgressView().controlSize(.small) } }
                 .padding(.top, 6)
             HStack {
-                Text("0:00").font(.system(size: 11)).foregroundStyle(.secondary)
+                Text("0:00").font(.system(size: 12)).foregroundStyle(.secondary)
                 Spacer()
-                Text("\(formatTime(trim.start)) → \(formatTime(trim.end)) · \(formatTime(max(0, trim.end - trim.start)))")
-                    .font(.system(size: 11.5, weight: .semibold)).monospacedDigit()
-                Spacer()
-                Button("Inizio qui") { trim.markIn() }.keyboardShortcut("i", modifiers: []).controlSize(.small)
-                Button("Fine qui") { trim.markOut() }.keyboardShortcut("o", modifiers: []).controlSize(.small)
-                Text(formatTime(trim.duration)).font(.system(size: 11)).foregroundStyle(.secondary).monospacedDigit()
+                if selection {
+                    Text("\(formatTime(trim.start)) → \(formatTime(trim.end)) · \(formatTime(max(0, trim.end - trim.start)))")
+                        .font(.system(size: 12, weight: .semibold)).monospacedDigit()
+                    Spacer()
+                    Button("Inizio qui") { trim.markIn() }.keyboardShortcut("i", modifiers: []).controlSize(.small)
+                        .help("La selezione comincia dove stai ascoltando (I)")
+                    Button("Fine qui") { trim.markOut() }.keyboardShortcut("o", modifiers: []).controlSize(.small)
+                        .help("La selezione finisce dove stai ascoltando (O)")
+                } else {
+                    Text("Su tutto il file").font(.system(size: 12.5, weight: .semibold)).foregroundStyle(.secondary)
+                    Spacer()
+                }
+                Text(formatTime(trim.duration)).font(.system(size: 12)).foregroundStyle(.secondary).monospacedDigit()
             }
         }
         .padding(16)
         .card(radius: 14)
-    }
-}
-
-private struct ToolCard: View {
-    let title: String
-    let subtitle: String
-    let symbol: String
-    let tint: Color
-    let selected: Bool
-    let action: () -> Void
-    var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: 6) {
-                Image(systemName: symbol)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(selected ? Color.white : tint)
-                    .frame(width: 32, height: 32)
-                    .background(Circle().fill(selected ? AnyShapeStyle(tint.gradient) : AnyShapeStyle(tint.opacity(0.15))))
-                Text(title).font(.system(size: 13.5, weight: .bold)).lineLimit(1)
-                Text(subtitle).font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(14)
-            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.card))
-            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(selected ? tint : Theme.stroke, lineWidth: selected ? 2 : 1))
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
     }
 }

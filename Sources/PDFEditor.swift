@@ -402,7 +402,7 @@ final class PDFEditorController: @unchecked Sendable {
         if doc.isLocked {
             let a = NSAlert()
             a.messageText = "Il PDF è protetto da password."
-            a.informativeText = "Toglila prima con «Togli la password», poi riprova."
+            a.informativeText = "Toglila prima con «Rimuovi la password», poi riprova."
             a.runModal()
             return
         }
