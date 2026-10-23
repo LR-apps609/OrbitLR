@@ -116,6 +116,29 @@ final class VideoEffectsTests: XCTestCase {
         XCTAssertTrue(r.hasAudio)
     }
 
+    /// Logo nascosto su tutto il montaggio: la zona è sfocata, il resto no.
+    func testMontageHide() async throws {
+        let v = try await Fixtures.video(name: "fx-logo.mp4", width: 320, height: 180, seconds: 1.5, noise: true)
+        let info = try await VPMediaInfo.load(v)
+        var p = VideoProject()
+        p.clips = [VPClip(path: v.path, inPoint: 0, outPoint: info.videoDuration)]
+        p.hide = HideMark.encode(HideMark.Spec(style: "blur", strength: 0.8, rects: [CGRect(x: 0.6, y: 0.0, width: 0.4, height: 0.4)]))
+        let b = try await VideoProjectBuilder.build(p, infos: [v.path: info], speech: [:], maxSide: 640, engine: .frames)
+        let f = try await frame(b, at: 0.7)
+        func detail(_ r: CGRect) -> Double {
+            let img = CIImage(cgImage: f)
+            let soft = img.clampedToExtent().applyingFilter("CIGaussianBlur", parameters: ["inputRadius": 2]).cropped(to: img.extent)
+            let d = img.applyingFilter("CIDifferenceBlendMode", parameters: ["inputBackgroundImage": soft])
+            let rect = HideMark.pixelRect(r, in: img.extent)
+            let avg = d.applyingFilter("CIAreaAverage", parameters: ["inputExtent": CIVector(cgRect: rect)])
+            var px = [UInt8](repeating: 0, count: 4)
+            Media.ci.render(avg, toBitmap: &px, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
+                            format: .RGBA8, colorSpace: CGColorSpaceCreateDeviceRGB())
+            return (Double(px[0]) + Double(px[1]) + Double(px[2])) / 765
+        }
+        XCTAssertLessThan(detail(CGRect(x: 0.65, y: 0.03, width: 0.3, height: 0.3)), detail(CGRect(x: 0.05, y: 0.6, width: 0.3, height: 0.3)) * 0.5)
+    }
+
     func testSplitKeepsTransitionAndFadesOnTheRightPiece() {
         var c = VPClip(path: "/a.mp4", inPoint: 0, outPoint: 4)
         c.transition = VPTransition()

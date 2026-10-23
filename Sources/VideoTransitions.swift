@@ -21,15 +21,18 @@ final class VPCompositionInstruction: NSObject, AVVideoCompositionInstructionPro
     let to: VideoProjectBuilder.Placement?
     let transition: VPTransition?
     let canvas: CGSize
+    /// 2.9.8 · zone da sfocare su tutto il montaggio
+    let hide: HideMark.Spec?
 
     init(range: (Double, Double), from: VideoProjectBuilder.Placement, to: VideoProjectBuilder.Placement?,
-         transition: VPTransition?, canvas: CGSize) {
+         transition: VPTransition?, canvas: CGSize, hide: HideMark.Spec? = nil) {
         let a = VideoProjectBuilder.cm(range.0), b = VideoProjectBuilder.cm(range.1)
         timeRange = CMTimeRange(start: a, end: b)
         self.from = from
         self.to = to
         self.transition = transition
         self.canvas = canvas
+        self.hide = hide
         var ids = [NSNumber(value: from.trackID)]
         if let to { ids.append(NSNumber(value: to.trackID)) }
         requiredSourceTrackIDs = ids
@@ -67,6 +70,7 @@ final class VPCompositor: NSObject, AVVideoCompositing {
                 let x = min(1, max(0, (t - start) / len))
                 img = Self.blend(a, b, kind: ins.transition?.kind ?? "fade", progress: x * x * (3 - 2 * x), canvas: ins.canvas)
             }
+            if let h = ins.hide, h.style != "ai" { img = HideMark.apply(h, to: img) }
             Media.ci.render(img, to: out, bounds: CGRect(origin: .zero, size: ins.canvas), colorSpace: space)
             request.finish(withComposedVideoFrame: out)
         }

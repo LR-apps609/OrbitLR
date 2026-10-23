@@ -1668,6 +1668,7 @@ private struct EffectOptions: View {
     @ObservedObject var s: VideoProjectStore
     let undo: UndoManager?
     let tint: Color
+    @State private var showHide = false
 
     private var index: Int? { s.targetIndex }
     private var fx: VPEffects {
@@ -1743,11 +1744,41 @@ private struct EffectOptions: View {
                     Button("Ripristina") { change("Togli gli effetti") { $0 = VPEffects() } }
                         .controlSize(.small).disabled(fx.isIdentity)
                 }
+                Divider().frame(height: 40)
+                hideButton
             }
+            .sheet(isPresented: $showHide) { hideSheet }
         } else {
-            Text("Scegli una clip nella sequenza (clic sulla clip) per darle i suoi effetti.")
-                .font(.system(size: 12)).foregroundStyle(.secondary)
+            HStack(spacing: 16) {
+                Text("Scegli una clip nella sequenza (clic sulla clip) per darle i suoi effetti.")
+                    .font(.system(size: 12)).foregroundStyle(.secondary)
+                hideButton
+            }
+            .sheet(isPresented: $showHide) { hideSheet }
         }
+    }
+
+    /// 2.9.8 · Nascondi un logo su tutto il montaggio (sfocatura o pixel).
+    private var hideButton: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Button { showHide = true } label: { Label(s.project.hide == nil ? "Nascondi un logo…" : "Logo nascosto ✓", systemImage: "eye.slash") }
+                .controlSize(.small).help("Sfoca o copri a pixel un logo o una scritta in tutto il video")
+            if s.project.hide != nil {
+                Button("Togli") { s.change(undo, "Togli il logo nascosto") { $0.hide = nil } }.controlSize(.small)
+            }
+        }
+    }
+
+    private var hideSheet: some View {
+        let project = s.project, infos = s.infos
+        var plain = project
+        plain.hide = nil
+        let frames = MontageFrames(project: plain, infos: infos)
+        return HideMarkEditor(url: URL(fileURLWithPath: "/montaggio.mp4"), onDone: { v in
+            showHide = false
+            if let v { s.change(undo, "Nascondi un logo") { $0.hide = v } }
+        }, frameSource: { t in await frames.frame(at: t) }, montageDuration: project.duration,
+           initial: HideMark.parse(project.hide ?? ""), allowAI: false)
     }
 
     static func edit(_ p: inout VideoProject, _ i: Int, _ f: (inout VPEffects) -> Void) {
@@ -1760,5 +1791,32 @@ private struct EffectOptions: View {
     static func speedLabel(_ v: Double) -> String {
         let t = v == v.rounded() ? String(Int(v)) : String(format: "%g", v).replacingOccurrences(of: ".", with: ",")
         return t + "×"
+    }
+}
+
+/// 2.9.8 · Fotogrammi del montaggio (senza logo nascosto e senza testi), per disegnare le zone.
+final class MontageFrames: @unchecked Sendable {
+    private let project: VideoProject
+    private let infos: [String: VPMediaInfo]
+    private var built: VPBuilt?
+    private let lock = NSLock()
+
+    init(project: VideoProject, infos: [String: VPMediaInfo]) {
+        self.project = project
+        self.infos = infos
+    }
+
+    func frame(at t: Double) async -> CGImage? {
+        lock.lock(); var b = built; lock.unlock()
+        if b == nil {
+            b = try? await VideoProjectBuilder.build(project, infos: infos, speech: [:], maxSide: 1100, engine: .frames)
+            lock.lock(); built = b; lock.unlock()
+        }
+        guard let b else { return nil }
+        let g = AVAssetImageGenerator(asset: b.composition)
+        g.videoComposition = b.videoComposition
+        g.requestedTimeToleranceBefore = CMTime(value: 1, timescale: 10)
+        g.requestedTimeToleranceAfter = CMTime(value: 1, timescale: 10)
+        return try? await g.image(at: CMTime(seconds: min(t, max(0, b.duration - 0.05)), preferredTimescale: 600)).image
     }
 }

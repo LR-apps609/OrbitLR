@@ -120,6 +120,8 @@ struct VideoProject: Codable, Equatable, Sendable {
     var fps = 30
     /// 2.9 · Filtro e regolazioni di tutto il progetto (una clip può avere i suoi).
     var look: VPLook? = nil
+    /// 2.9.8 · Zone da sfocare su tutto il montaggio (un logo, una scritta), come «Nascondi filigrana».
+    var hide: String? = nil
 
     /// Il look che si vede su una clip: il suo, altrimenti quello del progetto.
     func effectiveLook(_ c: VPClip) -> VPLook? { c.look ?? look }
@@ -387,13 +389,15 @@ enum VideoProjectBuilder {
                 if half[i] > 0 {
                     let b = start + half[i]
                     instructions.append(VPCompositionInstruction(range: (t0, b), from: placements[i - 1], to: placements[i],
-                                                                 transition: items[i].clip.transition, canvas: canvas))
+                                                                 transition: items[i].clip.transition, canvas: canvas,
+                                                                 hide: HideMark.parse(p.hide ?? "")))
                     t0 = b
                 }
                 let soloEnd = i + 1 < items.count ? items[i + 1].start.seconds - half[i + 1] : total
                 if soloEnd - t0 > 0.0001 {
                     instructions.append(VPCompositionInstruction(range: (t0, soloEnd), from: placements[i], to: nil,
-                                                                 transition: nil, canvas: canvas))
+                                                                 transition: nil, canvas: canvas,
+                                                                 hide: HideMark.parse(p.hide ?? "")))
                 }
                 t0 = max(t0, soloEnd)
             }

@@ -127,6 +127,11 @@ enum HideMark {
 struct HideMarkEditor: View {
     let url: URL
     let onDone: (String?) -> Void
+    /// 2.9.8 · Nel montaggio Video: i fotogrammi arrivano da qui (non da un file) e l'IA non c'è
+    var frameSource: ((Double) async -> CGImage?)? = nil
+    var montageDuration: Double = 0
+    var initial: HideMark.Spec? = nil
+    var allowAI = true
 
     @State private var spec = HideMark.Spec()
     @State private var source: CGImage? = nil
@@ -139,16 +144,16 @@ struct HideMarkEditor: View {
     @State private var aiBusy = false
     @State private var aiTask: Task<Void, Never>? = nil
 
-    private var isVideo: Bool { Catalog.kind(of: url) == .video }
+    private var isVideo: Bool { frameSource != nil || Catalog.kind(of: url) == .video }
     private let box = CGSize(width: 620, height: 400)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
-                KindBadge(kind: Catalog.kind(of: url), size: 34)
+                KindBadge(kind: frameSource != nil ? .video : Catalog.kind(of: url), size: 34)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Nascondi filigrana").font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.ink)
-                    Text(url.lastPathComponent).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                    Text(frameSource != nil ? "Tutto il montaggio" : url.lastPathComponent).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                 }
             }
             canvas
@@ -164,7 +169,7 @@ struct HideMarkEditor: View {
                 Picker("", selection: $spec.style) {
                     Text("Sfocatura").tag("blur")
                     Text("Pixel").tag("pixel")
-                    Text("Rimuovi (IA)").tag("ai")
+                    if allowAI { Text("Rimuovi (IA)").tag("ai") }
                 }
                 .pickerStyle(.segmented).labelsHidden().frame(width: 290)
                 if spec.style == "ai" {
@@ -188,7 +193,7 @@ struct HideMarkEditor: View {
                     .font(.system(size: 10.5)).foregroundStyle(.tertiary)
                 Spacer()
                 Button("Annulla") { onDone(nil) }.keyboardShortcut(.cancelAction)
-                Button(isVideo ? "Crea il video" : "Crea la foto") { onDone(HideMark.encode(spec)) }
+                Button(frameSource != nil ? "Applica" : isVideo ? "Crea il video" : "Crea la foto") { onDone(HideMark.encode(spec)) }
                     .keyboardShortcut(.defaultAction)
                     .buttonStyle(.borderedProminent).tint(Theme.accent)
                     .disabled(spec.rects.isEmpty)
@@ -197,7 +202,11 @@ struct HideMarkEditor: View {
         .padding(20)
         .frame(width: box.width + 40)
         .task {
-            if isVideo {
+            if let initial { spec = initial }
+            if frameSource != nil {
+                duration = montageDuration
+                time = min(1, duration / 2)
+            } else if isVideo {
                 let d = (try? await AVURLAsset(url: url).load(.duration).seconds) ?? 0
                 duration = d.isFinite ? d : 0
                 time = min(1, duration / 2)
@@ -269,7 +278,9 @@ struct HideMarkEditor: View {
     private func loadFrame() {
         Task {
             let cg: CGImage?
-            if isVideo {
+            if let frameSource {
+                cg = await frameSource(time)
+            } else if isVideo {
                 cg = await HideMark.frame(of: url, at: time)
             } else {
                 cg = await Task.detached { () -> CGImage? in
