@@ -78,7 +78,8 @@ final class VPCompositor: NSObject, AVVideoCompositing {
     private func frame(_ r: AVAsynchronousVideoCompositionRequest, _ pl: VideoProjectBuilder.Placement, _ canvas: CGSize) -> CIImage {
         let bg = Self.color(0, canvas)
         guard let px = r.sourceFrame(byTrackID: pl.trackID) else { return bg }
-        return VideoProjectBuilder.place(CIImage(cvPixelBuffer: px), pl, canvas: canvas).composited(over: bg).cropped(to: bg.extent)
+        return VideoProjectBuilder.place(CIImage(cvPixelBuffer: px), pl, canvas: canvas, at: r.compositionTime.seconds)
+            .composited(over: bg).cropped(to: bg.extent)
     }
 
     static func color(_ v: Double, _ canvas: CGSize) -> CIImage {

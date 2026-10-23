@@ -699,6 +699,7 @@ enum VideoPipeline {
         if !aTracks.isEmpty {
             let o = AVAssetReaderAudioMixOutput(audioTracks: aTracks, audioSettings: pcm)
             o.audioMix = audioMix
+            o.audioTimePitchAlgorithm = .spectral
             aOut = o
         }
         try await run(reader: reader, vOut: vOut, aOut: aOut, range: range, fps: fps, size: size, out: out,

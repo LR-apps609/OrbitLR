@@ -270,6 +270,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             let item = AVPlayerItem(asset: built.composition)
             item.videoComposition = built.videoComposition
             item.audioMix = built.audioMix
+            item.audioTimePitchAlgorithm = .spectral          // 2.9.8 · clip più veloci o lente: la voce non cambia tono
             let t = min(self.clock.time, max(0, built.duration - 0.05))
             let wasPlaying = self.clock.playing
             self.player.replaceCurrentItem(with: item)
@@ -318,8 +319,17 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             a.outPoint = l
             b.id = UUID()
             b.inPoint = l
+            Self.splitExtras(&a, &b)
             p.clips.replaceSubrange(hit.index...hit.index, with: [a, b])
         }
+    }
+
+    /// 2.9.8 · Dividendo una clip: la transizione resta prima del primo pezzo, la dissolvenza in entrata al primo,
+    /// quella in uscita al secondo (prima finivano su entrambi).
+    static func splitExtras(_ a: inout VPClip, _ b: inout VPClip) {
+        b.transition = nil
+        a.fx?.fadeOut = 0
+        b.fx?.fadeIn = 0
     }
 
     func trimStartHere(_ undo: UndoManager?) {
@@ -376,6 +386,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             a.outPoint = hit.local
             b.id = UUID()
             b.inPoint = hit.local
+            Self.splitExtras(&a, &b)
             b.muted = true
             p.clips.replaceSubrange(hit.index...hit.index, with: [a, b])
         }
@@ -595,13 +606,14 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
 
 /// 2.7.4 · Quattro passi in ordine, invece di cinque strumenti sparsi: l'audio originale sta con la musica.
 enum VideoEditTool: String, CaseIterable, Identifiable {
-    case clips = "Taglia", looks = "Filtri", music = "Audio e musica", format = "Formato", export = "Esporta"
+    case clips = "Taglia", looks = "Filtri", effects = "Effetti", music = "Audio e musica", format = "Formato", export = "Esporta"
     var id: String { rawValue }
     var number: Int { (Self.allCases.firstIndex(of: self) ?? 0) + 1 }
     var symbol: String {
         switch self {
         case .clips: return "scissors"
         case .looks: return "camera.filters"
+        case .effects: return "sparkles"
         case .music: return "music.note"
         case .format: return "rectangle.portrait"
         case .export: return "square.and.arrow.up"
@@ -612,6 +624,7 @@ enum VideoEditTool: String, CaseIterable, Identifiable {
         switch self {
         case .clips: return "Trascina i bordi d’ottone di una clip per accorciarla, premi S per dividerla, trascina una clip per spostarla."
         case .looks: return "Scegli un filtro e quanto forte. Vale per tutto il video, oppure solo per la clip scelta. Sotto regoli luce, colori e nitidezza."
+        case .effects: return "Scegli una clip nella sequenza: cambia la velocità, aggiungi uno zoom lento, capovolgila, ruotala, sfocala o falla comparire e sparire piano."
         case .music: return "Trascina qui una canzone per la musica. Qui regoli anche l’audio dei tuoi video."
         case .format: return "Scegli la forma del video: verticale per Reels e TikTok, quadrato per i post, orizzontale per YouTube."
         case .export: return "Scegli la qualità e premi Esporta (⌘E): il video finale va nella cartella che hai scelto."
@@ -727,6 +740,7 @@ struct VideoEditorView: View {
             return c.inPoint > 0.05 || c.outPoint < full - 0.05
         } || s.project.clips.count > 1
         case .looks: return !(s.project.look?.isIdentity ?? true) || s.project.clips.contains { !($0.look?.isIdentity ?? true) }
+        case .effects: return s.project.clips.contains { !($0.fx?.isIdentity ?? true) }
         case .music: return s.project.music != nil
         case .format: return s.project.aspect != "orig"
         case .export: return s.lastJob != nil
@@ -786,6 +800,7 @@ struct VideoEditorView: View {
         switch tool {
         case .clips: clipOptions
         case .looks: LookOptions(s: s, undo: undo, tint: tint)
+        case .effects: EffectOptions(s: s, undo: undo, tint: tint)
         case .music:
             originalOptions
             Divider().frame(height: 44)
@@ -1256,7 +1271,8 @@ private struct ProjectTimeline: View {
                         trimOut = c.outPoint
                         frozenPPS = max(pps, 0.0001)
                     }
-                    let delta = Double(v.translation.width / frozenPPS)
+                    // 2.9.8 · I punti sulla sequenza sono secondi del montaggio: nel file valgono «velocità» volte tanto
+                    let delta = Double(v.translation.width / frozenPPS) * c.speed
                     let fileD = s.infos[c.path]?.videoDuration ?? c.outPoint
                     var shown = start
                     s.live { p in
@@ -1292,7 +1308,7 @@ private struct ProjectTimeline: View {
         guard let m = s.project.music, m.duck, s.project.originalAudible, c.length > 0 else { return [] }
         return (s.speech[c.path] ?? []).compactMap { r in
             let a = max(r.lowerBound, c.inPoint), b = min(r.upperBound, c.outPoint)
-            return b > a ? ((a - c.inPoint) / c.length)...((b - c.inPoint) / c.length) : nil
+            return b > a ? ((a - c.inPoint) / c.sourceLength)...((b - c.inPoint) / c.sourceLength) : nil
         }
     }
 
@@ -1377,6 +1393,17 @@ private struct ClipBlock: View {
                     .foregroundStyle(Color.white)
                     .padding(4)
                     .opacity(g.size.width > 44 ? 1 : 0)
+                if abs(clip.speed - 1) > 0.001 || !(clip.fx?.isIdentity ?? true) {
+                    // 2.9.8 · clip con effetti: la velocità si legge subito
+                    Text(abs(clip.speed - 1) > 0.001 ? EffectOptions.speedLabel(clip.speed) : "✦")
+                        .font(.system(size: 9.5, weight: .bold)).monospacedDigit()
+                        .padding(.horizontal, 4).padding(.vertical, 1)
+                        .background(RoundedRectangle(cornerRadius: 3).fill(Theme.brass.opacity(0.9)))
+                        .foregroundStyle(Color.white)
+                        .padding(4)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                        .opacity(g.size.width > 70 ? 1 : 0)
+                }
                 if !(clip.look?.isIdentity ?? true) {
                     // 2.9 · clip con un suo filtro
                     Image(systemName: "camera.filters")
@@ -1620,5 +1647,106 @@ struct TransitionOptions: View {
             guard let i = p.clips.firstIndex(where: { $0.id == clipID }) else { return }
             f(&p.clips[i].transition)
         }
+    }
+}
+
+// MARK: - 2.9.8 · Effetti della clip
+
+private struct EffectOptions: View {
+    @ObservedObject var s: VideoProjectStore
+    let undo: UndoManager?
+    let tint: Color
+
+    private var index: Int? { s.targetIndex }
+    private var fx: VPEffects {
+        guard let i = index, s.project.clips.indices.contains(i) else { return VPEffects() }
+        return s.project.clips[i].fx ?? VPEffects()
+    }
+
+    private func change(_ name: String, _ f: @escaping (inout VPEffects) -> Void) {
+        guard let i = index else { NSSound.beep(); return }
+        s.change(undo, name) { p in
+            guard p.clips.indices.contains(i) else { return }
+            var e = p.clips[i].fx ?? VPEffects()
+            f(&e)
+            p.clips[i].fx = e.isIdentity ? nil : e
+        }
+    }
+
+    var body: some View {
+        if let i = index, s.project.clips.indices.contains(i) {
+            HStack(alignment: .center, spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Clip \(i + 1)").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
+                    Menu {
+                        ForEach(VPEffects.speeds, id: \.self) { v in
+                            Button(Self.speedLabel(v)) { change("Velocità") { $0.speed = v } }
+                        }
+                    } label: {
+                        Label(Self.speedLabel(fx.speed), systemImage: "speedometer")
+                    }
+                    .menuStyle(.button).fixedSize()
+                    .help("Velocità della clip: la voce non cambia tono")
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Zoom lento").font(.system(size: 11)).foregroundStyle(.secondary)
+                    Picker("", selection: Binding(get: { fx.zoom }, set: { v in change("Zoom lento") { $0.zoom = v } })) {
+                        Text("No").tag("none")
+                        Image(systemName: "plus.magnifyingglass").tag("in").help("Si avvicina piano")
+                        Image(systemName: "minus.magnifyingglass").tag("out").help("Si allontana piano")
+                    }
+                    .pickerStyle(.segmented).labelsHidden().frame(width: 130)
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Gira").font(.system(size: 11)).foregroundStyle(.secondary)
+                    HStack(spacing: 4) {
+                        Toggle(isOn: Binding(get: { fx.flipH }, set: { v in change("Capovolgi") { $0.flipH = v } })) {
+                            Image(systemName: "arrow.left.and.right.righttriangle.left.righttriangle.right")
+                        }
+                        .toggleStyle(.button).help("Specchia (destra ↔ sinistra)")
+                        Toggle(isOn: Binding(get: { fx.flipV }, set: { v in change("Capovolgi") { $0.flipV = v } })) {
+                            Image(systemName: "arrow.up.and.down.righttriangle.up.righttriangle.down")
+                        }
+                        .toggleStyle(.button).help("Capovolgi (sopra ↔ sotto)")
+                        Button { change("Ruota") { $0.rotate = ($0.rotate + 90) % 360 } } label: {
+                            Image(systemName: "rotate.right")
+                        }
+                        .help("Ruota di 90° · ora \(fx.rotate)°")
+                    }
+                }
+                EditSlider(title: "Sfocatura", value: fx.blur, range: 0...1, text: fx.blur < 0.01 ? "No" : "\(Int(fx.blur * 100))%",
+                           width: 120, s: s, undo: undo, name: "Sfocatura") { p, v in Self.edit(&p, i) { $0.blur = v } }
+                EditSlider(title: "Entrata", value: fx.fadeIn, range: 0...2, text: fx.fadeIn < 0.05 ? "No" : String(format: "%.1f s", fx.fadeIn),
+                           width: 100, s: s, undo: undo, name: "Dissolvenza in entrata") { p, v in Self.edit(&p, i) { $0.fadeIn = v < 0.05 ? 0 : v } }
+                EditSlider(title: "Uscita", value: fx.fadeOut, range: 0...2, text: fx.fadeOut < 0.05 ? "No" : String(format: "%.1f s", fx.fadeOut),
+                           width: 100, s: s, undo: undo, name: "Dissolvenza in uscita") { p, v in Self.edit(&p, i) { $0.fadeOut = v < 0.05 ? 0 : v } }
+                VStack(alignment: .leading, spacing: 4) {
+                    Button("A tutte le clip") {
+                        let e = fx
+                        s.change(undo, "Effetti a tutte le clip") { p in
+                            for k in p.clips.indices { p.clips[k].fx = e.isIdentity ? nil : e }
+                        }
+                    }
+                    .controlSize(.small).help("Copia questi effetti su tutte le clip")
+                    Button("Ripristina") { change("Togli gli effetti") { $0 = VPEffects() } }
+                        .controlSize(.small).disabled(fx.isIdentity)
+                }
+            }
+        } else {
+            Text("Scegli una clip nella sequenza (clic sulla clip) per darle i suoi effetti.")
+                .font(.system(size: 12)).foregroundStyle(.secondary)
+        }
+    }
+
+    static func edit(_ p: inout VideoProject, _ i: Int, _ f: (inout VPEffects) -> Void) {
+        guard p.clips.indices.contains(i) else { return }
+        var e = p.clips[i].fx ?? VPEffects()
+        f(&e)
+        p.clips[i].fx = e.isIdentity ? nil : e
+    }
+
+    static func speedLabel(_ v: Double) -> String {
+        let t = v == v.rounded() ? String(Int(v)) : String(format: "%g", v).replacingOccurrences(of: ".", with: ",")
+        return t + "×"
     }
 }
