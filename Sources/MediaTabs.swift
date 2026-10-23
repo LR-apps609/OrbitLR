@@ -437,7 +437,8 @@ struct AudioTabView: View {
 
     private let tint = Theme.color(.audio)
 
-    var body: some View {
+    /// 2.8.6 · Il contenuto, al centro e largo al massimo 1100 punti.
+    private var page: some View {
         VStack(alignment: .leading, spacing: 14) {
             MediaHeader(m: m, tint: tint) {
                 if let trim = m.trim, tool != .tts {
@@ -462,6 +463,16 @@ struct AudioTabView: View {
             if let job = m.lastJob { JobStrip(job: job) }
         }
         .padding(20)
+        .frame(maxWidth: 1100)
+        .frame(maxWidth: .infinity)
+    }
+
+    var body: some View {
+        // 2.8.6 · Se la finestra è bassa la pagina scorre, invece di uscire dai bordi
+        ViewThatFits(in: .vertical) {
+            page.frame(maxHeight: .infinity, alignment: .top)
+            ScrollView(.vertical) { page }
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.background)
         .onDrop(of: [UTType.fileURL], isTargeted: $targeted) { providers in
@@ -530,8 +541,10 @@ struct AudioTabView: View {
                 }
             }
             // 2.8.4 · Come nel Video: una frase che dice cosa fare adesso
+            // 2.8.6 · Niente «fixedSize» qui: con la larghezza libera faceva crescere la finestra a dismisura
             Label(tool.hint, systemImage: "lightbulb")
-                .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                .font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity)
     }

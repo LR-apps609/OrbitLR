@@ -163,6 +163,9 @@ struct MainWindow: View {
                 .transition(.asymmetric(insertion: Motion.reduced ? .opacity : .opacity.combined(with: .offset(y: 6)), removal: .identity))
             }
             .animation(Motion.spring(0.2, 0.9), value: app.selection)
+            // 2.8.6 · Nessuna pagina può far crescere la finestra oltre lo schermo: quello che non ci sta resta sotto
+            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
+            .clipped()
         }
         .background(WindowReader { w in
             // Una sola finestra principale: se ne nasce un'altra mentre la prima è aperta, si chiude subito

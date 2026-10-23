@@ -1,3 +1,8 @@
+Novità della 2.8.6 «Audio sistemato»:
+• Audio: sistemata la pagina che usciva dai bordi e spostava tutta la finestra (anche la barra laterale spariva)
+• Audio: contenuto al centro, largo al massimo come le altre schede; se la finestra è bassa la pagina scorre
+• Protezione in tutte le schede: nessuna pagina può più far crescere la finestra oltre lo schermo
+
 Novità della 2.8.5 «Progetti audio»:
 • Audio: ogni file che apri diventa un progetto che si salva da solo (file, strumento, selezione, file da unire)
 • Sotto l'area del file trovi i Progetti: un clic e riparti con lo stesso strumento e la stessa selezione
