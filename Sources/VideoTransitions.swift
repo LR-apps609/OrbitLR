@@ -23,9 +23,11 @@ final class VPCompositionInstruction: NSObject, AVVideoCompositionInstructionPro
     let canvas: CGSize
     /// 2.9.8 · zone da sfocare su tutto il montaggio
     let hide: HideMark.Spec?
+    /// 2.9.9 · i testi del progetto (si disegnano quelli visibili in quel momento)
+    let texts: [VPText]
 
     init(range: (Double, Double), from: VideoProjectBuilder.Placement, to: VideoProjectBuilder.Placement?,
-         transition: VPTransition?, canvas: CGSize, hide: HideMark.Spec? = nil) {
+         transition: VPTransition?, canvas: CGSize, hide: HideMark.Spec? = nil, texts: [VPText] = []) {
         let a = VideoProjectBuilder.cm(range.0), b = VideoProjectBuilder.cm(range.1)
         timeRange = CMTimeRange(start: a, end: b)
         self.from = from
@@ -33,6 +35,7 @@ final class VPCompositionInstruction: NSObject, AVVideoCompositionInstructionPro
         self.transition = transition
         self.canvas = canvas
         self.hide = hide
+        self.texts = texts
         var ids = [NSNumber(value: from.trackID)]
         if let to { ids.append(NSNumber(value: to.trackID)) }
         requiredSourceTrackIDs = ids
@@ -71,6 +74,7 @@ final class VPCompositor: NSObject, AVVideoCompositing {
                 img = Self.blend(a, b, kind: ins.transition?.kind ?? "fade", progress: x * x * (3 - 2 * x), canvas: ins.canvas)
             }
             if let h = ins.hide, h.style != "ai" { img = HideMark.apply(h, to: img) }
+            if !ins.texts.isEmpty { img = TextRender.overlay(ins.texts, on: img, canvas: ins.canvas, at: t) }
             Media.ci.render(img, to: out, bounds: CGRect(origin: .zero, size: ins.canvas), colorSpace: space)
             request.finish(withComposedVideoFrame: out)
         }

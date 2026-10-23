@@ -122,6 +122,8 @@ struct VideoProject: Codable, Equatable, Sendable {
     var look: VPLook? = nil
     /// 2.9.8 · Zone da sfocare su tutto il montaggio (un logo, una scritta), come «Nascondi filigrana».
     var hide: String? = nil
+    /// 2.9.9 · Testi animati sopra il video.
+    var texts: [VPText]? = nil
 
     /// Il look che si vede su una clip: il suo, altrimenti quello del progetto.
     func effectiveLook(_ c: VPClip) -> VPLook? { c.look ?? look }
@@ -390,14 +392,14 @@ enum VideoProjectBuilder {
                     let b = start + half[i]
                     instructions.append(VPCompositionInstruction(range: (t0, b), from: placements[i - 1], to: placements[i],
                                                                  transition: items[i].clip.transition, canvas: canvas,
-                                                                 hide: HideMark.parse(p.hide ?? "")))
+                                                                 hide: HideMark.parse(p.hide ?? ""), texts: p.texts ?? []))
                     t0 = b
                 }
                 let soloEnd = i + 1 < items.count ? items[i + 1].start.seconds - half[i + 1] : total
                 if soloEnd - t0 > 0.0001 {
                     instructions.append(VPCompositionInstruction(range: (t0, soloEnd), from: placements[i], to: nil,
                                                                  transition: nil, canvas: canvas,
-                                                                 hide: HideMark.parse(p.hide ?? "")))
+                                                                 hide: HideMark.parse(p.hide ?? ""), texts: p.texts ?? []))
                 }
                 t0 = max(t0, soloEnd)
             }

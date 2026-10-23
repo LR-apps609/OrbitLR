@@ -23,6 +23,8 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     @Published private(set) var thumbs: [String: [NSImage]] = [:]
     @Published private(set) var building = false
     @Published var selected: UUID? = nil
+    /// 2.9.9 · il testo che si sta modificando
+    @Published var selectedText: UUID? = nil
     @Published var notice: String? = nil
     @Published var lastJob: Job? = nil
     /// 2.7.3 · Il progetto aperto (nil = si vede la schermata Progetti) e l'elenco dei progetti salvati.
@@ -608,7 +610,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
 
 /// 2.7.4 · Quattro passi in ordine, invece di cinque strumenti sparsi: l'audio originale sta con la musica.
 enum VideoEditTool: String, CaseIterable, Identifiable {
-    case clips = "Taglia", looks = "Filtri", effects = "Effetti", music = "Audio e musica", format = "Formato", export = "Esporta"
+    case clips = "Taglia", looks = "Filtri", effects = "Effetti", texts = "Testi", music = "Audio e musica", format = "Formato", export = "Esporta"
     var id: String { rawValue }
     var number: Int { (Self.allCases.firstIndex(of: self) ?? 0) + 1 }
     var symbol: String {
@@ -616,6 +618,7 @@ enum VideoEditTool: String, CaseIterable, Identifiable {
         case .clips: return "scissors"
         case .looks: return "camera.filters"
         case .effects: return "sparkles"
+        case .texts: return "textformat"
         case .music: return "music.note"
         case .format: return "rectangle.portrait"
         case .export: return "square.and.arrow.up"
@@ -626,6 +629,7 @@ enum VideoEditTool: String, CaseIterable, Identifiable {
         switch self {
         case .clips: return "Trascina i bordi d’ottone di una clip per accorciarla, premi S per dividerla, trascina una clip per spostarla."
         case .looks: return "Scegli un filtro e quanto forte. Vale per tutto il video, oppure solo per la clip scelta. Sotto regoli luce, colori e nitidezza."
+        case .texts: return "Aggiungi un titolo o una scritta: compare dall'indicatore. Trascinalo sull'anteprima per spostarlo, scegli modello, animazione e colore."
         case .effects: return "Scegli una clip nella sequenza: cambia la velocità, aggiungi uno zoom lento, capovolgila, ruotala, sfocala o falla comparire e sparire piano."
         case .music: return "Trascina qui una canzone per la musica. Qui regoli anche l’audio dei tuoi video."
         case .format: return "Scegli la forma del video: verticale per Reels e TikTok, quadrato per i post, orizzontale per YouTube."
@@ -658,7 +662,7 @@ struct VideoEditorView: View {
                               subtitle: "oppure clicca per sceglierli · MP4, MOV, M4V · più video vanno in fila · un brano audio diventa la musica",
                               targeted: targeted) { choose(audio: false) }
             } else {
-                EditorPreview(s: s, clock: s.clock)
+                EditorPreview(s: s, clock: s.clock, editTexts: tool == .texts)
                 ProjectTimeline(s: s, clock: s.clock, tint: tint) {
                     // 2.9.1 · «Aggiungi musica» apriva solo il passo: ora, se la musica non c'è, si sceglie subito il brano
                     tool = .music
@@ -751,6 +755,7 @@ struct VideoEditorView: View {
         } || s.project.clips.count > 1
         case .looks: return !(s.project.look?.isIdentity ?? true) || s.project.clips.contains { !($0.look?.isIdentity ?? true) }
         case .effects: return s.project.clips.contains { !($0.fx?.isIdentity ?? true) }
+        case .texts: return !(s.project.texts ?? []).isEmpty
         case .music: return s.project.music != nil
         case .format: return s.project.aspect != "orig"
         case .export: return s.lastJob != nil
@@ -811,6 +816,7 @@ struct VideoEditorView: View {
         case .clips: clipOptions
         case .looks: LookOptions(s: s, undo: undo, tint: tint)
         case .effects: EffectOptions(s: s, undo: undo, tint: tint)
+        case .texts: TextOptions(s: s, undo: undo, tint: tint)
         case .music:
             originalOptions
             Divider().frame(height: 44)
@@ -1038,6 +1044,8 @@ private struct EditSlider: View {
 private struct EditorPreview: View {
     @ObservedObject var s: VideoProjectStore
     @ObservedObject var clock: PlayClock
+    /// 2.9.9 · nel passo «Testi» i testi si trascinano sull'anteprima
+    var editTexts = false
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
@@ -1046,6 +1054,7 @@ private struct EditorPreview: View {
             if let r = s.project.aspectRatio {
                 FormatFrame(canvas: s.canvasSize, ratio: r).allowsHitTesting(false)
             }
+            if editTexts { TextDragLayer(s: s, clock: clock) }
             HStack {
                 Button { s.togglePlay() } label: {
                     Image(systemName: clock.playing ? "pause.fill" : "play.fill").font(.system(size: 13, weight: .bold))
@@ -1773,6 +1782,7 @@ private struct EffectOptions: View {
         let project = s.project, infos = s.infos
         var plain = project
         plain.hide = nil
+        plain.texts = nil
         let frames = MontageFrames(project: plain, infos: infos)
         return HideMarkEditor(url: URL(fileURLWithPath: "/montaggio.mp4"), onDone: { v in
             showHide = false
