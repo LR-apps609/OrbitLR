@@ -1,0 +1,45 @@
+# 3.0 · Foto di tutte le schermate (chiare e scure) per la revisione dell'aspetto.
+# Parte con una modifica sul ramo «foto-richiesta» (o a mano); le foto finiscono sul ramo «foto».
+name: Foto delle schermate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [foto-richiesta]
+
+permissions:
+  contents: write
+
+jobs:
+  foto:
+    runs-on: macos-15-intel
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - name: Xcode più recente disponibile
+        run: |
+          XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -n 1)
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+      - name: Progetto
+        run: brew install xcodegen && xcodegen generate
+      - name: Foto
+        run: |
+          mkdir -p "$RUNNER_TEMP/foto"
+          TEST_RUNNER_SCREENSHOTS=1 TEST_RUNNER_SCREENSHOT_DIR="$RUNNER_TEMP/foto" \
+          xcodebuild test -project OrbitLR.xcodeproj -scheme OrbitLRTests -destination 'platform=macOS' \
+            -only-testing:OrbitLRTests/ScreenshotTests \
+            -derivedDataPath build-foto CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= \
+            > foto.log 2>&1 || true
+          grep -E "Test Case|error:" foto.log | tail -n 40 || true
+          ls -la "$RUNNER_TEMP/foto" | head -n 80
+          n=$(ls "$RUNNER_TEMP/foto" | wc -l | tr -d ' ')
+          echo "::notice::Foto fatte: $n"
+      - name: Sul ramo «foto»
+        run: |
+          cd "$RUNNER_TEMP/foto"
+          git init -q -b foto
+          git config user.name "OrbitLR"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Foto delle schermate ($GITHUB_SHA)"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" foto

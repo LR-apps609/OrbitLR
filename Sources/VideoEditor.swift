@@ -677,6 +677,11 @@ struct VideoEditorView: View {
     @ObservedObject var s: VideoProjectStore
     @Environment(\.undoManager) private var undo
     @State private var tool: VideoEditTool = .clip
+
+    init(s: VideoProjectStore, startTool: VideoEditTool = .clip) {
+        self.s = s
+        _tool = State(initialValue: startTool)
+    }
     @State private var targeted = false
     @State private var askClose = false
 

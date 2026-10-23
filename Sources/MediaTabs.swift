@@ -427,6 +427,11 @@ final class SpeechPreview: NSObject, ObservableObject, AVSpeechSynthesizerDelega
 struct AudioTabView: View {
     @ObservedObject var m: MediaTabModel
     @State private var tool: AudioTool = .ringtone
+
+    init(m: MediaTabModel, startTool: AudioTool = .ringtone) {
+        self.m = m
+        _tool = State(initialValue: startTool)
+    }
     @State private var ringLength: Double = 30
     @State private var fade = true
     @State private var normalize = true
