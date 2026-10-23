@@ -346,6 +346,12 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
 
     func togglePlay() { clock.playing ? pause() : play() }
 
+    /// 3.4.8 · Passo dalla tastiera: un fotogramma (1/30 s) o un secondo, avanti o indietro.
+    func step(_ seconds: Double) {
+        if clock.playing { pause() }
+        seek(clock.time + seconds)
+    }
+
     func play() {
         guard player.currentItem != nil, previewDuration > 0 else { NSSound.beep(); return }
         if clock.time >= previewDuration - 0.1 { seek(0) }
@@ -794,6 +800,7 @@ struct VideoEditorView: View {
             return true
         }
         .onDisappear { s.pause() }
+        .background(EditorKeys(s: s))
         .confirmationDialog("Ci sono modifiche non applicate", isPresented: $askClose) {
             Button("Applica e chiudi") { s.applyChanges(); s.closeProject(undo) }
             Button("Scarta e chiudi", role: .destructive) { s.discardChanges(undo); s.closeProject(undo) }
@@ -1098,11 +1105,14 @@ struct VideoEditorView: View {
         p.canChooseDirectories = false
         p.allowedContentTypes = audio ? [.audio, .movie] : [.movie]
         p.prompt = audio ? "Scegli" : "Aggiungi"
-        guard p.runModal() == .OK else { return }
-        if audio, let u = p.url {
-            Task { @MainActor in await s.setMusic(u, undo: undo) }
-        } else {
-            s.add(p.urls, undo: undo)
+        let store = s, undo = undo
+        Sheet.choose(p) { urls in
+            guard !urls.isEmpty else { return }
+            if audio, let u = urls.first {
+                Task { @MainActor in await store.setMusic(u, undo: undo) }
+            } else {
+                store.add(urls, undo: undo)
+            }
         }
     }
 
@@ -1117,6 +1127,33 @@ struct VideoEditorView: View {
         guard let c = targetClip, let action = Catalog.action(id: "gifcut", kind: .video) else { NSSound.beep(); return }
         let end = min(c.outPoint, c.inPoint + 15)
         s.lastJob = QueueStore.shared.enqueue(files: [c.url], action: action, param: String(format: "%.3f|%.3f", c.inPoint, end))
+    }
+}
+
+/// 3.4.8 · I tasti del montaggio. Spenti mentre scrivi un testo (così le lettere restano lettere).
+private struct EditorKeys: View {
+    @ObservedObject var s: VideoProjectStore
+
+    var body: some View {
+        Group {
+            key("j", []) { s.step(-1) }
+            key("k", []) { s.pause() }
+            key("l", []) { if !s.clock.playing { s.play() } }
+            key(.leftArrow, []) { s.step(-1.0 / 30) }
+            key(.rightArrow, []) { s.step(1.0 / 30) }
+            key(.leftArrow, .shift) { s.step(-1) }
+            key(.rightArrow, .shift) { s.step(1) }
+            key(.home, []) { s.pause(); s.seek(0) }
+            key(.end, []) { s.pause(); s.seek(s.project.duration) }
+        }
+        .frame(width: 0, height: 0)
+        .opacity(0)
+        .accessibilityHidden(true)
+        .disabled(s.typing || s.project.clips.isEmpty)
+    }
+
+    private func key(_ k: KeyEquivalent, _ m: EventModifiers, _ action: @escaping () -> Void) -> some View {
+        Button("", action: action).keyboardShortcut(k, modifiers: m).buttonStyle(.plain)
     }
 }
 

@@ -103,3 +103,34 @@ enum Perf {
         }.joined(separator: "\n")
     }
 }
+
+// MARK: - 3.4.7 · Mai bloccata: avvisi e scelte di file come fogli attaccati alla finestra
+
+import AppKit
+
+/// Un avviso o una scelta di file nella finestra principale non blocca più tutta l'app:
+/// scende come foglio dalla finestra (le altre finestre, la torta e i lavori vanno avanti).
+enum Sheet {
+    private static var window: NSWindow? {
+        guard let w = AppState.shared.mainWindow, w.isVisible, w.attachedSheet == nil else { return nil }
+        return w
+    }
+
+    /// `then(true)` se si sceglie il primo pulsante.
+    static func confirm(_ a: NSAlert, then: @escaping (Bool) -> Void) {
+        if let w = window {
+            a.beginSheetModal(for: w) { then($0 == .alertFirstButtonReturn) }
+        } else {
+            then(a.runModal() == .alertFirstButtonReturn)
+        }
+    }
+
+    /// I file scelti (vuoto se si annulla).
+    static func choose(_ p: NSOpenPanel, then: @escaping ([URL]) -> Void) {
+        if let w = window {
+            p.beginSheetModal(for: w) { r in then(r == .OK ? p.urls : []) }
+        } else {
+            then(p.runModal() == .OK ? p.urls : [])
+        }
+    }
+}

@@ -271,7 +271,7 @@ struct KindTabView: View {
         p.canChooseDirectories = true
         p.allowedContentTypes = style.types
         p.message = style.kind == .img ? "Scegli le foto" : (style.kind == .video ? "Scegli i video" : "Scegli i file")
-        if p.runModal() == .OK { m.add(p.urls) }
+        Sheet.choose(p) { urls in if !urls.isEmpty { m.add(urls) } }
     }
 }
 

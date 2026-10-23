@@ -38,4 +38,23 @@ final class PreviewTests: XCTestCase {
         XCTAssertEqual(s.player.currentTime().seconds, 2.9, accuracy: 0.1, "e l'immagine lo ha raggiunto")
         s.closeProject(nil)
     }
+
+    /// 3.4.8 · Frecce e J: passi precisi, mai fuori dal montaggio.
+    func testPassiDallaTastiera() async throws {
+        let v = try await Fixtures.video(name: "passi-\(UUID().uuidString).mp4", width: 320, height: 180, seconds: 2)
+        let s = VideoProjectStore(folder: Fixtures.dir.appendingPathComponent("passi-\(UUID().uuidString)", isDirectory: true))
+        s.newProject(nil)
+        s.add([v], undo: nil)
+        for _ in 0..<80 where s.player.currentItem == nil { try await Task.sleep(nanoseconds: 100_000_000) }
+        s.seek(1)
+        s.step(1.0 / 30)
+        XCTAssertEqual(s.clock.time, 1 + 1.0 / 30, accuracy: 0.0001)
+        s.step(-1)
+        XCTAssertEqual(s.clock.time, 1.0 / 30, accuracy: 0.0001)
+        s.step(-1)
+        XCTAssertEqual(s.clock.time, 0, "non va prima dell'inizio")
+        s.step(10)
+        XCTAssertLessThanOrEqual(s.clock.time, 2.01, "né dopo la fine")
+        s.closeProject(nil)
+    }
 }

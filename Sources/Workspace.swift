@@ -363,7 +363,7 @@ struct WorkspaceView: View {
         panel.canChooseDirectories = true
         panel.canChooseFiles = true
         panel.prompt = "Apri"
-        if panel.runModal() == .OK { ws.load(panel.urls, append: append) }
+        Sheet.choose(panel) { urls in if !urls.isEmpty { ws.load(urls, append: append) } }
     }
 }
 

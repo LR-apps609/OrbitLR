@@ -290,7 +290,7 @@ struct ActivityView: View {
                             a.informativeText = "Spariscono tutte le voci dall’elenco. I file creati restano dove sono."
                             a.addButton(withTitle: "Svuota")
                             a.addButton(withTitle: "Annulla")
-                            if a.runModal() == .alertFirstButtonReturn { withAnimation(Motion.quick) { store.forgetAll() } }
+                            Sheet.confirm(a) { ok in if ok { withAnimation(Motion.quick) { store.forgetAll() } } }
                         } label: { Label("Svuota la cronologia…", systemImage: "trash") }
                         .help("Svuota la cronologia (i file non vengono toccati)")
                     }
@@ -521,7 +521,7 @@ struct HistoryRow: View {
                         a.informativeText = "Si possono ancora recuperare dal Cestino."
                         a.addButton(withTitle: "Sposta nel Cestino")
                         a.addButton(withTitle: "Annulla")
-                        if a.runModal() == .alertFirstButtonReturn { store.undo(entry) }
+                        Sheet.confirm(a) { ok in if ok { store.undo(entry) } }
                     }
                 }
                 Button("Togli dalla cronologia") { withAnimation(Motion.quick) { store.forget(entry) } }

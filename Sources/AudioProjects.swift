@@ -254,7 +254,7 @@ struct AudioProjectsRow: View {
         a.addButton(withTitle: "Rinomina")
         a.addButton(withTitle: "Annulla")
         a.window.initialFirstResponder = field
-        if a.runModal() == .alertFirstButtonReturn { m.renameProject(p.id, to: field.stringValue) }
+        Sheet.confirm(a) { ok in if ok { m.renameProject(p.id, to: field.stringValue) } }
     }
 
     private func delete(_ p: AudioProject) {
@@ -263,6 +263,6 @@ struct AudioProjectsRow: View {
         a.informativeText = "Il progetto va nel Cestino. Il file audio non viene toccato."
         a.addButton(withTitle: "Elimina")
         a.addButton(withTitle: "Annulla")
-        if a.runModal() == .alertFirstButtonReturn { m.deleteProject(p.id) }
+        Sheet.confirm(a) { ok in if ok { m.deleteProject(p.id) } }
     }
 }

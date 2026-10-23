@@ -237,7 +237,7 @@ struct VideoProjectsView: View {
         a.addButton(withTitle: "Rinomina")
         a.addButton(withTitle: "Annulla")
         a.window.initialFirstResponder = field
-        if a.runModal() == .alertFirstButtonReturn { s.renameProject(e.id, to: field.stringValue) }
+        Sheet.confirm(a) { ok in if ok { s.renameProject(e.id, to: field.stringValue) } }
     }
 
     private func delete(_ e: VPEntry) {
@@ -246,7 +246,7 @@ struct VideoProjectsView: View {
         a.informativeText = "Il progetto va nel Cestino, da dove puoi ancora recuperarlo. I tuoi video non vengono toccati."
         a.addButton(withTitle: "Elimina")
         a.addButton(withTitle: "Annulla")
-        if a.runModal() == .alertFirstButtonReturn { withAnimation(Motion.quick) { s.deleteProject(e.id, undo: undo) } }
+        Sheet.confirm(a) { ok in if ok { withAnimation(Motion.quick) { s.deleteProject(e.id, undo: undo) } } }
     }
 }
 

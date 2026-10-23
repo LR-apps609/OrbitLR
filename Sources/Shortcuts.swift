@@ -51,6 +51,19 @@ struct ShortcutsPanel: View {
                 Row(keys: ["Rotellina"], text: "Gira la manopola"),
                 Row(keys: ["Clic"], text: "Passa alla posizione successiva"),
             ]),
+            // 3.4.8 · Il montaggio dalla tastiera
+            KeyGroup(title: "Montaggio video", symbol: "film", rows: [
+                Row(keys: ["Spazio"], text: "Riproduci / pausa"),
+                Row(keys: ["J", "K", "L"], text: "Indietro di un secondo · pausa · riproduci"),
+                Row(keys: ["←", "→"], text: "Un fotogramma indietro / avanti"),
+                Row(keys: ["⇧", "←", "→"], text: "Un secondo indietro / avanti"),
+                Row(keys: ["↖", "↘"], text: "Inizio / fine del montaggio (fn ← / fn →)"),
+                Row(keys: ["S"], text: "Dividi la clip"),
+                Row(keys: ["T"], text: "Aggiungi un testo"),
+                Row(keys: ["⌫"], text: "Togli la clip scelta"),
+                Row(keys: ["⌘", "↩"], text: "Applica le modifiche"),
+                Row(keys: ["⌘", "E"], text: "Esporta"),
+            ]),
             KeyGroup(title: "Finestra", symbol: "macwindow", rows: [
                 Row(keys: ["⌘", "/"], text: "Questo elenco"),
                 Row(keys: ["⌘", ","], text: "Opzioni"),

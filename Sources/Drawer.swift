@@ -1,6 +1,7 @@
 import Foundation
 import AppKit
 import SwiftUI
+import Combine
 
 // ════════════════════════════════════════════════════════════════════
 //  3.0 · Il Cassetto: ogni file creato dall'app è a portata di mano.
@@ -57,6 +58,26 @@ enum DrawerTarget: String, CaseIterable, Identifiable {
 final class Drawer: ObservableObject, @unchecked Sendable {
     static let shared = Drawer()
     private static let hiddenKey = "drawerHidden"
+
+    /// 3.4.7 · I file del Cassetto già pronti: si ricalcolano in sottofondo quando cambia la cronologia,
+    /// non a ogni ridisegno della barra laterale (prima: 40 controlli sul disco a ogni avanzamento di un lavoro).
+    @Published private(set) var current: [URL] = []
+    private var watch: AnyCancellable?
+    private let work = DispatchQueue(label: "orbitlr.cassetto", qos: .utility)
+
+    init() {
+        watch = QueueStore.shared.$history
+            .combineLatest($hidden)
+            .debounce(for: .milliseconds(150), scheduler: DispatchQueue.main)
+            .sink { [weak self] history, hidden in self?.refresh(history, hidden) }
+    }
+
+    private func refresh(_ history: [HistoryEntry], _ hidden: Set<String>) {
+        work.async { [weak self] in
+            let list = Drawer.items(from: history, hidden: hidden)
+            DispatchQueue.main.async { if self?.current != list { self?.current = list } }
+        }
+    }
 
     /// File tolti dal Cassetto (restano dove sono, sul disco).
     @Published private(set) var hidden: Set<String> = Set(UserDefaults.standard.stringArray(forKey: Drawer.hiddenKey) ?? [])
@@ -166,7 +187,7 @@ struct DrawerSidebar: View {
     @ObservedObject private var drawer = Drawer.shared
     @State private var showAll = false
 
-    private var items: [URL] { Drawer.items(from: store.history, hidden: drawer.hidden) }
+    private var items: [URL] { drawer.current }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {

@@ -187,7 +187,7 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
         p.canChooseDirectories = false
         p.allowedContentTypes = videoTab ? [.movie] : [.audio, .movie]
         p.prompt = append ? "Aggiungi" : "Apri"
-        if p.runModal() == .OK { load(p.urls, append: append) }
+        Sheet.choose(p) { [weak self] urls in if !urls.isEmpty { self?.load(urls, append: append) } }
     }
 }
 
