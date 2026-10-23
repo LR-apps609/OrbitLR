@@ -22,6 +22,7 @@
   --sage:#6F9A69; --sage-deep:#7FB39A; --brass:#D9AA57; --brass-soft:#4A3D22; --terra:#D98266;
   --ok:#6CC08A; --ring:#2E342B; color-scheme:dark }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{min-height:100%}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
@@ -48,7 +49,7 @@ svg.pie{width:min(440px,100%);height:auto;display:block;overflow:visible}
 .petal text.est{font-family:var(--mono);font-weight:500;font-size:10.5px;fill:var(--quiet)}
 .petal text.est.down{fill:var(--ok)}
 .petal:hover circle.bg,.petal:focus-visible circle.bg{fill:var(--sage-deep);stroke:var(--sage-deep)}
-.petal:hover text,.petal:focus-visible text{fill:#fff}
+.petal:hover text,.petal:focus-visible text,.petal:hover text.est,.petal:focus-visible text.est{fill:#fff}
 .petal.edit circle.bg{fill:var(--brass-soft);stroke:var(--brass)}
 .petal.star circle.bg{stroke:var(--brass);stroke-width:2.5}
 .center-name{font-family:var(--display);font-weight:800;font-size:14px;fill:var(--ink);text-anchor:middle}
