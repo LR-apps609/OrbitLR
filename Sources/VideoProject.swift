@@ -268,6 +268,8 @@ enum VideoProjectBuilder {
         }
         vc.renderSize = canvas
         vc.frameDuration = CMTime(value: 1, timescale: CMTimeScale(effectiveFPS(p, infos: infos)))
+        // Il ritmo dei fotogrammi lo decide frameDuration (la fluidità scelta), non il video di partenza
+        vc.sourceTrackIDForFrameTiming = kCMPersistentTrackID_Invalid
         // Uscita in SDR standard: i video HDR dell'iPhone vengono convertiti con i colori giusti
         vc.colorPrimaries = AVVideoColorPrimaries_ITU_R_709_2
         vc.colorTransferFunction = AVVideoTransferFunction_ITU_R_709_2
