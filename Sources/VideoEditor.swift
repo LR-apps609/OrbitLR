@@ -57,7 +57,9 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     // MARK: Stato derivato
 
     var canvasSize: CGSize {
-        guard let i = project.clips.lazy.compactMap({ self.infos[$0.path] }).first(where: { $0.hasVideo }) else { return .zero }
+        guard let c = project.clips.first(where: { self.infos[$0.path]?.hasVideo == true }), let i = infos[c.path] else { return .zero }
+        // 2.9.8 · prima clip ruotata di 90°: la tela è girata
+        if let f = c.fx, (((f.rotate % 360) + 360) % 360) % 180 == 90 { return CGSize(width: i.displaySize.height, height: i.displaySize.width) }
         return i.displaySize
     }
     var songDuration: Double? { project.music.flatMap { infos[$0.path]?.duration } }
