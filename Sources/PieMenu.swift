@@ -556,7 +556,7 @@ final class PieController: @unchecked Sendable {
             .filter { let k = Catalog.kind(of: $0); return k == .pdf || k == .img }.count
         let exts = Set(files.map { Catalog.norm($0.pathExtension) })
         let model = PieModel()
-        model.setup(actions: PresetStore.shared.merged(Catalog.pieActions(for: kind, exts: exts, mergeable: mergeable, count: files.count), kind: kind))
+        model.setup(actions: RecipeStore.shared.merged(PresetStore.shared.merged(Catalog.pieActions(for: kind, exts: exts, mergeable: mergeable, count: files.count), kind: kind), kind: kind))
         model.tint = Theme.color(kind)
         model.suggestedId = Catalog.suggested(for: kind, exts: exts)
         model.fileName = files.count == 1 ? files[0].lastPathComponent : "\(files.count) \(kind.name)"
@@ -574,6 +574,12 @@ final class PieController: @unchecked Sendable {
             var presetParam: String? = nil
             if let r = PresetStore.shared.resolve(chosen) { action = r.0; presetParam = r.1 }
             self.close()
+            // 3.2 · Una ricetta: tutti i passi, uno dopo l'altro, sui file scelti
+            if let recipe = RecipeStore.shared.recipe(for: action) {
+                RecipeStore.shared.run(recipe, files: files)
+                self.pending = []
+                return
+            }
             // 3.0 · «Modifica in…»: apre OrbitLR sulla scheda giusta, con i file già dentro
             if let t = Catalog.openTarget(action.id) {
                 Task { @MainActor in

@@ -134,7 +134,7 @@ final class Workspace: ObservableObject, @unchecked Sendable {
         let pie = gr.pie
         let exts = Set(gr.files.map { Catalog.norm($0.pathExtension) })
         let base = Catalog.pieActions(for: gr.kind, exts: exts, mergeable: mergeable, count: gr.files.count)
-        pie.setup(actions: PresetStore.shared.merged(base, kind: gr.kind))
+        pie.setup(actions: RecipeStore.shared.merged(PresetStore.shared.merged(base, kind: gr.kind), kind: gr.kind))
         pie.loadEstimates(files: gr.files, kind: gr.kind)
         pie.tint = Theme.color(gr.kind)
         pie.suggestedId = Catalog.suggested(for: gr.kind, exts: exts)
@@ -156,6 +156,11 @@ final class Workspace: ObservableObject, @unchecked Sendable {
         gr.pie.estimateTask?.cancel()          // 2.7.1 · si sceglie: la stima si ferma e lascia la macchina alla conversione
         var a = chosen
         var presetParam: String? = nil
+        // 3.2 · Una ricetta: tutti i suoi passi, uno dopo l'altro
+        if let recipe = RecipeStore.shared.recipe(for: chosen) {
+            lastJob = RecipeStore.shared.run(recipe, files: gr.files)
+            return
+        }
         if let r = PresetStore.shared.resolve(chosen) { a = r.0; presetParam = r.1 }
         UserDefaults.standard.set(chosen.id, forKey: "last_" + gr.kind.rawValue)
         gr.pie.lastId = chosen.id

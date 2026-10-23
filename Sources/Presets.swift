@@ -137,6 +137,7 @@ struct PresetsView: View {
                            color: Theme.brass) {
                     Button { customizing = true } label: { Label("Personalizza il menu a torta", systemImage: "chart.pie") }
                 }
+                RecipesSection()
                 if store.presets.isEmpty {
                     EmptyState(symbol: "star.circle", color: Theme.brass, title: "Ancora nessuna scorciatoia",
                                text: "Quando scegli un’azione con delle opzioni (ridimensiona, comprimi, velocità…), spunta «Salva come scorciatoia». La ritroverai qui e nel menu a torta.")

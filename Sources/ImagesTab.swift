@@ -43,7 +43,7 @@ final class KindTabModel: ObservableObject, @unchecked Sendable {
         let exts = Set(targets.map { Catalog.norm($0.pathExtension) })
         // «Unisci» mette insieme PDF e foto: conta i file che si possono unire
         let mergeable = targets.filter { [.pdf, .img].contains(Catalog.kind(of: $0)) }.count
-        return PresetStore.shared.merged(Catalog.actions(for: k, exts: exts, mergeable: mergeable, count: targets.count), kind: k)
+        return RecipeStore.shared.merged(PresetStore.shared.merged(Catalog.actions(for: k, exts: exts, mergeable: mergeable, count: targets.count), kind: k), kind: k)
     }
 
     /// Seleziona solo i file di un tipo (quando ce ne sono di tipi diversi).
@@ -124,6 +124,7 @@ final class KindTabModel: ObservableObject, @unchecked Sendable {
         guard !t.isEmpty else { NSSound.beep(); return }
         var a = chosen
         var presetParam: String? = nil
+        if let recipe = RecipeStore.shared.recipe(for: chosen) { lastJob = RecipeStore.shared.run(recipe, files: t); return }
         if let r = PresetStore.shared.resolve(chosen) { a = r.0; presetParam = r.1 }
         if Interactive.handles(a.id) { Interactive.open(a, files: t); return }
         if let p = presetParam {

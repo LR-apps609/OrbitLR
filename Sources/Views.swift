@@ -458,6 +458,7 @@ struct HistoryRow: View {
                 Text(entry.title).font(.system(size: 13, weight: .semibold)).lineLimit(1).truncationMode(.middle)
                 Text("\(entry.action) · \(entry.date.formatted(date: .omitted, time: .shortened))")
                     .font(.system(size: 12.5)).foregroundStyle(.secondary)
+                if !entry.undone { SaveRecipeChip(entry: entry, history: store.history) }
             }
             Spacer()
             if let b = entry.before, let a = entry.after, b > 0 {

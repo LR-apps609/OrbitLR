@@ -28,6 +28,8 @@ final class Job: ObservableObject, Identifiable, @unchecked Sendable {
 
     var process: Process?
     var cancelRequested = false
+    /// 3.2 · Cosa fare quando il lavoro finisce bene (il passo successivo di una ricetta).
+    var then: ((Job) -> Void)? = nil
     var renames: [[String]]? = nil      // per «Rinomina in serie»: coppie [vecchio, nuovo], per poter annullare
     var exportSession: AVAssetExportSession?   // conversioni fatte da macOS, per poterle annullare
     var native = false
@@ -169,6 +171,10 @@ struct HistoryEntry: Codable, Identifiable {
     var before: Int64? = nil
     var after: Int64? = nil
     var renames: [[String]]? = nil
+    /// 3.2 · Per le ricette: che azione era, con quali opzioni, su quali file.
+    var actionId: String? = nil
+    var param: String? = nil
+    var inputs: [String]? = nil
 }
 
 /// 2.7 · Le statistiche del mese per la Cronologia: quanti file, quanto spazio risparmiato, l'azione preferita.
@@ -489,13 +495,16 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
                                         outputs: job.outputs.map { $0.path }, kind: job.kind?.rawValue,
                                         before: job.renames == nil ? job.beforeBytes : nil,
                                         after: job.renames == nil ? job.afterBytes : nil,
-                                        renames: job.renames), at: 0)
+                                        renames: job.renames, actionId: job.action.id, param: job.param,
+                                        inputs: job.mainFiles.map { $0.path }), at: 0)
             if history.count > 300 { history.removeLast(history.count - 300) }
             saveHistory()
         }
         keepDates(job)
         trashOriginalsIfWanted(job)
         if job.state == .done { Sounds.done() } else if job.state == .failed { Sounds.fail() }
+        // 3.2 · Ricette: il passo dopo parte dal file appena creato
+        if job.state == .done, let next = job.then { job.then = nil; DispatchQueue.main.async { next(job) } }
         notify(job)
         objectWillChange.send()
         startNext()
