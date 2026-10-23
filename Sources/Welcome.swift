@@ -567,10 +567,10 @@ struct PermissionsView: View {
     var body: some View {
         VStack(spacing: 12) {
             ZStack {
-                Circle().fill(Theme.accent.opacity(0.14)).frame(width: 60, height: 60)
-                Image(systemName: "lock.open.fill").font(.system(size: 24, weight: .semibold)).foregroundStyle(Theme.accent)
+                Circle().fill(Theme.accent.opacity(0.14)).frame(width: 52, height: 52)
+                Image(systemName: "lock.open.fill").font(.system(size: 21, weight: .semibold)).foregroundStyle(Theme.accent)
             }
-            .padding(.top, 22)
+            .padding(.top, 16)
             Text("Prima di iniziare").font(.system(size: 20, weight: .bold, design: .rounded))
             Text(firstLaunch
                  ? "macOS ti chiederà alcuni permessi. Meglio adesso, tutti insieme, che a metà lavoro."
