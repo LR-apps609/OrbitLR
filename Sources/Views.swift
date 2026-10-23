@@ -795,6 +795,8 @@ struct RunningRow: View {
 struct SettingsView: View {
     @EnvironmentObject var settings: SettingsModel
     @State var draft = SettingsDraft()
+    /// 2.8.9 · Controllo automatico degli aggiornamenti (una volta al giorno)
+    @AppStorage(UpdateCheck.autoKey) private var autoUpdate = true
     @State var saved = false
 
     private var changed: Bool { draft != settings.draft }
@@ -873,6 +875,10 @@ struct SettingsView: View {
                         Text("Nativo").tag("native")
                         Text("Classico").tag("classic")
                     }
+                }
+                Section("Aggiornamenti") {
+                    Toggle("Controlla da sola se c’è una versione nuova (una volta al giorno)", isOn: $autoUpdate)
+                    Button("Controlla adesso…") { Task { @MainActor in await UpdateCheck.check(userInitiated: true) } }
                 }
             }
             .formStyle(.grouped)

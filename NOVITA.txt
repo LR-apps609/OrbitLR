@@ -1,3 +1,8 @@
+Novità della 2.8.9 «Rete di sicurezza»:
+• Opzioni → Aggiornamenti: puoi spegnere il controllo automatico, oppure controllare subito
+• Conversione: l'area dove trascini i file si stringe nelle finestre basse, così le statistiche restano visibili
+• Nuovi test automatici controllano che nessuna scheda esca dalla finestra (avrebbero preso il problema dell'Audio)
+
 Novità della 2.8.8:
 • In basso nella barra laterale c'è la versione di OrbitLR: un clic controlla se ce n'è una nuova
 
