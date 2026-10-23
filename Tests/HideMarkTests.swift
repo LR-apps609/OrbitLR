@@ -17,6 +17,17 @@ final class HideMarkTests: XCTestCase {
         return (Double(px[0]) + Double(px[1]) + Double(px[2])) / 765
     }
 
+    /// Differenza media tra due immagini in una zona.
+    private func change(_ a: CGImage, _ b: CGImage, _ r: CGRect) -> Double {
+        let ia = CIImage(cgImage: a), ib = CIImage(cgImage: b)
+        let diff = ia.applyingFilter("CIDifferenceBlendMode", parameters: ["inputBackgroundImage": ib])
+        let avg = diff.applyingFilter("CIAreaAverage", parameters: ["inputExtent": CIVector(cgRect: HideMark.pixelRect(r, in: ia.extent))])
+        var px = [UInt8](repeating: 0, count: 4)
+        Media.ci.render(avg, toBitmap: &px, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
+                        format: .RGBA8, colorSpace: CGColorSpaceCreateDeviceRGB())
+        return (Double(px[0]) + Double(px[1]) + Double(px[2])) / 765
+    }
+
     private func load(_ u: URL) throws -> CGImage {
         try Tools.cgImage(try Tools.orientedImage(u))
     }
@@ -51,7 +62,13 @@ final class HideMarkTests: XCTestCase {
             let res = try load(out)
             XCTAssertEqual(res.width, original.width, "\(style): stessa larghezza")
             XCTAssertEqual(res.height, original.height, "\(style): stessa altezza")
-            XCTAssertLessThan(detail(res, zone.insetBy(dx: 0.02, dy: 0.02)), detail(original, zone) * 0.5, "\(style): dentro, niente dettaglio")
+            if style == "blur" {
+                XCTAssertLessThan(detail(res, zone.insetBy(dx: 0.02, dy: 0.02)), detail(original, zone) * 0.5, "blur: dentro, niente dettaglio")
+            } else {
+                // A pixel: dentro è cambiato tutto (quadretti), fuori niente
+                XCTAssertGreaterThan(change(original, res, zone.insetBy(dx: 0.02, dy: 0.02)), 0.02, "pixel: dentro, quadretti")
+                XCTAssertLessThan(change(original, res, outside), 0.003, "pixel: fuori, uguale")
+            }
             XCTAssertEqual(detail(res, outside), detail(original, outside), accuracy: 0.004, "\(style): fuori, tutto com'era")
         }
     }
