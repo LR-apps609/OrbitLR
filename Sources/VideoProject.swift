@@ -476,3 +476,10 @@ enum VideoProjectExport {
         }
     }
 }
+
+extension VPClip {
+    /// 2.7.7 · Come VoiceOver legge la clip: «Clip 2 di 3, 0:05, senza audio».
+    func spokenLabel(index: Int, of count: Int) -> String {
+        "Clip \(index + 1) di \(count), \(formatShort(length))" + (isMuted ? ", senza audio" : "")
+    }
+}

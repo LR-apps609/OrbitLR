@@ -659,9 +659,9 @@ struct VideoEditorView: View {
             Spacer(minLength: 8)
             if !s.project.clips.isEmpty {
                 Button { undo?.undo() } label: { Image(systemName: "arrow.uturn.backward") }
-                    .help("Annulla (⌘Z)")
+                    .help("Annulla (⌘Z)").accessibilityLabel("Annulla")
                 Button { undo?.redo() } label: { Image(systemName: "arrow.uturn.forward") }
-                    .help("Ripeti (⇧⌘Z)")
+                    .help("Ripeti (⇧⌘Z)").accessibilityLabel("Ripeti")
                 Button("Aggiungi video…") { choose(audio: false) }
             }
             // 2.7.3 · ✕ in alto a destra: chiude il progetto (resta salvato) e torna ai Progetti
@@ -672,6 +672,7 @@ struct VideoEditorView: View {
             }
             .buttonStyle(.plain)
             .keyboardShortcut(.escape, modifiers: [.command])
+            .accessibilityLabel("Chiudi il progetto")
             .help("Chiudi il progetto e torna ai Progetti (resta salvato) · ⌘Esc")
         }
     }
@@ -776,13 +777,16 @@ struct VideoEditorView: View {
                 .help("Divide la clip nel punto dell’indicatore (S)")
             Divider().frame(height: 22)
             Button { s.move(-1, undo) } label: { Image(systemName: "arrow.left") }.help("Sposta la clip prima")
+                .accessibilityLabel("Sposta la clip prima")
             Button { s.move(1, undo) } label: { Image(systemName: "arrow.right") }.help("Sposta la clip dopo")
+                .accessibilityLabel("Sposta la clip dopo")
             Button("Intera") { s.restoreClip(undo) }.help("Riporta la clip alla sua durata intera")
             Divider().frame(height: 22)
             clipAudioButtons
             Button(role: .destructive) { s.deleteClip(undo) } label: { Image(systemName: "trash") }
                 .keyboardShortcut(.delete, modifiers: [])
                 .help("Elimina la clip (si può annullare)")
+                .accessibilityLabel("Elimina la clip")
         }
         .fixedSize()
     }
@@ -999,6 +1003,7 @@ private struct EditorPreview: View {
                 .buttonStyle(.plain)
                 .keyboardShortcut(.space, modifiers: [])
                 .help("Riproduci / pausa (Spazio)")
+                .accessibilityLabel(clock.playing ? "Pausa" : "Riproduci")
                 Spacer()
                 Text("\(formatTime(clock.time)) / \(formatTime(s.project.duration))")
                     .font(.system(size: 12, design: .rounded)).monospacedDigit().foregroundStyle(Color.white.opacity(0.9))
@@ -1115,6 +1120,12 @@ private struct ProjectTimeline: View {
                           selected: s.selected == c.id, tint: tint,
                           speech: speechMarks(c, start: start))
                     .frame(width: w)
+                    // 2.7.7 · VoiceOver: «Clip 2 di 3, 0:05, senza audio»
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(c.spokenLabel(index: s.project.clips.firstIndex { $0.id == c.id } ?? 0, of: s.project.clips.count))
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityAddTraits(s.selected == c.id ? .isSelected : [])
+                    .accessibilityAction { s.selected = c.id }
                     .overlay(alignment: .leading) {
                         if s.selected == c.id { trimHandle(c, start: start, left: true, pps: pps) }
                     }
@@ -1133,6 +1144,7 @@ private struct ProjectTimeline: View {
                             .buttonStyle(.plain)
                             .padding(.top, 3).padding(.trailing, 12)
                             .help("Togli la clip (⌫) · si può annullare con ⌘Z")
+                            .accessibilityLabel("Togli la clip")
                         }
                     }
                     .offset(x: moving == c.id ? moveDX : 0)

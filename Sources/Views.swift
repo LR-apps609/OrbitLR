@@ -154,9 +154,9 @@ struct MainWindow: View {
                 .id(app.selection ?? .workspace)
                 // 2.7: la pagina nuova entra con una molla leggera (sale un poco e si posa), come una manopola che scatta
                 // 2.7.2 · più rapida: la pagina vecchia sparisce subito, la nuova entra in 0,2 s (niente zoom, che rallentava)
-                .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: 6)), removal: .identity))
+                .transition(.asymmetric(insertion: Motion.reduced ? .opacity : .opacity.combined(with: .offset(y: 6)), removal: .identity))
             }
-            .animation(.spring(response: 0.2, dampingFraction: 0.9), value: app.selection)
+            .animation(Motion.spring(0.2, 0.9), value: app.selection)
         }
         .background(WindowReader { w in
             // Una sola finestra principale: se ne nasce un'altra mentre la prima è aperta, si chiude subito
@@ -450,6 +450,7 @@ struct HistoryRow: View {
             }
             .buttonStyle(.borderless)
             .help("Togli dalla Cronologia (il file resta dov’è)")
+            .accessibilityLabel("Togli dalla Cronologia")
         }
         .padding(12)
         .card(radius: 12)

@@ -84,7 +84,7 @@ struct Knob<Value: Hashable>: View {
                 knobBody
                     .frame(width: size, height: size)
                     .rotationEffect(.degrees(angle(for: index)))
-                    .animation(.spring(response: 0.28, dampingFraction: 0.62), value: index)
+                    .animation(Motion.spring(0.28, 0.62), value: index)
                     .position(x: box / 2, y: box / 2)
                     .gesture(drag)
                     .overlay(ScrollCatcher { dy in step(dy > 0 ? 1 : -1) }.frame(width: size, height: size)

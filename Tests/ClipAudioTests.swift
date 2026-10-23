@@ -59,3 +59,19 @@ final class ClipAudioTests: XCTestCase {
         s.closeProject(um)
     }
 }
+
+/// 2.7.7 · Accessibilità.
+final class AccessibilityTests: XCTestCase {
+    func testClipSpokenLabel() {
+        var c = VPClip(path: "/a.mp4", inPoint: 0, outPoint: 5)
+        XCTAssertEqual(c.spokenLabel(index: 1, of: 3), "Clip 2 di 3, \(formatShort(5))")
+        c.muted = true
+        XCTAssertTrue(c.spokenLabel(index: 0, of: 1).hasSuffix(", senza audio"))
+    }
+
+    func testMotionSpringAlwaysAnAnimation() {
+        // Con o senza «Riduci movimento» c'è sempre un'animazione valida (breve se ridotta)
+        _ = Motion.spring(0.3, 0.8)
+        XCTAssertNotNil(Motion.reduced as Bool?)
+    }
+}

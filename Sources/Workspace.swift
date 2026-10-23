@@ -302,7 +302,7 @@ struct WorkspaceView: View {
                 .padding(.bottom, 18)
         }
         // Il risultato arriva dal basso con un piccolo rimbalzo
-        .animation(.spring(response: 0.42, dampingFraction: 0.72), value: ws.lastJob?.id)
+        .animation(Motion.spring(0.42, 0.72), value: ws.lastJob?.id)
         .background(KeyCatcher { e in
             // Spazio = anteprima (ma non mentre si sta cercando un'azione)
             if e.keyCode == 49 && (ws.single?.pie.query.isEmpty ?? true) { ws.togglePreview(); return true }
@@ -378,7 +378,7 @@ struct SinglePie: View {
                         t.disablesAnimations = true
                         withTransaction(t) { arrive = 0 }
                         DispatchQueue.main.async {
-                            withAnimation(.spring(response: 0.55, dampingFraction: 0.78)) { arrive = 1 }
+                            withAnimation(Motion.spring(0.55, 0.78)) { arrive = 1 }
                         }
                     }
                 Spacer(minLength: 0)
@@ -606,7 +606,7 @@ struct EmptyOrbit: View {
                     .contentTransition(.symbolEffect(.replace))
             }
             .frame(width: 176, height: 176)
-            .animation(.spring(response: 0.35, dampingFraction: 0.7), value: open)
+            .animation(Motion.spring(0.35, 0.7), value: open)
         }
         .accessibilityHidden(true)
     }

@@ -131,11 +131,15 @@ enum Theme {
 
 struct CardStyle: ViewModifier {
     var radius: CGFloat = 14
+    /// 2.7.7 · «Aumenta contrasto» di macOS: bordi più marcati, le schede si distinguono meglio dallo sfondo
+    @Environment(\.colorSchemeContrast) private var contrast
     func body(content: Content) -> some View {
+        let high = contrast == .increased
         content
             .background(RoundedRectangle(cornerRadius: radius, style: .continuous).fill(Theme.card)
-                .shadow(color: Theme.shadow.opacity(0.08), radius: 6, y: 2))
-            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(Theme.stroke))
+                .shadow(color: Theme.shadow.opacity(high ? 0 : 0.08), radius: 6, y: 2))
+            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous)
+                .strokeBorder(high ? Theme.ink.opacity(0.55) : Theme.stroke, lineWidth: high ? 1.5 : 1))
     }
 }
 
@@ -192,5 +196,16 @@ struct ProgressBar: View {
         }
         .frame(height: height)
         .clipShape(Capsule())
+    }
+}
+
+// MARK: - 2.7.7 · Movimento
+
+/// Le «molle» dell'app, ma con «Riduci movimento» attivo in macOS diventano una dissolvenza breve e ferma.
+enum Motion {
+    static var reduced: Bool { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
+
+    static func spring(_ response: Double, _ damping: Double) -> Animation {
+        reduced ? .easeOut(duration: 0.12) : .spring(response: response, dampingFraction: damping)
     }
 }

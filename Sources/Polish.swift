@@ -122,9 +122,9 @@ struct SavedBadge: View {
             guard s == .done, saved > 0 else { return }
             shown = 0
             withAnimation(.easeOut(duration: 0.9)) { shown = saved }
-            withAnimation(.spring(response: 0.25, dampingFraction: 0.5)) { pop = true }
+            withAnimation(Motion.spring(0.25, 0.5)) { pop = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { pop = false }
+                withAnimation(Motion.spring(0.3, 0.7)) { pop = false }
             }
         }
     }

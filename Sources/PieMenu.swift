@@ -362,9 +362,20 @@ struct PieView: View {
         .scaleEffect(on ? 1.15 : 1)
         .shadow(color: on ? model.tint.opacity(0.6) : .clear, radius: 16, y: 6)
         .animation(.spring(response: 0.22, dampingFraction: 0.7), value: on)
-        .accessibilityElement(children: .combine)
+        .overlay(alignment: .bottom) {
+            // 2.7.7 · il tasto che lo sceglie (1–9), piccolo, per chi usa la tastiera
+            if i < 9 && !on && petal >= 64 && model.query.isEmpty && model.estimates[a.id] == nil {
+                Text("\(i + 1)").font(.system(size: max(8, petal * 0.1), weight: .bold, design: .rounded))
+                    .foregroundStyle(Theme.ink.opacity(0.35))
+                    .offset(y: -petal * 0.04)
+            }
+        }
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel(a.title)
+        .accessibilityValue(model.estimates[a.id].map { "peso previsto " + SizeEstimate.label($0).replacingOccurrences(of: "≈ ", with: "circa ") } ?? "")
+        .accessibilityHint(i < 9 ? "\(a.hint). Tasto \(i + 1)" : a.hint)
         .accessibilityAddTraits(.isButton)
+        .accessibilityAction { model.pick(i) }
     }
 
     @ViewBuilder private var centerView: some View {

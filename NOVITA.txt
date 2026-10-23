@@ -1,3 +1,9 @@
+Novità della 2.7.7 «Accessibilità»:
+• VoiceOver legge gli spicchi della torta con il peso previsto e il tasto per sceglierli, le clip del montaggio («Clip 2 di 3, 0:05, senza audio») e tutti i pulsanti con sola icona
+• Conversione: sugli spicchi c'è il numero del tasto (1–9) per scegliere senza mouse
+• Con «Riduci movimento» di macOS le molle diventano dissolvenze brevi in tutta l'app
+• Con «Aumenta contrasto» di macOS le schede hanno bordi più marcati
+
 Novità della 2.7.6 «Più leggera»:
 • Avvio più rapido: la schermata di caricamento dura circa un terzo in meno
 • Le animazioni delle pagine vuote si fermano quando OrbitLR non è in primo piano e usano meno fotogrammi: meno lavoro per il Mac e per la batteria
