@@ -93,6 +93,27 @@ enum SizeEstimate {
         return b > 0 ? b : nil
     }
 
+    /// 2.7.5 · Formato social: lato corto 1080, stessa qualità del montaggio.
+    static func socialBytes(seconds: Double, aspect: String, fps: Double = 30) -> Int64 {
+        let parts = aspect.split(separator: "x").compactMap { Double($0) }
+        let (aw, ah) = parts.count == 2 && parts[0] > 0 && parts[1] > 0 ? (parts[0], parts[1]) : (9, 16)
+        let short = 1080.0
+        let w = aw <= ah ? short : short * aw / ah
+        let h = aw <= ah ? short * ah / aw : short
+        let bits = max(2_000_000, min(50_000_000, w * h * fps * 0.13)) + 160_000
+        return Int64(bits * seconds / 8)
+    }
+
+    /// 2.7.5 · Comprimi a X MB: il risultato starà sotto il peso scelto (o resta com'è se è già più leggero).
+    static func compressText(current: Int64, targetMB: Int?, files: Int) -> String {
+        let now = ByteCountFormatter.string(fromByteCount: current, countStyle: .file)
+        guard let mb = targetMB, mb > 0 else { return "Ora pesa \(now)" }
+        let target = Int64(mb) * 1_000_000 * Int64(max(1, files))
+        if current > 0 && current <= target { return "Pesa già \(now): è sotto il limite scelto" }
+        return "Ora \(now) → al massimo \(ByteCountFormatter.string(fromByteCount: target, countStyle: .file))"
+            + (files > 1 ? " in tutto" : "")
+    }
+
     /// «≈ 1,2 MB»
     static func label(_ bytes: Int64) -> String {
         "≈ " + ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)

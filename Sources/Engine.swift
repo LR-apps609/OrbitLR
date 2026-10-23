@@ -532,6 +532,11 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
             enqueue(files: job.files, action: job.action, param: job.param, classic: true)
         case .retry:
             retry(job)
+        case .storage:
+            if let u = URL(string: "x-apple.systempreferences:com.apple.settings.Storage") { NSWorkspace.shared.open(u) }
+        case .otherFolder:
+            NSApp.activate(ignoringOtherApps: true)
+            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
         }
     }
 
@@ -627,6 +632,10 @@ enum Fix: Equatable {
     case icloud
     case classic
     case retry
+    /// 2.7.5 · Disco pieno: apre «Spazio di archiviazione» di macOS.
+    case storage
+    /// 2.7.5 · Cartella dove non si può scrivere: apre le Opzioni per sceglierne un'altra.
+    case otherFolder
 
     var label: String {
         switch self {
@@ -636,6 +645,8 @@ enum Fix: Equatable {
         case .icloud: return "Scarica e riprova"
         case .classic: return "Riprova con l’altro motore"
         case .retry: return "Riprova"
+        case .storage: return "Libera spazio"
+        case .otherFolder: return "Scegli un’altra cartella"
         }
     }
 
@@ -647,6 +658,8 @@ enum Fix: Equatable {
         case .icloud: return "icloud.and.arrow.down.fill"
         case .classic: return "gearshape.2.fill"
         case .retry: return "arrow.clockwise"
+        case .storage: return "internaldrive"
+        case .otherFolder: return "folder.badge.gearshape"
         }
     }
 
@@ -661,6 +674,8 @@ enum Fix: Equatable {
         if job.action.id == "vcompress", text.contains("troppo lungo") || text.contains("farlo stare"), let mb = Int(job.param) {
             return .retryParam("Prova con \(mb * 2) MB", String(mb * 2))
         }
+        if text.contains("spazio su disco esaurito") { return .storage }
+        if text.contains("non può scrivere in quella cartella") { return .otherFolder }
         if text.contains("password") && job.kind == .pdf && job.action.id != "unprotect" { return .unlock }
         if text.contains("icloud") { return .icloud }
         // Gli strumenti che esistono solo con i motori di macOS non hanno un «altro motore»

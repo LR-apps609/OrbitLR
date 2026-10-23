@@ -1,3 +1,9 @@
+Novità della 2.7.5 «Errori e scoperte»:
+• Errori con il pulsante che li risolve: «Libera spazio» se il disco è pieno, «Scegli un'altra cartella» se non si può scrivere, «Riprova» negli altri casi, anche nelle schede Video e Audio
+• Conversione: sotto l'area dove trascini i file vedi file creati, spazio risparmiato e azione preferita del mese
+• Cosa c'è di nuovo: solo le novità dalla versione che avevi, con «Mostra ›» che apre la scheda giusta
+• Comprimi a X MB e Formato social: vedi quanto peserà il risultato prima di confermare
+
 Novità della 2.7.4 «Passo dopo passo»:
 • Video: il montaggio è un percorso in 4 passi numerati (Taglia → Audio e musica → Formato → Esporta), con la spunta quando un passo è fatto e una frase che dice cosa fare
 • Togli l'audio di una sola clip, oppure «Togli da qui» per spegnerlo dall'indicatore in poi; la clip muta mostra l'altoparlante barrato

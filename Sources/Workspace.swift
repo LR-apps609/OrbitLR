@@ -189,6 +189,7 @@ struct WorkspaceView: View {
     @EnvironmentObject var app: AppState
     @State var targeted = false
     @State var hoverDrop = false
+    @ObservedObject private var store = QueueStore.shared
 
     var body: some View {
         ZStack {
@@ -215,8 +216,21 @@ struct WorkspaceView: View {
         .navigationTitle("Conversione")
     }
 
-    // Nessun file: grande area cliccabile
+    // Nessun file: grande area cliccabile, e sotto (2.7.5) quanto hai fatto questo mese
     private var empty: some View {
+        VStack(spacing: 0) {
+            dropArea
+            let stats = MonthStats.of(store.history)
+            if stats.files > 0 {
+                MonthStatsRow(stats: stats)
+                    .frame(maxWidth: 720)
+                    .padding(.horizontal, 40).padding(.bottom, 28)
+                    .transition(.opacity)
+            }
+        }
+    }
+
+    private var dropArea: some View {
         Button(action: { choose(append: false) }) {
             VStack(spacing: 18) {
                 EmptyOrbit(open: hoverDrop || targeted)

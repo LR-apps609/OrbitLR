@@ -62,6 +62,7 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
         UserDefaults.standard.set(current, forKey: "lastLaunchVersion")
         justUpdated = last != nil && last != current
         fromVersion = last ?? ""
+        UserDefaults.standard.set(fromVersion, forKey: "newsFrom")
         if Self.isFirstLaunch {
             show(mode: .first)
         } else if (Self.splashEnabled || justUpdated) && !skipNextSplash {
@@ -198,14 +199,60 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
 // MARK: - Novità della versione (NOVITA.txt, incluso nell'app)
 
 enum News {
-    static let items: [String] = {
+    static let text: String = {
         guard let url = Bundle.main.url(forResource: "NOVITA", withExtension: "txt"),
-              let text = try? String(contentsOf: url, encoding: .utf8) else { return [] }
-        return text.split(separator: "\n")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { $0.hasPrefix("•") }
-            .map { String($0.dropFirst()).trimmingCharacters(in: .whitespaces) }
+              let t = try? String(contentsOf: url, encoding: .utf8) else { return "" }
+        return t
     }()
+
+    /// 2.7.5 · Solo le novità arrivate dopo la versione che avevi (al massimo le ultime 3 versioni),
+    /// non tutta la storia dell'app.
+    static func items(since from: String, in text: String = text, maxVersions: Int = 3) -> [String] {
+        var out: [String] = []
+        var versions = 0
+        var take = false
+        for raw in text.split(separator: "\n", omittingEmptySubsequences: false) {
+            let line = raw.trimmingCharacters(in: .whitespaces)
+            if let v = version(inHeader: line) {
+                take = versions < maxVersions && (from.isEmpty ? versions == 0 : newer(v, than: from))
+                if take { versions += 1 }
+                if !take && versions > 0 { break }       // le sezioni sono in ordine, dalla più nuova
+                continue
+            }
+            if take, line.hasPrefix("•") { out.append(String(line.dropFirst()).trimmingCharacters(in: .whitespaces)) }
+        }
+        return out
+    }
+
+    static var items: [String] { items(since: UserDefaults.standard.string(forKey: "newsFrom") ?? "") }
+
+    /// «Novità della 2.7.4 «Passo dopo passo»:» → «2.7.4»
+    static func version(inHeader line: String) -> String? {
+        guard line.hasPrefix("Novità della ") else { return nil }
+        let rest = line.dropFirst("Novità della ".count)
+        let v = rest.prefix { $0.isNumber || $0 == "." }
+        return v.isEmpty ? nil : String(v)
+    }
+
+    static func newer(_ a: String, than b: String) -> Bool {
+        let x = a.split(separator: ".").map { Int($0) ?? 0 }, y = b.split(separator: ".").map { Int($0) ?? 0 }
+        for i in 0..<max(x.count, y.count) {
+            let p = i < x.count ? x[i] : 0, q = i < y.count ? y[i] : 0
+            if p != q { return p > q }
+        }
+        return false
+    }
+
+    /// 2.7.5 · Dove si trova la novità: la scheda da aprire con «Mostra».
+    static func place(of item: String) -> SidebarItem? {
+        let s = item.lowercased()
+        if s.hasPrefix("video") || s.contains("progetti") || s.contains("montaggio") { return .video }
+        if s.hasPrefix("cronologia") { return .history }
+        if s.hasPrefix("audio") || s.contains("testo in voce") { return .audio }
+        if s.hasPrefix("coda") { return .queue }
+        if s.contains("torta") || s.contains("spicchi") || s.hasPrefix("conversione") { return .workspace }
+        return nil
+    }
 }
 
 // MARK: - Suggerimenti
@@ -393,6 +440,16 @@ struct WelcomeView: View {
                             Image(systemName: "sparkle").font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.accent)
                             Text(item).font(.system(size: 12.5))
                                 .fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: 4)
+                            // 2.7.5 · «Mostra»: apre la scheda dove si trova la novità
+                            if let place = News.place(of: item) {
+                                Button {
+                                    AppState.shared.selection = place
+                                    ctl.finish()
+                                } label: { Text("Mostra ›").font(.system(size: 11.5, weight: .semibold)) }
+                                .buttonStyle(.borderless).foregroundStyle(Theme.accent)
+                                .help("Apri «\(place.rawValue)»")
+                            }
                         }
                     }
                 }

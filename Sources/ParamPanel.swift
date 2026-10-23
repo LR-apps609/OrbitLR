@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import AVFoundation
 
 final class ParamController: @unchecked Sendable {
     static let shared = ParamController()
@@ -95,6 +96,7 @@ struct ParamView: View {
     @State var aiStrength = "0"     // Migliora con IA: quanto «Più nitido» mescolare (0 = tutto Fedele)
     @State var presetName = ""
     @State var follow = true        // Formato social: segui il soggetto
+    @State var videoSeconds: Double? = nil   // 2.7.5 · per il peso previsto di Comprimi e Formato social
 
     private var presetable: Bool { [.resize, .pdfcompress, .vcompress, .vresize, .speed, .rotate, .removebg, .straighten, .upscale, .aienhance, .stack, .social].contains(kind) }
 
@@ -190,6 +192,20 @@ struct ParamView: View {
         }
     }
 
+    /// 2.7.5 · Il peso che avrà il risultato, prima di confermare.
+    private func estimateLine(_ t: String) -> some View {
+        Label(t, systemImage: "scalemass").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.green)
+            .task(id: files) {
+                guard kind == .social, videoSeconds == nil else { return }
+                var s = 0.0
+                for f in files.prefix(20) {
+                    let d = (try? await AVURLAsset(url: f).load(.duration).seconds) ?? 0
+                    if d.isFinite { s += max(0, d) }
+                }
+                if s > 0 { videoSeconds = s }
+            }
+    }
+
     private func note(_ t: String) -> some View {
         Text(t).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
     }
@@ -227,9 +243,15 @@ struct ParamView: View {
                 }
             }
             note("Risoluzione e qualità vengono scelte da sole per stare sotto il peso indicato.")
+            estimateLine(SizeEstimate.compressText(current: files.reduce(Int64(0)) { $0 + Job.size(of: $1) },
+                                                   targetMB: Int(mb == "custom" ? customMB : mb), files: files.count))
         case .social:
             Knob(title: "Formato", options: ParamChoices.options(for: .social) ?? [], selection: $choice, tint: tint)
             Toggle("Inquadra le persone", isOn: $follow)
+            if let sec = videoSeconds {
+                estimateLine(SizeEstimate.label(SizeEstimate.socialBytes(seconds: sec, aspect: choice.isEmpty ? "9x16" : choice))
+                             + " · ora " + ByteCountFormatter.string(fromByteCount: files.reduce(Int64(0)) { $0 + Job.size(of: $1) }, countStyle: .file))
+            }
             note("L’inquadratura segue le persone (o ciò che si muove in primo piano) con calma, senza scatti. Con scene affollate resta al centro.")
         case .cut, .gifcut, .ringtone:
             HStack(spacing: 16) {

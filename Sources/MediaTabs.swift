@@ -201,6 +201,11 @@ struct JobStrip: View {
             } else if job.state == .done, !job.outputs.isEmpty {
                 Button("Mostra nel Finder") { NSWorkspace.shared.activateFileViewerSelecting(job.outputs) }
             }
+            // 2.7.5 · Errore: il pulsante che lo risolve, subito accanto
+            if let fix = Fix.best(for: job) {
+                Button { QueueStore.shared.apply(fix, to: job) } label: { Label(fix.label, systemImage: fix.symbol) }
+                    .buttonStyle(.borderedProminent).tint(Theme.brass)
+            }
         }
         .padding(.horizontal, 14).padding(.vertical, 10)
         .card(radius: 12)
