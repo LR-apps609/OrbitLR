@@ -148,7 +148,7 @@ struct RecipesSection: View {
             SectionLabel(text: "Ricette")
             if store.recipes.isEmpty {
                 Text("Quando lavori un file appena creato (per esempio converti in MP3, poi tagli), in Attività compare «Salva come ricetta»: la prossima volta fai tutti i passi con un clic, dal menu a torta.")
-                    .font(.system(size: 12.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .font(.system(size: 12.5)).foregroundStyle(.secondary).lineLimit(4)
             } else {
                 ForEach(store.recipes) { r in RecipeRow(recipe: r) }
             }
