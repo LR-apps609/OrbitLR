@@ -1,3 +1,10 @@
+Novità della 2.9.3 «Transizioni»:
+• Video: tra due clip c'è un pallino: cliccalo per scegliere la transizione (Dissolvenza, Al nero, Al bianco, Scorrimento, Zoom, Sfocatura)
+• Durata da 0,2 a 2 secondi; se una clip è corta, la transizione si accorcia da sola
+• «Applica a tutte le clip» mette la stessa transizione su tutto il montaggio
+• La durata del video non cambia: la musica e i tagli restano dove li avevi messi
+• Con «Motore video classico» acceso le transizioni non si vedono: si passa da una clip all'altra di netto
+
 Novità della 2.9.2:
 • Permessi tutti all'inizio: una schermata «Prima di iniziare» chiede insieme l'accesso a Scrivania, Documenti, Download, le notifiche e il Finder, invece di farli comparire a metà lavoro
 • La schermata compare al primo avvio e dopo ogni aggiornamento (senza la firma Apple, macOS dimentica i permessi a ogni nuova versione); puoi anche rimandare
