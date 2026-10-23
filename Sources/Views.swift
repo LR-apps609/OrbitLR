@@ -797,6 +797,8 @@ struct SettingsView: View {
     @State var draft = SettingsDraft()
     /// 2.8.9 · Controllo automatico degli aggiornamenti (una volta al giorno)
     @AppStorage(UpdateCheck.autoKey) private var autoUpdate = true
+    /// 2.9 · Motore video classico (senza filtri)
+    @AppStorage(VideoProjectBuilder.classicKey) private var classicVideo = false
     @State var saved = false
 
     private var changed: Bool { draft != settings.draft }
@@ -875,6 +877,11 @@ struct SettingsView: View {
                         Text("Nativo").tag("native")
                         Text("Classico").tag("classic")
                     }
+                }
+                Section("Video") {
+                    Toggle("Motore video classico (senza filtri)", isOn: $classicVideo)
+                    Text("Usalo solo se un video si vede o si esporta male: torna al modo di prima, ma i filtri non si applicano.")
+                        .font(.system(size: 11)).foregroundStyle(.secondary)
                 }
                 Section("Aggiornamenti") {
                     Toggle("Controlla da sola se c’è una versione nuova (una volta al giorno)", isOn: $autoUpdate)

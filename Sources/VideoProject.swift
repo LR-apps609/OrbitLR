@@ -195,6 +195,10 @@ enum VideoProjectBuilder {
     /// `.layers`: il vecchio modo (solo posizione), tenuto per confrontare i due nei test.
     enum Engine { case frames, layers }
 
+    /// Opzioni → Video → «Motore video classico»: la rete di sicurezza se il motore nuovo desse problemi.
+    static let classicKey = "videoEngineClassic"
+    static var preferredEngine: Engine { UserDefaults.standard.bool(forKey: classicKey) ? .layers : .frames }
+
     /// Dove sta una clip nel montaggio e come si disegna.
     struct Placement: Sendable {
         let start: Double
@@ -204,7 +208,7 @@ enum VideoProjectBuilder {
     }
 
     static func build(_ p: VideoProject, infos: [String: VPMediaInfo], speech: [String: [ClosedRange<Double>]],
-                      maxSide: CGFloat, engine: Engine = .frames) async throws -> VPBuilt {
+                      maxSide: CGFloat, engine: Engine = VideoProjectBuilder.preferredEngine) async throws -> VPBuilt {
         let comp = AVMutableComposition()
         guard let vT = comp.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid),
               let aT = comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) else {
