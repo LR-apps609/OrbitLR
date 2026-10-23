@@ -13,8 +13,8 @@ final class SendToPhoneTests: XCTestCase {
 
     func testQRAndPage() {
         XCTAssertNotNil(SendToPhone.qrImage("http://192.168.1.2:5000/abc/"))
-        let page = PhoneShare.page(name: "<b>Brano</b>.m4a")
-        XCTAssertTrue(page.contains("href=\"file.m4a\""))
+        let page = PhoneShare.page(name: "<b>Brano</b>.m4a", link: "/abc/file.m4a")
+        XCTAssertTrue(page.contains("href=\"/abc/file.m4a\""))
         XCTAssertTrue(page.contains("Usa come suoneria"))
         XCTAssertFalse(page.contains("<b>Brano"), "il nome del file non diventa codice nella pagina")
     }
@@ -39,7 +39,9 @@ final class SendToPhoneTests: XCTestCase {
             }
             c.stateUpdateHandler = { st in
                 if case .ready = st {
-                    c.send(content: Data("GET \(u.path)\(u.path.hasSuffix("/") ? "" : "") HTTP/1.1\r\nHost: x\r\n\r\n".utf8),
+                    // URL.path toglie la barra finale: si usa il percorso così com'è scritto
+                    let path = URLComponents(string: urlText)?.percentEncodedPath ?? u.path
+                    c.send(content: Data("GET \(path) HTTP/1.1\r\nHost: x\r\n\r\n".utf8),
                            completion: .contentProcessed { _ in read() })
                 }
                 if case .failed(let e) = st { finish(.failure(e)) }

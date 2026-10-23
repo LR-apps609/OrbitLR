@@ -129,7 +129,7 @@ final class PhoneShare: ObservableObject, @unchecked Sendable {
     }
 
     private func respond(to path: String, on c: NWConnection) {
-        guard let file, path.hasPrefix("/\(token)/") else {
+        guard let file, path == "/\(token)" || path.hasPrefix("/\(token)/") else {
             send(c, status: "404 Not Found", type: "text/plain; charset=utf-8", body: Data("Non trovato".utf8))
             return
         }
@@ -144,7 +144,7 @@ final class PhoneShare: ObservableObject, @unchecked Sendable {
                  extra: "Content-Disposition: attachment; filename=\"\(ascii)\"; filename*=UTF-8''\(encoded)\r\n", body: body)
             DispatchQueue.main.async { self.downloaded = true }
         } else {
-            send(c, status: "200 OK", type: "text/html; charset=utf-8", body: Data(Self.page(name: name).utf8))
+            send(c, status: "200 OK", type: "text/html; charset=utf-8", body: Data(Self.page(name: name, link: "/\(token)/file.m4a").utf8))
         }
     }
 
@@ -155,7 +155,7 @@ final class PhoneShare: ObservableObject, @unchecked Sendable {
     }
 
     /// La pagina che si apre sull'iPhone: un pulsante e i due passaggi.
-    static func page(name: String) -> String {
+    static func page(name: String, link: String) -> String {
         let safe = name.replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "<", with: "&lt;")
         return """
         <!doctype html><html lang="it"><head><meta charset="utf-8">
@@ -170,7 +170,7 @@ final class PhoneShare: ObservableObject, @unchecked Sendable {
         .f{margin-top:18px;font-size:12px;color:#9a8f80}
         </style></head><body>
         <h1>La tua suoneria</h1><div class="n">\(safe)</div>
-        <a class="b" href="file.m4a">Scarica la suoneria</a>
+        <a class="b" href="\(link)">Scarica la suoneria</a>
         <ol><li>Tocca <b>Scarica</b>: il file va in <b>File → Download</b>.</li>
         <li>Aprilo, tocca <b>Condividi</b> e scegli <b>Usa come suoneria</b> (in fondo all'elenco o in «Altro»).</li>
         <li>La trovi in <b>Impostazioni → Suoni</b>.</li></ol>

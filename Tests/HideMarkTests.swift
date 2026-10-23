@@ -98,7 +98,7 @@ final class HideMarkTests: XCTestCase {
         let src = try await Fixtures.video(name: "filigrana-vert.mp4", width: 320, height: 180, seconds: 1.5, portrait: true, noise: true)
         let out = Fixtures.url("filigrana-vert-out.mp4")
         try? FileManager.default.removeItem(at: out)
-        let spec = HideMark.Spec(style: "pixel", strength: 0.8, rects: [CGRect(x: 0, y: 0.75, width: 1, height: 0.25)])   // in basso
+        let spec = HideMark.Spec(style: "blur", strength: 0.8, rects: [CGRect(x: 0, y: 0.75, width: 1, height: 0.25)])   // in basso
         let job = try Fixtures.job("hidemark", kind: .video, files: [src], param: HideMark.encode(spec))
         try await HideMark.video(src, spec: spec, out: out, job: job) { _ in }
         let g = AVAssetImageGenerator(asset: AVURLAsset(url: out))
@@ -107,7 +107,7 @@ final class HideMarkTests: XCTestCase {
         XCTAssertGreaterThan(f.height, f.width, "resta verticale")
         let bottom = detail(f, CGRect(x: 0.05, y: 0.8, width: 0.9, height: 0.15))
         let top = detail(f, CGRect(x: 0.05, y: 0.05, width: 0.9, height: 0.2))
-        XCTAssertLessThan(bottom, top * 0.5, "a quadretti in basso, nitido in alto")
+        XCTAssertLessThan(bottom, top * 0.5, "sfocato in basso, nitido in alto")
     }
 
     func testActionIsOfferedForPhotosAndVideos() {
