@@ -8,7 +8,12 @@ import UniformTypeIdentifiers
 //  Si lavora su tutte le foto o solo su quelle scelte.
 // ════════════════════════════════════════════════════════════════════
 
-final class ImagesTabModel: ObservableObject, @unchecked Sendable {
+/// 2.8.2 · La stessa scheda serve a Immagini (solo foto) e a File (PDF, documenti, fogli, presentazioni, testi).
+typealias ImagesTabModel = KindTabModel
+
+final class KindTabModel: ObservableObject, @unchecked Sendable {
+    /// I tipi di file che la scheda accetta.
+    let accepts: [Kind]
     @Published private(set) var files: [URL] = []
     @Published var selection: Set<URL> = []
     @Published var pending: PendingParam? = nil
@@ -19,12 +24,32 @@ final class ImagesTabModel: ObservableObject, @unchecked Sendable {
 
     static let maxFiles = 200
 
-    /// Le foto su cui si lavora: quelle scelte, altrimenti tutte.
+    init(accepts: [Kind] = [.img]) { self.accepts = accepts }
+
+    /// I file su cui si lavora: quelli scelti, altrimenti tutti.
     var targets: [URL] { selection.isEmpty ? files : files.filter { selection.contains($0) } }
 
+    /// Il tipo dei file su cui si lavora; nil se sono di tipi diversi (allora si chiede di sceglierne di un tipo solo).
+    var kind: Kind? {
+        let kinds = Set(targets.compactMap { Catalog.kind(of: $0) })
+        return kinds.count == 1 ? kinds.first : nil
+    }
+
+    /// Quanti tipi diversi ci sono tra i file su cui si lavora.
+    var kindCount: Int { Set(targets.compactMap { Catalog.kind(of: $0) }).count }
+
     var actions: [Action] {
+        guard let k = kind else { return [] }
         let exts = Set(targets.map { Catalog.norm($0.pathExtension) })
-        return PresetStore.shared.merged(Catalog.actions(for: .img, exts: exts, mergeable: targets.count, count: targets.count), kind: .img)
+        // «Unisci» mette insieme PDF e foto: conta i file che si possono unire
+        let mergeable = targets.filter { [.pdf, .img].contains(Catalog.kind(of: $0)) }.count
+        return PresetStore.shared.merged(Catalog.actions(for: k, exts: exts, mergeable: mergeable, count: targets.count), kind: k)
+    }
+
+    /// Seleziona solo i file di un tipo (quando ce ne sono di tipi diversi).
+    func selectOnly(_ k: Kind) {
+        selection = Set(files.filter { Catalog.kind(of: $0) == k })
+        refreshEstimates()
     }
 
     /// I formati in cui convertire (in cima al pannello) e il resto (gli strumenti).
@@ -33,16 +58,18 @@ final class ImagesTabModel: ObservableObject, @unchecked Sendable {
 
     func add(_ urls: [URL]) {
         let all = PieController.expand(urls)
-        let images = all.filter { Catalog.kind(of: $0) == .img }
+        let images = all.filter { Catalog.kind(of: $0).map { accepts.contains($0) } ?? false }
         let others = all.count - images.count
         var seen = Set(files.map { $0.path })
         let fresh = images.filter { seen.insert($0.path).inserted }
         let room = max(0, Self.maxFiles - files.count)
         files += fresh.prefix(room)
         if others > 0 {
-            notice = others == 1 ? "1 file non è un'immagine: aprilo da Conversione." : "\(others) file non sono immagini: aprili da Conversione."
+            let what = accepts == [.img] ? "un'immagine" : "un documento"
+            let whatMany = accepts == [.img] ? "immagini" : "documenti"
+            notice = others == 1 ? "1 file non è \(what): aprilo da Conversione." : "\(others) file non sono \(whatMany): aprili da Conversione."
         } else if fresh.count > room {
-            notice = "Al massimo \(Self.maxFiles) foto insieme."
+            notice = "Al massimo \(Self.maxFiles) file insieme."
         } else {
             notice = nil
         }
@@ -97,9 +124,9 @@ final class ImagesTabModel: ObservableObject, @unchecked Sendable {
         estimateTask?.cancel()
         estimates = [:]
         let t = targets, acts = formats
-        guard !t.isEmpty else { return }
+        guard !t.isEmpty, let k = kind else { return }
         estimateTask = Task.detached(priority: .utility) { [weak self] in
-            let e = await SizeEstimate.estimates(actions: acts, files: t, kind: .img)
+            let e = await SizeEstimate.estimates(actions: acts, files: t, kind: k)
             guard !Task.isCancelled else { return }
             await MainActor.run { self?.estimates = e }
         }
@@ -108,10 +135,35 @@ final class ImagesTabModel: ObservableObject, @unchecked Sendable {
 
 // MARK: - La scheda
 
-struct ImagesTabView: View {
-    @ObservedObject var m: ImagesTabModel
+/// Testi e colori della scheda: Immagini o File.
+struct KindTabStyle {
+    let title: String
+    let kind: Kind
+    let dropTitle: String
+    let dropSubtitle: String
+    let intro: String
+    let noun: String          // «foto» / «file»
+    let types: [UTType]
+
+    static let images = KindTabStyle(
+        title: "Immagini", kind: .img, dropTitle: "Trascina qui le foto",
+        dropSubtitle: "oppure clicca per sceglierle · JPG, PNG, HEIC, RAW e altre · fino a \(KindTabModel.maxFiles) insieme",
+        intro: "Converti, ridimensiona, togli lo sfondo e altro, su una o tante foto", noun: "foto", types: [.image])
+
+    static let files = KindTabStyle(
+        title: "File", kind: .pdf, dropTitle: "Trascina qui PDF e documenti",
+        dropSubtitle: "oppure clicca per sceglierli · PDF, Word, Excel, PowerPoint, testi · fino a \(KindTabModel.maxFiles) insieme",
+        intro: "Unisci, comprimi, converti e proteggi PDF e documenti", noun: "file",
+        types: [.pdf, .plainText, .rtf, .html, UTType(filenameExtension: "docx"), UTType(filenameExtension: "doc"),
+                UTType(filenameExtension: "xlsx"), UTType(filenameExtension: "pptx"), UTType(filenameExtension: "odt"),
+                UTType(filenameExtension: "md")].compactMap { $0 })
+}
+
+struct KindTabView: View {
+    @ObservedObject var m: KindTabModel
+    let style: KindTabStyle
     @State private var targeted = false
-    private let tint = Theme.color(.img)
+    private var tint: Color { Theme.color(style.kind) }
     private let columns = [GridItem(.adaptive(minimum: 116, maximum: 160), spacing: 10)]
 
     var body: some View {
@@ -119,14 +171,13 @@ struct ImagesTabView: View {
             VStack(alignment: .leading, spacing: 12) {
                 header
                 if m.files.isEmpty {
-                    MediaDropZone(kind: .img, title: "Trascina qui le foto",
-                                  subtitle: "oppure clicca per sceglierle · JPG, PNG, HEIC, RAW e altre · fino a \(ImagesTabModel.maxFiles) insieme",
+                    MediaDropZone(kind: style.kind, title: style.dropTitle, subtitle: style.dropSubtitle,
                                   targeted: targeted) { choose() }
                 } else {
                     ScrollView {
                         LazyVGrid(columns: columns, spacing: 10) {
                             ForEach(m.files, id: \.self) { u in
-                                ImageTile(url: u, selected: m.selection.contains(u), tint: tint,
+                                ImageTile(url: u, selected: m.selection.contains(u), tint: Theme.color(Catalog.kind(of: u) ?? style.kind),
                                           tap: { extend in m.toggle(u, extend: extend) },
                                           remove: { withAnimation(.easeOut(duration: 0.15)) { m.remove(u) } })
                             }
@@ -142,7 +193,7 @@ struct ImagesTabView: View {
             .padding(20)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             Divider()
-            ImagesInspector(m: m, tint: tint)
+            ImagesInspector(m: m, tint: tint, noun: style.noun)
                 .frame(width: 300)
         }
         .background(Theme.background)
@@ -153,41 +204,45 @@ struct ImagesTabView: View {
         .sheet(item: $m.pending) { p in
             ParamView(kind: p.kind, action: p.action, files: p.files) { v in m.confirm(p, value: v) }
         }
-        .navigationTitle("Immagini")
+        .navigationTitle(style.title)
     }
 
     private var header: some View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Immagini").font(.system(size: 22, weight: .bold, design: .rounded))
+                Text(style.title).font(.system(size: 22, weight: .bold, design: .rounded))
                 Text(subtitle).font(.system(size: 12)).foregroundStyle(.secondary)
             }
             Spacer()
             if !m.files.isEmpty {
                 if !m.selection.isEmpty {
-                    Button("Tutte") { m.selection = []; m.refreshEstimates() }
-                        .help("Lavora su tutte le foto, non solo su quelle scelte")
+                    Button(fem ? "Tutte" : "Tutti") { m.selection = []; m.refreshEstimates() }
+                        .help(fem ? "Lavora su tutte le foto, non solo su quelle scelte" : "Lavora su tutti i file, non solo su quelli scelti")
                 }
                 Button("Aggiungi…") { choose() }
                 Button { m.clear() } label: { Image(systemName: "xmark").font(.system(size: 12, weight: .bold)) }
-                    .help("Togli tutte le foto dalla scheda (i file restano dove sono)")
-                    .accessibilityLabel("Togli tutte le foto")
+                    .help("Togli tutto dalla scheda (i file restano dove sono)")
+                    .accessibilityLabel("Togli tutto dalla scheda")
             }
         }
     }
 
     private var subtitle: String {
-        if m.files.isEmpty { return "Converti, ridimensiona, togli lo sfondo e altro, su una o tante foto" }
-        if m.selection.isEmpty { return "\(m.files.count) foto · clicca per sceglierne alcune, ⌘-clic per sceglierne più di una" }
-        return "\(m.selection.count) di \(m.files.count) foto scelte"
+        if m.files.isEmpty { return style.intro }
+        if m.selection.isEmpty {
+            return "\(m.files.count) \(style.noun) · clic per sceglierne " + (fem ? "una, ⌘-clic per sceglierne più di una" : "uno, ⌘-clic per sceglierne più di uno")
+        }
+        return "\(m.selection.count) di \(m.files.count) \(style.noun) " + (fem ? "scelte" : "scelti")
     }
+
+    private var fem: Bool { style.noun == "foto" }
 
     private func choose() {
         let p = NSOpenPanel()
         p.allowsMultipleSelection = true
         p.canChooseDirectories = true
-        p.allowedContentTypes = [.image]
-        p.message = "Scegli le foto"
+        p.allowedContentTypes = style.types
+        p.message = style.kind == .img ? "Scegli le foto" : "Scegli i file"
         if p.runModal() == .OK { m.add(p.urls) }
     }
 }
@@ -248,28 +303,43 @@ private struct ImageTile: View {
 // MARK: - Il pannello a destra
 
 private struct ImagesInspector: View {
-    @ObservedObject var m: ImagesTabModel
+    @ObservedObject var m: KindTabModel
     let tint: Color
+    let noun: String
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(m.targets.isEmpty ? "Cosa vuoi fare?" : (m.targets.count == 1 ? "Su 1 foto" : "Su \(m.targets.count) foto"))
+                    Text(m.targets.isEmpty ? "Cosa vuoi fare?" : "Su \(m.targets.count) \(noun)")
                         .font(.system(size: 15, weight: .bold))
-                    Text(m.targets.isEmpty ? "Aggiungi delle foto per iniziare." : "Ora: " + ByteCountFormatter.string(fromByteCount: currentBytes, countStyle: .file))
+                    Text(m.targets.isEmpty ? (noun == "foto" ? "Aggiungi delle foto per iniziare." : "Aggiungi dei file per iniziare.") : "Ora: " + ByteCountFormatter.string(fromByteCount: currentBytes, countStyle: .file))
                         .font(.system(size: 11.5)).foregroundStyle(.secondary)
                 }
-                section("Converti in") {
+                if m.kindCount > 1 {
+                    // 2.8.2 · Tipi diversi insieme: si sceglie su quali lavorare
+                    section("Tipi diversi") {
+                        Text("Ogni tipo di file ha le sue azioni. Scegli su quali lavorare:")
+                            .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        ForEach(kinds, id: \.self) { k in
+                            Button { m.selectOnly(k) } label: {
+                                Label("Solo \(k.label)", systemImage: Theme.symbol(k))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .tint(Theme.color(k))
+                        }
+                    }
+                }
+                if !m.formats.isEmpty { section("Converti in") {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 78), spacing: 8)], spacing: 8) {
                         ForEach(m.formats) { a in formatButton(a) }
                     }
-                }
-                section("Strumenti") {
+                } }
+                if !m.tools.isEmpty { section("Strumenti") {
                     VStack(spacing: 4) {
                         ForEach(m.tools) { a in toolRow(a) }
                     }
-                }
+                } }
             }
             .padding(16)
         }
@@ -279,6 +349,11 @@ private struct ImagesInspector: View {
     }
 
     private var currentBytes: Int64 { m.targets.reduce(Int64(0)) { $0 + Job.size(of: $1) } }
+
+    private var kinds: [Kind] {
+        var seen = Set<Kind>()
+        return m.targets.compactMap { Catalog.kind(of: $0) }.filter { seen.insert($0).inserted }
+    }
 
     private func section<C: View>(_ title: String, @ViewBuilder _ content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 8) {

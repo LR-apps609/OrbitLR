@@ -1,3 +1,8 @@
+Novità della 2.8.2 «File»:
+• Nuova scheda File nella barra laterale: PDF, Word, Excel, PowerPoint e testi a sinistra, a destra tutto quello che puoi farci
+• Unisci, comprimi, converti e proteggi i PDF e i documenti, su tutti o solo su quelli scelti
+• Con file di tipi diversi insieme, la scheda ti chiede su quali lavorare («Solo PDF», «Solo Word»…)
+
 Novità della 2.8.1 «Aggiornamenti»:
 • Nuovo comando OrbitLR → «Controlla aggiornamenti…»: se c'è una versione nuova la scarica e la installa da sola
 • Una volta al giorno OrbitLR controlla in silenzio e ti avvisa solo se c'è qualcosa di nuovo (puoi anche saltare una versione)

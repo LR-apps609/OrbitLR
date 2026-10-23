@@ -37,3 +37,32 @@ final class ImagesTabTests: XCTestCase {
         XCTAssertTrue(m.files.isEmpty)
     }
 }
+
+/// 2.8.2 · Scheda File: solo documenti; con tipi diversi si sceglie su quali lavorare.
+final class FilesTabTests: XCTestCase {
+    private func makePDF(_ name: String) throws -> URL {
+        let u = Fixtures.dir.appendingPathComponent(name)
+        var box = CGRect(x: 0, y: 0, width: 200, height: 200)
+        let ctx = try XCTUnwrap(CGContext(u as CFURL, mediaBox: &box, nil))
+        ctx.beginPDFPage(nil); ctx.endPDFPage(); ctx.closePDF()
+        return u
+    }
+
+    func testFilesTabAcceptsDocumentsAndSplitsKinds() throws {
+        let pdf = try makePDF("scheda-file.pdf")
+        let txt = Fixtures.dir.appendingPathComponent("scheda-file.txt")
+        try "testo".write(to: txt, atomically: true, encoding: .utf8)
+        let jpg = try Fixtures.photo(name: "scheda-file.jpg", width: 100, height: 100)
+        let m = KindTabModel(accepts: [.pdf, .doc, .sheet, .slide, .text])
+        m.add([pdf, txt, jpg])
+        XCTAssertEqual(m.files, [pdf, txt], "la foto va nella scheda Immagini")
+        XCTAssertNotNil(m.notice)
+        XCTAssertNil(m.kind, "tipi diversi")
+        XCTAssertEqual(m.kindCount, 2)
+        XCTAssertTrue(m.actions.isEmpty, "con tipi diversi si chiede prima su quali lavorare")
+        m.selectOnly(.pdf)
+        XCTAssertEqual(m.kind, .pdf)
+        XCTAssertEqual(m.targets, [pdf])
+        XCTAssertFalse(m.actions.isEmpty)
+    }
+}
