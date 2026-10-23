@@ -140,6 +140,7 @@ final class ScreenshotTests: XCTestCase {
     func test15_Aiuto() { both("15-aiuto", HelpView()) }
     func test16_Opzioni() { both("16-opzioni", SettingsView(), size: CGSize(width: 640, height: 620)) }
     func test16b_Scorciatoie() { both("16b-scorciatoie", PresetsView()) }
+    func test16c_MenuInAlto() { both("16c-menu-in-alto", MenuBarView(), size: CGSize(width: 290, height: 360)) }
 
     func test17_Avvio() throws {
         let ctl = WelcomeController()

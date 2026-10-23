@@ -764,8 +764,9 @@ struct MenuBarView: View {
                 Text("OrbitLR").font(.system(size: 13, weight: .bold, design: .rounded))
                 Spacer()
             }
+            MenuDropZone()
             if store.runningJobs.isEmpty {
-                Text("Nessuna operazione in corso").font(.system(size: 12.5)).foregroundStyle(.secondary)
+                Text("Niente in corso").font(.system(size: 12.5)).foregroundStyle(.secondary)
             } else {
                 ForEach(store.runningJobs) { job in RunningRow(job: job) }
             }
@@ -796,6 +797,31 @@ struct MenuBarView: View {
         }
         .padding(14)
         .frame(width: 290)
+    }
+}
+
+/// 3.2 · Trascina un file sul menu di OrbitLR (dalla barra in alto): si apre la torta, senza aprire la finestra.
+struct MenuDropZone: View {
+    @State private var targeted = false
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Image(systemName: "chart.pie.fill").font(.system(size: 18, weight: .semibold)).foregroundStyle(Theme.accent)
+            Text(targeted ? "Rilascia qui" : "Trascina qui un file").font(.system(size: 12.5, weight: .semibold))
+            Text("si apre la torta, senza aprire la finestra").font(.system(size: 11)).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity).padding(.vertical, 12)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Theme.accent.opacity(targeted ? 0.16 : 0.06)))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.accent.opacity(targeted ? 0.9 : 0.4), style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])))
+        .dropDestination(for: URL.self) { urls, _ in
+            let files = urls.filter { $0.isFileURL }
+            guard !files.isEmpty else { return false }
+            Sounds.drop()
+            NSApp.keyWindow?.orderOut(nil)            // si chiude il menu, poi la torta accanto al puntatore
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { PieController.shared.present(files: files) }
+            return true
+        } isTargeted: { targeted = $0 }
+        .animation(Motion.quick, value: targeted)
     }
 }
 
