@@ -1,4 +1,5 @@
 import AppKit
+import AVFoundation
 
 /// Suoni discreti in stile radio: un clic quando passi da uno spicchio all'altro,
 /// uno scatto quando confermi, un piccolo «ding» a lavoro finito (solo con l'app in primo piano).
@@ -18,6 +19,7 @@ final class Sounds: @unchecked Sendable {
 
     /// Carica i suoni una volta sola, all'avvio: così il primo clic non ha ritardi.
     func prepare() {
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil { prepareEngine() }
         for k in Effect.allCases where pools[k] == nil {
             guard let url = Bundle.main.url(forResource: k.rawValue, withExtension: "wav")
                     ?? Bundle.main.url(forResource: k.rawValue, withExtension: "wav", subdirectory: "Sounds"),
@@ -29,6 +31,60 @@ final class Sounds: @unchecked Sendable {
         }
     }
 
+    // MARK: 3.4.9 · Motore audio: i suoni sono già in memoria e partono subito (entro pochi millesimi)
+
+    private var engine: AVAudioEngine?
+    private var nodes: [Effect: [AVAudioPlayerNode]] = [:]
+    private var buffers: [Effect: AVAudioPCMBuffer] = [:]
+    private var nextNode: [Effect: Int] = [:]
+
+    /// Prepara il motore con un piccolo gruppo di «lettori» per ogni suono (si sovrappongono senza tagliarsi).
+    /// Se il Mac non ha un'uscita audio (o qualcosa va storto) restano i suoni di sempre.
+    private func prepareEngine() {
+        guard engine == nil else { return }
+        let e = AVAudioEngine()
+        var ok = false
+        for k in Effect.allCases {
+            guard let url = Bundle.main.url(forResource: k.rawValue, withExtension: "wav")
+                    ?? Bundle.main.url(forResource: k.rawValue, withExtension: "wav", subdirectory: "Sounds"),
+                  let f = try? AVAudioFile(forReading: url),
+                  let b = AVAudioPCMBuffer(pcmFormat: f.processingFormat, frameCapacity: AVAudioFrameCount(f.length)),
+                  (try? f.read(into: b)) != nil else { continue }
+            buffers[k] = b
+            nodes[k] = (0..<(k == .tick ? 4 : 2)).map { _ in
+                let n = AVAudioPlayerNode()
+                e.attach(n)
+                e.connect(n, to: e.mainMixerNode, format: b.format)
+                n.volume = volume[k] ?? 0.3
+                return n
+            }
+            ok = true
+        }
+        guard ok else { return }
+        e.prepare()
+        do { try e.start(); e.pause(); engine = e } catch { nodes = [:]; buffers = [:] }
+    }
+
+    /// true se il suono è partito dal motore audio.
+    private var idle: DispatchWorkItem?
+
+    private func playFast(_ k: Effect) -> Bool {
+        guard let e = engine, let b = buffers[k], let list = nodes[k], !list.isEmpty else { return false }
+        if !e.isRunning { guard (try? e.start()) != nil else { return false } }
+        // A riposo il motore si mette in pausa: niente consumo quando OrbitLR non suona
+        idle?.cancel()
+        let w = DispatchWorkItem { [weak e] in e?.pause() }
+        idle = w
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4, execute: w)
+        let i = (nextNode[k] ?? 0) % list.count
+        nextNode[k] = i + 1
+        let n = list[i]
+        n.stop()
+        n.scheduleBuffer(b, at: nil, options: .interrupts)
+        n.play()
+        return true
+    }
+
     func play(_ k: Effect) {
         guard enabled else { return }
         if k == .tick {
@@ -37,6 +93,7 @@ final class Sounds: @unchecked Sendable {
             guard now.timeIntervalSince(lastTick) > 0.035 else { return }
             lastTick = now
         }
+        if playFast(k) { return }
         if pools[k] == nil { prepare() }
         guard let pool = pools[k], !pool.isEmpty else { return }
         let i = (next[k] ?? 0) % pool.count

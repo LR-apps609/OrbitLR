@@ -197,6 +197,7 @@ struct Knob<Value: Hashable>: View {
         guard n != index else { return }
         selection = options[n].value
         Sounds.tick()
+        NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)    // 3.4.9 · lo scatto si sente anche al tatto
     }
 }
 
