@@ -23,7 +23,31 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
     var trimDefaultLength: Double? = nil
     var trimMaxLength: Double? = nil
 
-    init(videoTab: Bool) { self.videoTab = videoTab }
+    /// 2.8.4 · Gli ultimi file aperti, per riprenderli con un clic (solo quelli che esistono ancora).
+    @Published private(set) var recents: [URL] = []
+    private var recentsKey: String { videoTab ? "videoTabRecents" : "audioTabRecents" }
+    static let maxRecents = 6
+
+    init(videoTab: Bool) {
+        self.videoTab = videoTab
+        let paths = UserDefaults.standard.stringArray(forKey: recentsKey) ?? []
+        recents = paths.map { URL(fileURLWithPath: $0) }.filter { FileManager.default.fileExists(atPath: $0.path) }
+    }
+
+    func remember(_ url: URL) {
+        recents = Self.pushRecent(url, into: recents, max: Self.maxRecents)
+        UserDefaults.standard.set(recents.map { $0.path }, forKey: recentsKey)
+    }
+
+    func forgetRecents() {
+        recents = []
+        UserDefaults.standard.removeObject(forKey: recentsKey)
+    }
+
+    /// In cima l'ultimo aperto, niente doppioni, al massimo `max`.
+    static func pushRecent(_ url: URL, into list: [URL], max: Int) -> [URL] {
+        Array(([url] + list.filter { $0.standardizedFileURL.path != url.standardizedFileURL.path }).prefix(max))
+    }
 
     /// Formati che i motori di macOS leggono direttamente.
     static let readable: Set<String> = ["mp4", "mov", "m4v", "3gp", "mp3", "m4a", "wav", "aiff", "aac", "flac", "caf"]
@@ -69,6 +93,7 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
     func open(_ url: URL) {
         trim?.pause()
         file = url
+        remember(url)
         lastJob = nil
         let t = TrimModel(url: url, isVideo: videoTab, defaultLength: trimDefaultLength)
         t.maxLength = trimMaxLength
@@ -307,6 +332,18 @@ enum AudioTool: String, CaseIterable, Identifiable {
         case .merge: return "Unisci audio"
         }
     }
+    /// 2.8.4 · Cosa fare adesso, in una frase.
+    var hint: String {
+        switch self {
+        case .ringtone: return "Sposta il riquadro sul pezzo che ti piace (fino a 40 secondi) e premi il pulsante: ottieni il file .m4r per iPhone."
+        case .cut: return "Trascina le maniglie per tenere solo il pezzo che serve. ⌘Z annulla uno spostamento."
+        case .normalize: return "Rende il volume uniforme: né troppo basso né distorto. Va bene per vocali e registrazioni."
+        case .tts: return "Scrivi o incolla il testo, scegli la voce e ascolta l’anteprima prima di creare il file."
+        case .whatsapp: return "Crea un vocale leggero con la voce chiara, pronto da mandare."
+        case .merge: return "Trascina altri file audio: si uniscono in un solo file, nell’ordine in cui li aggiungi."
+        }
+    }
+
     var subtitle: String {
         switch self {
         case .ringtone: return "Fino a 40 secondi, pronta per iPhone"
@@ -373,6 +410,8 @@ struct AudioTabView: View {
                 }
             }
             topArea.frame(height: 210)
+            // 2.8.4 · Ripresa veloce degli ultimi file, come i Progetti del Video
+            if m.file == nil && tool != .tts && !m.recents.isEmpty { recentsRow }
             HStack(alignment: .top, spacing: 16) {
                 cards
                 panel.frame(width: 310)
@@ -439,12 +478,39 @@ struct AudioTabView: View {
     }
 
     private var cards: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
-            ForEach(AudioTool.allCases) { t in
-                ToolCard(title: t.title, subtitle: t.subtitle, symbol: t.symbol, tint: tint, selected: tool == t) { tool = t }
+        VStack(alignment: .leading, spacing: 8) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
+                ForEach(AudioTool.allCases) { t in
+                    ToolCard(title: t.title, subtitle: t.subtitle, symbol: t.symbol, tint: tint, selected: tool == t) { tool = t }
+                }
             }
+            // 2.8.4 · Come nel Video: una frase che dice cosa fare adesso
+            Label(tool.hint, systemImage: "lightbulb")
+                .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private var recentsRow: some View {
+        HStack(spacing: 8) {
+            SectionLabel(text: "Recenti")
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(m.recents, id: \.self) { u in
+                        Button { m.load([u]) } label: {
+                            Label(u.lastPathComponent, systemImage: "waveform").font(.system(size: 12)).lineLimit(1)
+                                .padding(.horizontal, 10).padding(.vertical, 5)
+                                .background(Capsule().fill(tint.opacity(0.14)))
+                        }
+                        .buttonStyle(.plain)
+                        .help("Riapri «\(u.lastPathComponent)»")
+                    }
+                }
+            }
+            Button { m.forgetRecents() } label: { Image(systemName: "xmark.circle").foregroundStyle(.secondary) }
+                .buttonStyle(.borderless).help("Svuota i recenti (i file non vengono toccati)")
+                .accessibilityLabel("Svuota i recenti")
+        }
     }
 
     // Il riquadro con le opzioni dello strumento scelto e il pulsante finale

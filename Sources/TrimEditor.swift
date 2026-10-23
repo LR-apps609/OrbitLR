@@ -98,6 +98,22 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
     func markIn() { setStart(playhead) }
     func markOut() { setEnd(playhead) }
 
+    /// 2.8.4 · ⌘Z sulla selezione: si registra una volta, alla fine del trascinamento.
+    func commitSelection(from before: (Double, Double), undo: UndoManager?, name: String = "Cambia la selezione") {
+        let after = (start, end)
+        guard abs(before.0 - after.0) > 0.001 || abs(before.1 - after.1) > 0.001, let undo else { return }
+        undo.registerUndo(withTarget: self) { m in m.restoreSelection(before, redo: after, undo: undo, name: name) }
+        undo.setActionName(name)
+    }
+
+    private func restoreSelection(_ sel: (Double, Double), redo: (Double, Double), undo: UndoManager, name: String) {
+        start = sel.0
+        end = sel.1
+        if !playing { seek(start) }
+        undo.registerUndo(withTarget: self) { m in m.restoreSelection(redo, redo: sel, undo: undo, name: name) }
+        undo.setActionName(name)
+    }
+
     // MARK: Analisi del file (in sottofondo)
 
     /// Picchi del volume, normalizzati 0…1, per disegnare la forma d'onda.
@@ -291,6 +307,15 @@ struct TrimEditorView: View {
 
 /// Forma d'onda (e fotogrammi per i video) con selezione trascinabile e testina.
 struct TrimTimeline: View {
+    @Environment(\.undoManager) private var undoManager
+    /// 2.8.4 · Selezione all'inizio del trascinamento, per ⌘Z.
+    @State private var dragBefore: (Double, Double)? = nil
+
+    private func endDrag(_ name: String) {
+        if let b = dragBefore { m.commitSelection(from: b, undo: undoManager, name: name) }
+        dragBefore = nil
+    }
+
     @ObservedObject var m: TrimModel
     let tint: Color
 
@@ -354,12 +379,14 @@ struct TrimTimeline: View {
                 // Maniglie
                 handle(height: h).offset(x: xs - 7, y: -6)
                     .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("timeline")).onChanged { v in
+                        if dragBefore == nil { dragBefore = (m.start, m.end) }
                         m.setStart(Double(v.location.x / w) * d)
-                    })
+                    }.onEnded { _ in endDrag("Sposta l’inizio") })
                 handle(height: h).offset(x: xe - 7, y: -6)
                     .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("timeline")).onChanged { v in
+                        if dragBefore == nil { dragBefore = (m.start, m.end) }
                         m.setEnd(Double(v.location.x / w) * d)
-                    })
+                    }.onEnded { _ in endDrag("Sposta la fine") })
             }
             .coordinateSpace(name: "timeline")
         }

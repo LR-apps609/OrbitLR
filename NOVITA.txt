@@ -1,3 +1,8 @@
+Novità della 2.8.4 «Audio»:
+• Audio: ⌘Z annulla anche lo spostamento delle maniglie del taglio (e ⇧⌘Z lo rifà)
+• Audio: «Recenti» per riaprire con un clic gli ultimi file usati
+• Audio: sotto gli strumenti una frase che dice cosa fare, come nel Video
+
 Novità della 2.8.3 «Aiuto»:
 • Nuova sezione Aiuto nella barra laterale: le domande frequenti su Conversione, Video, Immagini e File, Audio e aggiornamenti
 • Cerca con una parola (anche senza accenti): «verticale», «password», «unire PDF»…
