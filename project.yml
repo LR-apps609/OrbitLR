@@ -32,8 +32,8 @@ targets:
         CFBundleDisplayName: OrbitLR
         CFBundleName: OrbitLR
         CFBundleDevelopmentRegion: it
-        CFBundleShortVersionString: "2.9.11"
-        CFBundleVersion: "55"
+        CFBundleShortVersionString: "3.3"
+        CFBundleVersion: "57"
         LSMinimumSystemVersion: "14.0"
         LSApplicationCategoryType: public.app-category.utilities
         NSHumanReadableCopyright: "Uso personale di Ledion"
@@ -101,8 +101,8 @@ targets:
       path: ShareExtension/Info.plist
       properties:
         CFBundleDisplayName: OrbitLR
-        CFBundleShortVersionString: "2.9.11"
-        CFBundleVersion: "55"
+        CFBundleShortVersionString: "3.3"
+        CFBundleVersion: "57"
         LSMinimumSystemVersion: "14.0"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.share-services
