@@ -167,7 +167,7 @@ enum Catalog {
         "aienhance": Action(id: "aienhance", short: "Migliora", title: "Migliora con l’IA", hint: "Più nitida e pulita, senza inventare dettagli", symbol: "sparkles", param: .aienhance),
     ]
 
-    /// Un'azione dal suo identificativo (per i preset).
+    /// Un’azione dal suo identificativo (per i preset).
     static func action(id: String, kind: Kind) -> Action? {
         if id.hasPrefix("to:") { return conv(String(id.dropFirst(3)), kind: kind) }
         return tools[id]
@@ -313,6 +313,6 @@ enum Catalog {
                 if let a = tools[id] { out.append(a) }
             }
         }
-        return PieCustom.apply(out, kind: kind)       // l'ordine scelto in «Personalizza il menu»
+        return PieCustom.apply(out, kind: kind)       // l’ordine scelto in «Personalizza il menu»
     }
 }

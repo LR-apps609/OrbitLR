@@ -1027,7 +1027,7 @@ struct VideoEditorView: View {
             .help("Nel video finale l’inquadratura segue le persone con calma (in anteprima resta al centro)")
         SectionLabel(text: "Qualità dell’esportazione")
         HStack(spacing: 6) {
-            ForEach([(720, "720p"), (1080, "1080p"), (2160, "4K")], id: \.0) { item in
+            ForEach([(720, "HD 720p"), (1080, "Full HD 1080p"), (2160, "4K")], id: \.0) { item in
                 Chip(title: item.1, selected: s.project.resolution == item.0, tint: tint) {
                     s.change(undo, "Risoluzione \(item.1)") { $0.resolution = item.0 }
                 }
@@ -1035,7 +1035,7 @@ struct VideoEditorView: View {
         }
         HStack(spacing: 6) {
             ForEach([30, 60], id: \.self) { f in
-                Chip(title: "\(f) fps", selected: s.project.fps == f, tint: tint) {
+                Chip(title: f == 60 ? "Più fluido (60)" : "Normale (30)", selected: s.project.fps == f, tint: tint) {
                     s.change(undo, "\(f) fotogrammi al secondo") { $0.fps = f }
                 }
                 .help(f == 60 ? "Solo se i video sono girati a 60: non si inventano fotogrammi" : "")

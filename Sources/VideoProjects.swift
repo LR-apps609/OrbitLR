@@ -184,7 +184,7 @@ struct VideoProjectsView: View {
                                            : "Clicca un progetto per riprenderlo da dove eri rimasto.")
                         .font(.system(size: 12.5)).foregroundStyle(.secondary)
                 }
-                VideoModeSwitch().padding(.leading, 8).alignmentGuide(.firstTextBaseline) { $0[.bottom] - 8 }
+                VideoModeSwitch().padding(.leading, 8)
                 Spacer()
                 Button { s.newProject(undo) } label: { Label("Nuovo progetto", systemImage: "plus") }
                     .buttonStyle(.borderedProminent).tint(Theme.accent).controlSize(.large)

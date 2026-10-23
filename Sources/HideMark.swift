@@ -185,7 +185,7 @@ struct HideMarkEditor: View {
                 }
             }
             Text(spec.rects.isEmpty
-                 ? "Trascina sull'immagine per coprire il logo o la scritta. Puoi disegnare più zone."
+                 ? "Trascina sull’immagine per coprire il logo o la scritta. Puoi disegnare più zone."
                  : "\(spec.rects.count) \(spec.rects.count == 1 ? "zona" : "zone") · trascina ancora per aggiungerne, ✕ per toglierne una")
                 .font(.system(size: 11.5)).foregroundStyle(.secondary)
             HStack {

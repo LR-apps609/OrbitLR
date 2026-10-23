@@ -277,7 +277,7 @@ struct RunPresetIntent: AppIntent {
 
 struct FinderSelectionIntent: AppIntent {
     static var title: LocalizedStringResource = "OrbitLR sulla selezione del Finder"
-    static var description = IntentDescription("Applica un'azione ai file selezionati nel Finder. Con Siri: «Converti in JPG con OrbitLR».",
+    static var description = IntentDescription("Applica un’azione ai file selezionati nel Finder. Con Siri: «Converti in JPG con OrbitLR».",
                                                categoryName: "File")
 
     @Parameter(title: "Azione", default: .toJPG)

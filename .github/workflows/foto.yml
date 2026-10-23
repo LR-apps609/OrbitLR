@@ -30,7 +30,10 @@ jobs:
             -only-testing:OrbitLRTests/ScreenshotTests \
             -derivedDataPath build-foto CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= \
             > foto.log 2>&1 || true
-          grep -E "Test Case|error:" foto.log | tail -n 40 || true
+          grep -E "Test Case|error:" foto.log | tail -n 60 || true
+          # Il racconto dei test, accanto alle foto: si legge anche senza i registri di GitHub
+          grep -E "Test Case|error|Restarting|Fatal|crash|failed" foto.log > "$RUNNER_TEMP/foto/registro.txt" || true
+          tail -n 200 foto.log > "$RUNNER_TEMP/foto/coda-registro.txt" || true
           ls -la "$RUNNER_TEMP/foto" | head -n 80
           n=$(ls "$RUNNER_TEMP/foto" | wc -l | tr -d ' ')
           echo "::notice::Foto fatte: $n"

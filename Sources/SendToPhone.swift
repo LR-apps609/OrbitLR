@@ -196,18 +196,18 @@ struct SendToPhoneStrip: View {
                     Image(systemName: "iphone.radiowaves.left.and.right").font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Theme.accent)
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("Manda all'iPhone").font(.system(size: 12.5, weight: .semibold))
-                        Text("Poi sull'iPhone: apri il file → Condividi → «Usa come suoneria» (iOS 26)")
+                        Text("Manda all’iPhone").font(.system(size: 12.5, weight: .semibold))
+                        Text("Poi sull’iPhone: apri il file → Condividi → «Usa come suoneria» (iOS 26)")
                             .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
                     }
                     Spacer(minLength: 8)
                     Button { SendToPhone.airDrop(file) } label: { Label("AirDrop", systemImage: "dot.radiowaves.left.and.right") }
-                        .help("Manda la suoneria all'iPhone con AirDrop")
+                        .help("Manda la suoneria all’iPhone con AirDrop")
                     Button {
                         if share.url == nil { share.start(file) }
                         showQR = true
                     } label: { Label("Codice QR", systemImage: "qrcode") }
-                    .help("Inquadralo con la fotocamera dell'iPhone (stessa rete Wi-Fi)")
+                    .help("Inquadralo con la fotocamera dell’iPhone (stessa rete Wi-Fi)")
                     .popover(isPresented: $showQR, arrowEdge: .top) { qrPopover }
                 }
             }
@@ -219,12 +219,12 @@ struct SendToPhoneStrip: View {
 
     private var qrPopover: some View {
         VStack(spacing: 12) {
-            Text("Inquadra con l'iPhone").font(.headline)
+            Text("Inquadra con l’iPhone").font(.headline)
             if let u = share.url, let img = SendToPhone.qrImage(u) {
                 Image(nsImage: img).interpolation(.none).resizable().frame(width: 200, height: 200)
                     .padding(10).background(Color.white).clipShape(RoundedRectangle(cornerRadius: 10))
                 if share.downloaded {
-                    Label("Scaricata sull'iPhone", systemImage: "checkmark.circle.fill").foregroundStyle(Theme.green)
+                    Label("Scaricata sull’iPhone", systemImage: "checkmark.circle.fill").foregroundStyle(Theme.green)
                         .font(.system(size: 12, weight: .semibold))
                 }
             } else if let e = share.error {

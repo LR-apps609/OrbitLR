@@ -1,3 +1,16 @@
+Novità della 3.0 «Identità»:
+• Conversione: il menu a torta ora ha solo i formati, per scegliere al volo. Lo spicchio «Modifica» porta il file nella sua scheda, dove trovi tutto il resto
+• Video: in alto scegli «Montaggio» oppure «Strumenti veloci» (comprimi, taglia, GIF, formato social e altro, su uno o tanti video)
+• Audio rifatto come il Video: a destra i 9 strumenti (Suoneria, Taglia, Volume, Velocità, Silenzi, Trascrivi, Voce, WhatsApp, Unisci), a sinistra il file
+• Attività: Coda e Cronologia in una pagina sola, con quello che è in corso in cima
+• Immagini e File: strumenti divisi in gruppi (Modifica, Migliora… / Organizza, Proteggi…), spiegazioni intere e, in alto, quanti file e quanto pesano
+• Parole uguali ovunque: Interrompi, Scarta e Applica, Rimuovi, Mostra nel Finder. Word, Excel e PowerPoint con il loro nome. «Preset» ora si chiama «Scorciatoie»
+• Barra laterale più pulita: le schede, Attività, il Cassetto e una riga con Opzioni, Aiuto e Segnala
+• Opzioni in tre parti (File creati, Aspetto, Avvio) più «Avanzate», chiuso
+• Avvio: solo l’animazione, senza passi da leggere. Al primo avvio provi subito il menu a torta su una foto di prova
+• Testi più grandi e leggibili; le miniature dei filtri del Video sono pronte appena apri il progetto
+• Due progetti audio della stessa canzone si distinguono: «On The Rope · 0:40»
+
 Novità della 2.9.11 «Il Cassetto»:
 • Nella barra laterale c'è il Cassetto: gli ultimi file creati con OrbitLR, sempre a portata di mano («Tutti» li mostra in griglia)
 • Trascina un file del Cassetto su una scheda (anche sulla sua riga nella barra laterale): Video lo aggiunge al montaggio, Audio lo apre, Immagini e File lo caricano, Conversione apre il menu a torta

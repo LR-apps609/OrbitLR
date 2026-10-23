@@ -58,37 +58,61 @@ final class ScreenshotTests: XCTestCase {
         return u
     }
 
-    func test1_Conversione() async throws {
-        let app = AppState.shared
-        app.workspace.load([])
-        both("01-conversione-vuota", WorkspaceView(ws: app.workspace))
-        let photo = try Fixtures.photo(name: "Vacanze al mare.jpg", width: 1600, height: 1200)
-        app.workspace.load([photo])
-        both("02-conversione-foto", WorkspaceView(ws: app.workspace), wait: 2)
-        let v = try await Fixtures.video(name: "Compleanno.mp4", width: 640, height: 360, seconds: 2)
-        app.workspace.load([photo, v])
-        both("03-conversione-due-tipi", WorkspaceView(ws: app.workspace), wait: 2)
-        app.workspace.load([])
+    // Ogni schermata ha il suo test: se una si blocca, le altre si fanno lo stesso.
+
+    func test01_ConversioneVuota() {
+        AppState.shared.workspace.load([])
+        both("01-conversione-vuota", WorkspaceView(ws: AppState.shared.workspace))
     }
 
-    func test2_ImmaginiEFile() async throws {
+    func test02_ConversioneFoto() throws {
+        let ws = Workspace()
+        ws.load([try Fixtures.photo(name: "Vacanze al mare.jpg", width: 1600, height: 1200)])
+        both("02-conversione-foto", WorkspaceView(ws: ws), wait: 2)
+    }
+
+    func test03_ConversioneDueTipi() async throws {
+        let ws = Workspace()
+        let photo = try Fixtures.photo(name: "Vacanze al mare.jpg", width: 1600, height: 1200)
+        let v = try await Fixtures.video(name: "Compleanno.mp4", width: 640, height: 360, seconds: 2)
+        ws.load([photo, v])
+        both("03-conversione-due-tipi", WorkspaceView(ws: ws), wait: 2)
+    }
+
+    func test04_Immagini() throws {
         let m = KindTabModel(accepts: [.img])
         both("04-immagini-vuota", KindTabView(m: m, style: .images))
         m.add([try Fixtures.photo(name: "Tramonto.jpg"), try Fixtures.photo(name: "Ritratto.jpg", width: 900, height: 1200),
                try Fixtures.photo(name: "Spiaggia.png", width: 1200, height: 800)])
         both("05-immagini-tre-foto", KindTabView(m: m, style: .images), wait: 2.5)
+    }
+
+    func test06_File() throws {
         let f = KindTabModel(accepts: [.pdf, .doc, .sheet, .slide, .text])
         both("06-file-vuota", KindTabView(m: f, style: .files))
         f.add([try samplePDF()])
         both("07-file-pdf", KindTabView(m: f, style: .files), wait: 2.5)
     }
 
-    func test3_Video() async throws {
-        let folder = Fixtures.dir.appendingPathComponent("foto-video-\(UUID().uuidString)", isDirectory: true)
-        let s = VideoProjectStore(folder: folder)
+    func test08_VideoProgetti() {
+        let s = VideoProjectStore(folder: Fixtures.dir.appendingPathComponent("foto-video-\(UUID().uuidString)", isDirectory: true))
         both("08-video-progetti", VideoEditorView(s: s))
         s.newProject(nil)
         both("09-video-nuovo-progetto", VideoEditorView(s: s))
+        s.closeProject(nil)
+    }
+
+    func test09_VideoStrumentiVeloci() async throws {
+        let m = KindTabModel(accepts: [.video])
+        both("09b-video-strumenti-vuota", KindTabView(m: m, style: .video))
+        m.add([try await Fixtures.video(name: "Gita al lago.mp4", width: 640, height: 360, seconds: 2)])
+        both("09c-video-strumenti", KindTabView(m: m, style: .video), wait: 2.5)
+    }
+
+    func test10_VideoMontaggio() async throws {
+        let folder = Fixtures.dir.appendingPathComponent("foto-video-\(UUID().uuidString)", isDirectory: true)
+        let s = VideoProjectStore(folder: folder)
+        s.newProject(nil)
         let a = try await Fixtures.video(name: "Gita.mp4", width: 640, height: 360, seconds: 4)
         let b = try await Fixtures.video(name: "Cena.mp4", width: 640, height: 360, seconds: 3)
         s.add([a, b], undo: nil)
@@ -102,7 +126,7 @@ final class ScreenshotTests: XCTestCase {
         s.closeProject(nil)
     }
 
-    func test4_Audio() async throws {
+    func test11_Audio() throws {
         let m = MediaTabModel(videoTab: false, projectsFolder: Fixtures.dir.appendingPathComponent("foto-audio-\(UUID().uuidString)"))
         both("11-audio-vuota", AudioTabView(m: m))
         let song = try Fixtures.wav(Fixtures.tone(seconds: 40, freq: 330), name: "La mia canzone.wav")
@@ -112,22 +136,21 @@ final class ScreenshotTests: XCTestCase {
         }
     }
 
-    func test5_AttivitaEAiuto() throws {
-        both("13-attivita", ActivityView())
-        both("15-aiuto", HelpView())
-        both("16-opzioni", SettingsView(), size: CGSize(width: 640, height: 620))
-    }
+    func test13_Attivita() { both("13-attivita", ActivityView()) }
+    func test15_Aiuto() { both("15-aiuto", HelpView()) }
+    func test16_Opzioni() { both("16-opzioni", SettingsView(), size: CGSize(width: 640, height: 620)) }
+    func test16b_Scorciatoie() { both("16b-scorciatoie", PresetsView()) }
 
-    func test6_Avvio() throws {
+    func test17_Avvio() throws {
         let ctl = WelcomeController()
         ctl.firstLaunch = true
-        for (i, phase) in [WelcomeController.Phase.permissions, .page(0), .page(1), .page(2), .news].enumerated() {
+        for (i, phase) in [WelcomeController.Phase.loading, .permissions, .page(0), .page(1), .page(2), .news].enumerated() {
             ctl.phase = phase
             both("17-avvio-\(i)", WelcomeView(ctl: ctl), size: CGSize(width: 500, height: 470), wait: 0.8)
         }
     }
 
-    func test7_FinestraIntera() throws {
+    func test00_FinestraIntera() throws {
         AppState.shared.selection = .workspace
         both("00-finestra-intera", MainWindow(), size: CGSize(width: 1180, height: 760), wait: 2)
         AppState.shared.selection = .video
@@ -135,7 +158,7 @@ final class ScreenshotTests: XCTestCase {
         AppState.shared.selection = .workspace
     }
 
-    func test8_Finestrelle() throws {
+    func test18_Finestrelle() throws {
         let photo = try Fixtures.photo(name: "Logo da togliere.jpg", width: 1600, height: 900)
         both("18-nascondi-filigrana", HideMarkEditor(url: photo, onDone: { _ in }), size: CGSize(width: 700, height: 600), wait: 2)
         if let a = Catalog.action(id: "resize", kind: .img) {

@@ -107,7 +107,7 @@ struct CompareView: View {
                 Text(pct <= 0 ? "−\(abs(pct))%" : "+\(pct)%")
                     .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundStyle(pct < 0 ? Theme.green : Theme.brass)
-                    .help(pct < 0 ? "Spazio risparmiato" : "Il risultato pesa più dell'originale")
+                    .help(pct < 0 ? "Spazio risparmiato" : "Il risultato pesa più dell’originale")
             }
         }
     }

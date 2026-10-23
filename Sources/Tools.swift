@@ -44,7 +44,7 @@ enum Tools {
             if spec.style == "ai" {
                 if !ModelStore.shared.isReady { await MainActor.run { job.status = "Scarico il modello di IA (solo la prima volta)…" } }
                 inpainter = Inpainter(model: try await ModelStore.shared.lama())
-                await MainActor.run { job.status = "Ricostruisco la zona con l'IA…" }
+                await MainActor.run { job.status = "Ricostruisco la zona con l’IA…" }
             }
             if kind == .video {
                 let out = Destination.unique(dir, base: "\(base) (senza logo)", ext: "mp4")
