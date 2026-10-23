@@ -1,3 +1,18 @@
+Novità della 3.3 «Sottotitoli»:
+• Video: nel montaggio, «Testi» → «Sottotitoli automatici». OrbitLR ascolta le clip e scrive le frasi in basso, al momento giusto, anche con clip tagliate o accelerate. Poi li correggi come gli altri testi; ⌘Z li toglie tutti
+• Funziona sul Mac, senza internet quando la lingua lo permette; la prima volta macOS chiede il permesso «Riconoscimento vocale»
+
+Novità della 3.2 «Flusso»:
+• Conversione: le ricette. Quando lavori un file appena creato (converti in MP3, poi tagli, poi suoneria), in Attività compare «Salva come ricetta»: la volta dopo tutti i passi partono con un clic dal menu a torta
+• Le ricette si rinominano e si eliminano nella pagina Scorciatoie
+• Menu in alto: clicca l’icona di OrbitLR nella barra dei menu e trascina un file nel riquadro: la torta si apre senza aprire la finestra
+
+Novità della 3.1 «Volto»:
+• Ogni risultato dice quanto hai guadagnato: «da 48 MB a 9 MB · −81%», e sotto c’è «Confronta» per vedere prima e dopo
+• Suoni nuovi e discreti: un piccolo tonfo quando un file arriva, due note quando qualcosa non riesce
+• Movimenti tutti dello stesso stile, più rapidi e morbidi
+• Pulizia interna per un’app più solida
+
 Novità della 3.0 «Identità»:
 • Conversione: il menu a torta ora ha solo i formati, per scegliere al volo. Lo spicchio «Modifica» porta il file nella sua scheda, dove trovi tutto il resto
 • Video: in alto scegli «Montaggio» oppure «Strumenti veloci» (comprimi, taglia, GIF, formato social e altro, su uno o tanti video)
