@@ -1,3 +1,10 @@
+Novità della 2.9.8 «Effetti»:
+• Video: nuovo passo «Effetti» per la clip scelta: velocità da 0,25× a 4× (la voce non cambia tono), zoom lento che avvicina o allontana, specchia, capovolgi e ruota di 90°, sfocatura, dissolvenza in entrata e in uscita (anche dell'audio)
+• «A tutte le clip» copia gli effetti su tutto il montaggio; sulla clip con una velocità diversa si legge, ad esempio, «2×»
+• «Nascondi un logo…» anche nel montaggio: sfocatura o pixel su tutto il video
+• Dividendo una clip, la transizione e le dissolvenze restano dove devono (prima finivano su entrambi i pezzi)
+• Con poco spazio, i passi del Video mostrano solo il numero: la finestra non si allarga più
+
 Novità della 2.9.7 «Rimuovi con l'IA»:
 • Nascondi filigrana ha una terza scelta: «Rimuovi (IA)». L'intelligenza artificiale ricostruisce la zona con quello che c'è intorno, come se il logo non ci fosse mai stato
 • Funziona su foto e video, tutto sul tuo Mac: niente viene caricato su internet
