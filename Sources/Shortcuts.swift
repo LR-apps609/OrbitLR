@@ -58,7 +58,7 @@ struct ShortcutsPanel: View {
         ]
         let assigned = presets.presets.filter { $0.hotkey != nil }.sorted { ($0.hotkey ?? 0) < ($1.hotkey ?? 0) }
         list.insert(KeyGroup(title: "I tuoi preset", symbol: "star.circle.fill", rows: assigned.isEmpty
-            ? [Row(keys: ["⌃", "⌥", "1…9"], text: "Nessuno ancora: si assegnano nella pagina Preset")]
+            ? [Row(keys: ["⌃", "⌥", "1…9"], text: "Nessuna ancora: si assegnano nella pagina Scorciatoie")]
             : assigned.map { Row(keys: ["⌃", "⌥", "\($0.hotkey ?? 0)"], text: $0.name) }), at: 2)
         return list
     }

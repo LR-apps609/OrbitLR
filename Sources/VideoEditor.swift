@@ -666,7 +666,7 @@ enum VideoEditTool: String, CaseIterable, Identifiable {
         case .clip: return "Taglia, dividi, sposta e togli le clip. I bordi d’ottone di una clip si trascinano per accorciarla."
         case .looks: return "Un filtro per tutto il video o solo per la clip scelta, e le regolazioni di luce e colore."
         case .effects: return "Effetti della clip scelta: velocità, zoom lento, gira, sfocatura, dissolvenze."
-        case .texts: return "Titoli e scritte: «T+ Testo» sull’anteprima, poi trascinali dove vuoi."
+        case .texts: return "Titoli e scritte: premi «Testo» sull’anteprima (o il tasto T), poi trascinali dove vuoi."
         case .audio: return "Il volume dei tuoi video e la musica."
         case .format: return "La forma del video e la qualità dell’esportazione."
         }
@@ -821,8 +821,8 @@ struct VideoEditorView: View {
                     .help("Tieni premuto per vedere com’era prima delle modifiche")
                     .accessibilityAddTraits(.isButton)
                 Spacer(minLength: 4)
-                Button("Annulla") { s.discardChanges(undo) }
-                    .help("Torna all’ultima versione applicata")
+                Button("Scarta") { s.discardChanges(undo) }
+                    .help("Butta le modifiche non applicate e torna all’ultima versione applicata")
                 Button("Applica") { s.applyChanges() }
                     .buttonStyle(.borderedProminent).tint(Theme.accent)
                     .keyboardShortcut(.return, modifiers: .command)

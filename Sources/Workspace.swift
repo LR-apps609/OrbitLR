@@ -14,6 +14,10 @@ final class AppState: ObservableObject, @unchecked Sendable {
     let imagesTab = KindTabModel(accepts: [.img])
     /// 2.8.2 · La scheda File: PDF, documenti, fogli, presentazioni, testi.
     let filesTab = KindTabModel(accepts: [.pdf, .doc, .sheet, .slide, .text])
+    /// 3.0 · Gli strumenti veloci della scheda Video (comprimi, taglia, GIF…), tolti dal menu a torta.
+    let videoTools = KindTabModel(accepts: [.video])
+    /// 3.0 · La scheda Video mostra il montaggio o gli strumenti veloci.
+    @Published var videoMode: VideoMode = .montage
     /// La finestra principale, per riportarla in primo piano senza aprirne una seconda.
     weak var mainWindow: NSWindow?
     @Published var showBugReport = false
@@ -27,6 +31,8 @@ final class FileGroup: ObservableObject, Identifiable {
     let pie = PieModel()
     init(kind: Kind, files: [URL]) { self.kind = kind; self.files = files }
 }
+
+enum VideoMode: String { case montage, tools }
 
 struct PendingParam: Identifiable {
     let id = UUID()
@@ -127,7 +133,7 @@ final class Workspace: ObservableObject, @unchecked Sendable {
     private func rebuild(_ gr: FileGroup) {
         let pie = gr.pie
         let exts = Set(gr.files.map { Catalog.norm($0.pathExtension) })
-        let base = Catalog.actions(for: gr.kind, exts: exts, mergeable: mergeable, count: gr.files.count)
+        let base = Catalog.pieActions(for: gr.kind, exts: exts, mergeable: mergeable, count: gr.files.count)
         pie.setup(actions: PresetStore.shared.merged(base, kind: gr.kind))
         pie.loadEstimates(files: gr.files, kind: gr.kind)
         pie.tint = Theme.color(gr.kind)
@@ -154,6 +160,8 @@ final class Workspace: ObservableObject, @unchecked Sendable {
         UserDefaults.standard.set(chosen.id, forKey: "last_" + gr.kind.rawValue)
         gr.pie.lastId = chosen.id
         var targets = gr.files + subs
+        // 3.0 · «Modifica in…»: il file va nella sua scheda, con tutte le modifiche
+        if let t = Catalog.openTarget(a.id) { Drawer.send(gr.files, to: t); return }
         if Interactive.handles(a.id) { Interactive.open(a, files: gr.files); return }
         if a.id == "merge" {
             targets = groups.filter { $0.kind == .pdf || $0.kind == .img }.flatMap { $0.files }
@@ -317,7 +325,7 @@ struct WorkspaceView: View {
 
     @ViewBuilder private var statusBar: some View {
         if let job = ws.lastJob {
-            JobStatusBar(job: job, openQueue: { app.selection = .queue },
+            JobStatusBar(job: job, openQueue: { app.selection = .activity },
                          onClose: { withAnimation(.easeOut(duration: 0.2)) { ws.lastJob = nil } })
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         } else {

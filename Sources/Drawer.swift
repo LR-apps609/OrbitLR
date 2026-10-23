@@ -12,13 +12,14 @@ import SwiftUI
 
 /// Dove si può mandare un file.
 enum DrawerTarget: String, CaseIterable, Identifiable {
-    case video, music, audio, images, files, convert, finder
+    case video, music, videoTools, audio, images, files, convert, finder
     var id: String { rawValue }
 
     var title: String {
         switch self {
         case .video: return "Aggiungi al Video"
         case .music: return "Usa come musica nel Video"
+        case .videoTools: return "Comprimi, taglia e altro (Video)"
         case .audio: return "Apri in Audio"
         case .images: return "Apri in Immagini"
         case .files: return "Apri in File"
@@ -31,6 +32,7 @@ enum DrawerTarget: String, CaseIterable, Identifiable {
         switch self {
         case .video: return "film"
         case .music: return "music.note"
+        case .videoTools: return "slider.horizontal.3"
         case .audio: return "waveform"
         case .images: return "photo"
         case .files: return "doc.richtext"
@@ -82,7 +84,7 @@ final class Drawer: ObservableObject, @unchecked Sendable {
         var isDir: ObjCBool = false
         if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue { return [.finder] }
         switch Catalog.kind(of: url) {
-        case .video?: return [.video, .music, .audio, .convert, .finder]
+        case .video?: return [.video, .videoTools, .music, .audio, .convert, .finder]
         case .audio?: return [.music, .audio, .convert, .finder]
         case .img?: return [.images, .convert, .finder]
         case .pdf?, .doc?, .sheet?, .slide?, .text?: return [.files, .convert, .finder]
@@ -101,12 +103,18 @@ final class Drawer: ObservableObject, @unchecked Sendable {
             let s = VideoProjectStore.shared
             if s.currentID == nil { s.newProject(nil) }
             s.add(urls, undo: nil)
+            app.videoMode = .montage
             app.selection = .video
         case .music:
             let s = VideoProjectStore.shared
             if s.currentID == nil { s.newProject(nil) }
+            app.videoMode = .montage
             app.selection = .video
             Task { @MainActor in await s.setMusic(urls[0], undo: nil) }
+        case .videoTools:
+            app.videoTools.add(urls)
+            app.videoMode = .tools
+            app.selection = .video
         case .audio:
             app.audioTab.load(urls)
             app.selection = .audio

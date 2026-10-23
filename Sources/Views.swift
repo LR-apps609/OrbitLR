@@ -7,17 +7,15 @@ import QuickLook
 
 enum SidebarItem: String, CaseIterable, Identifiable {
     case workspace = "Conversione", files = "File", images = "Immagini", video = "Video", audio = "Audio",
-         queue = "Coda", history = "Cronologia", automation = "Automazioni", presets = "Preset", components = "Componenti",
+         activity = "Attività", automation = "Automazioni", presets = "Scorciatoie", components = "Componenti",
          help = "Aiuto"
     var id: String { rawValue }
     /// Le schede di lavoro (in alto) e le attività (sotto).
-    /// Solo quello che c'è davvero: File e Immagini compariranno quando avranno la loro schermata.
     static let tabs: [SidebarItem] = [.workspace, .files, .images, .video, .audio]
-    static let activities: [SidebarItem] = [.queue, .history, .help]
+    /// 3.0 · Coda e Cronologia sono una pagina sola: «Attività».
+    static let activities: [SidebarItem] = [.activity]
     /// Per chi vuole di più: chiuso di base, si apre con un clic.
     static let advanced: [SidebarItem] = [.automation, .presets, .components]
-    /// File e Immagini avranno la loro schermata nella 2.7: per ora si lavora da Conversione.
-    var comingSoon: Bool { false }
     var symbol: String {
         switch self {
         case .workspace: return "chart.pie.fill"
@@ -25,8 +23,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         case .images: return "photo.fill"
         case .video: return "film.fill"
         case .audio: return "waveform"
-        case .queue: return "tray.full.fill"
-        case .history: return "clock.arrow.circlepath"
+        case .activity: return "clock.arrow.circlepath"
         case .presets: return "star.circle.fill"
         case .automation: return "folder.badge.gearshape"
         case .components: return "shippingbox.fill"
@@ -40,8 +37,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         case .images: return Theme.color(.img)
         case .video: return Theme.color(.video)
         case .audio: return Theme.color(.audio)
-        case .queue: return Theme.brass
-        case .history: return Theme.color(.video)
+        case .activity: return Theme.brass
         case .presets: return Theme.brass
         case .automation: return Theme.color(.doc)
         case .components: return Theme.green
@@ -71,7 +67,7 @@ struct MainWindow: View {
                     Section("Schede") {
                         ForEach(SidebarItem.tabs) { item in sidebarRow(item) }
                     }
-                    Section("Attività") {
+                    Section {
                         ForEach(SidebarItem.activities) { item in sidebarRow(item) }
                     }
                     // 2.7.2 · «Avanzate» si vede che è un pulsante: icona, freccia che gira, sfondo leggero
@@ -94,7 +90,7 @@ struct MainWindow: View {
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        .help(advancedOpen ? "Nascondi Automazione, Preset e Componenti" : "Mostra Automazione, Preset e Componenti")
+                        .help(advancedOpen ? "Nascondi Automazioni, Scorciatoie e Componenti" : "Mostra Automazioni, Scorciatoie e Componenti")
                     }
                 }
                 .listStyle(.sidebar)
@@ -104,28 +100,14 @@ struct MainWindow: View {
                     // 3.0 · Il Cassetto al posto di «Risparmiati questo mese» (la cifra resta in Cronologia)
                     DrawerSidebar()
 
-                    Button { openSettings() } label: {
-                        Label("Opzioni", systemImage: "gearshape.fill")
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.vertical, 8).padding(.horizontal, 10)
-                            .contentShape(Rectangle())
+                    // 3.0 · Opzioni, Aiuto e Segnala un problema: una riga sola
+                    HStack(spacing: 6) {
+                        FooterButton(title: "Opzioni", symbol: "gearshape.fill", help: "Dove salvare i file, aspetto, avvio (⌘,)") { openSettings() }
+                        FooterButton(title: "Aiuto", symbol: "questionmark.circle.fill", help: "Guida, domande frequenti e scorciatoie",
+                                     selected: app.selection == .help) { app.selection = .help }
+                        FooterButton(title: "Segnala", symbol: "ladybug.fill", help: "Segnala un problema: mi arriva con uno screenshot") { app.showBugReport = true }
+                            .accessibilityLabel("Segnala un problema")
                     }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(Theme.ink)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Theme.ivory))
-                    .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.stroke))
-
-                    Button { app.showBugReport = true } label: {
-                        Label("Segnala bug", systemImage: "ladybug.fill")
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.vertical, 8).padding(.horizontal, 10)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(Theme.ink)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Theme.ivory))
-                    .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.stroke))
-                    .help("Qualcosa non va? Mandami una segnalazione con screenshot")
 
                     // 2.8.8 · La versione, sempre visibile; un clic controlla se ce n'è una nuova
                     Button {
@@ -155,10 +137,9 @@ struct MainWindow: View {
                     case .workspace: WorkspaceView(ws: app.workspace)
                     case .files: KindTabView(m: app.filesTab, style: .files)
                     case .images: KindTabView(m: app.imagesTab, style: .images)
-                    case .video: VideoEditorView(s: VideoProjectStore.shared)
+                    case .video: VideoTabView(s: VideoProjectStore.shared)
                     case .audio: AudioTabView(m: app.audioTab)
-                    case .queue: QueueView()
-                    case .history: HistoryView()
+                    case .activity: ActivityView()
                     case .presets: PresetsView()
                     case .automation: AutomationView()
                     case .components: ComponentsView()
@@ -204,15 +185,8 @@ struct MainWindow: View {
             } icon: {
                 Image(systemName: item.symbol).foregroundStyle(item.color)
             }
-            if item.comingSoon {
-                Spacer(minLength: 4)
-                Text("2.7").font(.system(size: 9.5, weight: .bold, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 5).padding(.vertical, 1)
-                    .background(Capsule().strokeBorder(Theme.stroke))
-            }
         }
-        .badge(item == .queue ? store.runningJobs.count : 0)
+        .badge(item == .activity ? store.runningJobs.count : 0)
         .tag(item)
         // 3.0 · Un file del Cassetto (o del Finder) trascinato sulla riga di una scheda: si apre lì
         .dropDestination(for: URL.self) { urls, _ in
@@ -220,35 +194,90 @@ struct MainWindow: View {
             Drawer.send(urls, to: t)
             return true
         }
-        .selectionDisabled(item.comingSoon)
-        .opacity(item.comingSoon ? 0.5 : 1)
-        .help(item.comingSoon ? "Schermata in arrivo: per ora usa Conversione" : "")
     }
 }
 
-// MARK: - Coda
+/// 3.0 · Un pulsante della riga in fondo alla barra laterale.
+private struct FooterButton: View {
+    let title: String
+    let symbol: String
+    let help: String
+    var selected = false
+    let action: () -> Void
+    @State private var hover = false
 
-struct QueueView: View {
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 3) {
+                Image(systemName: symbol).font(.system(size: 14, weight: .semibold))
+                Text(title).font(.system(size: 11, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.8)
+            }
+            .frame(maxWidth: .infinity).padding(.vertical, 7)
+            .foregroundStyle(Theme.ink)
+            .background(RoundedRectangle(cornerRadius: 8).fill(selected ? Theme.accent.opacity(0.18) : (hover ? Theme.ivory : Theme.ivory.opacity(0.7))))
+            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.stroke))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hover = $0 }
+        .help(help)
+    }
+}
+
+// MARK: - Attività (Coda e Cronologia insieme)
+
+struct ActivityView: View {
     @EnvironmentObject var store: QueueStore
     @EnvironmentObject var app: AppState
     @State var preview: URL? = nil
+
+    /// I lavori ancora aperti: in corso, in attesa, non riusciti o interrotti. Quelli finiti sono già nella cronologia.
+    private var open: [Job] { store.jobs.filter { $0.state != .done } }
 
     var body: some View {
         ZStack {
             Theme.background.ignoresSafeArea()
             VStack(alignment: .leading, spacing: 18) {
-                PageHeader(title: "Coda", subtitle: subtitle, color: Theme.orange) {
-                    Button("Svuota completati") { store.clearFinished() }
-                    Button { app.selection = .workspace } label: { Label("Nuova operazione", systemImage: "plus") }
-                        .buttonStyle(.borderedProminent)
+                PageHeader(title: "Attività", subtitle: subtitle, color: SidebarItem.activity.color) {
+                    if store.jobs.contains(where: { $0.state != .running && $0.state != .waiting }) {
+                        Button("Togli i completati") { store.clearFinished() }
+                            .help("Toglie dall’elenco i lavori finiti, non riusciti o interrotti (i file restano)")
+                    }
+                    if !store.history.isEmpty {
+                        Button(role: .destructive) {
+                            let a = NSAlert()
+                            a.messageText = "Svuotare la cronologia?"
+                            a.informativeText = "Spariscono tutte le voci dall’elenco. I file creati restano dove sono."
+                            a.addButton(withTitle: "Svuota")
+                            a.addButton(withTitle: "Annulla")
+                            if a.runModal() == .alertFirstButtonReturn { withAnimation(.easeOut(duration: 0.2)) { store.forgetAll() } }
+                        } label: { Label("Svuota la cronologia…", systemImage: "trash") }
+                        .help("Svuota la cronologia (i file non vengono toccati)")
+                    }
                 }
-                if store.jobs.isEmpty {
-                    EmptyState(symbol: "tray", color: Theme.orange, title: "La coda è vuota",
-                               text: "Le operazioni avviate dalla finestra o dal Finder compaiono qui, con il loro avanzamento.")
+                if open.isEmpty && store.history.isEmpty {
+                    EmptyState(symbol: "clock", color: SidebarItem.activity.color, title: "Ancora nessun lavoro",
+                               text: "Qui vedi quello che OrbitLR sta facendo e tutto quello che hai creato, giorno per giorno.")
                 } else {
                     ScrollView {
-                        LazyVStack(spacing: 10) {
-                            ForEach(store.jobs) { job in JobCard(job: job) { preview = $0 } }
+                        LazyVStack(alignment: .leading, spacing: 8, pinnedViews: [.sectionHeaders]) {
+                            if !open.isEmpty {
+                                Section {
+                                    ForEach(open) { job in JobCard(job: job) { preview = $0 } }
+                                } header: {
+                                    ActivityHeader(title: "Adesso", detail: openDetail)
+                                }
+                            }
+                            if !store.history.isEmpty {
+                                MonthStatsRow(stats: MonthStats.of(store.history)).padding(.vertical, 6)
+                            }
+                            ForEach(HistoryDay.group(store.history)) { day in
+                                Section {
+                                    ForEach(day.entries) { e in HistoryRow(entry: e) }
+                                } header: {
+                                    DayHeader(day: day)
+                                }
+                            }
                         }
                         .padding(.bottom, 20)
                     }
@@ -257,14 +286,35 @@ struct QueueView: View {
             .padding(28)
         }
         .quickLookPreview($preview, in: store.jobs.flatMap { $0.outputs })
-        .navigationTitle("Coda")
+        .navigationTitle("Attività")
     }
 
     private var subtitle: String {
         let r = store.runningJobs.count
         let w = store.jobs.filter { $0.state == .waiting }.count
-        if r == 0 && w == 0 { return "Nessuna operazione in corso" }
-        return "\(r) in corso" + (w > 0 ? " · \(w) in attesa" : "")
+        let saved = ByteCountFormatter.string(fromByteCount: store.savedThisMonth, countStyle: .file)
+        let now = r == 0 && w == 0 ? "Niente in corso" : "\(r) in corso" + (w > 0 ? " · \(w) in attesa" : "")
+        return now + (store.savedThisMonth > 0 ? " · \(saved) risparmiati questo mese" : "")
+    }
+
+    private var openDetail: String {
+        let n = open.count
+        return n == 1 ? "1 lavoro" : "\(n) lavori"
+    }
+}
+
+/// L'intestazione «Adesso» sopra i lavori in corso.
+private struct ActivityHeader: View {
+    let title: String
+    let detail: String
+    var body: some View {
+        HStack(spacing: 10) {
+            Text(title).font(.system(size: 13, weight: .bold, design: .rounded)).foregroundStyle(Theme.ink)
+            Text(detail).font(.system(size: 11.5)).foregroundStyle(.secondary)
+            Rectangle().fill(Theme.stroke).frame(height: 1)
+        }
+        .padding(.vertical, 6)
+        .background(Theme.background)
     }
 }
 
@@ -348,9 +398,9 @@ struct JobCard: View {
 
     @ViewBuilder private var actionButton: some View {
         switch job.state {
-        case .running, .waiting: Button("Annulla") { store.cancel(job) }
+        case .running, .waiting: Button("Interrompi") { store.cancel(job) }
         case .done:
-            Button("Mostra") { store.reveal(job.outputs.map { $0.path }) }
+            Button("Mostra nel Finder") { store.reveal(job.outputs.map { $0.path }) }
                 .buttonStyle(.borderedProminent).tint(Theme.green).disabled(job.outputs.isEmpty)
         case .failed, .cancelled: Button("Riprova") { store.retry(job) }
         }
@@ -394,53 +444,6 @@ struct MonthStatsRow: View {
     }
 }
 
-struct HistoryView: View {
-    @EnvironmentObject var store: QueueStore
-
-    var body: some View {
-        ZStack {
-            Theme.background.ignoresSafeArea()
-            VStack(alignment: .leading, spacing: 18) {
-                PageHeader(title: "Cronologia",
-                           subtitle: "Questo mese: \(ByteCountFormatter.string(fromByteCount: store.savedThisMonth, countStyle: .file)) risparmiati",
-                           color: SidebarItem.history.color) {
-                    if !store.history.isEmpty {
-                        Button(role: .destructive) {
-                            let a = NSAlert()
-                            a.messageText = "Cancellare tutta la Cronologia?"
-                            a.informativeText = "Spariscono tutte le voci dall’elenco. I file creati restano dove sono."
-                            a.addButton(withTitle: "Cancella tutto")
-                            a.addButton(withTitle: "Annulla")
-                            if a.runModal() == .alertFirstButtonReturn { withAnimation(.easeOut(duration: 0.2)) { store.forgetAll() } }
-                        } label: { Label("Cancella tutto", systemImage: "trash") }
-                        .help("Svuota la Cronologia (i file non vengono toccati)")
-                    }
-                }
-                if !store.history.isEmpty { MonthStatsRow(stats: MonthStats.of(store.history)) }
-                if store.history.isEmpty {
-                    EmptyState(symbol: "clock", color: SidebarItem.history.color, title: "Ancora nessuna operazione",
-                               text: "Ogni file creato finisce qui: puoi ritrovarlo o annullare l’operazione.")
-                } else {
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 8, pinnedViews: [.sectionHeaders]) {
-                            ForEach(HistoryDay.group(store.history)) { day in
-                                Section {
-                                    ForEach(day.entries) { e in HistoryRow(entry: e) }
-                                } header: {
-                                    DayHeader(day: day)
-                                }
-                            }
-                        }
-                        .padding(.bottom, 20)
-                    }
-                }
-            }
-            .padding(28)
-        }
-        .navigationTitle("Cronologia")
-    }
-}
-
 struct HistoryRow: View {
     let entry: HistoryEntry
     @EnvironmentObject var store: QueueStore
@@ -462,18 +465,32 @@ struct HistoryRow: View {
                     .font(.system(size: 12, design: .rounded)).foregroundStyle(a < b ? Theme.green : .secondary)
             }
             if entry.undone {
-                Text("Annullata").font(.system(size: 12)).foregroundStyle(.secondary)
+                Text("Nel Cestino").font(.system(size: 12)).foregroundStyle(.secondary)
             } else {
-                Button("Mostra") { store.reveal(entry.outputs) }
-                Button("Annulla") { store.undo(entry) }.help("Sposta nel Cestino i file creati da questa operazione")
+                if let first = entry.outputs.first, FileManager.default.fileExists(atPath: first) {
+                    UseInMenu(url: URL(fileURLWithPath: first), compact: true)
+                }
+                Button("Mostra nel Finder") { store.reveal(entry.outputs) }
             }
-            // 2.7.2 · Cestino: toglie solo la voce dall'elenco
-            Button { withAnimation(.easeOut(duration: 0.2)) { store.forget(entry) } } label: {
-                Image(systemName: "trash").foregroundStyle(.secondary)
+            // 3.0 · Un menu solo per le azioni meno frequenti
+            Menu {
+                if !entry.undone {
+                    Button("Elimina i file creati…") {
+                        let a = NSAlert()
+                        a.messageText = entry.outputs.count == 1 ? "Spostare il file nel Cestino?" : "Spostare \(entry.outputs.count) file nel Cestino?"
+                        a.informativeText = "Si possono ancora recuperare dal Cestino."
+                        a.addButton(withTitle: "Sposta nel Cestino")
+                        a.addButton(withTitle: "Annulla")
+                        if a.runModal() == .alertFirstButtonReturn { store.undo(entry) }
+                    }
+                }
+                Button("Togli dalla cronologia") { withAnimation(.easeOut(duration: 0.2)) { store.forget(entry) } }
+            } label: {
+                Image(systemName: "ellipsis.circle").foregroundStyle(.secondary)
             }
-            .buttonStyle(.borderless)
-            .help("Togli dalla Cronologia (il file resta dov’è)")
-            .accessibilityLabel("Togli dalla Cronologia")
+            .menuStyle(.button).buttonStyle(.borderless).fixedSize()
+            .help("Altro: elimina i file creati o togli la voce (il file resta dov’è)")
+            .accessibilityLabel("Altre azioni")
         }
         .padding(12)
         .card(radius: 12)
@@ -525,7 +542,7 @@ struct DayHeader: View {
     var body: some View {
         HStack(spacing: 10) {
             Text(day.title).font(.system(size: 13, weight: .bold, design: .rounded)).foregroundStyle(Theme.ink)
-            Text("\(day.entries.count) operazion\(day.entries.count == 1 ? "e" : "i")")
+            Text(day.entries.count == 1 ? "1 lavoro" : "\(day.entries.count) lavori")
                 .font(.system(size: 11)).foregroundStyle(.secondary)
             Rectangle().fill(Theme.stroke).frame(height: 1)
             if day.saved > 0 {
@@ -798,6 +815,7 @@ struct SettingsView: View {
     /// 2.9 · Motore video classico (senza filtri)
     @AppStorage(VideoProjectBuilder.classicKey) private var classicVideo = false
     @State var saved = false
+    @State private var advanced = false
 
     private var changed: Bool { draft != settings.draft }
 
@@ -826,64 +844,56 @@ struct SettingsView: View {
                         .font(.caption).foregroundStyle(.secondary)
                     Toggle("Conserva le date originali dei file", isOn: $draft.keepDates)
                 }
-                Section("Aspetto e suoni") {
-                    Picker("Aspetto", selection: $draft.appearance) {
-                        Text("Automatico (come il Mac)").tag("auto")
+                Section("Aspetto") {
+                    Picker("Chiaro o scuro", selection: $draft.appearance) {
+                        Text("Come il Mac").tag("auto")
                         Text("Chiaro").tag("light")
                         Text("Scuro · radio di notte").tag("dark")
                     }
-                    Picker("Tema", selection: $draft.palette) {
+                    Picker("Colori", selection: $draft.palette) {
                         ForEach(Palette.allCases) { p in
-                            HStack {
-                                Text(p.name)
-                            }
-                            .tag(p.rawValue)
+                            Text(p.name).tag(p.rawValue)
                         }
                     }
-                    Toggle("Suoni discreti (clic della manopola, scatto, fine lavoro)", isOn: $draft.sounds)
+                    Toggle("Suoni discreti (clic, scatto, fine lavoro)", isOn: $draft.sounds)
                     Picker("Opzioni nei pannelli", selection: $draft.controlStyle) {
                         Text("Elenco (più rapido)").tag("list")
                         Text("Manopole (stile radio)").tag("knob")
                     }
-                    Toggle("Schermata di avvio mentre OrbitLR si prepara", isOn: $draft.splash)
-                    Text("Dura solo il tempo vero di avvio. Non compare quando OrbitLR si apre per dei file o all’accesso al Mac.")
-                        .font(.caption).foregroundStyle(.secondary)
                 }
-                Section("Motori") {
-                    Toggle("Usa i motori di macOS quando possibile", isOn: $draft.useNative)
-                    Text("Immagini (JPG, PNG, HEIC, TIFF), MP4, MOV e M4A vengono fatti direttamente da macOS: più veloci, senza programmi da installare, e con i metadati originali. Disattivalo solo se un risultato non ti convince.")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-                Section("Trascrizione e testo dalle immagini") {
-                    Picker("Qualità", selection: $draft.quality) {
-                        Text("Veloce (modello da 470 MB)").tag("small")
-                        Text("Precisa (modello da 1,6 GB, consigliata per l’italiano)").tag("turbo")
-                    }
-                    Picker("Lingua", selection: $draft.language) {
-                        Text("Automatica").tag("auto")
-                        Text("Italiano").tag("it")
-                        Text("Inglese").tag("en")
-                        Text("Spagnolo").tag("es")
-                        Text("Francese").tag("fr")
-                        Text("Tedesco").tag("de")
-                    }
-                }
-                Section("Avvio rapido") {
+                Section("Avvio") {
+                    Toggle("Apri OrbitLR all’accesso al Mac (il menu si apre all’istante)", isOn: $draft.launchAtLogin)
                     Toggle("Scorciatoia ⌥⌘C sui file selezionati nel Finder", isOn: $draft.hotkey)
-                    Toggle("Apri OrbitLR all’accesso (menu sempre istantaneo)", isOn: $draft.launchAtLogin)
-                    Picker("Menu della vecchia Azione rapida", selection: $draft.quickActionMenu) {
-                        Text("Nativo").tag("native")
-                        Text("Classico").tag("classic")
-                    }
-                }
-                Section("Video") {
-                    Toggle("Motore video classico (senza filtri)", isOn: $classicVideo)
-                    Text("Usalo solo se un video si vede o si esporta male: torna al modo di prima, ma i filtri non si applicano.")
-                        .font(.system(size: 11)).foregroundStyle(.secondary)
-                }
-                Section("Aggiornamenti") {
                     Toggle("Controlla da sola se c’è una versione nuova (una volta al giorno)", isOn: $autoUpdate)
                     Button("Controlla adesso…") { Task { @MainActor in await UpdateCheck.check(userInitiated: true) } }
+                }
+                // 3.0 · Quello che serve di rado, chiuso di base
+                Section {
+                    DisclosureGroup("Avanzate", isExpanded: $advanced) {
+                        Toggle("Animazione di avvio", isOn: $draft.splash)
+                        Toggle("Usa i motori di macOS quando possibile", isOn: $draft.useNative)
+                        Text("Immagini, MP4, MOV e M4A li fa direttamente macOS: più veloce e senza programmi da installare. Disattivalo solo se un risultato non ti convince.")
+                            .font(.caption).foregroundStyle(.secondary)
+                        Toggle("Motore video classico (senza filtri)", isOn: $classicVideo)
+                        Text("Solo se un video si vede o si esporta male: torna al modo di prima, ma filtri ed effetti non si applicano.")
+                            .font(.caption).foregroundStyle(.secondary)
+                        Picker("Trascrizione e testo dalle foto", selection: $draft.quality) {
+                            Text("Veloce (scarica 470 MB)").tag("small")
+                            Text("Precisa (scarica 1,6 GB, meglio per l’italiano)").tag("turbo")
+                        }
+                        Picker("Lingua della trascrizione", selection: $draft.language) {
+                            Text("Automatica").tag("auto")
+                            Text("Italiano").tag("it")
+                            Text("Inglese").tag("en")
+                            Text("Spagnolo").tag("es")
+                            Text("Francese").tag("fr")
+                            Text("Tedesco").tag("de")
+                        }
+                        Picker("Menu del clic destro nel Finder", selection: $draft.quickActionMenu) {
+                            Text("Menu a torta").tag("native")
+                            Text("Elenco classico").tag("classic")
+                        }
+                    }
                 }
             }
             .formStyle(.grouped)
@@ -899,12 +909,12 @@ struct SettingsView: View {
                         .font(.system(size: 12)).foregroundStyle(Theme.green)
                 }
                 Spacer()
-                Button("Annulla") {
-                    draft = settings.draft
-                    NSApp.keyWindow?.close()
+                Button(changed ? "Scarta" : "Chiudi") {
+                    if changed { draft = settings.draft } else { NSApp.keyWindow?.close() }
                 }
                 .keyboardShortcut(.cancelAction)
-                Button("Applica modifiche") {
+                .help(changed ? "Butta le modifiche non applicate" : "Chiudi le Opzioni")
+                Button("Applica") {
                     settings.apply(draft)
                     withAnimation { saved = true }
                 }

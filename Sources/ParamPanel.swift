@@ -134,9 +134,9 @@ struct ParamView: View {
             }
             if presetable {
                 VStack(alignment: .leading, spacing: 6) {
-                    Toggle("Salva come preset", isOn: $savePreset)
+                    Toggle("Salva come scorciatoia", isOn: $savePreset)
                     if savePreset {
-                        TextField("Nome del preset, es. «Instagram»", text: $presetName)
+                        TextField("Nome della scorciatoia, per esempio «Instagram»", text: $presetName)
                     }
                 }
                 .padding(10)
@@ -375,7 +375,7 @@ struct ParamView: View {
             .padding(10)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: 8).fill(Theme.parchment.opacity(0.5)))
-            note("I file vengono rinominati in ordine di nome. Si può annullare dalla Cronologia.")
+            note("I file vengono rinominati in ordine di nome. Si può tornare indietro da Attività.")
         }
     }
 

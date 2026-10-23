@@ -137,6 +137,36 @@ enum VideoProjectLibrary {
 
 // MARK: - La schermata Progetti
 
+/// 3.0 · La scheda Video: il montaggio (progetti) oppure gli strumenti veloci su uno o più video.
+struct VideoTabView: View {
+    @ObservedObject var s: VideoProjectStore
+    @ObservedObject private var app = AppState.shared
+
+    var body: some View {
+        if app.videoMode == .tools {
+            KindTabView(m: app.videoTools, style: .video)
+        } else {
+            VideoEditorView(s: s)
+        }
+    }
+}
+
+/// Montaggio · Strumenti veloci, in cima alla scheda Video.
+struct VideoModeSwitch: View {
+    @ObservedObject private var app = AppState.shared
+
+    var body: some View {
+        Picker("", selection: $app.videoMode) {
+            Text("Montaggio").tag(VideoMode.montage)
+            Text("Strumenti veloci").tag(VideoMode.tools)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .fixedSize()
+        .help("Montaggio: più video, testi e musica in un progetto. Strumenti veloci: comprimi, taglia, GIF e altro, su uno o tanti video")
+    }
+}
+
 struct VideoProjectsView: View {
     @ObservedObject var s: VideoProjectStore
     @Environment(\.undoManager) private var undo
@@ -149,11 +179,12 @@ struct VideoProjectsView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Progetti video").font(.system(size: 22, weight: .bold, design: .rounded))
-                    Text(s.library.isEmpty ? "Crea il primo progetto: trascina qui dei video o premi «Nuovo progetto»."
+                    Text("Video").font(.system(size: 22, weight: .bold, design: .rounded))
+                    Text(s.library.isEmpty ? "Trascina qui dei video per iniziare un montaggio."
                                            : "Clicca un progetto per riprenderlo da dove eri rimasto.")
                         .font(.system(size: 12.5)).foregroundStyle(.secondary)
                 }
+                VideoModeSwitch().padding(.leading, 8).alignmentGuide(.firstTextBaseline) { $0[.bottom] - 8 }
                 Spacer()
                 Button { s.newProject(undo) } label: { Label("Nuovo progetto", systemImage: "plus") }
                     .buttonStyle(.borderedProminent).tint(Theme.accent).controlSize(.large)

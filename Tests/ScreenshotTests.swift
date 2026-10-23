@@ -113,8 +113,7 @@ final class ScreenshotTests: XCTestCase {
     }
 
     func test5_AttivitaEAiuto() throws {
-        both("13-coda", QueueView())
-        both("14-cronologia", HistoryView())
+        both("13-attivita", ActivityView())
         both("15-aiuto", HelpView())
         both("16-opzioni", SettingsView(), size: CGSize(width: 640, height: 620))
     }

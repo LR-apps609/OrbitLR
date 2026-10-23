@@ -38,8 +38,8 @@ final class LayoutTests: XCTestCase {
         s.closeProject(nil)
     }
     func testAudio() { check("Audio", AudioTabView(m: MediaTabModel(videoTab: false, projectsFolder: folder()))) }
-    func testCoda() { check("Coda", QueueView()) }
-    func testCronologia() { check("Cronologia", HistoryView()) }
+    func testAttivita() { check("Attività", ActivityView()) }
+    func testStrumentiVideo() { check("Strumenti video", KindTabView(m: KindTabModel(accepts: [.video]), style: .video)) }
     func testAiuto() { check("Aiuto", HelpView()) }
 
     /// 2.9.2 · La schermata dei permessi sta nella schedina di avvio (500 × 470), anche con la riga dei ✕.

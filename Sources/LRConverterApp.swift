@@ -158,6 +158,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         bringMainWindow(attempt: 0)
     }
 
+    /// 3.0 · Porta davanti la finestra principale (per «Modifica in…» dal menu del Finder).
+    static func showMain() {
+        LaunchGate.release()
+        NSApp.activate()
+        bringMainWindow(attempt: 0)
+    }
+
     /// Mostra la finestra principale se esiste già (dopo la schedina di avvio); non ne crea di nuove.
     static func revealMainWindow() {
         guard let w = AppState.shared.mainWindow else { return }

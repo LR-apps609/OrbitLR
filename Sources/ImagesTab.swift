@@ -56,6 +56,26 @@ final class KindTabModel: ObservableObject, @unchecked Sendable {
     var formats: [Action] { actions.filter { $0.id.hasPrefix("to:") } }
     var tools: [Action] { actions.filter { !$0.id.hasPrefix("to:") } }
 
+    /// 3.0 · Gli strumenti divisi in pochi gruppi con un nome chiaro, nell'ordine di sempre.
+    struct ToolGroup: Identifiable { let title: String; let actions: [Action]; var id: String { title } }
+
+    var toolGroups: [ToolGroup] {
+        let k = kind ?? .img
+        var order: [String] = []
+        var groups: [String: [Action]] = [:]
+        for a in tools {
+            let g = Catalog.toolGroup(a.id, kind: k)
+            if groups[g] == nil { order.append(g) }
+            groups[g, default: []].append(a)
+        }
+        let fixed = Catalog.toolGroupOrder(kind: k)
+        order.sort { (fixed.firstIndex(of: $0) ?? 99) < (fixed.firstIndex(of: $1) ?? 99) }
+        return order.map { ToolGroup(title: $0, actions: groups[$0] ?? []) }
+    }
+
+    /// Il peso dei file su cui si lavora.
+    var targetBytes: Int64 { targets.reduce(Int64(0)) { $0 + Job.size(of: $1) } }
+
     func add(_ urls: [URL]) {
         let all = PieController.expand(urls)
         let images = all.filter { Catalog.kind(of: $0).map { accepts.contains($0) } ?? false }
@@ -65,8 +85,8 @@ final class KindTabModel: ObservableObject, @unchecked Sendable {
         let room = max(0, Self.maxFiles - files.count)
         files += fresh.prefix(room)
         if others > 0 {
-            let what = accepts == [.img] ? "un'immagine" : "un documento"
-            let whatMany = accepts == [.img] ? "immagini" : "documenti"
+            let what = accepts == [.img] ? "un’immagine" : (accepts == [.video] ? "un video" : "un documento")
+            let whatMany = accepts == [.img] ? "immagini" : (accepts == [.video] ? "video" : "documenti")
             notice = others == 1 ? "1 file non è \(what): aprilo da Conversione." : "\(others) file non sono \(whatMany): aprili da Conversione."
         } else if fresh.count > room {
             notice = "Al massimo \(Self.maxFiles) file insieme."
@@ -150,6 +170,12 @@ struct KindTabStyle {
         dropSubtitle: "oppure clicca per sceglierle · JPG, PNG, HEIC, RAW, PSD, AVIF e altre · fino a \(KindTabModel.maxFiles) insieme",
         intro: "Converti, ridimensiona, togli lo sfondo e altro, su una o tante foto", noun: "foto", types: [.image])
 
+    /// 3.0 · Gli strumenti veloci della scheda Video, nella stessa disposizione di Immagini e File.
+    static let video = KindTabStyle(
+        title: "Video", kind: .video, dropTitle: "Trascina qui i video",
+        dropSubtitle: "oppure clicca per sceglierli · MP4, MOV, MKV, AVI e altri · fino a \(KindTabModel.maxFiles) insieme",
+        intro: "Comprimi, taglia, fai una GIF e altro, su uno o tanti video", noun: "video", types: [.movie])
+
     static let files = KindTabStyle(
         title: "File", kind: .pdf, dropTitle: "Trascina qui PDF e documenti",
         dropSubtitle: "oppure clicca per sceglierli · PDF, Word, Excel, PowerPoint, testi · fino a \(KindTabModel.maxFiles) insieme",
@@ -211,8 +237,10 @@ struct KindTabView: View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(style.title).font(.system(size: 22, weight: .bold, design: .rounded))
-                Text(subtitle).font(.system(size: 12)).foregroundStyle(.secondary)
+                Text(subtitle).font(.system(size: 12.5)).foregroundStyle(.secondary)
+                    .help(m.files.isEmpty ? "" : (fem ? "Clic su una foto per sceglierla, ⌘-clic per sceglierne più di una" : "Clic su un file per sceglierlo, ⌘-clic per sceglierne più di uno"))
             }
+            if style.kind == .video { VideoModeSwitch().padding(.leading, 8) }
             Spacer()
             if !m.files.isEmpty {
                 if !m.selection.isEmpty {
@@ -227,12 +255,12 @@ struct KindTabView: View {
         }
     }
 
+    /// 3.0 · «3 foto · 2,8 MB»: quanti e quanto pesano, niente istruzioni (sono nel suggerimento).
     private var subtitle: String {
         if m.files.isEmpty { return style.intro }
-        if m.selection.isEmpty {
-            return "\(m.files.count) \(style.noun) · clic per sceglierne " + (fem ? "una, ⌘-clic per sceglierne più di una" : "uno, ⌘-clic per sceglierne più di uno")
-        }
-        return "\(m.selection.count) di \(m.files.count) \(style.noun) " + (fem ? "scelte" : "scelti")
+        let size = ByteCountFormatter.string(fromByteCount: m.targetBytes, countStyle: .file)
+        if m.selection.isEmpty { return "\(m.files.count) \(style.noun) · \(size)" }
+        return "\(m.selection.count) di \(m.files.count) \(style.noun) " + (fem ? "scelte" : "scelti") + " · \(size)"
     }
 
     private var fem: Bool { style.noun == "foto" }
@@ -242,7 +270,7 @@ struct KindTabView: View {
         p.allowsMultipleSelection = true
         p.canChooseDirectories = true
         p.allowedContentTypes = style.types
-        p.message = style.kind == .img ? "Scegli le foto" : "Scegli i file"
+        p.message = style.kind == .img ? "Scegli le foto" : (style.kind == .video ? "Scegli i video" : "Scegli i file")
         if p.runModal() == .OK { m.add(p.urls) }
     }
 }
@@ -306,15 +334,14 @@ private struct ImagesInspector: View {
     @ObservedObject var m: KindTabModel
     let tint: Color
     let noun: String
+    @State private var hovered: String? = nil
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(m.targets.isEmpty ? "Cosa vuoi fare?" : "Su \(m.targets.count) \(noun)")
-                        .font(.system(size: 15, weight: .bold))
-                    Text(m.targets.isEmpty ? (noun == "foto" ? "Aggiungi delle foto per iniziare." : "Aggiungi dei file per iniziare.") : "Ora: " + ByteCountFormatter.string(fromByteCount: currentBytes, countStyle: .file))
-                        .font(.system(size: 11.5)).foregroundStyle(.secondary)
+                    Text("Cosa vuoi fare?").font(.system(size: 15, weight: .bold))
+                    Text(scope).font(.system(size: 12)).foregroundStyle(.secondary)
                 }
                 if m.kindCount > 1 {
                     // 2.8.2 · Tipi diversi insieme: si sceglie su quali lavorare
@@ -335,11 +362,13 @@ private struct ImagesInspector: View {
                         ForEach(m.formats) { a in formatButton(a) }
                     }
                 } }
-                if !m.tools.isEmpty { section("Strumenti") {
-                    VStack(spacing: 4) {
-                        ForEach(m.tools) { a in toolRow(a) }
+                ForEach(m.toolGroups) { g in
+                    section(g.title) {
+                        VStack(spacing: 2) {
+                            ForEach(g.actions) { a in toolRow(a) }
+                        }
                     }
-                } }
+                }
             }
             .padding(16)
         }
@@ -348,7 +377,17 @@ private struct ImagesInspector: View {
         .opacity(m.files.isEmpty ? 0.55 : 1)
     }
 
-    private var currentBytes: Int64 { m.targets.reduce(Int64(0)) { $0 + Job.size(of: $1) } }
+    private var currentBytes: Int64 { m.targetBytes }
+
+    /// Su quali file si lavora, in parole.
+    private var scope: String {
+        let fem = noun == "foto"
+        if m.files.isEmpty { return fem ? "Aggiungi delle foto per iniziare." : (noun == "video" ? "Aggiungi dei video per iniziare." : "Aggiungi dei file per iniziare.") }
+        let n = m.targets.count
+        if !m.selection.isEmpty { return n == 1 ? (fem ? "Sulla foto scelta" : "Sul \(noun) scelto") : (fem ? "Sulle \(n) foto scelte" : "Sui \(n) \(noun) scelti") }
+        if n == 1 { return fem ? "Sulla foto" : (noun == "video" ? "Sul video" : "Sul file") }
+        return fem ? "Su tutte le \(n) foto" : "Su tutti i \(n) \(noun)"
+    }
 
     private var kinds: [Kind] {
         var seen = Set<Kind>()
@@ -390,9 +429,11 @@ private struct ImagesInspector: View {
                 Image(systemName: a.symbol).font(.system(size: 13, weight: .semibold)).foregroundStyle(tint)
                     .frame(width: 26, height: 26).background(Circle().fill(tint.opacity(0.14)))
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(a.title).font(.system(size: 12.5, weight: .semibold)).lineLimit(1)
+                    Text(a.title).font(.system(size: 13, weight: .semibold)).lineLimit(1)
                     if !a.hint.isEmpty {
-                        Text(a.hint).font(.system(size: 10.5)).foregroundStyle(.secondary).lineLimit(1)
+                        // 3.0 · La spiegazione intera, mai tagliata
+                        Text(a.hint).font(.system(size: 11.5)).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 Spacer(minLength: 0)
@@ -401,9 +442,11 @@ private struct ImagesInspector: View {
                 }
             }
             .padding(.horizontal, 8).padding(.vertical, 6)
+            .background(RoundedRectangle(cornerRadius: 8).fill(hovered == a.id ? tint.opacity(0.1) : .clear))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help(a.param != nil ? "Si aprono le opzioni prima di iniziare" : "Parte subito")
+        .onHover { hovered = $0 ? a.id : (hovered == a.id ? nil : hovered) }
+        .help(a.param != nil ? "Prima scegli le opzioni, poi parte" : "Parte subito")
     }
 }

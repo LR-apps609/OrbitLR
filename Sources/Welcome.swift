@@ -264,9 +264,9 @@ enum News {
     static func place(of item: String) -> SidebarItem? {
         let s = item.lowercased()
         if s.hasPrefix("video") || s.contains("progetti") || s.contains("montaggio") { return .video }
-        if s.hasPrefix("cronologia") { return .history }
+        if s.hasPrefix("cronologia") || s.hasPrefix("attività") { return .activity }
         if s.hasPrefix("audio") || s.contains("testo in voce") { return .audio }
-        if s.hasPrefix("coda") { return .queue }
+        if s.hasPrefix("coda") { return .activity }
         if s.contains("torta") || s.contains("spicchi") || s.hasPrefix("conversione") { return .workspace }
         return nil
     }
@@ -288,10 +288,10 @@ struct Tip: Equatable {
             text: "Nella scheda Audio scrivi un testo e OrbitLR lo legge in un file audio. Le voci «Premium» di macOS sono le più naturali."),
         Tip(symbol: "space", title: "Anteprima con Spazio",
             text: "Con un file aperto nel menu, premi Spazio per vederlo grande, come nel Finder."),
-        Tip(symbol: "star.circle.fill", title: "Preset con scorciatoia",
-            text: "Spunta «Salva come preset» quando scegli le opzioni, poi assegnagli ⌃⌥1…9 nella pagina Preset: selezioni i file nel Finder e parte da solo."),
+        Tip(symbol: "star.circle.fill", title: "Le tue scorciatoie",
+            text: "Spunta «Salva come scorciatoia» quando scegli le opzioni, poi assegnale ⌃⌥1…9 nella pagina Scorciatoie: selezioni i file nel Finder e parte da sola."),
         Tip(symbol: "square.split.2x1", title: "Confronta prima e dopo",
-            text: "Dopo una compressione, nella Coda premi Confronta e trascina la linea per vedere la differenza, anche ingrandita."),
+            text: "Dopo una compressione, in Attività premi Confronta e trascina la linea per vedere la differenza, anche ingrandita."),
         Tip(symbol: "keyboard", title: "Tasti 1–8",
             text: "Nel menu a torta ogni spicchio ha il suo numero. Invio ripete l’ultima scelta per quel tipo di file."),
         Tip(symbol: "arrow.up.and.down.and.arrow.left.and.right", title: "Trascina il risultato",
@@ -301,15 +301,15 @@ struct Tip: Equatable {
         Tip(symbol: "dial.medium", title: "Manopole",
             text: "Le manopole si girano trascinando, con la rotellina o con le frecce. Un clic passa alla posizione successiva."),
         Tip(symbol: "moon.stars.fill", title: "Radio di notte",
-            text: "In Opzioni → Aspetto e suoni scegli la modalità scura e il tema: salvia, celeste o terracotta."),
+            text: "In Opzioni → Aspetto scegli la modalità scura e il tema: salvia, celeste o terracotta."),
         Tip(symbol: "command", title: "Tutte le scorciatoie",
             text: "Il pulsante ⌘ in alto nella finestra mostra sempre l’elenco completo delle scorciatoie."),
         Tip(symbol: "arrow.uturn.backward.circle.fill", title: "Si può sempre annullare",
-            text: "Nella Cronologia, «Annulla» sposta nel Cestino i file creati e rimette a posto le rinomine."),
+            text: "In Attività, ⋯ → «Elimina i file creati…» li sposta nel Cestino e rimette a posto le rinomine. Nel montaggio c’è ⌘Z."),
         Tip(symbol: "folder.fill", title: "Anche le cartelle",
             text: "Trascina una cartella intera: OrbitLR prende tutti i file che contiene, divisi per tipo."),
         Tip(symbol: "eye.slash", title: "Privacy delle foto",
-            text: "«Rimuovi i metadati» toglie posizione GPS, dispositivo e data prima di condividere una foto."),
+            text: "«Rimuovi i metadati» toglie posizione, modello del telefono e data prima di condividere una foto."),
     ]
 
     /// Un suggerimento diverso a ogni avvio, a giro.
@@ -508,11 +508,11 @@ struct WelcomeView: View {
             PageInfo(symbol: "command", color: Theme.color(.pdf), title: "Seleziona e premi ⌥⌘C",
                      text: "Seleziona i file nel Finder e premi ⌥⌘C: il menu a torta si apre accanto al puntatore.",
                      tips: ["Muovi il mouse verso un’azione e fai clic", "Tasti 1–8 per scegliere, Invio = ultima scelta",
-                            "I tuoi preset partono con ⌃⌥1…9"]),
+                            "Le tue scorciatoie partono con ⌃⌥1…9"]),
             PageInfo(symbol: "hand.draw.fill", color: Theme.color(.video), title: "Trascina, oppure usa la finestra",
                      text: "Trascina i file nella finestra di OrbitLR o sulla sua icona nel Dock. L’icona in alto a destra, nella barra dei menu, mostra i lavori in corso.",
                      tips: ["Spazio = anteprima del file", "Il pulsante ⌘ in alto elenca tutte le scorciatoie",
-                            "Nella Coda: Confronta, per vedere prima e dopo"]),
+                            "In Attività: Confronta, per vedere prima e dopo"]),
         ]
     }
 

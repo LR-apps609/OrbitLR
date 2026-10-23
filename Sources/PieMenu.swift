@@ -362,14 +362,6 @@ struct PieView: View {
         .scaleEffect(on ? 1.15 : 1)
         .shadow(color: on ? model.tint.opacity(0.6) : .clear, radius: 16, y: 6)
         .animation(.spring(response: 0.22, dampingFraction: 0.7), value: on)
-        .overlay(alignment: .bottom) {
-            // 2.7.7 · il tasto che lo sceglie (1–9), piccolo, per chi usa la tastiera
-            if i < 9 && !on && petal >= 64 && model.query.isEmpty && model.estimates[a.id] == nil {
-                Text("\(i + 1)").font(.system(size: max(8, petal * 0.1), weight: .bold, design: .rounded))
-                    .foregroundStyle(Theme.ink.opacity(0.35))
-                    .offset(y: -petal * 0.04)
-            }
-        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(a.title)
         .accessibilityValue(model.estimates[a.id].map { "peso previsto " + SizeEstimate.label($0).replacingOccurrences(of: "≈ ", with: "circa ") } ?? "")
@@ -398,7 +390,7 @@ struct PieView: View {
         } else if model.inMore {
             VStack(spacing: 6) {
                 Image(systemName: "chevron.backward.circle.fill").font(.system(size: 26)).foregroundStyle(model.tint)
-                Text("Altre azioni").font(.system(size: 14, weight: .semibold))
+                Text("Altri formati").font(.system(size: 14, weight: .semibold))
                 Text("Clic qui per tornare").font(.system(size: 11)).foregroundStyle(.secondary)
             }
         } else {
@@ -408,11 +400,7 @@ struct PieView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 Text(model.fileName).font(.system(size: 12, weight: .semibold)).lineLimit(2).truncationMode(.middle)
                     .multilineTextAlignment(.center)
-                Text(model.subtitle).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1)
-                if side >= 400 {
-                    Label("Scrivi per cercare", systemImage: "magnifyingglass")
-                        .font(.system(size: 9)).foregroundStyle(.tertiary)
-                }
+                Text(model.subtitle).font(.system(size: 10.5)).foregroundStyle(.secondary).lineLimit(1)
             }
             .padding(14)
         }
@@ -435,7 +423,7 @@ struct PieView: View {
             }
             .padding(.bottom, 2)
             if results.isEmpty {
-                Text("Nessuna azione").font(.system(size: 11)).foregroundStyle(.secondary)
+                Text("Nessun risultato").font(.system(size: 11)).foregroundStyle(.secondary)
             } else {
                 ForEach(Array(results.prefix(5).enumerated()), id: \.element.id) { i, a in
                     let on = i == model.resultIndex
@@ -555,7 +543,7 @@ final class PieController: @unchecked Sendable {
             .filter { let k = Catalog.kind(of: $0); return k == .pdf || k == .img }.count
         let exts = Set(files.map { Catalog.norm($0.pathExtension) })
         let model = PieModel()
-        model.setup(actions: PresetStore.shared.merged(Catalog.actions(for: kind, exts: exts, mergeable: mergeable, count: files.count), kind: kind))
+        model.setup(actions: PresetStore.shared.merged(Catalog.pieActions(for: kind, exts: exts, mergeable: mergeable, count: files.count), kind: kind))
         model.tint = Theme.color(kind)
         model.suggestedId = Catalog.suggested(for: kind, exts: exts)
         model.fileName = files.count == 1 ? files[0].lastPathComponent : "\(files.count) \(kind.name)"
@@ -564,7 +552,7 @@ final class PieController: @unchecked Sendable {
         model.lastId = UserDefaults.standard.string(forKey: "last_" + kind.rawValue)
         if let a = model.lastAction { model.subtitle = "Invio: " + a.short }
         else if let s = model.suggestedAction { model.subtitle = "Consigliato: " + s.short }
-        else { model.subtitle = "Scegli un’azione" }
+        else { model.subtitle = "Scegli un formato" }
         model.onClose = { [weak self] in self?.close(); self?.pending = [] }
         model.onPick = { [weak self] chosen in
             guard let self else { return }
@@ -573,6 +561,15 @@ final class PieController: @unchecked Sendable {
             var presetParam: String? = nil
             if let r = PresetStore.shared.resolve(chosen) { action = r.0; presetParam = r.1 }
             self.close()
+            // 3.0 · «Modifica in…»: apre OrbitLR sulla scheda giusta, con i file già dentro
+            if let t = Catalog.openTarget(action.id) {
+                Task { @MainActor in
+                    AppDelegate.showMain()
+                    Drawer.send(files, to: t)
+                }
+                self.pending = []
+                return
+            }
             if Interactive.handles(action.id) {
                 Interactive.open(action, files: files)
                 self.pending = []
