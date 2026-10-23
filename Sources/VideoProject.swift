@@ -44,6 +44,8 @@ struct VPMusic: Codable, Equatable, Sendable {
 }
 
 struct VideoProject: Codable, Equatable, Sendable {
+    /// 2.7.3 · Nome del progetto nella schermata Progetti.
+    var name: String? = nil
     var clips: [VPClip] = []
     var music: VPMusic? = nil
     var originalVolume: Double = 1

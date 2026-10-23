@@ -225,7 +225,7 @@ final class VideoProjectTests: XCTestCase {
     func testUndoRedoSplitAndTrim() async throws {
         let a = try await Fixtures.video(name: "u1.mp4", width: 320, height: 180, seconds: 4)
         let ia = try await info(a)
-        let s = VideoProjectStore()
+        let s = VideoProjectStore(folder: Fixtures.dir.appendingPathComponent("progetti-\(UUID().uuidString)"))
         let um = UndoManager()
         um.groupsByEvent = false
         func step(_ f: () -> Void) { um.beginUndoGrouping(); f(); um.endUndoGrouping() }

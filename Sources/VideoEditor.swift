@@ -25,6 +25,11 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     @Published var selected: UUID? = nil
     @Published var notice: String? = nil
     @Published var lastJob: Job? = nil
+    /// 2.7.3 · Il progetto aperto (nil = si vede la schermata Progetti) e l'elenco dei progetti salvati.
+    @Published private(set) var currentID: UUID? = nil
+    @Published private(set) var library: [VPEntry] = []
+    @Published private(set) var covers: [UUID: NSImage] = [:]
+    let folder: URL
 
     let clock = PlayClock()
     let player = AVPlayer()
@@ -34,9 +39,10 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     private var loading: Set<String> = []
     private(set) var previewDuration: Double = 0
 
-    private var saveURL: URL { Paths.support.appendingPathComponent("Progetto video.json") }
+    private var saveURL: URL? { currentID.map { VideoProjectLibrary.url(for: $0, in: folder) } }
 
-    init() {
+    init(folder: URL = VideoProjectLibrary.folder) {
+        self.folder = folder
         observer = player.addPeriodicTimeObserver(forInterval: CMTime(value: 1, timescale: 20), queue: .main) { [weak self] t in
             guard let self else { return }
             let s = t.seconds
@@ -44,7 +50,8 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             if abs(self.clock.time - s) > 0.001 { self.clock.time = s }
             if self.clock.playing, self.previewDuration > 0, s >= self.previewDuration - 0.04 { self.pause() }
         }
-        restore()
+        if folder == VideoProjectLibrary.folder { VideoProjectLibrary.migrateLegacy(to: folder) }
+        refreshLibrary()
     }
 
     // MARK: Stato derivato
@@ -355,11 +362,80 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         selected = nil
     }
 
+    /// 2.7.3 · Apre un progetto nuovo e vuoto (quello aperto resta salvato tra i Progetti).
     func newProject(_ undo: UndoManager?) {
+        closeProject(undo)
+        var p = VideoProject()
+        p.name = VideoProjectLibrary.uniqueName(existing: library.map { $0.name })
+        currentID = UUID()
+        project = p
+        scheduleRebuild()
+    }
+
+    /// 2.7.3 · Riapre un progetto salvato, ritrovando i file spostati.
+    func openProject(_ id: UUID, undo: UndoManager?) {
+        closeProject(undo)
+        guard var p = VideoProjectLibrary.read(VideoProjectLibrary.url(for: id, in: folder)) else {
+            notice = "Questo progetto non si apre più."
+            refreshLibrary()
+            return
+        }
+        notice = Self.relink(&p)
+        currentID = id
+        project = p
+        ensureLoaded()
+        ensureSpeech()
+        scheduleRebuild()
+    }
+
+    /// 2.7.3 · Chiude il progetto (resta salvato) e torna alla schermata Progetti.
+    func closeProject(_ undo: UndoManager?) {
         pause()
-        change(undo, "Nuovo progetto") { $0 = VideoProject() }
-        lastJob = nil
+        rebuildTask?.cancel()
+        saveWork?.cancel()
+        saveNow()
+        undo?.removeAllActions(withTarget: self)        // il ⌘Z di un progetto non deve toccare un altro
+        if let id = currentID { covers[id] = nil }      // la copertina si rifà: la prima clip può essere cambiata
+        currentID = nil
+        project = VideoProject()
+        selected = nil
         notice = nil
+        lastJob = nil
+        player.replaceCurrentItem(with: nil)
+        previewDuration = 0
+        clock.time = 0
+        refreshLibrary()
+    }
+
+    func renameProject(_ id: UUID, to name: String) {
+        let n = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !n.isEmpty else { return }
+        if id == currentID { project.name = n; scheduleSave() } else { VideoProjectLibrary.rename(id, to: n, in: folder) }
+        refreshLibrary()
+    }
+
+    func duplicateProject(_ id: UUID) {
+        if id == currentID { saveNow() }
+        _ = VideoProjectLibrary.duplicate(id, in: folder, existing: library.map { $0.name })
+        refreshLibrary()
+    }
+
+    func deleteProject(_ id: UUID, undo: UndoManager?) {
+        if id == currentID { closeProject(undo) }
+        VideoProjectLibrary.trash(id, in: folder)
+        covers[id] = nil
+        refreshLibrary()
+    }
+
+    func refreshLibrary() {
+        library = VideoProjectLibrary.list(in: folder)
+        for e in library where covers[e.id] == nil {
+            guard let path = e.coverPath else { continue }
+            let id = e.id, t = e.coverTime
+            Task { @MainActor [weak self] in
+                if let img = await VideoProjectLibrary.cover(path: path, at: t) { self?.covers[id] = img }
+            }
+        }
     }
 
     // MARK: Musica
@@ -423,13 +499,18 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
 
     private func scheduleSave() {
         saveWork?.cancel()
-        let p = project, url = saveURL
-        let w = DispatchWorkItem {
-            try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-            if let d = try? JSONEncoder().encode(VideoProjectStore.withBookmarks(p)) { try? d.write(to: url, options: .atomic) }
-        }
+        guard let url = saveURL else { return }
+        let p = project
+        let w = DispatchWorkItem { VideoProjectLibrary.save(p, to: url) }
         saveWork = w
-        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.6, execute: w)
+        VideoProjectLibrary.queue.asyncAfter(deadline: .now() + 0.6, execute: w)
+    }
+
+    /// Salva subito (alla chiusura del progetto).
+    func saveNow() {
+        guard let url = saveURL else { return }
+        let p = project
+        VideoProjectLibrary.queue.sync { VideoProjectLibrary.save(p, to: url) }   // in coda dopo eventuali salvataggi in corso
     }
 
     /// Aggiunge (o rinfresca) i segnalibri prima di salvare.
@@ -448,8 +529,8 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         return u.path
     }
 
-    private func restore() {
-        guard let d = try? Data(contentsOf: saveURL), var p = try? JSONDecoder().decode(VideoProject.self, from: d) else { return }
+    /// Ritrova i file spostati; toglie quelli spariti e restituisce l'avviso da mostrare (nil se va tutto bene).
+    static func relink(_ p: inout VideoProject) -> String? {
         let fm = FileManager.default
         let before = p.clips.count
         // File spostati o rinominati: li ritrova il segnalibro
@@ -461,12 +542,8 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         var lost: [String] = []
         if p.clips.count < before { lost.append(before - p.clips.count == 1 ? "1 clip" : "\(before - p.clips.count) clip") }
         if let m = p.music, !fm.fileExists(atPath: m.path) { p.music = nil; lost.append("la musica") }
-        if !lost.isEmpty {
-            notice = "Non trovo più \(lost.joined(separator: " e ")) del progetto: il file è stato cancellato o è su un disco scollegato."
-        }
-        project = p
-        ensureLoaded()
-        scheduleRebuild()
+        guard !lost.isEmpty else { return nil }
+        return "Non trovo più \(lost.joined(separator: " e ")) del progetto: il file è stato cancellato o è su un disco scollegato."
     }
 }
 
@@ -495,6 +572,14 @@ struct VideoEditorView: View {
     private let tint = Theme.color(.video)
 
     var body: some View {
+        if s.currentID == nil {
+            VideoProjectsView(s: s)        // 2.7.3 · fase «pre»: prima si sceglie il progetto
+        } else {
+            editor
+        }
+    }
+
+    private var editor: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
             if s.project.clips.isEmpty {
@@ -527,8 +612,9 @@ struct VideoEditorView: View {
     private var header: some View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(s.project.clips.isEmpty ? "Video" : "Progetto video")
+                Text(VideoProjectLibrary.displayName(s.project))
                     .font(.system(size: s.project.clips.isEmpty ? 22 : 15, weight: .bold, design: s.project.clips.isEmpty ? .rounded : .default))
+                    .lineLimit(1)
                 if !s.project.clips.isEmpty {
                     Text("\(s.project.clips.count) clip · \(formatShort(s.project.duration))" + (s.project.music != nil ? " · con musica" : ""))
                         .font(.system(size: 12)).foregroundStyle(.secondary)
@@ -542,17 +628,16 @@ struct VideoEditorView: View {
                 Button { undo?.redo() } label: { Image(systemName: "arrow.uturn.forward") }
                     .help("Ripeti (⇧⌘Z)")
                 Button("Aggiungi video…") { choose(audio: false) }
-                Button("Nuovo progetto") {
-                    // 2.7.1 · Il progetto c'è uno solo: prima di cancellarlo si chiede.
-                    let a = NSAlert()
-                    a.messageText = "Iniziare un nuovo progetto?"
-                    a.informativeText = "Il montaggio attuale verrà tolto. Puoi recuperarlo con ⌘Z finché OrbitLR resta aperta. I tuoi file originali non vengono toccati."
-                    a.addButton(withTitle: "Nuovo progetto")
-                    a.addButton(withTitle: "Annulla")
-                    if a.runModal() == .alertFirstButtonReturn { s.newProject(undo) }
-                }
-                .help("Ricomincia da capo")
             }
+            // 2.7.3 · ✕ in alto a destra: chiude il progetto (resta salvato) e torna ai Progetti
+            Button { s.closeProject(undo) } label: {
+                Image(systemName: "xmark").font(.system(size: 12, weight: .bold))
+                    .frame(width: 26, height: 26)
+                    .background(Circle().fill(Theme.ink.opacity(0.08)))
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut(.escape, modifiers: [.command])
+            .help("Chiudi il progetto e torna ai Progetti (resta salvato) · ⌘Esc")
         }
     }
 

@@ -1,3 +1,10 @@
+Novità della 2.7.3 «Progetti»:
+• Video: nuova schermata Progetti, come in CapCut. Prima di montare scegli il progetto da riprendere o ne crei uno nuovo
+• Più progetti salvati insieme, ognuno con copertina, durata e data; clic per riprenderlo da dove eri rimasto
+• Rinomina, Duplica ed Elimina dal menu «…» o con il tasto destro (l'eliminato va nel Cestino, i video non si toccano)
+• ✕ in alto a destra nel montaggio: chiude il progetto, che resta salvato, e torna ai Progetti
+• Il progetto della versione precedente diventa «Progetto 1»
+
 Novità della 2.7.2:
 • Video: ✕ sulla clip selezionata e tasto ⌫ per toglierla (si annulla con ⌘Z)
 • Cronologia: cestino accanto a ogni voce e «Cancella tutto» (i file restano dove sono)
