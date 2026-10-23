@@ -11,12 +11,12 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     /// Le schede di lavoro (in alto) e le attività (sotto).
     /// Solo quello che c'è davvero: File e Immagini compariranno quando avranno la loro schermata.
-    static let tabs: [SidebarItem] = [.workspace, .video, .audio]
+    static let tabs: [SidebarItem] = [.workspace, .images, .video, .audio]
     static let activities: [SidebarItem] = [.queue, .history]
     /// Per chi vuole di più: chiuso di base, si apre con un clic.
     static let advanced: [SidebarItem] = [.automation, .presets, .components]
     /// File e Immagini avranno la loro schermata nella 2.7: per ora si lavora da Conversione.
-    var comingSoon: Bool { self == .files || self == .images }
+    var comingSoon: Bool { self == .files }
     var symbol: String {
         switch self {
         case .workspace: return "chart.pie.fill"
@@ -141,7 +141,8 @@ struct MainWindow: View {
             ZStack {
                 Group {
                     switch app.selection ?? .workspace {
-                    case .workspace, .files, .images: WorkspaceView(ws: app.workspace)
+                    case .workspace, .files: WorkspaceView(ws: app.workspace)
+                    case .images: ImagesTabView(m: app.imagesTab)
                     case .video: VideoEditorView(s: VideoProjectStore.shared)
                     case .audio: AudioTabView(m: app.audioTab)
                     case .queue: QueueView()

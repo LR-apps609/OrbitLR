@@ -1,3 +1,9 @@
+Novità della 2.8 «Immagini»:
+• Nuova scheda Immagini nella barra laterale: le foto a sinistra, a destra tutto quello che puoi farci
+• Converti in JPG, PNG, HEIC, PDF e altri con il peso previsto su ogni formato
+• Strumenti a portata di clic: ridimensiona, togli lo sfondo, raddrizza, migliora, testo dalle foto e altro
+• Lavori su tutte le foto o solo su quelle scelte (clic per sceglierne una, ⌘-clic per più di una)
+
 Novità della 2.7.7 «Accessibilità»:
 • VoiceOver legge gli spicchi della torta con il peso previsto e il tasto per sceglierli, le clip del montaggio («Clip 2 di 3, 0:05, senza audio») e tutti i pulsanti con sola icona
 • Conversione: sugli spicchi c'è il numero del tasto (1–9) per scegliere senza mouse

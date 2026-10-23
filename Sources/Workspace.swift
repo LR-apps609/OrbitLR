@@ -10,6 +10,8 @@ final class AppState: ObservableObject, @unchecked Sendable {
     let workspace = Workspace()
     /// La scheda Audio tiene il suo file anche quando si cambia scheda (la scheda Video è un progetto a sé).
     let audioTab = MediaTabModel(videoTab: false)
+    /// 2.8 · Le foto della scheda Immagini restano anche cambiando scheda.
+    let imagesTab = ImagesTabModel()
     /// La finestra principale, per riportarla in primo piano senza aprirne una seconda.
     weak var mainWindow: NSWindow?
     @Published var showBugReport = false
