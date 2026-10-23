@@ -194,13 +194,16 @@ enum Catalog {
 
     static func toolGroupOrder(kind: Kind) -> [String] {
         switch kind {
-        case .img: return ["Modifica", "Migliora", "Altro"]
-        case .video: return ["Taglia e unisci", "Peso e grandezza", "Audio e sottotitoli", "Altro"]
-        default: return ["Organizza", "Proteggi", "Altro"]
+        case .img: return [mineGroup, "Modifica", "Migliora", "Altro"]
+        case .video: return [mineGroup, "Taglia e unisci", "Peso e grandezza", "Audio e sottotitoli", "Altro"]
+        default: return [mineGroup, "Organizza", "Proteggi", "Altro"]
         }
     }
 
+    static let mineGroup = "Le tue scorciatoie"
+
     static func toolGroup(_ id: String, kind: Kind) -> String {
+        if id.hasPrefix("preset:") || id.hasPrefix("recipe:") { return mineGroup }     // 3.2 · in cima, le proprie
         switch kind {
         case .img:
             switch id {

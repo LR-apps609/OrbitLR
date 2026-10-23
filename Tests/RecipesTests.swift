@@ -41,6 +41,7 @@ final class RecipesTests: XCTestCase {
         XCTAssertEqual(menu.count, 2)
         XCTAssertEqual(store.recipe(for: menu[1])?.id, r.id)
         XCTAssertEqual(RecipeStore(url: file).recipes.count, 1, "resta salvata")
+        XCTAssertEqual(Catalog.toolGroup(menu[1].id, kind: .audio), Catalog.mineGroup, "nelle schede stanno in cima")
         store.delete(r)
         XCTAssertTrue(store.recipes.isEmpty)
     }
