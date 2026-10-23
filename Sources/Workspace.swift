@@ -525,11 +525,12 @@ struct JobStatusBar: View {
             }
             if job.state == .done && !job.outputs.isEmpty {
                 UseInMenu(url: job.outputs[0])          // 3.0 · il passo successivo, in un clic
-                Button("Mostra") { store.reveal(job.outputs.map { $0.path }) }.buttonStyle(.borderedProminent).tint(Theme.green)
+                Button("Mostra nel Finder") { store.reveal(job.outputs.map { $0.path }) }.buttonStyle(.borderedProminent).tint(Theme.green)
             } else if job.state == .running {
                 Button("Interrompi") { store.cancel(job) }
             }
-            Button("Coda") { openQueue() }
+            Button("Attività") { openQueue() }
+                .help("Tutti i lavori, in corso e fatti")
             if let onClose {
                 // Chiude la barra (il lavoro resta nella Coda). Se sta ancora lavorando, continua in sottofondo.
                 Button(action: onClose) {
@@ -542,7 +543,7 @@ struct JobStatusBar: View {
                 .buttonStyle(.plain)
                 .onHover { hoverClose = $0 }
                 .help(job.state == .running || job.state == .waiting
-                      ? "Nascondi: il lavoro continua e lo trovi nella Coda" : "Chiudi (il risultato resta nella Coda)")
+                      ? "Nascondi: il lavoro continua e lo trovi in Attività" : "Chiudi (il risultato resta in Attività)")
             }
         }
         .padding(14)
