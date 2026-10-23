@@ -1,3 +1,8 @@
+Novità della 2.9.2:
+• Permessi tutti all'inizio: una schermata «Prima di iniziare» chiede insieme l'accesso a Scrivania, Documenti, Download, le notifiche e il Finder, invece di farli comparire a metà lavoro
+• La schermata compare al primo avvio e dopo ogni aggiornamento (senza la firma Apple, macOS dimentica i permessi a ogni nuova versione); puoi anche rimandare
+• Menu a torta: la ✕ per togliere il file ora sta dentro il cerchio centrale e non tocca più le azioni intorno
+
 Novità della 2.9.1:
 • Video: «+ Aggiungi musica» sotto le clip ora apre subito la scelta del brano (prima apriva solo il passo «Audio e musica»)
 • Video: come musica puoi scegliere anche un video: si usa il suo audio

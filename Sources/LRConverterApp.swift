@@ -61,7 +61,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         // Notifiche con il pulsante «Mostra»
         let center = UNUserNotificationCenter.current()
         center.delegate = self
-        center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        // 2.9.2 · Al primo avvio il permesso si chiede nella schermata «Prima di iniziare», insieme agli altri
+        if !WelcomeController.isFirstLaunch { center.requestAuthorization(options: [.alert, .sound]) { _, _ in } }
         let show = UNNotificationAction(identifier: "SHOW", title: "Mostra", options: [.foreground])
         center.setNotificationCategories([UNNotificationCategory(identifier: "DONE", actions: [show], intentIdentifiers: [])])
 

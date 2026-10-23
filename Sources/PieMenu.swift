@@ -266,7 +266,7 @@ struct PieView: View {
                 }
                 .buttonStyle(.plain)
                 .help(removeHelp)
-                .position(x: mid.x + centerSize * 0.36, y: mid.y - centerSize * 0.36)
+                .position(x: mid.x + centerSize * 0.27, y: mid.y - centerSize * 0.27)   // 2.9.2 · dentro il cerchio: fuori toccava lo spicchio
                 .opacity(Double(bloom))
             }
         }

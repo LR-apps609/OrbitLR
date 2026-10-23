@@ -12,7 +12,7 @@ import AppKit
 final class WelcomeController: ObservableObject, @unchecked Sendable {
     static let shared = WelcomeController()
 
-    enum Phase: Equatable { case loading, page(Int), tip, news }
+    enum Phase: Equatable { case loading, permissions, page(Int), tip, news }
 
     struct Step: Identifiable {
         let id: Int
@@ -38,6 +38,10 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
     /// Dopo un aggiornamento: al posto del suggerimento compare «Cosa c'è di nuovo».
     @Published var justUpdated = false
     @Published var fromVersion = ""
+    /// 2.9.2 · I permessi di macOS, chiesti qui all'inizio e non a metà lavoro.
+    let permissions = Permissions()
+    /// Dopo la schermata dei permessi: le tre schermate (primo avvio) o le novità (aggiornamento).
+    private var afterPermissions: Phase? = nil
     private var window: NSWindow?
     private var hidden: [NSWindow] = []
 
@@ -142,12 +146,24 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
     private func afterLoading(quick: Bool) {
         guard window != nil else { return }
         if !quick {
-            withAnimation(.easeInOut(duration: 0.35)) { phase = .page(0) }
-        } else if justUpdated && !News.items.isEmpty {
+            afterPermissions = .page(0)
+            withAnimation(.easeInOut(duration: 0.35)) { phase = .permissions }
+        } else if justUpdated {
             justUpdated = false
-            withAnimation(.easeInOut(duration: 0.35)) { phase = .news }
+            afterPermissions = News.items.isEmpty ? nil : .news
+            withAnimation(.easeInOut(duration: 0.35)) { phase = .permissions }
         } else {
             finish()                 // pronta: la schedina sfuma e compare la finestra
+        }
+    }
+
+    /// Fine della schermata dei permessi (chiesti o rimandati).
+    func permissionsDone() {
+        if let p = afterPermissions {
+            afterPermissions = nil
+            withAnimation(.easeInOut(duration: 0.35)) { phase = p }
+        } else {
+            finish()
         }
     }
 
@@ -321,6 +337,9 @@ struct WelcomeView: View {
                 tipView.transition(.opacity)
             case .news:
                 newsView.transition(.opacity)
+            case .permissions:
+                PermissionsView(p: ctl.permissions, firstLaunch: ctl.firstLaunch) { ctl.permissionsDone() }
+                    .transition(.opacity)
             case .page(let n):
                 page(n).transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity),
                                                removal: .move(edge: .leading).combined(with: .opacity)))
@@ -534,6 +553,74 @@ struct WelcomeView: View {
                     .buttonStyle(.borderedProminent).tint(Theme.accent)
             }
             .padding(.horizontal, 28).padding(.bottom, 22)
+        }
+    }
+}
+
+// MARK: - 2.9.2 · Permessi
+
+struct PermissionsView: View {
+    @ObservedObject var p: Permissions
+    let firstLaunch: Bool
+    let onDone: () -> Void
+
+    var body: some View {
+        VStack(spacing: 12) {
+            ZStack {
+                Circle().fill(Theme.accent.opacity(0.14)).frame(width: 60, height: 60)
+                Image(systemName: "lock.open.fill").font(.system(size: 24, weight: .semibold)).foregroundStyle(Theme.accent)
+            }
+            .padding(.top, 22)
+            Text("Prima di iniziare").font(.system(size: 20, weight: .bold, design: .rounded))
+            Text(firstLaunch
+                 ? "macOS ti chiederà alcuni permessi. Meglio adesso, tutti insieme, che a metà lavoro."
+                 : "Dopo un aggiornamento macOS chiede di nuovo i permessi. Meglio adesso, tutti insieme, che a metà lavoro.")
+                .font(.system(size: 12.5)).foregroundStyle(.secondary)
+                .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 400)
+            VStack(spacing: 0) {
+                ForEach(p.items) { it in
+                    HStack(spacing: 10) {
+                        Image(systemName: it.symbol).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.accent)
+                            .frame(width: 22)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(it.title).font(.system(size: 12.5, weight: .semibold))
+                            Text(it.why).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+                        }
+                        Spacer(minLength: 6)
+                        status(it.state)
+                    }
+                    .padding(.vertical, 5).padding(.horizontal, 12)
+                }
+            }
+            .padding(.vertical, 4)
+            .background(RoundedRectangle(cornerRadius: 12).fill(Theme.ink.opacity(0.05)))
+            .padding(.horizontal, 28)
+            if p.items.contains(where: { $0.state == .denied }) {
+                Text("Quelli con ✕ si possono dare dopo in Impostazioni di Sistema → Privacy e sicurezza.")
+                    .font(.system(size: 11)).foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+            HStack {
+                if !p.done && !p.running { Button("Più tardi") { onDone() } }
+                Spacer()
+                Button(p.done ? "Continua" : "Concedi i permessi") {
+                    if p.done { onDone() } else { p.askAll { } }
+                }
+                .keyboardShortcut(.defaultAction)
+                .buttonStyle(.borderedProminent).tint(Theme.accent)
+                .disabled(p.running)
+            }
+            .padding(.horizontal, 28).padding(.bottom, 22)
+        }
+    }
+
+    @ViewBuilder private func status(_ s: Permissions.State) -> some View {
+        switch s {
+        case .waiting: Image(systemName: "circle").foregroundStyle(Theme.ink.opacity(0.25))
+        case .asking: ProgressView().controlSize(.small)
+        case .granted: Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.green)
+        case .denied: Image(systemName: "xmark.circle.fill").foregroundStyle(.red.opacity(0.75))
         }
     }
 }

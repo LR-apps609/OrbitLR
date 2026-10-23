@@ -32,4 +32,14 @@ final class LayoutTests: XCTestCase {
     func testCoda() { check("Coda", QueueView()) }
     func testCronologia() { check("Cronologia", HistoryView()) }
     func testAiuto() { check("Aiuto", HelpView()) }
+
+    /// 2.9.2 · La schermata dei permessi sta nella schedina di avvio (500 × 470), anche con la riga dei ✕.
+    func testPermessi() {
+        let p = Permissions()
+        for i in p.items.indices { p.items[i].state = i % 2 == 0 ? .denied : .granted }
+        p.done = true
+        let host = NSHostingController(rootView: PermissionsView(p: p, firstLaunch: false) {}.frame(width: 500))
+        let fit = host.sizeThatFits(in: CGSize(width: 500, height: 470))
+        XCTAssertLessThanOrEqual(fit.height, 471, "permessi: troppo alta (\(Int(fit.height)) punti)")
+    }
 }
