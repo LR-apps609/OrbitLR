@@ -57,8 +57,12 @@ final class VideoTextsTests: XCTestCase {
         let before = lum(try await frame(b, at: 0.5), zone)
         let during = lum(try await frame(b, at: 1.8), zone)
         let after = lum(try await frame(b, at: 2.8), zone)
+        // Lo sfondo del video di prova cambia colore col tempo: si confronta con lo stesso istante senza testi
+        var plain = p; plain.texts = nil
+        let bp = try await VideoProjectBuilder.build(plain, infos: [v.path: info], speech: [:], maxSide: 640, engine: .frames)
+        let afterPlain = lum(try await frame(bp, at: 2.8), zone)
         XCTAssertGreaterThan(during, before + 0.12, "il titolo bianco si vede")
-        XCTAssertEqual(after, before, accuracy: 0.06, "e poi sparisce")
+        XCTAssertEqual(after, afterPlain, accuracy: 0.03, "e poi sparisce")
 
         p.resolution = 720
         let out = Fixtures.dir.appendingPathComponent("testi-out.mp4")
