@@ -15,21 +15,60 @@ import QuickLookThumbnailing
 // MARK: - Miniature
 
 /// Le miniature già create, così scorrendo la Cronologia non vengono rifatte.
+/// 3.4.4 · Anche sul disco (Cache di OrbitLR): al riavvio, Cassetto, Attività e schede le hanno subito.
 final class ThumbCache: @unchecked Sendable {
     static let shared = ThumbCache()
     private let cache = NSCache<NSString, NSImage>()
+    private let disk = DispatchQueue(label: "orbitlr.miniature", qos: .utility, attributes: .concurrent)
+    static var folder: URL { Paths.home.appendingPathComponent("Library/Caches/OrbitLR/Miniature", isDirectory: true) }
+
+    init() { cache.countLimit = 600 }
+
+    private static func key(_ url: URL, _ side: CGFloat) -> String { "\(url.path)|\(Int(side))|\(stamp(url))" }
+
+    /// Il file sul disco per una miniatura (nome = impronta della chiave).
+    static func diskURL(_ key: String) -> URL {
+        var h: UInt64 = 1469598103934665603                    // FNV-1a: stabile tra un avvio e l'altro
+        for b in key.utf8 { h = (h ^ UInt64(b)) &* 1099511628211 }
+        return folder.appendingPathComponent(String(h, radix: 36) + ".png")
+    }
+
+    /// Solo dalla memoria, subito (per mostrare la miniatura già al primo disegno, senza dissolvenze).
+    func cached(for url: URL?, side: CGFloat) -> NSImage? {
+        guard let url else { return nil }
+        return cache.object(forKey: Self.key(url, side) as NSString)
+    }
 
     func image(for url: URL, side: CGFloat, done: @escaping (NSImage?) -> Void) {
-        let key = "\(url.path)|\(Int(side))|\(Self.stamp(url))" as NSString
-        if let img = cache.object(forKey: key) { done(img); return }
+        let k = Self.key(url, side)
+        if let img = cache.object(forKey: k as NSString) { done(img); return }
         guard FileManager.default.fileExists(atPath: url.path) else { done(nil); return }
         let t0 = CACurrentMediaTime()
-        let req = QLThumbnailGenerator.Request(fileAt: url, size: CGSize(width: side, height: side),
-                                               scale: NSScreen.main?.backingScaleFactor ?? 2, representationTypes: .thumbnail)
-        QLThumbnailGenerator.shared.generateBestRepresentation(for: req) { [weak self] rep, _ in
-            let img = rep?.nsImage
-            if let img { self?.cache.setObject(img, forKey: key); Perf.record(.thumbnail, CACurrentMediaTime() - t0) }
-            DispatchQueue.main.async { done(img) }
+        disk.async { [weak self] in
+            let file = Self.diskURL(k)
+            if let img = NSImage(contentsOf: file) {
+                self?.cache.setObject(img, forKey: k as NSString)
+                Perf.record(.thumbnail, CACurrentMediaTime() - t0)
+                DispatchQueue.main.async { done(img) }
+                return
+            }
+            let req = QLThumbnailGenerator.Request(fileAt: url, size: CGSize(width: side, height: side),
+                                                   scale: 2, representationTypes: .thumbnail)
+            QLThumbnailGenerator.shared.generateBestRepresentation(for: req) { rep, _ in
+                let img = rep?.nsImage
+                if let img {
+                    self?.cache.setObject(img, forKey: k as NSString)
+                    Perf.record(.thumbnail, CACurrentMediaTime() - t0)
+                    if let cg = rep?.cgImage {
+                        self?.disk.async {
+                            try? FileManager.default.createDirectory(at: Self.folder, withIntermediateDirectories: true)
+                            let rep = NSBitmapImageRep(cgImage: cg)
+                            try? rep.representation(using: .png, properties: [:])?.write(to: file, options: .atomic)
+                        }
+                    }
+                }
+                DispatchQueue.main.async { done(img) }
+            }
         }
     }
 
@@ -37,6 +76,19 @@ final class ThumbCache: @unchecked Sendable {
     private static func stamp(_ url: URL) -> Int {
         let d = (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
         return Int(d.timeIntervalSince1970)
+    }
+
+    /// Le miniature sul disco più vecchie di 30 giorni se ne vanno (all'avvio, in sottofondo).
+    static func trimDisk(olderThan days: Double = 30) {
+        DispatchQueue.global(qos: .background).async {
+            let fm = FileManager.default
+            let limit = Date().addingTimeInterval(-days * 86_400)
+            guard let items = try? fm.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.contentAccessDateKey]) else { return }
+            for u in items {
+                let d = (try? u.resourceValues(forKeys: [.contentAccessDateKey]).contentAccessDate) ?? .distantPast
+                if d < limit { try? fm.removeItem(at: u) }
+            }
+        }
     }
 }
 
@@ -48,6 +100,14 @@ struct FileThumb: View {
     let kind: Kind?
     var size: CGFloat = 44
     @State private var image: NSImage? = nil
+
+    init(url: URL?, kind: Kind?, size: CGFloat = 44) {
+        self.url = url
+        self.kind = kind
+        self.size = size
+        // 3.4.4 · Se la miniatura è già pronta, c'è dal primo disegno: niente riquadro vuoto né dissolvenza
+        _image = State(initialValue: ThumbCache.shared.cached(for: url, side: size * 2))
+    }
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -67,10 +127,11 @@ struct FileThumb: View {
             }
         }
         .frame(width: size, height: size)
-        .animation(.easeOut(duration: 0.25), value: image != nil)
+        .animation(Motion.quick, value: image != nil)
         .task(id: url?.path) {
+            guard let url else { image = nil; return }
+            if let hit = ThumbCache.shared.cached(for: url, side: size * 2) { image = hit; return }
             image = nil
-            guard let url else { return }
             ThumbCache.shared.image(for: url, side: size * 2) { img in image = img }
         }
     }

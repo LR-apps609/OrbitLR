@@ -45,6 +45,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         Appearance.apply()
         Sounds.shared.prepare()
         cleanOldTemporaryFiles()
+        ThumbCache.trimDisk()                // 3.4.4 · miniature sul disco: via quelle vecchie
         // 3.2 · La torta già pronta per la prima apertura (dopo che l'avvio ha finito il suo lavoro)
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) { PieController.shared.prewarm() }
 

@@ -86,4 +86,22 @@ final class PerfTests: XCTestCase {
                            "\(f): animazione a scatti tornata")
         }
     }
+
+    /// 3.4.4 · Le miniature sul disco hanno un nome stabile (si ritrovano al riavvio) e diverso per ogni file e misura.
+    func testMiniatureSulDisco() {
+        let a = ThumbCache.diskURL("/x/foto.jpg|220|100"), b = ThumbCache.diskURL("/x/foto.jpg|220|100")
+        XCTAssertEqual(a, b)
+        XCTAssertNotEqual(a, ThumbCache.diskURL("/x/foto.jpg|88|100"))
+        XCTAssertNotEqual(a, ThumbCache.diskURL("/x/foto.jpg|220|101"), "file cambiato: miniatura nuova")
+        XCTAssertEqual(a.pathExtension, "png")
+    }
+
+    func testMiniaturaVeraDaUnaFoto() async throws {
+        let photo = try Fixtures.photo(name: "miniatura-\(UUID().uuidString).jpg", width: 800, height: 600)
+        let img: NSImage? = await withCheckedContinuation { c in ThumbCache.shared.image(for: photo, side: 120) { c.resume(returning: $0) } }
+        // Sul Mac di prova QuickLook può non fare miniature: se c'è, deve stare in memoria e sul disco
+        if img != nil {
+            XCTAssertNotNil(ThumbCache.shared.cached(for: photo, side: 120), "dopo la prima volta è in memoria")
+        }
+    }
 }

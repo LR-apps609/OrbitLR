@@ -284,17 +284,24 @@ private struct ImageTile: View {
     @State private var image: NSImage? = nil
     @State private var hover = false
 
+    init(url: URL, selected: Bool, tint: Color, tap: @escaping (Bool) -> Void, remove: @escaping () -> Void) {
+        self.url = url; self.selected = selected; self.tint = tint; self.tap = tap; self.remove = remove
+        _image = State(initialValue: ThumbCache.shared.cached(for: url, side: 220))     // 3.4.4 · subito, se già pronta
+    }
+
     var body: some View {
         VStack(spacing: 5) {
             ZStack {
                 RoundedRectangle(cornerRadius: 10).fill(tint.opacity(0.12))
                 if let image {
                     Image(nsImage: image).resizable().scaledToFit().padding(4)
+                        .transition(.opacity)
                 } else {
-                    Image(systemName: "photo").font(.system(size: 24)).foregroundStyle(tint)
+                    Image(systemName: "photo").font(.system(size: 24)).foregroundStyle(tint.opacity(0.6))
                 }
             }
             .frame(height: 104)
+            .animation(Motion.quick, value: image != nil)
             .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(selected ? Theme.brass : (hover ? tint.opacity(0.5) : .clear),
                                                                      lineWidth: selected ? 3 : 1.5))
             .overlay(alignment: .topTrailing) {
@@ -321,7 +328,9 @@ private struct ImageTile: View {
         .onTapGesture { tap(NSEvent.modifierFlags.contains(.command) || NSEvent.modifierFlags.contains(.shift)) }
         .onHover { hover = $0 }
         .fileDrag(url)
-        .task(id: url.path) { ThumbCache.shared.image(for: url, side: 220) { image = $0 } }
+        .task(id: url.path) {
+            if image == nil { ThumbCache.shared.image(for: url, side: 220) { image = $0 } }
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(url.lastPathComponent + (selected ? ", scelta" : ""))
         .accessibilityAddTraits(.isButton)
