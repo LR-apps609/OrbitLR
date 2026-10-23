@@ -41,6 +41,24 @@ final class LayoutTests: XCTestCase {
     func testAttivita() { check("Attività", ActivityView()) }
     func testStrumentiVideo() { check("Strumenti video", KindTabView(m: KindTabModel(accepts: [.video]), style: .video)) }
     func testAiuto() { check("Aiuto", HelpView()) }
+    func testScorciatoie() { check("Scorciatoie", PresetsView()) }
+
+    /// 3.0 · Ogni strumento dell'Audio sta nella finestra più piccola, anche con un file aperto.
+    func testAudioTuttiGliStrumenti() throws {
+        let m = MediaTabModel(videoTab: false, projectsFolder: folder())
+        m.load([try Fixtures.wav(Fixtures.tone(seconds: 5), name: "layout-audio.wav")])
+        for t in AudioTool.allCases { check("Audio · \(t.title)", AudioTabView(m: m, startTool: t)) }
+    }
+
+    /// 3.0 · Ogni pannello del montaggio sta nella finestra più piccola.
+    func testVideoTuttiIPannelli() async throws {
+        let v = try await Fixtures.video(name: "layout-video-2.mp4", width: 320, height: 180, seconds: 2)
+        let s = VideoProjectStore(folder: folder())
+        s.newProject(nil)
+        s.change(nil, "Aggiungi") { $0.clips = [VPClip(path: v.path, inPoint: 0, outPoint: 2)] }
+        for t in VideoEditTool.allCases { check("Video · \(t.rawValue)", VideoEditorView(s: s, startTool: t)) }
+        s.closeProject(nil)
+    }
 
     /// 2.9.2 · La schermata dei permessi sta nella schedina di avvio (500 × 470), anche con la riga dei ✕.
     func testPermessi() {
