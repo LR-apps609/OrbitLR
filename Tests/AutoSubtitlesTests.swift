@@ -20,6 +20,12 @@ final class AutoSubtitlesTests: XCTestCase {
         XCTAssertEqual(lines.map(\.text), ["Ciao a tutti.", "Oggi", "si"])
     }
 
+    func testLingua() {
+        XCTAssertEqual(AutoSubtitles.preferredLocale(setting: "en").identifier, "en-US")
+        XCTAssertEqual(AutoSubtitles.preferredLocale(setting: "auto", system: Locale(identifier: "fr_FR")).identifier, "fr-FR")
+        XCTAssertEqual(AutoSubtitles.preferredLocale(setting: "auto", system: Locale(identifier: "ja_JP")).identifier, "it-IT")
+    }
+
     func testTempiDelMontaggio() {
         // Clip che usa il file da 10 a 20 s, a velocità 2×, e parte a 5 s nel montaggio
         var c = VPClip(path: "/x.mp4", inPoint: 10, outPoint: 20)

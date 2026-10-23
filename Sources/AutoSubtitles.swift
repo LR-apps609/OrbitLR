@@ -82,6 +82,14 @@ enum AutoSubtitles {
 
     enum Failure: Error { case notAllowed, unavailable, nothingHeard }
 
+    /// La lingua scelta in Opzioni → Avanzate (trascrizione); «automatica» = quella del Mac, se è tra quelle note.
+    static func preferredLocale(setting: String = ScriptPrefs.load()["wlang"] ?? "auto", system: Locale = .current) -> Locale {
+        let map = ["it": "it-IT", "en": "en-US", "es": "es-ES", "fr": "fr-FR", "de": "de-DE"]
+        if let id = map[setting] { return Locale(identifier: id) }
+        if let code = system.language.languageCode?.identifier, let id = map[code] { return Locale(identifier: id) }
+        return Locale(identifier: "it-IT")
+    }
+
     static func authorize() async -> Bool {
         switch SFSpeechRecognizer.authorizationStatus() {
         case .authorized: return true
@@ -130,7 +138,7 @@ enum AutoSubtitles {
         for (c, start) in zip(clips, starts) where !c.isMuted {
             let ws: [Word]
             if let hit = cache[c.path] { ws = hit } else {
-                ws = (try? await words(in: c.url)) ?? []
+                ws = (try? await words(in: c.url, locale: preferredLocale())) ?? []
                 cache[c.path] = ws
             }
             all += timeline(lines(ws), clip: c, clipStart: start)
