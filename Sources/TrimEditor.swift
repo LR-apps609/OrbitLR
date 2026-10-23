@@ -319,6 +319,24 @@ struct TrimTimeline: View {
     @ObservedObject var m: TrimModel
     let tint: Color
 
+    /// L'onda come forma (solo per le foto automatiche): le barre dentro o fuori dalla selezione.
+    private func wave(w: CGFloat, h: CGFloat, xs: CGFloat, xe: CGFloat, inside: Bool) -> Path {
+        var path = Path()
+        let peaks = m.peaks, n = peaks.count
+        guard n > 0 else { return path }
+        let top: CGFloat = m.isVideo ? h * 0.5 : 0
+        let area = h - top
+        let bw = w / CGFloat(n)
+        for (i, p) in peaks.enumerated() {
+            let x = CGFloat(i) * bw
+            guard (x >= xs && x <= xe) == inside else { continue }
+            let bh = max(2, CGFloat(p) * (area - 10))
+            path.addRoundedRect(in: CGRect(x: x, y: top + (area - bh) / 2, width: max(1, bw - 0.6), height: bh),
+                                cornerSize: CGSize(width: min(1.5, bw / 2), height: min(1.5, bw / 2)))
+        }
+        return path
+    }
+
     var body: some View {
         GeometryReader { g in
             let w = g.size.width, h = g.size.height
@@ -347,6 +365,14 @@ struct TrimTimeline: View {
                     .allowsHitTesting(false)
                 }
 
+                if GPULayer.off {
+                    // Foto automatiche (Mac virtuale senza scheda grafica): la stessa onda, fatta di forme
+                    ZStack(alignment: .topLeading) {
+                        wave(w: w, h: h, xs: xs, xe: xe, inside: true).fill(tint)
+                        wave(w: w, h: h, xs: xs, xe: xe, inside: false).fill(Theme.ink.opacity(0.22))
+                    }
+                    .allowsHitTesting(false)
+                } else {
                 Canvas { ctx, size in
                     let n = peaks.count
                     guard n > 0 else { return }
@@ -363,6 +389,7 @@ struct TrimTimeline: View {
                     }
                 }
                 .allowsHitTesting(false)
+                }
 
                 // Zone escluse un po' scure
                 Rectangle().fill(Theme.cream.opacity(0.65)).frame(width: max(0, xs), height: h).allowsHitTesting(false)

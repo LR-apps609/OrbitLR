@@ -128,6 +128,10 @@ struct GrilleTexture: View {
     var spacing: CGFloat = 7
 
     var body: some View {
+        if GPULayer.off { Color.clear } else { grille }
+    }
+
+    private var grille: some View {
         Canvas { ctx, size in
             var holes = Path()
             var light = Path()
