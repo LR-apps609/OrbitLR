@@ -134,6 +134,22 @@ struct MainWindow: View {
                     .background(RoundedRectangle(cornerRadius: 8).fill(Theme.ivory))
                     .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.stroke))
                     .help("Qualcosa non va? Mandami una segnalazione con screenshot")
+
+                    // 2.8.8 · La versione, sempre visibile; un clic controlla se ce n'è una nuova
+                    Button {
+                        Task { @MainActor in await UpdateCheck.check(userInitiated: true) }
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: "checkmark.seal.fill").font(.system(size: 10))
+                            Text("OrbitLR \(UpdateCheck.current)").font(.system(size: 11, weight: .semibold)).monospacedDigit()
+                        }
+                        .foregroundStyle(Theme.ink.opacity(0.55))
+                        .frame(maxWidth: .infinity)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .help("La versione che hai. Clicca per controllare se ce n’è una nuova")
+                    .accessibilityLabel("OrbitLR versione \(UpdateCheck.current), controlla aggiornamenti")
                 }
                 .padding(12)
             }
@@ -779,6 +795,8 @@ struct RunningRow: View {
 struct SettingsView: View {
     @EnvironmentObject var settings: SettingsModel
     @State var draft = SettingsDraft()
+    /// 2.8.9 · Controllo automatico degli aggiornamenti (una volta al giorno)
+    @AppStorage(UpdateCheck.autoKey) private var autoUpdate = true
     @State var saved = false
 
     private var changed: Bool { draft != settings.draft }
@@ -857,6 +875,10 @@ struct SettingsView: View {
                         Text("Nativo").tag("native")
                         Text("Classico").tag("classic")
                     }
+                }
+                Section("Aggiornamenti") {
+                    Toggle("Controlla da sola se c’è una versione nuova (una volta al giorno)", isOn: $autoUpdate)
+                    Button("Controlla adesso…") { Task { @MainActor in await UpdateCheck.check(userInitiated: true) } }
                 }
             }
             .formStyle(.grouped)

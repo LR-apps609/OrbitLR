@@ -256,7 +256,7 @@ struct WorkspaceView: View {
                     }
                 }
             }
-            .frame(maxWidth: 640, minHeight: 360)
+            .frame(maxWidth: 640, minHeight: 220, maxHeight: 360)   // 2.8.9 · si stringe nelle finestre basse
             .frame(maxWidth: .infinity)
             .padding(40)
             .background(RoundedRectangle(cornerRadius: 28, style: .continuous)
