@@ -717,18 +717,26 @@ struct VideoEditorView: View {
 
     private var toolRow: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
-                ForEach(VideoEditTool.allCases) { t in
-                    if t != .clips {
-                        Image(systemName: "chevron.right").font(.system(size: 9, weight: .bold)).foregroundStyle(.tertiary)
-                    }
-                    StepChip(tool: t, selected: tool == t, done: stepDone(t), tint: tint) { tool = t }
-                }
-                Spacer(minLength: 8)
-                otherMenu
+            // 2.9.8 · Con più passi: se lo spazio non basta, i passi non scelti mostrano solo il numero
+            ViewThatFits(in: .horizontal) {
+                steps(compact: false)
+                steps(compact: true)
             }
             Label(tool.hint, systemImage: "lightbulb")
                 .font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(2)
+        }
+    }
+
+    private func steps(compact: Bool) -> some View {
+        HStack(spacing: 6) {
+            ForEach(VideoEditTool.allCases) { t in
+                if t != .clips {
+                    Image(systemName: "chevron.right").font(.system(size: 9, weight: .bold)).foregroundStyle(.tertiary)
+                }
+                StepChip(tool: t, selected: tool == t, done: stepDone(t), tint: tint, compact: compact && tool != t) { tool = t }
+            }
+            Spacer(minLength: 8)
+            otherMenu
         }
     }
 
@@ -1445,11 +1453,13 @@ private struct StepChip: View {
     let selected: Bool
     let done: Bool
     let tint: Color
+    /// Solo il numero (o la spunta): quando lo spazio è poco
+    var compact = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
+            HStack(spacing: compact ? 0 : 6) {
                 ZStack {
                     Circle().fill(selected ? Color.white.opacity(0.9) : tint.opacity(done ? 0.85 : 0.18)).frame(width: 18, height: 18)
                     if done && !selected {
@@ -1458,9 +1468,9 @@ private struct StepChip: View {
                         Text("\(tool.number)").font(.system(size: 10.5, weight: .bold)).foregroundStyle(selected ? tint : Theme.ink)
                     }
                 }
-                Text(tool.rawValue).font(.system(size: 12.5, weight: .semibold))
+                if !compact { Text(tool.rawValue).font(.system(size: 12.5, weight: .semibold)).lineLimit(1).fixedSize() }
             }
-            .padding(.leading, 5).padding(.trailing, 10).padding(.vertical, 4)
+            .padding(.leading, 5).padding(.trailing, compact ? 5 : 10).padding(.vertical, 4)
             .background(Capsule().fill(selected ? tint : Theme.card))
             .overlay(Capsule().strokeBorder(selected ? Color.clear : Theme.stroke, lineWidth: 1))
             .foregroundStyle(selected ? Color.white : Theme.ink)
