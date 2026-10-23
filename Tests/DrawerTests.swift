@@ -32,7 +32,7 @@ final class DrawerTests: XCTestCase {
         }
         XCTAssertEqual(DrawerTarget.forSidebar(.video), .video)
         XCTAssertEqual(DrawerTarget.forSidebar(.workspace), .convert)
-        XCTAssertNil(DrawerTarget.forSidebar(.history))
+        XCTAssertNil(DrawerTarget.forSidebar(.activity))
     }
 
     /// Mandare un file a una scheda lo carica lì e apre quella scheda.

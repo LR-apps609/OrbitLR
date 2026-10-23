@@ -38,7 +38,7 @@ final class NewsAndFixTests: XCTestCase {
 
     func testNewsPlace() {
         XCTAssertEqual(News.place(of: "Video: schermata Progetti"), .video)
-        XCTAssertEqual(News.place(of: "Cronologia: cestino"), .history)
+        XCTAssertEqual(News.place(of: "Cronologia: cestino"), .activity)
         XCTAssertEqual(News.place(of: "Peso previsto sugli spicchi"), .workspace)
         XCTAssertNil(News.place(of: "Icona nuova"))
     }
