@@ -2,6 +2,7 @@ import SwiftUI
 import AppKit
 import AVFoundation
 import UniformTypeIdentifiers
+import Combine
 
 // ════════════════════════════════════════════════════════════════════
 //  2.6 · Scheda «Audio» (schede strumento) e pezzi comuni alle schede (la scheda Video è in VideoEditor.swift)
@@ -28,10 +29,31 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
     private var recentsKey: String { videoTab ? "videoTabRecents" : "audioTabRecents" }
     static let maxRecents = 6
 
-    init(videoTab: Bool) {
+    // 2.8.5 · Progetti audio (vedi AudioProjects.swift)
+    @Published var audioProjects: [AudioProject] = []
+    /// Lo strumento da rimettere quando si riprende un progetto (lo legge la scheda e lo azzera).
+    @Published var restoredTool: String? = nil
+    var currentProject: UUID? = nil
+    var currentTool = "ringtone"
+    var restoringProject = false
+    var projectSave: DispatchWorkItem? = nil
+    var restoreCancellable: AnyCancellable? = nil
+    private var selectionCancellable: AnyCancellable? = nil
+    let projectsFolder: URL
+
+    init(videoTab: Bool, projectsFolder: URL = AudioProjectLibrary.folder) {
         self.videoTab = videoTab
+        self.projectsFolder = projectsFolder
         let paths = UserDefaults.standard.stringArray(forKey: recentsKey) ?? []
         recents = paths.map { URL(fileURLWithPath: $0) }.filter { FileManager.default.fileExists(atPath: $0.path) }
+        refreshProjects()
+    }
+
+    /// La scheda avvisa quando cambia strumento: si ricorda nel progetto.
+    func toolChanged(_ id: String) {
+        guard id != currentTool else { return }
+        currentTool = id
+        scheduleProjectSave()
     }
 
     func remember(_ url: URL) {
@@ -84,6 +106,7 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
         if other.isEmpty { notice = nil }
         if append, file != nil {
             for u in ok where !allFiles.contains(u) { extra.append(u) }
+            scheduleProjectSave()
             return
         }
         extra = Array(ok.dropFirst())
@@ -98,6 +121,11 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
         let t = TrimModel(url: url, isVideo: videoTab, defaultLength: trimDefaultLength)
         t.maxLength = trimMaxLength
         trim = t
+        // 2.8.5 · Ogni spostamento della selezione si salva nel progetto (dopo una breve pausa)
+        selectionCancellable = t.$start.combineLatest(t.$end).dropFirst()
+            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
+            .sink { [weak self] _ in self?.scheduleProjectSave() }
+        startProject(for: url)
         info = ""
         videoSize = .zero
         Task { await self.loadInfo(url) }
@@ -105,14 +133,25 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
 
     func close() {
         trim?.pause()
+        scheduleProjectSave()
+        selectionCancellable = nil
+        restoreCancellable = nil
+        currentProject = nil
         trim = nil
         file = nil
         extra = []
         info = ""
         lastJob = nil
+        // il salvataggio parte tra un attimo: l'elenco si rilegge dopo
+        AudioProjectLibrary.queue.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+            DispatchQueue.main.async { self?.refreshProjects() }
+        }
     }
 
-    func removeExtra(_ u: URL) { extra.removeAll { $0 == u } }
+    func removeExtra(_ u: URL) {
+        extra.removeAll { $0 == u }
+        scheduleProjectSave()
+    }
 
     @MainActor
     private func loadInfo(_ url: URL) async {
@@ -410,8 +449,8 @@ struct AudioTabView: View {
                 }
             }
             topArea.frame(height: 210)
-            // 2.8.4 · Ripresa veloce degli ultimi file, come i Progetti del Video
-            if m.file == nil && tool != .tts && !m.recents.isEmpty { recentsRow }
+            // 2.8.5 · I progetti audio, come i Progetti del Video
+            if m.file == nil && tool != .tts && !m.audioProjects.isEmpty { AudioProjectsRow(m: m, tint: tint) }
             HStack(alignment: .top, spacing: 16) {
                 cards
                 panel.frame(width: 310)
@@ -432,8 +471,14 @@ struct AudioTabView: View {
             }
             return true
         }
-        .onAppear { applyTrimRules() }
+        .onAppear { applyTrimRules(); m.currentTool = tool.rawValue; m.refreshProjects() }
+        .onChange(of: m.restoredTool) { _, v in
+            // 2.8.5 · progetto ripreso: torna lo strumento che usavi
+            if let v, let t = AudioTool(rawValue: v) { tool = t }
+            m.restoredTool = nil
+        }
         .onChange(of: tool) { _, t in
+            m.toolChanged(t.rawValue)
             applyTrimRules()
             if t == .ringtone { m.trim?.setLength(ringLength) }
             if t != .tts { preview.stop() }
@@ -491,27 +536,6 @@ struct AudioTabView: View {
         .frame(maxWidth: .infinity)
     }
 
-    private var recentsRow: some View {
-        HStack(spacing: 8) {
-            SectionLabel(text: "Recenti")
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    ForEach(m.recents, id: \.self) { u in
-                        Button { m.load([u]) } label: {
-                            Label(u.lastPathComponent, systemImage: "waveform").font(.system(size: 12)).lineLimit(1)
-                                .padding(.horizontal, 10).padding(.vertical, 5)
-                                .background(Capsule().fill(tint.opacity(0.14)))
-                        }
-                        .buttonStyle(.plain)
-                        .help("Riapri «\(u.lastPathComponent)»")
-                    }
-                }
-            }
-            Button { m.forgetRecents() } label: { Image(systemName: "xmark.circle").foregroundStyle(.secondary) }
-                .buttonStyle(.borderless).help("Svuota i recenti (i file non vengono toccati)")
-                .accessibilityLabel("Svuota i recenti")
-        }
-    }
 
     // Il riquadro con le opzioni dello strumento scelto e il pulsante finale
     private var panel: some View {

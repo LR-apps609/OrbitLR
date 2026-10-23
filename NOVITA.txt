@@ -1,3 +1,9 @@
+Novità della 2.8.5 «Progetti audio»:
+• Audio: ogni file che apri diventa un progetto che si salva da solo (file, strumento, selezione, file da unire)
+• Sotto l'area del file trovi i Progetti: un clic e riparti con lo stesso strumento e la stessa selezione
+• Tasto destro su un progetto: Rinomina, Duplica, Elimina (va nel Cestino, il file audio non si tocca)
+• Se sposti o rinomini il file, il progetto lo ritrova
+
 Novità della 2.8.4 «Audio»:
 • Audio: ⌘Z annulla anche lo spostamento delle maniglie del taglio (e ⇧⌘Z lo rifà)
 • Audio: «Recenti» per riaprire con un clic gli ultimi file usati

@@ -35,3 +35,63 @@ final class AudioProjectTests: XCTestCase {
         XCTAssertEqual(t.end, 4, accuracy: 0.01)
     }
 }
+
+/// 2.8.5 · Progetti audio: si salvano da soli e si riprendono con strumento e selezione.
+final class AudioProjectsLibraryTests: XCTestCase {
+    private func folder() -> URL { Fixtures.dir.appendingPathComponent("audio-progetti-\(UUID().uuidString)", isDirectory: true) }
+
+    func testSaveListRenameDuplicateTrash() {
+        let f = folder()
+        let p = AudioProject(name: "Vocale", paths: ["/tmp/non-esiste.m4a"], tool: "cut", start: 1, end: 4)
+        AudioProjectLibrary.save(p, in: f)
+        XCTAssertEqual(AudioProjectLibrary.list(in: f).map { $0.name }, ["Vocale"])
+        AudioProjectLibrary.rename(p.id, to: "Lezione", in: f)
+        XCTAssertEqual(AudioProjectLibrary.list(in: f).first?.name, "Lezione")
+        let copy = AudioProjectLibrary.duplicate(p.id, in: f)
+        XCTAssertNotNil(copy)
+        XCTAssertEqual(AudioProjectLibrary.list(in: f).count, 2)
+        AudioProjectLibrary.trash(p.id, in: f)
+        XCTAssertEqual(AudioProjectLibrary.list(in: f).map { $0.name }, ["Lezione copia"])
+    }
+
+    func testRelinkMissingFile() throws {
+        var gone = AudioProject(name: "x", paths: ["/tmp/non-esiste-\(UUID().uuidString).m4a"], tool: "cut", start: 0, end: 1)
+        XCTAssertFalse(AudioProjectLibrary.relink(&gone))
+        let w = try Fixtures.wav(Fixtures.tone(seconds: 1), name: "relink-audio.wav")
+        var here = AudioProject(name: "y", paths: [w.path], tool: "cut", start: 0, end: 1)
+        XCTAssertTrue(AudioProjectLibrary.relink(&here))
+    }
+
+    @MainActor
+    func testOpenSaveAndResume() async throws {
+        let w = try Fixtures.wav(Fixtures.tone(seconds: 6), name: "progetto-audio.wav")
+        let f = folder()
+        let m = MediaTabModel(videoTab: false, projectsFolder: f)
+        XCTAssertTrue(m.audioProjects.isEmpty)
+        m.currentTool = "cut"
+        m.load([w])
+        XCTAssertEqual(m.audioProjects.count, 1, "aprire un file crea il progetto")
+        let t = try XCTUnwrap(m.trim)
+        for _ in 0..<100 where t.loading { try await Task.sleep(nanoseconds: 50_000_000) }
+        t.setStart(1.5)
+        t.setEnd(3.5)
+        try await Task.sleep(nanoseconds: 1_500_000_000)          // pausa + salvataggio
+        m.close()
+        try await Task.sleep(nanoseconds: 1_200_000_000)
+        let p = try XCTUnwrap(m.audioProjects.first)
+        XCTAssertEqual(p.start, 1.5, accuracy: 0.05)
+        XCTAssertEqual(p.end, 3.5, accuracy: 0.05)
+        XCTAssertEqual(p.tool, "cut")
+
+        m.currentTool = "ringtone"
+        m.openProject(p)
+        XCTAssertEqual(m.restoredTool, "cut", "torna lo strumento che usavi")
+        XCTAssertEqual(m.file?.path, w.path)
+        let t2 = try XCTUnwrap(m.trim)
+        for _ in 0..<100 where t2.loading { try await Task.sleep(nanoseconds: 50_000_000) }
+        try await Task.sleep(nanoseconds: 200_000_000)
+        XCTAssertEqual(t2.start, 1.5, accuracy: 0.05, "torna la selezione")
+        XCTAssertEqual(t2.end, 3.5, accuracy: 0.05)
+        XCTAssertEqual(m.audioProjects.count, 1, "riprendere non crea un doppione")
+    }
+}
