@@ -18,7 +18,7 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
     @Published var peaks: [Float] = []
     @Published var thumbs: [NSImage] = []
     @Published var loading = true
-    /// Durata massima della selezione (es. 40 s per le suonerie), nil = libera.
+    /// Durata massima della selezione (es. 30 s per le suonerie), nil = libera.
     var maxLength: Double? = nil
 
     private var observer: Any?
@@ -205,7 +205,7 @@ struct TrimEditorView: View {
         let kind = Catalog.kind(of: url)
         let model = TrimModel(url: url, isVideo: kind == .video,
                               defaultLength: mode == .gifcut ? 5 : (mode == .ringtone ? 30 : nil))
-        if mode == .ringtone { model.maxLength = 40 }
+        if mode == .ringtone { model.maxLength = 30 }
         _m = StateObject(wrappedValue: model)
         self.mode = mode
         self.tint = Theme.color(kind)
@@ -267,7 +267,7 @@ struct TrimEditorView: View {
             }
 
             Text(mode == .ringtone
-                 ? "Fino a 40 secondi. Si crea un file .m4r: collega l’iPhone, aprilo nel Finder e trascinaci la suoneria."
+                 ? "Fino a 30 secondi. Si crea un file .m4r: collega l’iPhone, aprilo nel Finder e trascinaci la suoneria."
                  : "Trascina le maniglie colorate, clicca sulla forma d’onda per spostarti. Spazio = riproduci, I/O = inizio/fine.")
                 .font(.system(size: 11)).foregroundStyle(.secondary)
 

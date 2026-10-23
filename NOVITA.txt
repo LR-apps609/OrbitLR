@@ -1,3 +1,9 @@
+Novità della 2.9.4 «Filigrana»:
+• Nuova azione «Nascondi filigrana» per foto e video: disegni una o più zone sul logo o sulla scritta e dentro si sfoca, normale o a pixel, con la forza che scegli
+• Anteprima dal vivo mentre disegni; nei video scorri per controllare il logo nei vari momenti
+• La trovi nel menu a torta (in «Altro»), nella scheda Immagini e in Conversione
+• Suoneria iPhone: al massimo 30 secondi (20 o 30), il limite per usarla direttamente sull'iPhone
+
 Novità della 2.9.3 «Transizioni»:
 • Video: tra due clip c'è un pallino: cliccalo per scegliere la transizione (Dissolvenza, Al nero, Al bianco, Scorrimento, Zoom, Sfocatura)
 • Durata da 0,2 a 2 secondi; se una clip è corta, la transizione si accorcia da sola

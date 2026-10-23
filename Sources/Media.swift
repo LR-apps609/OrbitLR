@@ -57,7 +57,7 @@ enum Media {
             let out = Destination.unique(dir, base: "\(base) (suoneria)", ext: "m4r")
             try await renderAudio([(file, r.start, r.end)], out: out, bitrate: 192_000, channels: 2,
                                   fadeIn: r.fade ? 0.6 : 0, fadeOut: r.fade ? 1.5 : 0, normalize: r.normalize,
-                                  maxSeconds: 40, job: job, progress: progress)
+                                  maxSeconds: 30, job: job, progress: progress)     // 2.9.4 · limite dell'iPhone
             return out
         case "whatsapp":
             let out = Destination.unique(dir, base: "\(base) (WhatsApp)", ext: "m4a")
@@ -390,8 +390,8 @@ enum Media {
 
     // MARK: - Esportazione con avanzamento e annullamento
 
-    private static func export(_ asset: AVAsset, videoComposition: AVVideoComposition?, audioMix: AVAudioMix?,
-                               out: URL, job: Job, progress: @escaping (Double) -> Void) async throws {
+    static func export(_ asset: AVAsset, videoComposition: AVVideoComposition?, audioMix: AVAudioMix?,
+                       out: URL, job: Job, progress: @escaping (Double) -> Void) async throws {
         guard let s = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else {
             throw NativeError("questo video non si può esportare")
         }

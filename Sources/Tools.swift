@@ -20,7 +20,7 @@ import UniformTypeIdentifiers
 // ════════════════════════════════════════════════════════════════════
 
 enum Tools {
-    static let ids: Set<String> = ["searchable", "removebg", "straighten", "upscale", "aienhance", "stack"]
+    static let ids: Set<String> = ["searchable", "removebg", "straighten", "upscale", "aienhance", "stack", "hidemark"]
 
     /// Esegue uno strumento su un file e restituisce il file creato.
     static func run(job: Job, file: URL, dir: URL, progress: @escaping (Double) -> Void) async throws -> URL {
@@ -35,6 +35,19 @@ enum Tools {
                 try makeSearchableFromImage(file, out: out)
                 progress(1)
             }
+            return out
+        case "hidemark":
+            // 2.9.4 · Nascondi filigrana, su una foto o un video
+            guard let spec = HideMark.parse(job.param) else { throw NativeError("nessuna zona da coprire") }
+            if kind == .video {
+                let out = Destination.unique(dir, base: "\(base) (senza logo)", ext: "mp4")
+                try await HideMark.video(file, spec: spec, out: out, job: job, progress: progress)
+                return out
+            }
+            let e = Catalog.norm(file.pathExtension)
+            let out = Destination.unique(dir, base: "\(base) (senza logo)", ext: ["jpg", "png", "heic", "tiff"].contains(e) ? e : "png")
+            try HideMark.image(file, spec: spec, out: out)
+            progress(1)
             return out
         case "removebg":
             let mode = job.param.isEmpty ? "transparent" : job.param

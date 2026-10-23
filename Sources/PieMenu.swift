@@ -707,7 +707,7 @@ extension PieKeys {
 /// Etichetta «Nuovo» sulle azioni appena arrivate, finché non le usi una volta.
 enum NewBadges {
     static let ids: Set<String> = ["searchable", "pdfedit", "redact", "removebg", "straighten", "upscale", "aienhance", "stack",
-                                   "social", "vmerge", "ringtone", "whatsapp", "amerge", "tts"]
+                                   "social", "vmerge", "ringtone", "whatsapp", "amerge", "tts", "hidemark"]
     static func isNew(_ id: String) -> Bool { ids.contains(id) && !UserDefaults.standard.bool(forKey: "seen." + id) }
     static func markSeen(_ id: String) { if ids.contains(id) { UserDefaults.standard.set(true, forKey: "seen." + id) } }
 }

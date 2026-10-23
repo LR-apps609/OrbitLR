@@ -20,7 +20,7 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
     @Published var extra: [URL] = []
     @Published var lastJob: Job? = nil
     @Published var notice: String? = nil
-    /// Selezione iniziale e massima dei file che si aprono (es. suoneria: 30 s, al massimo 40).
+    /// Selezione iniziale e massima dei file che si aprono (es. suoneria: 30 s, al massimo 30).
     var trimDefaultLength: Double? = nil
     var trimMaxLength: Double? = nil
 
@@ -374,7 +374,7 @@ enum AudioTool: String, CaseIterable, Identifiable {
     /// 2.8.4 · Cosa fare adesso, in una frase.
     var hint: String {
         switch self {
-        case .ringtone: return "Sposta il riquadro sul pezzo che ti piace (fino a 40 secondi) e premi il pulsante: ottieni il file .m4r per iPhone."
+        case .ringtone: return "Sposta il riquadro sul pezzo che ti piace (fino a 30 secondi) e premi il pulsante: ottieni il file .m4r per iPhone."
         case .cut: return "Trascina le maniglie per tenere solo il pezzo che serve. ⌘Z annulla uno spostamento."
         case .normalize: return "Rende il volume uniforme: né troppo basso né distorto. Va bene per vocali e registrazioni."
         case .tts: return "Scrivi o incolla il testo, scegli la voce e ascolta l’anteprima prima di creare il file."
@@ -385,7 +385,7 @@ enum AudioTool: String, CaseIterable, Identifiable {
 
     var subtitle: String {
         switch self {
-        case .ringtone: return "Fino a 40 secondi, pronta per iPhone"
+        case .ringtone: return "Fino a 30 secondi, pronta per iPhone"
         case .cut: return "Tieni solo la parte che serve"
         case .normalize: return "Né troppo basso né distorto"
         case .tts: return "Scrivi e OrbitLR legge"
@@ -498,12 +498,13 @@ struct AudioTabView: View {
         .navigationTitle("Audio")
     }
 
-    /// Suoneria: selezione di 20–40 secondi, anche per i file aperti dopo.
+    /// Suoneria: selezione di 20–30 secondi, anche per i file aperti dopo.
     private func applyTrimRules() {
         let ring = tool == .ringtone
         m.trimDefaultLength = ring ? ringLength : nil
-        m.trimMaxLength = ring ? 40 : nil
-        m.trim?.maxLength = ring ? 40 : nil
+        // 2.9.4 · Al massimo 30 s: è il limite di «Usa come suoneria» sull'iPhone (iOS 26)
+        m.trimMaxLength = ring ? 30 : nil
+        m.trim?.maxLength = ring ? 30 : nil
     }
 
     @ViewBuilder private var topArea: some View {
@@ -574,7 +575,7 @@ struct AudioTabView: View {
         case .ringtone:
             Text("Durata").font(.system(size: 11.5)).foregroundStyle(.secondary)
             Picker("", selection: $ringLength) {
-                Text("20 s").tag(20.0); Text("30 s").tag(30.0); Text("40 s").tag(40.0)
+                Text("20 s").tag(20.0); Text("30 s").tag(30.0)
             }
             .pickerStyle(.segmented).labelsHidden()
             .onChange(of: ringLength) { _, v in m.trim?.setLength(v); applyTrimRules() }

@@ -18,14 +18,14 @@ final class AudioToolsTests: XCTestCase {
         XCTAssertEqual(r.audioChannels, 2)
     }
 
-    func testRingtoneNeverLongerThan40Seconds() async throws {
+    func testRingtoneNeverLongerThan30Seconds() async throws {
         let src = try Fixtures.wav(Fixtures.tone(seconds: 50, freq: 220), name: "lunga.wav")
         let out = Fixtures.url("suoneria-lunga.m4r")
         let job = try Fixtures.job("ringtone", kind: .audio, files: [src])
         try await Media.renderAudio([(src, nil, nil)], out: out, bitrate: 192_000, channels: 2, fadeIn: 0, fadeOut: 0,
-                                    normalize: false, maxSeconds: 40, job: job) { _ in }
+                                    normalize: false, maxSeconds: 30, job: job) { _ in }
         let r = try await Fixtures.probe(out)
-        XCTAssertEqual(r.duration, 40, accuracy: 0.2)
+        XCTAssertEqual(r.duration, 30, accuracy: 0.2)
     }
 
     func testWhatsAppVoiceIsMonoAndSmall() async throws {

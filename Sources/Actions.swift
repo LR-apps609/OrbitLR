@@ -34,7 +34,7 @@ enum Kind: String, CaseIterable, Codable {
 }
 
 enum ParamKind { case resize, pdfcompress, vcompress, cut, gifcut, extract, vresize, speed, rotate, reorder, password, unlock, rename,
-                     removebg, straighten, upscale, aienhance, stack, social, ringtone }
+                     removebg, straighten, upscale, aienhance, stack, social, ringtone, hidemark }
 
 struct Action: Identifiable, Hashable {
     let id: String          // lo stesso identificativo dello script, es. "to:pdf" o "resize"
@@ -143,6 +143,7 @@ enum Catalog {
         "searchable": Action(id: "searchable", short: "Ricercabile", title: "Rendi ricercabile", hint: "Testo da cercare e copiare, anche nelle scansioni", symbol: "doc.text.magnifyingglass"),
         "pdfedit": Action(id: "pdfedit", short: "Firma", title: "Compila e firma", hint: "Moduli, firma, data e testo", symbol: "signature"),
         "redact": Action(id: "redact", short: "Oscura", title: "Oscura", hint: "Nasconde per davvero nomi, numeri e testo", symbol: "rectangle.inset.filled"),
+        "hidemark": Action(id: "hidemark", short: "Filigrana", title: "Nascondi filigrana", hint: "Sfoca o copri a pixel un logo o una scritta", symbol: "eye.slash.circle", param: .hidemark),
         "removebg": Action(id: "removebg", short: "Scontorna", title: "Rimuovi lo sfondo", hint: "Il soggetto ritagliato, sfondo trasparente", symbol: "person.and.background.dotted", param: .removebg),
         "straighten": Action(id: "straighten", short: "Raddrizza", title: "Raddrizza il documento", hint: "Foto di un foglio → scansione pulita", symbol: "doc.viewfinder", param: .straighten),
         "upscale": Action(id: "upscale", short: "Ingrandisci", title: "Ingrandisci", hint: "2× o 4×, contorni nitidi", symbol: "plus.magnifyingglass", param: .upscale),
@@ -151,7 +152,7 @@ enum Catalog {
         "social": Action(id: "social", short: "Social", title: "Formato social", hint: "9:16, 1:1, 4:5 per Reels, TikTok e post", symbol: "rectangle.portrait.on.rectangle.portrait", param: .social),
         "vmerge": Action(id: "vmerge", short: "Unisci", title: "Unisci i video", hint: "Uno dopo l’altro, in un solo video", symbol: "film.stack"),
         "music": Action(id: "music", short: "Musica", title: "Aggiungi musica", hint: "Sotto l’audio o al suo posto", symbol: "music.note"),
-        "ringtone": Action(id: "ringtone", short: "Suoneria", title: "Suoneria iPhone", hint: "Fino a 40 secondi, pronta per iPhone", symbol: "bell.and.waves.left.and.right", param: .ringtone),
+        "ringtone": Action(id: "ringtone", short: "Suoneria", title: "Suoneria iPhone", hint: "Fino a 30 secondi, pronta per iPhone", symbol: "bell.and.waves.left.and.right", param: .ringtone),
         "whatsapp": Action(id: "whatsapp", short: "WhatsApp", title: "Vocale leggero", hint: "Per WhatsApp e messaggi, voce chiara", symbol: "message"),
         "amerge": Action(id: "amerge", short: "Unisci", title: "Unisci gli audio", hint: "Uno dopo l’altro, in un solo file", symbol: "square.stack.3d.up"),
         "vproject": Action(id: "vproject", short: "Montaggio", title: "Esporta il montaggio", hint: "Il progetto della scheda Video", symbol: "film.stack"),
@@ -189,7 +190,7 @@ enum Catalog {
                               "pdfedit", "redact", "searchable",
                               "merge", "rotate", "reorder", "protect", "unprotect", "rename"]
         case .img:   order = ["to:jpg", "to:png", "to:heic", "resize", "strip", "ocr", "to:pdf",
-                              "aienhance", "stack", "removebg", "straighten", "upscale", "searchable",
+                              "aienhance", "stack", "removebg", "hidemark", "straighten", "upscale", "searchable",
                               "to:webp", "to:tiff", "to:ico", "merge", "rename"]
         case .doc:   order = ["to:pdf", "to:docx", "to:odt", "to:txt", "to:md", "to:html", "to:rtf", "tts", "rename"]
         case .sheet: order = ["to:pdf", "to:xlsx", "to:csv", "to:ods", "to:html", "rename"]
@@ -200,7 +201,7 @@ enum Catalog {
                               "speed", "to:flac", "to:ogg", "rename"]
         case .video: order = ["to:mp4", "vcompress", "cut", "gifcut", "to:mp3", "transcribe", "vresize",
                               "speed", "to:mov", "to:mkv", "to:webm", "to:gif", "to:m4a", "normalize",
-                              "social", "vmerge",
+                              "social", "vmerge", "hidemark",
                               "subextract", "subembed", "strip", "stack", "rename"]
         case .sub:   order = []
         }
@@ -219,7 +220,9 @@ enum Catalog {
                 if Media.ids.contains(id) && id != "tts" && !exts.isEmpty && !exts.isSubset(of: MediaTabModel.readable) { continue }
                 if id == "tts" && !exts.isEmpty && exts.isDisjoint(with: ["txt", "md", "rtf", "docx", "doc", "odt", "html", "pages"]) { continue }
                 if id == "stack" && kind == .img && mergeable < 2 { continue }      // servono almeno 2 foto
-                if hasSvg && ["resize", "strip", "ocr", "removebg", "straighten", "upscale", "aienhance", "searchable"].contains(id) { continue }
+                // 2.9.4 · Filigrana dei video: solo i formati che macOS sa leggere
+                if id == "hidemark" && kind == .video && !exts.isEmpty && !exts.isSubset(of: MediaTabModel.readable) { continue }
+                if hasSvg && ["resize", "strip", "ocr", "removebg", "hidemark", "straighten", "upscale", "aienhance", "searchable"].contains(id) { continue }
                 if hasRaw && id == "strip" { continue }
                 if let a = tools[id] { out.append(a) }
             }

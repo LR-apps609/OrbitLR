@@ -12,7 +12,9 @@ final class ParamController: @unchecked Sendable {
         callback = done
         let isTrim = kind == .cut || kind == .gifcut || kind == .ringtone
         let view: AnyView
-        if isTrim, let url = files.first(where: { Catalog.kind(of: $0) != .sub }) {
+        if kind == .hidemark, let url = files.first {
+            view = AnyView(HideMarkEditor(url: url, onDone: { [weak self] v in self?.close(v) }))
+        } else if isTrim, let url = files.first(where: { Catalog.kind(of: $0) != .sub }) {
             view = AnyView(TrimEditorView(url: url, mode: kind, onDone: { [weak self] v in self?.close(v) }))
         } else {
             view = AnyView(ParamView(kind: kind, action: action, files: files,
@@ -34,7 +36,7 @@ final class ParamController: @unchecked Sendable {
             origin.y = min(max(origin.y, vf.minY), vf.maxY - p.frame.height)
         }
         p.setFrameOrigin(origin)
-        if isTrim { p.center() }
+        if isTrim || kind == .hidemark { p.center() }
         WindowClose.once(p) { [weak self] in
             if self?.panel === p { self?.panel = nil; let cb = self?.callback; self?.callback = nil; cb?(nil) }
         }
@@ -104,6 +106,15 @@ struct ParamView: View {
     private var tint: Color { Theme.color(fileKind) }
 
     var body: some View {
+        // 2.9.4 · Nascondi filigrana: si disegna sull'immagine, ha il suo riquadro
+        if kind == .hidemark, let url = files.first {
+            HideMarkEditor(url: url, onDone: onDone)
+        } else {
+            standard
+        }
+    }
+
+    private var standard: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 12) {
                 KindBadge(kind: fileKind, size: 34)
@@ -189,6 +200,7 @@ struct ParamView: View {
         case .stack: return "Unisci"
         case .social: return "Esporta"
         case .ringtone: return "Crea la suoneria"
+        case .hidemark: return "Crea"
         }
     }
 
@@ -245,6 +257,8 @@ struct ParamView: View {
             note("Risoluzione e qualità vengono scelte da sole per stare sotto il peso indicato.")
             estimateLine(SizeEstimate.compressText(current: files.reduce(Int64(0)) { $0 + Job.size(of: $1) },
                                                    targetMB: Int(mb == "custom" ? customMB : mb), files: files.count))
+        case .hidemark:
+            EmptyView()
         case .social:
             Knob(title: "Formato", options: ParamChoices.options(for: .social) ?? [], selection: $choice, tint: tint)
             Toggle("Inquadra le persone", isOn: $follow)
@@ -395,6 +409,8 @@ struct ParamView: View {
                 guard let n = Int(v), n >= 1 else { error = "Scrivi un numero intero, ad esempio 25."; return }
                 finish(String(n))
             } else { finish(mb) }
+        case .hidemark:
+            break
         case .social:
             finish("\(choice.isEmpty ? "9x16" : choice)|\(follow ? 1 : 0)")
         case .cut, .gifcut, .ringtone:

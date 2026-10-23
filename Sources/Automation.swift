@@ -369,7 +369,7 @@ struct NewWatchView: View {
     /// Azioni adatte a lavorare da sole (niente che chieda di scegliere pagine, tagli o password).
     private static let excluded: Set<String> = ["rename", "merge", "cut", "gifcut", "extract", "reorder", "protect", "unprotect", "subembed",
                                                 "ringtone", "vmerge", "amerge", "music",
-                                                "pdfedit", "redact"]
+                                                "pdfedit", "redact", "hidemark"]
 
     private var actions: [Action] {
         let base = Catalog.actions(for: kind, exts: [], mergeable: 0).filter { !Self.excluded.contains($0.id) }
