@@ -32,3 +32,19 @@ final class UpdateCheckTests: XCTestCase {
         XCTAssertEqual(News.items(since: "2.7.7", in: news, maxVersions: 5), ["Uno", "Due"])
     }
 }
+
+/// 2.8.3 · Aiuto: ricerca e contenuti.
+final class HelpTests: XCTestCase {
+    func testSearchIgnoresCaseAndAccents() {
+        XCTAssertTrue(FAQ.search("VERTICALE").contains { $0.id == "vformat" })
+        XCTAssertTrue(FAQ.search("piu pdf").contains { $0.id == "fmerge" }, "«più» si trova anche senza accento")
+        XCTAssertEqual(FAQ.search("").count, FAQ.all.count)
+        XCTAssertTrue(FAQ.search("zzzz nessuna").isEmpty)
+    }
+
+    func testEveryAnswerHasAKnownSectionAndUniqueId() {
+        XCTAssertEqual(Set(FAQ.all.map { $0.id }).count, FAQ.all.count)
+        XCTAssertTrue(FAQ.all.allSatisfy { FAQ.sections.contains($0.section) })
+        XCTAssertTrue(FAQ.all.allSatisfy { !$0.answer.isEmpty && $0.question.count < 90 })
+    }
+}

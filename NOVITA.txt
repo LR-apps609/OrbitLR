@@ -1,3 +1,8 @@
+Novità della 2.8.3 «Aiuto»:
+• Nuova sezione Aiuto nella barra laterale: le domande frequenti su Conversione, Video, Immagini e File, Audio e aggiornamenti
+• Cerca con una parola (anche senza accenti): «verticale», «password», «unire PDF»…
+• «Vai a…» apre la scheda dove si fa, e «Segnala un problema» è sempre lì
+
 Novità della 2.8.2 «File»:
 • Nuova scheda File nella barra laterale: PDF, Word, Excel, PowerPoint e testi a sinistra, a destra tutto quello che puoi farci
 • Unisci, comprimi, converti e proteggi i PDF e i documenti, su tutti o solo su quelli scelti

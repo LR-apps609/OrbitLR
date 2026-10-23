@@ -7,12 +7,13 @@ import QuickLook
 
 enum SidebarItem: String, CaseIterable, Identifiable {
     case workspace = "Conversione", files = "File", images = "Immagini", video = "Video", audio = "Audio",
-         queue = "Coda", history = "Cronologia", automation = "Automazioni", presets = "Preset", components = "Componenti"
+         queue = "Coda", history = "Cronologia", automation = "Automazioni", presets = "Preset", components = "Componenti",
+         help = "Aiuto"
     var id: String { rawValue }
     /// Le schede di lavoro (in alto) e le attività (sotto).
     /// Solo quello che c'è davvero: File e Immagini compariranno quando avranno la loro schermata.
     static let tabs: [SidebarItem] = [.workspace, .files, .images, .video, .audio]
-    static let activities: [SidebarItem] = [.queue, .history]
+    static let activities: [SidebarItem] = [.queue, .history, .help]
     /// Per chi vuole di più: chiuso di base, si apre con un clic.
     static let advanced: [SidebarItem] = [.automation, .presets, .components]
     /// File e Immagini avranno la loro schermata nella 2.7: per ora si lavora da Conversione.
@@ -29,6 +30,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         case .presets: return "star.circle.fill"
         case .automation: return "folder.badge.gearshape"
         case .components: return "shippingbox.fill"
+        case .help: return "questionmark.circle.fill"
         }
     }
     var color: Color {
@@ -43,6 +45,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         case .presets: return Theme.brass
         case .automation: return Theme.color(.doc)
         case .components: return Theme.green
+        case .help: return Theme.accent
         }
     }
 }
@@ -151,6 +154,7 @@ struct MainWindow: View {
                     case .presets: PresetsView()
                     case .automation: AutomationView()
                     case .components: ComponentsView()
+                    case .help: HelpView()
                     }
                 }
                 .id(app.selection ?? .workspace)
