@@ -246,7 +246,7 @@ struct VideoProjectsView: View {
         a.informativeText = "Il progetto va nel Cestino, da dove puoi ancora recuperarlo. I tuoi video non vengono toccati."
         a.addButton(withTitle: "Elimina")
         a.addButton(withTitle: "Annulla")
-        if a.runModal() == .alertFirstButtonReturn { withAnimation(.easeOut(duration: 0.2)) { s.deleteProject(e.id, undo: undo) } }
+        if a.runModal() == .alertFirstButtonReturn { withAnimation(Motion.quick) { s.deleteProject(e.id, undo: undo) } }
     }
 }
 

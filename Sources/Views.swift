@@ -75,7 +75,7 @@ struct MainWindow: View {
                         if advancedOpen { ForEach(SidebarItem.advanced) { item in sidebarRow(item) } }
                     } header: {
                         Button {
-                            withAnimation(.easeOut(duration: 0.18)) { advancedOpen.toggle() }
+                            withAnimation(Motion.quick) { advancedOpen.toggle() }
                         } label: {
                             HStack(spacing: 6) {
                                 Image(systemName: "slider.horizontal.3").font(.system(size: 11, weight: .semibold))
@@ -250,7 +250,7 @@ struct ActivityView: View {
                             a.informativeText = "Spariscono tutte le voci dall’elenco. I file creati restano dove sono."
                             a.addButton(withTitle: "Svuota")
                             a.addButton(withTitle: "Annulla")
-                            if a.runModal() == .alertFirstButtonReturn { withAnimation(.easeOut(duration: 0.2)) { store.forgetAll() } }
+                            if a.runModal() == .alertFirstButtonReturn { withAnimation(Motion.quick) { store.forgetAll() } }
                         } label: { Label("Svuota la cronologia…", systemImage: "trash") }
                         .help("Svuota la cronologia (i file non vengono toccati)")
                     }
@@ -484,7 +484,7 @@ struct HistoryRow: View {
                         if a.runModal() == .alertFirstButtonReturn { store.undo(entry) }
                     }
                 }
-                Button("Togli dalla cronologia") { withAnimation(.easeOut(duration: 0.2)) { store.forget(entry) } }
+                Button("Togli dalla cronologia") { withAnimation(Motion.quick) { store.forget(entry) } }
             } label: {
                 Image(systemName: "ellipsis.circle").foregroundStyle(.secondary)
             }

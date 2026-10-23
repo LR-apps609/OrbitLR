@@ -147,8 +147,8 @@ final class KindTabModel: ObservableObject, @unchecked Sendable {
         guard !t.isEmpty, let k = kind else { return }
         estimateTask = Task.detached(priority: .utility) { [weak self] in
             let e = await SizeEstimate.estimates(actions: acts, files: t, kind: k)
-            guard !Task.isCancelled else { return }
-            await MainActor.run { self?.estimates = e }
+            guard !Task.isCancelled, let model = self else { return }
+            await MainActor.run { model.estimates = e }
         }
     }
 }
@@ -205,7 +205,7 @@ struct KindTabView: View {
                             ForEach(m.files, id: \.self) { u in
                                 ImageTile(url: u, selected: m.selection.contains(u), tint: Theme.color(Catalog.kind(of: u) ?? style.kind),
                                           tap: { extend in m.toggle(u, extend: extend) },
-                                          remove: { withAnimation(.easeOut(duration: 0.15)) { m.remove(u) } })
+                                          remove: { withAnimation(Motion.quick) { m.remove(u) } })
                             }
                         }
                         .padding(.bottom, 12)
@@ -224,7 +224,7 @@ struct KindTabView: View {
         }
         .background(Theme.background)
         .onDrop(of: [UTType.fileURL], isTargeted: $targeted) { providers in
-            loadURLs(providers) { urls in m.add(urls) }
+            loadURLs(providers) { urls in Sounds.drop(); m.add(urls) }
             return true
         }
         .sheet(item: $m.pending) { p in

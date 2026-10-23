@@ -746,7 +746,7 @@ struct VideoEditorView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.background)
         .onDrop(of: [UTType.fileURL], isTargeted: $targeted) { providers in
-            loadURLs(providers) { urls in s.add(urls, undo: undo) }
+            loadURLs(providers) { urls in Sounds.drop(); s.add(urls, undo: undo) }
             return true
         }
         .onDisappear { s.pause() }
@@ -1997,10 +1997,11 @@ final class MontageFrames: @unchecked Sendable {
     }
 
     func frame(at t: Double) async -> CGImage? {
-        lock.lock(); var b = built; lock.unlock()
+        var b = lock.withLock { built }
         if b == nil {
             b = try? await VideoProjectBuilder.build(project, infos: infos, speech: [:], maxSide: 1100, engine: .frames)
-            lock.lock(); built = b; lock.unlock()
+            let fresh = b
+            lock.withLock { built = fresh }
         }
         guard let b else { return nil }
         let g = AVAssetImageGenerator(asset: b.composition)

@@ -216,6 +216,7 @@ struct WorkspaceView: View {
         .onDrop(of: [UTType.fileURL], isTargeted: $targeted) { providers, location in
             let wasEmpty = ws.groups.isEmpty
             loadURLs(providers) { urls in
+                Sounds.drop()
                 if wasEmpty { ws.dropPoint = location }
                 ws.load(urls, append: !ws.groups.isEmpty)
             }
@@ -280,8 +281,8 @@ struct WorkspaceView: View {
         }
         .buttonStyle(.plain)
         .onHover { hoverDrop = $0 }
-        .animation(.easeOut(duration: 0.15), value: hoverDrop)
-        .animation(.easeOut(duration: 0.15), value: targeted)
+        .animation(Motion.quick, value: hoverDrop)
+        .animation(Motion.quick, value: targeted)
         .padding(40)
     }
 
@@ -332,7 +333,7 @@ struct WorkspaceView: View {
     @ViewBuilder private var statusBar: some View {
         if let job = ws.lastJob {
             JobStatusBar(job: job, openQueue: { app.selection = .activity },
-                         onClose: { withAnimation(.easeOut(duration: 0.2)) { ws.lastJob = nil } })
+                         onClose: { withAnimation(Motion.quick) { ws.lastJob = nil } })
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         } else {
             HStack(spacing: 18) {
@@ -505,7 +506,10 @@ struct JobStatusBar: View {
                     Text(job.action.title).font(.system(size: 13, weight: .semibold))
                     Spacer()
                     SavedBadge(job: job)
-                    Text(job.status).font(.system(size: 12.5)).foregroundStyle(job.state == .failed ? Theme.orange : .secondary).lineLimit(1)
+                    Text(job.state == .done && !job.gainText.isEmpty ? "Fatto · " + job.gainText : job.status)
+                        .font(.system(size: 12.5, weight: job.state == .done ? .semibold : .regular))
+                        .foregroundStyle(job.state == .failed ? Theme.orange : (job.state == .done ? Theme.green : .secondary)).lineLimit(1)
+                        .contentTransition(.numericText())
                 }
                 if job.state == .running || job.state == .waiting {
                     TunerBar(value: job.shownProgress, tint: Theme.color(job.kind), height: 20)

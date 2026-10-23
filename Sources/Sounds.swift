@@ -6,19 +6,19 @@ import AppKit
 final class Sounds: @unchecked Sendable {
     static let shared = Sounds()
 
-    enum Effect: String { case tick, select, done }
+    enum Effect: String, CaseIterable { case tick, select, done, fail, drop }
 
     private var pools: [Effect: [NSSound]] = [:]
     private var next: [Effect: Int] = [:]
     private var lastTick = Date.distantPast
 
-    private let volume: [Effect: Float] = [.tick: 0.22, .select: 0.38, .done: 0.45]
+    private let volume: [Effect: Float] = [.tick: 0.22, .select: 0.38, .done: 0.45, .fail: 0.35, .drop: 0.3]
 
     var enabled: Bool { UserDefaults.standard.object(forKey: "sounds") as? Bool ?? true }
 
     /// Carica i suoni una volta sola, all'avvio: così il primo clic non ha ritardi.
     func prepare() {
-        for k in [Effect.tick, .select, .done] where pools[k] == nil {
+        for k in Effect.allCases where pools[k] == nil {
             guard let url = Bundle.main.url(forResource: k.rawValue, withExtension: "wav")
                     ?? Bundle.main.url(forResource: k.rawValue, withExtension: "wav", subdirectory: "Sounds"),
                   let base = NSSound(contentsOf: url, byReference: false) else { continue }
@@ -48,6 +48,15 @@ final class Sounds: @unchecked Sendable {
 
     static func tick() { shared.play(.tick) }
     static func select() { shared.play(.select) }
+
+    /// 3.1 · Un piccolo tonfo quando un file arriva nella finestra.
+    static func drop() { shared.play(.drop) }
+
+    /// 3.1 · Lavoro non riuscito: due note che scendono, piano (solo con OrbitLR in primo piano).
+    static func fail() {
+        guard NSApp.isActive else { return }
+        shared.play(.fail)
+    }
 
     /// Fine lavoro: il ding solo se OrbitLR è in primo piano (altrimenti avvisa già la notifica).
     static func done() {

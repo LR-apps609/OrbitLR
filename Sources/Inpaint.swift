@@ -27,15 +27,17 @@ final class ModelStore: ObservableObject, @unchecked Sendable {
     private var model: MLModel?
     private let lock = NSLock()
 
+    private func cachedModel() -> MLModel? { lock.withLock { model } }
+    private func store(_ m: MLModel) { lock.withLock { model = m } }
+
     /// Il modello pronto: lo scarica e lo prepara se serve.
     func lama() async throws -> MLModel {
-        lock.lock(); let cached = model; lock.unlock()
-        if let m = cached { return m }
+        if let m = cachedModel() { return m }
         if !isReady { try await download() }
         let cfg = MLModelConfiguration()
         cfg.computeUnits = .all
         let m = try MLModel(contentsOf: Self.compiled, configuration: cfg)
-        lock.lock(); model = m; lock.unlock()
+        store(m)
         return m
     }
 

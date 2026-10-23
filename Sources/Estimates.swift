@@ -130,8 +130,8 @@ extension PieModel {
         currentBytes = total
         estimateTask = Task.detached(priority: .utility) { [weak self] in
             let e = await SizeEstimate.estimates(actions: actions, files: files, kind: kind)
-            guard !Task.isCancelled, !e.isEmpty else { return }
-            await MainActor.run { self?.estimates = e }
+            guard !Task.isCancelled, !e.isEmpty, let model = self else { return }
+            await MainActor.run { model.estimates = e }
         }
     }
 }

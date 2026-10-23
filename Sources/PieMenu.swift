@@ -251,7 +251,7 @@ struct PieView: View {
                     .fill(RadialGradient(colors: [model.tint.opacity(0.12), model.tint.opacity(0.45)],
                                          center: .center, startRadius: inner, endRadius: outer))
                     .frame(width: outer * 2, height: outer * 2)
-                    .animation(.easeOut(duration: 0.12), value: model.hover)
+                    .animation(Motion.quick, value: model.hover)
             }
 
             ForEach(Array(model.items.enumerated()), id: \.element.id) { i, a in

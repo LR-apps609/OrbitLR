@@ -208,4 +208,10 @@ enum Motion {
     static func spring(_ response: Double, _ damping: Double) -> Animation {
         reduced ? .easeOut(duration: 0.12) : .spring(response: response, dampingFraction: damping)
     }
+
+    /// 3.1 · Un solo modo di muoversi in tutta l'app.
+    /// Piccole cose che compaiono o spariscono (un pulsante, una riga, una voce): rapido e morbido.
+    static var quick: Animation { reduced ? .easeOut(duration: 0.08) : .snappy(duration: 0.2, extraBounce: 0) }
+    /// Un pannello o una pagina che cambia: un po' più lento, si posa senza rimbalzo.
+    static var page: Animation { reduced ? .easeOut(duration: 0.1) : .smooth(duration: 0.28) }
 }

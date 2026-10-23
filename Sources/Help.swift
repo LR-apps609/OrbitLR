@@ -160,7 +160,7 @@ struct HelpView: View {
         let isOpen = open.contains(f.id) || !query.isEmpty
         return VStack(alignment: .leading, spacing: 8) {
             Button {
-                withAnimation(.easeOut(duration: 0.15)) {
+                withAnimation(Motion.quick) {
                     if open.contains(f.id) { open.remove(f.id) } else { open.insert(f.id) }
                 }
             } label: {

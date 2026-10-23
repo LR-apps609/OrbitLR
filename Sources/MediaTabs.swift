@@ -246,6 +246,12 @@ struct JobStrip: View {
                     .buttonStyle(.borderless).help("Interrompi")
                     .accessibilityLabel("Interrompi")
             } else if job.state == .done, !job.outputs.isEmpty {
+                // 3.1 · Prima e dopo, a un clic
+                let pairs = job.comparePairs
+                if !pairs.isEmpty {
+                    Button { CompareController.shared.show(pairs, title: job.title) } label: { Label("Confronta", systemImage: "square.split.2x1") }
+                        .help("Originale e risultato fianco a fianco, con la linea da trascinare")
+                }
                 UseInMenu(url: job.outputs[0])          // 3.0 · il passo successivo, in un clic
                 Button("Mostra nel Finder") { NSWorkspace.shared.activateFileViewerSelecting(job.outputs) }
             }
@@ -280,8 +286,9 @@ struct JobStrip: View {
         case .done:
             // Sempre anche la cartella: il file creato si trova subito
             let folder = job.outputs.first.map { Self.folderName($0) } ?? ""
-            return job.outputs.count == 1 ? "«\(job.outputs[0].lastPathComponent)» in \(folder)"
-                : "\(job.outputs.count) file in \(folder)"
+            let gain = job.gainText.isEmpty ? "" : " · " + job.gainText
+            return (job.outputs.count == 1 ? "«\(job.outputs[0].lastPathComponent)» in \(folder)"
+                : "\(job.outputs.count) file in \(folder)") + gain
         case .failed: return job.failures.first ?? "Non riuscito"
         case .cancelled: return "Interrotto"
         }
@@ -464,6 +471,7 @@ struct AudioTabView: View {
         .background(Theme.background)
         .onDrop(of: [UTType.fileURL], isTargeted: $targeted) { providers in
             loadURLs(providers) { urls in
+                Sounds.drop()
                 m.load(urls, append: m.file != nil && tool == .merge)
                 if tool == .tts { tool = .ringtone }
             }

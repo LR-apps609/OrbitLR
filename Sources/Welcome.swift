@@ -169,16 +169,16 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
 
     func next() {
         if case .page(let n) = phase {
-            if n >= 2 { finish() } else { withAnimation(.easeInOut(duration: 0.25)) { phase = .page(n + 1) } }
+            if n >= 2 { finish() } else { withAnimation(Motion.page) { phase = .page(n + 1) } }
         }
     }
 
     func back() {
-        if case .page(let n) = phase, n > 0 { withAnimation(.easeInOut(duration: 0.25)) { phase = .page(n - 1) } }
+        if case .page(let n) = phase, n > 0 { withAnimation(Motion.page) { phase = .page(n - 1) } }
     }
 
     func anotherTip() {
-        withAnimation(.easeInOut(duration: 0.25)) { tip = Tip.next() }
+        withAnimation(Motion.page) { tip = Tip.next() }
     }
 
     /// «Non mostrare più»: dalla prossima volta, solo l'animazione (si riattiva dalle Opzioni).
@@ -556,7 +556,7 @@ private struct WelcomeTryPie: View {
                     Text("Fatto: \(a.short)").font(.system(size: 15, weight: .bold, design: .rounded))
                     Text("Con un tuo file, il nuovo file\nfinisce accanto all’originale.")
                         .font(.system(size: 11.5)).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                    Button("Riprova") { withAnimation(.easeOut(duration: 0.2)) { picked = nil } }
+                    Button("Riprova") { withAnimation(Motion.quick) { picked = nil } }
                         .buttonStyle(.borderless).foregroundStyle(Theme.accent).font(.system(size: 12, weight: .semibold))
                 }
                 .transition(.scale(scale: 0.9).combined(with: .opacity))

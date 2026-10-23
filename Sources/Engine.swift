@@ -72,6 +72,20 @@ final class Job: ObservableObject, Identifiable, @unchecked Sendable {
         return f.count == 1 ? f[0].lastPathComponent : "\(f.count) file"
     }
 
+    /// 3.1 · Il guadagno in parole: «da 48 MB a 9 MB · −81%». Vuoto se non c'è niente di utile da dire.
+    var gainText: String { Job.gain(before: beforeBytes, after: afterBytes, done: state == .done && !outputs.isEmpty) }
+
+    static func gain(before: Int64, after: Int64, done: Bool) -> String {
+        guard done, before > 0, after > 0 else { return "" }
+        let fmt = ByteCountFormatter()
+        fmt.countStyle = .file
+        let a = fmt.string(fromByteCount: before), b = fmt.string(fromByteCount: after)
+        let pct = Int((Double(before - after) / Double(before) * 100).rounded())
+        if pct >= 5 { return "da \(a) a \(b) · −\(pct)%" }
+        if pct <= -5 { return "da \(a) a \(b)" }
+        return b
+    }
+
     var sizeText: String {
         guard beforeBytes > 0 else { return "" }
         let fmt = ByteCountFormatter()
@@ -481,7 +495,7 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         }
         keepDates(job)
         trashOriginalsIfWanted(job)
-        if job.state == .done { Sounds.done() }
+        if job.state == .done { Sounds.done() } else if job.state == .failed { Sounds.fail() }
         notify(job)
         objectWillChange.send()
         startNext()
