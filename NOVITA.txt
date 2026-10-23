@@ -1,3 +1,10 @@
+Novità della 2.9 «Filtri»:
+• Video: nuovo passo «Filtri» con 12 filtri pronti (Vivido, Caldo, Freddo, Bianco e nero, Seppia, Vintage, Pellicola, Notte, Sogno, Drammatico, Pastello, Radio), con la miniatura della tua clip
+• Forza del filtro e sei regolazioni: luminosità, contrasto, saturazione, calore, nitidezza, vignetta
+• Per tutto il video o solo per la clip scelta; la clip con un suo filtro mostra un'icona nella sequenza
+• Nuovo motore video: anteprima ed esportazione disegnano ogni fotogramma allo stesso modo, filtri compresi
+• Opzioni → Video → «Motore video classico»: se un video desse problemi, torni al modo di prima con un clic
+
 Novità della 2.8.9 «Rete di sicurezza»:
 • Opzioni → Aggiornamenti: puoi spegnere il controllo automatico, oppure controllare subito
 • Conversione: l'area dove trascini i file si stringe nelle finestre basse, così le statistiche restano visibili
