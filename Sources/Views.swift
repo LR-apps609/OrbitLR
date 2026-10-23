@@ -207,6 +207,13 @@ struct MainWindow: View {
             }
             AppState.shared.mainWindow = w
             LaunchGate.attach(w)
+            // 3.5 · Alla prima chiusura della finestra, OrbitLR spiega che resta pronta in alto
+            if AppState.closeWatched !== w {
+                AppState.closeWatched = w
+                NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: w, queue: .main) { _ in
+                    AppDelegate.windowClosed()
+                }
+            }
         })     // niente «lampo» prima della schedina di avvio
         .sheet(isPresented: $app.showBugReport) { BugReportView { app.showBugReport = false } }
         .toolbar {

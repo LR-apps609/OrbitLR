@@ -217,6 +217,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 
+    /// 3.5 · ⌘Q con dei lavori in corso: si chiede, mai interruzioni silenziose (tranne durante un aggiornamento).
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        let running = QueueStore.shared.runningJobs.count + QueueStore.shared.jobs.filter { $0.state == .waiting }.count
+        guard running > 0, !Updater.shared.busy else { return .terminateNow }
+        let a = NSAlert()
+        a.messageText = running == 1 ? "C’è un lavoro in corso" : "Ci sono \(running) lavori in corso"
+        a.informativeText = "Se esci adesso si interrompono. I file già pronti restano."
+        a.addButton(withTitle: "Continua a lavorare")
+        a.addButton(withTitle: "Interrompi ed esci")
+        NSApp.activate()
+        if a.runModal() == .alertFirstButtonReturn { return .terminateCancel }
+        for j in QueueStore.shared.jobs where j.state == .running || j.state == .waiting { QueueStore.shared.cancel(j) }
+        return .terminateNow
+    }
+
+    /// 3.5 · La prima volta che chiudi la finestra: OrbitLR resta pronta in alto, e lo dice (una volta sola).
+    static func windowClosed() {
+        let key = "closeNoticeShown"
+        guard !UserDefaults.standard.bool(forKey: key), !Updater.shared.busy else { return }
+        UserDefaults.standard.set(true, forKey: key)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            let a = NSAlert()
+            a.messageText = "OrbitLR resta pronta"
+            a.informativeText = "La trovi nella barra in alto: ⌥⌘C sui file nel Finder, o trascinali sull’icona. Per chiuderla del tutto: ⌘Q."
+            a.addButton(withTitle: "Va bene")
+            a.addButton(withTitle: "Esci del tutto")
+            NSApp.activate()
+            if a.runModal() == .alertSecondButtonReturn { NSApp.terminate(nil) }
+        }
+    }
+
     /// 2.9.10 · Uscendo dall'app, le modifiche del Video ancora da confermare non si perdono.
     func applicationWillTerminate(_ notification: Notification) {
         let s = VideoProjectStore.shared

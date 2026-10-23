@@ -22,6 +22,8 @@ final class AppState: ObservableObject, @unchecked Sendable {
     @Published var videoMode: VideoMode = .montage
     /// La finestra principale, per riportarla in primo piano senza aprirne una seconda.
     weak var mainWindow: NSWindow?
+    /// 3.5 · La finestra di cui si sorveglia la chiusura (una volta sola)
+    static weak var closeWatched: NSWindow?
     @Published var showBugReport = false
 }
 
