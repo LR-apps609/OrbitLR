@@ -1,3 +1,6 @@
+Novità della 2.8.8:
+• In basso nella barra laterale c'è la versione di OrbitLR: un clic controlla se ce n'è una nuova
+
 Novità della 2.8.7 «Novità leggibili»:
 • Installazione di un aggiornamento: le novità stanno in un riquadro con la barra per scorrere, la finestra resta piccola e «Installa» si vede sempre
 • «Cosa c'è di nuovo»: la barra per scorrere è sempre visibile e il pulsante «Inizia» resta in basso

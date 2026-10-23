@@ -134,6 +134,22 @@ struct MainWindow: View {
                     .background(RoundedRectangle(cornerRadius: 8).fill(Theme.ivory))
                     .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.stroke))
                     .help("Qualcosa non va? Mandami una segnalazione con screenshot")
+
+                    // 2.8.8 · La versione, sempre visibile; un clic controlla se ce n'è una nuova
+                    Button {
+                        Task { @MainActor in await UpdateCheck.check(userInitiated: true) }
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: "checkmark.seal.fill").font(.system(size: 10))
+                            Text("OrbitLR \(UpdateCheck.current)").font(.system(size: 11, weight: .semibold)).monospacedDigit()
+                        }
+                        .foregroundStyle(Theme.ink.opacity(0.55))
+                        .frame(maxWidth: .infinity)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .help("La versione che hai. Clicca per controllare se ce n’è una nuova")
+                    .accessibilityLabel("OrbitLR versione \(UpdateCheck.current), controlla aggiornamenti")
                 }
                 .padding(12)
             }
