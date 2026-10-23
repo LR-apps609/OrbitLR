@@ -1,3 +1,9 @@
+Novità della 2.9.7 «Rimuovi con l'IA»:
+• Nascondi filigrana ha una terza scelta: «Rimuovi (IA)». L'intelligenza artificiale ricostruisce la zona con quello che c'è intorno, come se il logo non ci fosse mai stato
+• Funziona su foto e video, tutto sul tuo Mac: niente viene caricato su internet
+• La prima volta scarica il modello di IA (circa 190 MB), poi funziona anche senza connessione
+• Nei video lavora fotogramma per fotogramma: ci vuole qualche minuto, e va meglio con loghi piccoli e fermi
+
 Novità della 2.9.6 «Formati»:
 • Immagini: ora si aprono e si convertono anche AVIF, Photoshop (PSD), JPEG XL, JPEG 2000, TGA ed EXR
 • Audio: CAF (prima non veniva riconosciuto), audiolibri M4B, AIFC; con i componenti aggiuntivi anche AMR (vecchi vocali) e AC3
