@@ -70,13 +70,14 @@ final class Updater: ObservableObject, @unchecked Sendable {
         loadTimes()
 
         // 2.8.1 · Solo le novità rispetto alla versione che hai, non tutta la storia dell'app
-        let items = News.items(since: currentVersion, in: news, maxVersions: 5)
-        let newsText = items.isEmpty ? "" : items.prefix(12).map { "• " + $0 }.joined(separator: "\n") + (items.count > 12 ? "\n…" : "")
+        let items = News.items(since: currentVersion, in: news, maxVersions: 8)
+        let newsText = items.map { "• " + $0 }.joined(separator: "\n\n")
         if !confirmed {
             let a = NSAlert()
             a.messageText = "Installare OrbitLR \(version)?"
-            a.informativeText = "Versione attuale: \(currentVersion).\n\n" + newsText +
-                "\n\nOrbitLR si chiuderà e si riaprirà da sola, già aggiornata. Tempo stimato: \(roughDuration(expected.reduce(0, +)))."
+            a.informativeText = "Versione attuale: \(currentVersion).\n\nOrbitLR si chiuderà e si riaprirà da sola, già aggiornata. Tempo stimato: \(roughDuration(expected.reduce(0, +)))."
+            // 2.8.7 · Le novità in un riquadro che scorre: la finestra resta piccola e i pulsanti sempre visibili
+            if !newsText.isEmpty { a.accessoryView = Self.scrollingText(newsText) }
             a.addButton(withTitle: "Installa")
             a.addButton(withTitle: "Annulla")
             NSApp.activate()
@@ -97,6 +98,26 @@ final class Updater: ObservableObject, @unchecked Sendable {
         } else {
             build(project)
         }
+    }
+
+    /// 2.8.7 · Un testo lungo in un riquadro di misura fissa, con la barra per scorrere.
+    static func scrollingText(_ text: String, width: CGFloat = 380, height: CGFloat = 220) -> NSView {
+        let scroll = NSScrollView(frame: NSRect(x: 0, y: 0, width: width, height: height))
+        scroll.hasVerticalScroller = true
+        scroll.autohidesScrollers = false
+        scroll.borderType = .bezelBorder
+        let tv = NSTextView(frame: NSRect(x: 0, y: 0, width: width - 4, height: height))
+        tv.isEditable = false
+        tv.isSelectable = true
+        tv.drawsBackground = false
+        tv.textContainerInset = NSSize(width: 6, height: 8)
+        tv.font = .systemFont(ofSize: 12)
+        tv.string = text
+        tv.isVerticallyResizable = true
+        tv.autoresizingMask = [.width]
+        tv.textContainer?.widthTracksTextView = true
+        scroll.documentView = tv
+        return scroll
     }
 
     private func findProject(_ dir: URL) -> URL? {

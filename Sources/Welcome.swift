@@ -457,6 +457,8 @@ struct WelcomeView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(14)
             }
+            .scrollIndicators(.visible)          // 2.8.7 · la barra per scorrere si vede sempre
+            .frame(maxHeight: .infinity)
             .background(RoundedRectangle(cornerRadius: 12).fill(Theme.ink.opacity(0.05)))
             .padding(.horizontal, 28)
             HStack {

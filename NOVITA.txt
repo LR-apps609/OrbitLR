@@ -1,3 +1,7 @@
+Novità della 2.8.7 «Novità leggibili»:
+• Installazione di un aggiornamento: le novità stanno in un riquadro con la barra per scorrere, la finestra resta piccola e «Installa» si vede sempre
+• «Cosa c'è di nuovo»: la barra per scorrere è sempre visibile e il pulsante «Inizia» resta in basso
+
 Novità della 2.8.6 «Audio sistemato»:
 • Audio: sistemata la pagina che usciva dai bordi e spostava tutta la finestra (anche la barra laterale spariva)
 • Audio: contenuto al centro, largo al massimo come le altre schede; se la finestra è bassa la pagina scorre
