@@ -50,7 +50,8 @@ final class Updater: ObservableObject, @unchecked Sendable {
 
     var currentVersion: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?" }
 
-    func open(_ file: URL) {
+    /// `confirmed`: l'utente ha già detto sì (da «Controlla aggiornamenti»), niente seconda domanda.
+    func open(_ file: URL, confirmed: Bool = false) {
         guard !busy else { window?.makeKeyAndOrderFront(nil); return }
         // Da subito «occupato»: se l'app si è appena aperta per questo aggiornamento, la finestra principale non compare
         busy = true
@@ -68,17 +69,22 @@ final class Updater: ObservableObject, @unchecked Sendable {
         let news = (try? String(contentsOf: project.appendingPathComponent("NOVITA.txt"), encoding: .utf8)) ?? ""
         loadTimes()
 
-        let a = NSAlert()
-        a.messageText = "Installare OrbitLR \(version)?"
-        a.informativeText = "Versione attuale: \(currentVersion).\n\n" + news +
-            "\n\nOrbitLR si chiuderà e si riaprirà da sola, già aggiornata. Tempo stimato: \(roughDuration(expected.reduce(0, +)))."
-        a.addButton(withTitle: "Installa")
-        a.addButton(withTitle: "Annulla")
-        NSApp.activate()
-        guard a.runModal() == .alertFirstButtonReturn else {
-            busy = false
-            LaunchGate.release()
-            return
+        // 2.8.1 · Solo le novità rispetto alla versione che hai, non tutta la storia dell'app
+        let items = News.items(since: currentVersion, in: news, maxVersions: 5)
+        let newsText = items.isEmpty ? "" : items.prefix(12).map { "• " + $0 }.joined(separator: "\n") + (items.count > 12 ? "\n…" : "")
+        if !confirmed {
+            let a = NSAlert()
+            a.messageText = "Installare OrbitLR \(version)?"
+            a.informativeText = "Versione attuale: \(currentVersion).\n\n" + newsText +
+                "\n\nOrbitLR si chiuderà e si riaprirà da sola, già aggiornata. Tempo stimato: \(roughDuration(expected.reduce(0, +)))."
+            a.addButton(withTitle: "Installa")
+            a.addButton(withTitle: "Annulla")
+            NSApp.activate()
+            guard a.runModal() == .alertFirstButtonReturn else {
+                busy = false
+                LaunchGate.release()
+                return
+            }
         }
         fromVersion = currentVersion
         toVersion = version

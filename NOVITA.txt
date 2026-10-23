@@ -1,3 +1,8 @@
+Novità della 2.8.1 «Aggiornamenti»:
+• Nuovo comando OrbitLR → «Controlla aggiornamenti…»: se c'è una versione nuova la scarica e la installa da sola
+• Una volta al giorno OrbitLR controlla in silenzio e ti avvisa solo se c'è qualcosa di nuovo (puoi anche saltare una versione)
+• La finestra d'installazione mostra solo le novità rispetto alla versione che hai, non tutta la storia
+
 Novità della 2.8 «Immagini»:
 • Nuova scheda Immagini nella barra laterale: le foto a sinistra, a destra tutto quello che puoi farci
 • Converti in JPG, PNG, HEIC, PDF e altri con il peso previsto su ogni formato

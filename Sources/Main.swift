@@ -21,6 +21,13 @@ struct OrbitLRApp: App {
                 .frame(minWidth: 880, minHeight: 620)
         }
         .defaultSize(width: 1120, height: 760)
+        .commands {
+            CommandGroup(after: .appInfo) {
+                Button("Controlla aggiornamenti…") {
+                    Task { @MainActor in await UpdateCheck.check(userInitiated: true) }
+                }
+            }
+        }
 
         MenuBarExtra {
             MenuBarView().environmentObject(store).environmentObject(app)

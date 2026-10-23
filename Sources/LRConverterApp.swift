@@ -40,6 +40,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
         Paths.installScript()
         WatchStore.shared.start()            // cartelle automatiche
+        UpdateCheck.autoCheckSoon()          // 2.8.1 · una volta al giorno, in silenzio
         Appearance.apply()
         Sounds.shared.prepare()
         cleanOldTemporaryFiles()
