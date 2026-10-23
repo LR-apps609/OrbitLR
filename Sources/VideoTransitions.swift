@@ -45,7 +45,9 @@ final class VPCompositor: NSObject, AVVideoCompositing {
     var sourcePixelBufferAttributes: [String: Any]? { Self.bgra }
     var requiredPixelBufferAttributesForRenderContext: [String: Any] { Self.bgra }
     private let queue = DispatchQueue(label: "orbitlr.compositor")
-    private let space = CGColorSpace(name: CGColorSpace.itur_709) ?? CGColorSpaceCreateDeviceRGB()
+    /// I fotogrammi arrivano senza profilo e Core Image li legge come sRGB: si riscrive in sRGB, così i colori
+    /// restano identici (con il profilo 709 l'immagine usciva più scura).
+    private let space = CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB()
 
     func renderContextChanged(_ newRenderContext: AVVideoCompositionRenderContext) {}
 
