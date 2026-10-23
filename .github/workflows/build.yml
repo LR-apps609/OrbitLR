@@ -101,6 +101,11 @@ jobs:
           grep -E "^/.*:[0-9]+:[0-9]+: error:" test.log | sort -u | head -n 5 | while IFS= read -r l; do
             echo "::error::$l"
           done
+          # Test che si chiudono di colpo o saltati: anche loro con il nome, così si vede quale
+          grep -E "Test Case .* skipped|unexpected exit|[Cc]rashed|Fatal error|signal (SIGABRT|SIGSEGV|SIGILL|SIGTRAP)" test.log | sort -u | head -n 12 | while IFS= read -r l; do
+            echo "::error::$l"
+          done
+          grep -B2 -A12 -E "Restarting after unexpected exit|crashed" test.log | head -n 60 | sed 's/^/  /' || true
           passed=$(grep -cE "Test Case .* passed" test.log || true)
           failed=$(grep -cE "Test Case .* failed" test.log || true)
           echo "::notice::Test superati: $passed · falliti: $failed"

@@ -119,6 +119,21 @@ final class Inpainter: @unchecked Sendable {
         return CGRect(x: r.midX - side / 2, y: r.midY - side / 2, width: side, height: side).integral
     }
 
+    /// Un numero a 16 bit in Float (Float16 non esiste sui Mac Intel).
+    static func half(_ h: UInt16) -> Float {
+        let sign: UInt32 = UInt32(h & 0x8000) << 16
+        var exp = Int((h >> 10) & 0x1F)
+        var mant = UInt32(h & 0x3FF)
+        if exp == 0 {
+            if mant == 0 { return Float(bitPattern: sign) }
+            while mant & 0x400 == 0 { mant <<= 1; exp -= 1 }
+            exp += 1; mant &= 0x3FF
+        } else if exp == 31 {
+            return Float(bitPattern: sign | 0x7F80_0000 | (mant << 13))
+        }
+        return Float(bitPattern: sign | UInt32(exp + 112) << 23 | (mant << 13))
+    }
+
     func apply(_ spec: HideMark.Spec, to img: CIImage, time: Double? = nil) throws -> CIImage {
         lock.lock(); defer { lock.unlock() }
         if let t = time { if t < lastTime { previous = [:] }; lastTime = t }
@@ -176,12 +191,32 @@ final class Inpainter: @unchecked Sendable {
         guard let res = try model.prediction(from: input).featureValue(for: "output")?.multiArrayValue else {
             throw NativeError("il modello di IA non ha risposto")
         }
-        let rp = res.dataPointer.bindMemory(to: Float.self, capacity: 3 * plane)
+        // L'uscita può avere passi diversi da quelli «compatti» e numeri a 16 o 32 bit: si legge con i suoi passi
+        guard res.shape.count == 4, res.shape[1].intValue == 3, res.shape[2].intValue == side, res.shape[3].intValue == side else {
+            throw NativeError("il modello di IA ha risposto in un formato inatteso")
+        }
+        let st = res.strides.map { $0.intValue }
         var bytes = [UInt8](repeating: 255, count: plane * 4)
-        for i in 0..<plane {
-            bytes[i * 4] = UInt8(min(255, max(0, rp[i] * 255 + 0.5)))
-            bytes[i * 4 + 1] = UInt8(min(255, max(0, rp[plane + i] * 255 + 0.5)))
-            bytes[i * 4 + 2] = UInt8(min(255, max(0, rp[2 * plane + i] * 255 + 0.5)))
+        func put(_ read: (Int) -> Float) {
+            for y in 0..<side {
+                for x in 0..<side {
+                    let o = y * st[2] + x * st[3], d = (y * side + x) * 4
+                    for ch in 0..<3 { bytes[d + ch] = UInt8(min(255, max(0, read(o + ch * st[1]) * 255 + 0.5))) }
+                }
+            }
+        }
+        switch res.dataType {
+        case .float32:
+            let rp = res.dataPointer.bindMemory(to: Float.self, capacity: res.count)
+            put { rp[$0] }
+        case .float16:
+            let rp = res.dataPointer.bindMemory(to: UInt16.self, capacity: res.count)
+            put { Self.half(rp[$0]) }
+        case .double:
+            let rp = res.dataPointer.bindMemory(to: Double.self, capacity: res.count)
+            put { Float(rp[$0]) }
+        default:
+            put { res[$0].floatValue }
         }
         let restored = CIImage(bitmapData: Data(bytes), bytesPerRow: side * 4, size: CGSize(width: S, height: S),
                                format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB))
