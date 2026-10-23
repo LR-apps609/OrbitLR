@@ -1233,7 +1233,7 @@ private struct ProjectTimeline: View {
         .help(tr == nil ? "Aggiungi una transizione" : "Transizione: " + VPTransition.name(tr!.kind))
         .accessibilityLabel(tr == nil ? "Aggiungi transizione" : "Transizione " + VPTransition.name(tr!.kind))
         .popover(isPresented: Binding(get: { transitionFor == c.id }, set: { if !$0 { transitionFor = nil } }), arrowEdge: .top) {
-            TransitionOptions(s: s, clipID: c.id, tint: tint)
+            TransitionOptions(s: s, clipID: c.id, tint: tint, undo: undo)
         }
     }
 
@@ -1554,7 +1554,8 @@ struct TransitionOptions: View {
     @ObservedObject var s: VideoProjectStore
     let clipID: UUID
     let tint: Color
-    @Environment(\.undoManager) private var undo
+    /// Quello della finestra: il popover ne avrebbe uno suo (o nessuno) e ⌘Z non annullerebbe.
+    let undo: UndoManager?
     @State private var before: VideoProject? = nil
 
     private var current: VPTransition? { s.project.clips.first { $0.id == clipID }?.transition }
