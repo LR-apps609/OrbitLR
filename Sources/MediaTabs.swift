@@ -409,17 +409,24 @@ enum AudioTool: String, CaseIterable, Identifiable {
 
 /// Ascolto di prova della sintesi vocale.
 final class SpeechPreview: NSObject, ObservableObject, AVSpeechSynthesizerDelegate, @unchecked Sendable {
-    private let synth = AVSpeechSynthesizer()
+    /// 3.4.2 · La voce si prepara solo quando serve: crearla subito rallentava l'apertura della scheda Audio
+    private lazy var synth: AVSpeechSynthesizer = {
+        let s = AVSpeechSynthesizer()
+        s.delegate = self
+        return s
+    }()
+    private var started = false
     @Published var speaking = false
-    override init() { super.init(); synth.delegate = self }
+    override init() { super.init() }
     func speak(_ text: String, voice: String?, rate: Float) {
         stop()
         let sample = String(text.prefix(400))
         guard !sample.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { NSSound.beep(); return }
+        started = true
         synth.speak(Speech.utterance(sample, voice: voice, rate: rate))
         speaking = true
     }
-    func stop() { if synth.isSpeaking { synth.stopSpeaking(at: .immediate) }; speaking = false }
+    func stop() { if started, synth.isSpeaking { synth.stopSpeaking(at: .immediate) }; speaking = false }
     func speechSynthesizer(_ s: AVSpeechSynthesizer, didFinish u: AVSpeechUtterance) { DispatchQueue.main.async { self.speaking = false } }
     func speechSynthesizer(_ s: AVSpeechSynthesizer, didCancel u: AVSpeechUtterance) { DispatchQueue.main.async { self.speaking = false } }
 }
