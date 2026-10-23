@@ -913,9 +913,9 @@ struct VideoEditorView: View {
             }
             SectionLabel(text: "Altro")
             HStack(spacing: 6) {
-                Button(role: .destructive) { s.deleteClip(undo) } label: { Label("Elimina", systemImage: "trash") }
+                Button(role: .destructive) { s.deleteClip(undo) } label: { Label("Togli", systemImage: "trash") }
                     .keyboardShortcut(s.typing ? nil : KeyboardShortcut(.delete, modifiers: []))
-                    .help("Elimina la clip (si può annullare)")
+                    .help("Togli la clip dal montaggio (⌫ · si può annullare con ⌘Z; il tuo video resta dov’è)")
                 otherMenu
             }
         }
@@ -928,11 +928,11 @@ struct VideoEditorView: View {
             Button("GIF della clip") { quickGIF() }
             Button("Comprimi la clip a 25 MB") { quick("vcompress", param: "25") }
         } label: {
-            Label("Strumenti veloci", systemImage: "ellipsis.circle")
+            Label("Dal video originale", systemImage: "ellipsis.circle")
         }
         .menuStyle(.button)
         .fixedSize()
-        .help("Strumenti veloci sul file originale della clip")
+        .help("Audio, GIF o versione compressa del video originale di questa clip")
     }
 
     @ViewBuilder private var musicOptions: some View {

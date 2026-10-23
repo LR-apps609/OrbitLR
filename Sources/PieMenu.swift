@@ -116,6 +116,14 @@ final class PieModel: ObservableObject, @unchecked Sendable {
 
 /// Trama della griglia dell'altoparlante (punto 32): forellini sfalsati, come la tela delle radio d'epoca.
 /// Un solo disegno per tutto l'anello, così resta leggera anche durante le animazioni.
+/// Sul Mac virtuale delle foto automatiche non c'è la scheda grafica: lì niente effetti fatti con Metal.
+struct GPULayer: ViewModifier {
+    static let off = ProcessInfo.processInfo.environment["SCREENSHOTS"] == "1"
+    @ViewBuilder func body(content: Content) -> some View {
+        if Self.off { content } else { content.drawingGroup() }
+    }
+}
+
 struct GrilleTexture: View {
     var spacing: CGFloat = 7
 
@@ -139,7 +147,8 @@ struct GrilleTexture: View {
             ctx.fill(light, with: .color(Theme.ivory.opacity(0.35)))   // bordo illuminato sotto il foro
             ctx.fill(holes, with: .color(Theme.ink.opacity(0.13)))
         }
-        .drawingGroup()
+        // Disegnata dalla scheda grafica; nelle foto automatiche (Mac virtuale senza scheda grafica) no
+        .modifier(GPULayer())
     }
 }
 
