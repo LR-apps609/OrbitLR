@@ -32,7 +32,7 @@ targets:
         CFBundleDisplayName: OrbitLR
         CFBundleName: OrbitLR
         CFBundleDevelopmentRegion: it
-        CFBundleShortVersionString: "3.0"
+        CFBundleShortVersionString: "2.9.11"
         CFBundleVersion: "55"
         LSMinimumSystemVersion: "14.0"
         LSApplicationCategoryType: public.app-category.utilities
@@ -74,7 +74,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: it.ledion.OrbitLR
         PRODUCT_NAME: OrbitLR
-        MARKETING_VERSION: "3.0"
+        MARKETING_VERSION: "2.9.11"
         CURRENT_PROJECT_VERSION: "55"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # Colore dei controlli di sistema (selezione nella barra laterale, interruttori…): salvia, non il blu di macOS
@@ -100,7 +100,7 @@ targets:
       path: ShareExtension/Info.plist
       properties:
         CFBundleDisplayName: OrbitLR
-        CFBundleShortVersionString: "3.0"
+        CFBundleShortVersionString: "2.9.11"
         CFBundleVersion: "55"
         LSMinimumSystemVersion: "14.0"
         NSExtension:
@@ -118,7 +118,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: it.ledion.OrbitLR.Share
         PRODUCT_NAME: OrbitLRShare
-        MARKETING_VERSION: "3.0"
+        MARKETING_VERSION: "2.9.11"
         CURRENT_PROJECT_VERSION: "55"
         GENERATE_INFOPLIST_FILE: NO
         SWIFT_VERSION: "5.0"
