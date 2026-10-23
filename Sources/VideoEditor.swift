@@ -463,6 +463,25 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         }
     }
 
+    // MARK: 2.9 · Miniature dei filtri
+
+    private var lookThumbCache: [String: NSImage] = [:]
+
+    /// La miniatura della clip con un filtro pronto (fatta una volta, poi ricordata).
+    func lookThumbnail(_ preset: String, clip i: Int) -> NSImage? {
+        guard project.clips.indices.contains(i) else { return nil }
+        let path = project.clips[i].path
+        guard let list = thumbs[path], !list.isEmpty else { return nil }
+        let key = path + "|" + preset
+        if let hit = lookThumbCache[key] { return hit }
+        var look = VPLook()
+        look.preset = preset
+        guard let img = VideoLooks.thumbnail(list[list.count / 2], look: look) else { return nil }
+        if lookThumbCache.count > 400 { lookThumbCache.removeAll() }
+        lookThumbCache[key] = img
+        return img
+    }
+
     // MARK: Musica
 
     func musicStartHere(_ undo: UndoManager?) {
@@ -576,12 +595,13 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
 
 /// 2.7.4 · Quattro passi in ordine, invece di cinque strumenti sparsi: l'audio originale sta con la musica.
 enum VideoEditTool: String, CaseIterable, Identifiable {
-    case clips = "Taglia", music = "Audio e musica", format = "Formato", export = "Esporta"
+    case clips = "Taglia", looks = "Filtri", music = "Audio e musica", format = "Formato", export = "Esporta"
     var id: String { rawValue }
     var number: Int { (Self.allCases.firstIndex(of: self) ?? 0) + 1 }
     var symbol: String {
         switch self {
         case .clips: return "scissors"
+        case .looks: return "camera.filters"
         case .music: return "music.note"
         case .format: return "rectangle.portrait"
         case .export: return "square.and.arrow.up"
@@ -591,6 +611,7 @@ enum VideoEditTool: String, CaseIterable, Identifiable {
     var hint: String {
         switch self {
         case .clips: return "Trascina i bordi d’ottone di una clip per accorciarla, premi S per dividerla, trascina una clip per spostarla."
+        case .looks: return "Scegli un filtro e quanto forte. Vale per tutto il video, oppure solo per la clip scelta. Sotto regoli luce, colori e nitidezza."
         case .music: return "Trascina qui una canzone per la musica. Qui regoli anche l’audio dei tuoi video."
         case .format: return "Scegli la forma del video: verticale per Reels e TikTok, quadrato per i post, orizzontale per YouTube."
         case .export: return "Scegli la qualità e premi Esporta (⌘E): il video finale va nella cartella che hai scelto."
@@ -701,6 +722,7 @@ struct VideoEditorView: View {
             guard let full = s.infos[c.path]?.videoDuration else { return false }
             return c.inPoint > 0.05 || c.outPoint < full - 0.05
         } || s.project.clips.count > 1
+        case .looks: return !(s.project.look?.isIdentity ?? true) || s.project.clips.contains { !($0.look?.isIdentity ?? true) }
         case .music: return s.project.music != nil
         case .format: return s.project.aspect != "orig"
         case .export: return s.lastJob != nil
@@ -759,6 +781,7 @@ struct VideoEditorView: View {
     @ViewBuilder private var options: some View {
         switch tool {
         case .clips: clipOptions
+        case .looks: LookOptions(s: s, undo: undo, tint: tint)
         case .music:
             originalOptions
             Divider().frame(height: 44)
@@ -1321,6 +1344,15 @@ private struct ClipBlock: View {
                     .foregroundStyle(Color.white)
                     .padding(4)
                     .opacity(g.size.width > 44 ? 1 : 0)
+                if !(clip.look?.isIdentity ?? true) {
+                    // 2.9 · clip con un suo filtro
+                    Image(systemName: "camera.filters")
+                        .font(.system(size: 9, weight: .bold)).foregroundStyle(.white)
+                        .padding(3).background(Circle().fill(Color.black.opacity(0.55)))
+                        .padding(4)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .offset(x: clip.isMuted ? 18 : 0)
+                }
                 if clip.isMuted {
                     // 2.7.4 · clip senza audio: si vede a colpo d'occhio
                     Image(systemName: "speaker.slash.fill")
@@ -1376,5 +1408,109 @@ private struct StepChip: View {
         }
         .buttonStyle(.plain)
         .help("Passo \(tool.number): \(tool.rawValue)")
+    }
+}
+
+// MARK: - 2.9 · Filtri
+
+/// Il passo «Filtri»: filtro pronto con miniatura, forza, sei regolazioni; per tutto il video o per una clip.
+private struct LookOptions: View {
+    @ObservedObject var s: VideoProjectStore
+    let undo: UndoManager?
+    let tint: Color
+    @State private var onlyClip = false
+
+    private var clipIndex: Int? { onlyClip ? s.targetIndex : nil }
+
+    /// Il look che si sta modificando (della clip o del progetto).
+    private var look: VPLook {
+        if let i = clipIndex, s.project.clips.indices.contains(i) { return s.project.clips[i].look ?? s.project.look ?? VPLook() }
+        return s.project.look ?? VPLook()
+    }
+
+    private func edit(_ p: inout VideoProject, _ f: (inout VPLook) -> Void) {
+        if let i = clipIndex, p.clips.indices.contains(i) {
+            var l = p.clips[i].look ?? p.look ?? VPLook()
+            f(&l)
+            p.clips[i].look = l
+        } else {
+            var l = p.look ?? VPLook()
+            f(&l)
+            p.look = l
+        }
+    }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 16) {
+            VStack(alignment: .leading, spacing: 6) {
+                Picker("", selection: $onlyClip) {
+                    Text("Tutto il video").tag(false)
+                    Text("Solo questa clip").tag(true)
+                }
+                .pickerStyle(.segmented).labelsHidden().frame(width: 230)
+                .disabled(s.targetIndex == nil && !onlyClip)
+                Button("Ripristina") {
+                    s.change(undo, "Togli il filtro") { p in
+                        if let i = clipIndex, p.clips.indices.contains(i) { p.clips[i].look = nil } else { p.look = nil }
+                    }
+                }
+                .controlSize(.small)
+                .help(onlyClip ? "Toglie filtro e regolazioni da questa clip (torna quello del video)" : "Toglie filtro e regolazioni da tutto il video")
+            }
+            .fixedSize()
+            Divider().frame(height: 52)
+            ForEach(VideoLooks.presets) { preset in
+                PresetChip(preset: preset, selected: look.preset == preset.id, tint: tint,
+                           image: s.lookThumbnail(preset.id, clip: s.targetIndex ?? 0)) {
+                    s.change(undo, "Filtro \(preset.name)") { p in edit(&p) { $0.preset = preset.id; if $0.amount < 0.05 { $0.amount = 1 } } }
+                }
+            }
+            Divider().frame(height: 52)
+            EditSlider(title: "Forza", value: look.amount, range: 0...1, text: "\(Int((look.amount * 100).rounded()))%",
+                       width: 110, s: s, undo: undo, name: "Forza del filtro") { p, v in edit(&p) { $0.amount = v } }
+                .disabled(look.preset == "none")
+            adjust("Luminosità", \.brightness, range: -1...1)
+            adjust("Contrasto", \.contrast, range: -1...1)
+            adjust("Saturazione", \.saturation, range: -1...1)
+            adjust("Calore", \.warmth, range: -1...1)
+            adjust("Nitidezza", \.sharpness, range: 0...1)
+            adjust("Vignetta", \.vignette, range: 0...1)
+        }
+        .fixedSize()
+    }
+
+    private func adjust(_ title: String, _ key: WritableKeyPath<VPLook, Double>, range: ClosedRange<Double>) -> some View {
+        let v = look[keyPath: key]
+        let text = range.lowerBound < 0 ? (v > 0.005 ? "+" : "") + "\(Int((v * 100).rounded()))" : "\(Int((v * 100).rounded()))%"
+        return EditSlider(title: title, value: v, range: range, text: text, width: 96, s: s, undo: undo, name: title) { p, nv in
+            edit(&p) { $0[keyPath: key] = abs(nv) < 0.03 ? 0 : nv }       // vicino allo zero si «aggancia» a com'era
+        }
+    }
+}
+
+private struct PresetChip: View {
+    let preset: VPLookPreset
+    let selected: Bool
+    let tint: Color
+    let image: NSImage?
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 3) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 7).fill(tint.opacity(0.15))
+                    if let image { Image(nsImage: image).resizable().scaledToFill() }
+                }
+                .frame(width: 58, height: 40)
+                .clipShape(RoundedRectangle(cornerRadius: 7))
+                .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(selected ? Theme.brass : Color.black.opacity(0.12), lineWidth: selected ? 2.5 : 1))
+                Text(preset.name).font(.system(size: 10.5, weight: selected ? .bold : .regular)).lineLimit(1).frame(width: 64)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Filtro \(preset.name)")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }

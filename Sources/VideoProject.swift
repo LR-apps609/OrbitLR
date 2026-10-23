@@ -24,6 +24,8 @@ struct VPClip: Codable, Equatable, Identifiable, Sendable {
     /// 2.7.4 · Audio di questa clip spento (per un solo tratto: si divide la clip e si spegne quel pezzo).
     var muted: Bool? = nil
     var isMuted: Bool { muted ?? false }
+    /// 2.9 · Filtro e regolazioni solo di questa clip (nil = quelli di tutto il progetto).
+    var look: VPLook? = nil
     var url: URL { URL(fileURLWithPath: path) }
     var length: Double { max(0, outPoint - inPoint) }
 }
@@ -59,6 +61,11 @@ struct VideoProject: Codable, Equatable, Sendable {
     /// Lato corto del video esportato: 720, 1080, 2160 (mai più grande dell'originale)
     var resolution = 1080
     var fps = 30
+    /// 2.9 · Filtro e regolazioni di tutto il progetto (una clip può avere i suoi).
+    var look: VPLook? = nil
+
+    /// Il look che si vede su una clip: il suo, altrimenti quello del progetto.
+    func effectiveLook(_ c: VPClip) -> VPLook? { c.look ?? look }
 
     var duration: Double { clips.reduce(0) { $0 + $1.length } }
     var originalAudible: Bool { !originalMuted && originalVolume > 0.03 }
@@ -184,8 +191,20 @@ enum VideoProjectBuilder {
         return max(24, min(60, min(p.fps, Int(source.rounded()))))
     }
 
+    /// 2.9 · `.frames`: ogni fotogramma si disegna con Core Image (posizione, rotazione e filtri).
+    /// `.layers`: il vecchio modo (solo posizione), tenuto per confrontare i due nei test.
+    enum Engine { case frames, layers }
+
+    /// Dove sta una clip nel montaggio e come si disegna.
+    struct Placement: Sendable {
+        let start: Double
+        let end: Double
+        let transform: CGAffineTransform
+        let look: VPLook?
+    }
+
     static func build(_ p: VideoProject, infos: [String: VPMediaInfo], speech: [String: [ClosedRange<Double>]],
-                      maxSide: CGFloat) async throws -> VPBuilt {
+                      maxSide: CGFloat, engine: Engine = .frames) async throws -> VPBuilt {
         let comp = AVMutableComposition()
         guard let vT = comp.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid),
               let aT = comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) else {
@@ -202,6 +221,7 @@ enum VideoProjectBuilder {
 
         let layer = AVMutableVideoCompositionLayerInstruction(assetTrack: vT)
         var cursor = CMTime.zero
+        var placements: [Placement] = []
         for c in p.clips {
             guard let info = infos[c.path], info.hasVideo else { continue }
             let a = AVURLAsset(url: c.url)
@@ -221,18 +241,29 @@ enum VideoProjectBuilder {
                 .concatenating(CGAffineTransform(scaleX: fit, y: fit))
                 .concatenating(CGAffineTransform(translationX: tx, y: ty))
             layer.setTransform(t, at: cursor)
+            placements.append(Placement(start: cursor.seconds, end: (cursor + r.duration).seconds, transform: t, look: p.effectiveLook(c)))
             cursor = cursor + r.duration
         }
         guard cursor.seconds > 0.05 else { throw NativeError("il montaggio è vuoto") }
         let total = cursor.seconds
 
-        let instr = AVMutableVideoCompositionInstruction()
-        instr.timeRange = CMTimeRange(start: .zero, duration: cursor)
-        instr.layerInstructions = [layer]
-        let vc = AVMutableVideoComposition()
+        let vc: AVMutableVideoComposition
+        switch engine {
+        case .layers:
+            let instr = AVMutableVideoCompositionInstruction()
+            instr.timeRange = CMTimeRange(start: .zero, duration: cursor)
+            instr.layerInstructions = [layer]
+            vc = AVMutableVideoComposition()
+            vc.instructions = [instr]
+        case .frames:
+            let list = placements, size = canvas
+            vc = AVMutableVideoComposition(asset: comp) { request in
+                request.finish(with: renderFrame(request.sourceImage, at: request.compositionTime.seconds,
+                                                 placements: list, canvas: size), context: Media.ci)
+            }
+        }
         vc.renderSize = canvas
         vc.frameDuration = CMTime(value: 1, timescale: CMTimeScale(effectiveFPS(p, infos: infos)))
-        vc.instructions = [instr]
         // Uscita in SDR standard: i video HDR dell'iPhone vengono convertiti con i colori giusti
         vc.colorPrimaries = AVVideoColorPrimaries_ITU_R_709_2
         vc.colorTransferFunction = AVVideoTransferFunction_ITU_R_709_2
@@ -278,6 +309,19 @@ enum VideoProjectBuilder {
         let mix = AVMutableAudioMix()
         mix.inputParameters = params
         return VPBuilt(composition: comp, videoComposition: vc, audioMix: mix, renderSize: canvas, duration: total)
+    }
+
+    /// 2.9 · Un fotogramma del montaggio: la clip girata e messa in tela come prima, poi il suo filtro.
+    /// Le trasformazioni sono pensate con l'origine in alto a sinistra; Core Image ce l'ha in basso: si capovolge prima e dopo.
+    static func renderFrame(_ source: CIImage, at t: Double, placements: [Placement], canvas: CGSize) -> CIImage {
+        let bg = CIImage(color: CIColor(red: 0, green: 0, blue: 0)).cropped(to: CGRect(origin: .zero, size: canvas))
+        guard let pl = placements.last(where: { t >= $0.start - 0.0005 }) ?? placements.first else { return bg }
+        let src = source.extent
+        let flipIn = CGAffineTransform(a: 1, b: 0, c: 0, d: -1, tx: -src.minX, ty: src.maxY)
+        let flipOut = CGAffineTransform(a: 1, b: 0, c: 0, d: -1, tx: 0, ty: canvas.height)
+        let placed = source.transformed(by: flipIn.concatenating(pl.transform).concatenating(flipOut))
+        // Il filtro tocca solo la clip, non le bande nere intorno
+        return VideoLooks.apply(pl.look, to: placed).composited(over: bg).cropped(to: bg.extent)
     }
 
     /// Il volume della musica nel tempo: dissolvenze e «abbassa quando si parla», senza scalini.
