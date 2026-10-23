@@ -1,3 +1,9 @@
+Novità della 2.9.9 «Testi animati»:
+• Video: nuovo passo «Testi». Aggiungi un titolo o una scritta: compare dall'indicatore per 3 secondi, e con «Inizia qui» e «Finisci qui» decidi quando
+• Quattro modelli (Titolo, Sottotitolo, Didascalia, Grande), quattro animazioni (Dissolvenza, Scorrimento, Pop, Macchina da scrivere) e quattro colori dell'app
+• Si spostano trascinandoli direttamente sull'anteprima; i testi lunghi vanno a capo da soli
+• Si vedono nell'anteprima e nel video esportato (con il motore video nuovo)
+
 Novità della 2.9.8 «Effetti»:
 • Video: nuovo passo «Effetti» per la clip scelta: velocità da 0,25× a 4× (la voce non cambia tono), zoom lento che avvicina o allontana, specchia, capovolgi e ruota di 90°, sfocatura, dissolvenza in entrata e in uscita (anche dell'audio)
 • «A tutte le clip» copia gli effetti su tutto il montaggio; sulla clip con una velocità diversa si legge, ad esempio, «2×»
