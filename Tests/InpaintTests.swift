@@ -38,22 +38,36 @@ final class InpaintTests: XCTestCase {
         XCTAssertEqual(far.1, 0.45, accuracy: 0.02, "lontano dalla zona non cambia niente")
     }
 
-    /// Dal file: foto e video con «Rimuovi (IA)» passano dallo strumento vero.
-    func testPhotoAndVideoThroughTool() async throws {
+    /// Prima prova: scaricare e preparare il modello (la prima volta ci vuole un po').
+    func testA_ModelDownloadsAndCompiles() async throws {
+        let m = try await model()
+        XCTAssertNotNil(m.model.modelDescription.inputDescriptionsByName["image"])
+        XCTAssertTrue(ModelStore.shared.isReady)
+    }
+
+    /// Dal file: una foto con «Rimuovi (IA)» passa dallo strumento vero.
+    func testPhotoThroughTool() async throws {
         _ = try await model()
         let photo = try Fixtures.photo(name: "ia-foto.png", width: 600, height: 400)
         let spec = HideMark.Spec(style: "ai", strength: 0.6, rects: [CGRect(x: 0.7, y: 0.85, width: 0.25, height: 0.1)])
         let dir = Fixtures.dir.appendingPathComponent("ia-out-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let jp = try Fixtures.job("hidemark", kind: .img, files: [photo], param: HideMark.encode(spec))
-        let outPhoto = try await Tools.run(job: jp, file: photo, dir: dir) { _ in }
-        let cg = try Tools.cgImage(try Tools.orientedImage(outPhoto))
+        let out = try await Tools.run(job: jp, file: photo, dir: dir) { _ in }
+        let cg = try Tools.cgImage(try Tools.orientedImage(out))
         XCTAssertEqual(cg.width, 600); XCTAssertEqual(cg.height, 400)
+    }
 
-        let video = try await Fixtures.video(name: "ia-video.mp4", width: 320, height: 180, seconds: 0.6)
+    /// Un video brevissimo (pochi fotogrammi: sul Mac di prova l'IA gira senza chip dedicato ed è lenta).
+    func testVideoThroughTool() async throws {
+        _ = try await model()
+        let video = try await Fixtures.video(name: "ia-video.mp4", width: 320, height: 180, seconds: 0.4, fps: 10)
+        let spec = HideMark.Spec(style: "ai", strength: 0.6, rects: [CGRect(x: 0.7, y: 0.85, width: 0.25, height: 0.1)])
+        let dir = Fixtures.dir.appendingPathComponent("ia-vout-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let jv = try Fixtures.job("hidemark", kind: .video, files: [video], param: HideMark.encode(spec))
-        let outVideo = try await Tools.run(job: jv, file: video, dir: dir) { _ in }
-        let a = try await Fixtures.probe(video), b = try await Fixtures.probe(outVideo)
+        let out = try await Tools.run(job: jv, file: video, dir: dir) { _ in }
+        let a = try await Fixtures.probe(video), b = try await Fixtures.probe(out)
         XCTAssertEqual(b.duration, a.duration, accuracy: 0.15)
         XCTAssertEqual(b.displaySize, a.displaySize)
     }

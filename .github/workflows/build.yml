@@ -105,7 +105,8 @@ jobs:
           grep -E "Test Case .* skipped|unexpected exit|[Cc]rashed|Fatal error|signal (SIGABRT|SIGSEGV|SIGILL|SIGTRAP)" test.log | sort -u | head -n 12 | while IFS= read -r l; do
             echo "::error::$l"
           done
-          grep -B2 -A12 -E "Restarting after unexpected exit|crashed" test.log | head -n 60 | sed 's/^/  /' || true
+          # Il test che stava girando quando si è fermato (partito ma mai finito)
+          awk '/Test Case .* started/ {cur=$0} /Test Case .* (passed|failed|skipped)/ {cur=""} /Restarting after unexpected exit/ {if (cur!="") print "::error::Interrotto (si è chiuso o ha superato il tempo): " cur; cur=""}' test.log | sort -u | head -n 5
           passed=$(grep -cE "Test Case .* passed" test.log || true)
           failed=$(grep -cE "Test Case .* failed" test.log || true)
           echo "::notice::Test superati: $passed · falliti: $failed"
