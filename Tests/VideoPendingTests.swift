@@ -15,13 +15,14 @@ final class VideoPendingTests: XCTestCase {
         let id = try XCTUnwrap(s.currentID)
         XCTAssertFalse(s.hasPending)
 
-        s.change(um, "Aggiungi") { $0.clips = [VPClip(path: v.path, inPoint: 0, outPoint: 4)] }
+        func step(_ f: () -> Void) { um.beginUndoGrouping(); f(); um.endUndoGrouping() }
+        step { s.change(um, "Aggiungi") { $0.clips = [VPClip(path: v.path, inPoint: 0, outPoint: 4)] } }
         XCTAssertTrue(s.hasPending, "si vede ma non è ancora confermata")
         s.applyChanges()
         XCTAssertFalse(s.hasPending)
         XCTAssertEqual(s.saved.clips.count, 1)
 
-        s.change(um, "Filtro") { var l = VPLook(); l.preset = "mono"; $0.look = l }
+        step { s.change(um, "Filtro") { var l = VPLook(); l.preset = "mono"; $0.look = l } }
         XCTAssertTrue(s.hasPending)
         s.discardChanges(um)
         XCTAssertFalse(s.hasPending)
@@ -29,7 +30,7 @@ final class VideoPendingTests: XCTestCase {
         XCTAssertFalse(um.canUndo, "dopo Annulla non resta niente da annullare")
 
         // Chiudere tiene quello che si vede (la finestra chiede prima)
-        s.change(um, "Velocità") { var e = VPEffects(); e.speed = 2; $0.clips[0].fx = e }
+        step { s.change(um, "Velocità") { var e = VPEffects(); e.speed = 2; $0.clips[0].fx = e } }
         s.closeProject(um)
         s.openProject(id, undo: um)
         XCTAssertEqual(s.project.clips.first?.speed ?? 0, 2, accuracy: 0.001)
