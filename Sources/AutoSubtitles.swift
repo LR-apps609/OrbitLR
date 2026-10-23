@@ -1,0 +1,146 @@
+import Foundation
+import Speech
+import AVFoundation
+
+// ════════════════════════════════════════════════════════════════════
+//  3.3 · Sottotitoli automatici nel montaggio.
+//  macOS ascolta le clip (sul Mac, senza internet quando la lingua lo
+//  permette), le parole diventano righe brevi e le righe diventano testi
+//  «Sottotitolo» in basso, al momento giusto, anche con clip tagliate o
+//  accelerate. Si modificano poi come tutti gli altri testi.
+// ════════════════════════════════════════════════════════════════════
+
+enum AutoSubtitles {
+    struct Word: Equatable, Sendable {
+        let text: String
+        let start: Double
+        let end: Double
+    }
+
+    struct Line: Equatable, Sendable {
+        let text: String
+        let start: Double
+        let end: Double
+    }
+
+    /// Una riga si chiude dopo 7 parole, 42 caratteri, 3,5 secondi, una pausa lunga o un punto.
+    static let maxWords = 7, maxChars = 42, maxSeconds = 3.5, pause = 0.6
+
+    /// Raggruppa le parole in righe da leggere comode.
+    static func lines(_ words: [Word]) -> [Line] {
+        var out: [Line] = []
+        var cur: [Word] = []
+        func flush() {
+            guard let a = cur.first, let b = cur.last else { return }
+            let text = cur.map(\.text).joined(separator: " ")
+            // Ogni riga resta almeno 1 secondo, per dare il tempo di leggerla
+            out.append(Line(text: text, start: a.start, end: max(b.end, a.start + 1)))
+            cur = []
+        }
+        for w in words where !w.text.trimmingCharacters(in: .whitespaces).isEmpty {
+            if let last = cur.last, let first = cur.first {
+                let chars = cur.map(\.text).joined(separator: " ").count + 1 + w.text.count
+                if w.start - last.end > pause || cur.count >= maxWords || chars > maxChars || w.end - first.start > maxSeconds {
+                    flush()
+                }
+            }
+            cur.append(w)
+            if let c = w.text.last, ".!?".contains(c) { flush() }
+        }
+        flush()
+        // Righe che si accavallano (per il secondo minimo): la precedente finisce dove inizia la nuova
+        for i in out.indices.dropLast() where out[i].end > out[i + 1].start {
+            out[i] = Line(text: out[i].text, start: out[i].start, end: max(out[i].start + 0.3, out[i + 1].start))
+        }
+        return out
+    }
+
+    /// Dai secondi del file ai secondi del montaggio: solo il pezzo usato, con la velocità della clip.
+    static func timeline(_ lines: [Line], clip: VPClip, clipStart: Double) -> [Line] {
+        lines.compactMap { l in
+            let a = max(l.start, clip.inPoint), b = min(l.end, clip.outPoint)
+            guard b - a > 0.15 else { return nil }
+            return Line(text: l.text, start: clipStart + (a - clip.inPoint) / clip.speed,
+                        end: clipStart + (b - clip.inPoint) / clip.speed)
+        }
+    }
+
+    /// I testi «Sottotitolo» pronti per il progetto.
+    static func texts(_ lines: [Line]) -> [VPText] {
+        lines.map { l in
+            var t = VPText()
+            t.text = l.text
+            t.style = "subtitle"
+            t.start = l.start
+            t.end = l.end
+            t.y = 0.86
+            t.anim = "fade"
+            t.color = "white"
+            return t
+        }
+    }
+
+    enum Failure: Error { case notAllowed, unavailable, nothingHeard }
+
+    static func authorize() async -> Bool {
+        switch SFSpeechRecognizer.authorizationStatus() {
+        case .authorized: return true
+        case .notDetermined:
+            return await withCheckedContinuation { c in
+                SFSpeechRecognizer.requestAuthorization { c.resume(returning: $0 == .authorized) }
+            }
+        default: return false
+        }
+    }
+
+    /// Le parole dette in un file, con i loro tempi (secondi del file).
+    static func words(in url: URL, locale: Locale = Locale(identifier: "it-IT")) async throws -> [Word] {
+        guard let rec = SFSpeechRecognizer(locale: locale) ?? SFSpeechRecognizer(), rec.isAvailable else { throw Failure.unavailable }
+        let req = SFSpeechURLRecognitionRequest(url: url)
+        req.shouldReportPartialResults = false
+        if rec.supportsOnDeviceRecognition { req.requiresOnDeviceRecognition = true }      // sul Mac, senza internet
+        req.addsPunctuation = true
+        return try await withCheckedThrowingContinuation { c in
+            var done = false
+            rec.recognitionTask(with: req) { result, error in
+                guard !done else { return }
+                if let result, result.isFinal {
+                    done = true
+                    let ws = result.bestTranscription.segments.map {
+                        Word(text: $0.substring, start: $0.timestamp, end: $0.timestamp + $0.duration)
+                    }
+                    c.resume(returning: ws)
+                } else if let error {
+                    done = true
+                    c.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    /// Ascolta tutte le clip con l'audio acceso e mette i sottotitoli nel progetto (un solo ⌘Z li toglie).
+    @MainActor
+    static func run(_ s: VideoProjectStore, undo: UndoManager?) async -> String {
+        guard await authorize() else {
+            return "Per i sottotitoli serve il permesso «Riconoscimento vocale»: Impostazioni di Sistema → Privacy e sicurezza."
+        }
+        let clips = s.project.clips, starts = s.project.starts
+        var all: [Line] = []
+        var cache: [String: [Word]] = [:]
+        for (c, start) in zip(clips, starts) where !c.isMuted {
+            let ws: [Word]
+            if let hit = cache[c.path] { ws = hit } else {
+                ws = (try? await words(in: c.url)) ?? []
+                cache[c.path] = ws
+            }
+            all += timeline(lines(ws), clip: c, clipStart: start)
+        }
+        guard !all.isEmpty else { return "Non ho sentito parole nelle clip (o l’audio è spento)." }
+        let new = texts(all)
+        s.change(undo, "Sottotitoli automatici") { p in
+            // Al posto dei sottotitoli automatici di prima, se c'erano
+            p.texts = (p.texts ?? []).filter { $0.style != "subtitle" || $0.y < 0.8 } + new
+        }
+        return new.count == 1 ? "1 sottotitolo aggiunto: controllalo nella riga «Testi»." : "\(new.count) sottotitoli aggiunti: controllali nella riga «Testi»."
+    }
+}

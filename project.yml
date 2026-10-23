@@ -41,6 +41,7 @@ targets:
         NSDesktopFolderUsageDescription: "OrbitLR converte e salva i file che tieni sulla Scrivania."
         NSDocumentsFolderUsageDescription: "OrbitLR apre e salva i tuoi file e progetti in Documenti."
         NSDownloadsFolderUsageDescription: "OrbitLR converte i file scaricati e salva lì i risultati."
+        NSSpeechRecognitionUsageDescription: "OrbitLR ascolta le clip del montaggio per scrivere i sottotitoli automatici, sul tuo Mac."
         # «Apri con → OrbitLR» per qualsiasi file
         CFBundleDocumentTypes:
           - CFBundleTypeName: "Aggiornamento di OrbitLR"

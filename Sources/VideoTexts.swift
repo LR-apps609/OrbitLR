@@ -163,6 +163,9 @@ struct TextOptions: View {
     let tint: Color
     let add: () -> Void
     @FocusState private var focused: Bool
+    /// 3.3 · Sottotitoli automatici in corso, e l'esito in una frase.
+    @State private var listening = false
+    @State private var subsNote: String? = nil
 
     private var texts: [VPText] { s.project.texts ?? [] }
     private var current: VPText? { texts.first { $0.id == s.selectedText } }
@@ -193,6 +196,26 @@ struct TextOptions: View {
         VStack(alignment: .leading, spacing: 10) {
             Button(action: add) { Label("Aggiungi un testo", systemImage: "plus").frame(maxWidth: .infinity) }
                 .buttonStyle(.borderedProminent).tint(Theme.accent)
+            // 3.3 · Le parole dette nelle clip diventano sottotitoli, al momento giusto
+            Button {
+                listening = true
+                subsNote = nil
+                Task { @MainActor in
+                    subsNote = await AutoSubtitles.run(s, undo: undo)
+                    listening = false
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    if listening { ProgressView().controlSize(.small) } else { Image(systemName: "captions.bubble") }
+                    Text(listening ? "Ascolto le clip…" : "Sottotitoli automatici")
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .disabled(listening || s.project.clips.isEmpty)
+            .help("OrbitLR ascolta le clip e scrive i sottotitoli in basso. Poi li correggi come gli altri testi; ⌘Z li toglie tutti")
+            if let n = subsNote {
+                Text(n).font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
             if !texts.isEmpty {
                 VStack(spacing: 2) {
                     ForEach(Array(texts.enumerated()), id: \.element.id) { i, t in
