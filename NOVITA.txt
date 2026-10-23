@@ -1,3 +1,9 @@
+Novità della 2.9.5 «Manda all'iPhone»:
+• Audio → Suoneria iPhone: quando la suoneria è pronta, subito sotto trovi «Manda all'iPhone»
+• AirDrop: arriva sull'iPhone in un attimo
+• Codice QR: inquadralo con la Fotocamera dell'iPhone (stessa rete Wi-Fi) e scarichi la suoneria; resta attivo 10 minuti
+• Sull'iPhone (iOS 26): apri il file → Condividi → «Usa come suoneria». Niente GarageBand, niente cavo
+
 Novità della 2.9.4 «Filigrana»:
 • Nuova azione «Nascondi filigrana» per foto e video: disegni una o più zone sul logo o sulla scritta e dentro si sfoca, normale o a pixel, con la forza che scegli
 • Anteprima dal vivo mentre disegni; nei video scorri per controllare il logo nei vari momenti

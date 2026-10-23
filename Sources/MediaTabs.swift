@@ -460,7 +460,10 @@ struct AudioTabView: View {
             if let n = m.notice {
                 Label(n, systemImage: "info.circle").font(.system(size: 12)).foregroundStyle(.secondary)
             }
-            if let job = m.lastJob { JobStrip(job: job) }
+            if let job = m.lastJob {
+                JobStrip(job: job)
+                SendToPhoneStrip(job: job)          // 2.9.5 · sotto la suoneria pronta
+            }
         }
         .padding(20)
         .frame(maxWidth: 1100)
