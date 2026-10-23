@@ -155,12 +155,14 @@ enum TextRender {
     }
 }
 
-// MARK: - Il passo «Testi»
+// MARK: - Lo strumento «Testi» (2.9.10: in colonna, nel pannello a destra)
 
 struct TextOptions: View {
     @ObservedObject var s: VideoProjectStore
     let undo: UndoManager?
     let tint: Color
+    let add: () -> Void
+    @FocusState private var focused: Bool
 
     private var texts: [VPText] { s.project.texts ?? [] }
     private var current: VPText? { texts.first { $0.id == s.selectedText } }
@@ -173,83 +175,120 @@ struct TextOptions: View {
         }
     }
 
+    /// Un testo nuovo dall'indicatore, per 3 secondi, già scelto e pronto da scrivere.
+    static func addText(_ s: VideoProjectStore, undo: UndoManager?) {
+        let total = s.project.duration
+        guard total > 0.3 else { NSSound.beep(); return }
+        var t = VPText()
+        t.start = min(max(0, s.clock.time), max(0, total - 1))
+        t.end = min(total, t.start + 3)
+        let id = t.id
+        s.change(undo, "Aggiungi un testo") { p in p.texts = (p.texts ?? []) + [t] }
+        s.selectedText = id
+        s.seek(t.start + 0.05)
+        s.focusTextPending = true
+    }
+
     var body: some View {
-        HStack(alignment: .center, spacing: 14) {
-            VStack(alignment: .leading, spacing: 6) {
-                Button { add() } label: { Label("Aggiungi testo", systemImage: "plus") }
-                    .buttonStyle(.borderedProminent).tint(Theme.accent).controlSize(.small)
-                if !texts.isEmpty {
-                    Picker("", selection: Binding(get: { s.selectedText ?? texts[0].id }, set: { s.selectedText = $0 })) {
-                        ForEach(Array(texts.enumerated()), id: \.element.id) { i, t in
-                            Text("\(i + 1). " + (t.text.isEmpty ? "(vuoto)" : String(t.text.prefix(18)))).tag(t.id)
+        VStack(alignment: .leading, spacing: 10) {
+            Button(action: add) { Label("Aggiungi un testo", systemImage: "plus").frame(maxWidth: .infinity) }
+                .buttonStyle(.borderedProminent).tint(Theme.accent)
+            if !texts.isEmpty {
+                VStack(spacing: 2) {
+                    ForEach(Array(texts.enumerated()), id: \.element.id) { i, t in
+                        Button {
+                            s.selectedText = t.id
+                            s.seek(t.start + 0.05)
+                        } label: {
+                            HStack {
+                                Text("\(i + 1). " + (t.text.isEmpty ? "(vuoto)" : t.text)).lineLimit(1)
+                                Spacer(minLength: 4)
+                                Text(formatShort(t.start)).monospacedDigit().foregroundStyle(.secondary)
+                            }
+                            .font(.system(size: 12))
+                            .padding(.horizontal, 8).padding(.vertical, 5)
+                            .background(RoundedRectangle(cornerRadius: 6).fill(t.id == s.selectedText ? Theme.brass.opacity(0.3) : Color.clear))
+                            .contentShape(Rectangle())
                         }
+                        .buttonStyle(.plain)
                     }
-                    .labelsHidden().frame(width: 170).controlSize(.small)
                 }
             }
             if let t = current {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Testo").font(.system(size: 11)).foregroundStyle(.secondary)
-                    TextField("Il tuo testo", text: Binding(get: { t.text }, set: { v in
-                        guard let id = s.selectedText else { return }
-                        s.live { p in if let i = p.texts?.firstIndex(where: { $0.id == id }) { p.texts![i].text = v } }
-                    }))
-                    .textFieldStyle(.roundedBorder).frame(width: 190)
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Modello").font(.system(size: 11)).foregroundStyle(.secondary)
+                Divider()
+                TextField("Scrivi qui il testo", text: Binding(get: { t.text }, set: { v in
+                    guard let id = s.selectedText else { return }
+                    s.live { p in if let i = p.texts?.firstIndex(where: { $0.id == id }) { p.texts![i].text = v } }
+                }), axis: .vertical)
+                .lineLimit(1...4)
+                .textFieldStyle(.roundedBorder)
+                .focused($focused)
+                row("Modello") {
                     Picker("", selection: Binding(get: { t.style }, set: { v in edit("Modello del testo") { $0.style = v; $0.y = VPText.defaultY(v) } })) {
                         ForEach(VPText.styles, id: \.id) { Text($0.name).tag($0.id) }
                     }
-                    .labelsHidden().frame(width: 120)
+                    .labelsHidden().frame(width: 150)
                 }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Animazione").font(.system(size: 11)).foregroundStyle(.secondary)
+                row("Animazione") {
                     Picker("", selection: Binding(get: { t.anim }, set: { v in edit("Animazione del testo") { $0.anim = v } })) {
                         ForEach(VPText.anims, id: \.id) { Text($0.name).tag($0.id) }
                     }
                     .labelsHidden().frame(width: 150)
                 }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Colore").font(.system(size: 11)).foregroundStyle(.secondary)
-                    HStack(spacing: 5) {
+                row("Colore") {
+                    HStack(spacing: 6) {
                         ForEach(VPText.colors, id: \.id) { c in
                             Button { edit("Colore del testo") { $0.color = c.id } } label: {
                                 Circle().fill(Color(.sRGB, red: c.rgb.0, green: c.rgb.1, blue: c.rgb.2))
-                                    .frame(width: 18, height: 18)
+                                    .frame(width: 20, height: 20)
                                     .overlay(Circle().strokeBorder(t.color == c.id ? Theme.brass : Theme.ink.opacity(0.25), lineWidth: t.color == c.id ? 2.5 : 1))
                             }
                             .buttonStyle(.plain).help(c.name)
                         }
                     }
                 }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("\(formatShort(t.start)) → \(formatShort(t.end))").font(.system(size: 11)).monospacedDigit().foregroundStyle(.secondary)
-                    HStack(spacing: 4) {
-                        Button("Inizia qui") { let now = s.clock.time; edit("Inizio del testo") { $0.start = min(now, $0.end - 0.3) } }
-                        Button("Finisci qui") { let now = s.clock.time; edit("Fine del testo") { $0.end = max(now, $0.start + 0.3) } }
-                    }
-                    .controlSize(.small)
+                row("Quando") {
+                    Text("\(formatShort(t.start)) → \(formatShort(t.end))").font(.system(size: 12)).monospacedDigit()
                 }
-                Button { remove() } label: { Image(systemName: "trash") }
-                    .help("Togli questo testo").accessibilityLabel("Togli il testo")
+                HStack(spacing: 6) {
+                    Button("Inizia qui") { let now = s.clock.time; edit("Inizio del testo") { $0.start = min(now, $0.end - 0.3) } }
+                        .help("Il testo comincia nel punto dell’indicatore")
+                    Button("Finisci qui") { let now = s.clock.time; edit("Fine del testo") { $0.end = max(now, $0.start + 0.3) } }
+                        .help("Il testo finisce nel punto dell’indicatore")
+                    Spacer()
+                    Button(role: .destructive) { remove() } label: { Image(systemName: "trash") }
+                        .help("Togli questo testo").accessibilityLabel("Togli il testo")
+                }
+                .controlSize(.small)
+                Text("Per spostarlo, trascinalo sull’anteprima. Nella sequenza, sotto le clip, trascini il blocco o i suoi bordi.")
+                    .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             } else if texts.isEmpty {
-                Text("Aggiungi un testo: compare dall'indicatore per 3 secondi. Poi trascinalo sull'anteprima.")
-                    .font(.system(size: 12)).foregroundStyle(.secondary)
+                Text("Il testo compare dal punto dell’indicatore per 3 secondi. Poi lo scrivi qui e lo trascini sull’anteprima.")
+                    .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
         }
-        .onAppear { if s.selectedText == nil { s.selectedText = texts.first?.id } }
+        .onAppear {
+            if s.selectedText == nil { s.selectedText = texts.first?.id }
+            focusIfAsked()
+        }
+        .onChange(of: focused) { _, f in s.typing = f }
+        .onChange(of: s.focusTextPending) { _, _ in focusIfAsked() }
+        .onDisappear { s.typing = false }
     }
 
-    private func add() {
-        let total = s.project.duration
-        guard total > 0.3 else { NSSound.beep(); return }
-        var t = VPText()
-        t.start = min(max(0, s.clock.time), max(0, total - 0.5))
-        t.end = min(total, t.start + 3)
-        let id = t.id
-        s.change(undo, "Aggiungi un testo") { p in p.texts = (p.texts ?? []) + [t] }
-        s.selectedText = id
+    /// Il campo nasce insieme al testo: si aspetta un attimo prima di metterci il cursore.
+    private func focusIfAsked() {
+        guard s.focusTextPending else { return }
+        s.focusTextPending = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { focused = true }
+    }
+
+    private func row<C: View>(_ title: String, @ViewBuilder _ content: () -> C) -> some View {
+        HStack {
+            Text(title).font(.system(size: 12))
+            Spacer(minLength: 6)
+            content()
+        }
     }
 
     private func remove() {
@@ -259,6 +298,7 @@ struct TextOptions: View {
             if p.texts?.isEmpty == true { p.texts = nil }
         }
         s.selectedText = s.project.texts?.first?.id
+        focused = false
     }
 }
 
@@ -299,8 +339,9 @@ struct TextDragLayer: View {
                                 if let b = before { s.commit(from: b, undo, "Sposta il testo") }
                                 before = nil
                             })
+                        .onTapGesture(count: 2) { s.selectedText = t.id; s.focusTextPending = true }
                         .onTapGesture { s.selectedText = t.id }
-                        .help("Trascina per spostare il testo")
+                        .help("Trascina per spostare il testo · doppio clic per scriverci")
                 }
             }
         }

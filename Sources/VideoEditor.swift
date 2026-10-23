@@ -17,6 +17,16 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     static let shared = VideoProjectStore()
 
     @Published private(set) var project = VideoProject()
+    /// 2.9.10 · L'ultima versione confermata (salvata). Le modifiche si vedono subito in `project`;
+    /// diventano definitive con «Applica», oppure si buttano con «Annulla».
+    @Published private(set) var saved = VideoProject()
+    /// 2.9.10 · «Prima/dopo»: l'anteprima mostra la versione confermata
+    @Published var showingBefore = false { didSet { if showingBefore != oldValue { scheduleRebuild() } } }
+    /// 2.9.10 · Chiede al pannello Testi di mettere il cursore nel campo del testo
+    @Published var focusTextPending = false
+    /// 2.9.10 · Si sta scrivendo in un campo: i tasti singoli (Spazio, S, ⌫) non comandano il video.
+    /// Era il guasto dei testi della 2.9.9: scrivendo una «s» la clip si divideva, con ⌫ spariva.
+    @Published var typing = false
     @Published private(set) var infos: [String: VPMediaInfo] = [:]
     @Published private(set) var speech: [String: [ClosedRange<Double>]] = [:]
     @Published private(set) var analyzing: Set<String> = []
@@ -74,6 +84,26 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         return project.clip(at: clock.time)?.index
     }
 
+    // MARK: 2.9.10 · Modifiche da confermare
+
+    /// Ci sono modifiche visibili nell'anteprima ma non ancora confermate.
+    var hasPending: Bool { currentID != nil && project != saved }
+
+    /// «Applica»: le modifiche diventano definitive e si salvano.
+    func applyChanges() {
+        guard project != saved else { return }
+        saved = project
+        scheduleSave()
+    }
+
+    /// «Annulla»: si torna all'ultima versione confermata.
+    func discardChanges(_ undo: UndoManager?) {
+        guard project != saved else { return }
+        showingBefore = false
+        apply(saved)
+        undo?.removeAllActions(withTarget: self)
+    }
+
     // MARK: Modifiche (ognuna si può annullare con ⌘Z)
 
     func change(_ undo: UndoManager?, _ name: String, _ body: (inout VideoProject) -> Void) {
@@ -118,7 +148,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         ensureLoaded()
         ensureSpeech()
         scheduleRebuild()
-        scheduleSave()
+        // 2.9.10 · niente salvataggio qui: si salva con «Applica» (o chiudendo il progetto, o esportando)
     }
 
     // MARK: File
@@ -251,7 +281,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
 
     private func scheduleRebuild() {
         rebuildTask?.cancel()
-        let p = project, inf = infos, sp = speech
+        let p = showingBefore ? saved : project, inf = infos, sp = speech
         rebuildTask = Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: 120_000_000)
             guard let self, !Task.isCancelled else { return }
@@ -409,6 +439,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         p.name = VideoProjectLibrary.uniqueName(existing: library.map { $0.name })
         currentID = UUID()
         project = p
+        saved = p
         scheduleRebuild()
     }
 
@@ -423,6 +454,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         notice = Self.relink(&p)
         currentID = id
         project = p
+        saved = p
         ensureLoaded()
         ensureSpeech()
         scheduleRebuild()
@@ -433,12 +465,17 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         pause()
         rebuildTask?.cancel()
         saveWork?.cancel()
+        // 2.9.10 · Chiudere tiene le modifiche (la finestra chiede prima, se ce ne sono da confermare)
+        saved = project
+        showingBefore = false
         saveNow()
         undo?.removeAllActions(withTarget: self)        // il ⌘Z di un progetto non deve toccare un altro
         if let id = currentID { covers[id] = nil }      // la copertina si rifà: la prima clip può essere cambiata
         currentID = nil
         project = VideoProject()
+        saved = project
         selected = nil
+        selectedText = nil
         notice = nil
         lastJob = nil
         player.replaceCurrentItem(with: nil)
@@ -450,7 +487,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     func renameProject(_ id: UUID, to name: String) {
         let n = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !n.isEmpty else { return }
-        if id == currentID { project.name = n; scheduleSave() } else { VideoProjectLibrary.rename(id, to: n, in: folder) }
+        if id == currentID { project.name = n; saved.name = n; scheduleSave() } else { VideoProjectLibrary.rename(id, to: n, in: folder) }
         refreshLibrary()
     }
 
@@ -529,6 +566,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             return
         }
         pause()
+        applyChanges()          // 2.9.10 · si esporta quello che si vede, e diventa definitivo
         do {
             let snap = try VideoProjectExport.writeSnapshot(project, speech: speech)
             var seen = Set<String>()
@@ -559,7 +597,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     private func scheduleSave() {
         saveWork?.cancel()
         guard let url = saveURL else { return }
-        let p = project
+        let p = saved
         let w = DispatchWorkItem { VideoProjectLibrary.save(p, to: url) }
         saveWork = w
         VideoProjectLibrary.queue.asyncAfter(deadline: .now() + 0.6, execute: w)
@@ -568,7 +606,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     /// Salva subito (alla chiusura del progetto).
     func saveNow() {
         guard let url = saveURL else { return }
-        let p = project
+        let p = saved
         VideoProjectLibrary.queue.sync { VideoProjectLibrary.save(p, to: url) }   // in coda dopo eventuali salvataggi in corso
     }
 
@@ -608,32 +646,29 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
 
 // MARK: - La scheda
 
-/// 2.7.4 · Quattro passi in ordine, invece di cinque strumenti sparsi: l'audio originale sta con la musica.
+/// 2.9.10 · Gli strumenti del Video, per categoria (niente più passi numerati): si usa quello che serve, nell'ordine che vuoi.
 enum VideoEditTool: String, CaseIterable, Identifiable {
-    case clips = "Taglia", looks = "Filtri", effects = "Effetti", texts = "Testi", music = "Audio e musica", format = "Formato", export = "Esporta"
+    case clip = "Clip", looks = "Filtri", effects = "Effetti", texts = "Testi", audio = "Audio", format = "Formato"
     var id: String { rawValue }
-    var number: Int { (Self.allCases.firstIndex(of: self) ?? 0) + 1 }
     var symbol: String {
         switch self {
-        case .clips: return "scissors"
+        case .clip: return "scissors"
         case .looks: return "camera.filters"
         case .effects: return "sparkles"
         case .texts: return "textformat"
-        case .music: return "music.note"
+        case .audio: return "music.note"
         case .format: return "rectangle.portrait"
-        case .export: return "square.and.arrow.up"
         }
     }
-    /// Cosa fare adesso, in una frase.
+    /// Cosa si fa qui, in una frase.
     var hint: String {
         switch self {
-        case .clips: return "Trascina i bordi d’ottone di una clip per accorciarla, premi S per dividerla, trascina una clip per spostarla."
-        case .looks: return "Scegli un filtro e quanto forte. Vale per tutto il video, oppure solo per la clip scelta. Sotto regoli luce, colori e nitidezza."
-        case .texts: return "Aggiungi un titolo o una scritta: compare dall'indicatore. Trascinalo sull'anteprima per spostarlo, scegli modello, animazione e colore."
-        case .effects: return "Scegli una clip nella sequenza: cambia la velocità, aggiungi uno zoom lento, capovolgila, ruotala, sfocala o falla comparire e sparire piano."
-        case .music: return "Trascina qui una canzone per la musica. Qui regoli anche l’audio dei tuoi video."
-        case .format: return "Scegli la forma del video: verticale per Reels e TikTok, quadrato per i post, orizzontale per YouTube."
-        case .export: return "Scegli la qualità e premi Esporta (⌘E): il video finale va nella cartella che hai scelto."
+        case .clip: return "Taglia, dividi, sposta e togli le clip. I bordi d’ottone di una clip si trascinano per accorciarla."
+        case .looks: return "Un filtro per tutto il video o solo per la clip scelta, e le regolazioni di luce e colore."
+        case .effects: return "Effetti della clip scelta: velocità, zoom lento, gira, sfocatura, dissolvenze."
+        case .texts: return "Titoli e scritte: «T+ Testo» sull’anteprima, poi trascinali dove vuoi."
+        case .audio: return "Il volume dei tuoi video e la musica."
+        case .format: return "La forma del video e la qualità dell’esportazione."
         }
     }
 }
@@ -641,8 +676,9 @@ enum VideoEditTool: String, CaseIterable, Identifiable {
 struct VideoEditorView: View {
     @ObservedObject var s: VideoProjectStore
     @Environment(\.undoManager) private var undo
-    @State private var tool: VideoEditTool = .clips
+    @State private var tool: VideoEditTool = .clip
     @State private var targeted = false
+    @State private var askClose = false
 
     private let tint = Theme.color(.video)
 
@@ -654,30 +690,35 @@ struct VideoEditorView: View {
         }
     }
 
+    // MARK: 2.9.10 · Disposizione: anteprima e pannello in alto, sequenza sotto
+
     private var editor: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             header
             if s.project.clips.isEmpty {
                 MediaDropZone(kind: .video, title: "Trascina qui i video",
                               subtitle: "oppure clicca per sceglierli · MP4, MOV, M4V · più video vanno in fila · un brano audio diventa la musica",
                               targeted: targeted) { choose(audio: false) }
             } else {
-                EditorPreview(s: s, clock: s.clock, editTexts: tool == .texts)
-                ProjectTimeline(s: s, clock: s.clock, tint: tint) {
-                    // 2.9.1 · «Aggiungi musica» apriva solo il passo: ora, se la musica non c'è, si sceglie subito il brano
-                    tool = .music
-                    if s.project.music == nil { choose(audio: true) }
+                HStack(alignment: .top, spacing: 12) {
+                    EditorPreview(s: s, clock: s.clock, editTexts: tool == .texts) { addText() }
+                        .frame(minWidth: 280, maxWidth: .infinity)
+                    inspector
+                        .frame(width: 290)
                 }
-                    .frame(height: 118)
-                toolRow
-                strip
+                .frame(maxHeight: .infinity)
+                ProjectTimeline(s: s, clock: s.clock, tint: tint, openMusic: {
+                    tool = .audio
+                    if s.project.music == nil { choose(audio: true) }
+                }, openTexts: { tool = .texts })
+                    .frame(height: 142)
             }
             if let n = s.notice {
-                Label(n, systemImage: "info.circle").font(.system(size: 12)).foregroundStyle(.secondary)
+                Label(n, systemImage: "info.circle").font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(2)
             }
             if let job = s.lastJob { JobStrip(job: job) }
         }
-        .padding(20)
+        .padding(16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.background)
         .onDrop(of: [UTType.fileURL], isTargeted: $targeted) { providers in
@@ -686,6 +727,13 @@ struct VideoEditorView: View {
         }
         .onDisappear { s.pause() }
         .navigationTitle("Video")
+        .confirmationDialog("Ci sono modifiche non applicate", isPresented: $askClose) {
+            Button("Applica e chiudi") { s.applyChanges(); s.closeProject(undo) }
+            Button("Scarta e chiudi", role: .destructive) { s.discardChanges(undo); s.closeProject(undo) }
+            Button("Continua a modificare", role: .cancel) {}
+        } message: {
+            Text("Vuoi tenere le modifiche che vedi nell’anteprima?")
+        }
     }
 
     private var header: some View {
@@ -695,21 +743,27 @@ struct VideoEditorView: View {
                     .font(.system(size: s.project.clips.isEmpty ? 22 : 15, weight: .bold, design: s.project.clips.isEmpty ? .rounded : .default))
                     .lineLimit(1)
                 if !s.project.clips.isEmpty {
-                    Text("\(s.project.clips.count) clip · \(formatShort(s.project.duration))" + (s.project.music != nil ? " · con musica" : ""))
-                        .font(.system(size: 12)).foregroundStyle(.secondary)
+                    Text("\(s.project.clips.count) clip · \(formatShort(s.project.duration))" + (s.project.music != nil ? " · con musica" : "")
+                         + (s.estimate.map { " · ≈ " + ByteCountFormatter.string(fromByteCount: $0.bytes, countStyle: .file) } ?? ""))
+                        .font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1)
                 }
             }
             if s.building { ProgressView().controlSize(.small).help("Preparo l’anteprima") }
             Spacer(minLength: 8)
             if !s.project.clips.isEmpty {
                 Button { undo?.undo() } label: { Image(systemName: "arrow.uturn.backward") }
-                    .help("Annulla (⌘Z)").accessibilityLabel("Annulla")
+                    .help("Annulla l’ultima modifica (⌘Z)").accessibilityLabel("Annulla l’ultima modifica")
                 Button { undo?.redo() } label: { Image(systemName: "arrow.uturn.forward") }
                     .help("Ripeti (⇧⌘Z)").accessibilityLabel("Ripeti")
-                Button("Aggiungi video…") { choose(audio: false) }
+                Button { choose(audio: false) } label: { Label("Video", systemImage: "plus") }
+                    .help("Aggiungi altri video in fondo")
+                Button("Esporta") { s.export() }
+                    .buttonStyle(.borderedProminent).tint(Theme.accent)
+                    .keyboardShortcut("e", modifiers: .command)
+                    .help("Crea il video finale (⌘E). Le modifiche in sospeso vengono applicate")
             }
             // 2.7.3 · ✕ in alto a destra: chiude il progetto (resta salvato) e torna ai Progetti
-            Button { s.closeProject(undo) } label: {
+            Button { if s.hasPending { askClose = true } else { s.closeProject(undo) } } label: {
                 Image(systemName: "xmark").font(.system(size: 12, weight: .bold))
                     .frame(width: 26, height: 26)
                     .background(Circle().fill(Theme.ink.opacity(0.08)))
@@ -717,172 +771,178 @@ struct VideoEditorView: View {
             .buttonStyle(.plain)
             .keyboardShortcut(.escape, modifiers: [.command])
             .accessibilityLabel("Chiudi il progetto")
-            .help("Chiudi il progetto e torna ai Progetti (resta salvato) · ⌘Esc")
+            .help("Chiudi il progetto e torna ai Progetti · ⌘Esc")
         }
     }
 
-    private var toolRow: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            // 2.9.8 · Con più passi: se lo spazio non basta, i passi non scelti mostrano solo il numero
-            ViewThatFits(in: .horizontal) {
-                steps(compact: false)
-                steps(compact: true)
-            }
-            Label(tool.hint, systemImage: "lightbulb")
-                .font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(2)
-        }
-    }
+    // MARK: Pannello a destra: strumenti · opzioni · Annulla/Applica
 
-    private func steps(compact: Bool) -> some View {
-        HStack(spacing: 6) {
-            ForEach(VideoEditTool.allCases) { t in
-                if t != .clips {
-                    Image(systemName: "chevron.right").font(.system(size: 9, weight: .bold)).foregroundStyle(.tertiary)
+    private var inspector: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
+                ForEach(VideoEditTool.allCases) { t in
+                    ToolTab(tool: t, selected: tool == t, used: used(t), tint: tint) { tool = t }
                 }
-                StepChip(tool: t, selected: tool == t, done: stepDone(t), tint: tint, compact: compact && tool != t) { tool = t }
             }
-            Spacer(minLength: 8)
-            otherMenu
+            .padding(10)
+            Divider()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(tool.hint).font(.system(size: 11.5)).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    options
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .scrollIndicators(.visible)
+            if s.hasPending || s.showingBefore { pendingBar }
         }
+        .background(RoundedRectangle(cornerRadius: 14).fill(Theme.card))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Theme.stroke, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 
-    /// Un passo è «fatto» quando nel progetto c'è già quello che serve.
-    private func stepDone(_ t: VideoEditTool) -> Bool {
+    /// 2.9.10 · Le modifiche si vedono subito; qui si confermano o si buttano.
+    private var pendingBar: some View {
+        VStack(spacing: 8) {
+            Divider()
+            HStack(spacing: 8) {
+                Text("Prima / dopo")
+                    .font(.system(size: 11.5, weight: .semibold))
+                    .padding(.horizontal, 10).padding(.vertical, 5)
+                    .background(Capsule().fill(s.showingBefore ? Theme.brass.opacity(0.35) : Theme.ink.opacity(0.07)))
+                    .onLongPressGesture(minimumDuration: 0, maximumDistance: 50, perform: {}, onPressingChanged: { s.showingBefore = $0 })
+                    .help("Tieni premuto per vedere com’era prima delle modifiche")
+                    .accessibilityAddTraits(.isButton)
+                Spacer(minLength: 4)
+                Button("Annulla") { s.discardChanges(undo) }
+                    .help("Torna all’ultima versione applicata")
+                Button("Applica") { s.applyChanges() }
+                    .buttonStyle(.borderedProminent).tint(Theme.accent)
+                    .keyboardShortcut(.return, modifiers: .command)
+                    .help("Rendi definitive le modifiche (⌘↩)")
+            }
+            .controlSize(.small)
+            .padding(.horizontal, 10).padding(.bottom, 10)
+        }
+        .background(Theme.brass.opacity(0.08))
+    }
+
+    /// Un pallino sullo strumento se nel progetto c'è già qualcosa di suo.
+    private func used(_ t: VideoEditTool) -> Bool {
         switch t {
-        case .clips: return s.project.clips.contains { c in
-            guard let full = s.infos[c.path]?.videoDuration else { return false }
-            return c.inPoint > 0.05 || c.outPoint < full - 0.05
-        } || s.project.clips.count > 1
+        case .clip: return s.project.clips.count > 1
         case .looks: return !(s.project.look?.isIdentity ?? true) || s.project.clips.contains { !($0.look?.isIdentity ?? true) }
-        case .effects: return s.project.clips.contains { !($0.fx?.isIdentity ?? true) }
+        case .effects: return s.project.clips.contains { !($0.fx?.isIdentity ?? true) } || s.project.hide != nil
         case .texts: return !(s.project.texts ?? []).isEmpty
-        case .music: return s.project.music != nil
+        case .audio: return s.project.music != nil || s.project.originalMuted
         case .format: return s.project.aspect != "orig"
-        case .export: return s.lastJob != nil
         }
-    }
-
-    private var otherMenu: some View {
-        HStack {
-            Menu {
-                Button("Estrai l’audio (M4A)") { quick("to:m4a", param: "") }
-                Button("Estrai l’audio (MP3)") { quick("to:mp3", param: "") }
-                Button("GIF della clip") { quickGIF() }
-                Button("Comprimi la clip a 25 MB") { quick("vcompress", param: "25") }
-            } label: {
-                Label("Altro", systemImage: "ellipsis.circle")
-            }
-            .menuStyle(.button)
-            .buttonStyle(.borderless)
-            .fixedSize()
-            .help("Strumenti veloci sul file originale della clip")
-        }
-    }
-
-    // MARK: Striscia: strumento · opzioni · riepilogo · Esporta
-
-    private var strip: some View {
-        HStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .leading, spacing: 2) {
-                SectionLabel(text: "Strumento")
-                Text(tool.rawValue).font(.system(size: 14.5, weight: .bold)).lineLimit(1).fixedSize()
-            }
-            .frame(minWidth: 118, alignment: .leading)
-            Divider().frame(height: 52)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .center, spacing: 16) { options }
-                    .padding(.vertical, 2)
-            }
-            Spacer(minLength: 8)
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(formatTime(s.project.duration)).font(.system(size: 12, weight: .semibold)).monospacedDigit()
-                if let e = s.estimate {
-                    Text("\(Int(e.size.width)) × \(Int(e.size.height)) · ≈ " + ByteCountFormatter.string(fromByteCount: e.bytes, countStyle: .file))
-                        .font(.system(size: 11)).foregroundStyle(.secondary)
-                }
-            }
-            .fixedSize()
-            Button("Esporta") { s.export() }
-                .buttonStyle(.borderedProminent).tint(Theme.accent).controlSize(.large)
-                .keyboardShortcut("e", modifiers: .command)
-                .help("Crea il video finale (⌘E)")
-        }
-        .padding(.horizontal, 16).padding(.vertical, 12)
-        .card(radius: 14)
     }
 
     @ViewBuilder private var options: some View {
         switch tool {
-        case .clips: clipOptions
+        case .clip: clipOptions
         case .looks: LookOptions(s: s, undo: undo, tint: tint)
         case .effects: EffectOptions(s: s, undo: undo, tint: tint)
-        case .texts: TextOptions(s: s, undo: undo, tint: tint)
-        case .music:
+        case .texts: TextOptions(s: s, undo: undo, tint: tint, add: addText)
+        case .audio:
             originalOptions
-            Divider().frame(height: 44)
+            Divider()
             musicOptions
         case .format: formatOptions
-        case .export: exportOptions
         }
+    }
+
+    private func addText() {
+        tool = .texts
+        TextOptions.addText(s, undo: undo)
     }
 
     private var clipOptions: some View {
-        HStack(spacing: 8) {
-            Button("Inizio qui") { s.trimStartHere(undo) }.help("Taglia la clip da qui in poi")
-            Button("Fine qui") { s.trimEndHere(undo) }.help("Taglia la clip fino a qui")
-            Button("Dividi") { s.split(undo) }
-                .keyboardShortcut("s", modifiers: [])
-                .help("Divide la clip nel punto dell’indicatore (S)")
-            Divider().frame(height: 22)
-            Button { s.move(-1, undo) } label: { Image(systemName: "arrow.left") }.help("Sposta la clip prima")
-                .accessibilityLabel("Sposta la clip prima")
-            Button { s.move(1, undo) } label: { Image(systemName: "arrow.right") }.help("Sposta la clip dopo")
-                .accessibilityLabel("Sposta la clip dopo")
-            Button("Intera") { s.restoreClip(undo) }.help("Riporta la clip alla sua durata intera")
-            Divider().frame(height: 22)
-            clipAudioButtons
-            Button(role: .destructive) { s.deleteClip(undo) } label: { Image(systemName: "trash") }
-                .keyboardShortcut(.delete, modifiers: [])
-                .help("Elimina la clip (si può annullare)")
-                .accessibilityLabel("Elimina la clip")
+        VStack(alignment: .leading, spacing: 10) {
+            if let i = s.targetIndex, s.project.clips.indices.contains(i) {
+                let c = s.project.clips[i]
+                Text("Clip \(i + 1) di \(s.project.clips.count) · \(formatShort(c.length))" + (abs(c.speed - 1) > 0.001 ? " · " + EffectOptions.speedLabel(c.speed) : ""))
+                    .font(.system(size: 12.5, weight: .semibold))
+            }
+            SectionLabel(text: "Taglia")
+            HStack(spacing: 6) {
+                Button("Inizio qui") { s.trimStartHere(undo) }.help("Taglia la clip da qui in poi")
+                Button("Fine qui") { s.trimEndHere(undo) }.help("Taglia la clip fino a qui")
+                Button("Dividi") { s.split(undo) }
+                    .keyboardShortcut(s.typing ? nil : KeyboardShortcut("s", modifiers: []))
+                    .help("Divide la clip nel punto dell’indicatore (S)")
+            }
+            HStack(spacing: 6) {
+                Button { s.move(-1, undo) } label: { Label("Prima", systemImage: "arrow.left") }.help("Sposta la clip prima")
+                Button { s.move(1, undo) } label: { Label("Dopo", systemImage: "arrow.right") }.help("Sposta la clip dopo")
+                Button("Intera") { s.restoreClip(undo) }.help("Riporta la clip alla sua durata intera")
+            }
+            SectionLabel(text: "Audio della clip")
+            HStack(spacing: 6) { clipAudioButtons }
+            if let i = s.targetIndex, i > 0, s.project.clips.indices.contains(i) {
+                SectionLabel(text: "Transizione prima di questa clip")
+                Text("Oppure clicca il pallino tra due clip nella sequenza.").font(.system(size: 11)).foregroundStyle(.secondary)
+                TransitionOptions(s: s, clipID: s.project.clips[i].id, tint: tint, undo: undo, compact: true)
+            }
+            SectionLabel(text: "Altro")
+            HStack(spacing: 6) {
+                Button(role: .destructive) { s.deleteClip(undo) } label: { Label("Elimina", systemImage: "trash") }
+                    .keyboardShortcut(s.typing ? nil : KeyboardShortcut(.delete, modifiers: []))
+                    .help("Elimina la clip (si può annullare)")
+                otherMenu
+            }
         }
+    }
+
+    private var otherMenu: some View {
+        Menu {
+            Button("Estrai l’audio (M4A)") { quick("to:m4a", param: "") }
+            Button("Estrai l’audio (MP3)") { quick("to:mp3", param: "") }
+            Button("GIF della clip") { quickGIF() }
+            Button("Comprimi la clip a 25 MB") { quick("vcompress", param: "25") }
+        } label: {
+            Label("Strumenti veloci", systemImage: "ellipsis.circle")
+        }
+        .menuStyle(.button)
         .fixedSize()
+        .help("Strumenti veloci sul file originale della clip")
     }
 
     @ViewBuilder private var musicOptions: some View {
+        SectionLabel(text: "Musica")
         if let m = s.project.music {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(m.name).font(.system(size: 12, weight: .semibold)).lineLimit(1).truncationMode(.middle).frame(maxWidth: 170, alignment: .leading)
+            VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 6) {
+                    Text(m.name).font(.system(size: 12, weight: .semibold)).lineLimit(1).truncationMode(.middle)
+                    Spacer(minLength: 4)
                     Button("Cambia…") { choose(audio: true) }
                     Button(role: .destructive) { s.removeMusic(undo) } label: { Image(systemName: "trash") }.help("Togli la musica")
                 }
                 .controlSize(.small)
-            }
-            .fixedSize()
-            VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
-                    Button("Parte qui nel video") { s.musicStartHere(undo) }
+                    Button("Parte qui") { s.musicStartHere(undo) }
                         .help("La musica comincia nel punto dell’indicatore (oppure trascina la barra della musica)")
-                    Button("Finale con il video") { s.alignMusicEnd(undo) }
+                    Button("Finisce col video") { s.alignMusicEnd(undo) }
                         .help("Sceglie da dove far partire la canzone perché finisca insieme al video")
                 }
                 .controlSize(.small)
                 Toggle("Ripeti finché il video finisce", isOn: bind(\.loop, "Ripeti la musica")).toggleStyle(.checkbox)
                     .font(.system(size: 12))
-            }
-            .fixedSize()
-            if let sd = s.songDuration, sd > 1 {
-                EditSlider(title: "Parte dal", value: m.inPoint, range: 0...max(1, sd - 1), text: formatShort(m.inPoint),
-                           width: 150, s: s, undo: undo, name: "Punto della canzone") { p, v in p.music?.inPoint = v }
-            }
-            EditSlider(title: "Volume", value: m.volume, range: 0...1, text: "\(Int((m.volume * 100).rounded()))%",
-                       width: 110, s: s, undo: undo, name: "Volume della musica") { p, v in p.music?.volume = v }
-            EditSlider(title: "Entrata", value: m.fadeIn, range: 0...5, text: String(format: "%.1f s", m.fadeIn),
-                       width: 90, s: s, undo: undo, name: "Dissolvenza in entrata") { p, v in p.music?.fadeIn = v }
-            EditSlider(title: "Uscita", value: m.fadeOut, range: 0...5, text: String(format: "%.1f s", m.fadeOut),
-                       width: 90, s: s, undo: undo, name: "Dissolvenza in uscita") { p, v in p.music?.fadeOut = v }
-            VStack(alignment: .leading, spacing: 3) {
+                if let sd = s.songDuration, sd > 1 {
+                    EditSlider(title: "Parte dal", value: m.inPoint, range: 0...max(1, sd - 1), text: formatShort(m.inPoint),
+                               width: 260, s: s, undo: undo, name: "Punto della canzone") { p, v in p.music?.inPoint = v }
+                }
+                EditSlider(title: "Volume", value: m.volume, range: 0...1, text: "\(Int((m.volume * 100).rounded()))%",
+                           width: 260, s: s, undo: undo, name: "Volume della musica") { p, v in p.music?.volume = v }
+                HStack(spacing: 12) {
+                    EditSlider(title: "Entrata", value: m.fadeIn, range: 0...5, text: String(format: "%.1f s", m.fadeIn),
+                               width: 124, s: s, undo: undo, name: "Dissolvenza in entrata") { p, v in p.music?.fadeIn = v }
+                    EditSlider(title: "Uscita", value: m.fadeOut, range: 0...5, text: String(format: "%.1f s", m.fadeOut),
+                               width: 124, s: s, undo: undo, name: "Dissolvenza in uscita") { p, v in p.music?.fadeOut = v }
+                }
                 Toggle("Abbassa quando si parla", isOn: bind(\.duck, "Abbassa quando si parla")).toggleStyle(.checkbox)
                     .font(.system(size: 12))
                 if !s.analyzing.isEmpty {
@@ -894,10 +954,9 @@ struct VideoEditorView: View {
                     Text("\(s.speechOnTimeline.count) tratti con voce").font(.system(size: 11)).foregroundStyle(.secondary)
                 }
             }
-            .fixedSize()
         } else {
             Button { choose(audio: true) } label: { Label("Scegli la musica…", systemImage: "music.note") }
-            Text("oppure trascina un brano sulla scheda").font(.system(size: 12)).foregroundStyle(.secondary)
+            Text("oppure trascina un brano sulla scheda").font(.system(size: 11.5)).foregroundStyle(.secondary)
         }
     }
 
@@ -910,70 +969,58 @@ struct VideoEditorView: View {
     @ViewBuilder private var clipAudioButtons: some View {
         let muted = s.targetIndex.map { s.project.clips[$0].isMuted } ?? false
         Button { s.toggleClipAudio(undo) } label: {
-            Label(muted ? "Rimetti l’audio" : "Togli l’audio", systemImage: muted ? "speaker.wave.2" : "speaker.slash")
+            Label(muted ? "Rimetti" : "Togli", systemImage: muted ? "speaker.wave.2" : "speaker.slash")
         }
         .help(muted ? "Riaccende l’audio di questa clip" : "Spegne l’audio solo di questa clip (la musica resta)")
         Button { s.muteFromHere(undo) } label: { Label("Togli da qui", systemImage: "speaker.slash.circle") }
             .help("Spegne l’audio dall’indicatore alla fine della clip. Per un tratto in mezzo: dividi (S) e togli l’audio solo da quel pezzo")
     }
 
-    private var originalOptions: some View {
-        HStack(spacing: 16) {
-            SectionLabel(text: "Audio dei video")
-            Toggle("Muto", isOn: Binding(get: { s.project.originalMuted },
-                                          set: { v in s.change(undo, v ? "Audio originale muto" : "Audio originale attivo") { $0.originalMuted = v } }))
-                .toggleStyle(.checkbox)
-            EditSlider(title: "Volume", value: s.project.originalVolume, range: 0...1,
-                       text: "\(Int((s.project.originalVolume * 100).rounded()))%", width: 160, s: s, undo: undo,
-                       name: "Volume dell’audio originale") { p, v in p.originalVolume = v }
-                .disabled(s.project.originalMuted)
-        }
-        .fixedSize()
+    @ViewBuilder private var originalOptions: some View {
+        SectionLabel(text: "Audio dei video")
+        Toggle("Muto", isOn: Binding(get: { s.project.originalMuted },
+                                      set: { v in s.change(undo, v ? "Audio originale muto" : "Audio originale attivo") { $0.originalMuted = v } }))
+            .toggleStyle(.checkbox)
+        EditSlider(title: "Volume", value: s.project.originalVolume, range: 0...1,
+                   text: "\(Int((s.project.originalVolume * 100).rounded()))%", width: 260, s: s, undo: undo,
+                   name: "Volume dell’audio originale") { p, v in p.originalVolume = v }
+            .disabled(s.project.originalMuted)
     }
 
-    private var formatOptions: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 6) {
-                ForEach([("orig", "Originale"), ("9x16", "9:16 Reels"), ("1x1", "1:1 Post"), ("4x5", "4:5 Feed"), ("16x9", "16:9 YouTube")], id: \.0) { item in
-                    Chip(title: item.1, selected: s.project.aspect == item.0, tint: tint) {
-                        s.change(undo, "Formato \(item.1)") { $0.aspect = item.0 }
-                    }
-                }
-            }
-            Toggle("Inquadra le persone", isOn: Binding(get: { s.project.follow },
-                                                       set: { v in s.change(undo, "Inquadra le persone") { $0.follow = v } }))
-                .toggleStyle(.checkbox).font(.system(size: 12))
-                .disabled(s.project.aspect == "orig")
-                .help("Nel video finale l’inquadratura segue le persone con calma (in anteprima resta al centro)")
-        }
-        .fixedSize()
-    }
-
-    private var exportOptions: some View {
-        HStack(spacing: 14) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Risoluzione").font(.system(size: 11)).foregroundStyle(.secondary)
-                HStack(spacing: 6) {
-                    ForEach([(720, "720p"), (1080, "1080p"), (2160, "4K")], id: \.0) { item in
-                        Chip(title: item.1, selected: s.project.resolution == item.0, tint: tint) {
-                            s.change(undo, "Risoluzione \(item.1)") { $0.resolution = item.0 }
-                        }
-                    }
-                }
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Fluidità").font(.system(size: 11)).foregroundStyle(.secondary)
-                HStack(spacing: 6) {
-                    ForEach([30, 60], id: \.self) { f in
-                        Chip(title: "\(f) fps", selected: s.project.fps == f, tint: tint) {
-                            s.change(undo, "\(f) fotogrammi al secondo") { $0.fps = f }
-                        }
-                        .help(f == 60 ? "Solo se i video sono girati a 60: non si inventano fotogrammi" : "")
-                    }
+    @ViewBuilder private var formatOptions: some View {
+        SectionLabel(text: "Forma")
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 6)], alignment: .leading, spacing: 6) {
+            ForEach([("orig", "Originale"), ("9x16", "9:16 Reels"), ("1x1", "1:1 Post"), ("4x5", "4:5 Feed"), ("16x9", "16:9 YouTube")], id: \.0) { item in
+                Chip(title: item.1, selected: s.project.aspect == item.0, tint: tint) {
+                    s.change(undo, "Formato \(item.1)") { $0.aspect = item.0 }
                 }
             }
         }
-        .fixedSize(horizontal: true, vertical: false)
+        Toggle("Inquadra le persone", isOn: Binding(get: { s.project.follow },
+                                                   set: { v in s.change(undo, "Inquadra le persone") { $0.follow = v } }))
+            .toggleStyle(.checkbox).font(.system(size: 12))
+            .disabled(s.project.aspect == "orig")
+            .help("Nel video finale l’inquadratura segue le persone con calma (in anteprima resta al centro)")
+        SectionLabel(text: "Qualità dell’esportazione")
+        HStack(spacing: 6) {
+            ForEach([(720, "720p"), (1080, "1080p"), (2160, "4K")], id: \.0) { item in
+                Chip(title: item.1, selected: s.project.resolution == item.0, tint: tint) {
+                    s.change(undo, "Risoluzione \(item.1)") { $0.resolution = item.0 }
+                }
+            }
+        }
+        HStack(spacing: 6) {
+            ForEach([30, 60], id: \.self) { f in
+                Chip(title: "\(f) fps", selected: s.project.fps == f, tint: tint) {
+                    s.change(undo, "\(f) fotogrammi al secondo") { $0.fps = f }
+                }
+                .help(f == 60 ? "Solo se i video sono girati a 60: non si inventano fotogrammi" : "")
+            }
+        }
+        if let e = s.estimate {
+            Text("\(Int(e.size.width)) × \(Int(e.size.height)) · circa " + ByteCountFormatter.string(fromByteCount: e.bytes, countStyle: .file))
+                .font(.system(size: 11.5)).foregroundStyle(.secondary)
+        }
     }
 
     // MARK: Azioni
@@ -1003,6 +1050,35 @@ struct VideoEditorView: View {
         guard let c = targetClip, let action = Catalog.action(id: "gifcut", kind: .video) else { NSSound.beep(); return }
         let end = min(c.outPoint, c.inPoint + 15)
         s.lastJob = QueueStore.shared.enqueue(files: [c.url], action: action, param: String(format: "%.3f|%.3f", c.inPoint, end))
+    }
+}
+
+/// 2.9.10 · Uno strumento del pannello: icona e nome, sempre visibili.
+private struct ToolTab: View {
+    let tool: VideoEditTool
+    let selected: Bool
+    let used: Bool
+    let tint: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 3) {
+                Image(systemName: tool.symbol).font(.system(size: 15, weight: .semibold))
+                Text(tool.rawValue).font(.system(size: 11, weight: .semibold)).lineLimit(1)
+            }
+            .frame(maxWidth: .infinity).frame(height: 46)
+            .foregroundStyle(selected ? Color.white : Theme.ink)
+            .background(RoundedRectangle(cornerRadius: 9).fill(selected ? tint : Theme.ink.opacity(0.05)))
+            .overlay(alignment: .topTrailing) {
+                if used && !selected { Circle().fill(Theme.brass).frame(width: 6, height: 6).padding(5) }
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 9))
+        }
+        .buttonStyle(.plain)
+        .help(tool.hint)
+        .accessibilityLabel(tool.rawValue)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
 
@@ -1046,6 +1122,8 @@ private struct EditorPreview: View {
     @ObservedObject var clock: PlayClock
     /// 2.9.9 · nel passo «Testi» i testi si trascinano sull'anteprima
     var editTexts = false
+    /// 2.9.10 · «T+ Testo» sull'anteprima
+    var addText: () -> Void = {}
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
@@ -1055,6 +1133,28 @@ private struct EditorPreview: View {
                 FormatFrame(canvas: s.canvasSize, ratio: r).allowsHitTesting(false)
             }
             if editTexts { TextDragLayer(s: s, clock: clock) }
+            // 2.9.10 · Aggiungere un testo è sempre a un clic, sopra al video
+            VStack {
+                HStack {
+                    if s.showingBefore {
+                        Text("PRIMA").font(.system(size: 11, weight: .heavy)).padding(.horizontal, 8).padding(.vertical, 3)
+                            .background(Capsule().fill(Theme.brass)).foregroundStyle(.white)
+                    }
+                    Spacer()
+                    Button(action: addText) {
+                        Label("Testo", systemImage: "textformat")
+                            .font(.system(size: 12, weight: .bold))
+                            .padding(.horizontal, 10).padding(.vertical, 6)
+                            .background(Capsule().fill(Color.black.opacity(0.55)))
+                            .foregroundStyle(Color.white)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Aggiungi un testo qui (T)")
+                    .keyboardShortcut(s.typing ? nil : KeyboardShortcut("t", modifiers: []))
+                }
+                Spacer()
+            }
+            .padding(10)
             HStack {
                 Button { s.togglePlay() } label: {
                     Image(systemName: clock.playing ? "pause.fill" : "play.fill").font(.system(size: 13, weight: .bold))
@@ -1062,7 +1162,7 @@ private struct EditorPreview: View {
                         .foregroundStyle(Color.black)
                 }
                 .buttonStyle(.plain)
-                .keyboardShortcut(.space, modifiers: [])
+                .keyboardShortcut(s.typing ? nil : KeyboardShortcut(.space, modifiers: []))
                 .help("Riproduci / pausa (Spazio)")
                 .accessibilityLabel(clock.playing ? "Pausa" : "Riproduci")
                 Spacer()
@@ -1123,8 +1223,11 @@ private struct ProjectTimeline: View {
     let clock: PlayClock
     let tint: Color
     let openMusic: () -> Void
+    /// 2.9.10 · clic su un testo della sequenza: si apre lo strumento Testi
+    var openTexts: () -> Void = {}
     @Environment(\.undoManager) private var undo
     @State private var dragBefore: VideoProject? = nil
+    @State private var textDrag: (id: UUID, start: Double, end: Double, mode: Int)? = nil
     @State private var dragStartOffset: Double = 0
     @State private var moving: UUID? = nil
     @State private var moveDX: CGFloat = 0
@@ -1143,9 +1246,11 @@ private struct ProjectTimeline: View {
                     ruler(total: total, pps: pps, width: g.size.width)
                         .frame(height: 16)
                     clipsRow(pps: pps)
-                        .frame(height: 56)
+                        .frame(height: 52)
+                    textsRow(total: total, pps: pps, width: g.size.width)
+                        .frame(height: 22)
                     musicRow(total: total, pps: pps, width: g.size.width)
-                        .frame(height: 28)
+                        .frame(height: 26)
                 }
                 PlayheadLine(clock: clock, pps: pps, size: g.size)
                     .allowsHitTesting(false)
@@ -1331,6 +1436,77 @@ private struct ProjectTimeline: View {
         }
     }
 
+    /// 2.9.10 · La riga dei testi: ogni testo è un blocco. Clic = sceglilo; trascina il centro = spostalo;
+    /// trascina i bordi = cambia inizio e fine.
+    @ViewBuilder private func textsRow(total: Double, pps: CGFloat, width: CGFloat) -> some View {
+        let texts = s.project.texts ?? []
+        ZStack(alignment: .topLeading) {
+            RoundedRectangle(cornerRadius: 5).fill(Theme.ink.opacity(0.04))
+            if texts.isEmpty {
+                Text("Testi: premi «Testo» sull’anteprima").font(.system(size: 10.5)).foregroundStyle(.tertiary)
+                    .padding(.leading, 8).frame(maxHeight: .infinity)
+                    .allowsHitTesting(false)
+            }
+            ForEach(texts) { t in
+                let x = CGFloat(t.start) * pps, w = max(14, CGFloat(t.end - t.start) * pps)
+                let on = s.selectedText == t.id
+                HStack(spacing: 0) {
+                    edge(t, mode: 1, pps: pps, total: total)
+                    Text(t.text.isEmpty ? "Testo" : t.text).font(.system(size: 10.5, weight: .semibold)).lineLimit(1)
+                        .padding(.horizontal, 3)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                        .gesture(DragGesture(minimumDistance: 2).onChanged { v in moveText(t, by: v.translation.width, pps: pps, total: total, mode: 0) }
+                            .onEnded { _ in endTextDrag() })
+                        .onTapGesture { s.selectedText = t.id; openTexts(); s.seek(t.start + 0.05) }
+                    edge(t, mode: 2, pps: pps, total: total)
+                }
+                .frame(width: w, height: 20)
+                .foregroundStyle(on ? Color.white : Theme.ink)
+                .background(RoundedRectangle(cornerRadius: 5).fill(on ? Theme.brass : Theme.brass.opacity(0.35)))
+                .offset(x: x, y: 1)
+                .help("\(t.text) · \(formatShort(t.start))–\(formatShort(t.end)) · trascina per spostarlo, i bordi per allungarlo")
+            }
+        }
+    }
+
+    private func edge(_ t: VPText, mode: Int, pps: CGFloat, total: Double) -> some View {
+        Rectangle().fill(Color.white.opacity(0.001)).frame(width: 6)
+            .overlay(Capsule().fill(Color.white.opacity(0.8)).frame(width: 2, height: 10))
+            .onHover { inside in if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() } }
+            .gesture(DragGesture(minimumDistance: 1).onChanged { v in moveText(t, by: v.translation.width, pps: pps, total: total, mode: mode) }
+                .onEnded { _ in endTextDrag() })
+    }
+
+    /// mode 0 sposta, 1 cambia l'inizio, 2 cambia la fine
+    private func moveText(_ t: VPText, by dx: CGFloat, pps: CGFloat, total: Double, mode: Int) {
+        if textDrag?.id != t.id {
+            textDrag = (t.id, t.start, t.end, mode)
+            dragBefore = s.project
+            s.selectedText = t.id
+        }
+        guard let d = textDrag else { return }
+        let delta = Double(dx / max(pps, 0.0001))
+        s.live { p in
+            guard let i = p.texts?.firstIndex(where: { $0.id == d.id }) else { return }
+            let len = d.end - d.start
+            switch mode {
+            case 1: p.texts![i].start = min(max(0, d.start + delta), d.end - 0.3)
+            case 2: p.texts![i].end = max(min(total, d.end + delta), d.start + 0.3)
+            default:
+                let st = min(max(0, d.start + delta), max(0, total - len))
+                p.texts![i].start = st
+                p.texts![i].end = st + len
+            }
+        }
+    }
+
+    private func endTextDrag() {
+        if let b = dragBefore { s.commit(from: b, undo, "Sposta il testo") }
+        dragBefore = nil
+        textDrag = nil
+    }
+
     @ViewBuilder private func musicRow(total: Double, pps: CGFloat, width: CGFloat) -> some View {
         if let m = s.project.music {
             let start = min(max(0, m.offset), total)
@@ -1458,40 +1634,6 @@ private struct ClipBlock: View {
     }
 }
 
-/// 2.7.4 · Un passo del percorso: numero (o spunta), nome, colore del Video quando è quello attivo.
-private struct StepChip: View {
-    let tool: VideoEditTool
-    let selected: Bool
-    let done: Bool
-    let tint: Color
-    /// Solo il numero (o la spunta): quando lo spazio è poco
-    var compact = false
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: compact ? 0 : 6) {
-                ZStack {
-                    Circle().fill(selected ? Color.white.opacity(0.9) : tint.opacity(done ? 0.85 : 0.18)).frame(width: 18, height: 18)
-                    if done && !selected {
-                        Image(systemName: "checkmark").font(.system(size: 9, weight: .heavy)).foregroundStyle(.white)
-                    } else {
-                        Text("\(tool.number)").font(.system(size: 10.5, weight: .bold)).foregroundStyle(selected ? tint : Theme.ink)
-                    }
-                }
-                if !compact { Text(tool.rawValue).font(.system(size: 12.5, weight: .semibold)).lineLimit(1).fixedSize() }
-            }
-            .padding(.leading, 5).padding(.trailing, compact ? 5 : 10).padding(.vertical, 4)
-            .background(Capsule().fill(selected ? tint : Theme.card))
-            .overlay(Capsule().strokeBorder(selected ? Color.clear : Theme.stroke, lineWidth: 1))
-            .foregroundStyle(selected ? Color.white : Theme.ink)
-            .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .help("Passo \(tool.number): \(tool.rawValue)")
-    }
-}
-
 // MARK: - 2.9 · Filtri
 
 /// Il passo «Filtri»: filtro pronto con miniatura, forza, sei regolazioni; per tutto il video o per una clip.
@@ -1522,48 +1664,46 @@ private struct LookOptions: View {
     }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .leading, spacing: 6) {
-                Picker("", selection: $onlyClip) {
-                    Text("Tutto il video").tag(false)
-                    Text("Solo questa clip").tag(true)
-                }
-                .pickerStyle(.segmented).labelsHidden().frame(width: 230)
-                .disabled(s.targetIndex == nil && !onlyClip)
-                Button("Ripristina") {
-                    s.change(undo, "Togli il filtro") { p in
-                        if let i = clipIndex, p.clips.indices.contains(i) { p.clips[i].look = nil } else { p.look = nil }
+        // 2.9.10 · In colonna, nel pannello a destra
+        VStack(alignment: .leading, spacing: 10) {
+            Picker("", selection: $onlyClip) {
+                Text("Tutto il video").tag(false)
+                Text("Solo questa clip").tag(true)
+            }
+            .pickerStyle(.segmented).labelsHidden()
+            .disabled(s.targetIndex == nil && !onlyClip)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 8) {
+                ForEach(VideoLooks.presets) { preset in
+                    PresetChip(preset: preset, selected: look.preset == preset.id, tint: tint,
+                               image: s.lookThumbnail(preset.id, clip: s.targetIndex ?? 0)) {
+                        s.change(undo, "Filtro \(preset.name)") { p in edit(&p) { $0.preset = preset.id; if $0.amount < 0.05 { $0.amount = 1 } } }
                     }
                 }
-                .controlSize(.small)
-                .help(onlyClip ? "Toglie filtro e regolazioni da questa clip (torna quello del video)" : "Toglie filtro e regolazioni da tutto il video")
             }
-            .fixedSize()
-            Divider().frame(height: 52)
-            ForEach(VideoLooks.presets) { preset in
-                PresetChip(preset: preset, selected: look.preset == preset.id, tint: tint,
-                           image: s.lookThumbnail(preset.id, clip: s.targetIndex ?? 0)) {
-                    s.change(undo, "Filtro \(preset.name)") { p in edit(&p) { $0.preset = preset.id; if $0.amount < 0.05 { $0.amount = 1 } } }
-                }
-            }
-            Divider().frame(height: 52)
-            EditSlider(title: "Forza", value: look.amount, range: 0...1, text: "\(Int((look.amount * 100).rounded()))%",
-                       width: 110, s: s, undo: undo, name: "Forza del filtro") { p, v in edit(&p) { $0.amount = v } }
+            EditSlider(title: "Forza del filtro", value: look.amount, range: 0...1, text: "\(Int((look.amount * 100).rounded()))%",
+                       width: 260, s: s, undo: undo, name: "Forza del filtro") { p, v in edit(&p) { $0.amount = v } }
                 .disabled(look.preset == "none")
+            SectionLabel(text: "Regolazioni")
             adjust("Luminosità", \.brightness, range: -1...1)
             adjust("Contrasto", \.contrast, range: -1...1)
             adjust("Saturazione", \.saturation, range: -1...1)
             adjust("Calore", \.warmth, range: -1...1)
             adjust("Nitidezza", \.sharpness, range: 0...1)
             adjust("Vignetta", \.vignette, range: 0...1)
+            Button("Ripristina") {
+                s.change(undo, "Togli il filtro") { p in
+                    if let i = clipIndex, p.clips.indices.contains(i) { p.clips[i].look = nil } else { p.look = nil }
+                }
+            }
+            .controlSize(.small)
+            .help(onlyClip ? "Toglie filtro e regolazioni da questa clip (torna quello del video)" : "Toglie filtro e regolazioni da tutto il video")
         }
-        .fixedSize()
     }
 
     private func adjust(_ title: String, _ key: WritableKeyPath<VPLook, Double>, range: ClosedRange<Double>) -> some View {
         let v = look[keyPath: key]
         let text = range.lowerBound < 0 ? (v > 0.005 ? "+" : "") + "\(Int((v * 100).rounded()))" : "\(Int((v * 100).rounded()))%"
-        return EditSlider(title: title, value: v, range: range, text: text, width: 96, s: s, undo: undo, name: title) { p, nv in
+        return EditSlider(title: title, value: v, range: range, text: text, width: 260, s: s, undo: undo, name: title) { p, nv in
             edit(&p) { $0[keyPath: key] = abs(nv) < 0.03 ? 0 : nv }       // vicino allo zero si «aggancia» a com'era
         }
     }
@@ -1583,10 +1723,10 @@ private struct PresetChip: View {
                     RoundedRectangle(cornerRadius: 7).fill(tint.opacity(0.15))
                     if let image { Image(nsImage: image).resizable().scaledToFill() }
                 }
-                .frame(width: 58, height: 40)
+                .frame(width: 70, height: 46)
                 .clipShape(RoundedRectangle(cornerRadius: 7))
                 .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(selected ? Theme.brass : Color.black.opacity(0.12), lineWidth: selected ? 2.5 : 1))
-                Text(preset.name).font(.system(size: 10.5, weight: selected ? .bold : .regular)).lineLimit(1).frame(width: 64)
+                Text(preset.name).font(.system(size: 10.5, weight: selected ? .bold : .regular)).lineLimit(1).minimumScaleFactor(0.8).frame(width: 76)
             }
         }
         .buttonStyle(.plain)
@@ -1604,14 +1744,16 @@ struct TransitionOptions: View {
     let tint: Color
     /// Quello della finestra: il popover ne avrebbe uno suo (o nessuno) e ⌘Z non annullerebbe.
     let undo: UndoManager?
+    /// 2.9.10 · Dentro il pannello: più stretto, senza titolo
+    var compact = false
     @State private var before: VideoProject? = nil
 
     private var current: VPTransition? { s.project.clips.first { $0.id == clipID }?.transition }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Transizione").font(.headline)
-            LazyVGrid(columns: Array(repeating: GridItem(.fixed(78), spacing: 6), count: 4), spacing: 6) {
+            if !compact { Text("Transizione").font(.headline) }
+            LazyVGrid(columns: Array(repeating: GridItem(.fixed(compact ? 80 : 78), spacing: 6), count: compact ? 3 : 4), spacing: 6) {
                 chip(nil, "Nessuna", "minus")
                 ForEach(VPTransition.kinds, id: \.id) { k in chip(k.id, k.name, k.symbol) }
             }
@@ -1621,7 +1763,7 @@ struct TransitionOptions: View {
                     Slider(value: Binding(get: { tr.duration }, set: { v in set { $0?.duration = v } }), in: 0.2...2, step: 0.1) { editing in
                         if editing { before = s.project } else if let b = before { s.commit(from: b, undo, "Durata della transizione"); before = nil }
                     }
-                        .frame(width: 160)
+                        .frame(width: compact ? 130 : 160)
                     Text(String(format: "%.1f s", tr.duration)).font(.callout).monospacedDigit().frame(width: 40, alignment: .trailing)
                 }
                 Text("Se una clip è corta, la transizione si accorcia da sola.")
@@ -1634,8 +1776,8 @@ struct TransitionOptions: View {
                 .controlSize(.small)
             }
         }
-        .padding(14)
-        .frame(width: 360)
+        .padding(compact ? 0 : 14)
+        .frame(width: compact ? nil : 360)
     }
 
     private func chip(_ id: String?, _ name: String, _ symbol: String) -> some View {
@@ -1696,10 +1838,13 @@ private struct EffectOptions: View {
     }
 
     var body: some View {
-        if let i = index, s.project.clips.indices.contains(i) {
-            HStack(alignment: .center, spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Clip \(i + 1)").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
+        // 2.9.10 · In colonna, nel pannello a destra
+        VStack(alignment: .leading, spacing: 10) {
+            if let i = index, s.project.clips.indices.contains(i) {
+                Text("Clip \(i + 1) di \(s.project.clips.count)").font(.system(size: 12.5, weight: .semibold))
+                HStack {
+                    Text("Velocità").font(.system(size: 12))
+                    Spacer()
                     Menu {
                         ForEach(VPEffects.speeds, id: \.self) { v in
                             Button(Self.speedLabel(v)) { change("Velocità") { $0.speed = v } }
@@ -1710,8 +1855,9 @@ private struct EffectOptions: View {
                     .menuStyle(.button).fixedSize()
                     .help("Velocità della clip: la voce non cambia tono")
                 }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Zoom lento").font(.system(size: 11)).foregroundStyle(.secondary)
+                HStack {
+                    Text("Zoom lento").font(.system(size: 12))
+                    Spacer()
                     Picker("", selection: Binding(get: { fx.zoom }, set: { v in change("Zoom lento") { $0.zoom = v } })) {
                         Text("No").tag("none")
                         Image(systemName: "plus.magnifyingglass").tag("in").help("Si avvicina piano")
@@ -1719,57 +1865,56 @@ private struct EffectOptions: View {
                     }
                     .pickerStyle(.segmented).labelsHidden().frame(width: 130)
                 }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Gira").font(.system(size: 11)).foregroundStyle(.secondary)
-                    HStack(spacing: 4) {
-                        Toggle(isOn: Binding(get: { fx.flipH }, set: { v in change("Capovolgi") { $0.flipH = v } })) {
-                            Image(systemName: "arrow.left.and.right.righttriangle.left.righttriangle.right")
-                        }
-                        .toggleStyle(.button).help("Specchia (destra ↔ sinistra)")
-                        Toggle(isOn: Binding(get: { fx.flipV }, set: { v in change("Capovolgi") { $0.flipV = v } })) {
-                            Image(systemName: "arrow.up.and.down.righttriangle.up.righttriangle.down")
-                        }
-                        .toggleStyle(.button).help("Capovolgi (sopra ↔ sotto)")
-                        Button { change("Ruota") { $0.rotate = ($0.rotate + 90) % 360 } } label: {
-                            Image(systemName: "rotate.right")
-                        }
-                        .help("Ruota di 90° · ora \(fx.rotate)°")
+                HStack {
+                    Text("Gira").font(.system(size: 12))
+                    Spacer()
+                    Toggle(isOn: Binding(get: { fx.flipH }, set: { v in change("Capovolgi") { $0.flipH = v } })) {
+                        Image(systemName: "arrow.left.and.right.righttriangle.left.righttriangle.right")
                     }
+                    .toggleStyle(.button).help("Specchia (destra ↔ sinistra)")
+                    Toggle(isOn: Binding(get: { fx.flipV }, set: { v in change("Capovolgi") { $0.flipV = v } })) {
+                        Image(systemName: "arrow.up.and.down.righttriangle.up.righttriangle.down")
+                    }
+                    .toggleStyle(.button).help("Capovolgi (sopra ↔ sotto)")
+                    Button { change("Ruota") { $0.rotate = ($0.rotate + 90) % 360 } } label: {
+                        Image(systemName: "rotate.right")
+                    }
+                    .help("Ruota di 90° · ora \(fx.rotate)°")
                 }
                 EditSlider(title: "Sfocatura", value: fx.blur, range: 0...1, text: fx.blur < 0.01 ? "No" : "\(Int(fx.blur * 100))%",
-                           width: 120, s: s, undo: undo, name: "Sfocatura") { p, v in Self.edit(&p, i) { $0.blur = v } }
-                EditSlider(title: "Entrata", value: fx.fadeIn, range: 0...2, text: fx.fadeIn < 0.05 ? "No" : String(format: "%.1f s", fx.fadeIn),
-                           width: 100, s: s, undo: undo, name: "Dissolvenza in entrata") { p, v in Self.edit(&p, i) { $0.fadeIn = v < 0.05 ? 0 : v } }
-                EditSlider(title: "Uscita", value: fx.fadeOut, range: 0...2, text: fx.fadeOut < 0.05 ? "No" : String(format: "%.1f s", fx.fadeOut),
-                           width: 100, s: s, undo: undo, name: "Dissolvenza in uscita") { p, v in Self.edit(&p, i) { $0.fadeOut = v < 0.05 ? 0 : v } }
-                VStack(alignment: .leading, spacing: 4) {
+                           width: 260, s: s, undo: undo, name: "Sfocatura") { p, v in Self.edit(&p, i) { $0.blur = v } }
+                HStack(spacing: 12) {
+                    EditSlider(title: "Entrata", value: fx.fadeIn, range: 0...2, text: fx.fadeIn < 0.05 ? "No" : String(format: "%.1f s", fx.fadeIn),
+                               width: 124, s: s, undo: undo, name: "Dissolvenza in entrata") { p, v in Self.edit(&p, i) { $0.fadeIn = v < 0.05 ? 0 : v } }
+                    EditSlider(title: "Uscita", value: fx.fadeOut, range: 0...2, text: fx.fadeOut < 0.05 ? "No" : String(format: "%.1f s", fx.fadeOut),
+                               width: 124, s: s, undo: undo, name: "Dissolvenza in uscita") { p, v in Self.edit(&p, i) { $0.fadeOut = v < 0.05 ? 0 : v } }
+                }
+                HStack(spacing: 6) {
                     Button("A tutte le clip") {
                         let e = fx
                         s.change(undo, "Effetti a tutte le clip") { p in
                             for k in p.clips.indices { p.clips[k].fx = e.isIdentity ? nil : e }
                         }
                     }
-                    .controlSize(.small).help("Copia questi effetti su tutte le clip")
+                    .help("Copia questi effetti su tutte le clip")
                     Button("Ripristina") { change("Togli gli effetti") { $0 = VPEffects() } }
-                        .controlSize(.small).disabled(fx.isIdentity)
+                        .disabled(fx.isIdentity)
                 }
-                Divider().frame(height: 40)
-                hideButton
-            }
-            .sheet(isPresented: $showHide) { hideSheet }
-        } else {
-            HStack(spacing: 16) {
+                .controlSize(.small)
+            } else {
                 Text("Scegli una clip nella sequenza (clic sulla clip) per darle i suoi effetti.")
                     .font(.system(size: 12)).foregroundStyle(.secondary)
-                hideButton
             }
-            .sheet(isPresented: $showHide) { hideSheet }
+            Divider()
+            SectionLabel(text: "Su tutto il video")
+            hideButton
         }
+        .sheet(isPresented: $showHide) { hideSheet }
     }
 
     /// 2.9.8 · Nascondi un logo su tutto il montaggio (sfocatura o pixel).
     private var hideButton: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        HStack(spacing: 6) {
             Button { showHide = true } label: { Label(s.project.hide == nil ? "Nascondi un logo…" : "Logo nascosto ✓", systemImage: "eye.slash") }
                 .controlSize(.small).help("Sfoca o copri a pixel un logo o una scritta in tutto il video")
             if s.project.hide != nil {

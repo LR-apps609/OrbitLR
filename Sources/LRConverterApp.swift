@@ -206,6 +206,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 
+    /// 2.9.10 · Uscendo dall'app, le modifiche del Video ancora da confermare non si perdono.
+    func applicationWillTerminate(_ notification: Notification) {
+        let s = VideoProjectStore.shared
+        if s.hasPending { s.applyChanges(); s.saveNow() }
+    }
+
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
         if let p = response.notification.request.content.userInfo["path"] as? String {

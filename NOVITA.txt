@@ -1,3 +1,10 @@
+Novità della 2.9.10 «Video in ordine»:
+• Video: schermata nuova. Anteprima grande a sinistra, a destra un pannello con gli strumenti per categoria (Clip, Filtri, Effetti, Testi, Audio, Formato), le opzioni in colonna: niente più passi numerati né strisce da scorrere
+• Le modifiche si vedono subito e diventano definitive con «Applica»; «Annulla» torna a com'era, tieni premuto «Prima / dopo» per confrontare
+• Testi rifatti: pulsante «Testo» sopra l'anteprima (o tasto T), scrivi subito nel pannello, una riga «Testi» nella sequenza dove li sposti e li allunghi trascinandoli, doppio clic sul testo nell'anteprima per scriverci
+• Corretto: scrivendo un testo, la lettera «s» divideva la clip, lo spazio faceva partire il video e ⌫ toglieva la clip
+• «Esporta» sempre in alto a destra; risoluzione e fluidità stanno in «Formato»
+
 Novità della 2.9.9 «Testi animati»:
 • Video: nuovo passo «Testi». Aggiungi un titolo o una scritta: compare dall'indicatore per 3 secondi, e con «Inizia qui» e «Finisci qui» decidi quando
 • Quattro modelli (Titolo, Sottotitolo, Didascalia, Grande), quattro animazioni (Dissolvenza, Scorrimento, Pop, Macchina da scrivere) e quattro colori dell'app

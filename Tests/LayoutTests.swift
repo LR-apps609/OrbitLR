@@ -28,6 +28,15 @@ final class LayoutTests: XCTestCase {
     func testImmagini() { check("Immagini", KindTabView(m: KindTabModel(accepts: [.img]), style: .images)) }
     func testFile() { check("File", KindTabView(m: KindTabModel(accepts: [.pdf, .doc]), style: .files)) }
     func testVideo() { check("Video", VideoEditorView(s: VideoProjectStore(folder: folder()))) }
+    /// 2.9.10 · La schermata Video con una clip (anteprima, pannello, sequenza) sta nella finestra più piccola.
+    func testVideoEditorWithClip() async throws {
+        let v = try await Fixtures.video(name: "layout-video.mp4", width: 320, height: 180, seconds: 2)
+        let s = VideoProjectStore(folder: folder())
+        s.newProject(nil)
+        s.change(nil, "Aggiungi") { $0.clips = [VPClip(path: v.path, inPoint: 0, outPoint: 2)] }
+        check("Video con una clip", VideoEditorView(s: s))
+        s.closeProject(nil)
+    }
     func testAudio() { check("Audio", AudioTabView(m: MediaTabModel(videoTab: false, projectsFolder: folder()))) }
     func testCoda() { check("Coda", QueueView()) }
     func testCronologia() { check("Cronologia", HistoryView()) }
