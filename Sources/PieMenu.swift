@@ -616,6 +616,24 @@ final class PieController: @unchecked Sendable {
         open(model, at: point)
     }
 
+    /// 3.2 · Prepara la torta all'avvio, fuori dallo schermo e invisibile: la prima vera apertura è subito pronta
+    /// (SwiftUI e la scheda grafica hanno già fatto il lavoro della prima volta).
+    func prewarm() {
+        guard panel == nil else { return }
+        let m = PieModel()
+        m.setup(actions: Catalog.pieActions(for: .img, exts: ["heic"], mergeable: 1, count: 1))
+        let side: CGFloat = 520
+        let p = PiePanel(contentRect: NSRect(x: -10_000, y: -10_000, width: side, height: side),
+                         styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        p.isOpaque = false
+        p.backgroundColor = .clear
+        p.alphaValue = 0
+        p.ignoresMouseEvents = true
+        p.contentView = NSHostingView(rootView: PieView(model: m, side: side))
+        p.orderFrontRegardless()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { p.orderOut(nil); p.contentView = nil }
+    }
+
     private func open(_ model: PieModel, at point: NSPoint) {
         let side: CGFloat = 520
         let screen = NSScreen.screens.first { $0.frame.contains(point) } ?? NSScreen.main

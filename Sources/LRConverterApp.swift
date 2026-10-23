@@ -44,6 +44,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         Appearance.apply()
         Sounds.shared.prepare()
         cleanOldTemporaryFiles()
+        // 3.2 · La torta già pronta per la prima apertura (dopo che l'avvio ha finito il suo lavoro)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { PieController.shared.prewarm() }
 
         // Tasto destro nel Finder → OrbitLR
         NSApp.servicesProvider = services
