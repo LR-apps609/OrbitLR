@@ -9,7 +9,7 @@ final class VideoLooksTests: XCTestCase {
         let W = CGFloat(cg.width), H = CGFloat(cg.height)
         let rect = CGRect(x: r.minX * W, y: (1 - r.maxY) * H, width: r.width * W, height: r.height * H)
         let ci = CIImage(cgImage: cg)
-        let avg = ci.applyingFilter("CIAreaAverage", ["inputExtent": CIVector(cgRect: rect)])
+        let avg = ci.applyingFilter("CIAreaAverage", parameters: ["inputExtent": CIVector(cgRect: rect)])
         var px = [UInt8](repeating: 0, count: 4)
         Media.ci.render(avg, toBitmap: &px, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
                         format: .RGBA8, colorSpace: CGColorSpaceCreateDeviceRGB())

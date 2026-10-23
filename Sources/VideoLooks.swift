@@ -61,7 +61,7 @@ enum VideoLooks {
         if look.preset != "none", look.amount > 0.001 {
             let styled = preset(look.preset, img).cropped(to: extent)
             img = look.amount >= 0.999 ? styled
-                : styled.applyingFilter("CIDissolveTransition", ["inputTargetImage": img, "inputTime": 1 - look.amount]).cropped(to: extent)
+                : styled.applyingFilter("CIDissolveTransition", parameters: ["inputTargetImage": img, "inputTime": 1 - look.amount]).cropped(to: extent)
         }
         img = adjust(img, look, extent: extent)
         return img.cropped(to: extent)
@@ -72,7 +72,7 @@ enum VideoLooks {
     private static func preset(_ id: String, _ i: CIImage) -> CIImage {
         switch id {
         case "vivid":
-            return controls(i, saturation: 1.35, contrast: 1.08).applyingFilter("CIVibrance", ["inputAmount": 0.4])
+            return controls(i, saturation: 1.35, contrast: 1.08).applyingFilter("CIVibrance", parameters: ["inputAmount": 0.4])
         case "warm":
             return tint(i, r: 1.10, g: 1.02, b: 0.86)
         case "cool":
@@ -80,23 +80,23 @@ enum VideoLooks {
         case "mono":
             return controls(i, saturation: 0, contrast: 1.12)
         case "sepia":
-            return i.applyingFilter("CISepiaTone", ["inputIntensity": 0.85])
+            return i.applyingFilter("CISepiaTone", parameters: ["inputIntensity": 0.85])
         case "vintage":
-            let faded = lift(controls(i.applyingFilter("CISepiaTone", ["inputIntensity": 0.35]), saturation: 0.8, contrast: 0.92), 0.06)
+            let faded = lift(controls(i.applyingFilter("CISepiaTone", parameters: ["inputIntensity": 0.35]), saturation: 0.8, contrast: 0.92), 0.06)
             return vignette(faded, 0.6, extent: i.extent)
         case "film":
             return lift(controls(tint(i, r: 1.03, g: 1.0, b: 0.95), saturation: 0.88, contrast: 1.12), 0.03)
         case "night":
             return tint(controls(i, brightness: -0.06, saturation: 0.75, contrast: 1.15), r: 0.9, g: 0.97, b: 1.12)
         case "dream":
-            return controls(i.applyingFilter("CIBloom", ["inputRadius": 12, "inputIntensity": 0.6]), brightness: 0.03, saturation: 1.05)
+            return controls(i.applyingFilter("CIBloom", parameters: ["inputRadius": 12, "inputIntensity": 0.6]), brightness: 0.03, saturation: 1.05)
         case "drama":
             return vignette(controls(i, saturation: 0.85, contrast: 1.3), 0.8, extent: i.extent)
         case "pastel":
             return controls(i, brightness: 0.06, saturation: 0.6, contrast: 0.9)
         case "radio":
             // Lo stile di OrbitLR: caldo, un velo color salvia, bordi scuri
-            let warm = tint(i.applyingFilter("CISepiaTone", ["inputIntensity": 0.25]), r: 1.04, g: 1.03, b: 0.9)
+            let warm = tint(i.applyingFilter("CISepiaTone", parameters: ["inputIntensity": 0.25]), r: 1.04, g: 1.03, b: 0.9)
             return vignette(controls(warm, saturation: 0.9, contrast: 1.05), 0.55, extent: i.extent)
         default:
             return i
@@ -115,7 +115,7 @@ enum VideoLooks {
             img = tint(img, r: 1 + 0.12 * w, g: 1 + 0.02 * w, b: 1 - 0.14 * w)
         }
         if l.sharpness > 0.001 {
-            img = img.applyingFilter("CISharpenLuminance", ["inputSharpness": l.sharpness * 0.9]).cropped(to: extent)
+            img = img.applyingFilter("CISharpenLuminance", parameters: ["inputSharpness": l.sharpness * 0.9]).cropped(to: extent)
         }
         if l.vignette > 0.001 {
             img = vignette(img, l.vignette, extent: extent)
@@ -124,12 +124,12 @@ enum VideoLooks {
     }
 
     private static func controls(_ i: CIImage, brightness: Double = 0, saturation: Double = 1, contrast: Double = 1) -> CIImage {
-        i.applyingFilter("CIColorControls", ["inputBrightness": brightness, "inputSaturation": saturation, "inputContrast": contrast])
+        i.applyingFilter("CIColorControls", parameters: ["inputBrightness": brightness, "inputSaturation": saturation, "inputContrast": contrast])
     }
 
     /// Moltiplica i canali: r > 1 e b < 1 scalda, il contrario raffredda.
     private static func tint(_ i: CIImage, r: Double, g: Double, b: Double) -> CIImage {
-        i.applyingFilter("CIColorMatrix", [
+        i.applyingFilter("CIColorMatrix", parameters: [
             "inputRVector": CIVector(x: r, y: 0, z: 0, w: 0),
             "inputGVector": CIVector(x: 0, y: g, z: 0, w: 0),
             "inputBVector": CIVector(x: 0, y: 0, z: b, w: 0),
@@ -138,7 +138,7 @@ enum VideoLooks {
 
     /// Alza i neri (effetto «sbiadito» delle foto vecchie).
     private static func lift(_ i: CIImage, _ amount: Double) -> CIImage {
-        i.applyingFilter("CIColorMatrix", [
+        i.applyingFilter("CIColorMatrix", parameters: [
             "inputRVector": CIVector(x: 1 - amount, y: 0, z: 0, w: 0),
             "inputGVector": CIVector(x: 0, y: 1 - amount, z: 0, w: 0),
             "inputBVector": CIVector(x: 0, y: 0, z: 1 - amount, w: 0),
@@ -148,7 +148,7 @@ enum VideoLooks {
 
     private static func vignette(_ i: CIImage, _ strength: Double, extent: CGRect) -> CIImage {
         let r = Double(max(extent.width, extent.height)) * 0.62
-        return i.applyingFilter("CIVignetteEffect", [
+        return i.applyingFilter("CIVignetteEffect", parameters: [
             "inputCenter": CIVector(x: extent.midX, y: extent.midY),
             "inputRadius": r,
             "inputIntensity": min(1, strength),
