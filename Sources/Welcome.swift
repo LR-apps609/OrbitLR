@@ -497,7 +497,7 @@ struct WelcomeView: View {
         return VStack(spacing: 14) {
             if n == 0 {
                 WelcomeTryPie()
-                    .padding(.top, 26)
+                    .padding(.top, 18)
             } else {
                 ZStack {
                     Circle().fill(p.color.opacity(0.16)).frame(width: 110, height: 110)
@@ -548,7 +548,7 @@ private struct WelcomeTryPie: View {
 
     var body: some View {
         ZStack {
-            PieView(model: model, side: 210)
+            PieView(model: model, side: 264)
                 .opacity(picked == nil ? 1 : 0.25)
             if let a = picked {
                 VStack(spacing: 6) {
@@ -562,7 +562,7 @@ private struct WelcomeTryPie: View {
                 .transition(.scale(scale: 0.9).combined(with: .opacity))
             }
         }
-        .frame(width: 210, height: 210)
+        .frame(width: 264, height: 264)
         .onAppear {
             model.onPick = { a in withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { picked = a } }
             model.onClose = {}
@@ -574,8 +574,8 @@ private struct WelcomeTryPie: View {
         m.setup(actions: Catalog.pieActions(for: .img, exts: ["heic"], mergeable: 1, count: 1).filter { !$0.id.hasPrefix("__") })
         m.tint = Theme.color(.img)
         m.suggestedId = "to:jpg"
-        m.fileName = "Foto di prova.heic"
-        m.subtitle = "Consigliato: JPG"
+        m.fileName = "Prova.heic"
+        m.subtitle = "2,4 MB"
         m.icon = WelcomeTryPie.sampleImage()
         return m
     }
