@@ -1,4 +1,5 @@
 import SwiftUI
+import QuartzCore
 import AppKit
 import QuickLookThumbnailing
 
@@ -22,11 +23,12 @@ final class ThumbCache: @unchecked Sendable {
         let key = "\(url.path)|\(Int(side))|\(Self.stamp(url))" as NSString
         if let img = cache.object(forKey: key) { done(img); return }
         guard FileManager.default.fileExists(atPath: url.path) else { done(nil); return }
+        let t0 = CACurrentMediaTime()
         let req = QLThumbnailGenerator.Request(fileAt: url, size: CGSize(width: side, height: side),
                                                scale: NSScreen.main?.backingScaleFactor ?? 2, representationTypes: .thumbnail)
         QLThumbnailGenerator.shared.generateBestRepresentation(for: req) { [weak self] rep, _ in
             let img = rep?.nsImage
-            if let img { self?.cache.setObject(img, forKey: key) }
+            if let img { self?.cache.setObject(img, forKey: key); Perf.record(.thumbnail, CACurrentMediaTime() - t0) }
             DispatchQueue.main.async { done(img) }
         }
     }
@@ -217,19 +219,20 @@ struct RadioIllustration: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.controlActiveState) private var active
 
+    /// 3.4.1 · Movimenti nativi e continui (prima: 20 ridisegni al secondo, a scatti)
+    @State private var bob = false
+    @State private var sweep = false
+
     var body: some View {
-        // 2.7.6 · 20 fotogrammi al secondo bastano per un movimento lento; ferma se OrbitLR non è in primo piano
-        TimelineView(.animation(minimumInterval: 1 / 20, paused: reduceMotion || active == .inactive)) { tl in
-            let t = reduceMotion ? 0 : tl.date.timeIntervalSinceReferenceDate
-            ZStack {
+        ZStack {
                 // Nota che galleggia
                 Image(systemName: symbol)
                     .font(.system(size: 22, weight: .semibold))
                     .foregroundStyle(color)
                     .frame(width: 44, height: 44)
                     .background(Circle().fill(color.opacity(0.14)))
-                    .offset(x: 46, y: -64 + CGFloat(sin(t * 1.4)) * 4)
-                    .rotationEffect(.degrees(sin(t * 0.9) * 6))
+                    .offset(x: 46, y: bob ? -68 : -60)
+                    .rotationEffect(.degrees(bob ? 6 : -6))
 
                 // Corpo
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -255,7 +258,7 @@ struct RadioIllustration: View {
                     }
                     .padding(.leading, 5)
                     Capsule().fill(Theme.color(.pdf)).frame(width: 2, height: 16)
-                        .offset(x: 8 + CGFloat((sin(t * 0.7) + 1) / 2) * 50)
+                        .offset(x: sweep ? 58 : 8)
                 }
                 .frame(width: 68, height: 18)
                 .clipShape(RoundedRectangle(cornerRadius: 4))
@@ -268,7 +271,7 @@ struct RadioIllustration: View {
                         Circle().fill(Theme.ivory).frame(width: 18, height: 18)
                             .overlay(Circle().strokeBorder(Theme.brass, lineWidth: 1.5))
                             .overlay(Capsule().fill(Theme.ink.opacity(0.6)).frame(width: 2, height: 6).offset(y: -4)
-                                .rotationEffect(.degrees(i == 0 ? sin(t * 0.7) * 50 : -30)))
+                                .rotationEffect(.degrees(i == 0 ? (sweep ? 50 : -50) : -30)))
                     }
                 }
                 .offset(x: 38, y: 18)
@@ -279,8 +282,12 @@ struct RadioIllustration: View {
                     Capsule().fill(Theme.brass).frame(width: 14, height: 5)
                 }
                 .offset(y: 52)
-            }
-            .frame(width: 200, height: 170)
+        }
+        .frame(width: 200, height: 170)
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) { bob = true }
+            withAnimation(.easeInOut(duration: 4.5).repeatForever(autoreverses: true)) { sweep = true }
         }
         .accessibilityHidden(true)
     }
@@ -390,6 +397,7 @@ enum LaunchGate {
 
     static func release() {
         guard !Updater.shared.busy else { return }
+        if holding { Perf.end(.launch) }
         holding = false
         for w in held {
             w.alphaValue = 1

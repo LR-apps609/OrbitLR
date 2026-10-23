@@ -284,6 +284,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
 
     private func scheduleRebuild() {
         rebuildTask?.cancel()
+        Perf.begin(.previewRebuild)
         let p = showingBefore ? saved : project, inf = infos, sp = speech
         rebuildTask = Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: 120_000_000)
@@ -315,6 +316,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             self.player.seek(to: VideoProjectBuilder.cm(t), toleranceBefore: .zero, toleranceAfter: .zero) { _ in }
             self.clock.time = t
             if wasPlaying { self.player.play() }
+            Perf.end(.previewRebuild)
         }
     }
 

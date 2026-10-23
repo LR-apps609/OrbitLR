@@ -1,3 +1,8 @@
+Novità della 3.4.1 «Misura»:
+• Le animazioni che girano da sole (il quadrante di Conversione, la radio delle pagine vuote) ora si muovono a piena fluidità, senza più scatti, e consumano meno
+• OrbitLR misura da sola i suoi tempi: apertura della torta, cambio di scheda, anteprima del montaggio, miniature, avvio. Da qui partono le prossime versioni della 3.4, tutte dedicate alla fluidità
+• «Segnala un problema» allega anche questi tempi, così un rallentamento si trova subito
+
 Novità della 3.3 «Sottotitoli»:
 • Video: nel montaggio, «Testi» → «Sottotitoli automatici». OrbitLR ascolta le clip e scrive le frasi in basso, al momento giusto, anche con clip tagliate o accelerate. Poi li correggi come gli altri testi; ⌘Z li toglie tutti
 • Funziona sul Mac, senza internet quando la lingua lo permette; la prima volta macOS chiede il permesso «Riconoscimento vocale»

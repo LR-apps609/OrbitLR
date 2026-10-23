@@ -284,7 +284,10 @@ struct PieView: View {
             }
         }
         .frame(width: side, height: side)
-        .onAppear { model.shown = true; animateOpen(from: 0) }
+        .onAppear {
+            model.shown = true; animateOpen(from: 0)
+            DispatchQueue.main.async { Perf.end(.pieOpen) }          // 3.4.1 · il primo disegno è fatto
+        }
         .onChange(of: model.shown) { _, now in if !now { animateClose() } }
         .onChange(of: model.spin) { _, _ in animateOpen(from: 0.35) }
         .contentShape(Rectangle())
@@ -503,6 +506,7 @@ final class PieController: @unchecked Sendable {
     private var mergeDone = false
 
     func present(files: [URL], at point: NSPoint? = nil) {
+        Perf.begin(.pieOpen)
         close()
         var groups: [Kind: [URL]] = [:]
         var order: [Kind] = []

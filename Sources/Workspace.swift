@@ -6,7 +6,9 @@ import UniformTypeIdentifiers
 
 final class AppState: ObservableObject, @unchecked Sendable {
     static let shared = AppState()
-    @Published var selection: SidebarItem? = .workspace
+    @Published var selection: SidebarItem? = .workspace {
+        willSet { if newValue != selection { Perf.begin(.tabSwitch) } }      // 3.4.1 · misura del cambio scheda
+    }
     let workspace = Workspace()
     /// La scheda Audio tiene il suo file anche quando si cambia scheda (la scheda Video è un progetto a sé).
     let audioTab = MediaTabModel(videoTab: false)
@@ -607,17 +609,15 @@ struct EmptyOrbit: View {
     let open: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let kinds: [Kind] = [.img, .pdf, .video, .audio, .doc, .sheet, .slide, .text]
-    @Environment(\.controlActiveState) private var active
+    /// 3.4.1 · Giro e respiro sono animazioni native (a 60/120 immagini al secondo), non più ridisegni a 24
+    @State private var spin = false
+    @State private var breathe = false
 
     var body: some View {
-        // 2.7.6 · più leggera: 24 fps e ferma quando OrbitLR non è in primo piano
-        TimelineView(.animation(minimumInterval: 1.0 / 24, paused: reduceMotion || active == .inactive)) { tl in
-            let t = tl.date.timeIntervalSinceReferenceDate
-            let angle = reduceMotion ? 0 : (t * 9).truncatingRemainder(dividingBy: 360)
-            let breathe = reduceMotion ? 1 : 1 + 0.025 * sin(t * 1.6)
+        ZStack {
+            Circle().fill(Theme.accent.opacity(open ? 0.10 : 0.06)).frame(width: 168, height: 168)
+                .scaleEffect(breathe ? 1.025 : 0.975)
             ZStack {
-                Circle().fill(Theme.accent.opacity(open ? 0.10 : 0.06)).frame(width: 168, height: 168)
-                    .scaleEffect(breathe)
                 ForEach(Array(kinds.enumerated()), id: \.offset) { i, k in
                     let a = Double(i) / Double(kinds.count)
                     Circle()
@@ -625,17 +625,22 @@ struct EmptyOrbit: View {
                         .stroke(Theme.color(k).gradient, style: StrokeStyle(lineWidth: open ? 24 : 18, lineCap: .butt))
                         .frame(width: open ? 148 : 128, height: open ? 148 : 128)
                 }
-                .rotationEffect(.degrees(angle))
-                Circle().fill(Theme.ivory).frame(width: 74, height: 74)
-                    .shadow(color: Theme.shadow.opacity(0.18), radius: 6, y: 2)
-                Circle().strokeBorder(Theme.brass, lineWidth: 2).frame(width: 74, height: 74)
-                Image(systemName: open ? "arrow.down" : "plus")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundStyle(Theme.accent)
-                    .contentTransition(.symbolEffect(.replace))
             }
-            .frame(width: 176, height: 176)
-            .animation(Motion.spring(0.35, 0.7), value: open)
+            .rotationEffect(.degrees(spin ? 360 : 0))
+            Circle().fill(Theme.ivory).frame(width: 74, height: 74)
+                .shadow(color: Theme.shadow.opacity(0.18), radius: 6, y: 2)
+            Circle().strokeBorder(Theme.brass, lineWidth: 2).frame(width: 74, height: 74)
+            Image(systemName: open ? "arrow.down" : "plus")
+                .font(.system(size: 28, weight: .bold))
+                .foregroundStyle(Theme.accent)
+                .contentTransition(.symbolEffect(.replace))
+        }
+        .frame(width: 176, height: 176)
+        .animation(Motion.spring(0.35, 0.7), value: open)
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.linear(duration: 40).repeatForever(autoreverses: false)) { spin = true }
+            withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) { breathe = true }
         }
         .accessibilityHidden(true)
     }

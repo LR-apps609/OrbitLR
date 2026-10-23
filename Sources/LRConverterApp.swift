@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     static let openNotification = Notification.Name("it.ledion.OrbitLR.open")
 
     func applicationWillFinishLaunching(_ notification: Notification) {
+        Perf.begin(.launch)                  // 3.4.1 · fino a quando la finestra è pronta
         let me = NSRunningApplication.current
         let others = NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "it.ledion.OrbitLR")
             .filter { $0.processIdentifier != me.processIdentifier && !$0.isTerminated }

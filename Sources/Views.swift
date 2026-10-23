@@ -147,6 +147,7 @@ struct MainWindow: View {
                     }
                 }
                 .id(app.selection ?? .workspace)
+                .onAppear { DispatchQueue.main.async { Perf.end(.tabSwitch) } }       // 3.4.1 · misura del cambio scheda
                 // 2.7: la pagina nuova entra con una molla leggera (sale un poco e si posa), come una manopola che scatta
                 // 2.7.2 · più rapida: la pagina vecchia sparisce subito, la nuova entra in 0,2 s (niente zoom, che rallentava)
                 .transition(.asymmetric(insertion: Motion.reduced ? .opacity : .opacity.combined(with: .offset(y: 6)), removal: .identity))

@@ -51,6 +51,9 @@ enum BugReport {
         Ultimi lavori:
         \(jobs.isEmpty ? "(nessuno)" : jobs)
 
+        Tempi (3.4.1):
+        \(Perf.report.isEmpty ? "(nessuna misura)" : Perf.report)
+
         Registro (ultime righe):
         \(log)
 

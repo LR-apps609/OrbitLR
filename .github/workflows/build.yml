@@ -111,6 +111,8 @@ jobs:
           passed=$(grep -cE "Test Case .* passed" test.log || true)
           failed=$(grep -cE "Test Case .* failed" test.log || true)
           echo "::notice::Test superati: $passed · falliti: $failed"
+          # 3.4.1 · I tempi misurati dai test di velocità, visibili nel riepilogo
+          grep -oE "TEMPO: .*" test.log | sort -u | head -n 30 | while read -r l; do echo "::notice::$l"; done
           echo "## Test automatici" >> $GITHUB_STEP_SUMMARY
           echo "Superati: $passed · Falliti: $failed" >> $GITHUB_STEP_SUMMARY
           exit $status
