@@ -1,7 +1,7 @@
 import XCTest
 import AVFoundation
 
-final class ZDiagTests: XCTestCase, AVVideoCompositionValidationHandling {
+final class AAADiagTests: XCTestCase, AVVideoCompositionValidationHandling {
     var reasons: [String] = []
     func videoComposition(_ videoComposition: AVVideoComposition, shouldContinueValidatingAfterFindingInvalidValueForKey key: String) -> Bool { reasons.append("key \(key)"); return true }
     func videoComposition(_ videoComposition: AVVideoComposition, shouldContinueValidatingAfterFindingEmptyTimeRange timeRange: CMTimeRange) -> Bool { reasons.append("empty \(timeRange.start.seconds)-\(timeRange.end.seconds)"); return true }
