@@ -578,9 +578,11 @@ struct EmptyOrbit: View {
     let open: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let kinds: [Kind] = [.img, .pdf, .video, .audio, .doc, .sheet, .slide, .text]
+    @Environment(\.controlActiveState) private var active
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: reduceMotion)) { tl in
+        // 2.7.6 · più leggera: 24 fps e ferma quando OrbitLR non è in primo piano
+        TimelineView(.animation(minimumInterval: 1.0 / 24, paused: reduceMotion || active == .inactive)) { tl in
             let t = tl.date.timeIntervalSinceReferenceDate
             let angle = reduceMotion ? 0 : (t * 9).truncatingRemainder(dividingBy: 360)
             let breathe = reduceMotion ? 1 : 1 + 0.025 * sin(t * 1.6)

@@ -1,3 +1,8 @@
+Novità della 2.7.6 «Più leggera»:
+• Avvio più rapido: la schermata di caricamento dura circa un terzo in meno
+• Le animazioni delle pagine vuote si fermano quando OrbitLR non è in primo piano e usano meno fotogrammi: meno lavoro per il Mac e per la batteria
+• Dopo un aggiornamento il Dock mostra subito l'icona nuova (si ridisegna da solo una volta)
+
 Novità della 2.7.5 «Errori e scoperte»:
 • Errori con il pulsante che li risolve: «Libera spazio» se il disco è pieno, «Scegli un'altra cartella» se non si può scrivere, «Riprova» negli altri casi, anche nelle schede Video e Audio
 • Conversione: sotto l'area dove trascini i file vedi file creati, spazio risparmiato e azione preferita del mese

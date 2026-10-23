@@ -215,9 +215,11 @@ struct RadioIllustration: View {
     let symbol: String
     let color: Color
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.controlActiveState) private var active
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion)) { tl in
+        // 2.7.6 · 20 fotogrammi al secondo bastano per un movimento lento; ferma se OrbitLR non è in primo piano
+        TimelineView(.animation(minimumInterval: 1 / 20, paused: reduceMotion || active == .inactive)) { tl in
             let t = reduceMotion ? 0 : tl.date.timeIntervalSinceReferenceDate
             ZStack {
                 // Nota che galleggia
@@ -409,5 +411,40 @@ enum WindowClose {
             box.token = nil
             action()
         }
+    }
+}
+
+// MARK: - 2.7.6 · Icona del Dock aggiornata dopo un aggiornamento
+
+/// macOS tiene in memoria le icone delle app: dopo l'aggiornamento il Dock può mostrare ancora quella vecchia.
+/// Quando l'icona è cambiata rispetto all'ultima vista su questo Mac, si avvisa macOS e il Dock si ridisegna (una volta sola).
+enum DockIcon {
+    /// Da aumentare ogni volta che cambia l'icona dell'app (2 = quadrante della 2.7).
+    static let revision = 2
+    static let key = "dockIconRevision"
+
+    static func needsRefresh(stored: Int) -> Bool { stored < revision }
+
+    static func refreshIfNeeded() {
+        let d = UserDefaults.standard
+        guard needsRefresh(stored: d.integer(forKey: key)) else { return }
+        d.set(revision, forKey: key)
+        let app = Bundle.main.bundlePath
+        guard app.hasPrefix("/Applications/") else { return }        // solo l'app installata, mai una copia di prova
+        DispatchQueue.global(qos: .utility).async {
+            try? FileManager.default.setAttributes([.modificationDate: Date()], ofItemAtPath: app)
+            run(Updater.lsregister, ["-f", app])
+            NSWorkspace.shared.noteFileSystemChanged(app)
+            Thread.sleep(forTimeInterval: 1.5)                          // si lascia aprire la finestra, poi il Dock
+            run("/usr/bin/killall", ["Dock"])                            // il Dock si riapre da solo in un attimo
+        }
+    }
+
+    private static func run(_ tool: String, _ args: [String]) {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: tool)
+        p.arguments = args
+        try? p.run()
+        p.waitUntilExit()
     }
 }

@@ -67,3 +67,12 @@ final class NewsAndFixTests: XCTestCase {
         XCTAssertTrue(SizeEstimate.compressText(current: 5_000_000, targetMB: 25, files: 1).contains("sotto il limite"))
     }
 }
+
+/// 2.7.6 · Il Dock si ridisegna una volta sola per ogni icona nuova.
+final class DockIconTests: XCTestCase {
+    func testRefreshOnlyForNewIcon() {
+        XCTAssertTrue(DockIcon.needsRefresh(stored: 0), "mai fatto: sì")
+        XCTAssertTrue(DockIcon.needsRefresh(stored: DockIcon.revision - 1))
+        XCTAssertFalse(DockIcon.needsRefresh(stored: DockIcon.revision), "già fatto per questa icona: no")
+    }
+}

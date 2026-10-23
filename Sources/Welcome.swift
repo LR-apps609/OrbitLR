@@ -63,6 +63,7 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
         justUpdated = last != nil && last != current
         fromVersion = last ?? ""
         UserDefaults.standard.set(fromVersion, forKey: "newsFrom")
+        if justUpdated { DockIcon.refreshIfNeeded() }
         if Self.isFirstLaunch {
             show(mode: .first)
         } else if (Self.splashEnabled || justUpdated) && !skipNextSplash {
@@ -120,7 +121,7 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
             { DispatchQueue.main.sync { PresetStore.shared.registerHotkeys() } },
         ]
         // Avvio normale: nessuna attesa finta, solo il minimo perché la barra si veda riempire (circa un secondo)
-        let minStep = quick ? 0.12 : 0.6
+        let minStep = quick ? 0.08 : 0.6
         let started = Date()
         DispatchQueue.global(qos: .userInitiated).async {
             for (i, job) in work.enumerated() {
@@ -132,7 +133,7 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
                 DispatchQueue.main.async { withAnimation(.easeOut(duration: 0.25)) { self.doneSteps = i + 1 } }
             }
             let total = Date().timeIntervalSince(started)
-            let tail = quick ? max(0.15, 0.9 - total) : 0.7
+            let tail = quick ? max(0.1, 0.6 - total) : 0.7
             Thread.sleep(forTimeInterval: tail)
             DispatchQueue.main.async { self.afterLoading(quick: quick) }
         }
