@@ -1,0 +1,41 @@
+# 2.9.7 · Prepara il modello LaMa per «Rimuovi filigrana (IA)» e lo mette tra i file scaricabili.
+# Parte solo a mano o con una modifica a Tools/convert_lama.py sul ramo «modello-lama».
+name: Modello LaMa
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [modello-lama]
+    paths: [Tools/convert_lama.py, .github/workflows/model.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    runs-on: macos-15-intel
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Strumenti
+        run: pip install "torch==2.2.2" "coremltools==7.2" "numpy<2"
+      - name: Modello originale
+        run: curl -fL --retry 3 -o big-lama.pt https://github.com/Sanster/models/releases/download/add_big_lama/big-lama.pt
+      - name: Conversione e prova
+        run: python Tools/convert_lama.py 512
+      - name: Pacchetto
+        run: |
+          ditto -c -k --keepParent LaMa.mlpackage LaMa-512.mlpackage.zip
+          ls -la LaMa-512.mlpackage.zip
+          shasum -a 256 LaMa-512.mlpackage.zip | tee LaMa-512.sha256
+      - name: Tra i file scaricabili (versione «modelli», non è un aggiornamento dell'app)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view modelli-1 >/dev/null 2>&1 || \
+            gh release create modelli-1 --prerelease --title "Modelli di IA (non è un aggiornamento)" \
+              --notes "File scaricati da OrbitLR al primo uso di alcune funzioni. Non serve scaricarli a mano."
+          gh release upload modelli-1 LaMa-512.mlpackage.zip LaMa-512.sha256 --clobber
