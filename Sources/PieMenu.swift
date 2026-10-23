@@ -496,8 +496,29 @@ final class PiePanel: NSPanel {
     override var canBecomeKey: Bool { true }
 }
 
+/// 3.4.3 · Chi tiene la torta mostrata: la finestrella resta la stessa, cambia solo il contenuto.
+final class PieHost: ObservableObject {
+    @Published var model: PieModel? = nil
+}
+
+private struct PieHostView: View {
+    @ObservedObject var host: PieHost
+    let side: CGFloat
+    var body: some View {
+        if let m = host.model {
+            PieView(model: m, side: side).id(ObjectIdentifier(m))      // torta nuova = animazione d'apertura nuova
+        } else {
+            Color.clear.frame(width: side, height: side)
+        }
+    }
+}
+
 final class PieController: @unchecked Sendable {
     static let shared = PieController()
+    /// 3.4.3 · Una sola finestrella per la torta, creata una volta e riusata
+    private var reusable: PiePanel?
+    private let host = PieHost()
+    private static let side: CGFloat = 520
     private var panel: PiePanel?
     private var model: PieModel?
     private var monitors: [Any] = []
@@ -565,7 +586,8 @@ final class PieController: @unchecked Sendable {
         model.suggestedId = Catalog.suggested(for: kind, exts: exts)
         model.fileName = files.count == 1 ? files[0].lastPathComponent : "\(files.count) \(kind.name)"
         model.icon = NSWorkspace.shared.icon(forFile: files[0].path)
-        model.loadEstimates(files: files, kind: kind)
+        // 3.4.3 · I pesi previsti si calcolano a torta aperta: l'animazione d'apertura ha tutta la macchina per sé
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak model] in model?.loadEstimates(files: files, kind: kind) }
         model.lastId = UserDefaults.standard.string(forKey: "last_" + kind.rawValue)
         if let a = model.lastAction { model.subtitle = "Invio: " + a.short }
         else if let s = model.suggestedAction { model.subtitle = "Consigliato: " + s.short }
@@ -620,40 +642,55 @@ final class PieController: @unchecked Sendable {
         open(model, at: point)
     }
 
-    /// 3.2 · Prepara la torta all'avvio, fuori dallo schermo e invisibile: la prima vera apertura è subito pronta
-    /// (SwiftUI e la scheda grafica hanno già fatto il lavoro della prima volta).
-    func prewarm() {
-        guard panel == nil else { return }
-        let m = PieModel()
-        m.setup(actions: Catalog.pieActions(for: .img, exts: ["heic"], mergeable: 1, count: 1))
-        let side: CGFloat = 520
+    /// La finestrella della torta, trasparente e sopra tutto. Una sola, riusata (3.4.3).
+    private func sharedPanel() -> PiePanel {
+        if let p = reusable { return p }
+        let side = Self.side
         let p = PiePanel(contentRect: NSRect(x: -10_000, y: -10_000, width: side, height: side),
                          styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         p.isOpaque = false
         p.backgroundColor = .clear
+        p.hasShadow = false
+        p.level = .popUpMenu
+        p.isReleasedWhenClosed = false
+        p.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        p.contentView = NSHostingView(rootView: PieHostView(host: host, side: side))
+        reusable = p
+        return p
+    }
+
+    /// 3.2 · Prepara la torta all'avvio, fuori dallo schermo e invisibile: la prima vera apertura è subito pronta.
+    /// 3.4.3 · È la stessa finestrella che poi si usa davvero.
+    func prewarm() {
+        guard panel == nil else { return }
+        let m = PieModel()
+        m.setup(actions: Catalog.pieActions(for: .img, exts: ["heic"], mergeable: 1, count: 1))
+        let p = sharedPanel()
         p.alphaValue = 0
         p.ignoresMouseEvents = true
-        p.contentView = NSHostingView(rootView: PieView(model: m, side: side))
+        p.setFrameOrigin(NSPoint(x: -10_000, y: -10_000))
+        host.model = m
         p.orderFrontRegardless()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { p.orderOut(nil); p.contentView = nil }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
+            guard let self, self.panel == nil else { return }          // nel frattempo si è aperta una torta vera
+            p.orderOut(nil)
+            self.host.model = nil
+        }
     }
 
     private func open(_ model: PieModel, at point: NSPoint) {
-        let side: CGFloat = 520
+        let side = Self.side
         let screen = NSScreen.screens.first { $0.frame.contains(point) } ?? NSScreen.main
         var origin = NSPoint(x: point.x - side / 2, y: point.y - side / 2)
         if let vf = screen?.visibleFrame {
             origin.x = min(max(origin.x, vf.minX), vf.maxX - side)
             origin.y = min(max(origin.y, vf.minY), vf.maxY - side)
         }
-        let p = PiePanel(contentRect: NSRect(origin: origin, size: NSSize(width: side, height: side)),
-                         styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
-        p.isOpaque = false
-        p.backgroundColor = .clear
-        p.hasShadow = false
-        p.level = .popUpMenu
-        p.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        p.contentView = NSHostingView(rootView: PieView(model: model, side: side))
+        let p = sharedPanel()
+        p.setFrameOrigin(origin)
+        p.alphaValue = 1
+        p.ignoresMouseEvents = false
+        host.model = model
         panel = p
         self.model = model
         NSApp.activate()
@@ -668,17 +705,23 @@ final class PieController: @unchecked Sendable {
         }) { monitors.append(m) }
     }
 
-    /// Chiude il menu: gli spicchi rientrano al centro (0,14 s), poi la finestrella sparisce.
+    /// Chiude il menu: gli spicchi rientrano al centro (0,14 s), poi la finestrella sparisce (e resta pronta per la prossima).
     func close() {
         model?.estimateTask?.cancel()          // 2.7.1 · scelta fatta o torta chiusa: la stima non serve più
         for m in monitors { NSEvent.removeMonitor(m) }
         monitors = []
         guard let p = panel else { return }
         panel = nil
+        let closing = model
         model?.shown = false
         model = nil
         p.ignoresMouseEvents = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { p.orderOut(nil) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+            // Se nel frattempo si è aperta un'altra torta, la finestrella serve a quella: non si nasconde
+            guard let self, self.panel == nil else { return }
+            p.orderOut(nil)
+            if self.host.model === closing { self.host.model = nil }
+        }
     }
 }
 
