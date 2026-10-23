@@ -39,14 +39,21 @@ enum Tools {
         case "hidemark":
             // 2.9.4 · Nascondi filigrana, su una foto o un video
             guard let spec = HideMark.parse(job.param) else { throw NativeError("nessuna zona da coprire") }
+            // 2.9.7 · Rimozione con l'IA: il modello si scarica la prima volta
+            var inpainter: Inpainter? = nil
+            if spec.style == "ai" {
+                if !ModelStore.shared.isReady { await MainActor.run { job.status = "Scarico il modello di IA (solo la prima volta)…" } }
+                inpainter = Inpainter(model: try await ModelStore.shared.lama())
+                await MainActor.run { job.status = "Ricostruisco la zona con l'IA…" }
+            }
             if kind == .video {
                 let out = Destination.unique(dir, base: "\(base) (senza logo)", ext: "mp4")
-                try await HideMark.video(file, spec: spec, out: out, job: job, progress: progress)
+                try await HideMark.video(file, spec: spec, out: out, job: job, inpainter: inpainter, progress: progress)
                 return out
             }
             let e = Catalog.norm(file.pathExtension)
             let out = Destination.unique(dir, base: "\(base) (senza logo)", ext: ["jpg", "png", "heic", "tiff"].contains(e) ? e : "png")
-            try HideMark.image(file, spec: spec, out: out)
+            try HideMark.image(file, spec: spec, out: out, inpainter: inpainter)
             progress(1)
             return out
         case "removebg":

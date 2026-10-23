@@ -14,7 +14,7 @@ import CoreImage
 
 enum HideMark {
     struct Spec: Equatable {
-        var style = "blur"          // «blur» sfocatura, «pixel» a quadretti
+        var style = "blur"          // «blur» sfocatura, «pixel» a quadretti, «ai» rimozione con l'IA (2.9.7)
         var strength = 0.6          // 0…1
         var rects: [CGRect] = []
     }
@@ -28,7 +28,7 @@ enum HideMark {
         let parts = text.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
         guard parts.count == 3 else { return nil }
         var s = Spec()
-        s.style = parts[0] == "pixel" ? "pixel" : "blur"
+        s.style = ["pixel", "ai"].contains(parts[0]) ? parts[0] : "blur"
         s.strength = min(1, max(0, Double(parts[1]) ?? 0.6))
         s.rects = parts[2].split(separator: ";").compactMap { item in
             let v = item.split(separator: ",").compactMap { Double($0) }
@@ -72,21 +72,41 @@ enum HideMark {
 
     // MARK: Foto
 
-    static func image(_ file: URL, spec: Spec, out: URL) throws {
+    static func image(_ file: URL, spec: Spec, out: URL, inpainter: Inpainter? = nil) throws {
         let img = try Tools.orientedImage(file)
-        let cg = try Tools.cgImage(apply(spec, to: img))
+        let done: CIImage
+        if spec.style == "ai" {
+            guard let inpainter else { throw NativeError("il modello di IA non è pronto") }
+            let flat = img.transformed(by: CGAffineTransform(translationX: -img.extent.minX, y: -img.extent.minY))
+            done = try inpainter.apply(spec, to: flat)
+        } else {
+            done = apply(spec, to: img)
+        }
+        let cg = try Tools.cgImage(done)
         try Tools.write(cg, to: out, quality: 0.92)
     }
 
     // MARK: Video
 
-    static func video(_ file: URL, spec: Spec, out: URL, job: Job, progress: @escaping (Double) -> Void) async throws {
+    static func video(_ file: URL, spec: Spec, out: URL, job: Job, inpainter: Inpainter? = nil,
+                      progress: @escaping (Double) -> Void) async throws {
         let asset = AVURLAsset(url: file)
         let tracks = try await asset.loadTracks(withMediaType: .video)
         guard !tracks.isEmpty else { throw NativeError("questo file non ha video") }
+        if spec.style == "ai" && inpainter == nil { throw NativeError("il modello di IA non è pronto") }
+        inpainter?.smoothing = 0.35          // un po' del fotogramma prima: meno tremolio
         // Il fotogramma arriva già girato nel verso giusto: le zone valgono così come le hai disegnate
         let vc = AVMutableVideoComposition(asset: asset) { request in
-            request.finish(with: apply(spec, to: request.sourceImage), context: Media.ci)
+            if let inpainter, spec.style == "ai" {
+                do {
+                    let img = try inpainter.apply(spec, to: request.sourceImage, time: request.compositionTime.seconds)
+                    request.finish(with: img, context: Media.ci)
+                } catch {
+                    request.finish(with: error)
+                }
+            } else {
+                request.finish(with: apply(spec, to: request.sourceImage), context: Media.ci)
+            }
         }
         try await Media.export(asset, videoComposition: vc, audioMix: nil, out: out, job: job, progress: progress)
     }
@@ -115,6 +135,9 @@ struct HideMarkEditor: View {
     @State private var duration: Double = 0
     @State private var time: Double = 0
     @State private var selected: Int? = nil
+    @ObservedObject private var models = ModelStore.shared
+    @State private var aiBusy = false
+    @State private var aiTask: Task<Void, Never>? = nil
 
     private var isVideo: Bool { Catalog.kind(of: url) == .video }
     private let box = CGSize(width: 620, height: 400)
@@ -141,10 +164,15 @@ struct HideMarkEditor: View {
                 Picker("", selection: $spec.style) {
                     Text("Sfocatura").tag("blur")
                     Text("Pixel").tag("pixel")
+                    Text("Rimuovi (IA)").tag("ai")
                 }
-                .pickerStyle(.segmented).labelsHidden().frame(width: 180)
-                Text("Forza").font(.system(size: 12)).foregroundStyle(.secondary)
-                Slider(value: $spec.strength, in: 0...1).frame(width: 150)
+                .pickerStyle(.segmented).labelsHidden().frame(width: 290)
+                if spec.style == "ai" {
+                    aiStatus
+                } else {
+                    Text("Forza").font(.system(size: 12)).foregroundStyle(.secondary)
+                    Slider(value: $spec.strength, in: 0...1).frame(width: 130)
+                }
                 Spacer()
                 if !spec.rects.isEmpty {
                     Button("Togli tutte le zone") { spec.rects = []; selected = nil }
@@ -261,9 +289,50 @@ struct HideMarkEditor: View {
     /// Anteprima dal vivo: l'effetto vero, sulle zone già disegnate.
     private func render() {
         guard let s = source else { shown = nil; return }
+        aiTask?.cancel()
+        if spec.style == "ai" {
+            // L'IA ci mette un attimo: si mostra l'immagine com'è e si aggiorna quando ha finito
+            shown = NSImage(cgImage: s, size: NSSize(width: s.width, height: s.height))
+            guard !spec.rects.isEmpty, models.isReady else { return }
+            let current = spec
+            aiBusy = true
+            aiTask = Task.detached(priority: .userInitiated) {
+                try? await Task.sleep(nanoseconds: 250_000_000)
+                guard !Task.isCancelled, let m = try? await ModelStore.shared.lama() else { return }
+                let out = try? Inpainter(model: m).apply(current, to: CIImage(cgImage: s))
+                let cg = out.flatMap { Media.ci.createCGImage($0, from: $0.extent) }
+                await MainActor.run {
+                    guard !Task.isCancelled else { return }
+                    aiBusy = false
+                    if let cg { shown = NSImage(cgImage: cg, size: NSSize(width: cg.width, height: cg.height)) }
+                }
+            }
+            return
+        }
+        aiBusy = false
         let out = HideMark.apply(spec, to: CIImage(cgImage: s))
         if let cg = Media.ci.createCGImage(out, from: out.extent) {
             shown = NSImage(cgImage: cg, size: NSSize(width: cg.width, height: cg.height))
+        }
+    }
+
+    /// 2.9.7 · Stato del modello di IA: da scaricare, in scaricamento, al lavoro.
+    @ViewBuilder private var aiStatus: some View {
+        if let p = models.progress {
+            ProgressView(value: p).frame(width: 110)
+            Text("Scarico il modello… \(Int(p * 100))%").font(.system(size: 11)).foregroundStyle(.secondary)
+        } else if !models.isReady {
+            Button("Scarica il modello (200 MB)") {
+                Task { _ = try? await ModelStore.shared.lama(); await MainActor.run { render() } }
+            }
+            .controlSize(.small)
+            .help("Solo la prima volta: poi funziona anche senza internet")
+            if let e = models.error { Text(e).font(.system(size: 10.5)).foregroundStyle(.red.opacity(0.8)).lineLimit(1) }
+        } else if aiBusy {
+            ProgressView().controlSize(.small)
+            Text("Ricostruisco…").font(.system(size: 11)).foregroundStyle(.secondary)
+        } else {
+            Label("Pronto", systemImage: "checkmark.circle.fill").font(.system(size: 11)).foregroundStyle(Theme.green)
         }
     }
 }

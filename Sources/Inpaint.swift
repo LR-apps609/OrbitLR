@@ -1,0 +1,200 @@
+import Foundation
+import AppKit
+import CoreML
+import CoreImage
+
+// ════════════════════════════════════════════════════════════════════
+//  2.9.7 · «Rimuovi (IA)»: LaMa (Apache-2.0, Samsung AI Center) ricostruisce
+//  la zona coperta dal logo con quello che c'è intorno. Tutto sul Mac.
+//  Il modello (circa 200 MB) si scarica la prima volta dalle «Release» di OrbitLR
+//  (versione «modelli-1», non è un aggiornamento dell'app) e resta nella cartella di supporto.
+// ════════════════════════════════════════════════════════════════════
+
+final class ModelStore: ObservableObject, @unchecked Sendable {
+    static let shared = ModelStore()
+
+    static let side = 512
+    static let name = "LaMa-512"
+    static let base = URL(string: "https://github.com/LR-apps609/OrbitLR/releases/download/modelli-1/")!
+    static var folder: URL { Paths.support.appendingPathComponent("Modelli", isDirectory: true) }
+    static var compiled: URL { folder.appendingPathComponent(name + ".mlmodelc", isDirectory: true) }
+
+    /// 0…1 durante lo scaricamento, nil se non si sta scaricando.
+    @Published private(set) var progress: Double? = nil
+    @Published private(set) var error: String? = nil
+    var isReady: Bool { FileManager.default.fileExists(atPath: Self.compiled.path) }
+
+    private var model: MLModel?
+    private let lock = NSLock()
+
+    /// Il modello pronto: lo scarica e lo prepara se serve.
+    func lama() async throws -> MLModel {
+        lock.lock(); let cached = model; lock.unlock()
+        if let m = cached { return m }
+        if !isReady { try await download() }
+        let cfg = MLModelConfiguration()
+        cfg.computeUnits = .all
+        let m = try MLModel(contentsOf: Self.compiled, configuration: cfg)
+        lock.lock(); model = m; lock.unlock()
+        return m
+    }
+
+    private func setProgress(_ v: Double?) { DispatchQueue.main.async { self.progress = v } }
+
+    private func download() async throws {
+        setProgress(0)
+        DispatchQueue.main.async { self.error = nil }
+        defer { setProgress(nil) }
+        let fm = FileManager.default
+        try fm.createDirectory(at: Self.folder, withIntermediateDirectories: true)
+        do {
+            // Il codice di controllo, per essere sicuri che il file arrivi intero
+            let (shaData, shaResp) = try await URLSession.shared.data(from: Self.base.appendingPathComponent(Self.name + ".sha256"))
+            guard (shaResp as? HTTPURLResponse)?.statusCode == 200,
+                  let expected = String(decoding: shaData, as: UTF8.self).split(separator: " ").first.map(String.init) else {
+                throw NativeError("il modello di IA non è ancora disponibile")
+            }
+            let zipURL = Self.base.appendingPathComponent(Self.name + ".mlpackage.zip")
+            let (tmp, resp) = try await URLSession.shared.download(from: zipURL, delegate: ProgressDelegate { [weak self] p in self?.setProgress(p) })
+            guard (resp as? HTTPURLResponse)?.statusCode == 200 else { throw NativeError("il modello di IA non è ancora disponibile") }
+            guard Self.sha256(of: tmp) == expected else { throw NativeError("il modello scaricato è rovinato, riprova") }
+            let work = Self.folder.appendingPathComponent("scarico-\(UUID().uuidString)", isDirectory: true)
+            try fm.createDirectory(at: work, withIntermediateDirectories: true)
+            defer { try? fm.removeItem(at: work); try? fm.removeItem(at: tmp) }
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
+            p.arguments = ["-x", "-k", tmp.path, work.path]
+            try p.run(); p.waitUntilExit()
+            guard p.terminationStatus == 0,
+                  let pkg = try fm.contentsOfDirectory(at: work, includingPropertiesForKeys: nil).first(where: { $0.pathExtension == "mlpackage" }) else {
+                throw NativeError("non riesco ad aprire il modello scaricato")
+            }
+            let built = try await MLModel.compileModel(at: pkg)
+            try? fm.removeItem(at: Self.compiled)
+            try fm.moveItem(at: built, to: Self.compiled)
+        } catch {
+            let msg = (error as? NativeError)?.localizedDescription ?? "non riesco a scaricare il modello di IA (serve internet la prima volta)"
+            DispatchQueue.main.async { self.error = msg }
+            throw NativeError(msg)
+        }
+    }
+
+    static func sha256(of url: URL) -> String? {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/usr/bin/shasum")
+        p.arguments = ["-a", "256", url.path]
+        let pipe = Pipe()
+        p.standardOutput = pipe
+        guard (try? p.run()) != nil else { return nil }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        p.waitUntilExit()
+        return String(decoding: data, as: UTF8.self).split(separator: " ").first.map(String.init)
+    }
+
+    private final class ProgressDelegate: NSObject, URLSessionTaskDelegate {
+        let onProgress: (Double) -> Void
+        var obs: NSKeyValueObservation?
+        init(_ f: @escaping (Double) -> Void) { onProgress = f }
+        func urlSession(_ session: URLSession, didCreateTask task: URLSessionTask) {
+            obs = task.progress.observe(\.fractionCompleted) { [weak self] pr, _ in self?.onProgress(pr.fractionCompleted) }
+        }
+    }
+}
+
+/// Ricostruisce le zone di un'immagine con LaMa, una zona alla volta, lavorando solo sul riquadro intorno.
+final class Inpainter: @unchecked Sendable {
+    let model: MLModel
+    private let ctx = Media.ci
+    private let lock = NSLock()
+    /// Video: il risultato del fotogramma prima, per ammorbidire il tremolio (uno per zona).
+    private var previous: [Int: CIImage] = [:]
+    private var lastTime = -1.0
+    var smoothing = 0.0
+
+    init(model: MLModel) { self.model = model }
+
+    /// Il riquadro su cui lavora il modello: un quadrato intorno alla zona, con abbastanza contesto.
+    static func window(for r: CGRect, in ext: CGRect) -> CGRect {
+        let side = min(max(max(r.width, r.height) * 2.6, 96), max(ext.width, ext.height))
+        return CGRect(x: r.midX - side / 2, y: r.midY - side / 2, width: side, height: side).integral
+    }
+
+    func apply(_ spec: HideMark.Spec, to img: CIImage, time: Double? = nil) throws -> CIImage {
+        lock.lock(); defer { lock.unlock() }
+        if let t = time { if t < lastTime { previous = [:] }; lastTime = t }
+        let ext = img.extent
+        var out = img
+        for (i, r) in spec.rects.enumerated() {
+            let px = HideMark.pixelRect(r, in: ext)
+            guard px.width >= 2, px.height >= 2 else { continue }
+            var filled = try fill(out, zone: px, ext: ext)
+            if smoothing > 0, let prev = previous[i] {
+                filled = prev.applyingFilter("CIDissolveTransition", parameters: ["inputTargetImage": filled, "inputTime": 1 - smoothing])
+                    .cropped(to: filled.extent)
+            }
+            if time != nil { previous[i] = filled }
+            out = filled.composited(over: out).cropped(to: ext)
+        }
+        return out
+    }
+
+    /// La zona ricostruita (solo la zona allargata di poco, con i bordi sfumati), pronta da sovrapporre.
+    private func fill(_ img: CIImage, zone: CGRect, ext: CGRect) throws -> CIImage {
+        let S = CGFloat(ModelStore.side)
+        let win = Self.window(for: zone, in: ext)
+        let k = S / win.width
+        // Il riquadro a 512×512: fuori dall'immagine si ripetono i bordi
+        let crop = img.clampedToExtent().cropped(to: win)
+            .transformed(by: CGAffineTransform(translationX: -win.minX, y: -win.minY).concatenating(CGAffineTransform(scaleX: k, y: k)))
+            .cropped(to: CGRect(x: 0, y: 0, width: S, height: S))
+        let grow: CGFloat = 4
+        let maskRect = CGRect(x: (zone.minX - win.minX) * k - grow, y: (zone.minY - win.minY) * k - grow,
+                              width: zone.width * k + grow * 2, height: zone.height * k + grow * 2)
+        let side = ModelStore.side
+        var rgba = [Float](repeating: 0, count: side * side * 4)
+        ctx.render(crop, toBitmap: &rgba, rowBytes: side * 16, bounds: CGRect(x: 0, y: 0, width: S, height: S),
+                   format: .RGBAf, colorSpace: CGColorSpace(name: CGColorSpace.sRGB))
+        let image = try MLMultiArray(shape: [1, 3, NSNumber(value: side), NSNumber(value: side)], dataType: .float32)
+        let mask = try MLMultiArray(shape: [1, 1, NSNumber(value: side), NSNumber(value: side)], dataType: .float32)
+        let ip = image.dataPointer.bindMemory(to: Float.self, capacity: 3 * side * side)
+        let mp = mask.dataPointer.bindMemory(to: Float.self, capacity: side * side)
+        let plane = side * side
+        for y in 0..<side {
+            // La bitmap è dall'alto in basso; Core Image ha l'origine in basso
+            let cy = CGFloat(side - 1 - y) + 0.5
+            for x in 0..<side {
+                let s = (y * side + x) * 4, d = y * side + x
+                let inside = maskRect.contains(CGPoint(x: CGFloat(x) + 0.5, y: cy))
+                mp[d] = inside ? 1 : 0
+                // Dentro la zona il modello non deve vedere il logo
+                ip[d] = inside ? 0 : min(1, max(0, rgba[s]))
+                ip[plane + d] = inside ? 0 : min(1, max(0, rgba[s + 1]))
+                ip[2 * plane + d] = inside ? 0 : min(1, max(0, rgba[s + 2]))
+            }
+        }
+        let input = try MLDictionaryFeatureProvider(dictionary: ["image": image, "mask": mask])
+        guard let res = try model.prediction(from: input).featureValue(for: "output")?.multiArrayValue else {
+            throw NativeError("il modello di IA non ha risposto")
+        }
+        let rp = res.dataPointer.bindMemory(to: Float.self, capacity: 3 * plane)
+        var bytes = [UInt8](repeating: 255, count: plane * 4)
+        for i in 0..<plane {
+            bytes[i * 4] = UInt8(min(255, max(0, rp[i] * 255 + 0.5)))
+            bytes[i * 4 + 1] = UInt8(min(255, max(0, rp[plane + i] * 255 + 0.5)))
+            bytes[i * 4 + 2] = UInt8(min(255, max(0, rp[2 * plane + i] * 255 + 0.5)))
+        }
+        let restored = CIImage(bitmapData: Data(bytes), bytesPerRow: side * 4, size: CGSize(width: S, height: S),
+                               format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB))
+        // Torna alla misura vera, al suo posto, e si tiene solo la zona (bordi morbidi di qualche pixel)
+        let back = restored.transformed(by: CGAffineTransform(scaleX: 1 / k, y: 1 / k)
+            .concatenating(CGAffineTransform(translationX: win.minX, y: win.minY)))
+        let soft = max(1.5, 3 / k)
+        let keep = zone.insetBy(dx: -soft * 1.5, dy: -soft * 1.5).intersection(ext)
+        let maskImg = CIImage(color: .white).cropped(to: keep)
+            .applyingFilter("CIGaussianBlur", parameters: ["inputRadius": soft])
+            .cropped(to: keep.insetBy(dx: -soft * 2, dy: -soft * 2))
+        let clear = CIImage(color: .clear).cropped(to: ext)
+        return back.applyingFilter("CIBlendWithMask", parameters: ["inputBackgroundImage": clear, "inputMaskImage": maskImg.composited(over: CIImage(color: .black).cropped(to: ext))])
+            .cropped(to: keep.insetBy(dx: -soft * 2, dy: -soft * 2).intersection(ext))
+    }
+}
