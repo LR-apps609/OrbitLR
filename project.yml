@@ -74,8 +74,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: it.ledion.OrbitLR
         PRODUCT_NAME: OrbitLR
-        MARKETING_VERSION: "2.9.11"
-        CURRENT_PROJECT_VERSION: "55"
+        MARKETING_VERSION: "3.0"
+        CURRENT_PROJECT_VERSION: "56"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # Colore dei controlli di sistema (selezione nella barra laterale, interruttori…): salvia, non il blu di macOS
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
@@ -118,8 +118,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: it.ledion.OrbitLR.Share
         PRODUCT_NAME: OrbitLRShare
-        MARKETING_VERSION: "2.9.11"
-        CURRENT_PROJECT_VERSION: "55"
+        MARKETING_VERSION: "3.0"
+        CURRENT_PROJECT_VERSION: "56"
         GENERATE_INFOPLIST_FILE: NO
         SWIFT_VERSION: "5.0"
         SWIFT_STRICT_CONCURRENCY: minimal
