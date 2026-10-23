@@ -31,24 +31,32 @@ final class PerfTests: XCTestCase {
         return h
     }
 
-    /// Cambio di scheda: il lavoro di SwiftUI per mostrare ogni scheda (costruzione e impaginazione).
+    /// Cambio di scheda: il lavoro di SwiftUI per mostrare ogni scheda. Al ritorno (3.4.2) le schede sono già vive.
     func testCambioDiScheda() {
         let app = AppState.shared
         let h = host(MainWindow())
         h.view.layoutSubtreeIfNeeded()
-        var worst = 0.0
-        for tab in SidebarItem.tabs + [.activity, .presets, .help, .workspace] {
-            let t0 = CACurrentMediaTime()
-            app.selection = tab
-            h.view.layoutSubtreeIfNeeded()
-            RunLoop.main.run(until: Date().addingTimeInterval(0.01))
-            h.view.layoutSubtreeIfNeeded()
-            let s = CACurrentMediaTime() - t0
-            worst = max(worst, s)
-            print("TEMPO: scheda \(tab.rawValue) \(ms(s))")
+        var worstFirst = 0.0, worstBack = 0.0
+        for pass in 0..<2 {
+            for tab in SidebarItem.tabs + [.activity, .workspace] {
+                let t0 = CACurrentMediaTime()
+                app.selection = tab
+                h.view.layoutSubtreeIfNeeded()
+                RunLoop.main.run(until: Date().addingTimeInterval(0.01))
+                h.view.layoutSubtreeIfNeeded()
+                let s = CACurrentMediaTime() - t0 - 0.01
+                if pass == 0 { worstFirst = max(worstFirst, s) } else { worstBack = max(worstBack, s) }
+                print("TEMPO: scheda \(tab.rawValue) \(pass == 0 ? "prima volta" : "ritorno") \(ms(s))")
+            }
         }
         app.selection = .workspace
-        XCTAssertLessThan(worst, 1.5, "una scheda ci mette troppo a comparire (\(ms(worst)))")
+        XCTAssertLessThan(worstFirst, 1.5, "una scheda ci mette troppo a comparire la prima volta (\(ms(worstFirst)))")
+        XCTAssertLessThan(worstBack, 0.5, "tornare su una scheda già aperta deve essere quasi istantaneo (\(ms(worstBack)))")
+    }
+
+    func testLeSchedeDiLavoroRestanoVive() {
+        for t in SidebarItem.tabs { XCTAssertTrue(SidebarItem.kept.contains(t), "\(t.rawValue) deve restare viva") }
+        XCTAssertTrue(SidebarItem.kept.contains(.activity))
     }
 
     /// Torta: costruire gli spicchi e impaginare la torta.

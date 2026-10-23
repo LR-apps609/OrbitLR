@@ -231,7 +231,6 @@ struct KindTabView: View {
         .sheet(item: $m.pending) { p in
             ParamView(kind: p.kind, action: p.action, files: p.files) { v in m.confirm(p, value: v) }
         }
-        .navigationTitle(style.title)
     }
 
     private var header: some View {

@@ -478,6 +478,7 @@ struct AudioTabView: View {
             return true
         }
         .onAppear { applyTrimRules(); m.currentTool = tool.rawValue; m.refreshProjects() }
+        .onChange(of: AppState.shared.selection) { _, now in if now == .audio { m.refreshProjects() } }   // 3.4.2
         .onChange(of: m.restoredTool) { _, v in
             // 2.8.5 · progetto ripreso: torna lo strumento che usavi
             if let v, let t = AudioTool(rawValue: v) { tool = t }
@@ -490,7 +491,6 @@ struct AudioTabView: View {
             if t != .tts { preview.stop() }
         }
         .onDisappear { preview.stop(); m.trim?.pause() }
-        .navigationTitle("Audio")
     }
 
     // MARK: Intestazione

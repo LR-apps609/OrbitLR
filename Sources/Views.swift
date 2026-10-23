@@ -14,6 +14,8 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     static let tabs: [SidebarItem] = [.workspace, .files, .images, .video, .audio]
     /// 3.0 · Coda e Cronologia sono una pagina sola: «Attività».
     static let activities: [SidebarItem] = [.activity]
+    /// 3.4.2 · Le schede che restano vive (le più usate); le altre si ricostruiscono quando servono.
+    static let kept: [SidebarItem] = tabs + [.activity]
     /// Per chi vuole di più: chiuso di base, si apre con un clic.
     static let advanced: [SidebarItem] = [.automation, .presets, .components]
     var symbol: String {
@@ -51,6 +53,37 @@ struct MainWindow: View {
     @EnvironmentObject var app: AppState
     @AppStorage("palette") private var palette = "sage"
     @AppStorage("sidebarAdvanced") private var advancedOpen = false
+    /// 3.4.2 · Le schede già aperte almeno una volta (restano vive)
+    @State private var visited: Set<SidebarItem> = []
+
+    private var current: SidebarItem { app.selection ?? .workspace }
+
+    @ViewBuilder private func page(_ item: SidebarItem) -> some View {
+        switch item {
+        case .workspace: WorkspaceView(ws: app.workspace)
+        case .files: KindTabView(m: app.filesTab, style: .files)
+        case .images: KindTabView(m: app.imagesTab, style: .images)
+        case .video: VideoTabView(s: VideoProjectStore.shared)
+        case .audio: AudioTabView(m: app.audioTab)
+        case .activity: ActivityView()
+        case .presets: PresetsView()
+        case .automation: AutomationView()
+        case .components: ComponentsView()
+        case .help: HelpView()
+        }
+    }
+
+    /// Lasciando una scheda viva: si ferma quello che suona o si muove (prima lo faceva la scomparsa della scheda).
+    static func left(_ item: SidebarItem?) {
+        switch item {
+        case .video?:
+            VideoProjectStore.shared.pause()
+            VideoProjectStore.shared.typing = false
+        case .audio?:
+            AppState.shared.audioTab.trim?.pause()
+        default: break
+        }
+    }
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
@@ -130,29 +163,35 @@ struct MainWindow: View {
             .background(LinearGradient(colors: [Theme.sageLight, Theme.sage.opacity(0.85)], startPoint: .top, endPoint: .bottom))
             .navigationSplitViewColumnWidth(min: 210, ideal: 230)
         } detail: {
-            // Passaggio morbido tra le pagine (dissolvenza breve)
+            // 3.4.2 · Schede istantanee: le schede di lavoro restano vive dopo la prima apertura.
+            // Tornarci non le ricostruisce: compare subito com'era (file, selezione, scorrimento).
+            // Le altre pagine (Aiuto, Scorciatoie…) si costruiscono quando servono, come prima.
             ZStack {
-                Group {
-                    switch app.selection ?? .workspace {
-                    case .workspace: WorkspaceView(ws: app.workspace)
-                    case .files: KindTabView(m: app.filesTab, style: .files)
-                    case .images: KindTabView(m: app.imagesTab, style: .images)
-                    case .video: VideoTabView(s: VideoProjectStore.shared)
-                    case .audio: AudioTabView(m: app.audioTab)
-                    case .activity: ActivityView()
-                    case .presets: PresetsView()
-                    case .automation: AutomationView()
-                    case .components: ComponentsView()
-                    case .help: HelpView()
-                    }
+                ForEach(SidebarItem.kept.filter { visited.contains($0) || $0 == current }) { item in
+                    let on = current == item
+                    page(item)
+                        .opacity(on ? 1 : 0)
+                        .offset(y: on || Motion.reduced ? 0 : 4)
+                        .allowsHitTesting(on)
+                        .disabled(!on)                 // niente scorciatoie da tastiera dalle schede nascoste
+                        .accessibilityHidden(!on)
+                        .zIndex(on ? 1 : 0)
                 }
-                .id(app.selection ?? .workspace)
-                .onAppear { DispatchQueue.main.async { Perf.end(.tabSwitch) } }       // 3.4.1 · misura del cambio scheda
-                // 2.7: la pagina nuova entra con una molla leggera (sale un poco e si posa), come una manopola che scatta
-                // 2.7.2 · più rapida: la pagina vecchia sparisce subito, la nuova entra in 0,2 s (niente zoom, che rallentava)
-                .transition(.asymmetric(insertion: Motion.reduced ? .opacity : .opacity.combined(with: .offset(y: 6)), removal: .identity))
+                if !SidebarItem.kept.contains(current) {
+                    page(current)
+                        .id(current)
+                        .transition(.asymmetric(insertion: Motion.reduced ? .opacity : .opacity.combined(with: .offset(y: 4)), removal: .identity))
+                        .zIndex(2)
+                }
             }
-            .animation(Motion.spring(0.2, 0.9), value: app.selection)
+            .animation(Motion.quick, value: app.selection)
+            .navigationTitle(current.rawValue)
+            .onAppear { visited.insert(current) }
+            .onChange(of: app.selection) { old, new in
+                if let n = new { visited.insert(n) }
+                Self.left(old)
+                DispatchQueue.main.async { Perf.end(.tabSwitch) }       // 3.4.1 · misura del cambio scheda
+            }
             // 2.8.6 · Nessuna pagina può far crescere la finestra oltre lo schermo: quello che non ci sta resta sotto
             .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
             .clipped()
@@ -287,7 +326,6 @@ struct ActivityView: View {
             .padding(28)
         }
         .quickLookPreview($preview, in: store.jobs.flatMap { $0.outputs })
-        .navigationTitle("Attività")
     }
 
     private var subtitle: String {

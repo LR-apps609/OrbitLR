@@ -237,7 +237,6 @@ struct WorkspaceView: View {
             }
         }
         .quickLookPreview($ws.preview, in: ws.allFiles)
-        .navigationTitle("Conversione")
     }
 
     // Nessun file: grande area cliccabile, e sotto (2.7.5) quanto hai fatto questo mese
@@ -330,6 +329,8 @@ struct WorkspaceView: View {
         // Il risultato arriva dal basso con un piccolo rimbalzo
         .animation(Motion.spring(0.42, 0.72), value: ws.lastJob?.id)
         .background(KeyCatcher { e in
+            // 3.4.2 · La scheda resta viva anche quando non si vede: i tasti valgono solo se è davanti
+            guard AppState.shared.selection == nil || AppState.shared.selection == .workspace else { return false }
             // Spazio = anteprima (ma non mentre si sta cercando un'azione)
             if e.keyCode == 49 && (ws.single?.pie.query.isEmpty ?? true) { ws.togglePreview(); return true }
             guard let g = ws.single else { return false }

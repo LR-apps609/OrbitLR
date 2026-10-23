@@ -752,7 +752,6 @@ struct VideoEditorView: View {
             return true
         }
         .onDisappear { s.pause() }
-        .navigationTitle("Video")
         .confirmationDialog("Ci sono modifiche non applicate", isPresented: $askClose) {
             Button("Applica e chiudi") { s.applyChanges(); s.closeProject(undo) }
             Button("Scarta e chiudi", role: .destructive) { s.discardChanges(undo); s.closeProject(undo) }

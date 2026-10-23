@@ -225,7 +225,7 @@ struct VideoProjectsView: View {
             return true
         }
         .onAppear { s.refreshLibrary() }
-        .navigationTitle("Video")
+        .onChange(of: AppState.shared.selection) { _, now in if now == .video { s.refreshLibrary() } }   // 3.4.2 · la scheda resta viva
     }
 
     private func rename(_ e: VPEntry) {
