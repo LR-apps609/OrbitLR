@@ -644,7 +644,11 @@ struct VideoEditorView: View {
                               targeted: targeted) { choose(audio: false) }
             } else {
                 EditorPreview(s: s, clock: s.clock)
-                ProjectTimeline(s: s, clock: s.clock, tint: tint) { tool = .music }
+                ProjectTimeline(s: s, clock: s.clock, tint: tint) {
+                    // 2.9.1 · «Aggiungi musica» apriva solo il passo: ora, se la musica non c'è, si sceglie subito il brano
+                    tool = .music
+                    if s.project.music == nil { choose(audio: true) }
+                }
                     .frame(height: 118)
                 toolRow
                 strip
@@ -947,7 +951,7 @@ struct VideoEditorView: View {
         let p = NSOpenPanel()
         p.allowsMultipleSelection = !audio
         p.canChooseDirectories = false
-        p.allowedContentTypes = audio ? [.audio] : [.movie]
+        p.allowedContentTypes = audio ? [.audio, .movie] : [.movie]
         p.prompt = audio ? "Scegli" : "Aggiungi"
         guard p.runModal() == .OK else { return }
         if audio, let u = p.url {

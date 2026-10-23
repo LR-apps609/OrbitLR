@@ -1,3 +1,7 @@
+Novità della 2.9.1:
+• Video: «+ Aggiungi musica» sotto le clip ora apre subito la scelta del brano (prima apriva solo il passo «Audio e musica»)
+• Video: come musica puoi scegliere anche un video: si usa il suo audio
+
 Novità della 2.9 «Filtri»:
 • Video: nuovo passo «Filtri» con 12 filtri pronti (Vivido, Caldo, Freddo, Bianco e nero, Seppia, Vintage, Pellicola, Notte, Sogno, Drammatico, Pastello, Radio), con la miniatura della tua clip
 • Forza del filtro e sei regolazioni: luminosità, contrasto, saturazione, calore, nitidezza, vignetta
