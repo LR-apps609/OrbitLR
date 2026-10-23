@@ -26,8 +26,23 @@ struct VPClip: Codable, Equatable, Identifiable, Sendable {
     var isMuted: Bool { muted ?? false }
     /// 2.9 · Filtro e regolazioni solo di questa clip (nil = quelli di tutto il progetto).
     var look: VPLook? = nil
+    /// 2.9.2 · Transizione tra la clip precedente e questa (nil = taglio netto).
+    var transition: VPTransition? = nil
     var url: URL { URL(fileURLWithPath: path) }
     var length: Double { max(0, outPoint - inPoint) }
+}
+
+/// 2.9.2 · Passaggio tra due clip.
+struct VPTransition: Codable, Equatable, Sendable {
+    /// «fade» dissolvenza, «black» al nero, «white» al bianco, «slide» scorrimento, «zoom», «blur» sfocatura
+    var kind = "fade"
+    var duration = 0.6
+
+    static let kinds: [(id: String, name: String, symbol: String)] = [
+        ("fade", "Dissolvenza", "circle.lefthalf.filled"), ("black", "Al nero", "moon.fill"), ("white", "Al bianco", "sun.max.fill"),
+        ("slide", "Scorrimento", "arrow.left.square"), ("zoom", "Zoom", "plus.magnifyingglass"), ("blur", "Sfocatura", "drop.fill"),
+    ]
+    static func name(_ id: String) -> String { kinds.first { $0.id == id }?.name ?? "Dissolvenza" }
 }
 
 struct VPMusic: Codable, Equatable, Sendable {
@@ -205,6 +220,13 @@ enum VideoProjectBuilder {
         let end: Double
         let transform: CGAffineTransform
         let look: VPLook?
+        var trackID: CMPersistentTrackID = kCMPersistentTrackID_Invalid
+    }
+
+    /// 2.9.2 · Durata vera di una transizione: mai più del 40% di ciascuna delle due clip, mai più di 2 secondi.
+    static func transitionDuration(_ tr: VPTransition?, before a: Double, after b: Double) -> Double {
+        guard let tr else { return 0 }
+        return max(0, min(tr.duration, 2, 0.4 * a, 0.4 * b))
     }
 
     static func build(_ p: VideoProject, infos: [String: VPMediaInfo], speech: [String: [ClosedRange<Double>]],
@@ -224,6 +246,11 @@ enum VideoProjectBuilder {
         let canvas = CGSize(width: CGFloat(Media.even(Double(base.width * k))), height: CGFloat(Media.even(Double(base.height * k))))
 
         let layer = AVMutableVideoCompositionLayerInstruction(assetTrack: vT)
+        // 2.9.2 · Motore a fotogrammi: due tracce video che si alternano, così due clip possono sovrapporsi in una transizione
+        let vT2: AVMutableCompositionTrack? = engine == .frames
+            ? comp.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) : nil
+        struct Item { let clip: VPClip; let v: AVAssetTrack; let s: Double; let e: Double; let info: VPMediaInfo; let start: CMTime }
+        var items: [Item] = []
         var cursor = CMTime.zero
         var placements: [Placement] = []
         for c in p.clips {
@@ -234,7 +261,8 @@ enum VideoProjectBuilder {
             let e = min(max(s + 0.05, c.outPoint), info.videoDuration)
             guard e - s >= 0.05 else { continue }
             let r = CMTimeRange(start: cm(s), end: cm(e))
-            try vT.insertTimeRange(r, of: v, at: cursor)
+            if engine == .layers { try vT.insertTimeRange(r, of: v, at: cursor) }
+            items.append(Item(clip: c, v: v, s: s, e: e, info: info, start: cursor))
             if info.hasAudio, !c.isMuted, let au = try await a.loadTracks(withMediaType: .audio).first {
                 try? aT.insertTimeRange(r, of: au, at: cursor)
             }
@@ -251,6 +279,63 @@ enum VideoProjectBuilder {
         guard cursor.seconds > 0.05 else { throw NativeError("il montaggio è vuoto") }
         let total = cursor.seconds
 
+        // 2.9.2 · Le clip sulle due tracce, con il pezzo in più che serve alle transizioni
+        var instructions: [VPCompositionInstruction] = []
+        if engine == .frames, let vT2 {
+            let tracks = [vT, vT2]
+            let lens = items.map { $0.e - $0.s }
+            var half = [Double](repeating: 0, count: items.count)       // metà della transizione prima della clip i
+            for i in items.indices.dropFirst() {
+                let d = transitionDuration(items[i].clip.transition, before: lens[i - 1], after: lens[i])
+                half[i] = d >= 0.05 ? d / 2 : 0
+            }
+            for (i, it) in items.enumerated() {
+                let tr = tracks[i % 2]
+                let start = it.start.seconds
+                let frame = 1 / max(1, it.info.fps)
+                // prima: il pezzo che precede l'inizio (se c'è), altrimenti il primo fotogramma fermo
+                if half[i] > 0 {
+                    let at = cm(start - half[i])
+                    if it.s - half[i] >= 0 {
+                        try tr.insertTimeRange(CMTimeRange(start: cm(it.s - half[i]), duration: cm(half[i])), of: it.v, at: at)
+                    } else {
+                        try tr.insertTimeRange(CMTimeRange(start: cm(it.s), duration: cm(frame)), of: it.v, at: at)
+                        tr.scaleTimeRange(CMTimeRange(start: at, duration: cm(frame)), toDuration: cm(half[i]))
+                    }
+                }
+                try tr.insertTimeRange(CMTimeRange(start: cm(it.s), end: cm(it.e)), of: it.v, at: it.start)
+                // dopo: il pezzo che segue la fine (se c'è), altrimenti l'ultimo fotogramma fermo
+                let next = i + 1 < items.count ? half[i + 1] : 0
+                if next > 0 {
+                    let at = cm(start + lens[i])
+                    if it.e + next <= it.info.videoDuration - 0.02 {
+                        try tr.insertTimeRange(CMTimeRange(start: cm(it.e), duration: cm(next)), of: it.v, at: at)
+                    } else {
+                        try tr.insertTimeRange(CMTimeRange(start: cm(max(it.s, it.e - frame)), duration: cm(frame)), of: it.v, at: at)
+                        tr.scaleTimeRange(CMTimeRange(start: at, duration: cm(frame)), toDuration: cm(next))
+                    }
+                }
+                placements[i].trackID = tr.trackID
+            }
+            // Le istruzioni: un tratto per ogni clip da sola e uno per ogni transizione, uno dopo l'altro senza buchi
+            var t0 = 0.0
+            for i in items.indices {
+                let start = items[i].start.seconds
+                if half[i] > 0 {
+                    let b = start + half[i]
+                    instructions.append(VPCompositionInstruction(range: (t0, b), from: placements[i - 1], to: placements[i],
+                                                                 transition: items[i].clip.transition, canvas: canvas))
+                    t0 = b
+                }
+                let soloEnd = i + 1 < items.count ? items[i + 1].start.seconds - half[i + 1] : total
+                if soloEnd - t0 > 0.0001 {
+                    instructions.append(VPCompositionInstruction(range: (t0, soloEnd), from: placements[i], to: nil,
+                                                                 transition: nil, canvas: canvas))
+                }
+                t0 = max(t0, soloEnd)
+            }
+        }
+
         let vc: AVMutableVideoComposition
         switch engine {
         case .layers:
@@ -260,11 +345,9 @@ enum VideoProjectBuilder {
             vc = AVMutableVideoComposition()
             vc.instructions = [instr]
         case .frames:
-            let list = placements, size = canvas
-            vc = AVMutableVideoComposition(asset: comp) { request in
-                request.finish(with: renderFrame(request.sourceImage, at: request.compositionTime.seconds,
-                                                 placements: list, canvas: size), context: Media.ci)
-            }
+            vc = AVMutableVideoComposition()
+            vc.customVideoCompositorClass = VPCompositor.self
+            vc.instructions = instructions
         }
         vc.renderSize = canvas
         vc.frameDuration = CMTime(value: 1, timescale: CMTimeScale(effectiveFPS(p, infos: infos)))
@@ -322,12 +405,17 @@ enum VideoProjectBuilder {
     static func renderFrame(_ source: CIImage, at t: Double, placements: [Placement], canvas: CGSize) -> CIImage {
         let bg = CIImage(color: CIColor(red: 0, green: 0, blue: 0)).cropped(to: CGRect(origin: .zero, size: canvas))
         guard let pl = placements.last(where: { t >= $0.start - 0.0005 }) ?? placements.first else { return bg }
+        return place(source, pl, canvas: canvas).composited(over: bg).cropped(to: bg.extent)
+    }
+
+    /// La clip girata, messa in tela e con il suo filtro (senza sfondo).
+    static func place(_ source: CIImage, _ pl: Placement, canvas: CGSize) -> CIImage {
         let src = source.extent
         let flipIn = CGAffineTransform(a: 1, b: 0, c: 0, d: -1, tx: -src.minX, ty: src.maxY)
         let flipOut = CGAffineTransform(a: 1, b: 0, c: 0, d: -1, tx: 0, ty: canvas.height)
         let placed = source.transformed(by: flipIn.concatenating(pl.transform).concatenating(flipOut))
         // Il filtro tocca solo la clip, non le bande nere intorno
-        return VideoLooks.apply(pl.look, to: placed).composited(over: bg).cropped(to: bg.extent)
+        return VideoLooks.apply(pl.look, to: placed)
     }
 
     /// Il volume della musica nel tempo: dissolvenze e «abbassa quando si parla», senza scalini.

@@ -1,3 +1,10 @@
+Novità della 2.9.2 «Transizioni»:
+• Video: tra due clip c'è un pallino: cliccalo per scegliere la transizione (Dissolvenza, Al nero, Al bianco, Scorrimento, Zoom, Sfocatura)
+• Durata da 0,2 a 2 secondi; se una clip è corta, la transizione si accorcia da sola
+• «Applica a tutte le clip» mette la stessa transizione su tutto il montaggio
+• La durata del video non cambia: la musica e i tagli restano dove li avevi messi
+• Le transizioni usano il motore nuovo; con «Motore video classico» acceso si passa da una clip all'altra di netto
+
 Novità della 2.9.1:
 • Video: «+ Aggiungi musica» sotto le clip ora apre subito la scelta del brano (prima apriva solo il passo «Audio e musica»)
 • Video: come musica puoi scegliere anche un video: si usa il suo audio

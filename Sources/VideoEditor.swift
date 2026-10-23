@@ -1098,6 +1098,7 @@ private struct ProjectTimeline: View {
     @State private var trimIn: Double = 0
     @State private var trimOut: Double = 0
     @State private var frozenPPS: CGFloat = 1
+    @State private var transitionFor: UUID? = nil
 
     var body: some View {
         GeometryReader { g in
@@ -1174,6 +1175,13 @@ private struct ProjectTimeline: View {
                             .accessibilityLabel("Togli la clip")
                         }
                     }
+                    // 2.9.2 · Il pallino tra due clip: la transizione
+                    .overlay(alignment: .bottomLeading) {
+                        if c.id != s.project.clips.first?.id && moving == nil {
+                            transitionButton(c)
+                                .offset(x: -10, y: -4)
+                        }
+                    }
                     .offset(x: moving == c.id ? moveDX : 0)
                     .zIndex(moving == c.id ? 1 : 0)
                     .opacity(moving == c.id ? 0.85 : 1)
@@ -1205,6 +1213,27 @@ private struct ProjectTimeline: View {
                         })
                     .help(c.url.lastPathComponent + " · clic per sceglierla, trascina per spostarla")
             }
+        }
+    }
+
+    /// 2.9.2 · Pulsante della transizione prima della clip `c`.
+    private func transitionButton(_ c: VPClip) -> some View {
+        let tr = c.transition
+        let symbol = tr.flatMap { t in VPTransition.kinds.first { $0.id == t.kind }?.symbol } ?? "plus"
+        return Button { transitionFor = c.id } label: {
+            Image(systemName: symbol)
+                .font(.system(size: 8.5, weight: .bold))
+                .foregroundStyle(tr == nil ? Theme.ink.opacity(0.7) : Color.white)
+                .frame(width: 18, height: 18)
+                .background(Circle().fill(tr == nil ? Theme.cream : Theme.brass))
+                .overlay(Circle().stroke(Theme.ink.opacity(0.25), lineWidth: 0.5))
+                .shadow(color: .black.opacity(0.2), radius: 1.5, y: 1)
+        }
+        .buttonStyle(.plain)
+        .help(tr == nil ? "Aggiungi una transizione" : "Transizione: " + VPTransition.name(tr!.kind))
+        .accessibilityLabel(tr == nil ? "Aggiungi transizione" : "Transizione " + VPTransition.name(tr!.kind))
+        .popover(isPresented: Binding(get: { transitionFor == c.id }, set: { if !$0 { transitionFor = nil } }), arrowEdge: .top) {
+            TransitionOptions(s: s, clipID: c.id, tint: tint)
         }
     }
 
@@ -1516,5 +1545,79 @@ private struct PresetChip: View {
         .accessibilityLabel("Filtro \(preset.name)")
         .accessibilityAddTraits(.isButton)
         .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+// MARK: - 2.9.2 · Transizioni
+
+struct TransitionOptions: View {
+    @ObservedObject var s: VideoProjectStore
+    let clipID: UUID
+    let tint: Color
+    @Environment(\.undoManager) private var undo
+    @State private var before: VideoProject? = nil
+
+    private var current: VPTransition? { s.project.clips.first { $0.id == clipID }?.transition }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Transizione").font(.headline)
+            LazyVGrid(columns: Array(repeating: GridItem(.fixed(78), spacing: 6), count: 4), spacing: 6) {
+                chip(nil, "Nessuna", "minus")
+                ForEach(VPTransition.kinds, id: \.id) { k in chip(k.id, k.name, k.symbol) }
+            }
+            if let tr = current {
+                HStack {
+                    Text("Durata").font(.callout)
+                    Slider(value: Binding(get: { tr.duration }, set: { v in set { $0?.duration = v } }), in: 0.2...2, step: 0.1) { editing in
+                        if editing { before = s.project } else if let b = before { s.commit(from: b, undo, "Durata della transizione"); before = nil }
+                    }
+                        .frame(width: 160)
+                    Text(String(format: "%.1f s", tr.duration)).font(.callout).monospacedDigit().frame(width: 40, alignment: .trailing)
+                }
+                Text("Se una clip è corta, la transizione si accorcia da sola.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Button("Applica a tutte le clip") {
+                    s.change(undo, "Transizione a tutte") { p in
+                        for i in p.clips.indices.dropFirst() { p.clips[i].transition = tr }
+                    }
+                }
+                .controlSize(.small)
+            }
+        }
+        .padding(14)
+        .frame(width: 360)
+    }
+
+    private func chip(_ id: String?, _ name: String, _ symbol: String) -> some View {
+        let on = current?.kind == id
+        return Button {
+            s.change(undo, id == nil ? "Togli la transizione" : "Transizione") { p in
+                guard let i = p.clips.firstIndex(where: { $0.id == clipID }) else { return }
+                if let id {
+                    p.clips[i].transition = VPTransition(kind: id, duration: p.clips[i].transition?.duration ?? 0.6)
+                } else {
+                    p.clips[i].transition = nil
+                }
+            }
+        } label: {
+            VStack(spacing: 4) {
+                Image(systemName: symbol).font(.system(size: 15))
+                Text(name).font(.system(size: 10)).lineLimit(1).minimumScaleFactor(0.8)
+            }
+            .frame(width: 78, height: 48)
+            .background(RoundedRectangle(cornerRadius: 7).fill(on ? tint.opacity(0.22) : Theme.ink.opacity(0.05)))
+            .overlay(RoundedRectangle(cornerRadius: 7).stroke(on ? tint : .clear, lineWidth: 1.5))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Cambio della durata mentre si trascina: si vede subito, un solo passo di annulla alla fine.
+    private func set(_ f: (inout VPTransition?) -> Void) {
+        s.live { p in
+            guard let i = p.clips.firstIndex(where: { $0.id == clipID }) else { return }
+            f(&p.clips[i].transition)
+        }
     }
 }
