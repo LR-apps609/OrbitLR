@@ -1,3 +1,9 @@
+Novità della 2.9.6 «Formati»:
+• Immagini: ora si aprono e si convertono anche AVIF, Photoshop (PSD), JPEG XL, JPEG 2000, TGA ed EXR
+• Audio: CAF (prima non veniva riconosciuto), audiolibri M4B, AIFC; con i componenti aggiuntivi anche AMR (vecchi vocali) e AC3
+• Video: con i componenti aggiuntivi anche TS, VOB (DVD), MXF, OGV, DV, F4V e ASF
+• Documenti: con i componenti aggiuntivi anche i vecchi Works (WPS) e WordPerfect (WPD)
+
 Novità della 2.9.5 «Manda all'iPhone»:
 • Audio → Suoneria iPhone: quando la suoneria è pronta, subito sotto trovi «Manda all'iPhone»
 • AirDrop: arriva sull'iPhone in un attimo

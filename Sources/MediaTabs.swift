@@ -72,7 +72,8 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
     }
 
     /// Formati che i motori di macOS leggono direttamente.
-    static let readable: Set<String> = ["mp4", "mov", "m4v", "3gp", "mp3", "m4a", "wav", "aiff", "aac", "flac", "caf"]
+    static let readable: Set<String> = ["mp4", "mov", "m4v", "3gp", "mp3", "m4a", "wav", "aiff", "aac", "flac", "caf",
+                                        "m4b", "aifc"]          // 2.9.6
 
     var accepted: Set<Kind> { videoTab ? [.video] : [.audio, .video] }
     var allFiles: [URL] { (file.map { [$0] } ?? []) + extra }

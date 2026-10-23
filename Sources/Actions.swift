@@ -58,6 +58,7 @@ enum Catalog {
         case "htm", "xhtml": return "html"
         case "markdown", "mdown": return "md"
         case "aif": return "aiff"
+        case "j2k", "jpf", "jpx": return "jp2"
         default: return e.lowercased()
         }
     }
@@ -65,13 +66,16 @@ enum Catalog {
     static func kind(of url: URL) -> Kind? {
         let e = norm(url.pathExtension)
         switch e {
-        case "docx", "doc", "odt", "rtf", "txt", "pages": return .doc
+        case "docx", "doc", "odt", "rtf", "txt", "pages", "wps", "wpd": return .doc
         case "xlsx", "xls", "ods", "csv", "numbers": return .sheet
         case "pptx", "ppt", "odp", "key": return .slide
         case "md", "html", "epub": return .text
         case "jpg", "png", "heic", "tiff", "webp", "gif", "bmp", "svg", "ico": return .img
+        case "avif", "psd", "jxl", "jp2", "tga", "exr": return .img                       // 2.9.6
         case "mp3", "wav", "m4a", "flac", "aac", "ogg", "opus", "aiff", "wma": return .audio
+        case "caf", "amr", "m4b", "ac3", "aifc": return .audio                            // 2.9.6
         case "mp4", "mov", "mkv", "avi", "webm", "m4v", "wmv", "flv", "mpg", "mpeg", "3gp", "mts", "m2ts": return .video
+        case "ts", "vob", "mxf", "ogv", "dv", "f4v", "asf": return .video                // 2.9.6
         case "pdf": return .pdf
         case "srt": return .sub
         default: return rawExts.contains(e) ? .img : nil
@@ -171,11 +175,13 @@ enum Catalog {
         guard exts.count == 1, let e = exts.first else { return nil }
         if rawExts.contains(e) { return "to:jpg" }
         switch e {
-        case "heic", "webp", "bmp", "tiff": return "to:jpg"
+        case "heic", "webp", "bmp", "tiff", "avif", "psd", "jxl", "jp2", "tga": return "to:jpg"
+        case "exr": return "to:png"
         case "svg": return "to:png"
-        case "mov", "mkv", "avi", "wmv", "flv", "mpg", "mpeg", "3gp", "m4v", "mts", "m2ts": return "to:mp4"
-        case "wav", "aiff", "flac", "wma", "ogg", "opus", "aac": return "to:mp3"
-        case "docx", "doc", "odt", "rtf", "pages", "xlsx", "xls", "ods", "numbers", "pptx", "ppt", "odp", "key", "md", "html", "epub":
+        case "mov", "mkv", "avi", "wmv", "flv", "mpg", "mpeg", "3gp", "m4v", "mts", "m2ts",
+             "ts", "vob", "mxf", "ogv", "dv", "f4v", "asf": return "to:mp4"
+        case "wav", "aiff", "flac", "wma", "ogg", "opus", "aac", "caf", "amr", "m4b", "ac3", "aifc": return "to:mp3"
+        case "docx", "doc", "odt", "rtf", "pages", "wps", "wpd", "xlsx", "xls", "ods", "numbers", "pptx", "ppt", "odp", "key", "md", "html", "epub":
             return "to:pdf"
         default: return nil
         }

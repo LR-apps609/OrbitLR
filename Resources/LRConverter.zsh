@@ -740,20 +740,24 @@ norm() {
     htm|xhtml)      print html ;;
     markdown|mdown) print md   ;;
     aif)            print aiff ;;
+    j2k|jpf|jpx)    print jp2  ;;
     *)              print -r -- ${(L)1} ;;
   esac
 }
 
 kind_of() {
   case $1 in
-    docx|doc|odt|rtf|txt|pages)                                print doc   ;;
+    docx|doc|odt|rtf|txt|pages|wps|wpd)                        print doc   ;;
     xlsx|xls|ods|csv|numbers)                                  print sheet ;;
     pptx|ppt|odp|key)                                          print slide ;;
     md|html|epub)                                              print text  ;;
     jpg|png|heic|tiff|webp|gif|bmp|svg|ico)                    print img   ;;
+    avif|psd|jxl|jp2|tga|exr)                                  print img   ;;
     dng|cr2|cr3|nef|arw|raf|orf|rw2|srw|pef)                   print img   ;;
     mp3|wav|m4a|flac|aac|ogg|opus|aiff|wma)                    print audio ;;
+    caf|amr|m4b|ac3|aifc)                                      print audio ;;
     mp4|mov|mkv|avi|webm|m4v|wmv|flv|mpg|mpeg|3gp|mts|m2ts)    print video ;;
+    ts|vob|mxf|ogv|dv|f4v|asf)                                 print video ;;
     pdf)                                                       print pdf   ;;
     srt)                                                       print sub   ;;
   esac

@@ -147,7 +147,7 @@ struct KindTabStyle {
 
     static let images = KindTabStyle(
         title: "Immagini", kind: .img, dropTitle: "Trascina qui le foto",
-        dropSubtitle: "oppure clicca per sceglierle · JPG, PNG, HEIC, RAW e altre · fino a \(KindTabModel.maxFiles) insieme",
+        dropSubtitle: "oppure clicca per sceglierle · JPG, PNG, HEIC, RAW, PSD, AVIF e altre · fino a \(KindTabModel.maxFiles) insieme",
         intro: "Converti, ridimensiona, togli lo sfondo e altro, su una o tante foto", noun: "foto", types: [.image])
 
     static let files = KindTabStyle(
@@ -156,7 +156,7 @@ struct KindTabStyle {
         intro: "Unisci, comprimi, converti e proteggi PDF e documenti", noun: "file",
         types: [.pdf, .plainText, .rtf, .html, UTType(filenameExtension: "docx"), UTType(filenameExtension: "doc"),
                 UTType(filenameExtension: "xlsx"), UTType(filenameExtension: "pptx"), UTType(filenameExtension: "odt"),
-                UTType(filenameExtension: "md")].compactMap { $0 })
+                UTType(filenameExtension: "md"), UTType(filenameExtension: "wps"), UTType(filenameExtension: "wpd")].compactMap { $0 })
 }
 
 struct KindTabView: View {

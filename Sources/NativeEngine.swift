@@ -44,10 +44,12 @@ enum Destination {
 /// nessun programma da installare, più veloci, e i metadati restano.
 /// Tutto il resto passa al motore classico.
 enum NativeEngine {
-    static let imageIn: Set<String> = Set(["jpg", "png", "heic", "tiff", "gif", "bmp", "webp"]).union(Catalog.rawExts)
+    /// 2.9.6 · anche AVIF, Photoshop, JPEG XL, JPEG 2000, TGA ed EXR: li legge macOS (ImageIO)
+    static let imageIn: Set<String> = Set(["jpg", "png", "heic", "tiff", "gif", "bmp", "webp",
+                                           "avif", "psd", "jxl", "jp2", "tga", "exr"]).union(Catalog.rawExts)
     static let imageOut: Set<String> = ["jpg", "png", "heic", "tiff", "pdf"]
     static let videoIn: Set<String> = ["mp4", "mov", "m4v"]
-    static let audioIn: Set<String> = ["mp4", "mov", "m4v", "m4a", "mp3", "wav", "aiff", "aac"]
+    static let audioIn: Set<String> = ["mp4", "mov", "m4v", "m4a", "mp3", "wav", "aiff", "aac", "caf", "m4b", "aifc"]
 
     static var enabled: Bool { !UserDefaults.standard.bool(forKey: "disableNative") }
 
