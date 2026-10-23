@@ -1,3 +1,8 @@
+Novità della 2.7.4 «Passo dopo passo»:
+• Video: il montaggio è un percorso in 4 passi numerati (Taglia → Audio e musica → Formato → Esporta), con la spunta quando un passo è fatto e una frase che dice cosa fare
+• Togli l'audio di una sola clip, oppure «Togli da qui» per spegnerlo dall'indicatore in poi; la clip muta mostra l'altoparlante barrato
+• Meno comandi: l'audio originale ora sta insieme alla musica, in un unico passo
+
 Novità della 2.7.3 «Progetti»:
 • Video: nuova schermata Progetti, come in CapCut. Prima di montare scegli il progetto da riprendere o ne crei uno nuovo
 • Più progetti salvati insieme, ognuno con copertina, durata e data; clic per riprenderlo da dove eri rimasto

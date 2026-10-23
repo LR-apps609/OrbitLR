@@ -21,6 +21,9 @@ struct VPClip: Codable, Equatable, Identifiable, Sendable {
     var outPoint: Double
     /// 2.7.1 · Segnalibro di macOS: ritrova il file anche se lo sposti o lo rinomini.
     var bookmark: Data? = nil
+    /// 2.7.4 · Audio di questa clip spento (per un solo tratto: si divide la clip e si spegne quel pezzo).
+    var muted: Bool? = nil
+    var isMuted: Bool { muted ?? false }
     var url: URL { URL(fileURLWithPath: path) }
     var length: Double { max(0, outPoint - inPoint) }
 }
@@ -156,7 +159,7 @@ enum VideoProjectBuilder {
     /// Momenti del montaggio in cui c'è una voce (da quelli trovati nei singoli file).
     static func speechOnTimeline(_ p: VideoProject, speech: [String: [ClosedRange<Double>]]) -> [ClosedRange<Double>] {
         var out: [ClosedRange<Double>] = []
-        for (c, start) in zip(p.clips, p.starts) {
+        for (c, start) in zip(p.clips, p.starts) where !c.isMuted {      // clip senza audio: nessuna voce da rispettare
             for r in speech[c.path] ?? [] {
                 let a = max(r.lowerBound, c.inPoint), b = min(r.upperBound, c.outPoint)
                 if b > a { out.append((start + a - c.inPoint)...(start + b - c.inPoint)) }
@@ -208,7 +211,7 @@ enum VideoProjectBuilder {
             guard e - s >= 0.05 else { continue }
             let r = CMTimeRange(start: cm(s), end: cm(e))
             try vT.insertTimeRange(r, of: v, at: cursor)
-            if info.hasAudio, let au = try await a.loadTracks(withMediaType: .audio).first {
+            if info.hasAudio, !c.isMuted, let au = try await a.loadTracks(withMediaType: .audio).first {
                 try? aT.insertTimeRange(r, of: au, at: cursor)
             }
             let ds = info.displaySize

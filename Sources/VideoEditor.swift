@@ -356,6 +356,31 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         seek(project.starts[j])
     }
 
+    /// 2.7.4 · Accende o spegne l'audio della clip scelta.
+    func toggleClipAudio(_ undo: UndoManager?) {
+        guard let i = targetIndex else { NSSound.beep(); return }
+        let off = !project.clips[i].isMuted
+        change(undo, off ? "Togli l’audio della clip" : "Rimetti l’audio della clip") { $0.clips[i].muted = off ? true : nil }
+    }
+
+    /// 2.7.4 · Toglie l'audio da qui alla fine della clip (divide nel punto dell'indicatore).
+    func muteFromHere(_ undo: UndoManager?) {
+        guard let hit = project.clip(at: clock.time) else { NSSound.beep(); return }
+        let c = project.clips[hit.index]
+        guard hit.local - c.inPoint > 0.1, c.outPoint - hit.local > 0.1 else {
+            change(undo, "Togli l’audio della clip") { $0.clips[hit.index].muted = true }
+            return
+        }
+        change(undo, "Togli l’audio da qui") { p in
+            var a = c, b = c
+            a.outPoint = hit.local
+            b.id = UUID()
+            b.inPoint = hit.local
+            b.muted = true
+            p.clips.replaceSubrange(hit.index...hit.index, with: [a, b])
+        }
+    }
+
     func deleteClip(_ undo: UndoManager?) {
         guard let i = targetIndex else { NSSound.beep(); return }
         change(undo, "Elimina la clip") { $0.clips.remove(at: i) }
@@ -549,16 +574,26 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
 
 // MARK: - La scheda
 
+/// 2.7.4 · Quattro passi in ordine, invece di cinque strumenti sparsi: l'audio originale sta con la musica.
 enum VideoEditTool: String, CaseIterable, Identifiable {
-    case clips = "Clip", music = "Musica", original = "Audio originale", format = "Formato", export = "Esportazione"
+    case clips = "Taglia", music = "Audio e musica", format = "Formato", export = "Esporta"
     var id: String { rawValue }
+    var number: Int { (Self.allCases.firstIndex(of: self) ?? 0) + 1 }
     var symbol: String {
         switch self {
-        case .clips: return "film.stack"
+        case .clips: return "scissors"
         case .music: return "music.note"
-        case .original: return "speaker.wave.2"
         case .format: return "rectangle.portrait"
         case .export: return "square.and.arrow.up"
+        }
+    }
+    /// Cosa fare adesso, in una frase.
+    var hint: String {
+        switch self {
+        case .clips: return "Trascina i bordi d’ottone di una clip per accorciarla, premi S per dividerla, trascina una clip per spostarla."
+        case .music: return "Trascina qui una canzone per la musica. Qui regoli anche l’audio dei tuoi video."
+        case .format: return "Scegli la forma del video: verticale per Reels e TikTok, quadrato per i post, orizzontale per YouTube."
+        case .export: return "Scegli la qualità e premi Esporta (⌘E): il video finale va nella cartella che hai scelto."
         }
     }
 }
@@ -642,11 +677,37 @@ struct VideoEditorView: View {
     }
 
     private var toolRow: some View {
-        HStack(spacing: 6) {
-            ForEach(VideoEditTool.allCases) { t in
-                Chip(title: t.rawValue, selected: tool == t, tint: tint) { tool = t }
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                ForEach(VideoEditTool.allCases) { t in
+                    if t != .clips {
+                        Image(systemName: "chevron.right").font(.system(size: 9, weight: .bold)).foregroundStyle(.tertiary)
+                    }
+                    StepChip(tool: t, selected: tool == t, done: stepDone(t), tint: tint) { tool = t }
+                }
+                Spacer(minLength: 8)
+                otherMenu
             }
-            Spacer(minLength: 8)
+            Label(tool.hint, systemImage: "lightbulb")
+                .font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(2)
+        }
+    }
+
+    /// Un passo è «fatto» quando nel progetto c'è già quello che serve.
+    private func stepDone(_ t: VideoEditTool) -> Bool {
+        switch t {
+        case .clips: return s.project.clips.contains { c in
+            guard let full = s.infos[c.path]?.videoDuration else { return false }
+            return c.inPoint > 0.05 || c.outPoint < full - 0.05
+        } || s.project.clips.count > 1
+        case .music: return s.project.music != nil
+        case .format: return s.project.aspect != "orig"
+        case .export: return s.lastJob != nil
+        }
+    }
+
+    private var otherMenu: some View {
+        HStack {
             Menu {
                 Button("Estrai l’audio (M4A)") { quick("to:m4a", param: "") }
                 Button("Estrai l’audio (MP3)") { quick("to:mp3", param: "") }
@@ -697,8 +758,10 @@ struct VideoEditorView: View {
     @ViewBuilder private var options: some View {
         switch tool {
         case .clips: clipOptions
-        case .music: musicOptions
-        case .original: originalOptions
+        case .music:
+            originalOptions
+            Divider().frame(height: 44)
+            musicOptions
         case .format: formatOptions
         case .export: exportOptions
         }
@@ -715,6 +778,8 @@ struct VideoEditorView: View {
             Button { s.move(-1, undo) } label: { Image(systemName: "arrow.left") }.help("Sposta la clip prima")
             Button { s.move(1, undo) } label: { Image(systemName: "arrow.right") }.help("Sposta la clip dopo")
             Button("Intera") { s.restoreClip(undo) }.help("Riporta la clip alla sua durata intera")
+            Divider().frame(height: 22)
+            clipAudioButtons
             Button(role: .destructive) { s.deleteClip(undo) } label: { Image(systemName: "trash") }
                 .keyboardShortcut(.delete, modifiers: [])
                 .help("Elimina la clip (si può annullare)")
@@ -779,8 +844,20 @@ struct VideoEditorView: View {
                 set: { v in s.change(undo, name) { $0.music?[keyPath: key] = v } })
     }
 
+    /// 2.7.4 · L'audio della singola clip: spento tutto, o da un punto in poi.
+    @ViewBuilder private var clipAudioButtons: some View {
+        let muted = s.targetIndex.map { s.project.clips[$0].isMuted } ?? false
+        Button { s.toggleClipAudio(undo) } label: {
+            Label(muted ? "Rimetti l’audio" : "Togli l’audio", systemImage: muted ? "speaker.wave.2" : "speaker.slash")
+        }
+        .help(muted ? "Riaccende l’audio di questa clip" : "Spegne l’audio solo di questa clip (la musica resta)")
+        Button { s.muteFromHere(undo) } label: { Label("Togli da qui", systemImage: "speaker.slash.circle") }
+            .help("Spegne l’audio dall’indicatore alla fine della clip. Per un tratto in mezzo: dividi (S) e togli l’audio solo da quel pezzo")
+    }
+
     private var originalOptions: some View {
         HStack(spacing: 16) {
+            SectionLabel(text: "Audio dei video")
             Toggle("Muto", isOn: Binding(get: { s.project.originalMuted },
                                           set: { v in s.change(undo, v ? "Audio originale muto" : "Audio originale attivo") { $0.originalMuted = v } }))
                 .toggleStyle(.checkbox)
@@ -1232,6 +1309,14 @@ private struct ClipBlock: View {
                     .foregroundStyle(Color.white)
                     .padding(4)
                     .opacity(g.size.width > 44 ? 1 : 0)
+                if clip.isMuted {
+                    // 2.7.4 · clip senza audio: si vede a colpo d'occhio
+                    Image(systemName: "speaker.slash.fill")
+                        .font(.system(size: 9, weight: .bold)).foregroundStyle(.white)
+                        .padding(3).background(Circle().fill(Color.black.opacity(0.55)))
+                        .padding(4)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                }
             }
             .clipShape(RoundedRectangle(cornerRadius: 6))
             .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(selected ? Theme.brass : Color.black.opacity(0.15), lineWidth: selected ? 3 : 1))
@@ -1247,5 +1332,37 @@ private struct ClipBlock: View {
             return t >= clip.inPoint - fileDuration / Double(n) / 2 && t <= clip.outPoint + fileDuration / Double(n) / 2
         }.map { $0.element }
         return picked.isEmpty ? [thumbs[min(n - 1, Int(clip.inPoint / fileDuration * Double(n)))]] : picked
+    }
+}
+
+/// 2.7.4 · Un passo del percorso: numero (o spunta), nome, colore del Video quando è quello attivo.
+private struct StepChip: View {
+    let tool: VideoEditTool
+    let selected: Bool
+    let done: Bool
+    let tint: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                ZStack {
+                    Circle().fill(selected ? Color.white.opacity(0.9) : tint.opacity(done ? 0.85 : 0.18)).frame(width: 18, height: 18)
+                    if done && !selected {
+                        Image(systemName: "checkmark").font(.system(size: 9, weight: .heavy)).foregroundStyle(.white)
+                    } else {
+                        Text("\(tool.number)").font(.system(size: 10.5, weight: .bold)).foregroundStyle(selected ? tint : Theme.ink)
+                    }
+                }
+                Text(tool.rawValue).font(.system(size: 12.5, weight: .semibold))
+            }
+            .padding(.leading, 5).padding(.trailing, 10).padding(.vertical, 4)
+            .background(Capsule().fill(selected ? tint : Theme.card))
+            .overlay(Capsule().strokeBorder(selected ? Color.clear : Theme.stroke, lineWidth: 1))
+            .foregroundStyle(selected ? Color.white : Theme.ink)
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .help("Passo \(tool.number): \(tool.rawValue)")
     }
 }
