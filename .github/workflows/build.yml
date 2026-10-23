@@ -137,6 +137,19 @@ jobs:
           du -h "dist/OrbitLR $VERSION.orbitlr"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
+      - name: Controllo del pacchetto (3.5)
+        run: |
+          # L'app dentro il pacchetto deve dire la stessa versione del pacchetto (il bug della prima 3.3)
+          rm -rf /tmp/controllo && mkdir -p /tmp/controllo
+          ditto -x -k "dist/OrbitLR $VERSION.orbitlr" /tmp/controllo
+          APP=/tmp/controllo/OrbitLR/Prebuilt/OrbitLR.app
+          SHOWN=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")
+          if [ "$SHOWN" != "$VERSION" ]; then echo "::error::L'app nel pacchetto dice $SHOWN invece di $VERSION"; exit 1; fi
+          codesign --verify --deep "$APP" || { echo "::error::Firma dell'app nel pacchetto non valida"; exit 1; }
+          lipo -archs "$APP/Contents/MacOS/OrbitLR" | grep -q arm64 || { echo "::error::Manca la parte per Apple Silicon"; exit 1; }
+          lipo -archs "$APP/Contents/MacOS/OrbitLR" | grep -q x86_64 || { echo "::error::Manca la parte per Intel"; exit 1; }
+          echo "::notice::Pacchetto controllato: OrbitLR $SHOWN, firma valida, Apple Silicon e Intel"
+
       - uses: actions/upload-artifact@v6
         with:
           name: OrbitLR-${{ env.VERSION }}

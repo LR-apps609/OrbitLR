@@ -265,7 +265,7 @@ private struct FooterButton: View {
             .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.stroke))
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(Pressable())
         .onHover { hover = $0 }
         .help(help)
     }

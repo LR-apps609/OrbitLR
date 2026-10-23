@@ -426,7 +426,7 @@ private struct ImagesInspector: View {
             .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(tint.opacity(0.35)))
             .contentShape(RoundedRectangle(cornerRadius: 9))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(Pressable())
         .help(a.title + (a.hint.isEmpty ? "" : " · " + a.hint))
         .accessibilityLabel(a.title)
         .accessibilityValue(m.estimates[a.id].map { "peso previsto " + SizeEstimate.label($0).replacingOccurrences(of: "≈ ", with: "circa ") } ?? "")
@@ -454,7 +454,7 @@ private struct ImagesInspector: View {
             .background(RoundedRectangle(cornerRadius: 8).fill(hovered == a.id ? tint.opacity(0.1) : .clear))
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(Pressable())
         .onHover { hovered = $0 ? a.id : (hovered == a.id ? nil : hovered) }
         .help(a.param != nil ? "Prima scegli le opzioni, poi parte" : "Parte subito")
     }

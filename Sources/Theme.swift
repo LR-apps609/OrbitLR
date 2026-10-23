@@ -215,3 +215,14 @@ enum Motion {
     /// Un pannello o una pagina che cambia: un po' più lento, si posa senza rimbalzo.
     static var page: Animation { reduced ? .easeOut(duration: 0.1) : .smooth(duration: 0.28) }
 }
+
+/// 3.4.9 · Il tocco di tutti i pulsanti «disegnati a mano» (strumenti, formati, pastiglie):
+/// al clic si abbassano appena e tornano su, sempre allo stesso modo.
+struct Pressable: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed && !Motion.reduced ? 0.965 : 1)
+            .brightness(configuration.isPressed ? -0.03 : 0)
+            .animation(Motion.quick, value: configuration.isPressed)
+    }
+}

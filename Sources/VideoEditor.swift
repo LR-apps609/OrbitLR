@@ -1190,7 +1190,7 @@ struct ToolTab: View {
             }
             .contentShape(RoundedRectangle(cornerRadius: 9))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(Pressable())
         .help(hint)
         .accessibilityLabel(title)
         .accessibilityAddTraits(selected ? .isSelected : [])

@@ -313,7 +313,7 @@ struct Chip: View {
                 .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(selected ? Color.clear : Theme.stroke))
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(Pressable())
     }
 }
 
