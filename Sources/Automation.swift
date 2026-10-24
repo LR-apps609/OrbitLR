@@ -363,7 +363,7 @@ enum ParamChoices {
             KnobOption(value: "best", short: "Uguale", label: "Stessa qualità, meno peso"),
             KnobOption(value: "9", short: "Discord", label: "Discord (sotto 10 MB)"),
             KnobOption(value: "15", short: "WhatsApp", label: "WhatsApp (sotto 16 MB)"),
-            KnobOption(value: "24", short: "Email", label: "Email (sotto 25 MB)"),
+            KnobOption(value: "18", short: "Email", label: "Email (allegato sotto 25 MB, anche per Gmail)"),
             KnobOption(value: "50", short: "50", label: "50 MB"),
             KnobOption(value: "100", short: "100", label: "100 MB")]
         case .vresize: return [
