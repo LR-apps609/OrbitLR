@@ -31,11 +31,13 @@ export function editorPage(app, onBack) {
   let tool = "clip";
   let time = 0, playing = false;
   let pps = 60; // pixel per secondo nella sequenza
+  const rects = new Map(); // id del testo → riquadro disegnato nell'anteprima
   const bar = resultBar("editor");
 
   // ── Libreria dei progetti
+  let saveWarned = false;
   function saveLibrary() {
-    store.set("projects", library);
+    return store.set("projects", library);
   }
   let saveTimer;
   function scheduleSave() {
@@ -45,7 +47,10 @@ export function editorPage(app, onBack) {
       current.data = p;
       current.name = p.name;
       current.updated = Date.now();
-      saveLibrary();
+      if (!saveLibrary() && !saveWarned) {
+        saveWarned = true;
+        toast("Non riesco a salvare il progetto: troppi progetti grandi. Eliminane qualcuno da «Progetti».");
+      }
     }, 400);
   }
 
@@ -186,7 +191,8 @@ export function editorPage(app, onBack) {
   svgDefs.setAttribute("width", "0");
   svgDefs.setAttribute("height", "0");
   svgDefs.style.position = "absolute";
-  const canvasBox = h("div.canvas", vA, vB, veil, vig, overlay);
+  const still = h("img.pv.still", { alt: "", hidden: true });
+  const canvasBox = h("div.canvas", vA, vB, still, veil, vig, overlay);
   const stage = h("div.stage", canvasBox, svgDefs);
   let active = vA, spare = vB, activeIndex = -1;
 
@@ -283,8 +289,12 @@ export function editorPage(app, onBack) {
       }
       seek = true;
     }
-    active.style.opacity = 1;
+    const isImage = infos[c.path]?.kind === "image";
+    still.hidden = !isImage;
+    if (isImage && !DEMO && still.dataset.path !== c.path) { still.dataset.path = c.path; still.src = fileUrl(c.path); }
+    active.style.opacity = isImage ? 0 : 1;
     spare.style.opacity = 0;
+    still.style.objectFit = !p.aspect || p.aspect === "orig" ? "contain" : "cover";
     const speed = c.fx?.speed || 1;
     if (seek) {
       try { active.currentTime = c.in + at.local * speed; } catch {}
@@ -295,6 +305,8 @@ export function editorPage(app, onBack) {
     const lf = lookFilter(c, at.i);
     active.style.filter = lf.filter;
     active.style.transform = clipTransform(c, at.local);
+    still.style.filter = lf.filter;
+    still.style.transform = clipTransform(c, at.local);
     vig.style.opacity = lf.vig;
     // Dissolvenze della clip e transizioni (approssimate nell'anteprima)
     const len = clipLen(c);
@@ -325,8 +337,7 @@ export function editorPage(app, onBack) {
     for (const tx of p.texts) {
       const st = stateAt(tx, t);
       if (!st) continue;
-      const r = drawText(g, tx, overlay.width, overlay.height, st);
-      tx._rect = r;
+      rects.set(tx.id, drawText(g, tx, overlay.width, overlay.height, st));
     }
   }
 
@@ -359,7 +370,8 @@ export function editorPage(app, onBack) {
     if (!at) return stop();
     const c = p.clips[at.i];
     const speed = c.fx?.speed || 1;
-    if (!DEMO && active.readyState >= 2) {
+    const isImage = infos[c.path]?.kind === "image";
+    if (!DEMO && !isImage && active.readyState >= 2) {
       const local = (active.currentTime - c.in) / speed;
       time = starts()[at.i] + Math.max(0, local);
       if (active.currentTime >= c.out - 0.04 || local >= clipLen(c) - 0.02) {
@@ -370,10 +382,18 @@ export function editorPage(app, onBack) {
         active.play().catch(() => {});
       } else showAt(time, false);
     } else {
-      time += 1 / 60;
+      // Foto (o video non ancora pronto): l'orologio va avanti da solo
+      const now = performance.now();
+      time += Math.min(0.1, (now - (loop.last || now)) / 1000);
+      loop.last = now;
       if (time >= total()) return stop(true);
-      showAt(time, false);
+      const next = clipAt(time);
+      if (next && next.i !== at.i) {
+        showAt(time, true);
+        if (infos[p.clips[next.i].path]?.kind !== "image") active.play().catch(() => {});
+      } else showAt(time, false);
     }
+    if (!isImage || DEMO) loop.last = performance.now();
     updatePlayhead();
     raf = requestAnimationFrame(loop);
   }
@@ -560,19 +580,15 @@ export function editorPage(app, onBack) {
     const maxOut = info?.kind === "image" ? 3600 : info?.duration || c.out;
     const before = JSON.stringify(p);
     const x0 = e.clientX, in0 = c.in, out0 = c.out, speed = c.fx?.speed || 1;
-    const edge = e.currentTarget;
-    edge.setPointerCapture(e.pointerId);
-    edge.onpointermove = (ev) => {
+    capture(e, (ev) => {
       const d = ((ev.clientX - x0) / pps) * speed;
       if (side === "in") c.in = Math.max(0, Math.min(c.out - 0.1, in0 + d));
       else c.out = Math.min(maxOut, Math.max(c.in + 0.1, out0 + d));
       renderTimeline();
       showAt(side === "in" ? starts()[i] : starts()[i] + clipLen(c) - 0.01, true);
-    };
-    edge.onpointerup = () => {
-      edge.onpointermove = null;
+    }, () => {
       if (JSON.stringify(p) !== before) { undo.push(before); redo = []; afterChange(); }
-    };
+    });
   }
 
   function dragText(e, k) {
@@ -584,17 +600,13 @@ export function editorPage(app, onBack) {
     const t = p.texts[k];
     const before = JSON.stringify(p);
     const x0 = e.clientX, s0 = t.start, len = t.end - t.start;
-    const blk = e.currentTarget;
-    blk.setPointerCapture(e.pointerId);
-    blk.onpointermove = (ev) => {
+    capture(e, (ev) => {
       t.start = Math.max(0, Math.min(Math.max(0, total() - len), s0 + (ev.clientX - x0) / pps));
       t.end = t.start + len;
       renderTimeline();
-    };
-    blk.onpointerup = () => {
-      blk.onpointermove = null;
+    }, () => {
       if (JSON.stringify(p) !== before) { undo.push(before); redo = []; afterChange(); } else { seekTo(t.start + 0.05); renderAll(); }
-    };
+    });
   }
 
   function trimText(e, k, side) {
@@ -603,9 +615,7 @@ export function editorPage(app, onBack) {
     const t = p.texts[k];
     const before = JSON.stringify(p);
     const x0 = e.clientX, v0 = t[side];
-    const edge = e.currentTarget;
-    edge.setPointerCapture(e.pointerId);
-    edge.onpointermove = (ev) => {
+    capture(e, (ev) => {
       const v = v0 + (ev.clientX - x0) / pps;
       if (side === "start") {
         const old = t.start;
@@ -614,11 +624,24 @@ export function editorPage(app, onBack) {
         if (Array.isArray(t.wordTimes)) t.wordTimes = t.wordTimes.map((w) => Math.max(0, w + old - t.start));
       } else t.end = Math.min(total(), Math.max(t.start + 0.3, v));
       renderTimeline();
-    };
-    edge.onpointerup = () => {
-      edge.onpointermove = null;
+    }, () => {
       if (JSON.stringify(p) !== before) { undo.push(before); redo = []; afterChange(); }
+    });
+  }
+
+  /** Trascinamento: la cattura sta sul contenitore della sequenza, che resta anche quando la sequenza si ridisegna. */
+  function capture(e, move, up) {
+    timelineEl.setPointerCapture(e.pointerId);
+    const end = () => {
+      timelineEl.removeEventListener("pointermove", move);
+      timelineEl.removeEventListener("pointerup", end);
+      timelineEl.removeEventListener("pointercancel", end);
+      try { timelineEl.releasePointerCapture(e.pointerId); } catch {}
+      up();
     };
+    timelineEl.addEventListener("pointermove", move);
+    timelineEl.addEventListener("pointerup", end);
+    timelineEl.addEventListener("pointercancel", end);
   }
 
   function transitionMenu(i, anchor) {
@@ -670,17 +693,18 @@ export function editorPage(app, onBack) {
   function deleteSelected() {
     if (sel.kind === "text") {
       if (!p.texts[sel.index]) return;
-      change((pp) => pp.texts.splice(sel.index, 1));
+      const k = sel.index;
       sel = { kind: "clip", index: 0 };
+      change((pp) => pp.texts.splice(k, 1));
       return;
     }
     if (!p.clips[sel.index]) return;
+    const k = sel.index;
+    sel = { kind: "clip", index: Math.max(0, Math.min(k, p.clips.length - 2)) };
     change((pp) => {
-      pp.clips.splice(sel.index, 1);
-      if (pp.clips[sel.index]) pp.clips[sel.index].transition = sel.index === 0 ? null : pp.clips[sel.index].transition;
+      pp.clips.splice(k, 1);
       if (pp.clips[0]) pp.clips[0].transition = null;
     });
-    sel.index = Math.max(0, Math.min(sel.index, p.clips.length - 1));
   }
 
   function addText() {
@@ -700,7 +724,7 @@ export function editorPage(app, onBack) {
     const r = overlay.getBoundingClientRect();
     const k = overlay.width / r.width;
     const px = (e.clientX - r.left) * k, py = (e.clientY - r.top) * k;
-    const idx = p.texts.findIndex((t) => t._rect && stateAt(t, time) && px >= t._rect.x && px <= t._rect.x + t._rect.w && py >= t._rect.y && py <= t._rect.y + t._rect.h);
+    const idx = p.texts.findIndex((t) => { const r = rects.get(t.id); return r && stateAt(t, time) && px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h; });
     if (idx < 0) return;
     e.preventDefault();
     sel = { kind: "text", index: idx };
@@ -803,7 +827,8 @@ export function editorPage(app, onBack) {
     } else if (tool === "text") {
       const t = sel.kind === "text" ? p.texts[sel.index] : null;
       box.push(h("div.btns", h("button.btn.primary", { onclick: addText }, ico("plus", 14), "Aggiungi un testo"),
-        h("button.btn", { onclick: autoSubtitles, disabled: subsBusy || null }, ico("message-circle", 14), "Sottotitoli automatici")),
+        subsBusy ? h("button.btn", { onclick: () => subsJob && invoke("cancel_job", { id: subsJob }) }, "Interrompi")
+          : h("button.btn", { onclick: autoSubtitles }, ico("message-circle", 14), "Sottotitoli automatici")),
         subsStatus,
         h("p.hint", "Il testo compare all'indicatore per 3 secondi. Trascinalo sull'anteprima per spostarlo, e nella riga «Testi» per cambiare quando si vede."));
       if (t) {
@@ -877,6 +902,7 @@ export function editorPage(app, onBack) {
   // ── Sottotitoli automatici: si ascoltano le clip (sul computer), le parole diventano righe
   // facili da leggere (al massimo 7 parole, 42 caratteri, 3,5 secondi; si va a capo alle pause e ai punti)
   let subsBusy = false;
+  let subsJob = null;
   const subsStatus = h("p.hint", { "aria-live": "polite" });
   function makeLines(words) {
     const out = [];
@@ -910,6 +936,8 @@ export function editorPage(app, onBack) {
     const paths = [...new Set(p.clips.filter((c) => infos[c.path]?.has_audio).map((c) => c.path))];
     if (!paths.length) { subsBusy = false; renderInspector(); return toast("Le clip non hanno audio."); }
     let which = 0;
+    const startedOn = current;
+    subsJob = "v" + uid();
     const un = await window.__TAURI__.event.listen("voice-progress", (e) => {
       const { stage, progress } = e.payload;
       subsStatus.textContent = stage === "modello" ? `Scarico il modello della voce (solo la prima volta)… ${Math.round(progress * 100)}%`
@@ -919,17 +947,22 @@ export function editorPage(app, onBack) {
     try {
       for (which = 0; which < paths.length; which++) {
         subsStatus.textContent = "Preparo…";
-        const segs = await invoke("transcribe_words", { path: paths[which], lang });
+        const segs = await invoke("transcribe_words", { path: paths[which], lang, id: subsJob });
+        if (current !== startedOn || !p) throw new Error("annullato");
         byPath[paths[which]] = segs.flatMap((s) => (s.words?.length ? s.words : s.text.split(/\s+/).map((t, k, all) => ({ text: t, start: s.start + ((s.end - s.start) * k) / all.length, end: s.start + ((s.end - s.start) * (k + 1)) / all.length }))));
       }
     } catch (e) {
       un();
       subsBusy = false;
+      subsJob = null;
       subsStatus.textContent = "";
-      renderInspector();
+      if (current === startedOn && p) renderInspector();
+      if (String(e).includes("annullato") || String(e).includes("interrotto")) return;
       return toast(String(e));
     }
     un();
+    subsJob = null;
+    if (current !== startedOn || !p) return;
     const st = starts();
     const made = [];
     p.clips.forEach((c, i) => {

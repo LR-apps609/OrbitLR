@@ -304,7 +304,7 @@ fn montaggio_completo() {
             Clip { path: a.to_string_lossy().into(), in_point: 0.0, out_point: 2.0, look: Some(Look { preset: "dream".into(), amount: 1.0, brightness: 0.2, vignette: 0.5, ..Default::default() }), ..Default::default() },
         ],
         music: Some(Music { path: song.to_string_lossy().into(), volume: 0.7, fade_in: 1.0, fade_out: 1.0, duck: true, looped: true, ..Default::default() }),
-        overlays: vec![Overlay { png: png.to_string_lossy().into(), start: 0.5, end: 3.0, fade_in: 0.3, fade_out: 0.3, slide: 40.0 }],
+        overlays: vec![Overlay { png: png.to_string_lossy().into(), start: 0.5, end: 3.0, fade_in: 0.3, fade_out: 0.3, slide: 40.0, ..Default::default() }],
         resolution: 720,
         fps: 30.0,
         original_volume: 1.0,
@@ -359,4 +359,39 @@ fn nascondi_un_logo() {
     let i = info(&o[0]);
     assert_eq!((i.width, i.height), (320, 240));
     assert!(i.has_audio);
+}
+
+#[test]
+fn montaggio_taglio_poi_transizione_e_tanti_sottotitoli() {
+    use orbit_engine::editor::{export, Clip, Frame, Overlay, Project, Transition};
+    let a = fixture_video("piccolo.mp4", 320, 240, 2, true);
+    let b = fixture_video("muto.mp4", 640, 480, 2, false);
+    // Prima un taglio netto, poi una transizione (prima falliva: basi dei tempi diverse)
+    let clips = vec![
+        Clip { path: a.to_string_lossy().into(), out_point: 2.0, ..Default::default() },
+        Clip { path: b.to_string_lossy().into(), out_point: 2.0, ..Default::default() },
+        Clip { path: a.to_string_lossy().into(), out_point: 2.0, transition: Some(Transition { kind: "fade".into(), duration: 0.5 }), ..Default::default() },
+    ];
+    // Tante parole: una sequenza per riga e tanti testi singoli (il grafo va in un file)
+    let mut overlays = Vec::new();
+    let mut frames = Vec::new();
+    for i in 0..6 {
+        let png = work().join(format!("parola-{i}.png"));
+        let mut t = image::RgbaImage::new(320, 240);
+        for x in (40 + i * 30)..(60 + i * 30) { for y in 200..220 { t.put_pixel(x as u32, y, image::Rgba([250, 200, 90, 255])); } }
+        t.save(&png).unwrap();
+        frames.push(Frame { png: png.to_string_lossy().into(), duration: 0.3 });
+    }
+    overlays.push(Overlay { frames, start: 0.5, end: 2.3, fade_in: 0.2, fade_out: 0.2, ..Default::default() });
+    let single = work().join("parola-0.png").to_string_lossy().to_string();
+    for k in 0..150 {
+        let s = (k as f64) * 0.035;
+        overlays.push(Overlay { png: single.clone(), start: s, end: s + 0.2, ..Default::default() });
+    }
+    let p = Project { name: "Molti testi".into(), clips, overlays, resolution: 240, fps: 25.0, original_volume: 1.0, ..Default::default() };
+    let dir = work().join("out");
+    std::fs::create_dir_all(&dir).unwrap();
+    let out = export(&tools(), &p, &dir, &Cancel::new(), &mut |_| {}).unwrap_or_else(|e| panic!("{e}"));
+    let i = info(&out);
+    assert!((i.duration - 6.0).abs() < 0.25, "durata {}", i.duration);
 }

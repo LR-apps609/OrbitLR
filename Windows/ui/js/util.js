@@ -74,7 +74,10 @@ export const store = {
   set(k, v) {
     try {
       localStorage.setItem("orbitlr." + k, JSON.stringify(v));
-    } catch {}
+      return true;
+    } catch {
+      return false;
+    }
   },
 };
 

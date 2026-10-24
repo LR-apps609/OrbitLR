@@ -69,6 +69,7 @@ pub struct Music {
     /// Da che punto della canzone
     pub in_point: f64,
     pub looped: bool,
+    #[serde(default = "music_volume")]
     pub volume: f64,
     pub fade_in: f64,
     pub fade_out: f64,
@@ -76,10 +77,20 @@ pub struct Music {
     pub duck: bool,
 }
 
+/// Un'immagine di una sequenza, con quanto resta sullo schermo.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Frame {
+    pub png: String,
+    pub duration: f64,
+}
+
 /// Un testo già disegnato dall'app (PNG trasparente grande come il video), da mostrare tra `start` ed `end`.
+/// Per «Parola per parola» e «Macchina da scrivere» c'è una sequenza (`frames`): un solo ingresso per riga.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Overlay {
+    pub frames: Vec<Frame>,
     pub png: String,
     pub start: f64,
     pub end: f64,
@@ -95,6 +106,7 @@ pub struct Project {
     pub name: String,
     pub clips: Vec<Clip>,
     pub music: Option<Music>,
+    #[serde(default = "one")]
     pub original_volume: f64,
     pub original_muted: bool,
     /// «orig», «9x16», «1x1», «4x5», «16x9»
@@ -104,6 +116,13 @@ pub struct Project {
     pub fps: f64,
     pub look: Option<Look>,
     pub overlays: Vec<Overlay>,
+}
+
+fn one() -> f64 {
+    1.0
+}
+fn music_volume() -> f64 {
+    0.8
 }
 
 impl Project {
@@ -159,7 +178,7 @@ pub fn build(p: &Project, infos: &[FileInfo], w: u32, h: u32) -> Result<(Vec<OsS
         return Err(EngineError::new("il montaggio è vuoto"));
     }
     let fps = if p.fps > 0.0 { p.fps.clamp(10.0, 60.0) } else { 30.0 };
-    let orig_vol = if p.original_muted { 0.0 } else if p.original_volume > 0.0 { p.original_volume.min(2.0) } else if p.original_volume == 0.0 && !p.original_muted { 1.0 } else { 0.0 };
+    let orig_vol = if p.original_muted { 0.0 } else { p.original_volume.clamp(0.0, 2.0) };
     let mut a: Vec<OsString> = Vec::new();
     let mut g = String::new();
     let n = p.clips.len();
@@ -211,13 +230,16 @@ pub fn build(p: &Project, infos: &[FileInfo], w: u32, h: u32) -> Result<(Vec<OsS
             v.push(format!("scale={w}:{h}:force_original_aspect_ratio=increase:flags=lanczos,crop={w}:{h}"));
         }
         v.push(format!("fps={fps:.3}"));
+        // Se il video della clip finisce prima (audio più lungo nel file), l'ultimo fotogramma resta: la clip dura sempre `len`
+        v.push(format!("tpad=stop_mode=clone:stop_duration={len:.3},trim=duration={len:.3},setpts=PTS-STARTPTS"));
         if fx.zoom == "in" || fx.zoom == "out" {
             let frames = (len * fps).max(1.0).round();
             let z = if fx.zoom == "in" { format!("1+0.15*on/{frames}") } else { format!("1.15-0.15*on/{frames}") };
             v.push(format!("zoompan=z='{z}':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={w}x{h}:fps={fps:.3}"));
         }
         if fx.blur > 0.01 {
-            v.push(format!("gblur=sigma={:.1}", fx.blur.min(1.0) * 25.0));
+            // Stessa sfocatura dell'anteprima a ogni risoluzione
+            v.push(format!("gblur=sigma={:.1}", fx.blur.min(1.0) * 25.0 * h as f64 / 1080.0));
         }
         let look = c.look.as_ref().or(p.look.as_ref());
         if let Some(l) = look {
@@ -238,7 +260,8 @@ pub fn build(p: &Project, infos: &[FileInfo], w: u32, h: u32) -> Result<(Vec<OsS
         if before > 0.0 || after > 0.0 {
             v.push(format!("tpad=start_mode=clone:start_duration={before:.3}:stop_mode=clone:stop_duration={after:.3}"));
         }
-        v.push("setsar=1,format=yuv420p".into());
+        // Base dei tempi uguale per tutti: xfade la vuole identica (anche dopo un concat)
+        v.push("setsar=1,format=yuv420p,settb=AVTB".into());
         g.push_str(&format!("[{i}:v]{}[v{i}];", v.join(",")));
 
         // Audio della clip
@@ -294,26 +317,51 @@ pub fn build(p: &Project, infos: &[FileInfo], w: u32, h: u32) -> Result<(Vec<OsS
 
     // Testi
     for (k, o) in p.overlays.iter().enumerate() {
-        if !(o.end > o.start) || !Path::new(&o.png).is_file() {
+        let start = o.start.max(0.0);
+        let end = o.end.min(total);
+        if !(end > start) {
             continue;
         }
-        a.extend(args!["-loop", "1", "-framerate", format!("{fps:.3}"), "-t", format!("{:.3}", o.end.min(total) + 0.1), "-i", &o.png]);
+        let dur = end - start;
+        if !o.frames.is_empty() {
+            if o.frames.iter().any(|f| !Path::new(&f.png).is_file()) {
+                continue;
+            }
+            // Una sequenza (parola per parola): un file di elenco per il concat demuxer
+            let mut list = String::from("ffconcat version 1.0\n");
+            for f in &o.frames {
+                list.push_str(&format!("file '{}'\nduration {:.3}\n", f.png.replace('\'', "'\\''"), f.duration.max(0.04)));
+            }
+            if let Some(last) = o.frames.last() {
+                list.push_str(&format!("file '{}'\n", last.png.replace('\'', "'\\''")));
+            }
+            let lf = Path::new(&o.frames[0].png).with_extension("ffconcat");
+            if std::fs::write(&lf, list).is_err() {
+                continue;
+            }
+            a.extend(args!["-itsoffset", format!("{start:.3}"), "-f", "concat", "-safe", "0", "-i", &lf]);
+        } else {
+            if !Path::new(&o.png).is_file() {
+                continue;
+            }
+            a.extend(args!["-itsoffset", format!("{start:.3}"), "-loop", "1", "-framerate", format!("{fps:.3}"), "-t", format!("{:.3}", dur + 0.1), "-i", &o.png]);
+        }
         let idx = next_input;
         next_input += 1;
-        let mut tf = vec!["format=rgba".to_string()];
+        let mut tf = vec![format!("fps={fps:.3}"), "format=rgba".to_string()];
         if o.fade_in > 0.01 {
-            tf.push(format!("fade=t=in:st={:.3}:d={:.3}:alpha=1", o.start, o.fade_in));
+            tf.push(format!("fade=t=in:st={start:.3}:d={:.3}:alpha=1", o.fade_in.min(dur)));
         }
         if o.fade_out > 0.01 {
-            tf.push(format!("fade=t=out:st={:.3}:d={:.3}:alpha=1", (o.end - o.fade_out).max(o.start), o.fade_out));
+            tf.push(format!("fade=t=out:st={:.3}:d={:.3}:alpha=1", (end - o.fade_out).max(start), o.fade_out.min(dur)));
         }
         g.push_str(&format!("[{idx}:v]{}[t{k}];", tf.join(",")));
         let y = if o.slide > 0.5 {
-            format!("'if(lt(t-{s:.3},0.45),{sl:.1}*(1-(t-{s:.3})/0.45),0)'", s = o.start, sl = o.slide)
+            format!("'if(lt(t-{start:.3},0.45),{sl:.1}*(1-(t-{start:.3})/0.45),0)'", sl = o.slide)
         } else {
             "0".into()
         };
-        g.push_str(&format!("[{cur_v}][t{k}]overlay=x=0:y={y}:enable='between(t,{:.3},{:.3})':eof_action=pass[vt{k}];", o.start, o.end));
+        g.push_str(&format!("[{cur_v}][t{k}]overlay=x=0:y={y}:enable='between(t,{start:.3},{end:.3})':eof_action=pass:repeatlast=0[vt{k}];"));
         cur_v = format!("vt{k}");
     }
 
@@ -325,7 +373,7 @@ pub fn build(p: &Project, infos: &[FileInfo], w: u32, h: u32) -> Result<(Vec<OsS
         a.extend(args!["-ss", format!("{:.3}", m.in_point.max(0.0)), "-i", &m.path]);
         let idx = next_input;
         let play = (total - m.offset.max(0.0)).max(0.1);
-        let vol = if m.volume > 0.0 { m.volume.min(2.0) } else { 0.8 };
+        let vol = m.volume.clamp(0.0, 2.0);
         let mut mf = vec![format!("atrim=0:{play:.3}"), "asetpts=PTS-STARTPTS".into(), "aresample=48000".into(), "aformat=sample_fmts=fltp:channel_layouts=stereo".into(), format!("volume={vol:.3}")];
         if m.fade_in > 0.01 {
             mf.push(format!("afade=t=in:st=0:d={:.3}", m.fade_in));
@@ -365,7 +413,30 @@ pub fn export(tools: &Tools, p: &Project, dir: &Path, cancel: &Cancel, progress:
         infos.push(probe::probe(Some(tools), path)?);
     }
     let (w, h) = canvas(p, &infos[0]);
-    let (base, total) = build(p, &infos, w, h)?;
+    let (mut base, total) = build(p, &infos, w, h)?;
+    // Grafo lungo (tanti sottotitoli): in un file, perché Windows limita la riga di comando a 32.767 caratteri
+    let graph_file = names::temp_beside(&dir.join("x.txt"), "txt");
+    struct Rm(PathBuf);
+    impl Drop for Rm {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_file(&self.0);
+            names::track_temp(&self.0, false);
+        }
+    }
+    let _rm = Rm(graph_file.clone());
+    if let Some(i) = base.iter().position(|x| x == "-filter_complex") {
+        let g = base[i + 1].clone();
+        if g.len() > 6000 {
+            std::fs::write(&graph_file, g.to_string_lossy().as_bytes())?;
+            let major = tools.version().split("version").nth(1).map(|v| v.trim().trim_start_matches('n')).and_then(|v| v.split(|c: char| !c.is_ascii_digit()).next()).and_then(|d| d.parse::<u32>().ok()).unwrap_or(7);
+            if major >= 7 {
+                base[i] = "-/filter_complex".into();
+            } else {
+                base[i] = "-filter_complex_script".into();
+            }
+            base[i + 1] = graph_file.clone().into();
+        }
+    }
     if total < 0.1 {
         return Err(EngineError::new("il montaggio è vuoto"));
     }

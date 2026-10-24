@@ -85,7 +85,21 @@ pub fn speak(tools: &Tools, text: &str, voice: Option<&str>, rate: i32, dir: &Pa
         .env("ORBIT_WAV", &wav)
         .env("ORBIT_VOCE", voice.unwrap_or(""))
         .env("ORBIT_VELOCITA", rate.clamp(-10, 10).to_string());
-    let status = cmd.status().map_err(|e| EngineError::new(format!("non riesco ad avviare la voce di Windows: {e}")));
+    let status = (|| -> Result<std::process::ExitStatus> {
+        let mut child = cmd.spawn().map_err(|e| EngineError::new(format!("non riesco ad avviare la voce di Windows: {e}")))?;
+        crate::tools::bind_to_app(&child);
+        loop {
+            if cancel.is_cancelled() {
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(EngineError::cancelled());
+            }
+            if let Some(st) = child.try_wait()? {
+                return Ok(st);
+            }
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+    })();
     if cancel.is_cancelled() {
         cleanup(&txt, &wav);
         return Err(EngineError::cancelled());

@@ -73,7 +73,8 @@ pub fn photo(tools: Option<&Tools>, src: &Path, p: &Params, dir: &Path) -> Resul
     let e = names::ext(src);
     let ext = if ["jpg", "jpeg", "png", "webp", "bmp", "tiff"].contains(&e.as_str()) { if e == "jpeg" { "jpg".to_string() } else { e } } else { "jpg".into() };
     let of = names::OutFile::new(dir, &format!("{} (logo nascosto)", names::stem(src)), &ext)?;
-    images::save(tools, &Photo { img: ph.img, exif: ph.exif, icc: ph.icc }, &ext, 93, &of.tmp)?;
+    // Senza EXIF: dentro c'è spesso una miniatura della foto originale, con il logo ancora visibile
+    images::save(tools, &Photo { img: ph.img, exif: None, icc: ph.icc }, &ext, 93, &of.tmp)?;
     of.commit()
 }
 
@@ -118,7 +119,9 @@ pub fn movie(tools: &Tools, src: &Path, info: &FileInfo, p: &Params, dir: &Path,
     for enc in video::candidates(tools, video::Codec::H264) {
         let mut a = args!["-i", src, "-filter_complex", &graph, "-map", "[v]", "-map", "0:a:0?", "-map_metadata", "0"];
         a.extend(video::encoder_args(&enc, bitrate));
-        a.extend(args!["-c:a", "copy", "-movflags", "+faststart", &of.tmp]);
+        let copy = ["aac", "mp3", "alac", "ac3", "eac3"].contains(&info.audio_codec.as_str());
+        if copy { a.extend(args!["-c:a", "copy"]) } else { a.extend(args!["-c:a", "aac", "-b:a", "192k"]) }
+        a.extend(args!["-movflags", "+faststart", &of.tmp]);
         match run::ffmpeg(tools, &a, info.duration, cancel, progress) {
             Ok(()) => return of.commit(),
             Err(e) if e.is_cancelled() => return Err(e),

@@ -391,10 +391,9 @@ fn open_result(app: tauri::AppHandle, state: State<'_, Shared>, path: String) ->
     let known = state.made.lock().unwrap().contains(&path);
     let ext = orbit_engine::names::ext(Path::new(&path));
     const SAFE: &[&str] = &["jpg", "jpeg", "png", "webp", "avif", "bmp", "tiff", "tif", "gif", "ico", "pdf", "mp4", "mov", "m4v", "mkv", "webm", "avi",
-        "mp3", "m4a", "m4r", "wav", "flac", "ogg", "opus", "aiff", "aac"];
-    if !known && !SAFE.contains(&ext.as_str()) {
-        return Err("questo file non si apre da qui".into());
-    }
+        "mp3", "m4a", "m4r", "wav", "flac", "ogg", "opus", "aiff", "aac", "txt", "srt"];
+    // Solo file creati da OrbitLR in questa sessione o, dalla cronologia, con un'estensione sicura
+    let _ = known;
     if !SAFE.contains(&ext.as_str()) {
         return Err("questo file non si apre da qui".into());
     }
@@ -406,16 +405,29 @@ fn open_result(app: tauri::AppHandle, state: State<'_, Shared>, path: String) ->
 /// Le parole dette in un file, con i tempi (per i sottotitoli automatici del montaggio).
 /// L'avanzamento arriva come evento «voice-progress»; si interrompe con cancel_job("voce").
 #[tauri::command]
-async fn transcribe_words(app: tauri::AppHandle, state: State<'_, Shared>, path: String, lang: String) -> Result<Vec<orbit_engine::whisper::Segment>, String> {
+async fn transcribe_words(app: tauri::AppHandle, state: State<'_, Shared>, path: String, lang: String, id: String) -> Result<Vec<orbit_engine::whisper::Segment>, String> {
     let st = state.inner().clone();
     let f = checked_file(&path)?;
-    if let Some(c) = st.words_cache.lock().unwrap().get(&format!("{path}|{lang}")) {
+    if id.is_empty() || id.len() > 64 || !id.chars().all(|c| c.is_ascii_alphanumeric()) {
+        return Err("lavoro non valido".into());
+    }
+    // Nella chiave anche la data del file: un file sostituito si riascolta
+    let mtime = std::fs::metadata(&f).and_then(|m| m.modified()).ok().and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok()).map(|d| d.as_secs()).unwrap_or(0);
+    let key = format!("{path}|{lang}|{mtime}");
+    if let Some(c) = st.words_cache.lock().unwrap().get(&key) {
         return Ok(c.clone());
     }
     let cancel = Cancel::new();
-    st.jobs.lock().unwrap().insert("voce".into(), cancel.clone());
+    st.jobs.lock().unwrap().insert(id.clone(), cancel.clone());
+    // Si toglie dai lavori in corso comunque vada
+    struct Done(Shared, String);
+    impl Drop for Done {
+        fn drop(&mut self) {
+            self.0.jobs.lock().unwrap().remove(&self.1);
+        }
+    }
+    let _done = Done(st.clone(), id);
     let st2 = st.clone();
-    let key = format!("{path}|{lang}");
     let r = tauri::async_runtime::spawn_blocking(move || -> Result<Vec<orbit_engine::whisper::Segment>, String> {
         let t = st2.tools.as_ref().ok_or("manca il motore audio")?;
         let exe = st2.voice_exe.clone().ok_or("manca il motore della voce: reinstalla OrbitLR")?;
@@ -432,7 +444,6 @@ async fn transcribe_words(app: tauri::AppHandle, state: State<'_, Shared>, path:
     })
     .await
     .map_err(|e| e.to_string())?;
-    st.jobs.lock().unwrap().remove("voce");
     let segs = r?;
     st.words_cache.lock().unwrap().insert(key, segs.clone());
     Ok(segs)
@@ -539,7 +550,8 @@ fn main() {
             let voice_exe = res.map(|d| d.join("motori").join("voce").join(if cfg!(windows) { "whisper-cli.exe" } else { "whisper-cli" }))
                 .filter(|p| p.is_file())
                 .or_else(|| std::env::var_os("ORBIT_WHISPER").map(PathBuf::from).filter(|p| p.is_file()));
-            let data_dir = app.path().app_data_dir().unwrap_or_else(|_| std::env::temp_dir().join("OrbitLR"));
+            // Il modello della voce (190 MB) nella cartella locale, non in quella che si sincronizza
+            let data_dir = app.path().app_local_data_dir().unwrap_or_else(|_| std::env::temp_dir().join("OrbitLR"));
             app.manage(Arc::new(AppState {
                 voice_exe,
                 data_dir,

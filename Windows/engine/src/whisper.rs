@@ -51,15 +51,36 @@ fn hex(bytes: &[u8]) -> String {
 }
 
 /// Scarica il modello (una volta sola), controllando l'impronta. `progress` tra 0 e 1.
+static DOWNLOAD: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 pub fn download_model(data_dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<PathBuf> {
     use sha2::{Digest, Sha256};
+    // Una trascrizione e i sottotitoli automatici insieme: si scarica una volta sola
+    let _one = DOWNLOAD.lock().unwrap_or_else(|e| e.into_inner());
     let dest = model_path(data_dir);
     if model_ready(data_dir) {
         return Ok(dest);
     }
     std::fs::create_dir_all(dest.parent().unwrap())?;
     let part = dest.with_extension("parziale");
-    let agent: ureq::Agent = ureq::Agent::config_builder().proxy(ureq::Proxy::try_from_env()).build().into();
+    struct Rm<'a>(&'a Path, bool);
+    impl Drop for Rm<'_> {
+        fn drop(&mut self) {
+            if !self.1 {
+                let _ = std::fs::remove_file(self.0);
+            }
+        }
+    }
+    let mut guard = Rm(&part, false);
+    let secs = |n| Some(std::time::Duration::from_secs(n));
+    // Mai bloccati per sempre: 20 s per collegarsi, 60 s di silenzio al massimo durante lo scaricamento
+    let agent: ureq::Agent = ureq::Agent::config_builder()
+        .proxy(ureq::Proxy::try_from_env())
+        .timeout_connect(secs(20))
+        .timeout_recv_response(secs(30))
+        .timeout_per_read(secs(60))
+        .build()
+        .into();
     let mut resp = agent
         .get(MODEL_URL)
         .call()
@@ -72,8 +93,6 @@ pub fn download_model(data_dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut
     let mut got: u64 = 0;
     loop {
         if cancel.is_cancelled() {
-            drop(file);
-            let _ = std::fs::remove_file(&part);
             return Err(EngineError::cancelled());
         }
         let n = reader.read(&mut buf).map_err(|e| EngineError::new(format!("scaricamento interrotto: {e}")))?;
@@ -91,15 +110,57 @@ pub fn download_model(data_dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut
     drop(file);
     let sha = hex(&hasher.finalize());
     if got < 50_000_000 || (!MODEL_SHA256.is_empty() && sha != MODEL_SHA256) || (MODEL_BYTES > 0 && got != MODEL_BYTES) {
-        let _ = std::fs::remove_file(&part);
         return Err(EngineError::new("il modello scaricato non è quello giusto (impronta diversa): riprova più tardi"));
     }
     std::fs::rename(&part, &dest)?;
+    guard.1 = true;
     progress(1.0);
     Ok(dest)
 }
 
-/// Dal JSON completo di whisper.cpp: frasi con i tempi di ogni parola.
+/// Dal JSON di whisper.cpp con una parola per segmento (-ml 1 -sow): le parole con i tempi,
+/// raggruppate in frasi da leggere comode (7 parole, 42 caratteri, 3,5 s; a capo alle pause e ai punti).
+pub fn parse_words_json(j: &serde_json::Value) -> Vec<Segment> {
+    let mut words: Vec<Word> = Vec::new();
+    if let Some(list) = j["transcription"].as_array() {
+        for s in list {
+            let t = s["text"].as_str().unwrap_or("").trim();
+            if t.is_empty() || t.starts_with('[') {
+                continue;
+            }
+            let ms = |v: &serde_json::Value| v.as_f64().unwrap_or(0.0) / 1000.0;
+            words.push(Word { text: t.to_string(), start: ms(&s["offsets"]["from"]), end: ms(&s["offsets"]["to"]) });
+        }
+    }
+    group_words(&words)
+}
+
+pub fn group_words(words: &[Word]) -> Vec<Segment> {
+    let mut out: Vec<Segment> = Vec::new();
+    let mut cur: Vec<Word> = Vec::new();
+    let flush = |cur: &mut Vec<Word>, out: &mut Vec<Segment>| {
+        if let (Some(a), Some(b)) = (cur.first(), cur.last()) {
+            out.push(Segment { start: a.start, end: b.end.max(a.start + 0.5), text: cur.iter().map(|w| w.text.as_str()).collect::<Vec<_>>().join(" "), words: cur.clone() });
+        }
+        cur.clear();
+    };
+    for w in words {
+        if let (Some(first), Some(last)) = (cur.first(), cur.last()) {
+            let chars: usize = cur.iter().map(|x| x.text.chars().count() + 1).sum::<usize>() + w.text.chars().count();
+            if w.start - last.end > 0.6 || cur.len() >= 7 || chars > 42 || w.end - first.start > 3.5 {
+                flush(&mut cur, &mut out);
+            }
+        }
+        cur.push(w.clone());
+        if w.text.ends_with(['.', '!', '?']) {
+            flush(&mut cur, &mut out);
+        }
+    }
+    flush(&mut cur, &mut out);
+    out
+}
+
+/// Dal JSON completo di whisper.cpp (pezzi di parole): frasi con i tempi di ogni parola.
 pub fn parse_json(j: &serde_json::Value) -> Vec<Segment> {
     let mut out = Vec::new();
     let Some(list) = j["transcription"].as_array() else { return out };
@@ -190,7 +251,7 @@ pub fn transcribe(tools: &Tools, exe: &Path, model: &Path, src: &Path, info: &Fi
     let threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).clamp(1, 8);
     let lang = if lang.chars().all(|c| c.is_ascii_alphabetic()) && (lang.len() == 2 || lang == "auto") { lang } else { "auto" };
     let mut cmd = quiet(std::process::Command::new(exe));
-    cmd.arg("-m").arg(model).arg("-f").arg(&wav).args(["-l", lang, "-t", &threads.to_string(), "-ojf", "-pp", "-of"]).arg(&base);
+    cmd.arg("-m").arg(model).arg("-f").arg(&wav).args(["-l", lang, "-t", &threads.to_string(), "-ml", "1", "-sow", "-oj", "-pp", "-of"]).arg(&base);
     cmd.stdout(Stdio::null()).stderr(Stdio::piped());
     let mut child = cmd.spawn().map_err(|e| EngineError::new(format!("non riesco ad avviare il motore della voce: {e}")))?;
     crate::tools::bind_to_app(&child);
@@ -201,14 +262,21 @@ pub fn transcribe(tools: &Tools, exe: &Path, model: &Path, src: &Path, info: &Fi
     let reader = std::thread::spawn(move || {
         let mut tail = String::new();
         if let Some(e) = stderr {
-            for line in BufReader::new(e).lines().map_while(|l| l.ok()) {
+            let mut r = BufReader::new(e);
+            let mut buf = Vec::new();
+            loop {
+                buf.clear();
+                match r.read_until(b'\n', &mut buf) {
+                    Ok(0) | Err(_) => break,
+                    Ok(_) => {}
+                }
+                let line = String::from_utf8_lossy(&buf);
                 if let Some(p) = line.split("progress =").nth(1).and_then(|x| x.trim().trim_end_matches('%').trim().parse::<f64>().ok()) {
                     let _ = tx.send(p / 100.0);
                 }
                 tail.push_str(&line);
-                tail.push('\n');
-                if tail.len() > 8000 {
-                    tail.drain(..4000);
+                if tail.chars().count() > 8000 {
+                    tail = tail.chars().skip(4000).collect();
                 }
             }
         }
@@ -234,8 +302,10 @@ pub fn transcribe(tools: &Tools, exe: &Path, model: &Path, src: &Path, info: &Fi
         return Err(EngineError::new(format!("la trascrizione si è fermata: {}", last.chars().take(200).collect::<String>())));
     }
     let json = std::fs::read(base.with_extension("json")).map_err(|_| EngineError::new("la trascrizione non ha prodotto risultati"))?;
-    let v: serde_json::Value = serde_json::from_slice(&json).map_err(|_| EngineError::new("risultato della trascrizione non leggibile"))?;
-    let segs = parse_json(&v);
+    // Le lettere accentate a volte arrivano spezzate: si legge comunque
+    let text = String::from_utf8_lossy(&json);
+    let v: serde_json::Value = serde_json::from_str(&text).map_err(|_| EngineError::new("risultato della trascrizione non leggibile"))?;
+    let segs = parse_words_json(&v);
     if segs.is_empty() {
         return Err(EngineError::new("non ho sentito parole in questo file"));
     }
@@ -274,5 +344,19 @@ mod tests {
         assert!((s[0].words[2].end - 1.4).abs() < 1e-9);
         assert_eq!(to_srt(&s).lines().nth(1), Some("00:00:00,000 --> 00:00:02,400"));
         assert_eq!(to_text(&s), "Ciao a tutti.\n\nSeconda frase\n");
+    }
+
+    #[test]
+    fn una_parola_per_segmento() {
+        let j: serde_json::Value = serde_json::from_str(r#"{"transcription":[
+          {"offsets":{"from":0,"to":400},"text":" Buongiorno."},
+          {"offsets":{"from":500,"to":800},"text":" Oggi"},
+          {"offsets":{"from":850,"to":1000},"text":" è"},
+          {"offsets":{"from":1050,"to":1400},"text":" sabato"},
+          {"offsets":{"from":3000,"to":3400},"text":" Dopo"},
+          {"offsets":{"from":3400,"to":3500},"text":" [_TT_]"}]}"#).unwrap();
+        let s = parse_words_json(&j);
+        assert_eq!(s.iter().map(|x| x.text.as_str()).collect::<Vec<_>>(), vec!["Buongiorno.", "Oggi è sabato", "Dopo"]);
+        assert!((s[1].words[1].start - 0.85).abs() < 1e-9);
     }
 }
