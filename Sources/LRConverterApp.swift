@@ -279,12 +279,16 @@ enum SharedFiles {
         for p in (c.queryItems ?? []).filter({ $0.name == "f" }).compactMap({ $0.value }) {
             let u = URL(fileURLWithPath: p)
             guard fm.fileExists(atPath: u.path) else { continue }
-            if p.contains("/Library/Containers/") {
+            // 3.5.2 · Sicurezza: un link non può mai spostare file dai dati di altre app.
+            // Solo lo spazio dell'estensione Condividi di OrbitLR viene copiato (mai spostato); gli altri si ignorano.
+            let real = u.resolvingSymlinksInPath().standardizedFileURL.path
+            if real.contains("/Library/Containers/") {
+                guard real.contains("/Library/Containers/it.ledion.OrbitLR.Share/") else { continue }
                 let inbox = IntentRunner.inbox
                 try? fm.createDirectory(at: inbox, withIntermediateDirectories: true)
                 let ext = u.pathExtension
                 let dest = Destination.unique(inbox, base: u.deletingPathExtension().lastPathComponent, ext: ext.isEmpty ? "dat" : ext)
-                if (try? fm.moveItem(at: u, to: dest)) != nil || (try? fm.copyItem(at: u, to: dest)) != nil { out.append(dest) }
+                if (try? fm.copyItem(at: u, to: dest)) != nil { out.append(dest) }
             } else {
                 out.append(u)
             }
