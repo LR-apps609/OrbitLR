@@ -1,3 +1,13 @@
+Novità della 3.5 «Seta»:
+• Video: dopo una modifica l’anteprima nuova compare solo quando ha già l’immagine pronta, al posto di quella vecchia: niente più nero in mezzo
+• Video: durante la riproduzione si aggiorna solo la barra in basso, non tutta l’anteprima: più fluida e più leggera
+• Le schede nascoste fermano le loro animazioni e la voce di prova; tornando su Video e Audio gli elenchi dei progetti sono sempre aggiornati
+• OrbitLR si riapre sulla scheda dove eri
+• ⌘Q con dei lavori in corso: OrbitLR chiede se continuare o interrompere, mai perdite silenziose
+• La prima volta che chiudi la finestra, OrbitLR ti dice che resta pronta nella barra in alto (una volta sola)
+• Miniature senza mai toccare il disco mentre l’app disegna; il Cassetto si ricontrolla quando torni in OrbitLR
+• Ogni aggiornamento viene aperto e controllato prima di uscire: versione giusta, firma valida, pronto per Apple Silicon e Intel
+
 Novità della 3.4.9 «Suono e tocco»:
 • I suoni partono subito, insieme al movimento, e non si tagliano mai a vicenda; a riposo il motore audio si spegne e non consuma
 • Le manopole e gli agganci della sequenza si sentono anche al tatto, con un piccolo colpo del trackpad

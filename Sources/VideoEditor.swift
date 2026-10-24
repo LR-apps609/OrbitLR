@@ -343,7 +343,10 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             // (o dopo mezzo secondo al massimo, se nessuno lo sta guardando)
             if let pending = self.incoming, pending !== next { pending.replaceCurrentItem(with: nil) }
             self.incoming = next
+            Perf.end(.previewRebuild)                          // il lettore nuovo è pronto sul punto giusto
             self.promoteFallback?.cancel()
+            // Nessuna finestra la mostra (app in barra, test): niente da aspettare, si scambia subito
+            guard AppState.shared.mainWindow?.isVisible == true else { self.promote(next); return }
             let w = DispatchWorkItem { [weak self, weak next] in if let next { self?.promote(next) } }
             self.promoteFallback = w
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: w)
@@ -366,7 +369,6 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         attachObserver()
         if wasPlaying { next.play() }
         old.replaceCurrentItem(with: nil)
-        Perf.end(.previewRebuild)
     }
 
     func togglePlay() { clock.playing ? pause() : play() }
