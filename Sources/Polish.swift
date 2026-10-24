@@ -49,7 +49,10 @@ final class ThumbCache: @unchecked Sendable {
         // 3.5 · Tutto quello che tocca il disco (data del file, file sul disco) avviene in sottofondo
         disk.async { [weak self] in
             guard let self else { return }
-            guard FileManager.default.fileExists(atPath: url.path) else { DispatchQueue.main.async { done(nil) }; return }
+            guard FileManager.default.fileExists(atPath: url.path) else {
+                self.latest.removeObject(forKey: quick)          // file sparito: niente miniatura vecchia al prossimo disegno
+                DispatchQueue.main.async { done(nil) }; return
+            }
             let k = Self.key(url, side)
             if let img = self.cache.object(forKey: k as NSString) { DispatchQueue.main.async { done(img) }; return }
             let file = Self.diskURL(k)
@@ -64,6 +67,7 @@ final class ThumbCache: @unchecked Sendable {
                                                    scale: 2, representationTypes: .thumbnail)
             QLThumbnailGenerator.shared.generateBestRepresentation(for: req) { [weak self] rep, _ in
                 let img = rep?.nsImage
+                if img == nil { self?.latest.removeObject(forKey: quick) }
                 if let img, let self {
                     self.cache.setObject(img, forKey: k as NSString)
                     self.latest.setObject(img, forKey: quick)
@@ -79,6 +83,11 @@ final class ThumbCache: @unchecked Sendable {
                 DispatchQueue.main.async { done(img) }
             }
         }
+    }
+
+    /// La stessa, da attendere dentro una `.task` (così una risposta per un file vecchio si può scartare).
+    func image(for url: URL, side: CGFloat) async -> NSImage? {
+        await withCheckedContinuation { c in image(for: url, side: side) { c.resume(returning: $0) } }
     }
 
     /// Data di modifica: se il file cambia, la miniatura si rifà.
@@ -139,9 +148,12 @@ struct FileThumb: View {
         .animation(Motion.quick, value: image != nil)
         .task(id: url?.path) {
             guard let url else { image = nil; return }
-            let hit = ThumbCache.shared.cached(for: url, side: size * 2)
-            if hit == nil { image = nil } else if image == nil { image = hit }
-            ThumbCache.shared.image(for: url, side: size * 2) { img in if img !== image { image = img } }
+            // 3.5.1 · Sempre la miniatura di QUESTO file (mai quella del precedente), e una risposta
+            // arrivata tardi per un file vecchio viene scartata
+            image = ThumbCache.shared.cached(for: url, side: size * 2)
+            let img = await ThumbCache.shared.image(for: url, side: size * 2)
+            guard !Task.isCancelled else { return }
+            if img !== image { image = img }
         }
     }
 }

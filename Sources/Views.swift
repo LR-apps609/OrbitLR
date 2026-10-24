@@ -78,6 +78,11 @@ struct MainWindow: View {
         switch item {
         case .video?:
             VideoProjectStore.shared.pause()
+            // 3.5.1 · Un campo di testo del montaggio non resta acceso di nascosto: tornando, i tasti J/K/L/S funzionano
+            if VideoProjectStore.shared.typing {
+                AppState.shared.mainWindow?.makeFirstResponder(nil)
+                VideoProjectStore.shared.typing = false
+            }
         case .audio?:
             AppState.shared.audioTab.trim?.pause()
         default: break

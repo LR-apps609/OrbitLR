@@ -433,8 +433,6 @@ final class SpeechPreview: NSObject, ObservableObject, AVSpeechSynthesizerDelega
 
 struct AudioTabView: View {
     @ObservedObject var m: MediaTabModel
-    /// 3.5 · La scheda resta viva: si guarda quale scheda è davanti per fermare la voce e aggiornare i progetti
-    @ObservedObject private var app = AppState.shared
     @State private var tool: AudioTool = .ringtone
 
     init(m: MediaTabModel, startTool: AudioTool = .ringtone) {
@@ -487,7 +485,8 @@ struct AudioTabView: View {
             return true
         }
         .onAppear { applyTrimRules(); m.currentTool = tool.rawValue; m.refreshProjects() }
-        .onChange(of: app.selection) { _, now in
+        // 3.5.1 · Solo il cambio di scheda, non ogni modifica dell'app: la scheda nascosta non si ridisegna
+        .onReceive(AppState.shared.$selection.dropFirst().removeDuplicates()) { now in
             if now == .audio { m.refreshProjects() } else { preview.stop(); m.trim?.pause() }
         }
         .onChange(of: m.restoredTool) { _, v in

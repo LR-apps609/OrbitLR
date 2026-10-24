@@ -60,6 +60,8 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     private var saveWork: DispatchWorkItem?
     private var loading: Set<String> = []
     private(set) var previewDuration: Double = 0
+    /// 3.5.1 · La durata del lettore nuovo, in attesa dello scambio
+    private var pendingDuration: Double? = nil
 
     private var saveURL: URL? { currentID.map { VideoProjectLibrary.url(for: $0, in: folder) } }
 
@@ -311,7 +313,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
                 self.pause()
                 self.player.replaceCurrentItem(with: nil)
                 self.incoming = nil
-                self.previewDuration = 0
+                self.previewDuration = 0; self.pendingDuration = nil
                 return
             }
             self.building = true
@@ -322,7 +324,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
                 self.pause()
                 self.player.replaceCurrentItem(with: nil)
                 self.incoming = nil
-                self.previewDuration = 0
+                self.previewDuration = 0; self.pendingDuration = nil
                 return
             }
             let item = AVPlayerItem(asset: built.composition)
@@ -338,7 +340,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             let now = min(self.clock.time, max(0, built.duration - 0.05))
             if abs(now - t) > 0.02 { _ = await next.seek(to: VideoProjectBuilder.cm(now), toleranceBefore: .zero, toleranceAfter: .zero) }
             guard !Task.isCancelled else { return }
-            self.previewDuration = built.duration
+            self.pendingDuration = built.duration
             // Si mostra, invisibile, sopra quello vecchio; lo scambio avviene quando ha l'immagine pronta
             // (o dopo mezzo secondo al massimo, se nessuno lo sta guardando)
             if let pending = self.incoming, pending !== next { pending.replaceCurrentItem(with: nil) }
@@ -359,16 +361,29 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         promoteFallback?.cancel()
         let wasPlaying = clock.playing
         let old = player
+        // 3.5.1 · La durata nuova vale solo da adesso: fino allo scambio il lettore vecchio usa la sua
+        if let d = pendingDuration { previewDuration = d; pendingDuration = nil }
         let now = min(clock.time, max(0, previewDuration - 0.05))
-        if abs(next.currentTime().seconds - now) > 0.05 {
-            next.seek(to: VideoProjectBuilder.cm(now), toleranceBefore: .zero, toleranceAfter: .zero)
-        }
+        let needsSeek = abs(next.currentTime().seconds - now) > 0.05
         old.pause()
         player = next
         incoming = nil
         attachObserver()
-        if wasPlaying { next.play() }
         old.replaceCurrentItem(with: nil)
+        if needsSeek {
+            // L'indicatore non torna indietro e il video riparte solo quando l'immagine è sul punto giusto
+            seeking = true
+            next.seek(to: VideoProjectBuilder.cm(now), toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    self.seeking = false
+                    if wasPlaying, self.clock.playing, self.player === next { next.play() }
+                    self.chaseSeek()
+                }
+            }
+        } else if wasPlaying {
+            next.play()
+        }
     }
 
     func togglePlay() { clock.playing ? pause() : play() }
@@ -561,7 +576,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         player.replaceCurrentItem(with: nil)
         incoming?.replaceCurrentItem(with: nil)
         incoming = nil
-        previewDuration = 0
+        previewDuration = 0; pendingDuration = nil
         clock.time = 0
         refreshLibrary()
     }

@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 import AppKit
 import AVFoundation
@@ -169,7 +170,6 @@ struct VideoModeSwitch: View {
 
 struct VideoProjectsView: View {
     @ObservedObject var s: VideoProjectStore
-    @ObservedObject private var app = AppState.shared
     @Environment(\.undoManager) private var undo
     @State private var targeted = false
 
@@ -226,7 +226,7 @@ struct VideoProjectsView: View {
             return true
         }
         .onAppear { s.refreshLibrary() }
-        .onChange(of: app.selection) { _, now in if now == .video { s.refreshLibrary() } }   // 3.4.2 · la scheda resta viva
+        .onReceive(AppState.shared.$selection.dropFirst().removeDuplicates()) { now in if now == .video { s.refreshLibrary() } }   // 3.4.2 · la scheda resta viva
     }
 
     private func rename(_ e: VPEntry) {

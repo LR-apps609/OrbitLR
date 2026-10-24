@@ -461,11 +461,14 @@ struct PlayerPreview: NSViewRepresentable {
             guard let onReady else { token = nil; return }
             guard token == nil, !fired else { return }
             if v.isReadyForDisplay { fired = true; DispatchQueue.main.async { onReady() }; return }
+            // 3.5.1 · L'avviso può arrivare da un altro thread: tutto si decide sul principale
             token = v.observe(\.isReadyForDisplay, options: [.new]) { [weak self] view, _ in
-                guard let self, !self.fired, view.isReadyForDisplay else { return }
-                self.fired = true
-                self.token = nil
-                DispatchQueue.main.async { onReady() }
+                DispatchQueue.main.async {
+                    guard let self, !self.fired, view.isReadyForDisplay else { return }
+                    self.fired = true
+                    self.token = nil
+                    onReady()
+                }
             }
         }
     }

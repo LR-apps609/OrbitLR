@@ -329,7 +329,9 @@ private struct ImageTile: View {
         .onHover { hover = $0 }
         .fileDrag(url)
         .task(id: url.path) {
-            ThumbCache.shared.image(for: url, side: 220) { img in if img !== image { image = img } }
+            let img = await ThumbCache.shared.image(for: url, side: 220)
+            guard !Task.isCancelled else { return }
+            if img !== image { image = img }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(url.lastPathComponent + (selected ? ", scelta" : ""))

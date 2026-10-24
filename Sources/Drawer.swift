@@ -71,7 +71,9 @@ final class Drawer: ObservableObject, @unchecked Sendable {
             .debounce(for: .milliseconds(150), scheduler: DispatchQueue.main)
             .sink { [weak self] history, hidden in self?.refresh(history, hidden) }
         // Tornando in OrbitLR (magari dopo aver cestinato un file nel Finder) il Cassetto si ricontrolla
+        // 3.5.1 · Con un attimo di ritardo: l'apertura della torta (che attiva l'app) resta libera
         active = NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+            .debounce(for: .milliseconds(600), scheduler: DispatchQueue.main)
             .sink { [weak self] _ in guard let self else { return }; self.refresh(QueueStore.shared.history, self.hidden) }
     }
     private var active: AnyCancellable?
