@@ -1,3 +1,10 @@
+Novità della 3.5.1 · rifiniture:
+• Miniature sempre del file giusto, anche scorrendo veloce; un file cestinato non lascia più la sua miniatura
+• Video: dopo una modifica il video riparte esattamente dal punto in cui eri, senza salti dell’indicatore
+• Le schede nascoste non si ridisegnano più a ogni cambiamento: passare da una scheda all’altra è ancora più leggero
+• Lasciando la scheda Video mentre scrivi un testo, tornando i tasti J, K, L e S funzionano subito
+• La torta si apre libera: il Cassetto si ricontrolla un attimo dopo
+
 Novità della 3.5 «Seta»:
 • Video: dopo una modifica l’anteprima nuova compare solo quando ha già l’immagine pronta, al posto di quella vecchia: niente più nero in mezzo
 • Video: durante la riproduzione si aggiorna solo la barra in basso, non tutta l’anteprima: più fluida e più leggera
