@@ -6,6 +6,7 @@ import { audioPage } from "./audio.js";
 import { convertPage } from "./convert.js";
 import { getDrawer, running, subscribe } from "./jobs.js";
 import { mediaPage } from "./media.js";
+import { videoTab } from "./video.js";
 import { activityPage, helpPage, report, settingsPage } from "./pages.js";
 import { extOf, fmtBytes, h, ico, modal, store, toast } from "./util.js";
 
@@ -35,7 +36,7 @@ window.orbit = app;
 const TABS = [
   { id: "convert", label: "Conversione", icon: "arrow-left-right", make: () => convertPage(app) },
   { id: "image", label: "Immagini", icon: "image", make: () => mediaPage("image", app) },
-  { id: "video", label: "Video", icon: "film", make: () => mediaPage("video", app) },
+  { id: "video", label: "Video", icon: "film", make: () => videoTab(app) },
   { id: "audio", label: "Audio", icon: "audio-lines", make: () => audioPage(app) },
   { id: "pdf", label: "File", icon: "file-text", make: () => mediaPage("pdf", app) },
 ];
@@ -173,7 +174,7 @@ async function boot() {
   // Niente menu del browser e niente navigazione accidentale trascinando un link
   window.addEventListener("dragover", (e) => e.preventDefault());
   window.addEventListener("drop", (e) => e.preventDefault());
-  if (!DEMO) document.addEventListener("contextmenu", (e) => { if (!e.target.closest("input, textarea")) e.preventDefault(); });
+  if (!DEMO) document.addEventListener("contextmenu", (e) => { if (!(e.target instanceof Element && e.target.closest("input, textarea"))) e.preventDefault(); });
   invoke("engine_status").then((s) => {
     app.engine = s;
     if (!s.ready) toast("Il motore video non si è avviato: reinstalla OrbitLR.");

@@ -41,7 +41,9 @@ export function resultBar(origin) {
     }
     const first = outs[0];
     let detail;
-    if (outs.length === 1 && job.results.length === 1) {
+    if (job.action === "vproject" || job.action === "tts") {
+      detail = h("span", `${job.action === "vproject" ? "Montaggio pronto" : "File audio pronto"} · ${fmtBytes(first.size)}`);
+    } else if (outs.length === 1 && job.results.length === 1) {
       const before = job.results[0].sourceSize;
       const g = gainText(before, first.size);
       detail = g ? h("span.gain", g) : h("span", fmtBytes(first.size));

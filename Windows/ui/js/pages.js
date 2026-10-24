@@ -14,7 +14,8 @@ export function activityPage() {
     h("div.page-scroll", body));
 
   function jobCard(j, live) {
-    const outs = j.results.flatMap((r) => r.outputs.map((o) => ({ ...o, before: j.results.length === 1 && r.outputs.length === 1 ? r.sourceSize : 0 })));
+    const compare = j.results.length === 1 && !["vproject", "tts", "merge", "vmerge", "amerge", "pdfmerge"].includes(j.action);
+    const outs = j.results.flatMap((r) => r.outputs.map((o) => ({ ...o, before: compare && r.outputs.length === 1 ? r.sourceSize : 0 })));
     const errs = j.results.filter((r) => r.error);
     const when = new Date(j.ended || j.started).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
     const state = live ? h("span", { style: { color: "var(--brass)" } }, `${Math.round(j.progress * 100)}%`)
@@ -101,6 +102,7 @@ const FAQ = [
   ["Video", "Come rendo un video più leggero senza perdere qualità?", "Video → scegli il video → «Comprimi» → «Stessa qualità, meno peso». OrbitLR usa la scheda video del computer (NVIDIA, Intel o AMD) quando c'è, ed è molto più veloce."],
   ["Video", "Devo mandare un video su WhatsApp, Discord o per email", "In «Comprimi» scegli WhatsApp, Discord o Email: il video starà sotto quel peso. Prima si tengono qualità e misura; la risoluzione scende solo se serve."],
   ["Video", "Posso lavorare film lunghi, di 2 ore o 5 GB?", "Sì: tutto avviene sul computer, senza caricare niente. OrbitLR controlla prima che ci sia spazio sul disco. «Taglia» su un film lungo è istantaneo perché non ricodifica."],
+  ["Video", "Come faccio un montaggio con testi, filtri e musica?", "Video → «Editor» (o Ctrl+Maiusc+E): i video scelti entrano nel montaggio. In basso la sequenza: trascina i bordi per accorciare, S per dividere, il pallino tra due clip per la transizione. A destra Clip, Filtri, Effetti, Testi, Audio e Formato. Si salva da solo; «Esporta» crea il video."],
   ["Video", "Come taglio un video?", "Video → scegli il video → «Taglia». Sposta le maniglie (o usa I e O mentre guardi). Senza ricodifica il taglio è istantaneo e senza perdita; con «Taglio preciso» cade esattamente dove vuoi."],
   ["Video", "Come faccio un video verticale per Reels o TikTok?", "Video → «Formato social» → 9:16. Il video resta intero e i bordi si riempiono con lo stesso video sfocato."],
   ["Audio", "Come faccio una suoneria?", "Audio → apri la canzone → «Suoneria». Sposta il riquadro sul pezzo (fino a 30 secondi), scegli iPhone o Android e premi «Crea la suoneria»."],

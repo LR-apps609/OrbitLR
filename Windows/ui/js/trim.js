@@ -155,7 +155,7 @@ export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange 
 
   let destroyed = false;
   const keys = (e) => {
-    if (!el.isConnected || e.target.closest("input, textarea, select, button") || document.querySelector(".modal-bg")) return;
+    if (!el.isConnected || (e.target instanceof Element && e.target.closest("input, textarea, select, button")) || document.querySelector(".modal-bg")) return;
     if (e.key === "i" || e.key === "I") setStart(player.currentTime);
     else if (e.key === "o" || e.key === "O") setEnd(player.currentTime);
     else if (e.key === " ") {

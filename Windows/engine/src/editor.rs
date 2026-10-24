@@ -179,7 +179,12 @@ pub fn build(p: &Project, infos: &[FileInfo], w: u32, h: u32) -> Result<(Vec<OsS
     for (i, c) in p.clips.iter().enumerate() {
         let info = &infos[i];
         let src_len = (c.out_point - c.in_point).max(0.05);
-        a.extend(args!["-ss", format!("{:.3}", c.in_point.max(0.0)), "-t", format!("{src_len:.3}"), "-i", &c.path]);
+        // Una foto nel montaggio: si ripete per la durata scelta
+        if info.kind == Some(crate::probe::Kind::Image) {
+            a.extend(args!["-loop", "1", "-framerate", format!("{fps:.3}"), "-t", format!("{src_len:.3}"), "-i", &c.path]);
+        } else {
+            a.extend(args!["-ss", format!("{:.3}", c.in_point.max(0.0)), "-t", format!("{src_len:.3}"), "-i", &c.path]);
+        }
         let fx = c.fx.clone().unwrap_or_default();
         let speed = c.speed();
         let len = src_len / speed;

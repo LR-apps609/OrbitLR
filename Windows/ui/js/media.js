@@ -15,7 +15,7 @@ const COPY = {
   pdf: { title: "File", one: "PDF", many: "PDF", empty: "Trascina qui i PDF", emptySub: "Unisci, dividi ed estrai pagine. Word, Excel e PowerPoint arriveranno con un componente facoltativo.", filters: [{ name: "PDF", extensions: ["pdf"] }] },
 };
 
-export function mediaPage(kind, app) {
+export function mediaPage(kind, app, opts = {}) {
   const c = COPY[kind];
   let files = [];
   let selected = new Set();
@@ -92,6 +92,9 @@ export function mediaPage(kind, app) {
     head.replaceChildren(
       h("div", h("h1", c.title), h("div.sub", files.length ? `${files.length} ${files.length === 1 ? c.one : c.many} · ${fmtBytes(total)}${selected.size ? ` · ${selected.size} scelti` : ""}` : "Niente ancora")),
       h("div.grow"),
+      opts.onEditor ? h("div.seg", { role: "tablist" },
+        h("button.on", { role: "tab", "aria-selected": "true" }, "Strumenti veloci"),
+        h("button", { role: "tab", title: "Montaggio completo (Ctrl+Maiusc+E)", onclick: () => opts.onEditor(targets().map((f) => f.path)) }, ico("film", 14), " Editor")) : null,
       files.length ? h("button.btn", { onclick: pick }, ico("plus", 16), "Aggiungi…") : null,
       files.length ? h("button.btn.icon", { title: "Togli tutto", "aria-label": "Togli tutto", onclick: clearAll }, ico("x", 16)) : null);
   }

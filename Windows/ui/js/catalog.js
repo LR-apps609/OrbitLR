@@ -163,7 +163,7 @@ export const ACTION_NAMES = {
   vcompress: "Comprimi", icompress: "Comprimi", vresize: "Cambia la grandezza", social: "Formato social", cut: "Taglia", gifcut: "GIF da un pezzo",
   speed: "Cambia la velocità", vmerge: "Unisci i video", amerge: "Unisci", normalize: "Volume uniforme", voiceclean: "Voce più pulita", mute: "Togli l'audio",
   rotate: "Ruota", resize: "Ridimensiona", strip: "Rimuovi i metadati", merge: "Unisci in un PDF", pdfmerge: "Unisci i PDF", split: "Dividi in pagine",
-  extract: "Estrai pagine", ringtone: "Suoneria", silence: "Togli i silenzi", whatsapp: "Vocale per WhatsApp", tts: "Testo in voce",
+  extract: "Estrai pagine", vproject: "Esporta il montaggio", ringtone: "Suoneria", silence: "Togli i silenzi", whatsapp: "Vocale per WhatsApp", tts: "Testo in voce",
 };
 
 export function actionName(id) {

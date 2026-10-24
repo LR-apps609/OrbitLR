@@ -120,8 +120,8 @@ export function convertPage(app) {
   }
 
   function onKey(e) {
-    if (!el.isConnected || !files.length || e.target.closest("input, textarea, select") || document.querySelector(".modal-bg")) return;
-    if ((e.key === "Enter" || e.key === " ") && e.target.closest("button")) return; // ci pensa il pulsante
+    if (!el.isConnected || !files.length || (e.target instanceof Element && e.target.closest("input, textarea, select")) || document.querySelector(".modal-bg")) return;
+    if ((e.key === "Enter" || e.key === " ") && (e.target instanceof Element && e.target.closest("button"))) return; // ci pensa il pulsante
     const n = Number(e.key);
     if (n >= 1 && n <= 9 && keyMap[n - 1]) {
       e.preventDefault();

@@ -203,3 +203,15 @@ mod tests {
         assert!((b.o[0] - 0.2).abs() < 1e-9);
     }
 }
+
+#[cfg(test)]
+mod parity {
+    #[test]
+    fn stessa_matematica_dell_anteprima() {
+        let l = super::Look { preset: "vintage".into(), amount: 0.7, brightness: 0.2, contrast: -0.3, saturation: 0.1, warmth: 0.5, ..Default::default() };
+        let (a, v, _) = l.resolve();
+        let m: Vec<String> = a.m.iter().map(|r| r.iter().map(|x| format!("{x:.5}")).collect::<Vec<_>>().join(",")).collect();
+        let o: Vec<String> = a.o.iter().map(|x| format!("{x:.5}")).collect();
+        println!("RUST {} {} {:.3}", m.join(" | "), o.join(","), v);
+    }
+}
