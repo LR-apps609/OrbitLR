@@ -57,7 +57,12 @@ pub fn open(tools: Option<&Tools>, path: &Path) -> Result<Photo> {
                 }
                 return Err(first);
             }
-            Ok(Photo { img: image::load_from_memory_with_format(&out.stdout, ImageFormat::Png)?, exif: None, icc: None })
+            // L'EXIF dell'iPhone (posizione, data, fotocamera) passa nel JPG; ffmpeg ha già raddrizzato la foto
+            let exif = std::fs::read(path).ok().and_then(|d| crate::heif::exif(&d)).and_then(|mut t| {
+                meta::exif_reset_orientation(&mut t);
+                (t.len() <= 60_000).then_some(t)
+            });
+            Ok(Photo { img: image::load_from_memory_with_format(&out.stdout, ImageFormat::Png)?, exif, icc: None })
         }
     }
 }

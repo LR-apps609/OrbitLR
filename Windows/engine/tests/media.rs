@@ -418,3 +418,17 @@ fn comprimi_pdf() {
     let e = act("pdfcompress", &[&out[0]], json!("light")).unwrap_err();
     assert!(e.contains("già compresso"), "{e}");
 }
+
+#[test]
+fn heic_in_jpg_tiene_la_posizione() {
+    // Una foto HEIC con GPS e marca (fatta con libheif, come quelle dell'iPhone)
+    let src = work().join("Vacanza.heic");
+    std::fs::copy(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/iphone-gps.heic"), &src).unwrap();
+    let out = act("to:jpg", &[&src], json!(null)).unwrap();
+    let data = std::fs::read(&out[0]).unwrap();
+    let tiff = orbit_engine::meta::jpeg_exif(&data).expect("il JPG deve avere l'EXIF");
+    assert!(tiff.windows(5).any(|w| w == b"Apple"), "manca la marca");
+    assert_eq!(orbit_engine::meta::exif_orientation(&tiff).unwrap_or(1), 1);
+    let img = image::load_from_memory(&data).unwrap();
+    assert_eq!((img.width(), img.height()), (64, 48));
+}

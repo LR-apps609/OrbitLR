@@ -9,6 +9,7 @@ pub mod actions;
 pub mod audio;
 pub mod editor;
 pub mod error;
+pub mod heif;
 pub mod hide;
 pub mod images;
 pub mod look;
