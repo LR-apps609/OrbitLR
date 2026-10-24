@@ -1,0 +1,13 @@
+[package]
+name = "orbit_engine"
+version = "0.1.0"
+edition = "2021"
+description = "Il motore di OrbitLR per Windows: video, audio, foto e PDF sul computer, senza internet"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "bmp", "tiff", "ico", "webp"] }
+fs4 = "1"
+lopdf = "0.46"
+

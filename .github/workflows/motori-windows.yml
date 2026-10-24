@@ -1,6 +1,7 @@
 # OrbitLR per Windows · motori: ffmpeg in versione LGPL (si può distribuire dentro un'app venduta).
 # Prende la build LGPL di BtbN/FFmpeg-Builds, la prova, e la mette tra i file del nostro repository
 # (release «motori-win-1») con la sua impronta: la compilazione dell'app scarica solo da lì e controlla l'impronta.
+# Si rifà spingendo una modifica di questo file sul ramo «motori-win».
 
 name: Motori per Windows
 

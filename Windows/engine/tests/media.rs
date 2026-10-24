@@ -1,0 +1,285 @@
+//! Prove vere: file creati al momento con ffmpeg, lavorati dal motore, controllati con ffprobe.
+//! Girano su Linux (qui) e su Windows (GitHub), con l'ffmpeg che si trova.
+
+use orbit_engine::{probe, run_action, Cancel, Ctx, Tools};
+use serde_json::{json, Value};
+use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
+
+fn tools() -> Tools {
+    static T: OnceLock<Tools> = OnceLock::new();
+    T.get_or_init(|| {
+        let dir = std::env::var_os("ORBIT_MOTORI").map(PathBuf::from);
+        Tools::locate(dir.as_deref()).expect("serve ffmpeg per le prove")
+    })
+    .clone()
+}
+
+fn work() -> PathBuf {
+    static D: OnceLock<PathBuf> = OnceLock::new();
+    D.get_or_init(|| {
+        let d = std::env::temp_dir().join(format!("orbit-prove-{}", std::process::id()));
+        std::fs::create_dir_all(&d).unwrap();
+        d
+    })
+    .clone()
+}
+
+fn ff(args: &[&str]) {
+    let st = tools().ffmpeg_cmd().args(["-hide_banner", "-loglevel", "error", "-y"]).args(args).status().unwrap();
+    assert!(st.success(), "ffmpeg {:?}", args);
+}
+
+/// Video di prova con movimento e un tono (il rumore lo rende difficile da comprimere, come i video veri).
+static FIXTURES: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+fn fixture_video(name: &str, w: u32, h: u32, secs: u32, audio: bool) -> PathBuf {
+    let _g = FIXTURES.lock().unwrap_or_else(|e| e.into_inner());
+    let p = work().join(name);
+    if p.exists() {
+        return p;
+    }
+    let tmp = work().join(format!("tmp-{name}"));
+    let src = format!("testsrc2=size={w}x{h}:rate=30:duration={secs},noise=alls=12:allf=t");
+    let tone = format!("sine=frequency=440:duration={secs}");
+    let enc: Vec<String> = orbit_engine::video::encoder_args(&orbit_engine::video::candidates(&tools(), orbit_engine::video::Codec::H264)[0], 6_000_000)
+        .into_iter()
+        .map(|s| s.to_string_lossy().to_string())
+        .collect();
+    let mut a: Vec<String> = vec!["-f".into(), "lavfi".into(), "-i".into(), src];
+    if audio {
+        a.extend(["-f".into(), "lavfi".into(), "-i".into(), tone]);
+    }
+    a.extend(enc);
+    if audio {
+        a.extend(["-c:a".into(), "aac".into(), "-b:a".into(), "192k".into(), "-shortest".into()]);
+    }
+    a.push(tmp.to_string_lossy().to_string());
+    let r: Vec<&str> = a.iter().map(String::as_str).collect();
+    ff(&r);
+    std::fs::rename(&tmp, &p).unwrap();
+    p
+}
+
+fn fixture_audio(name: &str) -> PathBuf {
+    let _g = FIXTURES.lock().unwrap_or_else(|e| e.into_inner());
+    let p = work().join(name);
+    if !p.exists() {
+        // 2 s di tono, 2 s di silenzio, 2 s di tono
+        let pl = p.to_string_lossy().to_string();
+        ff(&["-f", "lavfi", "-i", "sine=f=330:d=2", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono:d=2", "-f", "lavfi", "-i", "sine=f=550:d=2",
+             "-filter_complex", "[0:a]aresample=44100[a];[1:a]aresample=44100[b];[2:a]aresample=44100[c];[a][b][c]concat=n=3:v=0:a=1", &pl]);
+    }
+    p
+}
+
+fn fixture_photo(name: &str, w: u32, h: u32) -> PathBuf {
+    let _g = FIXTURES.lock().unwrap_or_else(|e| e.into_inner());
+    let p = work().join(name);
+    if !p.exists() {
+        let img = image::RgbImage::from_fn(w, h, |x, y| image::Rgb([(x * 255 / w) as u8, (y * 255 / h) as u8, ((x ^ y) & 255) as u8]));
+        img.save(&p).unwrap();
+    }
+    p
+}
+
+fn ctx() -> Ctx {
+    Ctx { tools: Some(tools()), out_dir: Some(work().join("out")) }
+}
+
+fn act(id: &str, files: &[&Path], param: Value) -> Result<Vec<PathBuf>, String> {
+    let files: Vec<PathBuf> = files.iter().map(|p| p.to_path_buf()).collect();
+    let mut last = 0.0;
+    let r = run_action(&ctx(), id, &files, &param, &Cancel::new(), &mut |p| {
+        assert!(p >= 0.0 && p <= 1.0, "avanzamento fuori scala: {p}");
+        last = p;
+    });
+    r.map(|o| o.into_iter().map(|o| PathBuf::from(o.path)).collect()).map_err(|e| e.0)
+}
+
+fn info(p: &Path) -> orbit_engine::FileInfo {
+    probe(Some(&tools()), p).unwrap()
+}
+
+fn size(p: &Path) -> u64 {
+    std::fs::metadata(p).unwrap().len()
+}
+
+#[test]
+fn comprimi_stessa_qualita() {
+    let v = fixture_video("grande.mp4", 1280, 720, 6, true);
+    let out = act("vcompress", &[&v], json!("best")).unwrap();
+    let i = info(&out[0]);
+    assert_eq!((i.width, i.height), (1280, 720), "stessa misura");
+    assert!(size(&out[0]) < size(&v), "più leggero: {} → {}", size(&v), size(&out[0]));
+    assert!(i.has_audio);
+    assert!((i.duration - 6.0).abs() < 0.3);
+}
+
+#[test]
+fn comprimi_a_peso_preciso() {
+    let v = fixture_video("grande.mp4", 1280, 720, 6, true);
+    let out = act("vcompress", &[&v], json!(0.6)).unwrap();
+    assert!(size(&out[0]) <= 600_000, "sotto 0,6 MB: {}", size(&out[0]));
+    assert!(info(&out[0]).has_video);
+}
+
+#[test]
+fn comprimi_verticale_resta_verticale() {
+    let v = fixture_video("verticale.mp4", 720, 1280, 4, true);
+    let out = act("vcompress", &[&v], json!(0.5)).unwrap();
+    let i = info(&out[0]);
+    assert!(i.height > i.width, "{}x{}", i.width, i.height);
+    assert!(size(&out[0]) <= 500_000);
+}
+
+#[test]
+fn comprimi_gia_leggero_lo_dice() {
+    let v = fixture_video("grande.mp4", 1280, 720, 6, true);
+    let e = act("vcompress", &[&v], json!(50)).unwrap_err();
+    assert!(e.contains("non serve comprimerlo"), "{e}");
+}
+
+#[test]
+fn taglia_senza_perdita() {
+    let v = fixture_video("grande.mp4", 1280, 720, 6, true);
+    let out = act("cut", &[&v], json!({"start": 1.0, "end": 4.0})).unwrap();
+    let i = info(&out[0]);
+    assert!((i.duration - 3.0).abs() < 1.1, "durata {}", i.duration);
+    assert!(out[0].file_name().unwrap().to_string_lossy().contains("(tagliato"));
+}
+
+#[test]
+fn taglia_preciso() {
+    let v = fixture_video("grande.mp4", 1280, 720, 6, true);
+    let out = act("cut", &[&v], json!({"start": 1.5, "end": 3.5, "precise": true})).unwrap();
+    assert!((info(&out[0]).duration - 2.0).abs() < 0.15);
+}
+
+#[test]
+fn converti_video() {
+    let v = fixture_video("grande.mp4", 1280, 720, 6, true);
+    let mkv = act("to:mkv", &[&v], Value::Null).unwrap();
+    assert_eq!(info(&mkv[0]).video_codec, info(&v).video_codec, "stessa codifica: copiato senza perdita");
+    let mp3 = act("to:mp3", &[&v], Value::Null).unwrap();
+    let i = info(&mp3[0]);
+    assert!(i.has_audio && !i.has_video);
+    let small = fixture_video("piccolo.mp4", 320, 240, 2, true);
+    let webm = act("to:webm", &[&small], Value::Null).unwrap();
+    assert_eq!(info(&webm[0]).video_codec, "vp9");
+    let gif = act("gifcut", &[&small], json!({"start": 0, "end": 1.5})).unwrap();
+    assert!(size(&gif[0]) > 1000);
+}
+
+#[test]
+fn formato_social_e_velocita() {
+    let v = fixture_video("piccolo.mp4", 320, 240, 2, true);
+    let s = act("social", &[&v], json!("9x16")).unwrap();
+    let i = info(&s[0]);
+    assert_eq!((i.width, i.height), (1080, 1920));
+    let f = act("speed", &[&v], json!(2)).unwrap();
+    assert!((info(&f[0]).duration - 1.0).abs() < 0.2, "{}", info(&f[0]).duration);
+}
+
+#[test]
+fn risoluzione_e_audio_del_video() {
+    let v = fixture_video("grande.mp4", 1280, 720, 6, true);
+    let r = act("vresize", &[&v], json!("480")).unwrap();
+    assert_eq!(info(&r[0]).height, 480);
+    let n = act("voiceclean", &[&v], Value::Null).unwrap();
+    let i = info(&n[0]);
+    assert_eq!(i.video_codec, info(&v).video_codec, "il video non si ricodifica");
+    assert!(i.has_audio);
+    let m = act("mute", &[&v], Value::Null).unwrap();
+    assert!(!info(&m[0]).has_audio);
+}
+
+#[test]
+fn unisci_video_anche_senza_audio() {
+    let a = fixture_video("piccolo.mp4", 320, 240, 2, true);
+    let b = fixture_video("muto.mp4", 640, 480, 2, false);
+    let out = act("vmerge", &[&a, &b], Value::Null).unwrap();
+    let i = info(&out[0]);
+    assert!((i.duration - 4.0).abs() < 0.3, "{}", i.duration);
+    assert_eq!((i.width, i.height), (320, 240));
+    assert!(i.has_audio);
+}
+
+#[test]
+fn audio_strumenti() {
+    let a = fixture_audio("voce.wav");
+    let mp3 = act("to:mp3", &[&a], Value::Null).unwrap();
+    assert_eq!(info(&mp3[0]).audio_codec, "mp3");
+    let ring = act("ringtone", &[&a], json!({"start": 0, "end": 40})).unwrap();
+    let r = info(&ring[0]);
+    assert!(r.duration <= 30.1 && r.duration > 5.0, "{}", r.duration);
+    assert_eq!(ring[0].extension().unwrap(), "m4r");
+    let s = act("silence", &[&a], Value::Null).unwrap();
+    assert!(info(&s[0]).duration < 5.5, "pause tolte: {}", info(&s[0]).duration);
+    let c = act("cut", &[&a], json!({"start": 1, "end": 3})).unwrap();
+    assert!((info(&c[0]).duration - 2.0).abs() < 0.1);
+    let w = act("whatsapp", &[&a], Value::Null).unwrap();
+    assert_eq!(info(&w[0]).audio_codec, "opus");
+    let m = act("amerge", &[&a, &mp3[0]], Value::Null).unwrap();
+    assert!((info(&m[0]).duration - 12.0).abs() < 0.3);
+    let v = act("voiceclean", &[&a], Value::Null).unwrap();
+    assert!(info(&v[0]).has_audio);
+}
+
+#[test]
+fn foto_comprimi_e_converti() {
+    let p = fixture_photo("foto.png", 1600, 1200);
+    let small = act("icompress", &[&p], json!(80)).unwrap();
+    assert!(size(&small[0]) <= 80_000, "{}", size(&small[0]));
+    let best = act("icompress", &[&p], json!("best")).unwrap();
+    assert!(size(&best[0]) < size(&p));
+    for to in ["jpg", "webp", "bmp", "tiff", "ico", "gif", "pdf"] {
+        let o = act(&format!("to:{to}"), &[&p], Value::Null).unwrap_or_else(|e| panic!("{to}: {e}"));
+        assert!(size(&o[0]) > 100, "{to}");
+    }
+    let r = act("resize", &[&p], json!("50%")).unwrap();
+    assert_eq!(image::image_dimensions(&r[0]).unwrap(), (800, 600));
+    let r2 = act("resize", &[&p], json!("400")).unwrap();
+    assert_eq!(image::image_dimensions(&r2[0]).unwrap(), (400, 300));
+    let rot = act("rotate", &[&p], json!(90)).unwrap();
+    assert_eq!(image::image_dimensions(&rot[0]).unwrap(), (1200, 1600));
+}
+
+#[test]
+fn foto_in_un_pdf_e_pdf() {
+    let a = fixture_photo("pagina1.jpg", 800, 1100);
+    let b = fixture_photo("pagina2.jpg", 1100, 800);
+    let pdf = act("merge", &[&a, &b], Value::Null).unwrap();
+    assert_eq!(orbit_engine::pdf::page_count(&pdf[0]).unwrap(), 2);
+    let both = act("pdfmerge", &[&pdf[0], &pdf[0]], Value::Null).unwrap();
+    assert_eq!(orbit_engine::pdf::page_count(&both[0]).unwrap(), 4);
+    let parts = act("split", &[&both[0]], Value::Null).unwrap();
+    assert_eq!(parts.len(), 4);
+    let ex = act("extract", &[&both[0]], json!("2-3")).unwrap();
+    assert_eq!(orbit_engine::pdf::page_count(&ex[0]).unwrap(), 2);
+}
+
+#[test]
+fn interrompi() {
+    let v = fixture_video("lungo.mp4", 1280, 720, 20, true);
+    let c = Cancel::new();
+    let c2 = c.clone();
+    let t = std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(400));
+        c2.cancel();
+    });
+    let r = run_action(&ctx(), "vresize", &[v], &json!("360"), &c, &mut |_| {});
+    t.join().unwrap();
+    assert!(r.unwrap_err().is_cancelled());
+    // Niente file a metà
+    let left: Vec<_> = std::fs::read_dir(work().join("out")).unwrap().flatten().filter(|e| e.file_name().to_string_lossy().starts_with("lungo (360p)")).collect();
+    assert!(left.is_empty(), "file a metà rimasto");
+}
+
+#[test]
+fn nomi_mai_sovrascritti() {
+    let p = fixture_photo("doppio.png", 100, 100);
+    let a = act("to:jpg", &[&p], Value::Null).unwrap();
+    let b = act("to:jpg", &[&p], Value::Null).unwrap();
+    assert_ne!(a[0], b[0]);
+}

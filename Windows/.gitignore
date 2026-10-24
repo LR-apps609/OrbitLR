@@ -1,0 +1,4 @@
+node_modules/
+target/
+src-tauri/motori/
+src-tauri/gen/
