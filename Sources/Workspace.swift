@@ -7,7 +7,11 @@ import UniformTypeIdentifiers
 final class AppState: ObservableObject, @unchecked Sendable {
     static let shared = AppState()
     /// 3.5 · Si riapre sulla scheda dove eri (solo le schede di lavoro)
-    @Published var selection: SidebarItem? = SidebarItem(rawValue: UserDefaults.standard.string(forKey: "lastTab") ?? "")
+    @Published var selection: SidebarItem? = {
+        // 3.9 · «Scorciatoie» ora si chiama «Le mie azioni»: chi l'aveva lasciata aperta la ritrova
+        let saved = UserDefaults.standard.string(forKey: "lastTab") ?? ""
+        return SidebarItem(rawValue: saved == "Scorciatoie" ? "Le mie azioni" : saved)
+    }()
         .flatMap { SidebarItem.kept.contains($0) ? $0 : nil } ?? .workspace {
         willSet { if newValue != selection { Perf.begin(.tabSwitch) } }      // 3.4.1 · misura del cambio scheda
         didSet { if let s = selection, SidebarItem.kept.contains(s) { UserDefaults.standard.set(s.rawValue, forKey: "lastTab") } }

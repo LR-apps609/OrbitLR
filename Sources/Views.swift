@@ -7,7 +7,7 @@ import QuickLook
 
 enum SidebarItem: String, CaseIterable, Identifiable {
     case workspace = "Conversione", files = "File", images = "Immagini", video = "Video", audio = "Audio",
-         activity = "Attività", automation = "Automazioni", presets = "Scorciatoie", components = "Componenti",
+         activity = "Attività", automation = "Automazioni", presets = "Le mie azioni", components = "Componenti",
          help = "Aiuto"
     var id: String { rawValue }
     /// Le schede di lavoro (in alto) e le attività (sotto).
@@ -127,7 +127,7 @@ struct MainWindow: View {
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        .help(advancedOpen ? "Nascondi Automazioni, Scorciatoie e Componenti" : "Mostra Automazioni, Scorciatoie e Componenti")
+                        .help(advancedOpen ? "Nascondi Automazioni, Le mie azioni e Componenti" : "Mostra Automazioni, Le mie azioni e Componenti")
                     }
                 }
                 .listStyle(.sidebar)
@@ -772,7 +772,7 @@ struct PageHeader<Actions: View>: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
-            RoundedRectangle(cornerRadius: 3).fill(color.gradient).frame(width: 5, height: 40)
+            TitleAccent(color: color)
             VStack(alignment: .leading, spacing: 3) {
                 Text(title).font(.system(size: 26, weight: .bold, design: .rounded))
                 Text(subtitle).font(.system(size: 12.5)).foregroundStyle(.secondary)
@@ -781,6 +781,15 @@ struct PageHeader<Actions: View>: View {
             Spacer()
             HStack(spacing: 8) { actions() }
         }
+    }
+}
+
+/// 3.9 · Il segno d'ottone accanto al titolo di ogni scheda: stessa intestazione ovunque, una sola app.
+struct TitleAccent: View {
+    let color: Color
+    var body: some View {
+        RoundedRectangle(cornerRadius: 3).fill(color.gradient).frame(width: 5, height: 36)
+            .accessibilityHidden(true)
     }
 }
 

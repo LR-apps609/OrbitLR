@@ -507,6 +507,7 @@ struct AudioTabView: View {
 
     private var header: some View {
         HStack(spacing: 10) {
+            TitleAccent(color: Theme.color(.audio)).padding(.trailing, 4)
             VStack(alignment: .leading, spacing: 2) {
                 if tool == .tts {
                     // 3.0 · In «Testo in voce» non c'è un file aperto: niente nome di file

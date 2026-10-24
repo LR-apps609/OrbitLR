@@ -134,9 +134,9 @@ struct ParamView: View {
             }
             if presetable {
                 VStack(alignment: .leading, spacing: 6) {
-                    Toggle("Salva come scorciatoia", isOn: $savePreset)
+                    Toggle("Salva tra le mie azioni", isOn: $savePreset)
                     if savePreset {
-                        TextField("Nome della scorciatoia, per esempio «Instagram»", text: $presetName)
+                        TextField("Nome dell’azione, per esempio «Instagram»", text: $presetName)
                     }
                 }
                 .padding(10)

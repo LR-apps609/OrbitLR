@@ -132,15 +132,15 @@ struct PresetsView: View {
         ZStack {
             Theme.background.ignoresSafeArea()
             VStack(alignment: .leading, spacing: 18) {
-                PageHeader(title: "Scorciatoie",
-                           subtitle: "Le azioni che usi spesso, con le opzioni già scelte. Compaiono nel menu a torta del loro tipo di file.",
+                PageHeader(title: "Le mie azioni",
+                           subtitle: "Le azioni e le ricette che usi spesso, con le opzioni già scelte. Compaiono nel menu a torta del loro tipo di file.",
                            color: Theme.brass) {
                     Button { customizing = true } label: { Label("Personalizza il menu a torta", systemImage: "chart.pie") }
                 }
                 RecipesSection()
                 if store.presets.isEmpty {
-                    EmptyState(symbol: "star.circle", color: Theme.brass, title: "Ancora nessuna scorciatoia",
-                               text: "Quando scegli un’azione con delle opzioni (ridimensiona, comprimi, velocità…), spunta «Salva come scorciatoia». La ritroverai qui e nel menu a torta.")
+                    EmptyState(symbol: "star.circle", color: Theme.brass, title: "Ancora nessuna azione salvata",
+                               text: "Quando scegli un’azione con delle opzioni (ridimensiona, comprimi, velocità…), spunta «Salva tra le mie azioni». La ritroverai qui e nel menu a torta.")
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 10) {
@@ -148,14 +148,14 @@ struct PresetsView: View {
                         }
                         .padding(.bottom, 20)
                     }
-                    Text("Assegna dei tasti: selezioni i file nel Finder, premi ⌃⌥ e il numero, e la scorciatoia parte senza aprire il menu.")
+                    Text("Assegna dei tasti: selezioni i file nel Finder, premi ⌃⌥ e il numero, e l’azione parte senza aprire il menu.")
                         .font(.system(size: 12.5)).foregroundStyle(.secondary)
                 }
             }
             .padding(28)
         }
         .sheet(isPresented: $customizing) { PieCustomizeView { customizing = false } }
-        .navigationTitle("Scorciatoie")
+        .navigationTitle("Le mie azioni")
     }
 }
 

@@ -235,6 +235,7 @@ struct KindTabView: View {
 
     private var header: some View {
         HStack(spacing: 10) {
+            TitleAccent(color: Theme.color(style.kind)).padding(.trailing, 4)
             VStack(alignment: .leading, spacing: 2) {
                 Text(style.title).font(.system(size: 22, weight: .bold, design: .rounded))
                 Text(subtitle).font(.system(size: 12.5)).foregroundStyle(.secondary)

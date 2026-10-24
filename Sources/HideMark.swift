@@ -152,7 +152,7 @@ struct HideMarkEditor: View {
             HStack(spacing: 12) {
                 KindBadge(kind: frameSource != nil ? .video : Catalog.kind(of: url), size: 34)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Nascondi filigrana").font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.ink)
+                    Text("Nascondi una scritta o un logo").font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.ink)
                     Text(frameSource != nil ? "Tutto il montaggio" : url.lastPathComponent).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                 }
             }

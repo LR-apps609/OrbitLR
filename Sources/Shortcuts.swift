@@ -6,9 +6,9 @@ struct ShortcutsButton: View {
 
     var body: some View {
         Button { showing.toggle() } label: {
-            Label("Scorciatoie", systemImage: "command").labelStyle(.titleAndIcon)
+            Label("Tasti", systemImage: "command").labelStyle(.titleAndIcon)
         }
-        .help("Tutte le scorciatoie di OrbitLR")
+        .help("Tutti i tasti rapidi di OrbitLR")
         .keyboardShortcut("/", modifiers: .command)
         .popover(isPresented: $showing, arrowEdge: .bottom) {
             ShortcutsPanel()
@@ -70,8 +70,8 @@ struct ShortcutsPanel: View {
             ]),
         ]
         let assigned = presets.presets.filter { $0.hotkey != nil }.sorted { ($0.hotkey ?? 0) < ($1.hotkey ?? 0) }
-        list.insert(KeyGroup(title: "Le tue scorciatoie", symbol: "star.circle.fill", rows: assigned.isEmpty
-            ? [Row(keys: ["⌃", "⌥", "1…9"], text: "Nessuna ancora: si assegnano nella pagina Scorciatoie")]
+        list.insert(KeyGroup(title: "Le mie azioni", symbol: "star.circle.fill", rows: assigned.isEmpty
+            ? [Row(keys: ["⌃", "⌥", "1…9"], text: "Nessuna ancora: si assegnano nella pagina «Le mie azioni»")]
             : assigned.map { Row(keys: ["⌃", "⌥", "\($0.hotkey ?? 0)"], text: $0.name) }), at: 2)
         return list
     }
@@ -80,7 +80,7 @@ struct ShortcutsPanel: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 8) {
                 Image(systemName: "command").font(.system(size: 14, weight: .bold)).foregroundStyle(Theme.accent)
-                Text("Scorciatoie").font(.system(size: 15, weight: .bold, design: .rounded))
+                Text("Tasti rapidi").font(.system(size: 15, weight: .bold, design: .rounded))
             }
             ForEach(groups) { g in
                 VStack(alignment: .leading, spacing: 6) {

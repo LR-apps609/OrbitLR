@@ -41,6 +41,6 @@ final class IdentityTests: XCTestCase {
     func testBarraLateraleSemplice() {
         XCTAssertEqual(SidebarItem.tabs.map { $0.rawValue }, ["Conversione", "File", "Immagini", "Video", "Audio"])
         XCTAssertEqual(SidebarItem.activities, [.activity])
-        XCTAssertEqual(SidebarItem.presets.rawValue, "Scorciatoie")
+        XCTAssertEqual(SidebarItem.presets.rawValue, "Le mie azioni")
     }
 }

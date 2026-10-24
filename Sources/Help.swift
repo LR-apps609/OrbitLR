@@ -114,7 +114,8 @@ struct HelpView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack(alignment: .center, spacing: 14) {
+                TitleAccent(color: Theme.brass)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Aiuto").font(.system(size: 22, weight: .bold, design: .rounded))
                     Text("Le domande più frequenti. Scrivi una parola per cercare.")

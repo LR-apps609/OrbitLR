@@ -49,7 +49,7 @@ enum FriendlyError {
         }
         if has("the operation couldn’t be completed", "the operation couldn't be completed", "impossibile completare l’operazione",
                "impossibile completare l'operazione") {
-            return "Qualcosa non è andato con questo file. Riprova; se succede ancora, usa «Segnala bug» e lo sistemiamo."
+            return "Qualcosa non è andato con questo file. Riprova; se succede ancora, usa «Segnala» e lo sistemiamo."
         }
         return raw
     }
