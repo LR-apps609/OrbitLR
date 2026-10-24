@@ -542,7 +542,7 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         switch fix {
         case .install(let ids):
             AppState.shared.selection = .components
-            let list = Installer.shared.components.filter { ids.contains($0.id) && !$0.installed }
+            let list = Installer.shared.all.filter { ids.contains($0.id) && !$0.installed }
             if !list.isEmpty { Installer.shared.install(list, id: list.count == 1 ? list[0].id : "all") }
         case .retryParam(_, let value):
             enqueue(files: job.files, action: job.action, param: value)

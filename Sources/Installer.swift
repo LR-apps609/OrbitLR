@@ -21,26 +21,29 @@ final class Installer: ObservableObject, @unchecked Sendable {
     @Published var refresh = 0
     private var process: Process?
 
+    /// 3.8 · ffmpeg viaggia dentro l'app; compressione PDF, metadati e trascrizione usano macOS.
+    /// Restano facoltativi solo i programmi per i formati più rari.
     let components: [ComponentInfo] = [
-        ComponentInfo(id: "ffmpeg", name: "ffmpeg", tool: "ffmpeg", brew: "ffmpeg", purpose: "Audio e video",
-                      unlocks: "MP3, WAV, FLAC, OGG, MKV, WEBM, GIF, taglio, compressione, velocità, sottotitoli"),
-        ComponentInfo(id: "magick", name: "ImageMagick", tool: "magick", brew: "imagemagick", purpose: "Immagini",
-                      unlocks: "WEBP, ICO, SVG e formati meno comuni"),
-        ComponentInfo(id: "soffice", name: "LibreOffice", tool: "soffice", brew: "--cask libreoffice", purpose: "Documenti, fogli, presentazioni",
+        ComponentInfo(id: "ffmpeg", name: "ffmpeg (incluso)", tool: "ffmpeg", brew: "ffmpeg", purpose: "Audio e video",
+                      unlocks: "MP3, FLAC, OGG, MKV, WEBM, WebP, ICO, velocità, sottotitoli: già dentro OrbitLR"),
+        ComponentInfo(id: "soffice", name: "LibreOffice (facoltativo)", tool: "soffice", brew: "--cask libreoffice", purpose: "Documenti, fogli, presentazioni",
                       unlocks: "Word, Excel, PowerPoint, Pages, Numbers, Keynote ↔ PDF"),
-        ComponentInfo(id: "pandoc", name: "pandoc", tool: "pandoc", brew: "pandoc", purpose: "Testo e web",
-                      unlocks: "Markdown, HTML, EPUB, Word → HTML con immagini"),
-        ComponentInfo(id: "gs", name: "Ghostscript", tool: "gs", brew: "ghostscript", purpose: "PDF",
-                      unlocks: "Compressione dei PDF"),
-        ComponentInfo(id: "exiftool", name: "ExifTool", tool: "exiftool", brew: "exiftool", purpose: "Privacy",
-                      unlocks: "Rimozione dei metadati senza perdita di qualità"),
-        ComponentInfo(id: "whisper", name: "Whisper", tool: "whisper-cli", brew: "whisper-cpp", purpose: "Trascrizione",
-                      unlocks: "Testo e sottotitoli da audio e video, sul Mac"),
+        ComponentInfo(id: "pandoc", name: "pandoc (facoltativo)", tool: "pandoc", brew: "pandoc", purpose: "Testo e web",
+                      unlocks: "Markdown, HTML, EPUB"),
+        ComponentInfo(id: "magick", name: "ImageMagick (facoltativo)", tool: "magick", brew: "imagemagick", purpose: "Immagini rare",
+                      unlocks: "SVG e formati di immagine poco comuni"),
     ]
 
     var brewPath: String? {
         ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"].first { FileManager.default.isExecutableFile(atPath: $0) }
     }
+    /// Programmi che OrbitLR non chiede più (ci pensa macOS), ma che il motore classico usa ancora se ci sono.
+    let legacy: [ComponentInfo] = [
+        ComponentInfo(id: "gs", name: "Ghostscript", tool: "gs", brew: "ghostscript", purpose: "PDF", unlocks: "Compressione dei PDF (motore classico)"),
+        ComponentInfo(id: "exiftool", name: "ExifTool", tool: "exiftool", brew: "exiftool", purpose: "Privacy", unlocks: "Metadati (motore classico)"),
+        ComponentInfo(id: "whisper", name: "Whisper", tool: "whisper-cli", brew: "whisper-cpp", purpose: "Trascrizione", unlocks: "Trascrizione (motore classico)"),
+    ]
+    var all: [ComponentInfo] { components + legacy }
     var missing: [ComponentInfo] { components.filter { !$0.installed } }
 
     func install(_ list: [ComponentInfo], id: String) {

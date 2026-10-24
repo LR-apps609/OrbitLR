@@ -128,6 +128,45 @@ enum SmartImage {
         return m
     }
 
+    // MARK: 3.8 · Rimuovi i metadati, senza perdita
+
+    /// Copia della foto senza posizione, data, modello, autore e altri dati personali.
+    /// L'immagine non viene ricompressa (JPEG e HEIC restano identici punto per punto); l'orientamento resta.
+    static func strip(_ src: URL, dir: URL) throws -> URL {
+        guard let source = CGImageSourceCreateWithURL(src as CFURL, nil), let type = CGImageSourceGetType(source) else {
+            throw NativeError("non riesco a leggere l’immagine")
+        }
+        let props = (CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]) ?? [:]
+        let base = src.deletingPathExtension().lastPathComponent
+        let out = Destination.unique(dir, base: "\(base) (senza metadati)", ext: src.pathExtension.isEmpty ? "jpg" : src.pathExtension)
+        guard let dest = CGImageDestinationCreateWithURL(out as CFURL, type, 1, nil) else {
+            throw NativeError("macOS non sa scrivere questo formato")
+        }
+        // Solo l'orientamento sopravvive: tutto il resto (EXIF, GPS, IPTC, XMP) se ne va
+        let meta = CGImageMetadataCreateMutable()
+        if let o = props[kCGImagePropertyOrientation] as? Int {
+            CGImageMetadataSetValueMatchingImageProperty(meta, kCGImagePropertyTIFFDictionary, kCGImagePropertyTIFFOrientation, o as CFNumber)
+        }
+        let opts: [CFString: Any] = [
+            kCGImageDestinationMetadata: meta,
+            kCGImageDestinationMergeMetadata: false,
+            kCGImageMetadataShouldExcludeXMP: true,
+            kCGImageMetadataShouldExcludeGPS: true,
+        ]
+        var err: Unmanaged<CFError>?
+        if !CGImageDestinationCopyImageSource(dest, source, opts as CFDictionary, &err) {
+            // Formati che non si copiano senza ricomprimere: si riscrive l'immagine, senza dati
+            try? FileManager.default.removeItem(at: out)
+            guard let d2 = CGImageDestinationCreateWithURL(out as CFURL, type, 1, nil),
+                  let img = CGImageSourceCreateImageAtIndex(source, 0, nil) else { throw NativeError("non riesco a togliere i metadati") }
+            var p: [CFString: Any] = [kCGImageDestinationLossyCompressionQuality: 0.95]
+            if let o = props[kCGImagePropertyOrientation] { p[kCGImagePropertyOrientation] = o }
+            CGImageDestinationAddImage(d2, img, p as CFDictionary)
+            guard CGImageDestinationFinalize(d2) else { throw NativeError("non riesco a togliere i metadati") }
+        }
+        return out
+    }
+
     /// «200 KB», «1 MB».
     static func kb(_ bytes: Int) -> String {
         bytes >= 1_000_000 && bytes % 1_000_000 == 0 ? "\(bytes / 1_000_000) MB" : "\(bytes / 1000) KB"

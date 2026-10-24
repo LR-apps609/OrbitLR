@@ -85,6 +85,10 @@ enum NativeEngine {
         if id == "resize" { return exts.allSatisfy { imageIn.contains($0) && $0 != "gif" } }
         if id == "icompress" { return exts.allSatisfy { imageIn.contains($0) && $0 != "gif" } }      // 3.6
         if id == "pdfcompress" { return exts.allSatisfy { $0 == "pdf" } }                            // 3.8 · senza Ghostscript
+        // 3.8 · Rimuovi i metadati delle foto senza ExifTool né ImageMagick
+        if id == "strip" { return exts.allSatisfy { ["jpg", "heic", "png", "tiff"].contains($0) } }
+        // 3.8 · Trascrivi senza Whisper: con macOS, sul Mac. Chi ha già Whisper continua a usarlo.
+        if id == "transcribe" { return Transcriber.supports(exts) && Paths.tool("whisper-cli") == nil && Paths.tool("whisper-cpp") == nil }
         if id == "vresize" && job.param == "hevc" { return exts.allSatisfy { videoIn.contains($0) } }
         return false
     }
@@ -112,6 +116,18 @@ enum NativeEngine {
             return try await Task.detached(priority: .userInitiated) {
                 try await Tools.run(job: job, file: file, dir: dir, progress: progress)
             }.value
+        }
+
+        if id == "strip" {
+            let out = try SmartImage.strip(file, dir: dir)
+            progress(1)
+            return out
+        }
+
+        if id == "transcribe" {
+            return try await Transcriber.run(file, dir: dir, job: job, progress: progress) { srt in
+                DispatchQueue.main.async { job.outputs.append(srt) }
+            }
         }
 
         if id == "pdfcompress" {

@@ -57,3 +57,31 @@ final class SmartImageTests: XCTestCase {
         XCTAssertEqual(ParamChoices.defaultValue(for: .vcompress), "best")
     }
 }
+
+/// 3.8 · Rimuovi i metadati senza programmi da installare: via la posizione, l'immagine resta identica.
+final class StripMetadataTests: XCTestCase {
+    func testViaLaPosizione() throws {
+        let plain = try Fixtures.photo(name: "con-gps-base.jpg", width: 800, height: 600)
+        // La stessa foto con posizione e modello del telefono
+        let src = Fixtures.url("con-gps.jpg")
+        try? FileManager.default.removeItem(at: src)
+        let s = CGImageSourceCreateWithURL(plain as CFURL, nil)!
+        let d = CGImageDestinationCreateWithURL(src as CFURL, "public.jpeg" as CFString, 1, nil)!
+        let props: [CFString: Any] = [
+            kCGImagePropertyGPSDictionary: [kCGImagePropertyGPSLatitude: 40.85, kCGImagePropertyGPSLatitudeRef: "N",
+                                            kCGImagePropertyGPSLongitude: 14.27, kCGImagePropertyGPSLongitudeRef: "E"],
+            kCGImagePropertyTIFFDictionary: [kCGImagePropertyTIFFModel: "iPhone di prova"],
+        ]
+        CGImageDestinationAddImageFromSource(d, s, 0, props as CFDictionary)
+        XCTAssertTrue(CGImageDestinationFinalize(d))
+        let before = CGImageSourceCopyPropertiesAtIndex(CGImageSourceCreateWithURL(src as CFURL, nil)!, 0, nil) as! [CFString: Any]
+        XCTAssertNotNil(before[kCGImagePropertyGPSDictionary], "la foto di prova ha la posizione")
+
+        let out = try SmartImage.strip(src, dir: Fixtures.dir)
+        let after = CGImageSourceCopyPropertiesAtIndex(CGImageSourceCreateWithURL(out as CFURL, nil)!, 0, nil) as! [CFString: Any]
+        XCTAssertNil(after[kCGImagePropertyGPSDictionary], "niente posizione")
+        let tiff = after[kCGImagePropertyTIFFDictionary] as? [CFString: Any]
+        XCTAssertNil(tiff?[kCGImagePropertyTIFFModel], "niente modello del telefono")
+        XCTAssertEqual(after[kCGImagePropertyPixelWidth] as? Int, 800)
+    }
+}
