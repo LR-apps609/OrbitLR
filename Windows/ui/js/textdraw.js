@@ -127,9 +127,27 @@ export function stateAt(t, time) {
 }
 
 /**
- * Per l'esportazione: i fotogrammi di un testo (PNG grandi come il video) con i loro tempi.
- * Ritorna [{ dataUrl, start, end, fadeIn, fadeOut, slide }].
+ * Per l'esportazione: un testo diventa UN ingresso per il motore.
+ * Ritorna { start, end, fadeIn, fadeOut, slide, png?: dataUrl, frames?: [{ dataUrl, duration }] }:
+ * «Parola per parola» e «Macchina da scrivere» sono una sequenza di immagini.
  */
+export function exportOverlay(t, W, H) {
+  const parts = exportFrames(t, W, H);
+  if (parts.length === 1) {
+    const f = parts[0];
+    return { start: f.start, end: f.end, fadeIn: f.fadeIn, fadeOut: f.fadeOut, slide: f.slide, png: f.dataUrl };
+  }
+  // La riga compare dall'inizio del testo (con la prima parola già accesa), come nell'anteprima
+  return {
+    start: t.start,
+    end: parts[parts.length - 1].end,
+    fadeIn: parts[0].fadeIn,
+    fadeOut: parts[parts.length - 1].fadeOut,
+    slide: 0,
+    frames: parts.map((f, i) => ({ dataUrl: f.dataUrl, duration: Math.max(0.04, f.end - (i === 0 ? t.start : f.start)) })),
+  };
+}
+
 export function exportFrames(t, W, H) {
   const frames = [];
   const make = (opts) => {

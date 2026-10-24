@@ -5,7 +5,7 @@ import { DEMO, fileUrl, invoke, pickFiles, setDemoPick } from "./api.js";
 import { run } from "./jobs.js";
 import { PRESETS, emptyLook, feMatrix, isIdentity, resolve } from "./look.js";
 import { resultBar } from "./resultbar.js";
-import { ANIMS, COLORS, STYLES, drawText, exportFrames, newText, stateAt } from "./textdraw.js";
+import { ANIMS, COLORS, STYLES, drawText, exportOverlay, newText, stateAt } from "./textdraw.js";
 import { baseName, fmtTime, h, ico, modal, store, toast } from "./util.js";
 
 const TRANSITIONS = [["fade", "Dissolvenza"], ["black", "Al nero"], ["white", "Al bianco"], ["slide", "Scorrimento"], ["zoom", "Zoom"], ["blur", "Sfocatura"]];
@@ -1005,9 +1005,14 @@ export function editorPage(app, onBack) {
     try {
       for (const t of p.texts) {
         if (!t.text.trim() || t.end <= t.start) continue;
-        for (const f of exportFrames(t, W, H)) {
-          const png = DEMO ? "demo.png" : await invoke("save_overlay", { pngBase64: f.dataUrl });
-          overlays.push({ png, start: f.start, end: f.end, fade_in: f.fadeIn, fade_out: f.fadeOut, slide: f.slide });
+        const o = exportOverlay(t, W, H);
+        const save = (d) => (DEMO ? "demo.png" : invoke("save_overlay", { pngBase64: d }));
+        if (o.frames) {
+          const frames = [];
+          for (const f of o.frames) frames.push({ png: await save(f.dataUrl), duration: f.duration });
+          overlays.push({ frames, png: "", start: o.start, end: o.end, fade_in: o.fadeIn, fade_out: o.fadeOut, slide: 0 });
+        } else {
+          overlays.push({ png: await save(o.png), start: o.start, end: o.end, fade_in: o.fadeIn, fade_out: o.fadeOut, slide: o.slide });
         }
       }
     } catch (e) {
