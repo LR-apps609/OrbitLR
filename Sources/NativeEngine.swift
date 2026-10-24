@@ -83,7 +83,14 @@ enum NativeEngine {
             return false
         }
         if id == "resize" { return exts.allSatisfy { imageIn.contains($0) && $0 != "gif" } }
+        if id == "pdfcompress" {
+            let out = try SmartPDF.compress(file, level: job.param, dir: dir)
+            progress(1)
+            return out
+        }
+
         if id == "icompress" { return exts.allSatisfy { imageIn.contains($0) && $0 != "gif" } }      // 3.6
+        if id == "pdfcompress" { return exts.allSatisfy { $0 == "pdf" } }                            // 3.8 · senza Ghostscript
         if id == "vresize" && job.param == "hevc" { return exts.allSatisfy { videoIn.contains($0) } }
         return false
     }
@@ -111,6 +118,12 @@ enum NativeEngine {
             return try await Task.detached(priority: .userInitiated) {
                 try await Tools.run(job: job, file: file, dir: dir, progress: progress)
             }.value
+        }
+
+        if id == "pdfcompress" {
+            let out = try SmartPDF.compress(file, level: job.param, dir: dir)
+            progress(1)
+            return out
         }
 
         if id == "icompress" {
