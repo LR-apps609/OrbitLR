@@ -861,11 +861,12 @@ menu_for() {  # tipo → M_IDS e M_LABELS
       M_LABELS+=("Estrai il testo (anche da scansioni)" "Dividi in pagine singole" "Estrai alcune pagine…" "Comprimi…"
                  "Ruota le pagine…" "Riordina le pagine…" "Proteggi con password…" "Togli la password…") ;;
     audio)
-      M_IDS+=(cut normalize transcribe silence speed)
-      M_LABELS+=("Taglia…" "Normalizza il volume" "Trascrivi (testo + sottotitoli)" "Togli i silenzi" "Cambia la velocità…") ;;
+      M_IDS+=(cut normalize voiceclean transcribe silence speed)
+      M_LABELS+=("Taglia…" "Normalizza il volume" "Voce più pulita (meno rumore di fondo)" "Trascrivi (testo + sottotitoli)" "Togli i silenzi" "Cambia la velocità…") ;;
     video)
-      M_IDS+=(vresize speed vcompress cut gifcut normalize transcribe subextract subembed strip)
+      M_IDS+=(vresize speed vcompress cut gifcut normalize voiceclean transcribe subextract subembed strip)
       M_LABELS+=("Cambia risoluzione (1080p, 720p, HEVC)…" "Cambia la velocità…" "Comprimi per WhatsApp / email…" "Taglia…" "GIF animata da un pezzo…" "Normalizza il volume"
+                 "Voce più pulita (meno rumore di fondo)"
                  "Trascrivi (testo + sottotitoli)" "Estrai i sottotitoli (.srt)" "Aggiungi i sottotitoli da un file .srt"
                  "Rimuovi i metadati (posizione GPS, dispositivo…)") ;;
   esac
@@ -885,7 +886,7 @@ typeset -A SYM=(
   resize arrow.up.left.and.arrow.down.right  strip eye.slash  ocr text.viewfinder
   pdftext doc.text.magnifyingglass  split rectangle.split.3x1  extract doc.on.doc
   pdfcompress arrow.down.right.and.arrow.up.left  vcompress arrow.down.right.and.arrow.up.left
-  cut scissors  gifcut photo.stack  normalize speaker.wave.2  transcribe captions.bubble
+  cut scissors  gifcut photo.stack  normalize speaker.wave.2  voiceclean waveform.and.mic  transcribe captions.bubble
   subextract text.bubble  subembed plus.bubble  merge square.stack.3d.up  settings gearshape
   rotate rotate.right  reorder arrow.up.arrow.down  protect lock  unprotect lock.open
   vresize aspectratio  speed speedometer  silence waveform.badge.minus
@@ -1080,7 +1081,7 @@ needs() {  # motore o azione, tipo → programmi richiesti
     lo)                  print soffice ;;
     pandoc)              print pandoc ;;
     lo+pandoc|pandoc+lo) print soffice pandoc ;;
-    av|cut|gifcut|vcompress|normalize|subextract|subembed|vresize|speed|silence) print ffmpeg ffprobe ;;
+    av|cut|gifcut|vcompress|normalize|voiceclean|subextract|subembed|vresize|speed|silence) print ffmpeg ffprobe ;;
     transcribe)          print ffmpeg whisper ;;
     pdfcompress)         print gs ;;
     pdftext|ocr|split|extract|merge|rotate|reorder|protect|unprotect) print helper ;;
@@ -1572,24 +1573,28 @@ cut_run() {  # sorgente, inizio, fine ("" = fino alla fine), modo (cut | gif)
   $ff $m ${=$(enc264 20)} -pix_fmt yuv420p -c:a aac -b:a 192k $fs "$out"
 }
 
-norm_run() {  # sorgente → volume uniforme
-  local src=$1 e=$(norm "${1:e}") base=${1:t:r}
+norm_run() {  # sorgente [clean] → volume uniforme; con «clean» anche la voce ripulita (4.0)
+  local src=$1 e=$(norm "${1:e}") base=${1:t:r} mode=${2:-}
   local k=$(kind_of $e) oe=${1:e} out
+  # Voce più pulita: via il rombo sotto gli 80 Hz, il fruscio costante attenuato con delicatezza
+  # (12 dB: di più la voce diventa metallica), poi il volume uniforme. Il video non si tocca.
+  local chain="loudnorm=I=-16:TP=-1.5:LRA=11" tag="normalizzato"
+  [[ $mode == clean ]] && { chain="highpass=f=80,afftdn=nr=12:nf=-35:tn=1,$chain"; tag="voce pulita" }
   local sr=$(ffprobe -v error -select_streams a:0 -show_entries stream=sample_rate -of default=nw=1:nk=1 "$src" 2>/dev/null | head -n 1)
   [[ -n $sr ]] || { print "LRERR: il file non contiene audio" >&2; return 1 }
   [[ $sr == <-> ]] || sr=48000
   (( sr > 48000 )) && sr=48000
   local -a ff=(ffmpeg -nostdin -hide_banner -loglevel error -y -progress "$JOB_PROG" -nostats -i "$src" -map_metadata 0)
-  local -a af=(-af "loudnorm=I=-16:TP=-1.5:LRA=11" -ar $sr)
+  local -a af=(-af "$chain" -ar $sr)
   if [[ $k == audio ]]; then
     [[ $e == (wma|aac) ]] && oe=m4a
-    [[ $e == (ogg|opus) ]] && af=(-af "loudnorm=I=-16:TP=-1.5:LRA=11" -ar 48000)
-    $ff -map 0:a:0 $af ${=$(acodec_for $(norm $oe))} "$JD/out/$base (normalizzato).$oe"
+    [[ $e == (ogg|opus) ]] && af=(-af "$chain" -ar 48000)
+    $ff -map 0:a:0 $af ${=$(acodec_for $(norm $oe))} "$JD/out/$base ($tag).$oe"
     return
   fi
   [[ $e == (mp4|mov|mkv|m4v) ]] || oe=mp4
   local -a fs=(); [[ $oe == (mp4|mov|m4v) ]] && fs=(-movflags +faststart)
-  out="$JD/out/$base (normalizzato).$oe"
+  out="$JD/out/$base ($tag).$oe"
   $ff -map 0:v:0 -map 0:a:0 -c:v copy $af -c:a aac -b:a 192k $fs "$out" && return 0
   $ff -map 0:v:0 -map 0:a:0 ${=$(enc264 20)} -pix_fmt yuv420p $af -c:a aac -b:a 192k $fs "$out"
 }
@@ -1679,6 +1684,7 @@ run_job() {
     cut)         cut_run "$src" "${p%%|*}" "${p#*|}" cut ;;
     gifcut)      cut_run "$src" "${p%%|*}" "${p#*|}" gif ;;
     normalize)   norm_run "$src" ;;
+    voiceclean)  norm_run "$src" clean ;;
     transcribe)  transcribe_run "$src" ;;
     subextract)  subx_run "$src" ;;
     subembed)
@@ -1827,6 +1833,7 @@ selftest() {
   st audio "MP3 → OGG"                 to:ogg      "$T/prova.mp3"
   st audio "Taglia"                    cut         "$T/prova.mp3" "1.000|3.000"
   st audio "Normalizza il volume"      normalize   "$T/prova.mp3"
+  st audio "Voce più pulita"           voiceclean  "$T/prova.mp3"
   st audio "Togli i silenzi"           silence     "$T/prova.mp3"
   st audio "Velocità 1,5×"             speed       "$T/prova.mp3" 1.5
   if [[ -s $(model_path) ]]; then st audio "Trascrivi" transcribe "$T/prova.mp3"
@@ -1843,6 +1850,7 @@ selftest() {
   st video "Taglia"                    cut         "$T/prova.mp4" "1.000|4.000"
   st video "GIF da un pezzo"           gifcut      "$T/prova.mp4" "0.000|2.000"
   st video "Normalizza il volume"      normalize   "$T/prova.mp4"
+  st video "Voce più pulita"           voiceclean  "$T/prova.mp4"
   st video "Rimuovi i metadati"        strip       "$T/prova.mp4"
   st video "Aggiungi sottotitoli"      subembed    "$T/prova.mp4" "$T/prova.srt"
   st video "Estrai sottotitoli"        subextract  "$T/prova-sottotitoli.mkv"
@@ -2286,7 +2294,7 @@ for j in {1..$#J_ACT}; do
   JD="$WORK/j$j"; JOB_PROG="$JD/prog"; JOB_DUR=""; : > "$JOB_PROG"
   case ${J_ACT[j]} in
     to:*) [[ ${J_ROUTE[j]} == av ]] && JOB_DUR=$(media_dur "${J_SRC[j]}") ;;
-    vcompress|normalize|transcribe|subembed|vresize|silence) JOB_DUR=$(media_dur "${J_SRC[j]}") ;;
+    vcompress|normalize|voiceclean|transcribe|subembed|vresize|silence) JOB_DUR=$(media_dur "${J_SRC[j]}") ;;
     speed) d=$(media_dur "${J_SRC[j]}"); [[ -n $d ]] && JOB_DUR=$(( d / ${J_PARAM[j]:-1} )) ;;
     strip) [[ ${J_KIND[j]} == (audio|video) ]] && JOB_DUR=$(media_dur "${J_SRC[j]}") ;;
     cut|gifcut)

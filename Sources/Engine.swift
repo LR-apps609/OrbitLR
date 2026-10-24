@@ -520,7 +520,7 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         guard UserDefaults.standard.string(forKey: "original") == "trash",
               job.state == .done, job.failures.isEmpty, !job.outputs.isEmpty else { return }
         let id = job.action.id
-        let replaces = id.hasPrefix("to:") || ["resize", "strip", "pdfcompress", "vcompress", "normalize"].contains(id)
+        let replaces = id.hasPrefix("to:") || ["resize", "strip", "pdfcompress", "vcompress", "normalize", "voiceclean"].contains(id)
         guard replaces else { return }
         for f in job.mainFiles { try? FileManager.default.trashItem(at: f, resultingItemURL: nil) }
     }

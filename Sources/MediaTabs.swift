@@ -350,13 +350,14 @@ private struct MergeList: View {
 // MARK: - Scheda Audio (3.0: come il Video, con il pannello degli strumenti a destra)
 
 enum AudioTool: String, CaseIterable, Identifiable {
-    case ringtone, cut, normalize, speed, silence, transcribe, tts, whatsapp, merge
+    case ringtone, cut, normalize, voiceclean, speed, silence, transcribe, tts, whatsapp, merge
     var id: String { rawValue }
     var title: String {
         switch self {
         case .ringtone: return "Suoneria iPhone"
         case .cut: return "Taglia"
         case .normalize: return "Volume uniforme"
+        case .voiceclean: return "Voce più pulita"
         case .speed: return "Velocità"
         case .silence: return "Rimuovi i silenzi"
         case .transcribe: return "Trascrivi"
@@ -370,6 +371,7 @@ enum AudioTool: String, CaseIterable, Identifiable {
         switch self {
         case .ringtone: return "Suoneria"
         case .normalize: return "Volume"
+        case .voiceclean: return "Pulisci"
         case .silence: return "Silenzi"
         case .tts: return "Voce"
         case .whatsapp: return "WhatsApp"
@@ -382,6 +384,7 @@ enum AudioTool: String, CaseIterable, Identifiable {
         case .ringtone: return "Sposta il riquadro sul pezzo che ti piace (fino a 30 secondi): ottieni la suoneria per iPhone."
         case .cut: return "Trascina le maniglie per tenere solo il pezzo che serve. Tasti I e O mentre ascolti."
         case .normalize: return "Rende il volume uniforme: né troppo basso né distorto. Per vocali, lezioni e podcast."
+        case .voiceclean: return "Attenua il ronzio e il fruscio di fondo e rende il volume uniforme. La voce resta naturale."
         case .speed: return "Più lento o più veloce, su tutto il file. La voce mantiene il suo tono."
         case .silence: return "Toglie le pause lunghe, su tutto il file. Ottimo per lezioni e registrazioni."
         case .transcribe: return "Le parole diventano testo e sottotitoli, sul Mac, senza internet."
@@ -395,6 +398,7 @@ enum AudioTool: String, CaseIterable, Identifiable {
         case .ringtone: return "bell.and.waves.left.and.right"
         case .cut: return "scissors"
         case .normalize: return "speaker.wave.2"
+        case .voiceclean: return "waveform.and.mic"
         case .speed: return "speedometer"
         case .silence: return "waveform.badge.minus"
         case .transcribe: return "captions.bubble"
@@ -630,7 +634,7 @@ struct AudioTabView: View {
             note("Alla fine puoi mandarla all’iPhone con AirDrop o con il codice QR.")
         case .cut:
             if let trim = m.trim { SelectionText(trim: trim) }
-        case .normalize, .silence, .whatsapp, .transcribe:
+        case .normalize, .voiceclean, .silence, .whatsapp, .transcribe:
             EmptyView()
         case .speed:
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 70), spacing: 6)], alignment: .leading, spacing: 6) {
@@ -686,6 +690,7 @@ struct AudioTabView: View {
         case .ringtone: return "Crea la suoneria"
         case .cut: return "Taglia"
         case .normalize: return "Rendi uniforme il volume"
+        case .voiceclean: return "Pulisci la voce"
         case .speed: return "Cambia la velocità"
         case .silence: return "Rimuovi i silenzi"
         case .transcribe: return "Trascrivi"
@@ -712,6 +717,7 @@ struct AudioTabView: View {
         case .ringtone: m.run("ringtone", param: sel + "|\(fade ? 1 : 0)|\(normalize ? 1 : 0)")
         case .cut: m.run("cut", param: sel)
         case .normalize: m.run("normalize", param: "")
+        case .voiceclean: m.run("voiceclean", param: "")
         case .speed: m.run("speed", param: speed)
         case .silence: m.run("silence", param: "")
         case .transcribe: m.run("transcribe", param: "")

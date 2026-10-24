@@ -135,6 +135,7 @@ enum Catalog {
         "cut": Action(id: "cut", short: "Taglia", title: "Taglia", hint: "Tieni solo un pezzo", symbol: "scissors", param: .cut),
         "gifcut": Action(id: "gifcut", short: "GIF", title: "GIF da un pezzo", hint: "Un’animazione da un tratto del video", symbol: "photo.stack", param: .gifcut),
         "normalize": Action(id: "normalize", short: "Volume", title: "Volume uniforme", hint: "Né troppo basso né distorto", symbol: "speaker.wave.2"),
+        "voiceclean": Action(id: "voiceclean", short: "Pulisci voce", title: "Voce più pulita", hint: "Meno ronzio e fruscio di fondo", symbol: "waveform.and.mic"),
         "transcribe": Action(id: "transcribe", short: "Trascrivi", title: "Trascrivi", hint: "Le parole in testo e sottotitoli, senza internet", symbol: "captions.bubble"),
         "subextract": Action(id: "subextract", short: "Sottotitoli", title: "Estrai i sottotitoli", hint: "Un file SRT per ogni lingua", symbol: "text.bubble"),
         "subembed": Action(id: "subembed", short: "+ Sottotitoli", title: "Aggiungi i sottotitoli", hint: "Dal file SRT con lo stesso nome del video", symbol: "plus.bubble"),
@@ -216,7 +217,7 @@ enum Catalog {
             switch id {
             case "cut", "gifcut", "vmerge", "speed": return "Taglia e unisci"
             case "vcompress", "vresize", "social": return "Peso e grandezza"
-            case "normalize", "transcribe", "subextract", "subembed": return "Audio e sottotitoli"
+            case "normalize", "voiceclean", "transcribe", "subextract", "subembed": return "Audio e sottotitoli"
             default: return "Altro"
             }
         default:
@@ -286,12 +287,12 @@ enum Catalog {
         case .sheet: order = ["to:pdf", "to:xlsx", "to:csv", "to:ods", "to:html", "rename"]
         case .slide: order = ["to:pdf", "to:pptx", "to:odp", "rename"]
         case .text:  order = ["to:pdf", "to:docx", "to:html", "to:md", "to:odt", "to:epub", "tts", "rename"]
-        case .audio: order = ["to:mp3", "to:m4a", "to:wav", "cut", "normalize", "transcribe", "silence",
+        case .audio: order = ["to:mp3", "to:m4a", "to:wav", "cut", "normalize", "voiceclean", "transcribe", "silence",
                               "ringtone", "whatsapp", "amerge",
                               "speed", "to:flac", "to:ogg", "rename"]
         // 3.7 · Prima le cose di tutti i giorni (dalle ricerche: comprimere per le app, tagliare, cambiare grandezza)
         case .video: order = ["vcompress", "cut", "vresize", "social", "gifcut", "to:mp4", "to:mp3",
-                              "vmerge", "speed", "transcribe", "normalize", "hidemark",
+                              "vmerge", "speed", "transcribe", "normalize", "voiceclean", "hidemark",
                               "to:mov", "to:mkv", "to:webm", "to:gif", "to:m4a",
                               "subextract", "subembed", "strip", "rename"]
         case .sub:   order = []

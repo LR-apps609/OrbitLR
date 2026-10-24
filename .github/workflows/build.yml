@@ -86,6 +86,10 @@ jobs:
           test -x "$APP/Contents/Resources/Motori/ffmpeg"
           "$APP/Contents/Resources/Motori/ffmpeg" -hide_banner -loglevel error -f lavfi -i "sine=duration=0.5" -c:a libmp3lame /tmp/prova-motori.mp3
           echo "::notice::ffmpeg dentro l'app: funziona (MP3 di prova creato)"
+          # 4.0 · «Voce più pulita»: i filtri devono esserci nel nostro ffmpeg (stessa catena del motore)
+          "$APP/Contents/Resources/Motori/ffmpeg" -hide_banner -loglevel error -f lavfi -i "sine=f=220:duration=2" -f lavfi -i "anoisesrc=d=2:a=0.05" \
+            -filter_complex "amix=inputs=2,highpass=f=80,afftdn=nr=12:nf=-35:tn=1,loudnorm=I=-16:TP=-1.5:LRA=11" -ar 48000 -c:a aac /tmp/prova-voce.m4a
+          test -s /tmp/prova-voce.m4a && echo "::notice::Voce più pulita: filtri presenti"
           plutil -p "$APP/Contents/Info.plist" | grep -E "CFBundleShortVersionString|CFBundleVersion"
           # Deve girare sia sui Mac Apple Silicon sia sugli Intel
           ARCHS=$(lipo -archs "$APP/Contents/MacOS/OrbitLR"); echo "Architetture: $ARCHS"
