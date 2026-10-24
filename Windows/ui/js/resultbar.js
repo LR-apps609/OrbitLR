@@ -20,7 +20,7 @@ export function resultBar(origin) {
         h("div.resultbar", { role: "status" },
           h("div.ic.run", ico("loader-circle", 20, "spin")),
           h("div.tx",
-            h("b", `${job.title} · ${n > 1 ? `${n} file` : job.files[0]?.name}`),
+            h("b", n > 1 ? `${job.title} · ${n} file` : n === 1 ? `${job.title} · ${job.files[0].name}` : job.title),
             h("span", pct > 0 ? `${pct}%` : "Preparo…"),
             h("div.tuner", h("div.fill", { style: { width: Math.max(2, pct) + "%" } }), h("div.scale"))),
           h("button.btn", { onclick: () => cancel(job.id) }, "Interrompi")));

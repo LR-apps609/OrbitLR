@@ -156,7 +156,7 @@ struct JobEvent {
 /// Avvia un lavoro: per ogni file (o una volta sola per «unisci»). Torna subito; l'avanzamento arriva come eventi «job».
 #[tauri::command]
 fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action: String, files: Vec<String>, param: Value, out_dir: Option<String>) -> Result<(), String> {
-    if files.is_empty() {
+    if files.is_empty() && action != "tts" {
         return Err("nessun file".into());
     }
     let files: Vec<PathBuf> = files.iter().map(|f| checked_file(f)).collect::<Result<_, _>>()?;
@@ -181,6 +181,33 @@ fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action
             let emit = |e: JobEvent| {
                 let _ = app.emit("job", e);
             };
+            // Testo in voce: nessun file di partenza, va in Download (o nella cartella scelta)
+            if action == "tts" {
+                let dir = ctx.out_dir.clone().or_else(|| app.path().download_dir().ok()).unwrap_or_else(std::env::temp_dir);
+                let text = param["text"].as_str().unwrap_or("").to_string();
+                let voice = param["voice"].as_str().filter(|v| !v.is_empty()).map(String::from);
+                let rate = param["rate"].as_i64().unwrap_or(0) as i32;
+                let r = match &ctx.tools {
+                    Some(t) => orbit_engine::speech::speak(t, &text, voice.as_deref(), rate, &dir, &cancel, &mut |p| {
+                        emit(JobEvent { id: id.clone(), kind: "progress".into(), progress: p, index: 0, outputs: vec![], error: None, state: "running".into() });
+                    }),
+                    None => Err(orbit_engine::EngineError::new("manca il motore audio")),
+                };
+                let state = match r {
+                    Ok(p) => {
+                        emit(JobEvent { id: id.clone(), kind: "file".into(), progress: 1.0, index: 0, outputs: vec![actions::Output::of(&p)], error: None, state: "running".into() });
+                        "done"
+                    }
+                    Err(e) if e.is_cancelled() => "cancelled",
+                    Err(e) => {
+                        emit(JobEvent { id: id.clone(), kind: "file".into(), progress: 1.0, index: 0, outputs: vec![], error: Some(e.0), state: "running".into() });
+                        "failed"
+                    }
+                };
+                st.jobs.lock().unwrap().remove(&id);
+                emit(JobEvent { id, kind: "done".into(), progress: 1.0, index: 1, outputs: vec![], error: None, state: state.into() });
+                return;
+            }
             let groups: Vec<Vec<PathBuf>> = if actions::is_multi(&action) || (action == "to:pdf" && files.len() > 1 && files.iter().all(|f| orbit_engine::probe::kind_of_ext(&orbit_engine::names::ext(f)) == orbit_engine::Kind::Image)) {
                 vec![files.clone()]
             } else {
@@ -242,6 +269,11 @@ fn cancel_job(state: State<'_, Shared>, id: String) {
     }
 }
 
+#[tauri::command]
+async fn voices() -> Result<Vec<orbit_engine::speech::Voice>, String> {
+    tauri::async_runtime::spawn_blocking(|| orbit_engine::speech::voices().map_err(|e| e.0)).await.map_err(|e| e.to_string())?
+}
+
 /// Esiste ancora? (per la cronologia)
 #[tauri::command]
 fn files_exist(paths: Vec<String>) -> Vec<bool> {
@@ -261,7 +293,7 @@ struct Startup {
 /// cosa fare con loro.
 #[tauri::command]
 fn startup() -> Startup {
-    let mut files: Vec<String> = std::env::args().skip(1).filter(|a| !a.starts_with('-') && Path::new(a).is_file()).collect();
+    let mut files: Vec<String> = std::env::args().skip(1).filter(|a| !a.starts_with('-') && Path::new(a).exists()).collect();
     if let Ok(list) = std::env::var("ORBIT_PROVA_FILE") {
         files.extend(list.split(';').filter(|p| Path::new(p).is_file()).map(String::from));
     }
@@ -295,6 +327,18 @@ fn places(app: tauri::AppHandle) -> Places {
 
 fn main() {
     tauri::Builder::default()
+        // Una sola OrbitLR: i file aperti dal clic destro arrivano nella finestra che c'è già
+        .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+            let files: Vec<String> = argv.iter().skip(1).filter(|a| !a.starts_with('-') && Path::new(a).exists()).cloned().collect();
+            if let Some(w) = app.get_webview_window("main") {
+                let _ = w.unminimize();
+                let _ = w.show();
+                let _ = w.set_focus();
+            }
+            if !files.is_empty() {
+                let _ = app.emit("open-files", files);
+            }
+        }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
@@ -327,7 +371,7 @@ fn main() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now])
+        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices])
         .run(tauri::generate_context!())
         .expect("OrbitLR non è riuscita ad avviarsi");
 }

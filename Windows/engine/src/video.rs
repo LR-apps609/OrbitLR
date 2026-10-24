@@ -472,7 +472,7 @@ pub fn social(tools: &Tools, src: &Path, info: &FileInfo, aspect: &str, dir: &Pa
     let out = names::unique(dir, &format!("{} ({label})", names::stem(src)), "mp4");
     let fps = if info.fps > 0.0 { info.fps.min(60.0) } else { 30.0 };
     let graph = format!(
-        "[0:v]scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},boxblur=luma_radius=40:luma_power=2,eq=brightness=-0.06[bg];\
+        "[0:v]scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},gblur=sigma=36:steps=2,colorchannelmixer=rr=0.9:gg=0.9:bb=0.9[bg];\
          [0:v]scale={w}:{h}:force_original_aspect_ratio=decrease:flags=lanczos[fg];\
          [bg][fg]overlay=(W-w)/2:(H-h)/2,setsar=1,format=yuv420p[v]"
     );

@@ -13,8 +13,9 @@ const TOOLS = [
   { id: "voiceclean", title: "Voce più pulita", short: "Pulisci", icon: "mic", hint: "Attenua il ronzio e il fruscio di fondo e rende il volume uniforme. La voce resta naturale.", go: "Pulisci la voce" },
   { id: "speed", title: "Velocità", short: "Velocità", icon: "gauge", hint: "Più lento o più veloce, su tutto il file. La voce mantiene il suo tono.", go: "Cambia la velocità" },
   { id: "silence", title: "Togli i silenzi", short: "Silenzi", icon: "audio-waveform", hint: "Toglie le pause lunghe, su tutto il file. Ottimo per lezioni e registrazioni.", go: "Togli i silenzi" },
-  { id: "whatsapp", title: "Per WhatsApp", short: "WhatsApp", icon: "message-circle", hint: "Un vocale leggero con la voce chiara, che parte subito anche con poca rete.", go: "Crea il vocale" },
+  { id: "whatsapp", title: "Per WhatsApp", short: "WhatsApp", icon: "smartphone", hint: "Un vocale leggero con la voce chiara, che parte subito anche con poca rete.", go: "Crea il vocale" },
   { id: "merge", title: "Unisci", short: "Unisci", icon: "combine", hint: "Più file audio in uno solo, nell'ordine dell'elenco.", go: "Unisci" },
+  { id: "tts", title: "Testo in voce", short: "Voce", icon: "message-circle", hint: "Scrivi o incolla un testo: una voce di Windows lo legge in un file MP3 (in Download).", go: "Crea il file audio", noFile: true },
   { id: "convert", title: "Converti", short: "Converti", icon: "arrow-left-right", hint: "In un altro formato. MP3 va ovunque; WAV e FLAC non perdono niente.", go: "Converti" },
 ];
 
@@ -25,8 +26,9 @@ export function audioPage(app) {
   let trim = null;
   const opts = {
     ringLen: store.get("audio.ringLen", 30), fade: true, normalize: true, ringFmt: store.get("audio.ringFmt", "m4r"),
-    speed: "1.5", to: "mp3",
+    speed: "1.5", to: "mp3", text: "", voice: store.get("audio.voice", ""), rate: 0,
   };
+  let voices = null;
   const bar = resultBar("audio");
   const el = h("div.page");
 
@@ -64,6 +66,11 @@ export function audioPage(app) {
   }
 
   function start() {
+    if (tool === "tts") {
+      if (!opts.text.trim()) return toast("Scrivi o incolla un testo.");
+      store.set("audio.voice", opts.voice);
+      return run("tts", [], { text: opts.text, voice: opts.voice, rate: opts.rate }, "audio");
+    }
     if (!file) return pick();
     const t = TOOLS.find((x) => x.id === tool);
     const sel = { start: +trim.start.toFixed(3), end: +trim.end.toFixed(3) };
@@ -98,6 +105,20 @@ export function audioPage(app) {
     } else if (tool === "speed") {
       box.push(chips([["0.5", "0,5×"], ["0.75", "0,75×"], ["1.25", "1,25×"], ["1.5", "1,5×"], ["2", "2×"]], opts.speed, (v) => (opts.speed = v)));
       if (file) box.push(h("p", { style: { margin: 0, fontSize: "12.5px", color: "var(--quiet)" } }, `Su tutto il file: da ${fmtTime(file.info.duration)} a circa ${fmtTime(file.info.duration / Number(opts.speed))}.`));
+    } else if (tool === "tts") {
+      if (voices === null) {
+        voices = [];
+        invoke("voices").then((v) => { voices = v || []; render(); }).catch(() => {});
+      }
+      const sel = h("select", { style: { width: "100%", padding: "7px", borderRadius: "10px", border: "1px solid var(--line-2)", background: "var(--card)", fontWeight: 700 } },
+        h("option", { value: "" }, "La voce predefinita di Windows"),
+        voices.map((v) => h("option", { value: v.name, selected: v.name === opts.voice || null }, `${v.name.replace(/^Microsoft /, "").replace(/ Desktop$/, "")} · ${v.culture}`)));
+      sel.addEventListener("change", () => (opts.voice = sel.value));
+      const rate = h("input", { type: "range", min: -5, max: 5, step: 1, value: opts.rate, style: { width: "100%", accentColor: "var(--sage-deep)" } });
+      rate.addEventListener("input", () => (opts.rate = Number(rate.value)));
+      box.push(h("div", { style: { fontSize: "12.5px", color: "var(--quiet)" } }, "Voce"), sel,
+        h("div", { style: { fontSize: "12.5px", color: "var(--quiet)" } }, "Velocità"), rate,
+        h("p", { style: { margin: 0, fontSize: "12.5px", color: "var(--quiet)" } }, "Altre voci italiane: Impostazioni di Windows → Ora e lingua → Voce → Aggiungi voci."));
     } else if (tool === "convert") {
       box.push(chips([["mp3", "MP3"], ["m4a", "M4A"], ["wav", "WAV"], ["flac", "FLAC"], ["ogg", "OGG"], ["opus", "OPUS"]], opts.to, (v) => (opts.to = v)));
     } else if (tool === "merge") {
@@ -116,18 +137,31 @@ export function audioPage(app) {
     if (trim) trim.setMaxLen(tool === "ringtone" ? opts.ringLen : 0);
     const t = TOOLS.find((x) => x.id === tool);
     const head = h("div.head",
-      h("div", h("h1", file ? file.name.replace(/\.[^.]+$/, "") : "Audio"),
+      h("div", h("h1", tool === "tts" ? "Testo in voce" : file ? file.name.replace(/\.[^.]+$/, "") : "Audio"),
         h("div.sub", file ? `${file.info.ext.toUpperCase()} · ${fmtTime(file.info.duration)} · ${fmtBytes(file.size)}` : "Suonerie, tagli, volume, voce pulita e altro")),
       h("div.grow"),
       file ? h("button.btn", { onclick: pick }, "Apri un altro…") : null,
       file ? h("button.btn.icon", { "aria-label": "Chiudi il file", onclick: () => { trim?.destroy(); trim = null; file = null; others = []; render(); } }, ico("x", 16)) : null);
-    const leftSide = file
+    let leftSide;
+    if (tool === "tts") {
+      const ta = h("textarea.tts", { placeholder: "Scrivi o incolla qui il testo da leggere…", "aria-label": "Testo da leggere" });
+      ta.value = opts.text;
+      const count = h("div", { style: { fontSize: "12.5px", color: "var(--quiet)", textAlign: "right" } });
+      const upd = () => {
+        const w = opts.text.trim() ? opts.text.trim().split(/\s+/).length : 0;
+        count.textContent = w ? `${w} ${w === 1 ? "parola" : "parole"} · ${w < 140 ? "meno di un minuto" : `circa ${Math.round(w / 150)} min`} di audio` : "";
+      };
+      ta.addEventListener("input", () => { opts.text = ta.value; upd(); });
+      upd();
+      leftSide = h("div.wave-card", ta, count);
+      setTimeout(() => ta.focus(), 50);
+    } else leftSide = file
       ? h("div.wave-card", trim.el)
       : h("div.empty", h("div.box", { role: "button", tabindex: "0", onclick: pick }, ico("audio-lines", 44), h("h3", "Trascina qui un file audio"), h("div", "oppure clicca per sceglierlo"), h("div", { style: { fontSize: "12.5px" } }, "MP3, M4A, WAV, FLAC, OGG e anche l'audio dei video")));
     const grid = h("div.tool-grid", TOOLS.map((x) => h("button.tg" + (x.id === tool ? ".on" : ""), { onclick: () => { tool = x.id; render(); }, "aria-pressed": x.id === tool ? "true" : "false" }, ico(x.icon, 20), x.short)));
     const side = h("div.side-card",
       h("div.scroll", grid, ...options()),
-      h("div.act", h("button.btn.primary.big", { onclick: start, disabled: !file || (tool === "merge" && !others.length) || null }, t.go)));
+      h("div.act", h("button.btn.primary.big", { onclick: start, disabled: (!file && !t.noFile) || (tool === "merge" && !others.length) || null }, t.go)));
     el.replaceChildren(head, h("div.audio-wrap", leftSide, side), bar.el);
   }
 

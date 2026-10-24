@@ -22,7 +22,7 @@ export function activityPage() {
       : errs.length && !outs.length ? h("span", { style: { color: "var(--err)" } }, "Non riuscito") : null;
     return h("div.job",
       h("div.top", ico(live ? "loader-circle" : errs.length && !outs.length ? "circle-x" : "circle-check", 18, live ? "spin" : ""),
-        h("b", j.title || actionName(j.action)), h("span", { style: { color: "var(--quiet)" } }, j.files.length === 1 ? j.files[0].name : `${j.files.length} file`),
+        h("b", j.title || actionName(j.action)), h("span", { style: { color: "var(--quiet)" } }, j.files.length === 1 ? j.files[0].name : j.files.length ? `${j.files.length} file` : ""),
         state, h("span.when", when),
         live ? h("button.btn", { onclick: () => cancel(j.id) }, "Interrompi") : h("button.btn.icon.ghost", { "aria-label": "Togli dalla cronologia", title: "Togli dalla cronologia", onclick: () => removeFromHistory(j.id) }, ico("x", 14))),
       live ? h("div.tuner", h("div.fill", { style: { width: Math.max(2, j.progress * 100) + "%" } }), h("div.scale")) : null,

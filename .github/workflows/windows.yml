@@ -70,6 +70,9 @@ jobs:
         working-directory: Windows
         run: |
           npm ci --no-audit --no-fund
+          # Il numero della compilazione dentro l'app (per sapere se c'è una versione più nuova)
+          sed -i "s/^const BUILD = 0;/const BUILD = ${GITHUB_RUN_NUMBER};/" ui/js/app.js
+          grep -n "^const BUILD" ui/js/app.js
           set +e
           npx tauri build --ci 2>&1 | tee build.log
           st=${PIPESTATUS[0]}

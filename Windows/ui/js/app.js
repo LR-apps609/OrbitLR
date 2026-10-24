@@ -1,6 +1,6 @@
 // OrbitLR per Windows: la finestra con la barra laterale e le schede.
 
-import { DEMO, invoke, onDrop, openPath, reveal } from "./api.js";
+import { DEMO, invoke, onDrop, openPath, openUrl, reveal } from "./api.js";
 import { kindOfExt } from "./catalog.js";
 import { audioPage } from "./audio.js";
 import { convertPage } from "./convert.js";
@@ -10,6 +10,8 @@ import { activityPage, helpPage, report, settingsPage } from "./pages.js";
 import { extOf, fmtBytes, h, ico, modal, store, toast } from "./util.js";
 
 const VERSION = "0.1.0";
+// Numero della compilazione (lo scrive GitHub quando crea l'installazione)
+const BUILD = 0;
 
 const app = {
   version: VERSION,
@@ -48,6 +50,7 @@ const navButtons = {};
 const activityBadge = h("span.badge", { hidden: true });
 const drawerList = h("ul");
 const drawerEmpty = h("p", "I file che crei finiscono qui: un clic per vederli nella cartella.");
+const updateLink = h("button.btn.brass", { hidden: true, style: { width: "100%", marginBottom: "8px" }, onclick: () => openUrl("https://github.com/LR-apps609/OrbitLR/releases/tag/windows-anteprima") });
 
 function show(id) {
   if (!app.pages[id]) {
@@ -78,9 +81,10 @@ function sidebar() {
     h("div.brand", h("img", { src: "img/icona.png", alt: "" }), h("div", h("b", "OrbitLR"), h("small", "per Windows"))),
     nav,
     h("div.side-fill"),
+    updateLink,
     h("div.drawer", h("h4", ico("archive", 15), "Cassetto"), drawerEmpty, drawerList),
     foot,
-    h("div.ver", `OrbitLR ${VERSION}${DEMO ? " · prova" : ""}`));
+    h("div.ver", `OrbitLR ${VERSION}${BUILD ? ` (${BUILD})` : ""}${DEMO ? " · prova" : ""}`));
 }
 
 function renderDrawer() {
@@ -118,6 +122,33 @@ async function handleDrop(paths) {
   app.pages.convert.add(paths);
 }
 
+/** Una volta al giorno: c'è una versione per Windows più nuova? (solo una richiesta a GitHub, nessun dato personale) */
+async function checkUpdate(force = false) {
+  if (DEMO) return null;
+  const last = store.get("updateCheck", 0);
+  if (!force && Date.now() - last < 20 * 3600e3) return null;
+  try {
+    const r = await fetch("https://api.github.com/repos/LR-apps609/OrbitLR/releases/tags/windows-anteprima", { headers: { Accept: "application/vnd.github+json" } });
+    if (!r.ok) return null;
+    const j = await r.json();
+    store.set("updateCheck", Date.now());
+    const v = String(j.name || "").match(/(\d+\.\d+\.\d+)/)?.[1];
+    const build = Number(String(j.body || "").match(/build (\d+)/)?.[1] || 0);
+    if (v && (newer(v, VERSION) || (v === VERSION && build > BUILD))) {
+      updateLink.hidden = false;
+      updateLink.textContent = `Nuova versione ${v}: scaricala`;
+      return v;
+    }
+  } catch {}
+  return null;
+}
+
+function newer(a, b) {
+  const x = a.split(".").map(Number), y = b.split(".").map(Number);
+  for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0);
+  return false;
+}
+
 async function boot() {
   app.applyTheme();
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => app.applyTheme());
@@ -151,6 +182,8 @@ async function boot() {
       [{ label: "Continua a lavorare", value: false }, { label: "Interrompi e chiudi", value: true, primary: true }]);
     if (ok) invoke("quit_now");
   });
+  // «Apri con OrbitLR» mentre l'app è già aperta
+  window.__TAURI__?.event.listen("open-files", (e) => handleDrop(e.payload || []));
   // File passati all'avvio (Apri con…); nelle prove automatiche anche scheda e azione
   invoke("startup").then(async (st) => {
     if (!st || !st.files?.length) return;
@@ -169,6 +202,8 @@ async function boot() {
       run(st.action, files, param, app.current);
     }
   }).catch(() => {});
+  setTimeout(() => checkUpdate(), 4000);
+  app.checkUpdate = checkUpdate;
   setTimeout(() => splash.classList.add("out"), 450);
   setTimeout(() => splash.remove(), 900);
 }

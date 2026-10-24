@@ -14,6 +14,7 @@ pub mod names;
 pub mod pdf;
 pub mod probe;
 pub mod run;
+pub mod speech;
 pub mod tools;
 pub mod video;
 

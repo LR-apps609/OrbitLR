@@ -324,3 +324,6 @@ input, textarea, select, button { font: inherit; color: inherit; }
 @keyframes pop { from { transform: scale(.6) rotate(-20deg); opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+textarea.tts { flex: 1; min-height: 200px; width: 100%; resize: none; border: 1px solid var(--line-2); border-radius: 14px; padding: 14px 16px; background: var(--panel); font-weight: 600; font-size: 15px; line-height: 1.6; user-select: text; outline: none; }
+textarea.tts:focus { border-color: var(--brass); }
