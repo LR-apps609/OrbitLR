@@ -1,3 +1,4 @@
+# (avvio: 24 ottobre 2026)
 # 3.8 · Motori dentro l'app: ffmpeg compilato in versione LGPL (si può distribuire con un'app a pagamento),
 # per Apple Silicon e Intel insieme. Si costruisce una volta sola e si conserva tra i file scaricabili
 # (versione «motori-1»); la compilazione dell'app lo prende da lì, controllando l'impronta.
