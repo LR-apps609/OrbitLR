@@ -68,6 +68,14 @@ jobs:
           curl -fL --retry 3 -o modello-voce/ggml-small-q5_1.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-q5_1.bin"
           echo "ae85e4a935d7a567bd102fe55afc16bb595bdb618e11b2fc7591bc08120411bb  modello-voce/ggml-small-q5_1.bin" | sha256sum -c -
 
+      - name: LibreOffice (per provare Word, Excel e PowerPoint)
+        continue-on-error: true
+        timeout-minutes: 15
+        shell: pwsh
+        run: |
+          choco install libreoffice-fresh -y --no-progress | Out-Null
+          if (Test-Path "$env:ProgramFiles\LibreOffice\program\soffice.exe") { Write-Output "::notice::LibreOffice installato per le prove" } else { Write-Output "::warning::LibreOffice non installato: la prova dei documenti viene saltata" }
+
       - name: Prove del motore (con l'ffmpeg di Windows)
         working-directory: Windows
         env:

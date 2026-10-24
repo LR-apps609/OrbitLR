@@ -80,11 +80,13 @@ const demoFiles = {
   "C:\\Utenti\\Ledion\\Video\\Gita al lago.mp4": { kind: "video", size: 48_200_000, width: 1920, height: 1080, duration: 74.5, fps: 30, has_video: true, has_audio: true, video_bitrate: 5_000_000 },
   "C:\\Utenti\\Ledion\\Musica\\La mia canzone.mp3": { kind: "audio", size: 7_100_000, duration: 222, has_audio: true },
   "C:\\Utenti\\Ledion\\Documenti\\Contratto.pdf": { kind: "pdf", size: 1_400_000 },
+  "C:\\Utenti\\Ledion\\Documenti\\Relazione.docx": { kind: "doc", size: 240_000 },
 };
 
 let demoPickKind = "image";
 export function setDemoPick(kind) {
-  demoPickKind = kind;
+  // Nelle foto di prova «?prova=doc» sceglie sempre quel tipo
+  demoPickKind = new URLSearchParams(location.search).get("prova") || kind;
 }
 
 function demoPick() {
@@ -118,7 +120,7 @@ async function demo(cmd, a) {
   await new Promise((r) => setTimeout(r, 60));
   switch (cmd) {
     case "engine_status":
-      return { ready: true, version: "ffmpeg version n9.0 (LGPL)", h264: ["h264_nvenc", "h264_mf"], hevc: ["hevc_nvenc"] };
+      return { ready: true, version: "ffmpeg version n9.0 (LGPL)", h264: ["h264_nvenc", "h264_mf"], hevc: ["hevc_nvenc"], office: false };
     case "places":
       return { downloads: "C:\\Utenti\\Ledion\\Download", desktop: "C:\\Utenti\\Ledion\\Desktop", documents: "C:\\Utenti\\Ledion\\Documenti", pictures: null, videos: null, music: null };
     case "probe_files":
@@ -153,6 +155,11 @@ async function demo(cmd, a) {
       }, 160);
       return null;
     }
+    case "office_ready":
+      return false;
+    case "office_install":
+      await new Promise((r) => setTimeout(r, 1200));
+      return true;
     case "watch_get":
       return demoRules;
     case "watch_set":

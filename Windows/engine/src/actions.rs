@@ -124,6 +124,11 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
         // ── Converti
         x if x.starts_with("to:") => {
             let to = &x[3..];
+            // Word, Excel e PowerPoint: con LibreOffice, se c'è
+            if kind == Kind::Doc && crate::office::group(&info.ext).is_some() {
+                let so = crate::office::locate().ok_or_else(|| EngineError::new("per Word, Excel e PowerPoint serve LibreOffice (gratuito): installalo da Opzioni → Componenti"))?;
+                return Ok(vec![Output::of(&crate::office::convert(&so, src, to, &dir, cancel, progress)?)]);
+            }
             const KNOWN: &[&str] = &["jpg", "jpeg", "png", "webp", "avif", "bmp", "tiff", "tif", "gif", "ico", "pdf", "mp4", "mov", "m4v", "mkv", "webm", "avi",
                 "mp3", "m4a", "m4r", "wav", "flac", "ogg", "opus", "aiff", "aac"];
             if !KNOWN.contains(&to) {

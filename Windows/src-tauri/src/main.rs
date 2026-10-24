@@ -56,6 +56,8 @@ struct EngineStatus {
     version: String,
     h264: Vec<String>,
     hevc: Vec<String>,
+    /// LibreOffice c'è (per Word, Excel e PowerPoint)
+    office: bool,
 }
 
 /// Un percorso vero, di un file che esiste (niente percorsi di dispositivi o cartelle).
@@ -79,9 +81,9 @@ async fn engine_status(state: State<'_, Shared>) -> Result<EngineStatus, String>
     tauri::async_runtime::spawn_blocking(move || match &st.tools {
         Some(t) => {
             let e = t.encoders();
-            EngineStatus { ready: true, version: t.version(), h264: e.h264.clone(), hevc: e.hevc.clone() }
+            EngineStatus { ready: true, version: t.version(), h264: e.h264.clone(), hevc: e.hevc.clone(), office: orbit_engine::office::locate().is_some() }
         }
-        None => EngineStatus { ready: false, version: String::new(), h264: vec![], hevc: vec![] },
+        None => EngineStatus { ready: false, version: String::new(), h264: vec![], hevc: vec![], office: orbit_engine::office::locate().is_some() },
     })
     .await
     .map_err(|e| e.to_string())
@@ -414,6 +416,31 @@ fn run_auto(app: &tauri::AppHandle, st: &Shared, w: &mut orbit_engine::watch::Wa
     emit(JobEvent { id, kind: "done".into(), progress: 1.0, index: 1, outputs: vec![], error: None, state: state.into() });
 }
 
+/// LibreOffice c'è? (si ricontrolla tornando nell'app dopo averlo installato)
+#[tauri::command]
+fn office_ready() -> bool {
+    orbit_engine::office::locate().is_some()
+}
+
+/// Installa LibreOffice con winget (il gestore di app di Windows): gratuito, circa 350 MB.
+/// Windows chiede il permesso. Senza winget l'app apre la pagina per scaricarlo.
+#[tauri::command]
+async fn office_install() -> Result<bool, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        if orbit_engine::office::locate().is_some() {
+            return Ok(true);
+        }
+        let mut c = orbit_engine::tools::quiet(std::process::Command::new("winget"));
+        c.args(["install", "--id", "TheDocumentFoundation.LibreOffice", "-e", "--silent", "--accept-package-agreements", "--accept-source-agreements", "--disable-interactivity"]);
+        match orbit_engine::tools::output_timeout(c, 1800) {
+            Err(_) => Err("winget-assente".to_string()),
+            Ok(_) => Ok(orbit_engine::office::locate().is_some()),
+        }
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 /// «Interrompi e chiudi»: ferma tutto, cancella i file a metà, poi chiude.
 #[tauri::command]
 fn quit_now(app: tauri::AppHandle, state: State<'_, Shared>) {
@@ -672,7 +699,7 @@ fn main() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set])
+        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install])
         .run(tauri::generate_context!())
         .expect("OrbitLR non è riuscita ad avviarsi");
 }

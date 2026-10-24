@@ -23,8 +23,19 @@ export const CONVERT = {
   other: [],
 };
 
-const FMT_ICON = { jpg: "image", png: "image", webp: "image", avif: "image", ico: "square-play", bmp: "image", tiff: "image", gif: "film", pdf: "file-text",
+const FMT_ICON = { docx: "file-text", odt: "file-text", rtf: "file-text", txt: "file-text", xlsx: "list-ordered", ods: "list-ordered", csv: "list-ordered", pptx: "square-play", odp: "square-play", jpg: "image", png: "image", webp: "image", avif: "image", ico: "square-play", bmp: "image", tiff: "image", gif: "film", pdf: "file-text",
   mp4: "film", mov: "film", mkv: "film", webm: "film", avi: "film", mp3: "music", m4a: "music", wav: "audio-waveform", flac: "audio-waveform", ogg: "music", opus: "mic" };
+/** Word, Excel e PowerPoint (con LibreOffice): in cosa si può convertire un documento. */
+const DOC_GROUPS = [
+  [["docx", "doc", "odt", "rtf", "txt", "wps"], ["pdf", "docx", "odt", "txt", "rtf"]],
+  [["xlsx", "xls", "ods", "csv"], ["pdf", "xlsx", "ods", "csv"]],
+  [["pptx", "ppt", "odp"], ["pdf", "pptx", "odp"]],
+];
+export function docTargets(ext) {
+  const g = DOC_GROUPS.find(([from]) => from.includes(String(ext).toLowerCase()));
+  return g ? g[1].filter((t) => t !== String(ext).toLowerCase()) : [];
+}
+
 export const fmtIcon = (f) => FMT_ICON[f] || "file";
 
 /** Le azioni (non conversioni). `min`: quanti file servono almeno. `params`: come si sceglie. */

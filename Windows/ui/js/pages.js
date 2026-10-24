@@ -4,6 +4,7 @@ import { invoke, openPath, openUrl, pickFolder, reveal } from "./api.js";
 import { actionName } from "./catalog.js";
 import { clearHistory, getHistory, removeFromHistory, running, subscribe, cancel } from "./jobs.js";
 import { fmtBytes, gainText, h, ico, modal, store } from "./util.js";
+import { install as installOffice, isInstalling, officeReady } from "./office.js";
 
 // ── Attività: in corso in cima, poi la cronologia giorno per giorno
 export function activityPage() {
@@ -91,6 +92,9 @@ export function settingsPage(app) {
         h("div.set", h("h3", "Aspetto"),
           h("div.opts", [["auto", "Come Windows"], ["light", "Chiaro"], ["dark", "Radio di notte"]].map(([v, l]) =>
             h("button.opt" + (v === theme ? ".on" : ""), { onclick: () => { store.set("theme", v); app.applyTheme(); render(); } }, l)))),
+        h("div.set", h("h3", "Componenti"),
+          h("p", eng.office ? "LibreOffice è installato: Word, Excel e PowerPoint si convertono in PDF e negli altri formati." : "LibreOffice (facoltativo, gratuito, circa 350 MB) serve solo per Word, Excel e PowerPoint."),
+          eng.office ? null : h("div", h("button.btn.brass", { disabled: isInstalling() || null, onclick: async () => { await installOffice(app); await officeReady(app); render(); } }, ico("download", 15), isInstalling() ? "Installazione in corso…" : "Installa LibreOffice"))),
         h("div.set", h("h3", "Motore"),
           h("p", eng.ready ? `Pronto · ${String(eng.version || "").replace(/^ffmpeg version /, "ffmpeg ").split(" Copyright")[0]}` : "Il motore video non si è avviato: reinstalla OrbitLR."),
           eng.ready ? h("p", `Per comprimere usa: ${gpuText}${eng.hevc?.length ? " · HEVC disponibile" : ""}`) : null,
@@ -117,6 +121,7 @@ const FAQ = [
   ["Video", "Come aggiungo i sottotitoli automatici?", "Nell'editor apri «Testi» e premi «Sottotitoli automatici»: OrbitLR ascolta le clip e scrive le frasi in basso, al momento giusto, con la parola detta che si accende. Poi li correggi come gli altri testi; Ctrl+Z li toglie tutti."],
   ["File", "Come rendo un PDF più leggero per l'email?", "File → trascina il PDF → «Comprimi» → «Schermo ed email». Le foto dentro vengono ricompresse; testo, link e moduli restano come sono. Se il PDF è già leggero, OrbitLR te lo dice e non crea copie inutili."],
   ["Generale", "Posso far convertire o comprimere i file da soli?", "Sì: «Cartelle automatiche». Attiva per esempio «Foto HEIC e WebP in JPG» sulla cartella Download: ogni foto HEIC scaricata diventa JPG da sola. Per i video c'è la cartella «Da comprimere». Funziona con OrbitLR aperta, anche ridotta a icona."],
+  ["File", "Come converto Word, Excel o PowerPoint in PDF?", "Trascina il documento in Conversione e scegli PDF (o DOCX, XLSX, CSV…). La prima volta OrbitLR ti propone di installare LibreOffice, gratuito: lo usa in silenzio, senza aprire finestre. Macro e collegamenti esterni dei documenti restano spenti."],
   ["File", "Come unisco più PDF?", "File → trascina i PDF → «Unisci». L'ordine è quello dell'elenco."],
   ["Generale", "Windows dice «Windows ha protetto il PC»", "Succede con le app nuove senza la firma a pagamento di Microsoft. Clicca «Ulteriori informazioni» e poi «Esegui comunque». Si fa una volta sola."],
   ["Generale", "I miei file vengono caricati su internet?", "No. OrbitLR lavora tutto sul tuo computer, anche senza connessione."],

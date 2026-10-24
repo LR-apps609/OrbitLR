@@ -2,7 +2,8 @@
 // nella sua scheda. Con tipi diversi insieme, una torta piccola per tipo. Tasti 1–9; Invio = ultima scelta.
 
 import { invoke, pickFiles, setDemoPick } from "./api.js";
-import { CONVERT, KINDS, fmtIcon } from "./catalog.js";
+import { CONVERT, KINDS, docTargets, fmtIcon } from "./catalog.js";
+import { askOffice } from "./office.js";
 import { run } from "./jobs.js";
 import { resultBar } from "./resultbar.js";
 import { fmtBytes, h, ico, store, toast } from "./util.js";
@@ -58,12 +59,20 @@ export function convertPage(app) {
     if (key === lastRun.key && Date.now() - lastRun.at < 1500) return;
     lastRun = { key, at: Date.now() };
     store.set("lastFmt." + kind, fmt);
+    if (kind === "doc") {
+      // Word, Excel e PowerPoint: serve LibreOffice (si installa con un clic la prima volta)
+      askOffice(app).then((ok) => ok && run("to:" + fmt, list, null, "convert"));
+      return;
+    }
     run("to:" + fmt, list, null, "convert");
   }
 
   function pie(kind, list, size) {
     const R = size / 2;
-    const formats = CONVERT[kind] || [];
+    // Documenti: i formati che vanno bene per TUTTI i file scelti (un Word e un Excel insieme → solo PDF)
+    const formats = kind === "doc"
+      ? list.map((f) => docTargets(f.info?.ext || f.name.split(".").pop())).reduce((a, b) => a.filter((x) => b.includes(x)))
+      : CONVERT[kind] || [];
     const slices = formats.slice(0, 7).map((f) => ({ id: f, label: f.toUpperCase(), icon: fmtIcon(f), go: () => choose(kind, list, f) }));
     if (kind !== "other" && kind !== "doc") {
       const tab = kind === "pdf" ? "pdf" : kind;
@@ -79,7 +88,7 @@ export function convertPage(app) {
         h("div.sz", one ? fmtBytes(one.size) : `${KINDS[kind].label} · ${fmtBytes(list.reduce((a, f) => a + f.size, 0))}`))));
     if (!slices.length) {
       node.append(h("div", { style: { position: "absolute", bottom: "14%", left: "15%", right: "15%", textAlign: "center", fontSize: "12.5px", zIndex: 3 } },
-        kind === "doc" ? "Word, Excel e PowerPoint arriveranno con un componente facoltativo" : "Questo formato non lo so ancora lavorare"));
+        kind === "doc" ? "Questo documento non lo so ancora convertire (Word, Excel e PowerPoint sì)" : "Questo formato non lo so ancora lavorare"));
     }
     const ring = R * 0.72;
     slices.forEach((s, i) => {

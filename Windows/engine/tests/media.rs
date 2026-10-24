@@ -432,3 +432,36 @@ fn heic_in_jpg_tiene_la_posizione() {
     let img = image::load_from_memory(&data).unwrap();
     assert_eq!((img.width(), img.height()), (64, 48));
 }
+
+#[test]
+fn word_excel_powerpoint_con_libreoffice() {
+    if orbit_engine::office::locate().is_none() {
+        eprintln!("LibreOffice non c'è: prova saltata");
+        return;
+    }
+    let fx = |n: &str| PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures")).join(n);
+    // Nome con spazi e accenti, come quelli veri
+    let doc = work().join("Contratto finale è pronto.docx");
+    std::fs::copy(fx("contratto.docx"), &doc).unwrap();
+    let pdf = act("to:pdf", &[&doc], json!(null)).unwrap();
+    assert!(pdf[0].to_string_lossy().ends_with("Contratto finale è pronto.pdf"), "{:?}", pdf[0]);
+    assert!(orbit_engine::pdf::page_count(&pdf[0]).unwrap() >= 1);
+    let txt = act("to:txt", &[&doc], json!(null)).unwrap();
+    let t = std::fs::read_to_string(&txt[0]).unwrap();
+    assert!(t.contains("12345") && t.contains("àèéìòù"), "{t}");
+
+    let xls = work().join("Conti di casa.xlsx");
+    std::fs::copy(fx("conti.xlsx"), &xls).unwrap();
+    let csv = act("to:csv", &[&xls], json!(null)).unwrap();
+    let c = std::fs::read_to_string(&csv[0]).unwrap();
+    assert!(c.contains("Anna,Roma,1") && c.contains("città"), "{c}");
+    assert!(orbit_engine::pdf::page_count(&act("to:pdf", &[&xls], json!(null)).unwrap()[0]).unwrap() >= 1);
+
+    let ppt = work().join("Riunione.pptx");
+    std::fs::copy(fx("presentazione.pptx"), &ppt).unwrap();
+    assert!(orbit_engine::pdf::page_count(&act("to:pdf", &[&ppt], json!(null)).unwrap()[0]).unwrap() >= 1);
+
+    // Formati che non hanno senso: un errore chiaro, nessun file
+    let e = act("to:mp3", &[&doc], json!(null)).unwrap_err();
+    assert!(e.contains("MP3"), "{e}");
+}
