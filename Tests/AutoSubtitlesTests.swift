@@ -66,7 +66,7 @@ final class WordHighlightTests: XCTestCase {
         let ws = [AutoSubtitles.Word(text: "Ciao", start: 1, end: 1.3), AutoSubtitles.Word(text: "mondo.", start: 1.4, end: 1.8)]
         let texts = AutoSubtitles.texts(AutoSubtitles.lines(ws))
         XCTAssertEqual(texts.first?.anim, "word")
-        XCTAssertEqual(texts.first?.wordTimes ?? [], [0, 0.4], accuracy: 0.001)
+        assertClose(texts.first?.wordTimes ?? [], [0, 0.4], accuracy: 0.001)
     }
 
     func testLaParolaAccesaCambiaIlDisegno() {
@@ -77,7 +77,30 @@ final class WordHighlightTests: XCTestCase {
     }
 }
 
-private func XCTAssertEqual(_ a: [Double], _ b: [Double], accuracy: Double, file: StaticString = #filePath, line: UInt = #line) {
+func assertClose(_ a: [Double], _ b: [Double], accuracy: Double, file: StaticString = #filePath, line: UInt = #line) {
     XCTAssertEqual(a.count, b.count, file: file, line: line)
     for (x, y) in zip(a, b) { XCTAssertEqual(x, y, accuracy: accuracy, file: file, line: line) }
+}
+
+/// 4.0 · Dopo «Togli i silenzi» una riga a cavallo di due pezzi non si ripete: ogni pezzo ha le sue parole.
+final class SubtitlesAcrossCutsTests: XCTestCase {
+    func testOgniPezzoHaLeSueParole() {
+        let ws = [AutoSubtitles.Word(text: "uno", start: 1.0, end: 1.3), AutoSubtitles.Word(text: "due", start: 1.4, end: 1.7),
+                  AutoSubtitles.Word(text: "tre", start: 2.1, end: 2.4), AutoSubtitles.Word(text: "quattro", start: 2.5, end: 2.9)]
+        let lines = AutoSubtitles.lines(ws)
+        XCTAssertEqual(lines.count, 1, "una riga sola: le pause sono brevi")
+        let a = AutoSubtitles.timeline(lines, clip: VPClip(path: "/x.mp4", inPoint: 0.9, outPoint: 1.82), clipStart: 0)
+        let b = AutoSubtitles.timeline(lines, clip: VPClip(path: "/x.mp4", inPoint: 1.98, outPoint: 3.0), clipStart: 0.92)
+        XCTAssertEqual(a.map(\.text), ["uno due"])
+        XCTAssertEqual(b.map(\.text), ["tre quattro"])
+        XCTAssertEqual(b[0].start, 0.92 + (2.1 - 1.98), accuracy: 0.001)
+        assertClose(AutoSubtitles.texts(b)[0].wordTimes ?? [], [0, 0.4], accuracy: 0.001)
+    }
+
+    func testParoleContateSempreAlloStessoModo() {
+        XCTAssertEqual(VPText.wordCount("  l’acqua,  è\tfredda!\n"), 3)
+        XCTAssertEqual(VPText.wordCount(""), 0)
+        let t = "Ciao  👋 mondo"
+        XCTAssertEqual(VPText.wordRanges(t).map { String(t[$0]) }, ["Ciao", "👋", "mondo"])
+    }
 }

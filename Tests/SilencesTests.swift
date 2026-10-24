@@ -30,3 +30,36 @@ final class SilencesTests: XCTestCase {
         XCTAssertGreaterThan(kept, 1.9, "la voce resta tutta")
     }
 }
+
+/// 4.0 · Testi e sottotitoli seguono i tagli di «Togli i silenzi».
+final class SilencesTextsTests: XCTestCase {
+    // Clip del file 0…10 s che parte a 5 s nel montaggio; restano 0…2 e 6…8 (tolti 4 s + 2 s finali)
+    let clip = VPClip(path: "/x.mp4", inPoint: 0, outPoint: 10)
+    let parts: [ClosedRange<Double>] = [0...2, 6...8]
+
+    func testIstanti() {
+        XCTAssertEqual(Silences.remap(3, clipStart: 5, clip: clip, parts: parts), 3, "prima della clip non cambia")
+        XCTAssertEqual(Silences.remap(6, clipStart: 5, clip: clip, parts: parts), 6, accuracy: 0.001)
+        XCTAssertEqual(Silences.remap(9, clipStart: 5, clip: clip, parts: parts), 7, accuracy: 0.001, "nella pausa: all'inizio del pezzo dopo")
+        XCTAssertEqual(Silences.remap(12, clipStart: 5, clip: clip, parts: parts), 8, accuracy: 0.001)
+        XCTAssertEqual(Silences.remap(20, clipStart: 5, clip: clip, parts: parts), 14, accuracy: 0.001, "dopo la clip: indietro di 6 s")
+    }
+
+    func testTestiSpostatiOTolti() {
+        var a = VPText(); a.start = 11.5; a.end = 12.5; a.wordTimes = [0, 0.5]   // nel secondo pezzo
+        var b = VPText(); b.start = 8; b.end = 10                               // tutto nella pausa
+        var c = VPText(); c.start = 16; c.end = 18                              // dopo la clip
+        let out = Silences.remap([a, b, c], clipStart: 5, clip: clip, parts: parts)
+        XCTAssertEqual(out.count, 2, "il testo che stava solo nella pausa se ne va")
+        XCTAssertEqual(out[0].start, 7.5, accuracy: 0.001)
+        assertClose(out[0].wordTimes ?? [], [0, 0.5], accuracy: 0.001)
+        XCTAssertEqual(out[1].start, 10, accuracy: 0.001)
+    }
+
+    func testCasiLimite() {
+        XCTAssertEqual(Silences.ranges(levels: [], step: 0.02, offset: 0, end: 1), [])
+        // livelli oltre la fine della clip: niente intervalli rovesciati
+        let r = Silences.ranges(levels: Array(repeating: -10.0, count: 100), step: 0.02, offset: 5, end: 5.01)
+        XCTAssertTrue(r.allSatisfy { $0.lowerBound < $0.upperBound })
+    }
+}

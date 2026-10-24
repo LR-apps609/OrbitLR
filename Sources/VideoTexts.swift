@@ -34,7 +34,7 @@ struct VPText: Codable, Equatable, Identifiable, Sendable {
 
     /// 4.0 · La parola accesa in un certo momento (per «Parola per parola»).
     func wordIndex(at time: Double) -> Int {
-        let n = text.split(whereSeparator: \.isWhitespace).count
+        let n = Self.wordCount(text)
         guard n > 0 else { return 0 }
         let local = time - start
         if let w = wordTimes, w.count == n {
@@ -43,6 +43,22 @@ struct VPText: Codable, Equatable, Identifiable, Sendable {
         let d = max(0.1, end - start)
         return min(n - 1, max(0, Int(local / d * Double(n))))
     }
+    /// 4.0 · Le parole di un testo: pezzi separati da spazi («l’acqua,» è una parola sola).
+    /// Un solo modo di contarle, per l'indice, il disegno e i sottotitoli automatici.
+    static func wordRanges(_ text: String) -> [Range<String.Index>] {
+        var out: [Range<String.Index>] = []
+        var i = text.startIndex
+        while i < text.endIndex {
+            while i < text.endIndex, text[i].isWhitespace { i = text.index(after: i) }
+            guard i < text.endIndex else { break }
+            var j = i
+            while j < text.endIndex, !text[j].isWhitespace { j = text.index(after: j) }
+            out.append(i..<j); i = j
+        }
+        return out
+    }
+    static func wordCount(_ text: String) -> Int { wordRanges(text).count }
+
     static let colors: [(id: String, name: String, rgb: (Double, Double, Double))] = [
         ("white", "Bianco", (1, 1, 1)), ("black", "Nero", (0.08, 0.08, 0.08)),
         ("brass", "Ottone", (0.85, 0.67, 0.38)), ("sage", "Salvia", (0.62, 0.78, 0.63)),
@@ -59,7 +75,13 @@ struct VPText: Codable, Equatable, Identifiable, Sendable {
 }
 
 enum TextRender {
-    private static let cache = NSCache<NSString, CGImage>()
+    /// 4.0 · Con «Parola per parola» ogni riga ha un disegno per parola: la memoria ha un tetto (circa 300 MB)
+    private static let cache: NSCache<NSString, CGImage> = {
+        let c = NSCache<NSString, CGImage>()
+        c.countLimit = 600
+        c.totalCostLimit = 300 * 1024 * 1024
+        return c
+    }()
 
     /// Durata dell'entrata e dell'uscita.
     static let inTime = 0.45, outTime = 0.35
@@ -143,10 +165,8 @@ enum TextRender {
             // 4.0 · La parola detta adesso si accende (ottone; sui testi già d'ottone, bianca)
             let lit = color == "brass" ? NSColor.white : NSColor(srgbRed: 0.98, green: 0.78, blue: 0.36, alpha: 1)
             // Le parole contate come in wordIndex: pezzi separati da spazi («l’acqua,» è una parola sola)
-            if let re = try? NSRegularExpression(pattern: "\\S+") {
-                let all = re.matches(in: text, range: NSRange(location: 0, length: (text as NSString).length))
-                if all.indices.contains(h) { m.addAttribute(.foregroundColor, value: lit, range: all[h].range) }
-            }
+            let all = VPText.wordRanges(text)
+            if all.indices.contains(h) { m.addAttribute(.foregroundColor, value: lit, range: NSRange(all[h], in: text)) }
         }
         let s: NSAttributedString = m
         let maxW = canvas.width * 0.88
@@ -177,7 +197,7 @@ enum TextRender {
                options: [.usesLineFragmentOrigin, .usesFontLeading])
         NSGraphicsContext.restoreGraphicsState()
         guard let img = ctx.makeImage() else { return nil }
-        cache.setObject(img, forKey: key)
+        cache.setObject(img, forKey: key, cost: img.bytesPerRow * img.height)
         return img
     }
 }

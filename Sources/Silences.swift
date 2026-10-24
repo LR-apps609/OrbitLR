@@ -19,10 +19,18 @@ enum Silences {
 
     /// I tratti parlati del file tra `start` e `end` (secondi del file), già con un po' d'aria ai bordi.
     static func voiced(in url: URL, start: Double, end: Double) async throws -> [ClosedRange<Double>] {
+        guard end > start + 0.05 else { return [] }
         let asset = AVURLAsset(url: url)
         guard let track = try await asset.loadTracks(withMediaType: .audio).first else {
             throw NativeError("questa clip non ha audio")
         }
+        // La lettura è lunga e sincrona: fuori dal thread dell'interfaccia
+        return try await Task.detached(priority: .utility) {
+            try Self.read(asset: asset, track: track, start: start, end: end)
+        }.value
+    }
+
+    private static func read(asset: AVURLAsset, track: AVAssetTrack, start: Double, end: Double) throws -> [ClosedRange<Double>] {
         let reader = try AVAssetReader(asset: asset)
         reader.timeRange = CMTimeRange(start: CMTime(seconds: start, preferredTimescale: 600),
                                        end: CMTime(seconds: end, preferredTimescale: 600))
@@ -36,29 +44,38 @@ enum Silences {
         reader.add(out)
         guard reader.startReading() else { throw NativeError("non riesco a leggere l'audio") }
 
-        // Livello (dB) ogni 20 ms
-        let window = Int(rate * 0.02)
-        var levels: [Double] = []
-        var acc = 0.0, n = 0
+        // Livello ogni 20 ms, messo al suo posto grazie al tempo di ogni pacchetto
+        // (audio che parte dopo il video o con dei buchi: i buchi contano come silenzio)
+        let step = 0.02
+        let window = rate * step
+        let buckets = max(1, Int(((end - start) / step).rounded(.up)))
+        var sums = [Double](repeating: 0, count: buckets)
+        var counts = [Int](repeating: 0, count: buckets)
+        var samples = [Float]()
         while let sb = out.copyNextSampleBuffer() {
             guard let block = CMSampleBufferGetDataBuffer(sb) else { continue }
-            var length = 0
-            var ptr: UnsafeMutablePointer<Int8>?
-            guard CMBlockBufferGetDataPointer(block, atOffset: 0, lengthAtOffsetOut: nil, totalLengthOut: &length, dataPointerOut: &ptr) == noErr,
-                  let p = ptr else { continue }
+            let length = CMBlockBufferGetDataLength(block)
             let count = length / MemoryLayout<Float>.size
-            p.withMemoryRebound(to: Float.self, capacity: count) { f in
-                for i in 0..<count {
-                    let v = Double(f[i]); acc += v * v; n += 1
-                    if n == window {
-                        levels.append(10 * log10(max(acc / Double(n), 1e-12)))
-                        acc = 0; n = 0
-                    }
-                }
+            guard count > 0 else { continue }
+            if samples.count < count { samples = [Float](repeating: 0, count: count) }
+            // Copia sicura anche quando il pacchetto è spezzato in più pezzi di memoria
+            let ok = samples.withUnsafeMutableBytes { raw in
+                CMBlockBufferCopyDataBytes(block, atOffset: 0, dataLength: count * MemoryLayout<Float>.size, destination: raw.baseAddress!) == noErr
+            }
+            guard ok else { continue }
+            let pts = CMSampleBufferGetPresentationTimeStamp(sb)
+            let first = pts.isNumeric ? (pts.seconds - start) * rate : 0
+            for i in 0..<count {
+                let b = Int(((first + Double(i)) / window).rounded(.down))
+                guard b >= 0, b < buckets else { continue }
+                let v = Double(samples[i]); sums[b] += v * v; counts[b] += 1
             }
         }
-        if n > 0 { levels.append(10 * log10(max(acc / Double(n), 1e-12))) }
-        return ranges(levels: levels, step: 0.02, offset: start, end: end)
+        if reader.status != .completed {
+            throw NativeError(reader.error.map { "lettura dell'audio interrotta: \($0.localizedDescription)" } ?? "lettura dell'audio interrotta")
+        }
+        let levels = (0..<buckets).map { counts[$0] > 0 ? 10 * log10(max(sums[$0] / Double(counts[$0]), 1e-12)) : -120 }
+        return ranges(levels: levels, step: step, offset: start, end: end)
     }
 
     /// Dai livelli ai tratti parlati (puro: si prova nei test).
@@ -71,9 +88,11 @@ enum Silences {
         let threshold = max(-50, min(floor + 10, peak - 12))
         var raw: [(Double, Double)] = []
         var startIdx: Int? = nil
+        // Si entra nella voce sopra la soglia e se ne esce solo 6 dB sotto:
+        // le sillabe deboli e i finali di parola non vengono mozzati
         for (i, l) in levels.enumerated() {
-            if l > threshold { if startIdx == nil { startIdx = i } }
-            else if let s = startIdx { raw.append((Double(s) * step, Double(i) * step)); startIdx = nil }
+            if startIdx == nil { if l > threshold { startIdx = i } }
+            else if l <= threshold - 6, let s = startIdx { raw.append((Double(s) * step, Double(i) * step)); startIdx = nil }
         }
         if let s = startIdx { raw.append((Double(s) * step, Double(levels.count) * step)) }
         // Le pause brevi non dividono
@@ -84,7 +103,42 @@ enum Silences {
         }
         return merged
             .filter { $0.1 - $0.0 >= minVoice }
-            .map { max(offset, offset + $0.0 - pad)...min(end, offset + $0.1 + pad) }
+            .compactMap { r -> ClosedRange<Double>? in
+                let lo = max(offset, offset + r.0 - pad), hi = min(end, offset + r.1 + pad)
+                return lo < hi ? lo...hi : nil
+            }
+    }
+
+    /// Dove finisce un istante del montaggio dopo aver diviso la clip (che iniziava a `clipStart`) nei pezzi `parts`.
+    /// Un istante dentro una pausa tolta va all'inizio del pezzo dopo; dopo la clip tutto si sposta indietro.
+    static func remap(_ t: Double, clipStart: Double, clip c: VPClip, parts: [ClosedRange<Double>]) -> Double {
+        let speed = max(0.01, c.speed)
+        let oldEnd = clipStart + c.length
+        let newLength = parts.reduce(0) { $0 + ($1.upperBound - $1.lowerBound) } / speed
+        guard t > clipStart else { return t }
+        guard t < oldEnd else { return t - (c.length - newLength) }
+        let f = c.inPoint + (t - clipStart) * speed     // secondi del file
+        var before = 0.0
+        for r in parts {
+            if f < r.lowerBound { return clipStart + before }
+            if f <= r.upperBound { return clipStart + before + (f - r.lowerBound) / speed }
+            before += (r.upperBound - r.lowerBound) / speed
+        }
+        return clipStart + before
+    }
+
+    /// I testi del montaggio spostati insieme ai tagli; spariscono quelli che stavano solo in una pausa tolta.
+    static func remap(_ texts: [VPText], clipStart: Double, clip: VPClip, parts: [ClosedRange<Double>]) -> [VPText] {
+        texts.compactMap { t in
+            var n = t
+            n.start = remap(t.start, clipStart: clipStart, clip: clip, parts: parts)
+            n.end = remap(t.end, clipStart: clipStart, clip: clip, parts: parts)
+            guard n.end - n.start > 0.15 || t.end - t.start <= 0.15 else { return nil }
+            if let w = t.wordTimes {
+                n.wordTimes = w.map { max(0, remap(t.start + $0, clipStart: clipStart, clip: clip, parts: parts) - n.start) }
+            }
+            return n
+        }
     }
 }
 
@@ -112,8 +166,13 @@ extension VideoProjectStore {
                 p.outPoint = r.upperBound
                 return p
             }
-            change(undo, "Togli i silenzi") { $0.clips.replaceSubrange(now...now, with: pieces) }
-            let saved = c.sourceLength - kept
+            let clipStart = project.starts[now]
+            change(undo, "Togli i silenzi") {
+                $0.clips.replaceSubrange(now...now, with: pieces)
+                // Testi e sottotitoli seguono i tagli
+                if let tx = $0.texts { $0.texts = Silences.remap(tx, clipStart: clipStart, clip: c, parts: parts) }
+            }
+            let saved = (c.sourceLength - kept) / max(0.01, c.speed)      // secondi del montaggio
             notice = "Tolti \(Fmt.decimal(saved)) secondi di pause in \(parts.count) pezzi. ⌘Z per tornare indietro."
         }
     }

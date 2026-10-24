@@ -1720,10 +1720,13 @@ private struct ProjectTimeline: View {
             }
             start = min(max(0, st), max(0, total - len)); end = start + len
         }
+        // 4.0 · Cambiando l'inizio, le parole restano accese nel momento in cui vengono dette
+        let words = mode == 1 ? dragBefore?.texts?.first(where: { $0.id == d.id })?.wordTimes : nil
         s.live { p in
             guard let i = p.texts?.firstIndex(where: { $0.id == d.id }) else { return }
             p.texts![i].start = start
             p.texts![i].end = end
+            if let w = words { p.texts![i].wordTimes = w.map { max(0, d.start + $0 - start) } }
         }
     }
 
