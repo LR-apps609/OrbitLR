@@ -53,7 +53,7 @@ pub fn convert(tools: &Tools, src: &Path, info: &FileInfo, to: &str, dir: &Path,
     if !info.has_audio {
         return Err(EngineError::new("il file non contiene audio"));
     }
-    let out = names::unique(dir, &names::stem(src), to);
+    let of = names::OutFile::new(dir, &names::stem(src), to)?;
     let mut a = args!["-i", src, "-map", "0:a:0", "-vn", "-map_metadata", "0"];
     // Se l'audio è già in quel formato, si copia: niente perdita
     let same = matches!((to, info.audio_codec.as_str()), ("mp3", "mp3") | ("m4a", "aac") | ("opus", "opus") | ("flac", "flac"));
@@ -66,9 +66,9 @@ pub fn convert(tools: &Tools, src: &Path, info: &FileInfo, to: &str, dir: &Path,
         }
     }
     a.extend(container_args(to));
-    a.push(out.clone().into());
+    a.push(of.tmp.clone().into());
     run::ffmpeg(tools, &a, info.duration, cancel, progress)?;
-    Ok(out)
+    of.commit()
 }
 
 /// Taglia un pezzo dell'audio. Per MP3, M4A e WAV senza ricodificare.
@@ -79,14 +79,14 @@ pub fn cut(tools: &Tools, src: &Path, info: &FileInfo, start: f64, end: f64, dir
         return Err(EngineError::new("scegli un pezzo di almeno un decimo di secondo"));
     }
     let ext = same_or_m4a(src);
-    let out = names::unique(dir, &format!("{} (tagliato)", names::stem(src)), &ext);
+    let of = names::OutFile::new(dir, &format!("{} (tagliato)", names::stem(src)), &ext)?;
     let d = end - start;
     let mut a = args!["-ss", format!("{start:.3}"), "-i", src, "-t", format!("{d:.3}"), "-map", "0:a:0", "-vn", "-map_metadata", "0"];
     let copy = (ext == "mp3" && info.audio_codec == "mp3") || ext == "wav" || (ext == "flac" && info.audio_codec == "flac");
     if copy { a.extend(args!["-c:a", "copy"]) } else { a.extend(codec_args(&ext)) }
-    a.push(out.clone().into());
+    a.push(of.tmp.clone().into());
     run::ffmpeg(tools, &a, d, cancel, progress)?;
-    Ok(out)
+    of.commit()
 }
 
 /// Suoneria: al massimo 30 secondi (il limite per usarla direttamente sull'iPhone),
@@ -105,7 +105,7 @@ pub fn ringtone(
         return Err(EngineError::new("scegli almeno un secondo"));
     }
     let ext = if format == "mp3" { "mp3" } else { "m4r" };
-    let out = names::unique(dir, &format!("{} (suoneria)", names::stem(src)), ext);
+    let of = names::OutFile::new(dir, &format!("{} (suoneria)", names::stem(src)), ext)?;
     let mut af: Vec<String> = Vec::new();
     if fade {
         af.push("afade=t=in:st=0:d=0.6".into());
@@ -121,9 +121,9 @@ pub fn ringtone(
     a.extend(args!["-ar", "44100"]);
     a.extend(codec_args(ext));
     a.extend(container_args(ext));
-    a.push(out.clone().into());
+    a.push(of.tmp.clone().into());
     run::ffmpeg(tools, &a, d, cancel, progress)?;
-    Ok(out)
+    of.commit()
 }
 
 /// Volume uniforme (`clean = false`) o Voce più pulita (`clean = true`). Nei video l'immagine non si tocca.
@@ -137,23 +137,23 @@ pub fn level(tools: &Tools, src: &Path, info: &FileInfo, clean: bool, dir: &Path
     if info.has_video {
         let e = names::ext(src);
         let ext = if ["mp4", "mov", "m4v", "mkv"].contains(&e.as_str()) { e } else { "mp4".into() };
-        let out = names::unique(dir, &format!("{} ({tag})", names::stem(src)), &ext);
+        let of = names::OutFile::new(dir, &format!("{} ({tag})", names::stem(src)), &ext)?;
         let mut a = args!["-i", src, "-map", "0:v:0", "-map", "0:a:0", "-c:v", "copy", "-af", chain, "-ar", sr.to_string(), "-c:a", "aac", "-b:a", "192k", "-map_metadata", "0"];
         if ext != "mkv" {
             a.extend(args!["-movflags", "+faststart"]);
         }
-        a.push(out.clone().into());
+        a.push(of.tmp.clone().into());
         run::ffmpeg(tools, &a, info.duration, cancel, progress)?;
-        return Ok(out);
+        return of.commit();
     }
     let ext = same_or_m4a(src);
-    let out = names::unique(dir, &format!("{} ({tag})", names::stem(src)), &ext);
+    let of = names::OutFile::new(dir, &format!("{} ({tag})", names::stem(src)), &ext)?;
     let sr = if ext == "opus" { 48_000 } else { sr };
     let mut a = args!["-i", src, "-map", "0:a:0", "-vn", "-map_metadata", "0", "-af", chain, "-ar", sr.to_string()];
     a.extend(codec_args(&ext));
-    a.push(out.clone().into());
+    a.push(of.tmp.clone().into());
     run::ffmpeg(tools, &a, info.duration, cancel, progress)?;
-    Ok(out)
+    of.commit()
 }
 
 /// Togli i silenzi: le pause più lunghe di 0,7 secondi diventano corte (restano 0,25 s di respiro).
@@ -162,23 +162,22 @@ pub fn remove_silence(tools: &Tools, src: &Path, info: &FileInfo, dir: &Path, ca
         return Err(EngineError::new("il file non contiene audio"));
     }
     let ext = same_or_m4a(src);
-    let out = names::unique(dir, &format!("{} (senza pause)", names::stem(src)), &ext);
+    let of = names::OutFile::new(dir, &format!("{} (senza pause)", names::stem(src)), &ext)?;
     let f = "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.1:stop_periods=-1:stop_duration=0.7:stop_threshold=-45dB:stop_silence=0.25:detection=rms";
     let mut a = args!["-i", src, "-map", "0:a:0", "-vn", "-map_metadata", "0", "-af", f];
     a.extend(codec_args(&ext));
-    a.push(out.clone().into());
+    a.push(of.tmp.clone().into());
     run::ffmpeg(tools, &a, info.duration, cancel, progress)?;
-    let after = crate::probe::probe(Some(tools), &out).map(|i| i.duration).unwrap_or(0.0);
+    let after = crate::probe::probe(Some(tools), &of.tmp).map(|i| i.duration).unwrap_or(0.0);
     if after > 0.0 && after >= info.duration - 0.3 {
-        let _ = std::fs::remove_file(&out);
         return Err(EngineError::new("non ho trovato pause lunghe da togliere"));
     }
-    Ok(out)
+    of.commit()
 }
 
 /// La catena di atempo per qualsiasi velocità (ogni anello tra 0,5 e 2).
 pub fn atempo_chain(factor: f64) -> String {
-    let mut f = factor;
+    let mut f = if factor.is_finite() { factor.clamp(0.25, 4.0) } else { 1.0 };
     let mut parts = Vec::new();
     while f > 2.0 {
         parts.push("atempo=2.0".to_string());
@@ -193,16 +192,19 @@ pub fn atempo_chain(factor: f64) -> String {
 }
 
 pub fn speed(tools: &Tools, src: &Path, info: &FileInfo, factor: f64, dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<PathBuf> {
+    if !(0.25..=4.0).contains(&factor) {
+        return Err(EngineError::new("scegli una velocità tra 0,25× e 4×"));
+    }
     if !info.has_audio {
         return Err(EngineError::new("il file non contiene audio"));
     }
     let ext = same_or_m4a(src);
-    let out = names::unique(dir, &format!("{} ({}×)", names::stem(src), crate::actions::fmt_decimal(factor)), &ext);
+    let of = names::OutFile::new(dir, &format!("{} ({}×)", names::stem(src), crate::actions::fmt_decimal(factor)), &ext)?;
     let mut a = args!["-i", src, "-map", "0:a:0", "-vn", "-map_metadata", "0", "-af", atempo_chain(factor)];
     a.extend(codec_args(&ext));
-    a.push(out.clone().into());
+    a.push(of.tmp.clone().into());
     run::ffmpeg(tools, &a, info.duration / factor, cancel, progress)?;
-    Ok(out)
+    of.commit()
 }
 
 /// Un vocale leggero con la voce chiara, che parte subito anche con poca rete (Opus, come WhatsApp).
@@ -210,10 +212,10 @@ pub fn voice_note(tools: &Tools, src: &Path, info: &FileInfo, dir: &Path, cancel
     if !info.has_audio {
         return Err(EngineError::new("il file non contiene audio"));
     }
-    let out = names::unique(dir, &format!("{} (vocale)", names::stem(src)), "ogg");
-    let a = args!["-i", src, "-map", "0:a:0", "-vn", "-map_metadata", "-1", "-af", VOICE_CLEAN, "-ac", "1", "-ar", "48000", "-c:a", "libopus", "-b:a", "32k", "-application", "voip", out.clone()];
+    let of = names::OutFile::new(dir, &format!("{} (vocale)", names::stem(src)), "ogg")?;
+    let a = args!["-i", src, "-map", "0:a:0", "-vn", "-map_metadata", "-1", "-af", VOICE_CLEAN, "-ac", "1", "-ar", "48000", "-c:a", "libopus", "-b:a", "32k", "-application", "voip", of.tmp.clone()];
     run::ffmpeg(tools, &a, info.duration, cancel, progress)?;
-    Ok(out)
+    of.commit()
 }
 
 /// Più file audio in uno, nell'ordine dato (nel formato del primo).
@@ -225,7 +227,7 @@ pub fn merge(tools: &Tools, files: &[(PathBuf, FileInfo)], dir: &Path, cancel: &
         return Err(EngineError::new(format!("«{}» non contiene audio", p.file_name().unwrap_or_default().to_string_lossy())));
     }
     let ext = same_or_m4a(&files[0].0);
-    let out = names::unique(dir, &format!("{} (uniti)", names::stem(&files[0].0)), &ext);
+    let of = names::OutFile::new(dir, &format!("{} (uniti)", names::stem(&files[0].0)), &ext)?;
     let mut a: Vec<OsString> = Vec::new();
     for (p, _) in files {
         a.extend(args!["-i", p]);
@@ -240,10 +242,10 @@ pub fn merge(tools: &Tools, files: &[(PathBuf, FileInfo)], dir: &Path, cancel: &
     graph.push_str(&format!("concat=n={}:v=0:a=1[a]", files.len()));
     a.extend(args!["-filter_complex", graph, "-map", "[a]"]);
     a.extend(codec_args(&ext));
-    a.push(out.clone().into());
+    a.push(of.tmp.clone().into());
     let total = files.iter().map(|f| f.1.duration).sum();
     run::ffmpeg(tools, &a, total, cancel, progress)?;
-    Ok(out)
+    of.commit()
 }
 
 #[cfg(test)]

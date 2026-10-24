@@ -93,11 +93,20 @@ jobs:
           sleep 12
           if kill -0 $pid 2>/dev/null; then echo "::notice::L'app si avvia e resta aperta"; kill $pid || true; else echo "::error::L'app si è chiusa da sola"; exit 1; fi
 
-      - name: Foto dell'app
+      - name: Foto dell'app (con un lavoro vero dall'inizio alla fine)
+        continue-on-error: true
         shell: pwsh
         run: |
+          # Un video di prova, poi l'app lo apre da sola nella scheda Video e lo comprime
+          & ".\Windows\src-tauri\motori\ffmpeg.exe" -hide_banner -loglevel error -y -f lavfi -i "testsrc2=size=1280x720:rate=30:duration=8" -f lavfi -i "sine=frequency=440:duration=8" -c:v h264_mf -b:v 6M -pix_fmt nv12 -c:a aac -shortest "$env:RUNNER_TEMP\Gita al lago.mp4"
+          (New-Object -ComObject Shell.Application).MinimizeAll()
+          Start-Sleep -Seconds 1
+          $env:ORBIT_PROVA_FILE = "$env:RUNNER_TEMP\Gita al lago.mp4"
+          $env:ORBIT_PROVA_SCHEDA = "video"
+          $env:ORBIT_PROVA_AZIONE = "vcompress"
+          $env:ORBIT_PROVA_PARAMETRO = "best"
           Start-Process -FilePath ".\Windows\target\release\orbitlr.exe"
-          Start-Sleep -Seconds 10
+          Start-Sleep -Seconds 25
           Add-Type -AssemblyName System.Windows.Forms,System.Drawing
           $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
           $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
@@ -105,6 +114,8 @@ jobs:
           $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
           $bmp.Save("$PWD\foto-windows.png")
           Get-Process orbitlr -ErrorAction SilentlyContinue | Stop-Process
+          $made = Get-ChildItem "$env:RUNNER_TEMP" -Filter "Gita al lago (compresso)*.mp4"
+          if ($made) { Write-Output "::notice::Lavoro vero dentro l'app riuscito: $($made[0].Name) $([math]::Round($made[0].Length/1MB,1)) MB" } else { Write-Output "::warning::Il lavoro di prova dentro l'app non ha creato il file" }
 
       - uses: actions/upload-artifact@v4
         with:
@@ -137,11 +148,17 @@ jobs:
           cp OrbitLR-Setup.exe "OrbitLR-Windows-$V-Setup.exe"
           sha256sum "OrbitLR-Windows-$V-Setup.exe" > "OrbitLR-Windows-$V-Setup.sha256"
           NOTES="OrbitLR per Windows $V (anteprima, build ${GITHUB_RUN_NUMBER}). Scarica OrbitLR-Windows-$V-Setup.exe e aprilo. Windows può dire «Windows ha protetto il PC»: Ulteriori informazioni → Esegui comunque (l'app non ha ancora la firma a pagamento di Microsoft)."
+          FILES="OrbitLR-Windows-$V-Setup.exe OrbitLR-Windows-$V-Setup.sha256"
+          [ -f foto-windows.png ] && FILES="$FILES foto-windows.png"
           if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            # Prima i file nuovi (la pagina non resta mai vuota), poi via quelli di versioni vecchie
+            gh release upload "$TAG" $FILES -R "$GITHUB_REPOSITORY" --clobber
             gh release edit "$TAG" -R "$GITHUB_REPOSITORY" --prerelease --latest=false --title "OrbitLR per Windows $V (anteprima)" --notes "$NOTES"
-            for a in $(gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json assets -q '.assets[].name'); do gh release delete-asset "$TAG" "$a" -y -R "$GITHUB_REPOSITORY"; done
+            for a in $(gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json assets -q '.assets[].name'); do
+              case " $FILES " in *" $a "*) ;; *) gh release delete-asset "$TAG" "$a" -y -R "$GITHUB_REPOSITORY" ;; esac
+            done
           else
             gh release create "$TAG" -R "$GITHUB_REPOSITORY" --prerelease --latest=false --title "OrbitLR per Windows $V (anteprima)" --notes "$NOTES" --target "$GITHUB_SHA"
+            gh release upload "$TAG" $FILES -R "$GITHUB_REPOSITORY" --clobber
           fi
-          gh release upload "$TAG" "OrbitLR-Windows-$V-Setup.exe" "OrbitLR-Windows-$V-Setup.sha256" foto-windows.png -R "$GITHUB_REPOSITORY" --clobber
           echo "::notice::Pubblicata: https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"

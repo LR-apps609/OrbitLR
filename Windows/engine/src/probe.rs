@@ -110,12 +110,15 @@ pub fn probe(tools: Option<&Tools>, path: &Path) -> Result<FileInfo> {
 }
 
 fn fill_from_ffprobe(t: &Tools, path: &Path, info: &mut FileInfo) -> Result<()> {
-    let out = t
-        .ffprobe_cmd()
-        .args(["-v", "error", "-print_format", "json", "-show_format", "-show_streams"])
-        .arg(path)
-        .output()
-        .map_err(|e| EngineError::new(format!("non riesco ad avviare il motore video: {e}")))?;
+    let mut c = t.ffprobe_cmd();
+    c.args(["-v", "error", "-print_format", "json", "-show_format", "-show_streams"]).arg(path);
+    let out = crate::tools::output_timeout(c, 45).map_err(|e| {
+        if e.kind() == std::io::ErrorKind::TimedOut {
+            EngineError::new("il file non risponde (è su un disco di rete o su iCloud/OneDrive non scaricato?)")
+        } else {
+            EngineError::new(format!("non riesco ad avviare il motore video: {e}"))
+        }
+    })?;
     if !out.status.success() {
         return Err(EngineError::new("il file sembra danneggiato o in un formato non riconosciuto"));
     }

@@ -283,3 +283,39 @@ fn nomi_mai_sovrascritti() {
     let b = act("to:jpg", &[&p], Value::Null).unwrap();
     assert_ne!(a[0], b[0]);
 }
+
+#[test]
+fn montaggio_completo() {
+    use orbit_engine::editor::{export, Clip, Effects, Music, Overlay, Project, Transition};
+    use orbit_engine::look::Look;
+    let a = fixture_video("grande.mp4", 1280, 720, 6, true);
+    let b = fixture_video("verticale.mp4", 720, 1280, 4, true);
+    let song = fixture_audio("voce.wav");
+    // Un testo già disegnato (PNG trasparente grande come il video)
+    let png = work().join("testo.png");
+    let mut t = image::RgbaImage::new(1280, 720);
+    for x in 400..880 { for y in 600..660 { t.put_pixel(x, y, image::Rgba([255, 255, 255, 230])); } }
+    t.save(&png).unwrap();
+    let p = Project {
+        name: "Gita".into(),
+        clips: vec![
+            Clip { path: a.to_string_lossy().into(), in_point: 1.0, out_point: 5.0, look: Some(Look { preset: "vintage".into(), amount: 1.0, ..Default::default() }), fx: Some(Effects { zoom: "in".into(), fade_in: 0.5, ..Default::default() }), ..Default::default() },
+            Clip { path: b.to_string_lossy().into(), in_point: 0.0, out_point: 4.0, transition: Some(Transition { kind: "black".into(), duration: 0.6 }), fx: Some(Effects { speed: 2.0, flip_h: true, ..Default::default() }), muted: true, ..Default::default() },
+            Clip { path: a.to_string_lossy().into(), in_point: 0.0, out_point: 2.0, look: Some(Look { preset: "dream".into(), amount: 1.0, brightness: 0.2, vignette: 0.5, ..Default::default() }), ..Default::default() },
+        ],
+        music: Some(Music { path: song.to_string_lossy().into(), volume: 0.7, fade_in: 1.0, fade_out: 1.0, duck: true, looped: true, ..Default::default() }),
+        overlays: vec![Overlay { png: png.to_string_lossy().into(), start: 0.5, end: 3.0, fade_in: 0.3, fade_out: 0.3, slide: 40.0 }],
+        resolution: 720,
+        fps: 30.0,
+        original_volume: 1.0,
+        ..Default::default()
+    };
+    let dir = work().join("out");
+    std::fs::create_dir_all(&dir).unwrap();
+    let out = export(&tools(), &p, &dir, &Cancel::new(), &mut |_| {}).unwrap_or_else(|e| panic!("{e}"));
+    let i = info(&out);
+    // 4 s + 2 s (4 s a 2×) + 2 s = 8 s; le transizioni non tolgono tempo
+    assert!((i.duration - 8.0).abs() < 0.25, "durata {}", i.duration);
+    assert_eq!((i.width, i.height), (1280, 720));
+    assert!(i.has_audio);
+}

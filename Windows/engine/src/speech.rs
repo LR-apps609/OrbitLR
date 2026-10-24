@@ -60,9 +60,9 @@ pub fn speak(tools: &Tools, text: &str, voice: Option<&str>, rate: i32, dir: &Pa
     }
     std::fs::create_dir_all(dir)?;
     let first: String = text.split_whitespace().take(6).collect::<Vec<_>>().join(" ");
-    let out = names::unique(dir, &format!("{} (voce)", if first.is_empty() { "Testo".into() } else { first }), "mp3");
-    let txt = names::temp_beside(&out, "txt");
-    let wav = names::temp_beside(&out, "wav");
+    let of = names::OutFile::new(dir, &format!("{} (voce)", if first.is_empty() { "Testo".into() } else { first }), "mp3")?;
+    let txt = names::temp_beside(&of.path, "txt");
+    let wav = names::temp_beside(&of.path, "wav");
     let cleanup = |a: &Path, b: &Path| {
         let _ = std::fs::remove_file(a);
         let _ = std::fs::remove_file(b);
@@ -102,8 +102,8 @@ pub fn speak(tools: &Tools, text: &str, voice: Option<&str>, rate: i32, dir: &Pa
         }
     }
     progress(0.6);
-    let r = run::ffmpeg(tools, &args!["-i", &wav, "-c:a", "libmp3lame", "-q:a", "3", &out], 0.0, cancel, &mut |p| progress(0.6 + p * 0.4));
+    let r = run::ffmpeg(tools, &args!["-i", &wav, "-c:a", "libmp3lame", "-q:a", "3", &of.tmp], 0.0, cancel, &mut |p| progress(0.6 + p * 0.4));
     cleanup(&txt, &wav);
     r?;
-    Ok(out)
+    of.commit()
 }

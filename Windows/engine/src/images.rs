@@ -45,12 +45,11 @@ pub fn open(tools: Option<&Tools>, path: &Path) -> Result<Photo> {
         Err(first) => {
             // HEIC, AVIF e altri: li apre ffmpeg
             let Some(t) = tools else { return Err(first) };
-            let out = t
-                .ffmpeg_cmd()
-                .args(["-hide_banner", "-loglevel", "error", "-i"])
+            let mut c = t.ffmpeg_cmd();
+            c.args(["-hide_banner", "-loglevel", "error", "-i"])
                 .arg(path)
-                .args(["-frames:v", "1", "-f", "image2pipe", "-c:v", "png", "pipe:1"])
-                .output()?;
+                .args(["-frames:v", "1", "-f", "image2pipe", "-c:v", "png", "pipe:1"]);
+            let out = crate::tools::output_timeout(c, 60)?;
             if !out.status.success() || out.stdout.is_empty() {
                 let e = names::ext(path);
                 if e == "heic" || e == "heif" {
@@ -178,9 +177,9 @@ pub fn save(tools: Option<&Tools>, p: &Photo, ext: &str, quality: u8, out: &Path
 pub fn convert(tools: Option<&Tools>, src: &Path, to: &str, dir: &Path) -> Result<PathBuf> {
     let to = if to == "jpeg" { "jpg" } else if to == "tif" { "tiff" } else { to };
     let p = open(tools, src)?;
-    let out = names::unique(dir, &names::stem(src), to);
-    save(tools, &p, to, 92, &out)?;
-    Ok(out)
+    let of = names::OutFile::new(dir, &names::stem(src), to)?;
+    save(tools, &p, to, 92, &of.tmp)?;
+    of.commit()
 }
 
 /// Comprimi: `target` in byte, oppure `None` per «Stessa qualità, meno peso».
@@ -196,7 +195,7 @@ pub fn compress(tools: Option<&Tools>, src: &Path, target: Option<u64>, dir: &Pa
     if has_alpha(&p.img) {
         return Err(EngineError::new("l'immagine ha parti trasparenti: comprimendola in JPG diventerebbero bianche. Usa «Converti in WebP», che le tiene"));
     }
-    let out = names::unique(dir, &format!("{} (compresso)", names::stem(src)), "jpg");
+    let of = names::OutFile::new(dir, &format!("{} (compresso)", names::stem(src)), "jpg")?;
     let bytes = match target {
         None => {
             // 82: sopra non si vede differenza, sotto iniziano i difetti sui bordi
@@ -208,8 +207,8 @@ pub fn compress(tools: Option<&Tools>, src: &Path, target: Option<u64>, dir: &Pa
         }
         Some(t) => fit(&p, t)?,
     };
-    std::fs::write(&out, bytes)?;
-    Ok(out)
+    std::fs::write(&of.tmp, bytes)?;
+    of.commit()
 }
 
 /// La qualità più alta che sta sotto il peso; se non basta, la foto si rimpicciolisce un po' alla volta.
@@ -270,9 +269,9 @@ pub fn resize(tools: Option<&Tools>, src: &Path, param: &str, dir: &Path) -> Res
         x if WRITE.contains(&x) && x != "pdf" => x.to_string(),
         _ => "jpg".into(),
     };
-    let out = names::unique(dir, &format!("{} ({nw}×{nh})", names::stem(src)), &ext);
-    save(tools, &Photo { img, exif: p.exif, icc: p.icc }, &ext, 92, &out)?;
-    Ok(out)
+    let of = names::OutFile::new(dir, &format!("{} ({nw}×{nh})", names::stem(src)), &ext)?;
+    save(tools, &Photo { img, exif: p.exif, icc: p.icc }, &ext, 92, &of.tmp)?;
+    of.commit()
 }
 
 pub fn rotate(tools: Option<&Tools>, src: &Path, degrees: i32, dir: &Path) -> Result<PathBuf> {
@@ -285,9 +284,9 @@ pub fn rotate(tools: Option<&Tools>, src: &Path, degrees: i32, dir: &Path) -> Re
     };
     let e = names::ext(src);
     let ext = if ["jpg", "png", "webp", "bmp", "tiff", "gif"].contains(&e.as_str()) { e } else { "jpg".into() };
-    let out = names::unique(dir, &format!("{} (ruotata)", names::stem(src)), &ext);
-    save(tools, &Photo { img, exif: p.exif, icc: p.icc }, &ext, 95, &out)?;
-    Ok(out)
+    let of = names::OutFile::new(dir, &format!("{} (ruotata)", names::stem(src)), &ext)?;
+    save(tools, &Photo { img, exif: p.exif, icc: p.icc }, &ext, 95, &of.tmp)?;
+    of.commit()
 }
 
 /// Rimuovi i metadati senza perdere qualità (JPG, PNG, WebP).
@@ -301,9 +300,9 @@ pub fn strip(src: &Path, dir: &Path) -> Result<PathBuf> {
         _ => return Err(EngineError::new("per questo formato converti prima la foto in JPG: la conversione si può fare senza metadati")),
     };
     let ext = if e == "jpeg" || e == "jfif" { "jpg".to_string() } else { e };
-    let out = names::unique(dir, &format!("{} (senza metadati)", names::stem(src)), &ext);
-    std::fs::write(&out, clean)?;
-    Ok(out)
+    let of = names::OutFile::new(dir, &format!("{} (senza metadati)", names::stem(src)), &ext)?;
+    std::fs::write(&of.tmp, clean)?;
+    of.commit()
 }
 
 /// Più foto in un unico PDF, una per pagina, nell'ordine dato.
@@ -317,10 +316,10 @@ pub fn to_pdf(tools: Option<&Tools>, files: &[PathBuf], dir: &Path, cancel: &Can
         progress((i + 1) as f64 / files.len() as f64 * 0.95);
     }
     let base = if files.len() == 1 { names::stem(&files[0]) } else { format!("{} e altre {}", names::stem(&files[0]), files.len() - 1) };
-    let out = names::unique(dir, &base, "pdf");
-    crate::pdf::images_to_pdf(&pages, &out)?;
+    let of = names::OutFile::new(dir, &base, "pdf")?;
+    crate::pdf::images_to_pdf(&pages, &of.tmp)?;
     progress(1.0);
-    Ok(out)
+    of.commit()
 }
 
 /// Una miniatura JPEG (lato lungo `side`).

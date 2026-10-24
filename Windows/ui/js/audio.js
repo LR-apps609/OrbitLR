@@ -56,7 +56,8 @@ export function audioPage(app) {
     trim?.destroy();
     file = f;
     trim = createTrim({ path: f.path, duration: Math.max(0.1, f.info.duration), media: "audio", maxLen: tool === "ringtone" ? opts.ringLen : 0 });
-    invoke("waveform", { path: f.path, points: 900 }).then((p) => trim?.setPeaks(p)).catch(() => {});
+    const t = trim;
+    invoke("waveform", { path: f.path, points: 900 }).then((p) => { if (trim === t && file === f) trim.setPeaks(p); }).catch(() => {});
   }
 
   async function pick() {
@@ -76,8 +77,9 @@ export function audioPage(app) {
     const sel = { start: +trim.start.toFixed(3), end: +trim.end.toFixed(3) };
     switch (tool) {
       case "ringtone": return run("ringtone", [file], { ...sel, fade: opts.fade, normalize: opts.normalize, format: opts.ringFmt }, "audio");
-      case "cut": return run("cut", [file], sel, "audio");
-      case "speed": return run("speed", [file], opts.speed, "audio");
+      // Dalla scheda Audio esce sempre un audio, anche partendo da un video
+      case "cut": return run("cut", [file], { ...sel, audio: true }, "audio");
+      case "speed": return run("speed", [file], { factor: Number(opts.speed), audio: true }, "audio");
       case "merge":
         if (!others.length) return toast("Aggiungi almeno un altro file da unire.");
         return run("amerge", [file, ...others], null, "audio");

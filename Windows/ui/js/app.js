@@ -90,7 +90,10 @@ function sidebar() {
 function renderDrawer() {
   const items = getDrawer().slice(0, 12);
   drawerEmpty.hidden = items.length > 0;
-  drawerList.replaceChildren(...items.map((d) => h("li", { title: `${d.name}\nClic: mostra nella cartella · Doppio clic: apri`, onclick: () => reveal(d.path), ondblclick: () => openPath(d.path) },
+  let clickTimer;
+  drawerList.replaceChildren(...items.map((d) => h("li", { title: `${d.name}\nClic: mostra nella cartella · Doppio clic: apri`,
+    onclick: () => { clearTimeout(clickTimer); clickTimer = setTimeout(() => reveal(d.path), 260); },
+    ondblclick: () => { clearTimeout(clickTimer); openPath(d.path); } },
     ico(iconFor(d.name), 15), h("span.n", d.name), h("span.s", fmtBytes(d.size)))));
 }
 
@@ -154,7 +157,8 @@ async function boot() {
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => app.applyTheme());
   const splash = h("div.splash", h("img", { src: "img/icona.png", alt: "OrbitLR" }));
   document.body.append(h("div.app", sidebar(), main), splash);
-  show(store.get("tab", "convert"));
+  const saved = store.get("tab", "convert");
+  show(TABS.some((t) => t.id === saved) || EXTRA[saved] ? saved : "convert");
   renderDrawer();
   subscribe(() => {
     renderDrawer();

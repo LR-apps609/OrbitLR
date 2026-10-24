@@ -257,18 +257,8 @@ pub fn compress(
         None => plan_best(info, codec)?,
     };
     ensure_space(dir, plan.bytes(info.duration))?;
-    let out = names::unique(dir, &format!("{} (compresso)", names::stem(src)), "mp4");
-    let tmp = names::temp_beside(&out, "mp4");
-    // Qualsiasi uscita: il temporaneo non resta annotato
-    struct Untrack<'a>(&'a Path);
-    impl Drop for Untrack<'_> {
-        fn drop(&mut self) {
-            if !self.0.exists() {
-                names::track_temp(self.0, false);
-            }
-        }
-    }
-    let _untrack = Untrack(&tmp);
+    let of = names::OutFile::new(dir, &format!("{} (compresso)", names::stem(src)), "mp4")?;
+    let tmp = of.tmp.clone();
     let attempts = if target.is_some() { 4 } else { 1 };
     let mut factor = 1.0;
     let mut result = Err(EngineError::new("non riesco a comprimere il video"));
@@ -315,15 +305,8 @@ pub fn compress(
             _ => break,
         }
     }
-    if let Err(e) = result {
-        let _ = std::fs::remove_file(&tmp);
-        names::track_temp(&tmp, false);
-        return Err(e);
-    }
-    let r = std::fs::rename(&tmp, &out);
-    names::track_temp(&tmp, false);
-    r?;
-    Ok(out)
+    result?;
+    of.commit()
 }
 
 /// Taglia senza ricodificare: istantaneo e senza perdita (l'inizio cade sul fotogramma chiave più vicino).
@@ -348,27 +331,30 @@ pub fn cut(
         e @ ("mp4" | "mov" | "m4v" | "mkv" | "webm" | "avi" | "ts" | "mts" | "m2ts") => e.to_string(),
         _ => "mp4".into(),
     };
-    let out = names::unique(dir, &format!("{} (tagliato)", names::stem(src)), &ext);
+    let name = format!("{} (tagliato)", names::stem(src));
+    let of = names::OutFile::new(dir, &name, &ext)?;
     let d = end - start;
     if !precise {
         let a = args![
             "-ss", format!("{start:.3}"), "-i", src, "-t", format!("{d:.3}"),
             "-map", "0:v?", "-map", "0:a?", "-c", "copy", "-avoid_negative_ts", "make_zero",
-            "-map_metadata", "0", out.clone()
+            "-map_metadata", "0", of.tmp.clone()
         ];
         match run::ffmpeg(tools, &a, d, cancel, progress) {
-            Ok(()) if out.metadata().map(|m| m.len() > 1000).unwrap_or(false) => return Ok(out),
-            Err(e) if e.is_cancelled() => {
-                let _ = std::fs::remove_file(&out);
-                return Err(e);
-            }
+            Ok(()) if of.tmp.metadata().map(|m| m.len() > 1000).unwrap_or(false) => return of.commit(),
+            Err(e) if e.is_cancelled() => return Err(e),
             _ => {
-                let _ = std::fs::remove_file(&out);
+                let _ = std::fs::remove_file(&of.tmp);
             }
         }
     }
     // Ricodifica (taglio preciso, o se la copia non è riuscita); mai sopra un file che c'è già
-    let out = if names::ext(&out) == "mp4" { out } else { names::unique(dir, &format!("{} (tagliato)", names::stem(src)), "mp4") };
+    let of = if ext == "mp4" {
+        of
+    } else {
+        drop(of);
+        names::OutFile::new(dir, &name, "mp4")?
+    };
     let fps = if info.fps > 0.0 { info.fps } else { 30.0 };
     let px = info.width.max(2) as f64 * info.height.max(2) as f64 * fps;
     let b = if info.video_bitrate > 0 { (info.video_bitrate as f64 * 1.05).max(px * CLEAN_BPP_H264) } else { px * CLEAN_BPP_H264 * 1.5 };
@@ -376,13 +362,10 @@ pub fn cut(
     for enc in candidates(tools, Codec::H264) {
         let mut a = args!["-ss", format!("{start:.3}"), "-i", src, "-t", format!("{d:.3}"), "-map", "0:v:0", "-map", "0:a:0?", "-map_metadata", "0"];
         a.extend(encoder_args(&enc, b as u64));
-        a.extend(args!["-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", out.clone()]);
+        a.extend(args!["-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", of.tmp.clone()]);
         match run::ffmpeg(tools, &a, d, cancel, progress) {
-            Ok(()) => return Ok(out),
-            Err(e) if e.is_cancelled() => {
-                let _ = std::fs::remove_file(&out);
-                return Err(e);
-            }
+            Ok(()) => return of.commit(),
+            Err(e) if e.is_cancelled() => return Err(e),
             Err(e) => last = e,
         }
     }
@@ -433,11 +416,11 @@ pub fn resize(tools: &Tools, src: &Path, info: &FileInfo, short: u32, dir: &Path
     }
     let (w, h) = fit_short(info.width, info.height, short);
     let fps = if info.fps > 0.0 { info.fps } else { 30.0 };
-    let out = names::unique(dir, &format!("{} ({}p)", names::stem(src), short), "mp4");
+    let of = names::OutFile::new(dir, &format!("{} ({}p)", names::stem(src), short), "mp4")?;
     ensure_space(dir, (w as f64 * h as f64 * fps * CLEAN_BPP_H264 * info.duration / 8.0) as u64)?;
     let pre = args!["-i", src, "-map", "0:v:0", "-map", "0:a:0?", "-map_metadata", "0"];
-    reencode(tools, pre, args!["-vf", format!("scale={w}:{h}:flags=lanczos")], w as f64 * h as f64 * fps, info.has_audio, info.duration, &out, cancel, progress)?;
-    Ok(out)
+    reencode(tools, pre, args!["-vf", format!("scale={w}:{h}:flags=lanczos")], w as f64 * h as f64 * fps, info.has_audio, info.duration, &of.tmp, cancel, progress)?;
+    of.commit()
 }
 
 /// Velocità da 0,25× a 4×: la voce mantiene il suo tono.
@@ -449,15 +432,15 @@ pub fn speed(tools: &Tools, src: &Path, info: &FileInfo, factor: f64, dir: &Path
     if !info.has_video {
         return crate::audio::speed(tools, src, info, factor, dir, cancel, progress);
     }
-    let out = names::unique(dir, &format!("{} ({label}×)", names::stem(src)), "mp4");
+    let of = names::OutFile::new(dir, &format!("{} ({label}×)", names::stem(src)), "mp4")?;
     let fps = if info.fps > 0.0 { info.fps } else { 30.0 };
     let pre = args!["-i", src, "-map", "0:v:0", "-map", "0:a:0?", "-map_metadata", "0"];
     let mut f = args!["-vf", format!("setpts=PTS/{factor}")];
     if info.has_audio {
         f.extend(args!["-af", crate::audio::atempo_chain(factor)]);
     }
-    reencode(tools, pre, f, info.width as f64 * info.height as f64 * fps, info.has_audio, info.duration / factor, &out, cancel, progress)?;
-    Ok(out)
+    reencode(tools, pre, f, info.width as f64 * info.height as f64 * fps, info.has_audio, info.duration / factor, &of.tmp, cancel, progress)?;
+    of.commit()
 }
 
 /// Formato per i social: 9:16 (Reels, TikTok, Shorts), 1:1, 4:5, 16:9. Il video resta intero,
@@ -469,7 +452,7 @@ pub fn social(tools: &Tools, src: &Path, info: &FileInfo, aspect: &str, dir: &Pa
         "16x9" => (1920, 1080, "16-9"),
         _ => (1080, 1920, "9-16"),
     };
-    let out = names::unique(dir, &format!("{} ({label})", names::stem(src)), "mp4");
+    let of = names::OutFile::new(dir, &format!("{} ({label})", names::stem(src)), "mp4")?;
     let fps = if info.fps > 0.0 { info.fps.min(60.0) } else { 30.0 };
     let graph = format!(
         "[0:v]scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},gblur=sigma=36:steps=2,colorchannelmixer=rr=0.9:gg=0.9:bb=0.9[bg];\
@@ -481,44 +464,44 @@ pub fn social(tools: &Tools, src: &Path, info: &FileInfo, aspect: &str, dir: &Pa
     if info.fps > 60.0 {
         f.extend(args!["-r", "60"]);
     }
-    reencode(tools, pre, f, w as f64 * h as f64 * fps, info.has_audio, info.duration, &out, cancel, progress)?;
-    Ok(out)
+    reencode(tools, pre, f, w as f64 * h as f64 * fps, info.has_audio, info.duration, &of.tmp, cancel, progress)?;
+    of.commit()
 }
 
 /// Senza audio: istantaneo, il video non si tocca.
 pub fn mute(tools: &Tools, src: &Path, info: &FileInfo, dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<PathBuf> {
     let ext = names::ext(src);
     let ext = if ["mp4", "mov", "m4v", "mkv", "webm"].contains(&ext.as_str()) { ext } else { "mp4".into() };
-    let out = names::unique(dir, &format!("{} (senza audio)", names::stem(src)), &ext);
-    run::ffmpeg(tools, &args!["-i", src, "-map", "0:v", "-c", "copy", "-an", "-map_metadata", "0", out.clone()], info.duration, cancel, progress)?;
-    Ok(out)
+    let of = names::OutFile::new(dir, &format!("{} (senza audio)", names::stem(src)), &ext)?;
+    run::ffmpeg(tools, &args!["-i", src, "-map", "0:v", "-c", "copy", "-an", "-map_metadata", "0", of.tmp.clone()], info.duration, cancel, progress)?;
+    of.commit()
 }
 
 /// Ruota di 90°, 180° o 270° senza ricodificare (cambia solo l'indicazione per i lettori).
 pub fn rotate(tools: &Tools, src: &Path, info: &FileInfo, degrees: i32, dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<PathBuf> {
     let ext = names::ext(src);
     let ext = if ["mp4", "mov", "m4v"].contains(&ext.as_str()) { ext } else { "mp4".into() };
-    let out = names::unique(dir, &format!("{} (ruotato)", names::stem(src)), &ext);
+    let of = names::OutFile::new(dir, &format!("{} (ruotato)", names::stem(src)), &ext)?;
     // La rotazione nuova (oraria) è quella di adesso più quella chiesta;
     // display_rotation la vuole in senso antiorario e sostituisce quella che c'è
     let clockwise = (info.rotation + degrees).rem_euclid(360);
     let total = (360 - clockwise).rem_euclid(360);
-    let a = args!["-display_rotation:v:0", total.to_string(), "-i", src, "-map", "0", "-c", "copy", "-map_metadata", "0", out.clone()];
+    let a = args!["-display_rotation:v:0", total.to_string(), "-i", src, "-map", "0", "-c", "copy", "-map_metadata", "0", of.tmp.clone()];
     match run::ffmpeg(tools, &a, info.duration, cancel, progress) {
-        Ok(()) => Ok(out),
+        Ok(()) => of.commit(),
         Err(e) if e.is_cancelled() => Err(e),
         Err(_) => {
             // Vecchi contenitori: si ricodifica
-            let _ = std::fs::remove_file(&out);
-            let out = names::unique(dir, &format!("{} (ruotato)", names::stem(src)), "mp4");
+            drop(of);
+            let of = names::OutFile::new(dir, &format!("{} (ruotato)", names::stem(src)), "mp4")?;
             let t = match degrees.rem_euclid(360) {
                 90 => "transpose=1",
                 180 => "transpose=1,transpose=1",
                 _ => "transpose=2",
             };
             let fps = if info.fps > 0.0 { info.fps } else { 30.0 };
-            reencode(tools, args!["-i", src, "-map", "0:v:0", "-map", "0:a:0?"], args!["-vf", t], info.width as f64 * info.height as f64 * fps, info.has_audio, info.duration, &out, cancel, progress)?;
-            Ok(out)
+            reencode(tools, args!["-i", src, "-map", "0:v:0", "-map", "0:a:0?"], args!["-vf", t], info.width as f64 * info.height as f64 * fps, info.has_audio, info.duration, &of.tmp, cancel, progress)?;
+            of.commit()
         }
     }
 }
@@ -535,15 +518,18 @@ pub fn gif(tools: &Tools, src: &Path, info: &FileInfo, start: f64, end: f64, wid
         return Err(EngineError::new("una GIF può essere lunga al massimo 60 secondi: scegli un pezzo più corto"));
     }
     let w = width.min(info.width.max(2));
-    let out = names::unique(dir, &format!("{} (GIF)", names::stem(src)), "gif");
+    let of = names::OutFile::new(dir, &format!("{} (GIF)", names::stem(src)), "gif")?;
     let graph = format!("fps=12,scale={w}:-2:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle");
-    run::ffmpeg(tools, &args!["-ss", format!("{start:.3}"), "-t", format!("{d:.3}"), "-i", src, "-filter_complex", graph, "-loop", "0", out.clone()], d, cancel, progress)?;
-    Ok(out)
+    run::ffmpeg(tools, &args!["-ss", format!("{start:.3}"), "-t", format!("{d:.3}"), "-i", src, "-filter_complex", graph, "-loop", "0", of.tmp.clone()], d, cancel, progress)?;
+    of.commit()
 }
 
 /// Converti in un altro formato video. Se il formato lo permette, senza ricodificare (istantaneo e senza perdita).
 pub fn convert(tools: &Tools, src: &Path, info: &FileInfo, to: &str, dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<PathBuf> {
-    let out = names::unique(dir, &names::stem(src), to);
+    if to == "gif" {
+        return gif(tools, src, info, 0.0, info.duration.min(15.0), 480, dir, cancel, progress);
+    }
+    let of = names::OutFile::new(dir, &names::stem(src), to)?;
     let fps = if info.fps > 0.0 { info.fps } else { 30.0 };
     let px = info.width.max(2) as f64 * info.height.max(2) as f64 * fps;
     let vc = info.video_codec.as_str();
@@ -563,12 +549,12 @@ pub fn convert(tools: &Tools, src: &Path, info: &FileInfo, to: &str, dir: &Path,
         } else {
             a.extend(args!["-map", "0:s?"]);
         }
-        a.push(out.clone().into());
+        a.push(of.tmp.clone().into());
         match run::ffmpeg(tools, &a, info.duration, cancel, progress) {
-            Ok(()) => return Ok(out),
+            Ok(()) => return of.commit(),
             Err(e) if e.is_cancelled() => return Err(e),
             Err(_) => {
-                let _ = std::fs::remove_file(&out);
+                let _ = std::fs::remove_file(&of.tmp);
             }
         }
     }
@@ -579,7 +565,7 @@ pub fn convert(tools: &Tools, src: &Path, info: &FileInfo, to: &str, dir: &Path,
             if info.has_audio {
                 a.extend(args!["-c:a", "libopus", "-b:a", "128k"]);
             }
-            a.push(out.clone().into());
+            a.push(of.tmp.clone().into());
             run::ffmpeg(tools, &a, info.duration, cancel, progress)?;
         }
         "avi" => {
@@ -587,19 +573,15 @@ pub fn convert(tools: &Tools, src: &Path, info: &FileInfo, to: &str, dir: &Path,
             if info.has_audio {
                 a.extend(args!["-c:a", "libmp3lame", "-q:a", "2"]);
             }
-            a.push(out.clone().into());
+            a.push(of.tmp.clone().into());
             run::ffmpeg(tools, &a, info.duration, cancel, progress)?;
-        }
-        "gif" => {
-            let _ = std::fs::remove_file(&out);
-            return gif(tools, src, info, 0.0, info.duration.min(15.0), 480, dir, cancel, progress);
         }
         _ => {
             let pre = args!["-i", src, "-map", "0:v:0", "-map", "0:a:0?", "-map_metadata", "0"];
-            reencode(tools, pre, vec![], px, info.has_audio, info.duration, &out, cancel, progress)?;
+            reencode(tools, pre, vec![], px, info.has_audio, info.duration, &of.tmp, cancel, progress)?;
         }
     }
-    Ok(out)
+    of.commit()
 }
 
 /// Unisce più video in uno, nell'ordine dato: stessa misura del primo, bande nere dove serve.
@@ -639,21 +621,20 @@ pub fn merge(tools: &Tools, files: &[(PathBuf, FileInfo)], dir: &Path, cancel: &
         joined.push_str(&format!("[v{i}][a{i}]"));
     }
     graph.push_str(&format!("{joined}concat=n={}:v=1:a=1[v][a]", files.len()));
-    let out = names::unique(dir, &format!("{} (uniti)", names::stem(&files[0].0)), "mp4");
+    let of = names::OutFile::new(dir, &format!("{} (uniti)", names::stem(&files[0].0)), "mp4")?;
     ensure_space(dir, (w as f64 * h as f64 * fps * CLEAN_BPP_H264 * total / 8.0) as u64)?;
-    reencode(tools, a, args!["-filter_complex", graph, "-map", "[v]", "-map", "[a]"], w as f64 * h as f64 * fps, true, total, &out, cancel, progress)?;
-    Ok(out)
+    reencode(tools, a, args!["-filter_complex", graph, "-map", "[v]", "-map", "[a]"], w as f64 * h as f64 * fps, true, total, &of.tmp, cancel, progress)?;
+    of.commit()
 }
 
 /// Un fotogramma piccolo per le miniature (JPEG in memoria).
 pub fn thumbnail(tools: &Tools, src: &Path, duration: f64, side: u32) -> Result<Vec<u8>> {
     let at = if duration > 2.0 { (duration * 0.1).min(3.0) } else { 0.0 };
-    let out = tools
-        .ffmpeg_cmd()
-        .args(["-hide_banner", "-loglevel", "error", "-ss", &format!("{at:.2}"), "-i"])
+    let mut c = tools.ffmpeg_cmd();
+    c.args(["-hide_banner", "-loglevel", "error", "-ss", &format!("{at:.2}"), "-i"])
         .arg(src)
-        .args(["-frames:v", "1", "-vf", &format!("scale='min({side},iw)':-2"), "-f", "image2pipe", "-c:v", "mjpeg", "-q:v", "5", "pipe:1"])
-        .output()?;
+        .args(["-frames:v", "1", "-vf", &format!("scale='min({side},iw)':-2"), "-f", "image2pipe", "-c:v", "mjpeg", "-q:v", "5", "pipe:1"]);
+    let out = crate::tools::output_timeout(c, 30)?;
     if !out.status.success() || out.stdout.is_empty() {
         return Err(EngineError::new("nessuna anteprima"));
     }

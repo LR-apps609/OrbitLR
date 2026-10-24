@@ -101,9 +101,11 @@ export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange 
       const up = () => {
         handle.removeEventListener("pointermove", move);
         handle.removeEventListener("pointerup", up);
+        handle.removeEventListener("pointercancel", up);
       };
       handle.addEventListener("pointermove", move);
       handle.addEventListener("pointerup", up);
+      handle.addEventListener("pointercancel", up);
     });
     handle.addEventListener("keydown", (e) => {
       const step = e.shiftKey ? 1 : 0.1;
@@ -136,6 +138,12 @@ export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange 
   player.addEventListener("pause", () => playBtn.replaceChildren(ico("play", 14), "Ascolta il pezzo"));
   let raf = 0;
   const tick = () => {
+    // Pagina nascosta: niente animazione; si riprende quando torna visibile
+    if (!el.isConnected) {
+      raf = 0;
+      setTimeout(() => { if (!raf && !destroyed) raf = requestAnimationFrame(tick); }, 400);
+      return;
+    }
     ph.style.left = (player.currentTime / duration) * 100 + "%";
     if (stopAt != null && player.currentTime >= stopAt) {
       player.pause();
@@ -145,8 +153,9 @@ export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange 
   };
   raf = requestAnimationFrame(tick);
 
+  let destroyed = false;
   const keys = (e) => {
-    if (!el.isConnected || e.target.closest("input, textarea")) return;
+    if (!el.isConnected || e.target.closest("input, textarea, select, button") || document.querySelector(".modal-bg")) return;
     if (e.key === "i" || e.key === "I") setStart(player.currentTime);
     else if (e.key === "o" || e.key === "O") setEnd(player.currentTime);
     else if (e.key === " ") {
@@ -170,6 +179,7 @@ export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange 
     setMaxLen(m) { maxLen = m; if (maxLen && end - start > maxLen) end = Math.min(duration, start + maxLen); draw(); },
     playSelection,
     destroy() {
+      destroyed = true;
       cancelAnimationFrame(raf);
       document.removeEventListener("keydown", keys);
       ro.disconnect();

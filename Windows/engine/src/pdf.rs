@@ -104,14 +104,17 @@ pub fn extract(src: &Path, pages: &str, dir: &Path) -> Result<PathBuf> {
     doc.delete_pages(&drop);
     doc.prune_objects();
     doc.compress();
-    let out = names::unique(dir, &format!("{} (pagine {})", names::stem(src), pages.trim()), "pdf");
-    doc.save(&out).map_err(|e| EngineError::new(format!("non riesco a scrivere il PDF: {e}")))?;
-    Ok(out)
+    let of = names::OutFile::new(dir, &format!("{} (pagine {})", names::stem(src), pages.trim()), "pdf")?;
+    doc.save(&of.tmp).map_err(|e| EngineError::new(format!("non riesco a scrivere il PDF: {e}")))?;
+    of.commit()
 }
 
 /// Un PDF per ogni pagina.
 pub fn split(src: &Path, dir: &Path) -> Result<Vec<PathBuf>> {
     let total = page_count(src)?;
+    if total == 0 {
+        return Err(EngineError::new("il PDF non ha pagine"));
+    }
     if total < 2 {
         return Err(EngineError::new("il PDF ha una pagina sola"));
     }
@@ -122,89 +125,87 @@ pub fn split(src: &Path, dir: &Path) -> Result<Vec<PathBuf>> {
         doc.delete_pages(&drop);
         doc.prune_objects();
         doc.compress();
-        let out = names::unique(dir, &format!("{} - pagina {n}", names::stem(src)), "pdf");
-        doc.save(&out).map_err(|e| EngineError::new(format!("non riesco a scrivere il PDF: {e}")))?;
-        outs.push(out);
+        let of = names::OutFile::new(dir, &format!("{} - pagina {n}", names::stem(src)), "pdf")?;
+        doc.save(&of.tmp).map_err(|e| EngineError::new(format!("non riesco a scrivere il PDF: {e}")))?;
+        outs.push(of.commit()?);
     }
     Ok(outs)
 }
 
-/// Unisci più PDF in uno, nell'ordine dato (il metodo dell'esempio ufficiale di lopdf).
+/// Unisci più PDF in uno, nell'ordine dato. Ogni pagina si porta dietro le misure, le risorse e la rotazione
+/// che ereditava dal suo documento; poi un indice nuovo e pulito.
 pub fn merge(files: &[PathBuf], dir: &Path) -> Result<PathBuf> {
-    use lopdf::{Document, Object, ObjectId};
-    use std::collections::BTreeMap;
+    use lopdf::{Dictionary, Document, Object, ObjectId};
     if files.len() < 2 {
         return Err(EngineError::new("servono almeno due PDF"));
     }
-    let mut max_id = 1;
-    let mut pages_all: Vec<(ObjectId, Object)> = Vec::new();
-    let mut objects_all: BTreeMap<ObjectId, Object> = BTreeMap::new();
     let mut out = Document::with_version("1.5");
+    let mut max_id = 1;
+    let mut kids: Vec<ObjectId> = Vec::new();
     for f in files {
         let mut doc = load(f)?;
         doc.renumber_objects_with(max_id);
         max_id = doc.max_id + 1;
-        for (_, id) in doc.get_pages() {
-            if let Ok(o) = doc.get_object(id) {
-                pages_all.push((id, o.to_owned()));
-            }
-        }
-        objects_all.extend(doc.objects);
-    }
-    let mut catalog: Option<(ObjectId, Object)> = None;
-    let mut pages_root: Option<(ObjectId, Object)> = None;
-    for (id, obj) in objects_all.iter() {
-        match obj.type_name().unwrap_or(b"") {
-            b"Catalog" => {
-                if catalog.is_none() {
-                    catalog = Some((*id, obj.clone()));
+        let pages: Vec<ObjectId> = doc.get_pages().into_values().collect();
+        // Attributi ereditati dai genitori: dentro ogni pagina
+        for &pid in &pages {
+            let mut inherited: Vec<(Vec<u8>, Object)> = Vec::new();
+            let mut parent = doc.get_dictionary(pid).ok().and_then(|d| d.get(b"Parent").ok()).and_then(|o| o.as_reference().ok());
+            let mut guard = 0;
+            while let Some(par) = parent {
+                guard += 1;
+                if guard > 64 {
+                    break;
                 }
-            }
-            b"Pages" => {
-                if let Ok(d) = obj.as_dict() {
-                    let mut d = d.clone();
-                    if let Some((_, ref o)) = pages_root {
-                        if let Ok(old) = o.as_dict() {
-                            d.extend(old);
+                let Ok(pd) = doc.get_dictionary(par) else { break };
+                for key in [&b"MediaBox"[..], b"CropBox", b"Resources", b"Rotate"] {
+                    if !inherited.iter().any(|(k, _)| k == key) {
+                        if let Ok(v) = pd.get(key) {
+                            inherited.push((key.to_vec(), v.clone()));
                         }
                     }
-                    pages_root = Some((pages_root.as_ref().map(|p| p.0).unwrap_or(*id), Object::Dictionary(d)));
+                }
+                parent = pd.get(b"Parent").ok().and_then(|o| o.as_reference().ok());
+            }
+            if let Ok(Object::Dictionary(d)) = doc.get_object_mut(pid) {
+                for (k, v) in inherited {
+                    if d.get(&k).is_err() {
+                        d.set(k, v);
+                    }
                 }
             }
-            b"Page" | b"Outlines" | b"Outline" => {}
-            _ => {
-                out.objects.insert(*id, obj.clone());
-            }
+            kids.push(pid);
+        }
+        out.objects.extend(doc.objects);
+    }
+    if kids.is_empty() {
+        return Err(EngineError::new("PDF senza pagine"));
+    }
+    let pages_id: ObjectId = (max_id, 0);
+    let catalog_id: ObjectId = (max_id + 1, 0);
+    for pid in &kids {
+        if let Ok(Object::Dictionary(d)) = out.get_object_mut(*pid) {
+            d.set("Parent", Object::Reference(pages_id));
         }
     }
-    let (pages_id, pages_obj) = pages_root.ok_or_else(|| EngineError::new("PDF senza pagine"))?;
-    let (catalog_id, catalog_obj) = catalog.ok_or_else(|| EngineError::new("PDF senza indice"))?;
-    for (id, obj) in &pages_all {
-        if let Ok(d) = obj.as_dict() {
-            let mut d = d.clone();
-            d.set("Parent", pages_id);
-            out.objects.insert(*id, Object::Dictionary(d));
-        }
-    }
-    if let Ok(d) = pages_obj.as_dict() {
-        let mut d = d.clone();
-        d.set("Count", pages_all.len() as u32);
-        d.set("Kids", pages_all.iter().map(|(id, _)| Object::Reference(*id)).collect::<Vec<_>>());
-        out.objects.insert(pages_id, Object::Dictionary(d));
-    }
-    if let Ok(d) = catalog_obj.as_dict() {
-        let mut d = d.clone();
-        d.set("Pages", pages_id);
-        d.remove(b"Outlines");
-        out.objects.insert(catalog_id, Object::Dictionary(d));
-    }
-    out.trailer.set("Root", catalog_id);
-    out.max_id = out.objects.len() as u32;
+    let mut pages = Dictionary::new();
+    pages.set("Type", Object::Name(b"Pages".to_vec()));
+    pages.set("Count", Object::Integer(kids.len() as i64));
+    pages.set("Kids", Object::Array(kids.iter().map(|k| Object::Reference(*k)).collect()));
+    out.objects.insert(pages_id, Object::Dictionary(pages));
+    let mut catalog = Dictionary::new();
+    catalog.set("Type", Object::Name(b"Catalog".to_vec()));
+    catalog.set("Pages", Object::Reference(pages_id));
+    out.objects.insert(catalog_id, Object::Dictionary(catalog));
+    out.trailer.set("Root", Object::Reference(catalog_id));
+    out.max_id = max_id + 1;
+    // Via i vecchi indici e tutto ciò che non serve più
+    out.prune_objects();
     out.renumber_objects();
     out.compress();
-    let dest = names::unique(dir, &format!("{} (uniti)", names::stem(&files[0])), "pdf");
-    out.save(&dest).map_err(|e| EngineError::new(format!("non riesco a scrivere il PDF: {e}")))?;
-    Ok(dest)
+    let of = names::OutFile::new(dir, &format!("{} (uniti)", names::stem(&files[0])), "pdf")?;
+    out.save(&of.tmp).map_err(|e| EngineError::new(format!("non riesco a scrivere il PDF: {e}")))?;
+    of.commit()
 }
 
 #[cfg(test)]

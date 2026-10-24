@@ -7,8 +7,10 @@
 
 pub mod actions;
 pub mod audio;
+pub mod editor;
 pub mod error;
 pub mod images;
+pub mod look;
 pub mod meta;
 pub mod names;
 pub mod pdf;

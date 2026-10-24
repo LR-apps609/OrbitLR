@@ -75,7 +75,7 @@ export const KNOBS = {
       { value: "best", label: "Stessa qualità, meno peso", small: "di solito la metà" },
       { value: "9", label: "Discord", small: "9 MB" },
       { value: "15", label: "WhatsApp", small: "15 MB" },
-      { value: "24", label: "Email", small: "24 MB" },
+      { value: "18", label: "Email", small: "18 MB" },
       { value: "50", label: "50 MB" },
       { value: "100", label: "100 MB" },
     ],

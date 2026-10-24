@@ -51,7 +51,12 @@ export function convertPage(app) {
     return [...m.entries()];
   }
 
+  let lastRun = { key: "", at: 0 };
   function choose(kind, list, fmt) {
+    // Un doppio clic (o clic + Invio) non fa partire due volte lo stesso lavoro
+    const key = fmt + "|" + list.map((f) => f.path).join("|");
+    if (key === lastRun.key && Date.now() - lastRun.at < 1500) return;
+    lastRun = { key, at: Date.now() };
     store.set("lastFmt." + kind, fmt);
     run("to:" + fmt, list, null, "convert");
   }
@@ -115,7 +120,8 @@ export function convertPage(app) {
   }
 
   function onKey(e) {
-    if (!el.isConnected || !files.length || e.target.closest("input, textarea")) return;
+    if (!el.isConnected || !files.length || e.target.closest("input, textarea, select") || document.querySelector(".modal-bg")) return;
+    if ((e.key === "Enter" || e.key === " ") && e.target.closest("button")) return; // ci pensa il pulsante
     const n = Number(e.key);
     if (n >= 1 && n <= 9 && keyMap[n - 1]) {
       e.preventDefault();

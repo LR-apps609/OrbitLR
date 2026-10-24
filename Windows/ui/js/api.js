@@ -44,7 +44,7 @@ export async function reveal(path) {
 }
 
 export async function openPath(path) {
-  if (T) return T.opener.openPath(path);
+  if (T) return T.core.invoke("open_result", { path }).catch((e) => import("./util.js").then((u) => u.toast(String(e))));
 }
 
 export async function openUrl(url) {

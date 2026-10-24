@@ -35,7 +35,7 @@ impl Output {
 
 /// Le azioni che lavorano su tutti i file insieme (una sola volta).
 pub fn is_multi(id: &str) -> bool {
-    matches!(id, "vmerge" | "amerge" | "merge" | "pdfmerge")
+    matches!(id, "vmerge" | "amerge" | "merge" | "pdfmerge" | "vproject")
 }
 
 /// «2,8 MB», «850 KB»: numeri all'italiana.
@@ -93,6 +93,13 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
     let dir = out_dir(ctx, first)?;
     let t = ctx.tools.as_ref();
 
+    // Montaggio: il progetto arriva intero nel parametro
+    if id == "vproject" {
+        let project: crate::editor::Project = serde_json::from_value(param.clone()).map_err(|e| EngineError::new(format!("progetto non valido: {e}")))?;
+        let out = crate::editor::export(tools(ctx)?, &project, &dir, cancel, progress)?;
+        return Ok(vec![Output::of(&out)]);
+    }
+
     // Azioni su più file insieme
     if is_multi(id) {
         let out = match id {
@@ -117,6 +124,11 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
         // ── Converti
         x if x.starts_with("to:") => {
             let to = &x[3..];
+            const KNOWN: &[&str] = &["jpg", "jpeg", "png", "webp", "avif", "bmp", "tiff", "tif", "gif", "ico", "pdf", "mp4", "mov", "m4v", "mkv", "webm", "avi",
+                "mp3", "m4a", "m4r", "wav", "flac", "ogg", "opus", "aiff", "aac"];
+            if !KNOWN.contains(&to) {
+                return Err(EngineError::new(format!("formato sconosciuto: {to}")));
+            }
             match kind {
                 Kind::Image => {
                     if to == "pdf" { vec![images::to_pdf(t, files, &dir, cancel, progress)?] } else { vec![images::convert(t, src, to, &dir)?] }
@@ -142,7 +154,7 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
         }
         "cut" => {
             let (a, b) = (field(param, "start").unwrap_or(0.0), field(param, "end").unwrap_or(info.duration));
-            if kind == Kind::Video {
+            if kind == Kind::Video && !param["audio"].as_bool().unwrap_or(false) {
                 vec![video::cut(tools(ctx)?, src, &info, a, b, param["precise"].as_bool().unwrap_or(false), &dir, cancel, progress)?]
             } else {
                 vec![audio::cut(tools(ctx)?, src, &info, a, b, &dir, cancel, progress)?]
@@ -153,8 +165,12 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
             vec![video::gif(tools(ctx)?, src, &info, a, b, field(param, "width").unwrap_or(480.0) as u32, &dir, cancel, progress)?]
         }
         "speed" => {
-            let f = num(param).ok_or_else(|| EngineError::new("scegli una velocità"))?;
-            if kind == Kind::Video { vec![video::speed(tools(ctx)?, src, &info, f, &dir, cancel, progress)?] } else { vec![audio::speed(tools(ctx)?, src, &info, f, &dir, cancel, progress)?] }
+            let f = num(param).or_else(|| field(param, "factor")).ok_or_else(|| EngineError::new("scegli una velocità"))?;
+            if !(0.25..=4.0).contains(&f) || (f - 1.0).abs() < 0.01 {
+                return Err(EngineError::new("scegli una velocità tra 0,25× e 4×"));
+            }
+            let audio_only = param["audio"].as_bool().unwrap_or(false);
+            if kind == Kind::Video && !audio_only { vec![video::speed(tools(ctx)?, src, &info, f, &dir, cancel, progress)?] } else { vec![audio::speed(tools(ctx)?, src, &info, f, &dir, cancel, progress)?] }
         }
         "social" => vec![video::social(tools(ctx)?, src, &info, if p_str.is_empty() { "9x16" } else { &p_str }, &dir, cancel, progress)?],
         "mute" => vec![video::mute(tools(ctx)?, src, &info, &dir, cancel, progress)?],

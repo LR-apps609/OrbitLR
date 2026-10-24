@@ -73,7 +73,7 @@ export function settingsPage(app) {
     const eng = app.engine || {};
     const folder = store.get("folder", null);
     const radio = (name, value, cur, label, sub, on) => h("label.check", { style: { alignItems: "flex-start" } },
-      h("input", { type: "radio", name, checked: value === cur || null, onchange: () => { on(); render(); } }),
+      h("input", { type: "radio", name, checked: value === cur || null, onchange: async () => { await on(); render(); } }),
       h("span", h("b", { style: { display: "block" } }, label), sub ? h("span", { style: { color: "var(--quiet)", fontSize: "12.5px" } }, sub) : null));
     const gpu = (eng.h264 || []).map((e) => e.split("_")[1]).filter((x) => ["nvenc", "qsv", "amf", "mf"].includes(x));
     const gpuText = gpu.includes("nvenc") ? "Scheda video NVIDIA" : gpu.includes("qsv") ? "Grafica Intel" : gpu.includes("amf") ? "Scheda video AMD" : gpu.includes("mf") ? "Codificatore di Windows" : "Processore (più lento)";
@@ -82,7 +82,7 @@ export function settingsPage(app) {
       h("div.page-scroll", h("div.list",
         h("div.set", h("h3", "Dove salvare i file creati"),
           radio("where", "same", where, "Accanto all'originale", "Nella stessa cartella, con un nome nuovo: l'originale non si tocca mai", () => store.set("where", "same")),
-          radio("where", "downloads", where, "Nella cartella Download", null, async () => { const p = await invoke("places"); store.set("downloadsDir", p.downloads); store.set("where", "downloads"); }),
+          radio("where", "downloads", where, "Nella cartella Download", null, async () => { const p = await invoke("places"); store.set("downloadsDir", p.downloads); store.set("where", "downloads"); render(); }),
           radio("where", "folder", where, "In una cartella che scelgo", folder || "Nessuna cartella scelta", async () => { const f = await pickFolder(); if (f) { store.set("folder", f); store.set("where", "folder"); } render(); })),
         h("div.set", h("h3", "Aspetto"),
           h("div.opts", [["auto", "Come Windows"], ["light", "Chiaro"], ["dark", "Radio di notte"]].map(([v, l]) =>

@@ -15,6 +15,29 @@ struct AppState {
     tools: Option<Tools>,
     jobs: Mutex<HashMap<String, Cancel>>,
     thumbs: Mutex<HashMap<String, String>>,
+    /// Miniature in preparazione: al massimo 3 insieme (500 foto trascinate non bloccano il PC)
+    thumb_slots: (Mutex<usize>, std::sync::Condvar),
+    /// I file creati da OrbitLR: solo questi si possono aprire con un clic
+    made: Mutex<std::collections::HashSet<String>>,
+}
+
+/// Aspetta un posto libero per una miniatura; lo restituisce quando si esce.
+struct Slot<'a>(&'a (Mutex<usize>, std::sync::Condvar));
+impl<'a> Slot<'a> {
+    fn take(s: &'a (Mutex<usize>, std::sync::Condvar)) -> Slot<'a> {
+        let mut n = s.0.lock().unwrap();
+        while *n >= 3 {
+            n = s.1.wait(n).unwrap();
+        }
+        *n += 1;
+        Slot(s)
+    }
+}
+impl Drop for Slot<'_> {
+    fn drop(&mut self) {
+        *self.0 .0.lock().unwrap() -= 1;
+        self.0 .1.notify_one();
+    }
 }
 
 type Shared = Arc<AppState>;
@@ -30,7 +53,10 @@ struct EngineStatus {
 /// Un percorso vero, di un file che esiste (niente percorsi di dispositivi o cartelle).
 fn checked_file(p: &str) -> Result<PathBuf, String> {
     let path = PathBuf::from(p);
-    if !path.is_absolute() || p.starts_with(r"\\.\") || p.starts_with(r"\\?\GLOBALROOT") {
+    let low = p.to_ascii_lowercase().replace('/', "\\");
+    // Niente dispositivi, percorsi speciali di Windows o «pipe» di rete: solo file veri
+    let device = low.starts_with(r"\\.\") || low.starts_with(r"\\?\") || low.contains("globalroot") || low.split('\\').nth(3) == Some("pipe");
+    if !path.is_absolute() || device || p.contains('\0') {
         return Err("percorso non valido".into());
     }
     if !path.is_file() {
@@ -63,7 +89,7 @@ struct Probed {
 
 /// Legge i file trascinati. Le cartelle si aprono (un livello) e si prendono i file dentro.
 #[tauri::command]
-async fn probe_files(state: State<'_, Shared>, paths: Vec<String>) -> Result<Vec<Probed>, String> {
+async fn probe_files(app: tauri::AppHandle, state: State<'_, Shared>, paths: Vec<String>) -> Result<Vec<Probed>, String> {
     let st = state.inner().clone();
     tauri::async_runtime::spawn_blocking(move || {
         let mut list: Vec<PathBuf> = Vec::new();
@@ -84,7 +110,11 @@ async fn probe_files(state: State<'_, Shared>, paths: Vec<String>) -> Result<Vec
             .map(|p| {
                 let path = p.to_string_lossy().to_string();
                 match checked_file(&path).and_then(|f| probe(st.tools.as_ref(), &f).map_err(|e| e.0)) {
-                    Ok(i) => Probed { ok: true, info: Some(i), error: None, path },
+                    Ok(i) => {
+                        // L'anteprima (video e audio nella finestra) può leggere solo i file aggiunti
+                        let _ = app.asset_protocol_scope().allow_file(&p);
+                        Probed { ok: true, info: Some(i), error: None, path }
+                    }
                     Err(e) => Probed { ok: false, info: None, error: Some(e), path },
                 }
             })
@@ -106,6 +136,7 @@ async fn thumbnail(state: State<'_, Shared>, path: String, side: u32) -> Result<
             return Some(t.clone());
         }
         let side = side.clamp(48, 640);
+        let _slot = Slot::take(&st.thumb_slots);
         let kind = orbit_engine::probe::kind_of_ext(&orbit_engine::names::ext(&p));
         let bytes = match kind {
             orbit_engine::Kind::Image => orbit_engine::images::thumbnail(st.tools.as_ref(), &p, side).ok(),
@@ -171,6 +202,9 @@ fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action
         }
         None => None,
     };
+    if id.is_empty() || id.len() > 64 || !id.chars().all(|c| c.is_ascii_alphanumeric()) {
+        return Err("lavoro non valido".into());
+    }
     let cancel = Cancel::new();
     state.jobs.lock().unwrap().insert(id.clone(), cancel.clone());
     let st = state.inner().clone();
@@ -195,6 +229,7 @@ fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action
                 };
                 let state = match r {
                     Ok(p) => {
+                        st.made.lock().unwrap().insert(p.to_string_lossy().to_string());
                         emit(JobEvent { id: id.clone(), kind: "file".into(), progress: 1.0, index: 0, outputs: vec![actions::Output::of(&p)], error: None, state: "running".into() });
                         "done"
                     }
@@ -226,10 +261,13 @@ fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action
                         emit(JobEvent { id: id.clone(), kind: "progress".into(), progress: (i as f64 + p) / n as f64, index: i, outputs: vec![], error: None, state: "running".into() });
                     }
                 };
-                let r = run_action(&ctx, &action, g, &param, &cancel, &mut progress);
+                // Un errore imprevisto non chiude l'app: il lavoro finisce come «non riuscito»
+                let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run_action(&ctx, &action, g, &param, &cancel, &mut progress)))
+                    .unwrap_or_else(|_| Err(orbit_engine::EngineError::new("errore imprevisto: segnalalo con «Segnala», per favore")));
                 match r {
                     Ok(outs) => {
                         ok += 1;
+                        st.made.lock().unwrap().extend(outs.iter().map(|o| o.path.clone()));
                         emit(JobEvent { id: id.clone(), kind: "file".into(), progress: (i + 1) as f64 / n as f64, index: i, outputs: outs, error: None, state: "running".into() });
                     }
                     Err(e) if e.is_cancelled() => break,
@@ -272,6 +310,42 @@ fn cancel_job(state: State<'_, Shared>, id: String) {
 #[tauri::command]
 async fn voices() -> Result<Vec<orbit_engine::speech::Voice>, String> {
     tauri::async_runtime::spawn_blocking(|| orbit_engine::speech::voices().map_err(|e| e.0)).await.map_err(|e| e.to_string())?
+}
+
+/// Un testo del montaggio disegnato dalla finestra (PNG in base64): si salva nella cartella dell'app.
+#[tauri::command]
+fn save_overlay(app: tauri::AppHandle, png_base64: String) -> Result<String, String> {
+    if png_base64.len() > 60_000_000 {
+        return Err("immagine troppo grande".into());
+    }
+    let data = base64::engine::general_purpose::STANDARD.decode(png_base64.trim_start_matches("data:image/png;base64,")).map_err(|_| "immagine non valida".to_string())?;
+    if !data.starts_with(&[137, 80, 78, 71]) {
+        return Err("non è un PNG".into());
+    }
+    let dir = app.path().app_cache_dir().map_err(|e| e.to_string())?.join("testi");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let n = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or(0);
+    let p = dir.join(format!("testo-{n}.png"));
+    std::fs::write(&p, data).map_err(|e| e.to_string())?;
+    Ok(p.to_string_lossy().to_string())
+}
+
+/// Apre un file creato da OrbitLR con il suo programma (solo quelli: niente .exe o .bat a caso).
+#[tauri::command]
+fn open_result(app: tauri::AppHandle, state: State<'_, Shared>, path: String) -> Result<(), String> {
+    let known = state.made.lock().unwrap().contains(&path);
+    let ext = orbit_engine::names::ext(Path::new(&path));
+    const SAFE: &[&str] = &["jpg", "jpeg", "png", "webp", "avif", "bmp", "tiff", "tif", "gif", "ico", "pdf", "mp4", "mov", "m4v", "mkv", "webm", "avi",
+        "mp3", "m4a", "m4r", "wav", "flac", "ogg", "opus", "aiff", "aac"];
+    if !known && !SAFE.contains(&ext.as_str()) {
+        return Err("questo file non si apre da qui".into());
+    }
+    if !SAFE.contains(&ext.as_str()) {
+        return Err("questo file non si apre da qui".into());
+    }
+    checked_file(&path)?;
+    use tauri_plugin_opener::OpenerExt;
+    app.opener().open_path(path, None::<&str>).map_err(|e| e.to_string())
 }
 
 /// Esiste ancora? (per la cronologia)
@@ -351,13 +425,33 @@ fn main() {
                     let _ = t.encoders();
                 });
             }
+            // Testi disegnati per montaggi di più di un giorno fa: via
+            if let Ok(cache) = app.path().app_cache_dir() {
+                let dir = cache.join("testi");
+                std::thread::spawn(move || {
+                    if let Ok(rd) = std::fs::read_dir(&dir) {
+                        for e in rd.flatten() {
+                            let old = e.metadata().and_then(|m| m.modified()).ok().and_then(|t| t.elapsed().ok()).map(|d| d.as_secs() > 86_400).unwrap_or(false);
+                            if old {
+                                let _ = std::fs::remove_file(e.path());
+                            }
+                        }
+                    }
+                });
+            }
             // File temporanei rimasti da una chiusura a metà lavoro: via
             if let Ok(data) = app.path().app_data_dir() {
                 let _ = std::fs::create_dir_all(&data);
                 orbit_engine::names::set_temp_registry(data.join("temporanei.txt"));
                 std::thread::spawn(orbit_engine::names::cleanup_leftovers);
             }
-            app.manage(Arc::new(AppState { tools, jobs: Mutex::new(HashMap::new()), thumbs: Mutex::new(HashMap::new()) }));
+            app.manage(Arc::new(AppState {
+                tools,
+                jobs: Mutex::new(HashMap::new()),
+                thumbs: Mutex::new(HashMap::new()),
+                thumb_slots: (Mutex::new(0), std::sync::Condvar::new()),
+                made: Mutex::new(std::collections::HashSet::new()),
+            }));
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -371,7 +465,7 @@ fn main() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices])
+        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result])
         .run(tauri::generate_context!())
         .expect("OrbitLR non è riuscita ad avviarsi");
 }

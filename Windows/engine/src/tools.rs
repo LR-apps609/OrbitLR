@@ -53,12 +53,52 @@ impl Tools {
     }
 
     pub fn version(&self) -> String {
-        let out = self.ffmpeg_cmd().args(["-hide_banner", "-version"]).output();
+        let mut c = self.ffmpeg_cmd();
+        c.args(["-hide_banner", "-version"]);
+        let out = output_timeout(c, 15);
         out.ok()
             .and_then(|o| String::from_utf8(o.stdout).ok())
             .and_then(|s| s.lines().next().map(|l| l.to_string()))
             .unwrap_or_default()
     }
+}
+
+/// Esegue un comando breve con un tempo massimo: se si blocca (un driver, un disco di rete) si chiude.
+pub fn output_timeout(mut cmd: Command, secs: u64) -> std::io::Result<std::process::Output> {
+    use std::io::Read;
+    use std::process::Stdio;
+    cmd.stdout(Stdio::piped()).stderr(Stdio::piped());
+    let mut child = cmd.spawn()?;
+    bind_to_app(&child);
+    let mut so = child.stdout.take();
+    let mut se = child.stderr.take();
+    let t_out = std::thread::spawn(move || {
+        let mut v = Vec::new();
+        if let Some(o) = so.as_mut() {
+            let _ = o.read_to_end(&mut v);
+        }
+        v
+    });
+    let t_err = std::thread::spawn(move || {
+        let mut v = Vec::new();
+        if let Some(e) = se.as_mut() {
+            let _ = e.read_to_end(&mut v);
+        }
+        v
+    });
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(secs);
+    let status = loop {
+        if let Some(st) = child.try_wait()? {
+            break st;
+        }
+        if std::time::Instant::now() > deadline {
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err(std::io::Error::new(std::io::ErrorKind::TimedOut, "ci ha messo troppo"));
+        }
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    };
+    Ok(std::process::Output { status, stdout: t_out.join().unwrap_or_default(), stderr: t_err.join().unwrap_or_default() })
 }
 
 /// Su Windows i programmi lanciati non aprono la finestra nera del terminale.
@@ -118,10 +158,9 @@ const H264: &[&str] = &["h264_nvenc", "h264_qsv", "h264_amf", "h264_mf", "libx26
 const HEVC: &[&str] = &["hevc_nvenc", "hevc_qsv", "hevc_amf", "hevc_mf", "libx265"];
 
 fn detect(t: &Tools) -> Encoders {
-    let listed = t
-        .ffmpeg_cmd()
-        .args(["-hide_banner", "-encoders"])
-        .output()
+    let mut lc = t.ffmpeg_cmd();
+    lc.args(["-hide_banner", "-encoders"]);
+    let listed = output_timeout(lc, 20)
         .ok()
         .map(|o| String::from_utf8_lossy(&o.stdout).to_string())
         .unwrap_or_default();
@@ -143,7 +182,8 @@ fn detect(t: &Tools) -> Encoders {
         c.args(["-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", "color=c=gray:s=320x240:d=0.2:r=10"])
             .args(["-pix_fmt", if name.starts_with("lib") { "yuv420p" } else { "nv12" }])
             .args(["-c:v", name, "-b:v", "500k", "-f", "null", "-"]);
-        matches!(c.output(), Ok(o) if o.status.success())
+        // Un driver che si blocca non deve bloccare OrbitLR: 15 secondi al massimo
+        matches!(output_timeout(c, 15), Ok(o) if o.status.success())
     };
     Encoders {
         h264: H264.iter().filter(|n| works(n)).map(|s| s.to_string()).collect(),

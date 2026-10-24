@@ -53,7 +53,18 @@ export function mediaPage(kind, app) {
     if (skipped) toast(`${skipped} file non ${kind === "image" ? "sono foto" : kind === "video" ? "sono video" : "sono PDF"}: li trovi nella scheda giusta.`);
     closeTrim();
     render();
-    for (const f of files) if (!f.thumb && kind !== "pdf") loadThumb(f);
+    if (kind !== "pdf") queueThumbs();
+  }
+
+  let thumbsRunning = 0;
+  function queueThumbs() {
+    while (thumbsRunning < 3) {
+      const f = files.find((x) => !x.thumb);
+      if (!f) return;
+      f.thumb = "loading";
+      thumbsRunning++;
+      loadThumb(f).finally(() => { thumbsRunning--; queueThumbs(); });
+    }
   }
 
   async function loadThumb(f) {
@@ -100,7 +111,7 @@ export function mediaPage(kind, app) {
           closeTrim();
           render();
         } },
-        h("div.th", f.thumb && f.thumb !== "none" ? h("img", { src: f.thumb, alt: "" }) : ico(kind === "pdf" ? "file-text" : KINDS[kind].icon, 34)),
+        h("div.th", f.thumb && f.thumb !== "none" && f.thumb !== "loading" ? h("img", { src: f.thumb, alt: "" }) : ico(kind === "pdf" ? "file-text" : KINDS[kind].icon, 34)),
         kind === "video" && f.info.duration ? h("span.dur", fmtTime(f.info.duration)) : null,
         h("div.nm", { title: f.name }, f.name),
         h("div.mt", meta(f)),

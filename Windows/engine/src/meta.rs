@@ -23,8 +23,10 @@ fn jpeg_segments(data: &[u8]) -> Result<(Vec<(u8, &[u8])>, &[u8])> {
         }
         let marker = data[i + 1];
         if marker == 0xDA {
-            // Da qui in poi i dati dell'immagine: si copiano interi
-            return Ok((segs, &data[i..]));
+            // Da qui i dati dell'immagine, fino alla fine vera (EOI). Quello che c'è dopo
+            // (foto in movimento di Pixel e Samsung, immagini secondarie con il loro EXIF) non è l'immagine: via.
+            let end = image_end(data, i);
+            return Ok((segs, &data[i..end]));
         }
         if (0xD0..=0xD7).contains(&marker) || marker == 0x01 {
             segs.push((marker, &data[i..i + 2]));
@@ -38,6 +40,60 @@ fn jpeg_segments(data: &[u8]) -> Result<(Vec<(u8, &[u8])>, &[u8])> {
         segs.push((marker, &data[i..i + 2 + len]));
         i += 2 + len;
     }
+}
+
+/// Dove finisce l'immagine (dopo il marcatore EOI), partendo dal primo SOS.
+/// Gestisce i JPEG progressivi (più scansioni con tabelle in mezzo) e i dati con FF 00 e RST.
+fn image_end(data: &[u8], sos: usize) -> usize {
+    let mut i = sos;
+    while i + 1 < data.len() {
+        if data[i] != 0xFF {
+            return data.len();
+        }
+        let m = data[i + 1];
+        if m == 0xFF {
+            i += 1;
+            continue;
+        }
+        if m == 0xD9 {
+            return i + 2;
+        }
+        if (0xD0..=0xD7).contains(&m) || m == 0x01 {
+            i += 2;
+            continue;
+        }
+        if i + 4 > data.len() {
+            return data.len();
+        }
+        let len = u16::from_be_bytes([data[i + 2], data[i + 3]]) as usize;
+        let seg_end = i + 2 + len;
+        if len < 2 || seg_end > data.len() {
+            return data.len();
+        }
+        if m == 0xDA {
+            // Dati compressi: si va avanti fino al prossimo marcatore vero
+            let mut j = seg_end;
+            while j + 1 < data.len() {
+                if data[j] == 0xFF {
+                    let n = data[j + 1];
+                    if n == 0x00 || (0xD0..=0xD7).contains(&n) {
+                        j += 2;
+                        continue;
+                    }
+                    if n == 0xFF {
+                        j += 1;
+                        continue;
+                    }
+                    break;
+                }
+                j += 1;
+            }
+            i = j;
+        } else {
+            i = seg_end;
+        }
+    }
+    data.len()
 }
 
 fn payload(seg: &[u8]) -> &[u8] {
@@ -268,6 +324,27 @@ mod tests {
         assert_eq!(jpeg_exif(&s).and_then(|t| exif_orientation(&t)), Some(6), "l'orientamento resta");
         let img = image::load_from_memory(&s).unwrap();
         assert_eq!((img.width(), img.height()), (16, 8), "l'immagine è la stessa");
+    }
+
+    #[test]
+    fn via_anche_quello_attaccato_in_coda() {
+        // Foto in movimento dei telefoni: un video (con la posizione) attaccato dopo la fine del JPEG
+        let mut j = jpeg_with(1);
+        j.extend_from_slice(b"ftypmp42....GPS+40.85+014.27....");
+        let s = strip_jpeg(&j).unwrap();
+        assert!(!s.windows(10).any(|w| w == b"GPS+40.85+"), "la coda con la posizione se ne va");
+        assert!(s.ends_with(&[0xFF, 0xD9]));
+        assert!(image::load_from_memory(&s).is_ok());
+    }
+
+    #[test]
+    fn jpeg_progressivo_intero() {
+        // Un JPEG progressivo ha più scansioni: si devono tenere tutte
+        let img = image::RgbImage::from_fn(64, 48, |x, y| image::Rgb([(x * 4) as u8, (y * 5) as u8, 90]));
+        let mut buf = Vec::new();
+        image::codecs::jpeg::JpegEncoder::new_with_quality(&mut buf, 90).encode_image(&img).unwrap();
+        let s = strip_jpeg(&buf).unwrap();
+        assert_eq!(s.len(), buf.len(), "niente si perde quando non ci sono metadati");
     }
 
     #[test]
