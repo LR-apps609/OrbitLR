@@ -37,7 +37,7 @@ targets:
         CFBundleDisplayName: OrbitLR
         CFBundleName: OrbitLR
         CFBundleDevelopmentRegion: it
-        CFBundleShortVersionString: "3.8"
+        CFBundleShortVersionString: "3.9"
         CFBundleVersion: "65"
         LSMinimumSystemVersion: "14.0"
         LSApplicationCategoryType: public.app-category.utilities
@@ -115,7 +115,7 @@ targets:
       path: ShareExtension/Info.plist
       properties:
         CFBundleDisplayName: OrbitLR
-        CFBundleShortVersionString: "3.8"
+        CFBundleShortVersionString: "3.9"
         CFBundleVersion: "65"
         LSMinimumSystemVersion: "14.0"
         NSExtension:
