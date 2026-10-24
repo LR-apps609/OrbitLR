@@ -28,12 +28,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh api repos/ggml-org/whisper.cpp/releases/latest --jq '.tag_name, (.assets[].name)' > assets.txt || { echo "::error::non riesco a leggere le versioni di whisper.cpp"; exit 1; }
-          echo "::notice::file disponibili: $(tr '\n' ' ' < assets.txt)"
-          TAG=$(head -n 1 assets.txt)
-          NAME=$(grep -E '^whisper-bin-x64\.zip$' assets.txt || true)
-          [ -n "$NAME" ] || NAME=$( (grep -E 'x64.*\.zip$' assets.txt || true) | (grep -viE 'cublas|cuda|blas|vulkan|openvino' || true) | head -n 1)
-          [ -n "$NAME" ] || { echo "::error::nessun pacchetto per Windows tra quelli disponibili"; exit 1; }
+          # La versione più recente che ha il pacchetto per Windows (a volte i file arrivano dopo)
+          gh api "repos/ggml-org/whisper.cpp/releases?per_page=15" --jq '.[] | select(.prerelease|not) | select([.assets[].name] | index("whisper-bin-x64.zip")) | .tag_name' > tags.txt || true
+          TAG=$(head -n 1 tags.txt)
+          [ -n "$TAG" ] || { echo "::error::nessuna versione con il pacchetto per Windows"; exit 1; }
+          NAME=whisper-bin-x64.zip
+          echo "::notice::whisper.cpp scelto: $TAG"
           echo "Scelgo $TAG / $NAME"
           curl -fL --retry 3 -o w.zip "https://github.com/ggml-org/whisper.cpp/releases/download/$TAG/$NAME"
           unzip -q w.zip -d w
