@@ -186,7 +186,14 @@ struct MainWindow: View {
             }
             .animation(Motion.quick, value: app.selection)
             .navigationTitle(current.rawValue)
-            .onAppear { visited.insert(current) }
+            .onAppear {
+                visited.insert(current)
+                // 3.4.2 · Dopo l'avvio, a macchina libera, le altre schede si preparano una alla volta:
+                // anche la prima apertura di ciascuna diventa istantanea
+                for (i, item) in SidebarItem.kept.enumerated() where item != current {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0 + Double(i) * 0.35) { visited.insert(item) }
+                }
+            }
             .onChange(of: app.selection) { old, new in
                 if let n = new { visited.insert(n) }
                 Self.left(old)
