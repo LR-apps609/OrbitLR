@@ -16,8 +16,8 @@ use std::process::Stdio;
 pub const MODEL_NAME: &str = "ggml-small-q5_1.bin";
 pub const MODEL_URL: &str = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-q5_1.bin";
 /// Impronta e misura del modello (controllate dopo lo scaricamento). Vuota = non ancora fissata.
-pub const MODEL_SHA256: &str = "";
-pub const MODEL_BYTES: u64 = 0;
+pub const MODEL_SHA256: &str = "ae85e4a935d7a567bd102fe55afc16bb595bdb618e11b2fc7591bc08120411bb";
+pub const MODEL_BYTES: u64 = 190_085_487;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Word {

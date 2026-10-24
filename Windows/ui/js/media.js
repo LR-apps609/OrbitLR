@@ -133,6 +133,7 @@ export function mediaPage(kind, app, opts = {}) {
 
   function go(action, param) {
     const t = targets();
+    if (action === "transcribe") param = { lang: store.get("voiceLang", "auto") };
     if (!t.length) return pick();
     run(action, t, param, kind);
   }

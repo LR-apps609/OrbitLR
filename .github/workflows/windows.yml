@@ -38,6 +38,13 @@ jobs:
           mkdir -p Windows/src-tauri/motori
           cp motori-tmp/Motori/ffmpeg.exe motori-tmp/Motori/ffprobe.exe motori-tmp/Motori/LEGGIMI.txt Windows/src-tauri/motori/
           ./Windows/src-tauri/motori/ffmpeg.exe -hide_banner -version | head -n 1
+          # Motori della voce (whisper.cpp, MIT)
+          gh release download motori-win-voce-1 -p motori-win-voce-1.zip -R "$GITHUB_REPOSITORY"
+          echo "$(cut -d' ' -f1 Windows/motori-voce.sha256)  motori-win-voce-1.zip" | sha256sum -c -
+          unzip -q motori-win-voce-1.zip -d voce-tmp
+          mkdir -p Windows/src-tauri/motori/voce
+          cp voce-tmp/Voce/* Windows/src-tauri/motori/voce/
+          ls Windows/src-tauri/motori/voce
 
       - uses: actions/setup-node@v4
         with:

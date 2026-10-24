@@ -1,9 +1,7 @@
 {
   "bundle": {
     "resources": {
-      "motori/ffmpeg.exe": "motori/ffmpeg.exe",
-      "motori/ffprobe.exe": "motori/ffprobe.exe",
-      "motori/LEGGIMI.txt": "motori/LEGGIMI.txt"
+      "motori/": "motori/"
     }
   }
 }

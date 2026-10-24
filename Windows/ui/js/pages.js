@@ -85,6 +85,9 @@ export function settingsPage(app) {
           radio("where", "same", where, "Accanto all'originale", "Nella stessa cartella, con un nome nuovo: l'originale non si tocca mai", () => store.set("where", "same")),
           radio("where", "downloads", where, "Nella cartella Download", null, async () => { const p = await invoke("places"); store.set("downloadsDir", p.downloads); store.set("where", "downloads"); render(); }),
           radio("where", "folder", where, "In una cartella che scelgo", folder || "Nessuna cartella scelta", async () => { const f = await pickFolder(); if (f) { store.set("folder", f); store.set("where", "folder"); } render(); })),
+        h("div.set", h("h3", "Lingua del parlato"), h("p", "Per «Trascrivi» e i sottotitoli automatici. «Automatica» la riconosce da sola."),
+          h("div.opts", [["auto", "Automatica"], ["it", "Italiano"], ["en", "English"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["pt", "Português"], ["sq", "Shqip"]].map(([v, l]) =>
+            h("button.opt" + (v === store.get("voiceLang", "auto") ? ".on" : ""), { onclick: () => { store.set("voiceLang", v); render(); } }, l)))),
         h("div.set", h("h3", "Aspetto"),
           h("div.opts", [["auto", "Come Windows"], ["light", "Chiaro"], ["dark", "Radio di notte"]].map(([v, l]) =>
             h("button.opt" + (v === theme ? ".on" : ""), { onclick: () => { store.set("theme", v); app.applyTheme(); render(); } }, l)))),
@@ -110,6 +113,8 @@ const FAQ = [
   ["Immagini", "Devo mandare una foto sotto 200 KB per un modulo", "Immagini → «Comprimi» → 200 KB (o scrivi il peso): OrbitLR tiene la qualità più alta possibile sotto quel peso."],
   ["Immagini", "Come tolgo la posizione GPS dalle foto?", "Immagini → «Rimuovi i metadati». Via posizione, fotocamera e date, senza perdere qualità; l'orientamento resta, così la foto non si gira."],
   ["Immagini", "Le foto HEIC dell'iPhone si aprono?", "Sì: trascinale e convertile in JPG con un clic. Se una non si apre, sull'iPhone scegli Impostazioni → Fotocamera → Formati → «Più compatibile»."],
+  ["Audio", "Come trascrivo un audio o un video?", "Audio (o Video) → «Trascrivi»: ottieni il testo (.txt) e i sottotitoli (.srt). Tutto sul computer; solo la prima volta si scarica il modello della voce (circa 190 MB). La lingua si sceglie in Opzioni."],
+  ["Video", "Come aggiungo i sottotitoli automatici?", "Nell'editor apri «Testi» e premi «Sottotitoli automatici»: OrbitLR ascolta le clip e scrive le frasi in basso, al momento giusto, con la parola detta che si accende. Poi li correggi come gli altri testi; Ctrl+Z li toglie tutti."],
   ["File", "Come unisco più PDF?", "File → trascina i PDF → «Unisci». L'ordine è quello dell'elenco."],
   ["Generale", "Windows dice «Windows ha protetto il PC»", "Succede con le app nuove senza la firma a pagamento di Microsoft. Clicca «Ulteriori informazioni» e poi «Esegui comunque». Si fa una volta sola."],
   ["Generale", "I miei file vengono caricati su internet?", "No. OrbitLR lavora tutto sul tuo computer, anche senza connessione."],

@@ -15,6 +15,7 @@ const TOOLS = [
   { id: "silence", title: "Togli i silenzi", short: "Silenzi", icon: "audio-waveform", hint: "Toglie le pause lunghe, su tutto il file. Ottimo per lezioni e registrazioni.", go: "Togli i silenzi" },
   { id: "whatsapp", title: "Per WhatsApp", short: "WhatsApp", icon: "smartphone", hint: "Un vocale leggero con la voce chiara, che parte subito anche con poca rete.", go: "Crea il vocale" },
   { id: "merge", title: "Unisci", short: "Unisci", icon: "combine", hint: "Più file audio in uno solo, nell'ordine dell'elenco.", go: "Unisci" },
+  { id: "transcribe", title: "Trascrivi", short: "Trascrivi", icon: "file-text", hint: "Le parole diventano testo (.txt) e sottotitoli (.srt), sul computer. La prima volta scarica il modello della voce (circa 190 MB), poi funziona senza internet.", go: "Trascrivi" },
   { id: "tts", title: "Testo in voce", short: "Voce", icon: "message-circle", hint: "Scrivi o incolla un testo: una voce di Windows lo legge in un file MP3 (in Download).", go: "Crea il file audio", noFile: true },
   { id: "convert", title: "Converti", short: "Converti", icon: "arrow-left-right", hint: "In un altro formato. MP3 va ovunque; WAV e FLAC non perdono niente.", go: "Converti" },
 ];
@@ -84,6 +85,7 @@ export function audioPage(app) {
         if (!others.length) return toast("Aggiungi almeno un altro file da unire.");
         return run("amerge", [file, ...others], null, "audio");
       case "convert": return run("to:" + opts.to, [file], null, "audio");
+      case "transcribe": return run("transcribe", [file], { lang: store.get("voiceLang", "auto") }, "audio");
       default: return run(t.id, [file], null, "audio");
     }
   }

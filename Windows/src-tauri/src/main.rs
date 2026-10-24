@@ -13,6 +13,11 @@ use tauri::{Emitter, Manager, State};
 
 struct AppState {
     tools: Option<Tools>,
+    /// whisper-cli.exe (dentro l'app) e cartella dei dati (dove va il modello)
+    voice_exe: Option<PathBuf>,
+    data_dir: PathBuf,
+    /// Parole già trascritte (per i sottotitoli automatici del montaggio): percorso → frasi
+    words_cache: Mutex<HashMap<String, Vec<orbit_engine::whisper::Segment>>>,
     jobs: Mutex<HashMap<String, Cancel>>,
     thumbs: Mutex<HashMap<String, String>>,
     /// Miniature in preparazione: al massimo 3 insieme (500 foto trascinate non bloccano il PC)
@@ -243,6 +248,56 @@ fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action
                 emit(JobEvent { id, kind: "done".into(), progress: 1.0, index: 1, outputs: vec![], error: None, state: state.into() });
                 return;
             }
+            // Trascrivi: prima (una volta sola) il modello, poi testo e sottotitoli
+            if action == "transcribe" {
+                let lang = param["lang"].as_str().unwrap_or("auto").to_string();
+                let n = files.len();
+                let (mut ok, mut failed) = (0, 0);
+                let need_model = !orbit_engine::whisper::model_ready(&st.data_dir);
+                for (i, f) in files.iter().enumerate() {
+                    if cancel.is_cancelled() {
+                        break;
+                    }
+                    let mut last = std::time::Instant::now();
+                    let mut prog = |p: f64| {
+                        if last.elapsed().as_millis() >= 150 || p >= 1.0 {
+                            last = std::time::Instant::now();
+                            emit(JobEvent { id: id.clone(), kind: "progress".into(), progress: (i as f64 + p) / n as f64, index: i, outputs: vec![], error: None, state: "running".into() });
+                        }
+                    };
+                    let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| -> orbit_engine::error::Result<Vec<PathBuf>> {
+                        let t = st.tools.as_ref().ok_or_else(|| orbit_engine::EngineError::new("manca il motore audio"))?;
+                        let exe = st.voice_exe.clone().ok_or_else(|| orbit_engine::EngineError::new("manca il motore della voce: reinstalla OrbitLR"))?;
+                        let model = if need_model && i == 0 {
+                            orbit_engine::whisper::download_model(&st.data_dir, &cancel, &mut |p| prog(p * 0.4))?
+                        } else {
+                            orbit_engine::whisper::model_path(&st.data_dir)
+                        };
+                        let off = if need_model && i == 0 { 0.4 } else { 0.0 };
+                        let info = probe(Some(t), f)?;
+                        let dir = ctx.out_dir.clone().unwrap_or_else(|| f.parent().map(Path::to_path_buf).unwrap_or_default());
+                        orbit_engine::whisper::transcribe_files(t, &exe, &model, f, &info, &lang, &dir, &cancel, &mut |p| prog(off + p * (1.0 - off)))
+                    }))
+                    .unwrap_or_else(|_| Err(orbit_engine::EngineError::new("errore imprevisto: segnalalo con «Segnala», per favore")));
+                    match r {
+                        Ok(outs) => {
+                            ok += 1;
+                            let outs: Vec<actions::Output> = outs.iter().map(|p| actions::Output::of(p)).collect();
+                            st.made.lock().unwrap().extend(outs.iter().map(|o| o.path.clone()));
+                            emit(JobEvent { id: id.clone(), kind: "file".into(), progress: (i + 1) as f64 / n as f64, index: i, outputs: outs, error: None, state: "running".into() });
+                        }
+                        Err(e) if e.is_cancelled() => break,
+                        Err(e) => {
+                            failed += 1;
+                            emit(JobEvent { id: id.clone(), kind: "file".into(), progress: (i + 1) as f64 / n as f64, index: i, outputs: vec![], error: Some(e.0), state: "running".into() });
+                        }
+                    }
+                }
+                let state = if cancel.is_cancelled() { "cancelled" } else if failed > 0 && ok == 0 { "failed" } else { "done" };
+                st.jobs.lock().unwrap().remove(&id);
+                emit(JobEvent { id, kind: "done".into(), progress: 1.0, index: n, outputs: vec![], error: None, state: state.into() });
+                return;
+            }
             let groups: Vec<Vec<PathBuf>> = if actions::is_multi(&action) || (action == "to:pdf" && files.len() > 1 && files.iter().all(|f| orbit_engine::probe::kind_of_ext(&orbit_engine::names::ext(f)) == orbit_engine::Kind::Image)) {
                 vec![files.clone()]
             } else {
@@ -348,6 +403,41 @@ fn open_result(app: tauri::AppHandle, state: State<'_, Shared>, path: String) ->
     app.opener().open_path(path, None::<&str>).map_err(|e| e.to_string())
 }
 
+/// Le parole dette in un file, con i tempi (per i sottotitoli automatici del montaggio).
+/// L'avanzamento arriva come evento «voice-progress»; si interrompe con cancel_job("voce").
+#[tauri::command]
+async fn transcribe_words(app: tauri::AppHandle, state: State<'_, Shared>, path: String, lang: String) -> Result<Vec<orbit_engine::whisper::Segment>, String> {
+    let st = state.inner().clone();
+    let f = checked_file(&path)?;
+    if let Some(c) = st.words_cache.lock().unwrap().get(&format!("{path}|{lang}")) {
+        return Ok(c.clone());
+    }
+    let cancel = Cancel::new();
+    st.jobs.lock().unwrap().insert("voce".into(), cancel.clone());
+    let st2 = st.clone();
+    let key = format!("{path}|{lang}");
+    let r = tauri::async_runtime::spawn_blocking(move || -> Result<Vec<orbit_engine::whisper::Segment>, String> {
+        let t = st2.tools.as_ref().ok_or("manca il motore audio")?;
+        let exe = st2.voice_exe.clone().ok_or("manca il motore della voce: reinstalla OrbitLR")?;
+        let prog = |stage: &str, p: f64| {
+            let _ = app.emit("voice-progress", serde_json::json!({ "stage": stage, "progress": p }));
+        };
+        let model = if orbit_engine::whisper::model_ready(&st2.data_dir) {
+            orbit_engine::whisper::model_path(&st2.data_dir)
+        } else {
+            orbit_engine::whisper::download_model(&st2.data_dir, &cancel, &mut |p| prog("modello", p)).map_err(|e| e.0)?
+        };
+        let info = probe(Some(t), &f).map_err(|e| e.0)?;
+        orbit_engine::whisper::transcribe(t, &exe, &model, &f, &info, &lang, &cancel, &mut |p| prog("ascolto", p)).map_err(|e| e.0)
+    })
+    .await
+    .map_err(|e| e.to_string())?;
+    st.jobs.lock().unwrap().remove("voce");
+    let segs = r?;
+    st.words_cache.lock().unwrap().insert(key, segs.clone());
+    Ok(segs)
+}
+
 /// Esiste ancora? (per la cronologia)
 #[tauri::command]
 fn files_exist(paths: Vec<String>) -> Vec<bool> {
@@ -445,7 +535,15 @@ fn main() {
                 orbit_engine::names::set_temp_registry(data.join("temporanei.txt"));
                 std::thread::spawn(orbit_engine::names::cleanup_leftovers);
             }
+            let res = app.path().resource_dir().ok();
+            let voice_exe = res.map(|d| d.join("motori").join("voce").join(if cfg!(windows) { "whisper-cli.exe" } else { "whisper-cli" }))
+                .filter(|p| p.is_file())
+                .or_else(|| std::env::var_os("ORBIT_WHISPER").map(PathBuf::from).filter(|p| p.is_file()));
+            let data_dir = app.path().app_data_dir().unwrap_or_else(|_| std::env::temp_dir().join("OrbitLR"));
             app.manage(Arc::new(AppState {
+                voice_exe,
+                data_dir,
+                words_cache: Mutex::new(HashMap::new()),
                 tools,
                 jobs: Mutex::new(HashMap::new()),
                 thumbs: Mutex::new(HashMap::new()),
@@ -465,7 +563,7 @@ fn main() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result])
+        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words])
         .run(tauri::generate_context!())
         .expect("OrbitLR non è riuscita ad avviarsi");
 }

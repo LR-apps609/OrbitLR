@@ -45,6 +45,7 @@ export const TOOLS = {
   vmerge: { title: "Unisci i video", hint: "Uno dopo l'altro, nell'ordine dell'elenco", icon: "combine", min: 2 },
   normalize: { title: "Volume uniforme", hint: "Né troppo basso né distorto", icon: "volume-2" },
   voiceclean: { title: "Voce più pulita", hint: "Meno ronzio e fruscio di fondo; il video non si ricomprime", icon: "mic", isNew: true },
+  transcribe: { title: "Trascrivi", hint: "Le parole diventano testo e sottotitoli (.srt), sul computer", icon: "file-text", isNew: true },
   mute: { title: "Togli l'audio", hint: "Istantaneo: il video non si tocca", icon: "volume-x" },
   vrotate: { title: "Ruota", hint: "Senza ricodificare: istantaneo", icon: "rotate-cw", params: "rotate", id: "rotate" },
   // PDF
@@ -61,7 +62,7 @@ export const GROUPS = {
   video: [
     ["Peso e grandezza", ["vcompress", "vresize", "social"]],
     ["Taglia e unisci", ["cut", "gifcut", "vmerge", "speed"]],
-    ["Audio", ["voiceclean", "normalize", "mute"]],
+    ["Audio e sottotitoli", ["transcribe", "voiceclean", "normalize", "mute"]],
     ["Altro", ["vrotate"]],
   ],
   pdf: [["Organizza", ["pdfmerge", "split", "extract"]]],
@@ -163,7 +164,7 @@ export const ACTION_NAMES = {
   vcompress: "Comprimi", icompress: "Comprimi", vresize: "Cambia la grandezza", social: "Formato social", cut: "Taglia", gifcut: "GIF da un pezzo",
   speed: "Cambia la velocità", vmerge: "Unisci i video", amerge: "Unisci", normalize: "Volume uniforme", voiceclean: "Voce più pulita", mute: "Togli l'audio",
   rotate: "Ruota", resize: "Ridimensiona", strip: "Rimuovi i metadati", merge: "Unisci in un PDF", pdfmerge: "Unisci i PDF", split: "Dividi in pagine",
-  extract: "Estrai pagine", vproject: "Esporta il montaggio", ringtone: "Suoneria", silence: "Togli i silenzi", whatsapp: "Vocale per WhatsApp", tts: "Testo in voce",
+  extract: "Estrai pagine", vproject: "Esporta il montaggio", ringtone: "Suoneria", silence: "Togli i silenzi", whatsapp: "Vocale per WhatsApp", tts: "Testo in voce", transcribe: "Trascrivi",
 };
 
 export function actionName(id) {

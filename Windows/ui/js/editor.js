@@ -802,7 +802,10 @@ export function editorPage(app, onBack) {
       }
     } else if (tool === "text") {
       const t = sel.kind === "text" ? p.texts[sel.index] : null;
-      box.push(h("button.btn.primary", { onclick: addText }, ico("plus", 14), "Aggiungi un testo"), h("p.hint", "Compare all'indicatore per 3 secondi. Trascinalo sull'anteprima per spostarlo, e nella riga «Testi» per cambiare quando si vede."));
+      box.push(h("div.btns", h("button.btn.primary", { onclick: addText }, ico("plus", 14), "Aggiungi un testo"),
+        h("button.btn", { onclick: autoSubtitles, disabled: subsBusy || null }, ico("message-circle", 14), "Sottotitoli automatici")),
+        subsStatus,
+        h("p.hint", "Il testo compare all'indicatore per 3 secondi. Trascinalo sull'anteprima per spostarlo, e nella riga «Testi» per cambiare quando si vede."));
       if (t) {
         const k = sel.index;
         const ta = h("textarea", { rows: 3, "aria-label": "Testo" });
@@ -869,6 +872,85 @@ export function editorPage(app, onBack) {
       f.append(m);
       svgDefs.append(f);
     }
+  }
+
+  // ── Sottotitoli automatici: si ascoltano le clip (sul computer), le parole diventano righe
+  // facili da leggere (al massimo 7 parole, 42 caratteri, 3,5 secondi; si va a capo alle pause e ai punti)
+  let subsBusy = false;
+  const subsStatus = h("p.hint", { "aria-live": "polite" });
+  function makeLines(words) {
+    const out = [];
+    let cur = [];
+    const flush = () => {
+      if (!cur.length) return;
+      const a = cur[0], b = cur[cur.length - 1];
+      out.push({ text: cur.map((w) => w.text).join(" "), start: a.start, end: Math.max(b.end, a.start + 1), words: cur.slice() });
+      cur = [];
+    };
+    for (const w of words) {
+      if (!w.text.trim()) continue;
+      if (cur.length) {
+        const first = cur[0], last = cur[cur.length - 1];
+        const chars = cur.map((x) => x.text).join(" ").length + 1 + w.text.length;
+        if (w.start - last.end > 0.6 || cur.length >= 7 || chars > 42 || w.end - first.start > 3.5) flush();
+      }
+      cur.push(w);
+      if (/[.!?]$/.test(w.text)) flush();
+    }
+    flush();
+    for (let i = 0; i < out.length - 1; i++) if (out[i].end > out[i + 1].start) out[i].end = Math.max(out[i].start + 0.3, out[i + 1].start);
+    return out;
+  }
+  async function autoSubtitles() {
+    if (!p.clips.length) return toast("Aggiungi prima un video.");
+    if (DEMO) return toast("Nella prova non si può ascoltare: funziona nell'app.");
+    subsBusy = true;
+    renderInspector();
+    const lang = store.get("voiceLang", "auto");
+    const paths = [...new Set(p.clips.filter((c) => infos[c.path]?.has_audio).map((c) => c.path))];
+    if (!paths.length) { subsBusy = false; renderInspector(); return toast("Le clip non hanno audio."); }
+    let which = 0;
+    const un = await window.__TAURI__.event.listen("voice-progress", (e) => {
+      const { stage, progress } = e.payload;
+      subsStatus.textContent = stage === "modello" ? `Scarico il modello della voce (solo la prima volta)… ${Math.round(progress * 100)}%`
+        : `Ascolto ${paths.length > 1 ? `la clip ${which + 1} di ${paths.length}` : "la clip"}… ${Math.round(progress * 100)}%`;
+    });
+    const byPath = {};
+    try {
+      for (which = 0; which < paths.length; which++) {
+        subsStatus.textContent = "Preparo…";
+        const segs = await invoke("transcribe_words", { path: paths[which], lang });
+        byPath[paths[which]] = segs.flatMap((s) => (s.words?.length ? s.words : s.text.split(/\s+/).map((t, k, all) => ({ text: t, start: s.start + ((s.end - s.start) * k) / all.length, end: s.start + ((s.end - s.start) * (k + 1)) / all.length }))));
+      }
+    } catch (e) {
+      un();
+      subsBusy = false;
+      subsStatus.textContent = "";
+      renderInspector();
+      return toast(String(e));
+    }
+    un();
+    const st = starts();
+    const made = [];
+    p.clips.forEach((c, i) => {
+      const words = byPath[c.path];
+      if (!words || c.muted) return;
+      const speed = c.fx?.speed || 1;
+      for (const line of makeLines(words)) {
+        // Solo le parole dentro il pezzo usato della clip
+        const ws = line.words.filter((w) => w.start >= c.in - 0.05 && w.start < c.out - 0.05);
+        if (!ws.length) continue;
+        const a = Math.max(c.in, ws[0].start), b = Math.min(line.end, c.out);
+        if (b - a <= 0.15) continue;
+        const tStart = st[i] + (a - c.in) / speed, tEnd = st[i] + (b - c.in) / speed;
+        made.push({ id: "t" + uid(), text: ws.map((w) => w.text).join(" "), style: "subtitle", start: tStart, end: tEnd, x: 0.5, y: 0.86, anim: "word", color: "white",
+          wordTimes: ws.map((w) => Math.max(0, st[i] + (Math.max(w.start, c.in) - c.in) / speed - tStart)) });
+      }
+    });
+    subsBusy = false;
+    subsStatus.textContent = made.length ? `Fatto: ${made.length} righe di sottotitoli. Correggile come gli altri testi; Ctrl+Z le toglie tutte.` : "Non ho sentito parole nelle clip.";
+    if (made.length) change((pp) => pp.texts.push(...made));
+    else renderInspector();
   }
 
   async function pickMusic() {
