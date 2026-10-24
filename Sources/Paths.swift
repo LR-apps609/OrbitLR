@@ -37,7 +37,7 @@ enum Paths {
     /// L'ambiente per il motore classico: prima i motori dell'app, poi quelli installati sul Mac.
     static func engineEnvironment(_ extra: [String: String] = [:]) -> [String: String] {
         var env = ProcessInfo.processInfo.environment
-        if let m = motori { env["LR_MOTORI"] = m.path }
+        if let m = motori { env["LR_MOTORI"] = m.path } else { env["LR_MOTORI"] = nil }
         for (k, v) in extra { env[k] = v }
         return env
     }

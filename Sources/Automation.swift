@@ -191,7 +191,7 @@ final class WatchStore: ObservableObject, @unchecked Sendable {
 
     static let templates: [Template] = [
         Template(id: "heic-jpg", title: "Foto HEIC e WebP in Download → JPG",
-                 text: "Le foto dell’iPhone e quelle scaricate dal web che molti siti non aprono diventano JPG da sole. Gli originali restano; i JPG vanno in Download/Convertiti.",
+                 text: "Le foto dell’iPhone e quelle scaricate dal web che molti siti non aprono diventano JPG da sole. I JPG vanno in Download/Convertiti; gli originali restano dove sono (salvo che nelle Opzioni tu abbia scelto di cestinarli).",
                  symbol: "photo.on.rectangle.angled") {
             WatchRule(folder: downloads.path, kind: Kind.img.rawValue, actionId: "to:jpg", param: "", exts: ["heic", "webp", "avif"])
         },

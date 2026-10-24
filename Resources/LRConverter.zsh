@@ -33,8 +33,29 @@ SCRIPT_PATH=${0:A}
 
 APP="LRConverter"
 export PATH="/opt/homebrew/bin:/usr/local/bin:/Applications/LibreOffice.app/Contents/MacOS:/usr/bin:/bin:/usr/sbin:/sbin"
-# 3.8 · I motori dentro l'app (ffmpeg LGPL) hanno la precedenza: nessuna installazione necessaria
-[[ -n $LR_MOTORI && -x "$LR_MOTORI/ffmpeg" ]] && export PATH="$LR_MOTORI:$PATH"
+# 3.8 · I motori dentro l'app (ffmpeg LGPL): bastano da soli, nessuna installazione necessaria.
+# Vanno in fondo: se sul Mac c'è già un ffmpeg completo (Homebrew), quello resta il primo.
+# Anche quando lo script parte da fuori (Azione rapida del Finder) si trovano dentro l'app.
+if [[ -z $LR_MOTORI ]]; then
+  for d in /Applications/OrbitLR.app "$HOME/Applications/OrbitLR.app"; do
+    [[ -x "$d/Contents/Resources/Motori/ffmpeg" ]] && { LR_MOTORI="$d/Contents/Resources/Motori"; break; }
+  done
+fi
+[[ -n $LR_MOTORI && -x "$LR_MOTORI/ffmpeg" ]] && export PATH="$PATH:$LR_MOTORI"
+
+# Quali codificatori ha l'ffmpeg in uso (quello incluso non ha libx264/libx265: usa il chip video del Mac)
+typeset -gA ENC_CACHE
+has_enc() {
+  if [[ -z ${ENC_CACHE[$1]} ]]; then
+    if ffmpeg -hide_banner -encoders 2>/dev/null | grep -q " $1 "; then ENC_CACHE[$1]=1; else ENC_CACHE[$1]=0; fi
+  fi
+  [[ ${ENC_CACHE[$1]} == 1 ]]
+}
+# H.264 di ripiego: libx264 se c'è, altrimenti il chip video (anche via software, sui Mac senza chip adatto)
+enc264() {  # crf (qualità), bitrate di ripiego
+  if has_enc libx264; then print -r -- "-c:v libx264 -preset veryfast -crf $1"
+  else print -r -- "-c:v h264_videotoolbox -allow_sw 1 -b:v ${2:-8M}"; fi
+}
 export LANG="en_US.UTF-8" LC_ALL="en_US.UTF-8"
 ARCH=$(uname -m)
 NCPU=$(sysctl -n hw.ncpu 2>/dev/null); [[ $NCPU == <-> ]] || NCPU=4
@@ -1431,7 +1452,7 @@ av_run() {  # sorgente, formato, uscita
         $ff $m -c:v h264_videotoolbox -q:v 65 -pix_fmt yuv420p $aud $fs "$out" && return 0
       fi
       # 3) Codifica software
-      $ff $m -c:v libx264 -preset veryfast -crf 20 -pix_fmt yuv420p $aud $fs "$out" ;;
+      $ff $m ${=$(enc264 20)} -pix_fmt yuv420p $aud $fs "$out" ;;
     *) return 1 ;;
   esac
 }
@@ -1464,7 +1485,11 @@ vcompress_run() {  # video, MB massimi (oppure «best» = stessa qualità, meno 
     print "LRINFO: da $(hsize $size) a $(hsize $(stat -f %z "$out"))" >&2
     return 0
   fi
-  $ff -c:v libx264 -preset medium -b:v $vbps -maxrate $(( vbps * 3 / 2 )) -bufsize $(( vbps * 2 )) $a "$out" || return 1
+  if has_enc libx264; then
+    $ff -c:v libx264 -preset medium -b:v $vbps -maxrate $(( vbps * 3 / 2 )) -bufsize $(( vbps * 2 )) $a "$out" || return 1
+  else
+    $ff -c:v h264_videotoolbox -allow_sw 1 -b:v $vbps $a "$out" || return 1
+  fi
   print "LRINFO: da $(hsize $size) a $(hsize $(stat -f %z "$out"))" >&2
 }
 
@@ -1476,7 +1501,8 @@ vresize_run() {  # video, preset (1080 | 720 | 480 | hevc)
   if [[ $p == hevc ]]; then
     out="$JD/out/$base (HEVC).mp4"
     if [[ $ARCH == arm64 ]]; then $ff -c:v hevc_videotoolbox -q:v 60 -tag:v hvc1 $a "$out" && return 0; fi
-    $ff -c:v libx265 -preset medium -crf 26 -tag:v hvc1 -pix_fmt yuv420p $a "$out"
+    if has_enc libx265; then $ff -c:v libx265 -preset medium -crf 26 -tag:v hvc1 -pix_fmt yuv420p $a "$out"
+    else $ff -c:v hevc_videotoolbox -allow_sw 1 -b:v 6M -tag:v hvc1 $a "$out"; fi
     return
   fi
   # Il lato corto diventa 1080/720/480 (vale anche per i video verticali); mai ingrandire
@@ -1485,7 +1511,7 @@ vresize_run() {  # video, preset (1080 | 720 | 480 | hevc)
   if [[ $ARCH == arm64 ]]; then
     $ff -vf "$vf" -c:v h264_videotoolbox -q:v 62 -pix_fmt yuv420p $a "$out" && return 0
   fi
-  $ff -vf "$vf" -c:v libx264 -preset veryfast -crf 21 -pix_fmt yuv420p $a "$out"
+  $ff -vf "$vf" ${=$(enc264 21)} -pix_fmt yuv420p $a "$out"
 }
 
 silence_run() {  # audio → senza le pause lunghe
@@ -1514,7 +1540,7 @@ speed_run() {  # audio o video, velocità (0.5 · 0.75 · 1.25 · 1.5 · 2)
   if [[ $ARCH == arm64 ]]; then
     $ff $fc -c:v h264_videotoolbox -q:v 62 -pix_fmt yuv420p $a "$out" && return 0
   fi
-  $ff $fc -c:v libx264 -preset veryfast -crf 21 -pix_fmt yuv420p $a "$out"
+  $ff $fc ${=$(enc264 21)} -pix_fmt yuv420p $a "$out"
 }
 
 cut_run() {  # sorgente, inizio, fine ("" = fino alla fine), modo (cut | gif)
@@ -1543,7 +1569,7 @@ cut_run() {  # sorgente, inizio, fine ("" = fino alla fine), modo (cut | gif)
   if [[ $ARCH == arm64 ]]; then
     $ff $m -c:v h264_videotoolbox -q:v 65 -pix_fmt yuv420p -c:a aac -b:a 192k $fs "$out" && return 0
   fi
-  $ff $m -c:v libx264 -preset veryfast -crf 20 -pix_fmt yuv420p -c:a aac -b:a 192k $fs "$out"
+  $ff $m ${=$(enc264 20)} -pix_fmt yuv420p -c:a aac -b:a 192k $fs "$out"
 }
 
 norm_run() {  # sorgente → volume uniforme
@@ -1565,7 +1591,7 @@ norm_run() {  # sorgente → volume uniforme
   local -a fs=(); [[ $oe == (mp4|mov|m4v) ]] && fs=(-movflags +faststart)
   out="$JD/out/$base (normalizzato).$oe"
   $ff -map 0:v:0 -map 0:a:0 -c:v copy $af -c:a aac -b:a 192k $fs "$out" && return 0
-  $ff -map 0:v:0 -map 0:a:0 -c:v libx264 -preset veryfast -crf 20 -pix_fmt yuv420p $af -c:a aac -b:a 192k $fs "$out"
+  $ff -map 0:v:0 -map 0:a:0 ${=$(enc264 20)} -pix_fmt yuv420p $af -c:a aac -b:a 192k $fs "$out"
 }
 
 transcribe_run() {  # audio o video → testo + sottotitoli
@@ -1787,7 +1813,7 @@ selftest() {
     if have ffmpeg; then
       ffmpeg -nostdin -loglevel error -y -f lavfi -i "sine=frequency=440:duration=6" -c:a libmp3lame -q:a 4 "$T/prova.mp3"
       ffmpeg -nostdin -loglevel error -y -f lavfi -i "testsrc2=size=640x360:rate=25:duration=6" \
-             -f lavfi -i "sine=frequency=660:duration=6" -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest "$T/prova.mp4"
+             -f lavfi -i "sine=frequency=660:duration=6" ${=$(enc264 23 2M)} -pix_fmt yuv420p -c:a aac -shortest "$T/prova.mp4"
       ffmpeg -nostdin -loglevel error -y -i "$T/prova.mp4" -i "$T/prova.srt" -map 0 -map 1 -c copy -c:s srt "$T/prova-sottotitoli.mkv"
       [[ -s $T/prova.png ]] || ffmpeg -nostdin -loglevel error -y -f lavfi -i "testsrc2=size=800x600" -frames:v 1 "$T/prova.png"
     fi

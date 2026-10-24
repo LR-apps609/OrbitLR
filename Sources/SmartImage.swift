@@ -167,6 +167,48 @@ enum SmartImage {
         return out
     }
 
+    // MARK: 3.8 · WebP e ICO senza ImageMagick (foto sempre dritte)
+
+    /// macOS raddrizza la foto; poi la scrive lui se sa farlo, altrimenti l'ffmpeg incluso in OrbitLR.
+    static func convertRare(_ src: URL, to ext: String, dir: URL) throws -> URL {
+        guard let source = CGImageSourceCreateWithURL(src as CFURL, nil) else { throw NativeError("non riesco a leggere l’immagine") }
+        let props = (CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]) ?? [:]
+        let long = max(props[kCGImagePropertyPixelWidth] as? Int ?? 0, props[kCGImagePropertyPixelHeight] as? Int ?? 0)
+        let side = ext == "ico" ? min(256, max(16, long)) : max(16, long)
+        let opts: [CFString: Any] = [kCGImageSourceCreateThumbnailFromImageAlways: true,
+                                     kCGImageSourceCreateThumbnailWithTransform: true,
+                                     kCGImageSourceThumbnailMaxPixelSize: side]
+        guard let img = CGImageSourceCreateThumbnailAtIndex(source, 0, opts as CFDictionary) else { throw NativeError("non riesco a leggere l’immagine") }
+        let out = Destination.unique(dir, base: src.deletingPathExtension().lastPathComponent, ext: ext)
+        let type = ext == "ico" ? "com.microsoft.ico" : "org.webmproject.webp"
+        let writable = (CGImageDestinationCopyTypeIdentifiers() as? [String]) ?? []
+        if writable.contains(type), let d = CGImageDestinationCreateWithURL(out as CFURL, type as CFString, 1, nil) {
+            CGImageDestinationAddImage(d, img, [kCGImageDestinationLossyCompressionQuality: 0.85] as CFDictionary)
+            if CGImageDestinationFinalize(d), Job.size(of: out) > 0 { return out }
+            try? FileManager.default.removeItem(at: out)
+        }
+        guard let ff = Paths.tool("ffmpeg") else { throw NativeError("per questo formato serve ffmpeg") }
+        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("orbitlr-\(UUID().uuidString).png")
+        defer { try? FileManager.default.removeItem(at: tmp) }
+        guard let d = CGImageDestinationCreateWithURL(tmp as CFURL, "public.png" as CFString, 1, nil) else { throw NativeError("non riesco a preparare l’immagine") }
+        CGImageDestinationAddImage(d, img, nil)
+        guard CGImageDestinationFinalize(d) else { throw NativeError("non riesco a preparare l’immagine") }
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: ff)
+        var args = ["-nostdin", "-hide_banner", "-loglevel", "error", "-y", "-i", tmp.path]
+        if ext == "webp" { args += ["-c:v", "libwebp", "-quality", "85", "-compression_level", "5"] }
+        else { args += ["-vf", "scale=256:256:force_original_aspect_ratio=decrease,pad=256:256:(ow-iw)/2:(oh-ih)/2:color=0x00000000,format=rgba"] }
+        p.arguments = args + [out.path]
+        p.standardOutput = FileHandle.nullDevice
+        p.standardError = FileHandle.nullDevice
+        try p.run(); p.waitUntilExit()
+        guard p.terminationStatus == 0, Job.size(of: out) > 0 else {
+            try? FileManager.default.removeItem(at: out)
+            throw NativeError("non riesco a creare il file \(ext.uppercased())")
+        }
+        return out
+    }
+
     /// «200 KB», «1 MB».
     static func kb(_ bytes: Int) -> String {
         bytes >= 1_000_000 && bytes % 1_000_000 == 0 ? "\(bytes / 1_000_000) MB" : "\(bytes / 1000) KB"

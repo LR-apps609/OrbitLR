@@ -5,7 +5,7 @@ import AVFoundation
 // ════════════════════════════════════════════════════════════════════
 //  3.8 · «Trascrivi» con il riconoscimento vocale di macOS, sul Mac (senza internet).
 //  Prima serviva Whisper, da installare. Funziona con audio e video di qualsiasi durata:
-//  l'audio scorre a pezzi verso il riconoscimento, mai tutto in memoria.
+//  macOS legge il file da sé, senza tenerlo in memoria.
 //  Escono il testo (a paragrafi, divisi dalle pause) e i sottotitoli .srt.
 // ════════════════════════════════════════════════════════════════════
 
@@ -15,7 +15,7 @@ enum Transcriber {
 
     static func supports(_ exts: [String]) -> Bool { !exts.isEmpty && exts.allSatisfy { inputs.contains($0) } }
 
-    /// Trascrive `file` in `dir`: restituisce il testo; il file .srt va in `extra`.
+    /// Trascrive `file` in `dir`: il testo va in `extra` (per primo), il file .srt viene restituito.
     static func run(_ file: URL, dir: URL, job: Job?, progress: @escaping (Double) -> Void,
                     extra: @escaping (URL) -> Void) async throws -> URL {
         guard await AutoSubtitles.authorize() else {
@@ -28,9 +28,10 @@ enum Transcriber {
         try paragraphs(words).write(to: txt, atomically: true, encoding: .utf8)
         let srtURL = Destination.unique(dir, base: "\(base) (trascrizione)", ext: "srt")
         try srt(AutoSubtitles.lines(words)).write(to: srtURL, atomically: true, encoding: .utf8)
-        extra(srtURL)
+        // Il testo arriva per primo tra i file creati (è quello che si apre), poi i sottotitoli
+        extra(txt)
         progress(1)
-        return txt
+        return srtURL
     }
 
     // MARK: Riconoscimento
@@ -44,69 +45,51 @@ enum Transcriber {
             throw NativeError("il Mac non ha ancora la lingua per riconoscere la voce senza internet. Impostazioni di Sistema → Tastiera → Dettatura: attivala con la lingua giusta, attendi lo scaricamento e riprova")
         }
         let asset = AVURLAsset(url: file)
-        guard let track = try await asset.loadTracks(withMediaType: .audio).first else { throw NativeError("il file non contiene audio") }
-        let duration = max(0.1, try await asset.load(.duration).seconds)
-        let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 16_000, channels: 1, interleaved: false)!
+        let audioTracks = try await asset.loadTracks(withMediaType: .audio)
+        guard !audioTracks.isEmpty else { throw NativeError("il file non contiene audio") }
+        let duration = max(1, try await asset.load(.duration).seconds)
 
-        let req = SFSpeechAudioBufferRecognitionRequest()
+        // macOS legge il file da sé (niente audio tenuto in memoria, anche per ore di registrazione)
+        let req = SFSpeechURLRecognitionRequest(url: file)
         req.requiresOnDeviceRecognition = true
         req.shouldReportPartialResults = false
         req.addsPunctuation = true
 
-        final class Box: @unchecked Sendable { var words: [AutoSubtitles.Word] = []; var done = false; var error: Error? }
-        let box = Box()
-        let finished = DispatchSemaphore(value: 0)
-        let task = rec.recognitionTask(with: req) { result, error in
-            if let result {
-                // Ogni risultato finale copre un tratto: le parole si aggiungono in ordine
-                if result.isFinal {
-                    box.words = result.bestTranscription.segments.map {
-                        AutoSubtitles.Word(text: $0.substring, start: $0.timestamp, end: $0.timestamp + $0.duration)
-                    }
+        /// Raccoglie TUTTI i tratti riconosciuti (un audio lungo ne dà più d'uno) e sa quando è finita.
+        final class Collector: NSObject, SFSpeechRecognitionTaskDelegate, @unchecked Sendable {
+            private let lock = NSLock()
+            private var words: [AutoSubtitles.Word] = []
+            private var finished = false
+            private var failure: Error?
+            func speechRecognitionTask(_ task: SFSpeechRecognitionTask, didFinishRecognition result: SFSpeechRecognitionResult) {
+                let ws = result.bestTranscription.segments.map {
+                    AutoSubtitles.Word(text: $0.substring, start: $0.timestamp, end: $0.timestamp + $0.duration)
                 }
+                lock.lock(); words += ws; lock.unlock()
             }
-            if let error { box.error = error }
-            if result?.isFinal == true || error != nil, !box.done { box.done = true; finished.signal() }
-        }
-
-        // L'audio scorre a pezzi: 16 kHz, mono (quello che serve al riconoscimento)
-        let reader = try AVAssetReader(asset: asset)
-        let out = AVAssetReaderTrackOutput(track: track, outputSettings: [
-            AVFormatIDKey: kAudioFormatLinearPCM, AVSampleRateKey: 16_000, AVNumberOfChannelsKey: 1,
-            AVLinearPCMBitDepthKey: 32, AVLinearPCMIsFloatKey: true, AVLinearPCMIsNonInterleaved: false,
-            AVLinearPCMIsBigEndianKey: false,
-        ])
-        out.alwaysCopiesSampleData = false
-        guard reader.canAdd(out) else { throw NativeError("non riesco a leggere l'audio") }
-        reader.add(out)
-        guard reader.startReading() else { throw NativeError(reader.error?.localizedDescription ?? "non riesco a leggere l'audio") }
-        var lastStep = -1
-        while let sb = out.copyNextSampleBuffer() {
-            if job?.cancelRequested == true { reader.cancelReading(); task.cancel(); throw NativeError("annullato") }
-            if let buf = pcm(sb, format: format) { req.append(buf) }
-            let t = CMSampleBufferGetPresentationTimeStamp(sb).seconds
-            if t.isFinite {
-                let step = Int(min(0.9, t / duration * 0.9) * 100)
-                if step > lastStep { lastStep = step; progress(Double(step) / 100) }
+            func speechRecognitionTask(_ task: SFSpeechRecognitionTask, didFinishSuccessfully ok: Bool) {
+                lock.lock(); finished = true; if !ok { failure = task.error }; lock.unlock()
+            }
+            var state: (done: Bool, words: [AutoSubtitles.Word], error: Error?) {
+                lock.lock(); defer { lock.unlock() }
+                return (finished, words.sorted { $0.start < $1.start }, failure)
             }
         }
-        req.endAudio()
-        // Il riconoscimento finisce poco dopo l'ultimo pezzo (al massimo qualche minuto per file lunghissimi)
-        let ok = await withCheckedContinuation { (c: CheckedContinuation<Bool, Never>) in
-            DispatchQueue.global().async { c.resume(returning: finished.wait(timeout: .now() + 600) == .success) }
+        let collector = Collector()
+        let task = rec.recognitionTask(with: req, delegate: collector)
+        // Attesa che segue il lavoro: si può annullare, e il tempo massimo cresce con la durata del file
+        let start = Date()
+        let limit = max(600, duration * 2)
+        while !collector.state.done {
+            if job?.cancelRequested == true { task.cancel(); throw NativeError("annullato") }
+            let elapsed = Date().timeIntervalSince(start)
+            if elapsed > limit { task.cancel(); throw NativeError("il riconoscimento non ha risposto in tempo") }
+            progress(min(0.9, elapsed / max(5, duration / 8)))         // stima: circa 8 volte più veloce del tempo reale
+            try? await Task.sleep(nanoseconds: 400_000_000)
         }
-        if !ok { task.cancel(); throw NativeError("il riconoscimento non ha risposto in tempo") }
-        if box.words.isEmpty, let e = box.error { throw NativeError(e.localizedDescription) }
-        return box.words
-    }
-
-    private static func pcm(_ sb: CMSampleBuffer, format: AVAudioFormat) -> AVAudioPCMBuffer? {
-        let frames = AVAudioFrameCount(CMSampleBufferGetNumSamples(sb))
-        guard frames > 0, let buf = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frames) else { return nil }
-        buf.frameLength = frames
-        guard CMSampleBufferCopyPCMDataIntoAudioBufferList(sb, at: 0, frameCount: Int32(frames),
-                                                           into: buf.mutableAudioBufferList) == noErr else { return nil }
-        return buf
+        let st = collector.state
+        if st.words.isEmpty, let e = st.error { throw NativeError(e.localizedDescription) }
+        return st.words
     }
 
     // MARK: Scrittura

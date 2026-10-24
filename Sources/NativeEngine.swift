@@ -78,6 +78,8 @@ enum NativeEngine {
         if id.hasPrefix("to:") {
             let t = String(id.dropFirst(3))
             if imageOut.contains(t) { return exts.allSatisfy { imageIn.contains($0) } }
+            // 3.8 · WebP e ICO: foto raddrizzate da macOS, poi macOS o l'ffmpeg incluso (niente ImageMagick)
+            if (t == "webp" || t == "ico"), Paths.tool("magick") == nil { return exts.allSatisfy { imageIn.contains($0) && $0 != "gif" } }
             if t == "mp4" || t == "mov" { return exts.allSatisfy { videoIn.contains($0) } }
             if t == "m4a" { return exts.allSatisfy { audioIn.contains($0) } }
             return false
@@ -125,8 +127,8 @@ enum NativeEngine {
         }
 
         if id == "transcribe" {
-            return try await Transcriber.run(file, dir: dir, job: job, progress: progress) { srt in
-                DispatchQueue.main.async { job.outputs.append(srt) }
+            return try await Transcriber.run(file, dir: dir, job: job, progress: progress) { txt in
+                DispatchQueue.main.async { job.outputs.append(txt) }
             }
         }
 
@@ -162,6 +164,11 @@ enum NativeEngine {
         }
 
         let t = String(id.dropFirst(3))
+        if t == "webp" || t == "ico" {
+            let out = try SmartImage.convertRare(file, to: t, dir: dir)
+            progress(1)
+            return out
+        }
         let out = Destination.unique(dir, base: base, ext: t)
         if imageOut.contains(t) {
             try convertImage(file, to: t, resize: nil, out: out)
