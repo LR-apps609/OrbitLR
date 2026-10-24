@@ -24,6 +24,9 @@ struct AppState {
     thumb_slots: (Mutex<usize>, std::sync::Condvar),
     /// I file creati da OrbitLR: solo questi si possono aprire con un clic
     made: Mutex<std::collections::HashSet<String>>,
+    /// Cartelle automatiche e il file dove si salvano
+    rules: Mutex<Vec<orbit_engine::watch::Rule>>,
+    rules_file: PathBuf,
 }
 
 /// Aspetta un posto libero per una miniatura; lo restituisce quando si esce.
@@ -340,6 +343,77 @@ fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action
     Ok(())
 }
 
+/// Cartelle automatiche: l'elenco.
+#[tauri::command]
+fn watch_get(state: State<'_, Shared>) -> Vec<orbit_engine::watch::Rule> {
+    state.rules.lock().unwrap().clone()
+}
+
+/// Cartelle automatiche: salva l'elenco (le cartelle che mancano si creano).
+#[tauri::command]
+fn watch_set(state: State<'_, Shared>, rules: Vec<orbit_engine::watch::Rule>) -> Result<Vec<orbit_engine::watch::Rule>, String> {
+    let rules = orbit_engine::watch::sanitize(rules);
+    for r in &rules {
+        if !r.path.is_dir() {
+            std::fs::create_dir_all(&r.path).map_err(|_| format!("non riesco a creare la cartella «{}»", r.path.display()))?;
+        }
+    }
+    orbit_engine::watch::save(&state.rules_file, &rules).map_err(|_| "non riesco a salvare le cartelle automatiche".to_string())?;
+    *state.rules.lock().unwrap() = rules.clone();
+    Ok(rules)
+}
+
+/// Un file arrivato in una cartella automatica: si lavora come un lavoro normale e si vede in Attività.
+fn run_auto(app: &tauri::AppHandle, st: &Shared, w: &mut orbit_engine::watch::Watcher, rule: &orbit_engine::watch::Rule, file: &Path) {
+    let Some(pr) = orbit_engine::watch::preset(&rule.kind) else { return };
+    let out_dir = rule.out_dir();
+    if let Some(d) = &out_dir {
+        let _ = std::fs::create_dir_all(d);
+    }
+    static N: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let id = format!("auto{}x{}", std::process::id(), N.fetch_add(1, std::sync::atomic::Ordering::Relaxed));
+    let cancel = Cancel::new();
+    st.jobs.lock().unwrap().insert(id.clone(), cancel.clone());
+    let name = file.file_name().unwrap_or_default().to_string_lossy().to_string();
+    let size = std::fs::metadata(file).map(|m| m.len()).unwrap_or(0);
+    let param = rule.action_param();
+    let _ = app.emit("auto-job", serde_json::json!({
+        "id": id, "action": pr.action, "rule": pr.name, "param": param,
+        "files": [{ "path": file.to_string_lossy(), "name": name, "size": size }],
+    }));
+    let emit = |e: JobEvent| {
+        let _ = app.emit("job", e);
+    };
+    let ctx = Ctx { tools: st.tools.clone(), out_dir };
+    let mut last = std::time::Instant::now();
+    let mut progress = |p: f64| {
+        if last.elapsed().as_millis() >= 250 || p >= 1.0 {
+            last = std::time::Instant::now();
+            emit(JobEvent { id: id.clone(), kind: "progress".into(), progress: p, index: 0, outputs: vec![], error: None, state: "running".into() });
+        }
+    };
+    let files = [file.to_path_buf()];
+    let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run_action(&ctx, pr.action, &files, &param, &cancel, &mut progress)))
+        .unwrap_or_else(|_| Err(orbit_engine::EngineError::new("errore imprevisto: segnalalo con «Segnala», per favore")));
+    let state = match r {
+        Ok(outs) => {
+            for o in &outs {
+                w.mark_known(Path::new(&o.path));
+            }
+            st.made.lock().unwrap().extend(outs.iter().map(|o| o.path.clone()));
+            emit(JobEvent { id: id.clone(), kind: "file".into(), progress: 1.0, index: 0, outputs: outs, error: None, state: "running".into() });
+            "done"
+        }
+        Err(e) if e.is_cancelled() => "cancelled",
+        Err(e) => {
+            emit(JobEvent { id: id.clone(), kind: "file".into(), progress: 1.0, index: 0, outputs: vec![], error: Some(e.0), state: "running".into() });
+            "failed"
+        }
+    };
+    st.jobs.lock().unwrap().remove(&id);
+    emit(JobEvent { id, kind: "done".into(), progress: 1.0, index: 1, outputs: vec![], error: None, state: state.into() });
+}
+
 /// «Interrompi e chiudi»: ferma tutto, cancella i file a metà, poi chiude.
 #[tauri::command]
 fn quit_now(app: tauri::AppHandle, state: State<'_, Shared>) {
@@ -552,7 +626,11 @@ fn main() {
                 .or_else(|| std::env::var_os("ORBIT_WHISPER").map(PathBuf::from).filter(|p| p.is_file()));
             // Il modello della voce (190 MB) nella cartella locale, non in quella che si sincronizza
             let data_dir = app.path().app_local_data_dir().unwrap_or_else(|_| std::env::temp_dir().join("OrbitLR"));
-            app.manage(Arc::new(AppState {
+            let rules_file = app.path().app_config_dir().unwrap_or_else(|_| data_dir.clone()).join("cartelle.json");
+            let rules = orbit_engine::watch::load(&rules_file);
+            let shared = Arc::new(AppState {
+                rules: Mutex::new(rules),
+                rules_file,
                 voice_exe,
                 data_dir,
                 words_cache: Mutex::new(HashMap::new()),
@@ -561,7 +639,26 @@ fn main() {
                 thumbs: Mutex::new(HashMap::new()),
                 thumb_slots: (Mutex::new(0), std::sync::Condvar::new()),
                 made: Mutex::new(std::collections::HashSet::new()),
-            }));
+            });
+            app.manage(shared.clone());
+            // Cartelle automatiche: un controllo ogni 3 secondi, un file alla volta
+            let handle = app.handle().clone();
+            std::thread::Builder::new().name("cartelle".into()).spawn(move || {
+                let mut w = orbit_engine::watch::Watcher::default();
+                loop {
+                    std::thread::sleep(std::time::Duration::from_secs(3));
+                    let rules = shared.rules.lock().unwrap().clone();
+                    if rules.is_empty() {
+                        continue;
+                    }
+                    for (rule, file) in w.scan(&rules) {
+                        // La regola potrebbe essere stata spenta nel frattempo
+                        if shared.rules.lock().unwrap().iter().any(|r| r.id == rule.id && r.enabled) {
+                            run_auto(&handle, &shared, &mut w, &rule, &file);
+                        }
+                    }
+                }
+            })?;
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -575,7 +672,7 @@ fn main() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words])
+        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set])
         .run(tauri::generate_context!())
         .expect("OrbitLR non è riuscita ad avviarsi");
 }

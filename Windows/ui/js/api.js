@@ -6,8 +6,17 @@ export const DEMO = !T;
 
 const listeners = new Set();
 
+const autoListeners = new Set();
+
 if (T) {
   T.event.listen("job", (e) => listeners.forEach((fn) => fn(e.payload)));
+  T.event.listen("auto-job", (e) => autoListeners.forEach((fn) => fn(e.payload)));
+}
+
+/** Un lavoro partito da solo in una cartella automatica. */
+export function onAutoJob(fn) {
+  autoListeners.add(fn);
+  return () => autoListeners.delete(fn);
 }
 
 export function onJob(fn) {
@@ -104,6 +113,7 @@ function demoThumb(path) {
 }
 
 const demoTimers = {};
+let demoRules = [{ id: "foto", kind: "foto", path: "C:\\Utenti\\Ledion\\Download", param: "", enabled: true }];
 async function demo(cmd, a) {
   await new Promise((r) => setTimeout(r, 60));
   switch (cmd) {
@@ -143,6 +153,11 @@ async function demo(cmd, a) {
       }, 160);
       return null;
     }
+    case "watch_get":
+      return demoRules;
+    case "watch_set":
+      demoRules = a.rules;
+      return demoRules;
     case "cancel_job":
       clearInterval(demoTimers[a.id]);
       listeners.forEach((fn) => fn({ id: a.id, kind: "done", progress: 1, index: 0, outputs: [], error: null, state: "cancelled" }));

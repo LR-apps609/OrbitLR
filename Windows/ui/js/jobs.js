@@ -1,6 +1,6 @@
 // I lavori: partono, mandano l'avanzamento, finiscono in Attività e i file creati nel Cassetto.
 
-import { invoke, onJob } from "./api.js";
+import { invoke, onAutoJob, onJob } from "./api.js";
 import { actionName } from "./catalog.js";
 import { store } from "./util.js";
 
@@ -92,6 +92,24 @@ function finish(job) {
   }
   notify(job);
 }
+
+// Cartelle automatiche: il lavoro parte dal motore, qui si registra come gli altri
+onAutoJob((a) => {
+  const job = {
+    id: a.id,
+    action: a.action,
+    title: `${a.rule} · in automatico`,
+    origin: "auto",
+    files: a.files,
+    param: a.param,
+    state: "running",
+    progress: 0,
+    results: [],
+    started: Date.now(),
+  };
+  jobs.set(a.id, job);
+  notify(job);
+});
 
 onJob((ev) => {
   const job = jobs.get(ev.id);

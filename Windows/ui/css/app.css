@@ -301,6 +301,13 @@ input, textarea, select, button { font: inherit; color: inherit; }
 .set { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 16px 18px; display: grid; gap: 10px; max-width: 720px; }
 .set h3 { margin: 0; font-size: 15px; font-weight: 900; }
 .set p { margin: 0; color: var(--quiet); font-size: 13px; }
+.set.auto .top { display: flex; align-items: center; gap: 10px; }
+.set.auto .top b { font-weight: 900; font-size: 15px; }
+.set.auto .top .grow { flex: 1; }
+.set.auto.on { box-shadow: var(--shadow), inset 4px 0 0 var(--sage-2); }
+.set.auto .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.set.auto .out { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 6px 0 0; border-top: 1px dashed var(--line); }
+.set.auto .out .n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .faq { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); max-width: 820px; }
 .faq summary { cursor: pointer; padding: 12px 16px; font-weight: 800; list-style: none; display: flex; gap: 8px; align-items: center; }
 .faq summary::-webkit-details-marker { display: none; }

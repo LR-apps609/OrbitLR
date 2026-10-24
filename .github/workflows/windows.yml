@@ -129,6 +129,10 @@ jobs:
           Start-Sleep -Seconds 1
           (New-Object -ComObject Shell.Application).MinimizeAll()
           Start-Sleep -Seconds 1
+          # Cartelle automatiche: «Foto in JPG» su una cartella di prova (la foto arriva ad app aperta)
+          $arrivi = "$env:RUNNER_TEMP\Arrivi"
+          New-Item -ItemType Directory -Force -Path $arrivi, "$env:APPDATA\it.ledion.orbitlr" | Out-Null
+          ConvertTo-Json -InputObject @(@{ id = "foto"; kind = "foto"; path = $arrivi; param = ""; enabled = $true }) | Set-Content -Encoding utf8 "$env:APPDATA\it.ledion.orbitlr\cartelle.json"
           $env:ORBIT_PROVA_FILE = "$env:RUNNER_TEMP\Gita al lago.mp4"
           $env:ORBIT_PROVA_SCHEDA = "video"
           $env:ORBIT_PROVA_AZIONE = "vcompress"
@@ -145,6 +149,7 @@ jobs:
             Write-Output "::notice::App in esecuzione: finestra '$($p.MainWindowTitle)' handle $($p.MainWindowHandle), WebView2: $((Get-Process msedgewebview2 -ErrorAction SilentlyContinue).Count) processi"
             if ($p.MainWindowHandle -ne 0) { [W]::ShowWindow($p.MainWindowHandle, 3) | Out-Null; [W]::SetForegroundWindow($p.MainWindowHandle) | Out-Null }
           }
+          Copy-Item ".\Windows\engine\tests\fixtures\iphone-gps.heic" "$arrivi\Dall iPhone.heic"
           Start-Sleep -Seconds 20
           Add-Type -AssemblyName System.Windows.Forms,System.Drawing
           $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
@@ -154,6 +159,8 @@ jobs:
           $bmp.Save("$PWD\foto-windows.png")
           Get-Process orbitlr -ErrorAction SilentlyContinue | Stop-Process
           $made = Get-ChildItem "$env:RUNNER_TEMP" -Filter "Gita al lago (compresso)*.mp4"
+          $jpg = Get-ChildItem $arrivi -Filter "*.jpg"
+          if ($jpg) { Write-Output "::notice::Cartella automatica riuscita: $($jpg[0].Name) creato da solo" } else { Write-Output "::warning::La cartella automatica non ha creato il JPG" }
           if ($made) { Write-Output "::notice::Lavoro vero dentro l'app riuscito: $($made[0].Name) $([math]::Round($made[0].Length/1MB,1)) MB" } else { Write-Output "::warning::Il lavoro di prova dentro l'app non ha creato il file" }
 
       - uses: actions/upload-artifact@v4

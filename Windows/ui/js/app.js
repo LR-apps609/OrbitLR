@@ -8,6 +8,7 @@ import { getDrawer, running, subscribe } from "./jobs.js";
 import { mediaPage } from "./media.js";
 import { videoTab } from "./video.js";
 import { activityPage, helpPage, report, settingsPage } from "./pages.js";
+import { autoPage } from "./auto.js";
 import { extOf, fmtBytes, h, ico, modal, store, toast } from "./util.js";
 
 const VERSION = "0.1.0";
@@ -42,6 +43,7 @@ const TABS = [
 ];
 const EXTRA = {
   activity: { label: "Attività", make: () => activityPage(app) },
+  auto: { label: "Cartelle automatiche", make: () => autoPage(app) },
   settings: { label: "Opzioni", make: () => settingsPage(app) },
   help: { label: "Aiuto", make: () => helpPage(app) },
 };
@@ -74,6 +76,8 @@ function sidebar() {
   nav.append(h("div.nav-sep"));
   navButtons.activity = h("button", { onclick: () => show("activity") }, ico("clock", 18), "Attività", activityBadge);
   nav.append(navButtons.activity);
+  navButtons.auto = h("button", { onclick: () => show("auto") }, ico("folder-input", 18), "Cartelle automatiche");
+  nav.append(navButtons.auto);
   const foot = h("div.foot",
     (navButtons.settings = h("button", { onclick: () => show("settings") }, ico("settings", 17), "Opzioni")),
     (navButtons.help = h("button", { onclick: () => show("help") }, ico("circle-help", 17), "Aiuto")),
