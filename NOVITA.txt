@@ -1,3 +1,39 @@
+Novità della 3.4.9 «Suono e tocco»:
+• I suoni partono subito, insieme al movimento, e non si tagliano mai a vicenda; a riposo il motore audio si spegne e non consuma
+• Le manopole e gli agganci della sequenza si sentono anche al tatto, con un piccolo colpo del trackpad
+• Strumenti, formati e pastiglie rispondono al clic tutti allo stesso modo: si abbassano appena e tornano su
+
+Novità della 3.4.8 «Tastiera»:
+• Video: J indietro di un secondo, K pausa, L riproduci; ← → un fotogramma; ⇧← ⇧→ un secondo; Inizio e Fine del montaggio
+• Mentre scrivi un testo questi tasti si spengono da soli: le lettere restano lettere
+• L’elenco delle scorciatoie (⌘ in alto) ha la sezione «Montaggio video»
+
+Novità della 3.4.7 «Mai bloccata»:
+• Avvisi, rinomina e scelta dei file scendono come fogli dalla finestra: il resto dell’app non si blocca
+• Il Cassetto si aggiorna in sottofondo: la barra laterale resta leggera anche mentre lavori
+
+Novità della 3.4.6 «Anteprima liscia»:
+• Video: dopo un taglio o una modifica l’anteprima non diventa più nera; quella nuova si prepara dietro le quinte e compare già sul punto giusto
+• Trascinando l’indicatore l’immagine lo segue senza accumulare ritardo
+• L’indicatore si muove a 60 immagini al secondo durante la riproduzione (prima 20, a scatti)
+
+Novità della 3.4.5 «Sequenza liscia»:
+• Video: spostando una clip o un testo si ridisegna solo quello che cambia
+• Aggancio morbido: testi e musica si fermano da soli sui bordi delle clip, all’inizio e sull’indicatore
+
+Novità della 3.4.4 «Miniature»:
+• Le miniature di foto, video e file restano anche dopo il riavvio: Cassetto, Attività e schede le hanno subito
+• Una miniatura già pronta c’è dal primo disegno, senza riquadri vuoti né dissolvenze inutili
+
+Novità della 3.4.3 «Torta lampo»:
+• La torta è una sola, già pronta, e si apre all’istante; i pesi previsti arrivano un attimo dopo, senza rallentare l’apertura
+
+Novità della 3.4.2 «Schede istantanee»:
+• Le schede restano vive: tornandoci le trovi com’erano, all’istante (file, scelte, scorrimento)
+• Dopo l’avvio le schede si preparano da sole, così anche la prima apertura è immediata
+• OrbitLR si riapre sulla scheda dove eri
+• Scheda Audio più rapida da aprire
+
 Novità della 3.4.1 «Misura»:
 • Le animazioni che girano da sole (il quadrante di Conversione, la radio delle pagine vuote) ora si muovono a piena fluidità, senza più scatti, e consumano meno
 • OrbitLR misura da sola i suoi tempi: apertura della torta, cambio di scheda, anteprima del montaggio, miniature, avvio. Da qui partono le prossime versioni della 3.4, tutte dedicate alla fluidità
