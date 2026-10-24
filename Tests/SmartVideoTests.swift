@@ -109,7 +109,8 @@ final class SmartVideoTests: XCTestCase {
         let (n, t) = try await tr!.load(.naturalSize, .preferredTransform)
         let r = CGRect(origin: .zero, size: n).applying(t)
         XCTAssertLessThan(abs(r.width), abs(r.height), "resta in piedi")
-        XCTAssertGreaterThan(try await brightness(out), 0.08, "e l'immagine c'è davvero (non è nera)")
+        let light = try await brightness(out)
+        XCTAssertGreaterThan(light, 0.08, "e l'immagine c'è davvero (non è nera)")
     }
 
     /// La luminosità media di un fotogramma a metà video (0 = nero).
