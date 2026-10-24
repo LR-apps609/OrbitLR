@@ -68,7 +68,7 @@ enum SmartVideo {
         }
 
         if let target = targetBytes {
-            let budget = Double(target) * 8 * 0.95 / s.duration           // bit al secondo, con margine per il contenitore
+            let budget = Double(target) * 8 * 0.93 / s.duration           // bit al secondo, con margine per il contenitore
             // Senza audio, tutti i dati vanno all'immagine
             let abps: Int = s.audioBitrate <= 0 && !s.audioIsAAC ? 0 : budget >= 1_500_000 ? 128_000 : budget >= 500_000 ? 96_000 : 64_000
             var vbps = budget - Double(abps)
@@ -450,10 +450,24 @@ enum SmartVideo {
             try await encode(asset: asset, track: track, source: src, plan: p, out: out, job: job, progress: { progress($0 * 0.97) })
             let got = Job.size(of: out)
             if let t = targetBytes, got > t {
-                // Raro: il chip ha usato un po' più dati del previsto. Un secondo giro, giusto quanto basta.
-                p.videoBitrate = max(100_000, Int(Double(p.videoBitrate) * Double(t) / Double(got) * 0.94))
-                try await encode(asset: asset, track: track, source: src, plan: p, out: out, job: job, progress: progress)
-                if Job.size(of: out) > t {
+                // Il chip ha usato più dati del previsto (capita con immagini piene di dettagli minuti).
+                // Fino a due giri in più: si chiede meno in proporzione e, se si era sforato di molto,
+                // si rifà il piano con meno dati, così scende anche la misura invece di riempirsi di quadretti.
+                var last = got
+                for attempt in 1...2 {
+                    let ratio = Double(t) / Double(last)
+                    if ratio < 0.8, case .plan(let smaller) = plan(src, targetBytes: Int64(Double(t) * ratio * 0.95), codec: codec) {
+                        p = smaller
+                    } else {
+                        p.videoBitrate = max(80_000, Int(Double(p.videoBitrate) * ratio * 0.9))
+                    }
+                    let base = 0.97 + Double(attempt - 1) * 0.015
+                    try await encode(asset: asset, track: track, source: src, plan: p, out: out, job: job,
+                                     progress: { _ in progress(base) })
+                    last = Job.size(of: out)
+                    if last <= t { break }
+                }
+                if last > t {
                     try? FileManager.default.removeItem(at: out)
                     throw NativeError("non riesco a farlo stare in \(mb(t)): scegli un peso un po' maggiore")
                 }
