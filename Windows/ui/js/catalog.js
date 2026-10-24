@@ -51,6 +51,7 @@ export const TOOLS = {
   mute: { title: "Togli l'audio", hint: "Istantaneo: il video non si tocca", icon: "volume-x" },
   vrotate: { title: "Ruota", hint: "Senza ricodificare: istantaneo", icon: "rotate-cw", params: "rotate", id: "rotate" },
   // PDF
+  pdfcompress: { title: "Comprimi", hint: "Riduci il peso, per mandarlo via email: testo e link restano come sono", icon: "minimize-2", params: "pdfcompress", isNew: true },
   pdfmerge: { title: "Unisci", hint: "Più PDF in uno, nell'ordine dell'elenco", icon: "combine", min: 2 },
   split: { title: "Dividi in pagine", hint: "Un PDF per ogni pagina", icon: "split" },
   extract: { title: "Estrai alcune pagine", hint: "Scegli quali, per esempio 1-3, 5", icon: "file-output", params: "pages" },
@@ -67,7 +68,7 @@ export const GROUPS = {
     ["Audio e sottotitoli", ["transcribe", "voiceclean", "normalize", "mute"]],
     ["Altro", ["hidemark", "vrotate"]],
   ],
-  pdf: [["Organizza", ["pdfmerge", "split", "extract"]]],
+  pdf: [["Peso", ["pdfcompress"]], ["Organizza", ["pdfmerge", "split", "extract"]]],
 };
 
 /** Le scelte dei parametri, come le manopole dell'app per Mac. */
@@ -142,6 +143,15 @@ export const KNOBS = {
     custom: { label: "Lato lungo", unit: "px", placeholder: "es. 1600" },
     default: "50%",
   },
+  pdfcompress: {
+    hint: "Le foto dentro il PDF vengono ricompresse; testo, link e moduli restano come sono.",
+    options: [
+      { value: "medium", label: "Schermo ed email", small: "consigliato" },
+      { value: "light", label: "Qualità di stampa" },
+      { value: "strong", label: "Il più leggero" },
+    ],
+    default: "medium",
+  },
   rotate: {
     options: [
       { value: "90", label: "A destra", small: "90°" },
@@ -166,7 +176,7 @@ export const ACTION_NAMES = {
   vcompress: "Comprimi", icompress: "Comprimi", vresize: "Cambia la grandezza", social: "Formato social", cut: "Taglia", gifcut: "GIF da un pezzo",
   speed: "Cambia la velocità", vmerge: "Unisci i video", amerge: "Unisci", normalize: "Volume uniforme", voiceclean: "Voce più pulita", mute: "Togli l'audio",
   rotate: "Ruota", hidemark: "Nascondi un logo", ocr: "Estrai il testo", resize: "Ridimensiona", strip: "Rimuovi i metadati", merge: "Unisci in un PDF", pdfmerge: "Unisci i PDF", split: "Dividi in pagine",
-  extract: "Estrai pagine", vproject: "Esporta il montaggio", ringtone: "Suoneria", silence: "Togli i silenzi", whatsapp: "Vocale per WhatsApp", tts: "Testo in voce", transcribe: "Trascrivi",
+  extract: "Estrai pagine", pdfcompress: "Comprimi il PDF", vproject: "Esporta il montaggio", ringtone: "Suoneria", silence: "Togli i silenzi", whatsapp: "Vocale per WhatsApp", tts: "Testo in voce", transcribe: "Trascrivi",
 };
 
 export function actionName(id) {

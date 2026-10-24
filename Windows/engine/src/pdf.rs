@@ -208,6 +208,96 @@ pub fn merge(files: &[PathBuf], dir: &Path) -> Result<PathBuf> {
     of.commit()
 }
 
+/// Livelli di «Comprimi» (come su Mac): qualità JPEG e lato lungo massimo delle immagini.
+pub fn level_settings(level: &str) -> (u8, u32) {
+    match level {
+        "light" => (80, 2400),  // qualità di stampa
+        "strong" => (50, 1100), // il più leggero possibile, ancora leggibile
+        _ => (65, 1600),        // schermo ed email
+    }
+}
+
+/// Comprimi un PDF: le foto dentro vengono ricompresse in JPEG e riportate a una misura sensata.
+/// Testo, link e moduli restano come sono. Solo le immagini RGB o in scala di grigi a 8 bit
+/// (le altre, rare, restano com'erano).
+pub fn compress(src: &Path, level: &str, dir: &Path, cancel: &crate::run::Cancel, progress: &mut dyn FnMut(f64)) -> Result<PathBuf> {
+    use lopdf::Object;
+    let before = std::fs::metadata(src)?.len();
+    let mut doc = load(src)?;
+    let pages = doc.get_pages().len();
+    let (quality, max_side) = level_settings(level);
+    let ids: Vec<lopdf::ObjectId> = doc
+        .objects
+        .iter()
+        .filter(|(_, o)| matches!(o, Object::Stream(st) if st.dict.get(b"Subtype").and_then(|v| v.as_name()).map(|n| n == b"Image").unwrap_or(false)))
+        .map(|(id, _)| *id)
+        .collect();
+    let n = ids.len().max(1);
+    for (k, id) in ids.iter().enumerate() {
+        cancel.check()?;
+        progress(k as f64 / n as f64 * 0.9);
+        let Some(Object::Stream(st)) = doc.objects.get(id) else { continue };
+        let num = |key: &[u8]| st.dict.get(key).ok().and_then(|v| v.as_i64().ok()).unwrap_or(0);
+        let (w, h, bpc) = (num(b"Width") as u32, num(b"Height") as u32, num(b"BitsPerComponent"));
+        if w < 64 || h < 64 || bpc != 8 || st.dict.get(b"Decode").is_ok() || st.dict.get(b"ImageMask").is_ok() {
+            continue;
+        }
+        let cs = st.dict.get(b"ColorSpace").ok().and_then(|v| v.as_name().ok()).map(|n| n.to_vec());
+        let gray = match cs.as_deref() {
+            Some(b"DeviceRGB") => false,
+            Some(b"DeviceGray") => true,
+            _ => continue, // CMYK, Indexed, ICC: restano com'erano
+        };
+        let filters: Vec<Vec<u8>> = st.filters().map(|f| f.iter().map(|x| x.to_vec()).collect()).unwrap_or_default();
+        let img: Option<image::DynamicImage> = if filters.len() == 1 && filters[0] == b"DCTDecode" {
+            image::load_from_memory_with_format(&st.content, image::ImageFormat::Jpeg).ok()
+        } else if filters.is_empty() || (filters.len() == 1 && filters[0] == b"FlateDecode") {
+            let raw = if filters.is_empty() { Some(st.content.clone()) } else { st.decompressed_content_with_limit(400_000_000).ok() };
+            raw.and_then(|r| {
+                let ch = if gray { 1 } else { 3 };
+                if r.len() < (w * h * ch) as usize {
+                    return None;
+                }
+                let r = r[..(w * h * ch) as usize].to_vec();
+                if gray { image::GrayImage::from_raw(w, h, r).map(image::DynamicImage::ImageLuma8) } else { image::RgbImage::from_raw(w, h, r).map(image::DynamicImage::ImageRgb8) }
+            })
+        } else {
+            None
+        };
+        let Some(img) = img else { continue };
+        let img = if img.width().max(img.height()) > max_side { img.resize(max_side, max_side, image::imageops::FilterType::Lanczos3) } else { img };
+        let mut buf = Vec::new();
+        let enc = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut buf, quality);
+        let ok = if gray { img.to_luma8().write_with_encoder(enc).is_ok() } else { img.to_rgb8().write_with_encoder(enc).is_ok() };
+        if !ok || buf.len() as f64 >= st.content.len() as f64 * 0.9 {
+            continue; // non conviene: resta com'era
+        }
+        let (nw, nh) = (img.width(), img.height());
+        if let Some(Object::Stream(st)) = doc.objects.get_mut(id) {
+            st.dict.set("Width", nw as i64);
+            st.dict.set("Height", nh as i64);
+            st.dict.set("Filter", Object::Name(b"DCTDecode".to_vec()));
+            st.dict.remove(b"DecodeParms");
+            st.set_content(buf);
+            st.allows_compression = false;
+        }
+    }
+    doc.prune_objects();
+    doc.compress();
+    let of = names::OutFile::new(dir, &format!("{} (compresso)", names::stem(src)), "pdf")?;
+    doc.save(&of.tmp).map_err(|e| EngineError::new(format!("non riesco a scrivere il PDF: {e}")))?;
+    // Deve restare un PDF valido, con tutte le pagine
+    if load(&of.tmp).map(|d| d.get_pages().len()).unwrap_or(0) != pages {
+        return Err(EngineError::new("la compressione ha rovinato il PDF: lascio l'originale"));
+    }
+    let after = std::fs::metadata(&of.tmp)?.len();
+    if after >= before * 97 / 100 {
+        return Err(EngineError::new(format!("«{}» è già compresso al massimo", src.file_name().unwrap_or_default().to_string_lossy())));
+    }
+    progress(1.0);
+    of.commit()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

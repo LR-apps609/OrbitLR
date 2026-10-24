@@ -395,3 +395,26 @@ fn montaggio_taglio_poi_transizione_e_tanti_sottotitoli() {
     let i = info(&out);
     assert!((i.duration - 6.0).abs() < 0.25, "durata {}", i.duration);
 }
+
+#[test]
+fn comprimi_pdf() {
+    // Un PDF di 3 pagine con foto grandi e pesanti (come una scansione)
+    let mut pages = Vec::new();
+    for k in 0..3u32 {
+        let img = image::RgbImage::from_fn(2480, 3508, |x, y| {
+            let n = ((x * 7919 + y * 104729 + k * 31) % 251) as u8;
+            image::Rgb([((x / 9) as u8).wrapping_add(n / 8), ((y / 13) as u8).wrapping_add(n / 6), n])
+        });
+        let mut buf = Vec::new();
+        image::codecs::jpeg::JpegEncoder::new_with_quality(&mut buf, 95).encode_image(&img).unwrap();
+        pages.push((buf, 2480, 3508));
+    }
+    let src = work().join("scansione.pdf");
+    orbit_engine::pdf::images_to_pdf(&pages, &src).unwrap();
+    let out = act("pdfcompress", &[&src], json!("medium")).unwrap();
+    assert_eq!(orbit_engine::pdf::page_count(&out[0]).unwrap(), 3);
+    assert!(size(&out[0]) < size(&src) / 3, "{} → {}", size(&src), size(&out[0]));
+    // Un PDF già leggero lo dice
+    let e = act("pdfcompress", &[&out[0]], json!("light")).unwrap_err();
+    assert!(e.contains("già compresso"), "{e}");
+}

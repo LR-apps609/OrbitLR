@@ -115,6 +115,7 @@ const FAQ = [
   ["Immagini", "Le foto HEIC dell'iPhone si aprono?", "Sì: trascinale e convertile in JPG con un clic. Se una non si apre, sull'iPhone scegli Impostazioni → Fotocamera → Formati → «Più compatibile»."],
   ["Audio", "Come trascrivo un audio o un video?", "Audio (o Video) → «Trascrivi»: ottieni il testo (.txt) e i sottotitoli (.srt). Tutto sul computer; solo la prima volta si scarica il modello della voce (circa 190 MB). La lingua si sceglie in Opzioni."],
   ["Video", "Come aggiungo i sottotitoli automatici?", "Nell'editor apri «Testi» e premi «Sottotitoli automatici»: OrbitLR ascolta le clip e scrive le frasi in basso, al momento giusto, con la parola detta che si accende. Poi li correggi come gli altri testi; Ctrl+Z li toglie tutti."],
+  ["File", "Come rendo un PDF più leggero per l'email?", "File → trascina il PDF → «Comprimi» → «Schermo ed email». Le foto dentro vengono ricompresse; testo, link e moduli restano come sono. Se il PDF è già leggero, OrbitLR te lo dice e non crea copie inutili."],
   ["File", "Come unisco più PDF?", "File → trascina i PDF → «Unisci». L'ordine è quello dell'elenco."],
   ["Generale", "Windows dice «Windows ha protetto il PC»", "Succede con le app nuove senza la firma a pagamento di Microsoft. Clicca «Ulteriori informazioni» e poi «Esegui comunque». Si fa una volta sola."],
   ["Generale", "I miei file vengono caricati su internet?", "No. OrbitLR lavora tutto sul tuo computer, anche senza connessione."],

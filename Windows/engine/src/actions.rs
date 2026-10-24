@@ -211,6 +211,7 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
         }
         // ── PDF
         "split" => pdf::split(src, &dir)?,
+        "pdfcompress" => vec![pdf::compress(src, if p_str.is_empty() { "medium" } else { &p_str }, &dir, cancel, progress)?],
         "extract" => vec![pdf::extract(src, &p_str, &dir)?],
         _ => return Err(EngineError::new(format!("azione sconosciuta: {id}"))),
     };
