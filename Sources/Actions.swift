@@ -151,7 +151,7 @@ enum Catalog {
         "searchable": Action(id: "searchable", short: "Ricercabile", title: "Rendi ricercabile", hint: "Un PDF in cui cercare e copiare il testo, anche dalle scansioni", symbol: "doc.text.magnifyingglass"),
         "pdfedit": Action(id: "pdfedit", short: "Firma", title: "Compila e firma", hint: "Moduli, firma, data e testo", symbol: "signature"),
         "redact": Action(id: "redact", short: "Oscura", title: "Oscura", hint: "Nasconde per davvero nomi, numeri e testo", symbol: "rectangle.inset.filled"),
-        "hidemark": Action(id: "hidemark", short: "Nascondi", title: "Nascondi una scritta o un logo", hint: "Sfoca o copri un logo, una data o una filigrana", symbol: "eye.slash.circle", param: .hidemark),
+        "hidemark": Action(id: "hidemark", short: "Nascondi", title: "Nascondi un logo", hint: "Sfoca o copri un logo, una data o una filigrana", symbol: "eye.slash.circle", param: .hidemark),
         "removebg": Action(id: "removebg", short: "Sfondo", title: "Rimuovi lo sfondo", hint: "Resta solo il soggetto, su sfondo trasparente", symbol: "person.and.background.dotted", param: .removebg),
         "straighten": Action(id: "straighten", short: "Raddrizza", title: "Raddrizza il foglio", hint: "Da una foto storta a una scansione pulita", symbol: "doc.viewfinder", param: .straighten),
         "upscale": Action(id: "upscale", short: "Ingrandisci", title: "Ingrandisci", hint: "Due o quattro volte più grande, con i contorni nitidi", symbol: "plus.magnifyingglass", param: .upscale),
@@ -196,7 +196,7 @@ enum Catalog {
     static func toolGroupOrder(kind: Kind) -> [String] {
         switch kind {
         case .img: return [mineGroup, "Modifica", "Migliora", "Altro"]
-        case .video: return [mineGroup, "Taglia e unisci", "Peso e grandezza", "Audio e sottotitoli", "Altro"]
+        case .video: return [mineGroup, "Peso e grandezza", "Taglia e unisci", "Audio e sottotitoli", "Altro"]   // 3.9 · prima la più usata
         default: return [mineGroup, "Organizza", "Proteggi", "Altro"]
         }
     }

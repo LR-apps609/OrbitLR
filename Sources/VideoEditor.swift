@@ -2150,7 +2150,7 @@ private struct EffectOptions: View {
     /// 2.9.8 · Nascondi un logo su tutto il montaggio (sfocatura o pixel).
     private var hideButton: some View {
         HStack(spacing: 6) {
-            Button { showHide = true } label: { Label(s.project.hide == nil ? "Nascondi una scritta o un logo…" : "Scritta o logo nascosti ✓", systemImage: "eye.slash") }
+            Button { showHide = true } label: { Label(s.project.hide == nil ? "Nascondi un logo…" : "Logo nascosto ✓", systemImage: "eye.slash") }
                 .controlSize(.small).help("Sfoca o copri a pixel un logo o una scritta in tutto il video")
             if s.project.hide != nil {
                 Button("Rimuovi") { s.change(undo, "Rimuovi la copertura") { $0.hide = nil } }.controlSize(.small)
@@ -2166,7 +2166,7 @@ private struct EffectOptions: View {
         let frames = MontageFrames(project: plain, infos: infos)
         return HideMarkEditor(url: URL(fileURLWithPath: "/montaggio.mp4"), onDone: { v in
             showHide = false
-            if let v { s.change(undo, "Nascondi una scritta o un logo") { $0.hide = v } }
+            if let v { s.change(undo, "Nascondi un logo") { $0.hide = v } }
         }, frameSource: { t in await frames.frame(at: t) }, montageDuration: project.duration,
            initial: HideMark.parse(project.hide ?? ""), allowAI: false)
     }
