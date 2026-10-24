@@ -7,6 +7,7 @@ Novità della 3.8 «Autonoma e chiara»:
 • PDF: «Comprimi» con il motore di macOS, senza Ghostscript, con le scansioni ancora leggibili
 • Foto: rimuovi i metadati (posizione GPS, fotocamera) senza perdere qualità; WebP e ICO senza programmi aggiuntivi
 • Cartelle automatiche pronte con un clic: le foto HEIC e WebP scaricate diventano JPG da sole; i video messi in «Da comprimere» si alleggeriscono da soli
+• Audio: la forma d'onda torna bassa com'era, con lo zoom in larghezza (fino al millesimo di secondo, anche pizzicando il trackpad) e in altezza; «Selezione» ingrandisce sul pezzo scelto, «Tutto» torna indietro
 • Le Opzioni valgono subito, senza «Applica», con nomi più chiari
 • Comprimi per email: ora sotto 18 MB, così l'allegato passa anche su Gmail (che conta anche la codifica)
 • Stessi nomi in tutta l'app: «Scorciatoie» diventa «Le mie azioni», il pulsante ⌘ diventa «Tasti»; nella scheda Video «Comprimi» è in cima

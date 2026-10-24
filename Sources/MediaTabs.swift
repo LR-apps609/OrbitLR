@@ -776,16 +776,24 @@ private struct AudioWave: View {
     let tint: Color
     /// 3.0 · Solo Suoneria e Taglia usano la selezione: gli altri strumenti lavorano su tutto il file.
     var selection = true
+
+    /// 3.8 · Con lo zoom i tempi si leggono al millesimo.
+    private func t(_ x: Double) -> String { trim.zoom > 1 ? formatTimeMs(x) : formatTime(x) }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
+            zoomBar
+            // 3.8 · Altezza fissa come prima (non riempie più tutta la finestra); per vedere di più c'è lo zoom
             TrimTimeline(m: trim, tint: tint)
+                .frame(height: 150)
                 .overlay { if trim.loading { ProgressView().controlSize(.small) } }
                 .padding(.top, 6)
+            if trim.zoom > 1 { WaveOverview(m: trim, tint: tint).frame(height: 14) }
             HStack {
-                Text("0:00").font(.system(size: 12)).foregroundStyle(.secondary)
+                Text(t(trim.zoom > 1 ? trim.viewStart : 0)).font(.system(size: 12)).foregroundStyle(.secondary).monospacedDigit()
                 Spacer()
                 if selection {
-                    Text("\(formatTime(trim.start)) → \(formatTime(trim.end)) · \(formatTime(max(0, trim.end - trim.start)))")
+                    Text("\(t(trim.start)) → \(t(trim.end)) · \(t(max(0, trim.end - trim.start)))")
                         .font(.system(size: 12, weight: .semibold)).monospacedDigit()
                     Spacer()
                     Button("Inizio qui") { trim.markIn() }.keyboardShortcut("i", modifiers: []).controlSize(.small)
@@ -796,10 +804,88 @@ private struct AudioWave: View {
                     Text("Su tutto il file").font(.system(size: 12.5, weight: .semibold)).foregroundStyle(.secondary)
                     Spacer()
                 }
-                Text(formatTime(trim.duration)).font(.system(size: 12)).foregroundStyle(.secondary).monospacedDigit()
+                Text(t(trim.zoom > 1 ? trim.viewStart + trim.span : trim.duration))
+                    .font(.system(size: 12)).foregroundStyle(.secondary).monospacedDigit()
             }
         }
         .padding(16)
         .card(radius: 14)
+    }
+
+    /// Zoom in larghezza (tempo) e in altezza (onda), più «Selezione» e «Tutto».
+    private var zoomBar: some View {
+        HStack(spacing: 10) {
+            Text(trim.zoom > 1 ? "Zoom \(Fmt.decimal(trim.zoom, digits: trim.zoom < 10 ? 1 : 0))×" : "Tutto il file")
+                .font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary).monospacedDigit()
+            Spacer()
+            zoomPair(icon: "arrow.left.and.right", label: "Larghezza",
+                     minus: { trim.zoomOut() }, plus: { trim.zoomIn() },
+                     canMinus: trim.zoom > 1, canPlus: trim.zoom < trim.maxZoom,
+                     help: "Allarga o restringi il tempo: al massimo si vede un quarto di secondo, per tagliare al millesimo. Anche pizzicando il trackpad o con ⌘ e la rotellina.")
+            zoomPair(icon: "arrow.up.and.down", label: "Altezza",
+                     minus: { trim.gain = max(1, trim.gain / 1.5) }, plus: { trim.gain = min(8, trim.gain * 1.5) },
+                     canMinus: trim.gain > 1, canPlus: trim.gain < 8,
+                     help: "Onda più alta: si vedono meglio i suoni bassi e i silenzi")
+            if selection {
+                Button("Selezione") { trim.zoomToSelection() }.controlSize(.small)
+                    .help("Ingrandisce sul pezzo scelto, per rifinire inizio e fine")
+            }
+            Button("Tutto") { trim.zoomReset() }.controlSize(.small)
+                .disabled(trim.zoom <= 1 && trim.gain <= 1)
+                .help("Torna a vedere tutto il file")
+        }
+    }
+
+    private func zoomPair(icon: String, label: String, minus: @escaping () -> Void, plus: @escaping () -> Void,
+                          canMinus: Bool, canPlus: Bool, help: String) -> some View {
+        HStack(spacing: 2) {
+            Image(systemName: icon).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
+                .padding(.trailing, 2).accessibilityHidden(true)
+            Button(action: minus) { Image(systemName: "minus.magnifyingglass") }
+                .disabled(!canMinus).accessibilityLabel("\(label): meno")
+            Button(action: plus) { Image(systemName: "plus.magnifyingglass") }
+                .disabled(!canPlus).accessibilityLabel("\(label): più")
+        }
+        .controlSize(.small)
+        .help(help)
+    }
+}
+
+/// 3.8 · Sotto l'onda ingrandita: tutto il file in piccolo, con il riquadro di ciò che si vede (trascinabile).
+private struct WaveOverview: View {
+    @ObservedObject var m: TrimModel
+    let tint: Color
+    @State private var grab: Double? = nil
+
+    var body: some View {
+        GeometryReader { g in
+            let w = g.size.width, h = g.size.height
+            let d = max(m.duration, 0.001)
+            let vx = CGFloat(m.viewStart / d) * w
+            let vw = max(8, CGFloat(m.span / d) * w)
+            ZStack(alignment: .topLeading) {
+                Capsule().fill(Theme.ink.opacity(0.08))
+                // La selezione, nel colore della scheda
+                Capsule().fill(tint.opacity(0.45))
+                    .frame(width: max(2, CGFloat((m.end - m.start) / d) * w), height: h * 0.5)
+                    .offset(x: CGFloat(m.start / d) * w, y: h * 0.25)
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .strokeBorder(Theme.ink.opacity(0.55), lineWidth: 1.5)
+                    .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Theme.ink.opacity(0.10)))
+                    .frame(width: vw, height: h)
+                    .offset(x: vx)
+            }
+            .contentShape(Rectangle())
+            .gesture(DragGesture(minimumDistance: 0).onChanged { v in
+                let t = Double(v.location.x / max(w, 1)) * d
+                if grab == nil {
+                    // Presa dentro il riquadro: lo si sposta da lì; fuori: il riquadro salta lì al centro
+                    let inside = v.startLocation.x >= vx && v.startLocation.x <= vx + vw
+                    grab = inside ? t - m.viewStart : m.span / 2
+                }
+                m.pan(to: t - (grab ?? 0))
+            }.onEnded { _ in grab = nil })
+            .help("Trascina per scorrere lungo il file")
+        }
     }
 }
