@@ -54,10 +54,26 @@ jobs:
         with:
           workspaces: Windows
 
+      - name: Modello della voce (in cache)
+        id: modello
+        uses: actions/cache@v4
+        with:
+          path: modello-voce
+          key: whisper-ggml-small-q5_1-ae85e4a9
+
+      - name: Scarica il modello della voce (se non è in cache)
+        if: steps.modello.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p modello-voce
+          curl -fL --retry 3 -o modello-voce/ggml-small-q5_1.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-q5_1.bin"
+          echo "ae85e4a935d7a567bd102fe55afc16bb595bdb618e11b2fc7591bc08120411bb  modello-voce/ggml-small-q5_1.bin" | sha256sum -c -
+
       - name: Prove del motore (con l'ffmpeg di Windows)
         working-directory: Windows
         env:
           ORBIT_MOTORI: ${{ github.workspace }}\Windows\src-tauri\motori
+          ORBIT_WHISPER: ${{ github.workspace }}\Windows\src-tauri\motori\voce\whisper-cli.exe
+          ORBIT_WHISPER_MODEL: ${{ github.workspace }}\modello-voce\ggml-small-q5_1.bin
         run: |
           set +e
           cargo test -p orbit_engine --release 2>&1 | tee test.log

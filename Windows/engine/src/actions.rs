@@ -203,6 +203,12 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
                 return Err(EngineError::new("per ora i metadati si tolgono dalle foto (JPG, PNG, WebP)"));
             }
         }
+        "ocr" => vec![crate::ocr::to_file(t, src, &dir)?],
+        // ── Nascondi un logo (foto e video)
+        "hidemark" => {
+            let hp: crate::hide::Params = serde_json::from_value(param.clone()).map_err(|_| EngineError::new("disegna almeno una zona sul logo"))?;
+            if kind == Kind::Image { vec![crate::hide::photo(t, src, &hp, &dir)?] } else { vec![crate::hide::movie(tools(ctx)?, src, &info, &hp, &dir, cancel, progress)?] }
+        }
         // ── PDF
         "split" => pdf::split(src, &dir)?,
         "extract" => vec![pdf::extract(src, &p_str, &dir)?],

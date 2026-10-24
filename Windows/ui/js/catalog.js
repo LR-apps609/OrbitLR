@@ -33,7 +33,9 @@ export const TOOLS = {
   icompress: { title: "Comprimi", hint: "Stessa qualità con meno peso, o sotto un peso preciso (moduli, documenti, visti)", icon: "minimize-2", params: "icompress" },
   resize: { title: "Ridimensiona", hint: "Più piccola, in percentuale o in pixel", icon: "move-diagonal-2", params: "resize" },
   rotate: { title: "Ruota", hint: "Di 90° a destra o a sinistra, o capovolgi", icon: "rotate-cw", params: "rotate" },
+  hidemark: { title: "Nascondi un logo", hint: "Sfoca o copri a quadretti una scritta o un logo", icon: "eye-off", params: "zones", isNew: true },
   strip: { title: "Rimuovi i metadati", hint: "Posizione GPS, fotocamera e date: via, senza perdere qualità", icon: "eye-off" },
+  ocr: { title: "Estrai il testo", hint: "Dalle foto e dagli screenshot, in un file di testo (con il riconoscimento di Windows)", icon: "file-text", isNew: true },
   merge: { title: "Unisci in un PDF", hint: "Una foto per pagina, nell'ordine dell'elenco", icon: "file-stack", min: 2 },
   // Video
   vcompress: { title: "Comprimi", hint: "Più leggero senza perdere qualità, o per Discord, WhatsApp ed email", icon: "minimize-2", params: "vcompress" },
@@ -56,14 +58,14 @@ export const TOOLS = {
 
 export const GROUPS = {
   image: [
-    ["Modifica", ["icompress", "resize", "rotate", "strip"]],
-    ["Più foto", ["merge"]],
+    ["Modifica", ["icompress", "resize", "rotate", "hidemark", "strip"]],
+    ["Testo e più foto", ["ocr", "merge"]],
   ],
   video: [
     ["Peso e grandezza", ["vcompress", "vresize", "social"]],
     ["Taglia e unisci", ["cut", "gifcut", "vmerge", "speed"]],
     ["Audio e sottotitoli", ["transcribe", "voiceclean", "normalize", "mute"]],
-    ["Altro", ["vrotate"]],
+    ["Altro", ["hidemark", "vrotate"]],
   ],
   pdf: [["Organizza", ["pdfmerge", "split", "extract"]]],
 };
@@ -163,7 +165,7 @@ export function kindOfExt(ext) {
 export const ACTION_NAMES = {
   vcompress: "Comprimi", icompress: "Comprimi", vresize: "Cambia la grandezza", social: "Formato social", cut: "Taglia", gifcut: "GIF da un pezzo",
   speed: "Cambia la velocità", vmerge: "Unisci i video", amerge: "Unisci", normalize: "Volume uniforme", voiceclean: "Voce più pulita", mute: "Togli l'audio",
-  rotate: "Ruota", resize: "Ridimensiona", strip: "Rimuovi i metadati", merge: "Unisci in un PDF", pdfmerge: "Unisci i PDF", split: "Dividi in pagine",
+  rotate: "Ruota", hidemark: "Nascondi un logo", ocr: "Estrai il testo", resize: "Ridimensiona", strip: "Rimuovi i metadati", merge: "Unisci in un PDF", pdfmerge: "Unisci i PDF", split: "Dividi in pagine",
   extract: "Estrai pagine", vproject: "Esporta il montaggio", ringtone: "Suoneria", silence: "Togli i silenzi", whatsapp: "Vocale per WhatsApp", tts: "Testo in voce", transcribe: "Trascrivi",
 };
 

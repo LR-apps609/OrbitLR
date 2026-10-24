@@ -7,6 +7,7 @@ import { run } from "./jobs.js";
 import { imageEstimate, knobPanel, videoEstimate } from "./params.js";
 import { resultBar } from "./resultbar.js";
 import { createTrim } from "./trim.js";
+import { createZones } from "./zones.js";
 import { fmtBytes, fmtTime, h, ico, store, toast } from "./util.js";
 
 const COPY = {
@@ -89,14 +90,14 @@ export function mediaPage(kind, app, opts = {}) {
 
   function renderHead() {
     const total = files.reduce((a, f) => a + f.size, 0);
-    head.replaceChildren(
+    head.replaceChildren(...[
       h("div", h("h1", c.title), h("div.sub", files.length ? `${files.length} ${files.length === 1 ? c.one : c.many} · ${fmtBytes(total)}${selected.size ? ` · ${selected.size} scelti` : ""}` : "Niente ancora")),
       h("div.grow"),
       opts.onEditor ? h("div.seg", { role: "tablist" },
         h("button.on", { role: "tab", "aria-selected": "true" }, "Strumenti veloci"),
         h("button", { role: "tab", title: "Montaggio completo (Ctrl+Maiusc+E)", onclick: () => opts.onEditor(targets().map((f) => f.path)) }, ico("film", 14), " Editor")) : null,
       files.length ? h("button.btn", { onclick: pick }, ico("plus", 16), "Aggiungi…") : null,
-      files.length ? h("button.btn.icon", { title: "Togli tutto", "aria-label": "Togli tutto", onclick: clearAll }, ico("x", 16)) : null);
+      files.length ? h("button.btn.icon", { title: "Togli tutto", "aria-label": "Togli tutto", onclick: clearAll }, ico("x", 16)) : null].filter(Boolean));
   }
 
   function renderGrid() {
@@ -160,13 +161,15 @@ export function mediaPage(kind, app, opts = {}) {
             if (tooFew) return toast(`Servono almeno ${tool.min} file: aggiungine un altro.`);
             if (!tool.params) return go(actionId, null);
             if (tool.params === "trim") return openTrim(id);
+            if (tool.params === "zones") return openZones(id);
             openTool = openTool === id ? null : id;
             renderTools();
           } },
           h("span.ic", ico(tool.icon, 18)),
           h("span.txt", h("b", tool.title, tool.isNew ? h("span.new", "NUOVO") : null), h("span", tooFew ? `Scegli almeno ${tool.min} file` : tool.hint)));
         right.append(btn);
-        if (openTool === id && tool.params) right.append(paramsFor(id, actionId, tool));
+        // Taglio e zone hanno il loro riquadro (aggiunto da openTrim / openZones)
+        if (openTool === id && tool.params && !["trim", "zones"].includes(tool.params)) right.append(paramsFor(id, actionId, tool));
       }
     }
   }
@@ -207,10 +210,34 @@ export function mediaPage(kind, app, opts = {}) {
     right.querySelector(".tool.on")?.after(panel);
   }
 
+  function openZones(id) {
+    const t = targets();
+    const f = t.length === 1 ? t[0] : selected.size === 0 && files.length === 1 ? files[0] : null;
+    if (!f) return toast(`Scegli ${kind === "image" ? "una foto" : "un video"} (clic sulla miniatura) e poi «Nascondi un logo».`);
+    closeTrim();
+    trim = createZones({ path: f.path });
+    openTool = id;
+    let mode = "blur", strength = 0.7;
+    const modes = h("div.opts");
+    const drawModes = () => modes.replaceChildren(...[["blur", "Sfocatura"], ["pixel", "A quadretti"]].map(([v, l]) => h("button.opt" + (v === mode ? ".on" : ""), { onclick: () => { mode = v; drawModes(); } }, l)));
+    drawModes();
+    const force = h("input", { type: "range", min: 0.2, max: 1, step: 0.05, value: strength, style: { width: "100%", accentColor: "var(--sage-deep)" }, oninput: (e) => (strength = Number(e.target.value)) });
+    const panel = h("div.params", h("p.hint", "Disegna le zone sull'immagine a sinistra."), modes,
+      h("div", { style: { fontSize: "12.5px", color: "var(--quiet)" } }, "Forza"), force,
+      h("button.btn.primary.big", { onclick: () => {
+        const zones = trim.zones;
+        if (!zones.length) return toast("Disegna almeno una zona sul logo.");
+        run("hidemark", [f], { zones, mode, strength }, kind);
+      } }, "Nascondi"),
+      h("button.btn.ghost", { onclick: () => { closeTrim(); render(); } }, "Annulla"));
+    render();
+    right.querySelector(".tool.on")?.after(panel);
+  }
+
   function closeTrim() {
     if (trim) trim.destroy();
     trim = null;
-    if (openTool && TOOLS[openTool]?.params === "trim") openTool = null;
+    if (openTool && ["trim", "zones"].includes(TOOLS[openTool]?.params)) openTool = null;
   }
 
   function render() {

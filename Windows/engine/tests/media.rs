@@ -319,3 +319,44 @@ fn montaggio_completo() {
     assert_eq!((i.width, i.height), (1280, 720));
     assert!(i.has_audio);
 }
+
+/// Solo dove ci sono motore e modello della voce (su Windows nella compilazione automatica).
+#[test]
+fn trascrivi_una_voce() {
+    let (Some(exe), Some(model)) = (std::env::var_os("ORBIT_WHISPER"), std::env::var_os("ORBIT_WHISPER_MODEL")) else { return };
+    // Una voce di Windows legge una frase (in inglese: la voce italiana non c'è sui computer di prova)
+    let wav = work().join("voce-sintetica.wav");
+    let st = std::process::Command::new("powershell")
+        .args(["-NoProfile", "-Command", "Add-Type -AssemblyName System.Speech; $s=New-Object System.Speech.Synthesis.SpeechSynthesizer; $s.SetOutputToWaveFile($env:W); $s.Speak('Good morning. This is a test of the transcription in OrbitLR.'); $s.Dispose()"])
+        .env("W", &wav)
+        .status()
+        .unwrap();
+    assert!(st.success());
+    let info = info(&wav);
+    let dir = work().join("out");
+    std::fs::create_dir_all(&dir).unwrap();
+    let outs = orbit_engine::whisper::transcribe_files(&tools(), std::path::Path::new(&exe), std::path::Path::new(&model), &wav, &info, "en", &dir, &Cancel::new(), &mut |_| {}).unwrap_or_else(|e| panic!("{e}"));
+    let text = std::fs::read_to_string(&outs[0]).unwrap().to_lowercase();
+    assert!(text.contains("test") && text.contains("transcription"), "{text}");
+    let srt = std::fs::read_to_string(&outs[1]).unwrap();
+    assert!(srt.contains("-->"));
+}
+
+#[test]
+fn nascondi_un_logo() {
+    let p = fixture_photo("logo-foto.png", 800, 600);
+    let zones = json!({"zones": [{"x": 0.7, "y": 0.05, "w": 0.25, "h": 0.15}], "mode": "pixel", "strength": 0.8});
+    let out = act("hidemark", &[&p], zones.clone()).unwrap();
+    let a = image::open(&p).unwrap().to_rgb8();
+    let b = image::open(&out[0]).unwrap().to_rgb8();
+    assert_eq!(a.dimensions(), b.dimensions());
+    // Fuori dalla zona uguale, dentro cambiata
+    assert_eq!(a.get_pixel(100, 400), b.get_pixel(100, 400));
+    let changed = (580..780).step_by(7).any(|x| a.get_pixel(x, 50) != b.get_pixel(x, 50));
+    assert!(changed);
+    let v = fixture_video("piccolo.mp4", 320, 240, 2, true);
+    let o = act("hidemark", &[&v], json!({"zones": [{"x": 0.1, "y": 0.1, "w": 0.3, "h": 0.2}], "mode": "blur"})).unwrap();
+    let i = info(&o[0]);
+    assert_eq!((i.width, i.height), (320, 240));
+    assert!(i.has_audio);
+}
