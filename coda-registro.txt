@@ -1,0 +1,200 @@
+                while aIn.isReadyForMoreMediaData && !st.aDone {
+                      ^
+/Applications/Xcode_26.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks/AVFoundation.framework/Headers/AVAssetWriterInput.h:39:12: note: class 'AVAssetWriterInput' does not conform to the 'Sendable' protocol
+@interface AVAssetWriterInput : NSObject
+           ^
+
+SwiftCompile normal x86_64 /Users/runner/work/OrbitLR/OrbitLR/Sources/Estimates.swift (in target 'OrbitLRTests' from project 'OrbitLR')
+    cd /Users/runner/work/OrbitLR/OrbitLR
+    
+/Users/runner/work/OrbitLR/OrbitLR/Tests/Fixtures.swift:172:19: warning: capture of 'vIn' with non-Sendable type 'AVAssetWriterInput' in a '@Sendable' closure
+            while vIn.isReadyForMoreMediaData && !st.vDone {
+                  ^
+/Applications/Xcode_26.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks/AVFoundation.framework/Headers/AVAssetWriterInput.h:39:12: note: class 'AVAssetWriterInput' does not conform to the 'Sendable' protocol
+@interface AVAssetWriterInput : NSObject
+           ^
+/Users/runner/work/OrbitLR/OrbitLR/Tests/Fixtures.swift:174:34: warning: capture of 'adaptor' with non-Sendable type 'AVAssetWriterInputPixelBufferAdaptor' in a '@Sendable' closure
+                guard let pool = adaptor.pixelBufferPool else { continue }
+                                 ^
+/Applications/Xcode_26.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks/AVFoundation.framework/Headers/AVAssetWriterInput.h:554:12: note: class 'AVAssetWriterInputPixelBufferAdaptor' does not conform to the 'Sendable' protocol
+@interface AVAssetWriterInputPixelBufferAdaptor : NSObject
+           ^
+/Users/runner/work/OrbitLR/OrbitLR/Tests/Fixtures.swift:187:23: warning: capture of 'aIn' with non-Sendable type 'AVAssetWriterInput' in a '@Sendable' closure
+                while aIn.isReadyForMoreMediaData && !st.aDone {
+                      ^
+/Applications/Xcode_26.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks/AVFoundation.framework/Headers/AVAssetWriterInput.h:39:12: note: class 'AVAssetWriterInput' does not conform to the 'Sendable' protocol
+@interface AVAssetWriterInput : NSObject
+           ^
+
+SwiftCompile normal x86_64 /Users/runner/work/OrbitLR/OrbitLR/Tests/Fixtures.swift (in target 'OrbitLRTests' from project 'OrbitLR')
+    cd /Users/runner/work/OrbitLR/OrbitLR
+    
+/Users/runner/work/OrbitLR/OrbitLR/Tests/Fixtures.swift:172:19: warning: capture of 'vIn' with non-Sendable type 'AVAssetWriterInput' in a '@Sendable' closure
+            while vIn.isReadyForMoreMediaData && !st.vDone {
+                  ^
+/Applications/Xcode_26.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks/AVFoundation.framework/Headers/AVAssetWriterInput.h:39:12: note: class 'AVAssetWriterInput' does not conform to the 'Sendable' protocol
+@interface AVAssetWriterInput : NSObject
+           ^
+/Users/runner/work/OrbitLR/OrbitLR/Tests/Fixtures.swift:174:34: warning: capture of 'adaptor' with non-Sendable type 'AVAssetWriterInputPixelBufferAdaptor' in a '@Sendable' closure
+                guard let pool = adaptor.pixelBufferPool else { continue }
+                                 ^
+/Applications/Xcode_26.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks/AVFoundation.framework/Headers/AVAssetWriterInput.h:554:12: note: class 'AVAssetWriterInputPixelBufferAdaptor' does not conform to the 'Sendable' protocol
+@interface AVAssetWriterInputPixelBufferAdaptor : NSObject
+           ^
+/Users/runner/work/OrbitLR/OrbitLR/Tests/Fixtures.swift:187:23: warning: capture of 'aIn' with non-Sendable type 'AVAssetWriterInput' in a '@Sendable' closure
+                while aIn.isReadyForMoreMediaData && !st.aDone {
+                      ^
+/Applications/Xcode_26.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks/AVFoundation.framework/Headers/AVAssetWriterInput.h:39:12: note: class 'AVAssetWriterInput' does not conform to the 'Sendable' protocol
+@interface AVAssetWriterInput : NSObject
+           ^
+
+SwiftCompile normal x86_64 /Users/runner/work/OrbitLR/OrbitLR/Tests/FormatsTests.swift (in target 'OrbitLRTests' from project 'OrbitLR')
+    cd /Users/runner/work/OrbitLR/OrbitLR
+    
+/Users/runner/work/OrbitLR/OrbitLR/Tests/Fixtures.swift:172:19: warning: capture of 'vIn' with non-Sendable type 'AVAssetWriterInput' in a '@Sendable' closure
+            while vIn.isReadyForMoreMediaData && !st.vDone {
+                  ^
+/Applications/Xcode_26.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks/AVFoundation.framework/Headers/AVAssetWriterInput.h:39:12: note: class 'AVAssetWriterInput' does not conform to the 'Sendable' protocol
+@interface AVAssetWriterInput : NSObject
+           ^
+/Users/runner/work/OrbitLR/OrbitLR/Tests/Fixtures.swift:174:34: warning: capture of 'adaptor' with non-Sendable type 'AVAssetWriterInputPixelBufferAdaptor' in a '@Sendable' closure
+                guard let pool = adaptor.pixelBufferPool else { continue }
+                                 ^
+/Applications/Xcode_26.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks/AVFoundation.framework/Headers/AVAssetWriterInput.h:554:12: note: class 'AVAssetWriterInputPixelBufferAdaptor' does not conform to the 'Sendable' protocol
+@interface AVAssetWriterInputPixelBufferAdaptor : NSObject
+           ^
+/Users/runner/work/OrbitLR/OrbitLR/Tests/Fixtures.swift:187:23: warning: capture of 'aIn' with non-Sendable type 'AVAssetWriterInput' in a '@Sendable' closure
+                while aIn.isReadyForMoreMediaData && !st.aDone {
+                      ^
+/Applications/Xcode_26.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks/AVFoundation.framework/Headers/AVAssetWriterInput.h:39:12: note: class 'AVAssetWriterInput' does not conform to the 'Sendable' protocol
+@interface AVAssetWriterInput : NSObject
+           ^
+
+SwiftMergeGeneratedHeaders /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/DerivedSources/OrbitLRTests-Swift.h /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests-Swift.h (in target 'OrbitLRTests' from project 'OrbitLR')
+    cd /Users/runner/work/OrbitLR/OrbitLR
+    builtin-swiftHeaderTool -arch x86_64 /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests-Swift.h -o /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/DerivedSources/OrbitLRTests-Swift.h
+
+SwiftDriverJobDiscovery normal x86_64 Compiling NewsAndFixTests.swift, PDFEditor.swift, ParamPanel.swift, Paths.swift, Perf.swift, PerfTests.swift, Permissions.swift, PieConversionsTests.swift, PieCustom.swift, PieMenu.swift, Polish.swift, Presets.swift, PreviewTests.swift, QuickMedia.swift, Recipes.swift, RecipesTests.swift, ScreenshotTests.swift, SecurityTests.swift, SendToPhone.swift, SendToPhoneTests.swift (in target 'OrbitLRTests' from project 'OrbitLR')
+
+Copy /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.swiftmodule/x86_64-apple-macos.swiftmodule /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests.swiftmodule (in target 'OrbitLRTests' from project 'OrbitLR')
+    cd /Users/runner/work/OrbitLR/OrbitLR
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests.swiftmodule /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.swiftmodule/x86_64-apple-macos.swiftmodule
+
+Copy /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.swiftmodule/x86_64-apple-macos.swiftdoc /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests.swiftdoc (in target 'OrbitLRTests' from project 'OrbitLR')
+    cd /Users/runner/work/OrbitLR/OrbitLR
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests.swiftdoc /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.swiftmodule/x86_64-apple-macos.swiftdoc
+
+Copy /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.swiftmodule/x86_64-apple-macos.abi.json /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests.abi.json (in target 'OrbitLRTests' from project 'OrbitLR')
+    cd /Users/runner/work/OrbitLR/OrbitLR
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests.abi.json /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.swiftmodule/x86_64-apple-macos.abi.json
+
+Copy /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.swiftmodule/Project/x86_64-apple-macos.swiftsourceinfo /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests.swiftsourceinfo (in target 'OrbitLRTests' from project 'OrbitLR')
+    cd /Users/runner/work/OrbitLR/OrbitLR
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests.swiftsourceinfo /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.swiftmodule/Project/x86_64-apple-macos.swiftsourceinfo
+
+SwiftDriverJobDiscovery normal x86_64 Compiling FriendlyError.swift, FriendlyErrorTests.swift, Help.swift, HideMark.swift, HideMarkTests.swift, Hotkey.swift, IdentityTests.swift, ImagesTab.swift, ImagesTabTests.swift, Inpaint.swift, InpaintTests.swift, Installer.swift, Intents.swift, ItalianNumbersTests.swift, Knob.swift, LRConverterApp.swift, LayoutTests.swift, Media.swift, MediaTabs.swift, MenuBarIcon.swift, NativeEngine.swift (in target 'OrbitLRTests' from project 'OrbitLR')
+
+SwiftDriverJobDiscovery normal x86_64 Compiling AIEnhance.swift, Account.swift, Actions.swift, AudioProjectTests.swift, AudioProjects.swift, AudioToolsTests.swift, AutoSubtitles.swift, AutoSubtitlesTests.swift, Automation.swift, AutomationTemplatesTests.swift, Brand.swift, BugReport.swift, ClipAudioTests.swift, Compare.swift, Drawer.swift, DrawerTests.swift, Engine.swift, EstimateTests.swift, Estimates.swift, Fixtures.swift, FormatsTests.swift (in target 'OrbitLRTests' from project 'OrbitLR')
+
+SwiftDriverJobDiscovery normal x86_64 Compiling UpdateSignatureTests.swift, Updater.swift, VersionTests.swift, VideoEditor.swift, VideoEffectsTests.swift, VideoLooks.swift, VideoLooksTests.swift, VideoPendingTests.swift, VideoProject.swift, VideoProjectTests.swift, VideoProjects.swift, VideoProjectsLibraryTests.swift, VideoTexts.swift, VideoTextsTests.swift, VideoTransitions.swift, VideoTransitionsTests.swift, Views.swift, VoltoTests.swift, Welcome.swift, Workspace.swift (in target 'OrbitLRTests' from project 'OrbitLR')
+
+SwiftDriver\ Compilation OrbitLRTests normal x86_64 com.apple.xcode.tools.swift.compiler (in target 'OrbitLRTests' from project 'OrbitLR')
+    cd /Users/runner/work/OrbitLR/OrbitLR
+    builtin-Swift-Compilation -- /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name OrbitLRTests -Onone -enforce-exclusivity\=checked @/Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests.SwiftFileList -DDEBUG -plugin-path /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_26.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -target x86_64-apple-macos14.0 -g -module-cache-path /Users/runner/work/OrbitLR/OrbitLR/build-foto/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/runner/work/OrbitLR/OrbitLR/build-foto/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug -Isystem /Applications/Xcode_26.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug -F /Applications/Xcode_26.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -c -j4 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/runner/work/OrbitLR/OrbitLR/build-foto/SDKStatCaches.noindex/macosx26.2-25C58-3a7ae8a47380b252078bfe6190e59ef2.sdkstatcache -output-file-map /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/runner/work/OrbitLR/OrbitLR/build-foto/ModuleCache.noindex -sdk-module-cache-path /Users/runner/work/OrbitLR/OrbitLR/build-foto/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/runner/work/OrbitLR/OrbitLR/build-foto/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/OrbitLRTests-generated-files.hmap -Xcc -I/Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/OrbitLRTests-own-target-headers.hmap -Xcc -I/Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/OrbitLRTests-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/OrbitLRTests-project-headers.hmap -Xcc -I/Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/include -Xcc -I/Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/DerivedSources-normal/x86_64 -Xcc -I/Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/DerivedSources/x86_64 -Xcc -I/Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests-Swift.h -working-directory /Users/runner/work/OrbitLR/OrbitLR -experimental-emit-module-separately -disable-cmo
+
+Ld /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.xctest/Contents/MacOS/OrbitLRTests normal (in target 'OrbitLRTests' from project 'OrbitLR')
+    cd /Users/runner/work/OrbitLR/OrbitLR
+    /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target x86_64-apple-macos14.0 -bundle -isysroot /Applications/Xcode_26.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -O0 -L/Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/EagerLinkingTBDs/Debug -L/Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug -L/Applications/Xcode_26.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F/Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/EagerLinkingTBDs/Debug -F/Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug -iframework /Applications/Xcode_26.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -filelist /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests.LinkFileList -Xlinker -rpath -Xlinker /usr/lib/swift -Xlinker -rpath -Xlinker @loader_path/../Frameworks -Xlinker -rpath -Xlinker @executable_path/../Frameworks -Xlinker -object_path_lto -Xlinker /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests_lto.o -rdynamic -Xlinker -no_deduplicate -Xlinker -dependency_info -Xlinker /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests_dependency_info.dat -fobjc-link-runtime -L/Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests.swiftmodule @/Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests-linker-args.resp -Xlinker -needed_framework -Xlinker XCTest -framework XCTest -Xlinker -needed-lXCTestSwiftSupport -lXCTestSwiftSupport -Xlinker -no_adhoc_codesign -o /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.xctest/Contents/MacOS/OrbitLRTests
+
+CopySwiftLibs /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.xctest (in target 'OrbitLRTests' from project 'OrbitLR')
+    cd /Users/runner/work/OrbitLR/OrbitLR
+    builtin-swiftStdLibTool --copy --verbose --sign - --scan-executable /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.xctest/Contents/MacOS/OrbitLRTests --scan-folder /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.xctest/Contents/Frameworks --scan-folder /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.xctest/Contents/PlugIns --scan-folder /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.xctest/Contents/Library/SystemExtensions --scan-folder /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.xctest/Contents/Extensions --platform macosx --toolchain /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.xctest/Contents/Frameworks --strip-bitcode --scan-executable /Applications/Xcode_26.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/libXCTestSwiftSupport.dylib --strip-bitcode-tool /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os --back-deploy-swift-span
+
+ExtractAppIntentsMetadata (in target 'OrbitLRTests' from project 'OrbitLR')
+    cd /Users/runner/work/OrbitLR/OrbitLR
+    /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name OrbitLRTests --sdk-root /Applications/Xcode_26.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk --xcode-version 17C529 --platform-family macOS --deployment-target 14.0 --bundle-identifier it.ledion.OrbitLRTests --output /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.xctest/Contents/Resources --target-triple x86_64-apple-macos14.0 --binary-file /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.xctest/Contents/MacOS/OrbitLRTests --dependency-file /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests_dependency_info.dat --stringsdata-file /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests.SwiftFileList --metadata-file-list /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/OrbitLRTests.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/OrbitLRTests.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Intermediates.noindex/OrbitLR.build/Debug/OrbitLRTests.build/Objects-normal/x86_64/OrbitLRTests.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-10-24 13:43:17.827 appintentsmetadataprocessor[3785:14183] Starting appintentsmetadataprocessor export
+2026-10-24 13:43:18.271 appintentsmetadataprocessor[3785:14183] Writing Metadata.appintents
+2026-10-24 13:43:18.271 appintentsmetadataprocessor[3785:14183] Metadata root: /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.xctest/Contents/Resources/Metadata.appintents
+
+CodeSign /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.xctest (in target 'OrbitLRTests' from project 'OrbitLR')
+    cd /Users/runner/work/OrbitLR/OrbitLR
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --timestamp\=none --generate-entitlement-der /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.xctest
+
+RegisterExecutionPolicyException /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.xctest (in target 'OrbitLRTests' from project 'OrbitLR')
+    cd /Users/runner/work/OrbitLR/OrbitLR
+    builtin-RegisterExecutionPolicyException /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.xctest
+
+Touch /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.xctest (in target 'OrbitLRTests' from project 'OrbitLR')
+    cd /Users/runner/work/OrbitLR/OrbitLR
+    /usr/bin/touch -c /Users/runner/work/OrbitLR/OrbitLR/build-foto/Build/Products/Debug/OrbitLRTests.xctest
+
+Test Suite 'Selected tests' started at 2026-10-24 13:43:21.190.
+Test Suite 'OrbitLRTests.xctest' started at 2026-10-24 13:43:21.191.
+Test Suite 'ScreenshotTests' started at 2026-10-24 13:43:21.191.
+Test Case '-[OrbitLRTests.ScreenshotTests test00_FinestraIntera]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test00_FinestraIntera]' passed (9.954 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test01_ConversioneVuota]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test01_ConversioneVuota]' passed (2.571 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test02_ConversioneFoto]' started.
+2026-10-24 13:43:34.706800+0000 xctest[3909:14497] HWJPEG not available on this platform
+Test Case '-[OrbitLRTests.ScreenshotTests test02_ConversioneFoto]' passed (5.489 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test03_ConversioneDueTipi]' started.
+2026-10-24 13:43:41.077443+0000 xctest[3909:14497] fopen failed for data file: errno = 2 (No such file or directory)
+2026-10-24 13:43:41.077477+0000 xctest[3909:14497] Errors found! Invalidating cache...
+2026-10-24 13:43:41.209811+0000 xctest[3909:14497] fopen failed for data file: errno = 2 (No such file or directory)
+2026-10-24 13:43:41.209846+0000 xctest[3909:14497] Errors found! Invalidating cache...
+Test Case '-[OrbitLRTests.ScreenshotTests test03_ConversioneDueTipi]' passed (7.465 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test04_Immagini]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test04_Immagini]' passed (9.836 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test06_File]' started.
+CoreGraphics PDF has logged an error. Set environment variable "CG_PDF_VERBOSE" to learn more.
+Test Case '-[OrbitLRTests.ScreenshotTests test06_File]' passed (8.426 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test08_VideoProgetti]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test08_VideoProgetti]' passed (5.060 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test09_VideoStrumentiVeloci]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test09_VideoStrumentiVeloci]' passed (8.228 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test10_VideoMontaggio]' started.
+2026-10-24 13:44:21.197349+0000 xctest[3909:14497] [plugin] AddInstanceForFactory: No factory registered for id <CFUUID 0x600003084ba0> F8BB1C28-BAE8-11D6-9C31-00039315CD46
+Test Case '-[OrbitLRTests.ScreenshotTests test10_VideoMontaggio]' passed (34.647 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test11_Audio]' started.
+2026-10-24 13:44:56.583025+0000 xctest[3909:20447] [AQ]      AudioQueueObject.cpp:3370  _Start: Error (-4) getting reporterIDs
+2026-10-24 13:45:24.534128+0000 xctest[3909:14482] [AXTTSResourceManager] Error reading languages in for local resources.
+2026-10-24 13:45:25.042579+0000 xctest[3909:14497] [catalog] Query for com.apple.MobileAsset.VoiceServicesVocalizerVoice failed: 2
+2026-10-24 13:45:25.043980+0000 xctest[3909:14497] [asset] #FactoryInstall Unable to query results, error: 5
+2026-10-24 13:45:25.420503+0000 xctest[3909:14497] [catalog] Query for com.apple.MobileAsset.VoiceServices.GryphonVoice failed: 2
+2026-10-24 13:45:25.431653+0000 xctest[3909:14497] [catalog] Query for com.apple.MobileAsset.VoiceServicesVocalizerVoice failed: 2
+Test Case '-[OrbitLRTests.ScreenshotTests test11_Audio]' passed (45.918 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test13_Attivita]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test13_Attivita]' passed (2.547 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test15_Aiuto]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test15_Aiuto]' passed (3.029 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test16_Opzioni]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test16_Opzioni]' passed (2.796 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test16b_Scorciatoie]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test16b_Scorciatoie]' passed (2.526 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test16c_MenuInAlto]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test16c_MenuInAlto]' passed (2.487 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test17_Avvio]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test17_Avvio]' passed (11.081 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test18_Finestrelle]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test18_Finestrelle]' passed (10.114 seconds).
+Test Suite 'ScreenshotTests' passed at 2026-10-24 13:46:13.373.
+	 Executed 17 tests, with 0 failures (0 unexpected) in 172.172 (172.182) seconds
+Test Suite 'OrbitLRTests.xctest' passed at 2026-10-24 13:46:13.374.
+	 Executed 17 tests, with 0 failures (0 unexpected) in 172.172 (172.183) seconds
+Test Suite 'Selected tests' passed at 2026-10-24 13:46:13.374.
+	 Executed 17 tests, with 0 failures (0 unexpected) in 172.172 (172.184) seconds
+2026-10-24 13:46:13.901 xcodebuild[1431:7262] [MT] IDETestOperationsObserverDebug: 175.020 elapsed -- Testing started completed.
+2026-10-24 13:46:13.901 xcodebuild[1431:7262] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-24 13:46:13.901 xcodebuild[1431:7262] [MT] IDETestOperationsObserverDebug: 175.020 sec, +175.020 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/OrbitLR/OrbitLR/build-foto/Logs/Test/Test-OrbitLRTests-2026.10.24_13-41-05-+0000.xcresult
+
+** TEST SUCCEEDED **
+
+Testing started
