@@ -256,3 +256,54 @@ mod tests {
         assert_eq!(atempo_chain(0.25), "atempo=0.5,atempo=0.5000");
     }
 }
+
+/// La forma d'onda per il disegno: `points` valori tra 0 e 1 (il picco di ogni tratto).
+/// L'audio si legge a 4000 campioni al secondo, un pezzo alla volta: va bene anche per file di ore.
+pub fn waveform(tools: &Tools, src: &Path, duration: f64, points: usize) -> Result<Vec<f32>> {
+    use std::io::Read;
+    let points = points.clamp(16, 4000);
+    let rate = 4000.0;
+    let total = (duration.max(0.1) * rate) as usize;
+    let per = (total / points).max(1);
+    let mut child = tools
+        .ffmpeg_cmd()
+        .args(["-hide_banner", "-loglevel", "error", "-i"])
+        .arg(src)
+        .args(["-map", "0:a:0", "-vn", "-ac", "1", "-ar", "4000", "-f", "s16le", "-acodec", "pcm_s16le", "pipe:1"])
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::null())
+        .spawn()
+        .map_err(|e| EngineError::new(format!("non riesco ad avviare il motore audio: {e}")))?;
+    let mut out = child.stdout.take().ok_or_else(|| EngineError::new("nessun audio"))?;
+    let mut peaks = vec![0f32; points];
+    let mut buf = vec![0u8; 64 * 1024];
+    let mut idx = 0usize;
+    let mut carry: Option<u8> = None;
+    loop {
+        let n = out.read(&mut buf)?;
+        if n == 0 {
+            break;
+        }
+        let mut bytes: Vec<u8> = Vec::with_capacity(n + 1);
+        if let Some(c) = carry.take() {
+            bytes.push(c);
+        }
+        bytes.extend_from_slice(&buf[..n]);
+        if bytes.len() % 2 == 1 {
+            carry = bytes.pop();
+        }
+        for ch in bytes.chunks_exact(2) {
+            let v = (i16::from_le_bytes([ch[0], ch[1]]) as f32 / 32768.0).abs();
+            let k = (idx / per).min(points - 1);
+            if v > peaks[k] {
+                peaks[k] = v;
+            }
+            idx += 1;
+        }
+    }
+    let _ = child.wait();
+    if idx == 0 {
+        return Err(EngineError::new("il file non contiene audio"));
+    }
+    Ok(peaks)
+}

@@ -1,0 +1,209 @@
+// Schede Immagini, Video e File: i file a sinistra, a destra «Cosa vuoi fare?».
+// Un clic su uno strumento senza scelte lo fa partire subito; con le scelte apre il riquadro sotto.
+
+import { invoke, pickFiles, setDemoPick } from "./api.js";
+import { CONVERT, GROUPS, KINDS, TOOLS, fmtIcon } from "./catalog.js";
+import { run } from "./jobs.js";
+import { imageEstimate, knobPanel, videoEstimate } from "./params.js";
+import { resultBar } from "./resultbar.js";
+import { createTrim } from "./trim.js";
+import { fmtBytes, fmtTime, h, ico, store, toast } from "./util.js";
+
+const COPY = {
+  image: { title: "Immagini", one: "foto", many: "foto", empty: "Trascina qui le foto", emptySub: "JPG, PNG, HEIC dell'iPhone, WebP, AVIF e altre", filters: [{ name: "Immagini", extensions: ["jpg", "jpeg", "png", "heic", "heif", "webp", "avif", "gif", "bmp", "tif", "tiff", "ico", "jfif"] }] },
+  video: { title: "Video", one: "video", many: "video", empty: "Trascina qui i video", emptySub: "MP4, MOV dell'iPhone, MKV, AVI, WebM e altri. Anche film di ore: si lavorano sul computer.", filters: [{ name: "Video", extensions: ["mp4", "mov", "m4v", "mkv", "webm", "avi", "wmv", "flv", "mpg", "mpeg", "ts", "mts", "m2ts", "3gp"] }] },
+  pdf: { title: "File", one: "PDF", many: "PDF", empty: "Trascina qui i PDF", emptySub: "Unisci, dividi ed estrai pagine. Word, Excel e PowerPoint arriveranno con un componente facoltativo.", filters: [{ name: "PDF", extensions: ["pdf"] }] },
+};
+
+export function mediaPage(kind, app) {
+  const c = COPY[kind];
+  let files = [];
+  let selected = new Set();
+  let openTool = null;
+  let trim = null;
+
+  const bar = resultBar(kind);
+  const head = h("div.head");
+  const grid = h("div.grid");
+  const left = h("div.files");
+  const right = h("div.tools-scroll");
+  const el = h("div.page", h("div.split", left, h("div.tools", right)));
+
+  function targets() {
+    return selected.size ? files.filter((f) => selected.has(f.path)) : files;
+  }
+
+  async function add(paths) {
+    const fresh = paths.filter((p) => !files.some((f) => f.path === p));
+    if (!fresh.length) return;
+    const probed = await invoke("probe_files", { paths: fresh });
+    let skipped = 0;
+    for (const p of probed) {
+      if (!p.ok) {
+        toast(p.error);
+        continue;
+      }
+      const k = p.info.kind;
+      if (k !== kind) {
+        skipped++;
+        continue;
+      }
+      files.push({ path: p.info.path, name: p.info.name, size: p.info.size, info: p.info, thumb: null });
+    }
+    if (skipped) toast(`${skipped} file non ${kind === "image" ? "sono foto" : kind === "video" ? "sono video" : "sono PDF"}: li trovi nella scheda giusta.`);
+    closeTrim();
+    render();
+    for (const f of files) if (!f.thumb && kind !== "pdf") loadThumb(f);
+  }
+
+  async function loadThumb(f) {
+    const t = await invoke("thumbnail", { path: f.path, side: 320 }).catch(() => null);
+    f.thumb = t || "none";
+    const img = grid.querySelector(`[data-path="${CSS.escape(f.path)}"] .th`);
+    if (img && t) img.replaceChildren(h("img", { src: t, alt: "" }));
+  }
+
+  async function pick() {
+    setDemoPick(kind);
+    const p = await pickFiles(c.filters);
+    if (p.length) add(p);
+  }
+
+  function clearAll() {
+    files = [];
+    selected.clear();
+    closeTrim();
+    render();
+  }
+
+  function renderHead() {
+    const total = files.reduce((a, f) => a + f.size, 0);
+    head.replaceChildren(
+      h("div", h("h1", c.title), h("div.sub", files.length ? `${files.length} ${files.length === 1 ? c.one : c.many} · ${fmtBytes(total)}${selected.size ? ` · ${selected.size} scelti` : ""}` : "Niente ancora")),
+      h("div.grow"),
+      files.length ? h("button.btn", { onclick: pick }, ico("plus", 16), "Aggiungi…") : null,
+      files.length ? h("button.btn.icon", { title: "Togli tutto", "aria-label": "Togli tutto", onclick: clearAll }, ico("x", 16)) : null);
+  }
+
+  function renderGrid() {
+    if (!files.length) {
+      const box = h("div.box", { role: "button", tabindex: "0", onclick: pick, onkeydown: (e) => e.key === "Enter" && pick() },
+        ico(KINDS[kind].icon, 44), h("h3", c.empty), h("div", "oppure clicca per sceglierli"), h("div", { style: { fontSize: "12.5px" } }, c.emptySub));
+      left.replaceChildren(head, h("div.empty", box), bar.el);
+      return;
+    }
+    grid.replaceChildren(...files.map((f) => {
+      const tile = h("div.tile" + (selected.has(f.path) ? ".sel" : ""), { "data-path": f.path, tabindex: "0", role: "option", "aria-selected": selected.has(f.path) ? "true" : "false",
+        onclick: (e) => {
+          if (e.ctrlKey || e.metaKey || e.shiftKey) selected.has(f.path) ? selected.delete(f.path) : selected.add(f.path);
+          else selected = selected.size === 1 && selected.has(f.path) ? new Set() : new Set([f.path]);
+          closeTrim();
+          render();
+        } },
+        h("div.th", f.thumb && f.thumb !== "none" ? h("img", { src: f.thumb, alt: "" }) : ico(kind === "pdf" ? "file-text" : KINDS[kind].icon, 34)),
+        kind === "video" && f.info.duration ? h("span.dur", fmtTime(f.info.duration)) : null,
+        h("div.nm", { title: f.name }, f.name),
+        h("div.mt", meta(f)),
+        h("button.rm", { title: "Togli", "aria-label": "Togli " + f.name, onclick: (e) => { e.stopPropagation(); files = files.filter((x) => x !== f); selected.delete(f.path); closeTrim(); render(); } }, ico("x", 13)));
+      return tile;
+    }));
+    left.replaceChildren(head, trim ? h("div.page-scroll", trim.el) : grid, bar.el);
+  }
+
+  function meta(f) {
+    const i = f.info;
+    if (kind === "image" && i.width) return `${i.width}×${i.height} · ${fmtBytes(f.size)}`;
+    if (kind === "video" && i.width) return `${Math.min(i.width, i.height)}p · ${fmtBytes(f.size)}`;
+    return fmtBytes(f.size);
+  }
+
+  function go(action, param) {
+    const t = targets();
+    if (!t.length) return pick();
+    run(action, t, param, kind);
+  }
+
+  function renderTools() {
+    const t = targets();
+    const n = t.length;
+    right.replaceChildren(
+      h("h2", "Cosa vuoi fare?"),
+      h("div.sub", !files.length ? `Aggiungi ${kind === "image" ? "delle foto" : kind === "video" ? "dei video" : "dei PDF"} per iniziare` : n === 1 ? `Su «${t[0].name}»` : `Su ${n === files.length ? "tutti i" : ""} ${n} ${c.many}`.replace("  ", " ")));
+    if (CONVERT[kind].length) {
+      right.append(h("div.group", "Converti in"),
+        h("div.fmt-grid", CONVERT[kind].map((f) => h("button.fmt", { onclick: () => go("to:" + f), disabled: !files.length || null, title: `Converti in ${f.toUpperCase()}` }, f.toUpperCase()))));
+    }
+    for (const [g, ids] of GROUPS[kind] || []) {
+      right.append(h("div.group", g));
+      for (const id of ids) {
+        const tool = TOOLS[id];
+        const actionId = tool.id || id;
+        const tooFew = tool.min && n < tool.min;
+        const btn = h("button.tool" + (openTool === id ? ".on" : ""), {
+          disabled: !files.length || null,
+          onclick: () => {
+            if (tooFew) return toast(`Servono almeno ${tool.min} file: aggiungine un altro.`);
+            if (!tool.params) return go(actionId, null);
+            if (tool.params === "trim") return openTrim(id);
+            openTool = openTool === id ? null : id;
+            renderTools();
+          } },
+          h("span.ic", ico(tool.icon, 18)),
+          h("span", h("b", tool.title, tool.isNew ? h("span.new", "NUOVO") : null), h("span", tooFew ? `Scegli almeno ${tool.min} file` : tool.hint)));
+        right.append(btn);
+        if (openTool === id && tool.params) right.append(paramsFor(id, actionId, tool));
+      }
+    }
+  }
+
+  function paramsFor(id, actionId, tool) {
+    const t = targets();
+    if (tool.params === "pages") {
+      const input = h("input", { type: "text", placeholder: "es. 1-3, 5" });
+      return h("div.params", h("p.hint", "Le pagine da tenere, in un PDF nuovo."), h("div.field", input),
+        h("button.btn.primary.big", { onclick: () => input.value.trim() ? go(actionId, input.value.trim()) : toast("Scrivi quali pagine, per esempio 1-3, 5") }, "Estrai"));
+    }
+    const extra = {
+      goLabel: tool.title,
+      estimate: id === "vcompress" ? videoEstimate(t) : id === "icompress" ? imageEstimate(t) : null,
+    };
+    return knobPanel(tool.params, (v) => go(actionId, v), extra);
+  }
+
+  function openTrim(id) {
+    const t = targets();
+    const f = t.length === 1 ? t[0] : selected.size === 0 && files.length === 1 ? files[0] : null;
+    if (!f) return toast("Scegli un video (clic sulla miniatura) e poi «" + TOOLS[id].title + "».");
+    closeTrim();
+    const isGif = id === "gifcut";
+    trim = createTrim({ path: f.path, duration: Math.max(0.1, f.info.duration), media: "video", maxLen: isGif ? 15 : 0 });
+    openTool = id;
+    const precise = h("input", { type: "checkbox" });
+    const panel = h("div.params",
+      h("p.hint", isGif ? "Scegli il pezzo (fino a 15 secondi): diventa una GIF animata." : "Sposta le maniglie sul pezzo da tenere. Senza ricodificare il taglio è istantaneo e non perde qualità; l'inizio cade sul fotogramma chiave più vicino."),
+      isGif ? null : h("label.check", precise, "Taglio preciso al decimo (ricodifica, più lento)"),
+      h("button.btn.primary.big", { onclick: () => {
+        const p = { start: +trim.start.toFixed(3), end: +trim.end.toFixed(3) };
+        if (!isGif) p.precise = precise.checked;
+        run(isGif ? "gifcut" : "cut", [f], p, kind);
+      } }, isGif ? "Crea la GIF" : "Taglia"),
+      h("button.btn.ghost", { onclick: () => { closeTrim(); render(); } }, "Annulla"));
+    render();
+    right.querySelector(".tool.on")?.after(panel);
+  }
+
+  function closeTrim() {
+    if (trim) trim.destroy();
+    trim = null;
+    if (openTool && TOOLS[openTool]?.params === "trim") openTool = null;
+  }
+
+  function render() {
+    renderHead();
+    renderGrid();
+    renderTools();
+  }
+
+  render();
+  return { el, add, kind, show() {}, get count() { return files.length; } };
+}

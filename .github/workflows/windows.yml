@@ -1,0 +1,136 @@
+# OrbitLR per Windows: compila, prova il motore con l'ffmpeg vero di Windows, crea l'installazione
+# e la mette tra i file scaricabili come anteprima (mai come «ultima versione»: l'app per Mac non la vede).
+
+name: OrbitLR per Windows
+
+on:
+  push:
+    branches: [windows]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Motori (ffmpeg LGPL) con impronta controllata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release download motori-win-1 -p motori-win-1.zip -R "$GITHUB_REPOSITORY"
+          echo "$(cut -d' ' -f1 Windows/motori.sha256)  motori-win-1.zip" | sha256sum -c -
+          unzip -q motori-win-1.zip -d motori-tmp
+          mkdir -p Windows/src-tauri/motori
+          cp motori-tmp/Motori/ffmpeg.exe motori-tmp/Motori/ffprobe.exe motori-tmp/Motori/LEGGIMI.txt Windows/src-tauri/motori/
+          ./Windows/src-tauri/motori/ffmpeg.exe -hide_banner -version | head -n 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: Windows
+
+      - name: Prove del motore (con l'ffmpeg di Windows)
+        working-directory: Windows
+        env:
+          ORBIT_MOTORI: ${{ github.workspace }}\Windows\src-tauri\motori
+        run: |
+          set -o pipefail
+          cargo test -p orbit_engine --release 2>&1 | tee test.log
+          echo "::notice::$(grep -E '^test result' test.log | tr '\n' ' ')"
+          for t in $(grep -E '^test .* FAILED$' test.log | awk '{print $2}'); do echo "::error::Prova fallita: $t"; done
+          grep -A12 "panicked at" test.log | head -60 | while IFS= read -r l; do echo "::error::$l"; done || true
+
+      - name: Codificatori di questo computer
+        working-directory: Windows
+        run: |
+          ./src-tauri/motori/ffmpeg.exe -hide_banner -loglevel error -f lavfi -i "color=c=gray:s=320x240:d=0.2:r=10" -pix_fmt nv12 -c:v h264_mf -b:v 500k -f null - && echo "::notice::h264_mf (Windows) funziona" || echo "::notice::h264_mf non disponibile su questo computer di prova"
+
+      - name: Installazione
+        working-directory: Windows
+        run: |
+          npm ci --no-audit --no-fund
+          npx tauri build --ci
+          ls -la target/release/bundle/nsis/
+          f=$(ls target/release/bundle/nsis/*.exe | head -n 1)
+          cp "$f" "../OrbitLR-Setup.exe"
+          echo "::notice::Installazione pronta: $(du -h ../OrbitLR-Setup.exe | cut -f1)"
+
+      - name: Controllo dell'app
+        run: |
+          set -euo pipefail
+          # L'app si avvia e resta aperta (non si chiude da sola per un errore)
+          ./Windows/target/release/orbitlr.exe &
+          pid=$!
+          sleep 12
+          if kill -0 $pid 2>/dev/null; then echo "::notice::L'app si avvia e resta aperta"; kill $pid || true; else echo "::error::L'app si è chiusa da sola"; exit 1; fi
+
+      - name: Foto dell'app
+        shell: pwsh
+        run: |
+          Start-Process -FilePath ".\Windows\target\release\orbitlr.exe"
+          Start-Sleep -Seconds 10
+          Add-Type -AssemblyName System.Windows.Forms,System.Drawing
+          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          $g = [System.Drawing.Graphics]::FromImage($bmp)
+          $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+          $bmp.Save("$PWD\foto-windows.png")
+          Get-Process orbitlr -ErrorAction SilentlyContinue | Stop-Process
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: |
+            OrbitLR-Setup.exe
+            foto-windows.png
+          retention-days: 14
+
+  release:
+    needs: build
+    if: github.ref == 'refs/heads/windows'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows
+      - name: Anteprima scaricabile
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          V=$(python3 -c "import json;print(json.load(open('Windows/src-tauri/tauri.conf.json'))['version'])")
+          TAG="windows-anteprima"
+          cp OrbitLR-Setup.exe "OrbitLR-Windows-$V-Setup.exe"
+          sha256sum "OrbitLR-Windows-$V-Setup.exe" > "OrbitLR-Windows-$V-Setup.sha256"
+          NOTES="OrbitLR per Windows $V (anteprima, build ${GITHUB_RUN_NUMBER}). Scarica OrbitLR-Windows-$V-Setup.exe e aprilo. Windows può dire «Windows ha protetto il PC»: Ulteriori informazioni → Esegui comunque (l'app non ha ancora la firma a pagamento di Microsoft)."
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$TAG" -R "$GITHUB_REPOSITORY" --prerelease --latest=false --title "OrbitLR per Windows $V (anteprima)" --notes "$NOTES"
+            for a in $(gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json assets -q '.assets[].name'); do gh release delete-asset "$TAG" "$a" -y -R "$GITHUB_REPOSITORY"; done
+          else
+            gh release create "$TAG" -R "$GITHUB_REPOSITORY" --prerelease --latest=false --title "OrbitLR per Windows $V (anteprima)" --notes "$NOTES" --target "$GITHUB_SHA"
+          fi
+          gh release upload "$TAG" "OrbitLR-Windows-$V-Setup.exe" "OrbitLR-Windows-$V-Setup.sha256" foto-windows.png -R "$GITHUB_REPOSITORY" --clobber
+          echo "::notice::Pubblicata: https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"

@@ -1,0 +1,18 @@
+[package]
+name = "orbitlr"
+version = "0.1.0"
+description = "OrbitLR per Windows: converti, comprimi e modifica foto, video, audio e PDF sul tuo computer"
+authors = ["Ledion"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2.7", features = [] }
+
+[dependencies]
+tauri = { version = "2.12", features = ["protocol-asset"] }
+tauri-plugin-dialog = "2.8"
+tauri-plugin-opener = "2.7"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22"
+orbit_engine = { path = "../engine" }
