@@ -19,6 +19,7 @@ pub mod run;
 pub mod speech;
 pub mod tools;
 pub mod video;
+pub mod whisper;
 
 pub use actions::{run_action, Ctx, Output};
 pub use error::EngineError;

@@ -5,7 +5,7 @@ name: Compila OrbitLR
 
 on:
   push:
-    branches-ignore: [foto, foto-richiesta, motori, motori-win, modello-lama, windows]
+    branches-ignore: [foto, foto-richiesta, motori, motori-win, motori-win-voce, modello-lama, windows]
   pull_request:
   workflow_dispatch:
 
