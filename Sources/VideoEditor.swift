@@ -998,6 +998,9 @@ struct VideoEditorView: View {
                 Button { s.move(1, undo) } label: { Label("Dopo", systemImage: "arrow.right") }.help("Sposta la clip dopo")
                 Button("Intera") { s.restoreClip(undo) }.help("Riporta la clip alla sua durata intera")
             }
+            // 4.0 · Le pause lunghe spariscono da sole (tagli netti, come nei video dei social)
+            Button { s.removeSilences(undo) } label: { Label("Togli i silenzi", systemImage: "waveform.badge.minus") }
+                .help("Ascolta la clip e toglie le pause lunghe: restano solo i pezzi in cui si parla. ⌘Z per tornare indietro")
             SectionLabel(text: "Audio della clip")
             HStack(spacing: 6) { clipAudioButtons }
             if let i = s.targetIndex, i > 0, s.project.clips.indices.contains(i) {

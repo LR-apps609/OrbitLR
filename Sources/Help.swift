@@ -45,6 +45,8 @@ struct FAQ: Identifiable, Equatable {
             answer: "Clicca la clip e premi la ✕ nel suo angolo, oppure il tasto ⌫. Se ti sbagli, ⌘Z la rimette."),
         FAQ(id: "vtools", section: "Video", question: "Voglio solo comprimere, tagliare o fare una GIF",
             answer: "Apri Video e trascina uno o più video: scegli cosa fare (comprimi senza perdere qualità o per Discord, WhatsApp ed email, taglia, cambia grandezza, GIF e altro). L’editor completo serve solo per i montaggi.", place: .video),
+        FAQ(id: "vsilence", section: "Video", question: "Come tolgo le pause da un video in cui parlo?",
+            answer: "Nell’editor clicca la clip e premi «Togli i silenzi»: OrbitLR ascolta e lascia solo i pezzi in cui si parla, con tagli netti. Se non ti piace, ⌘Z.", place: .video),
         FAQ(id: "vsubs", section: "Video", question: "Come aggiungo i sottotitoli automatici?",
             answer: "Nel montaggio apri «Testi» e premi «Sottotitoli automatici»: OrbitLR ascolta le clip e scrive le frasi in basso, al momento giusto. Poi li correggi come gli altri testi; ⌘Z li toglie tutti.", place: .video),
         FAQ(id: "recipes", section: "Conversione", question: "Posso rifare più passi con un clic?",
