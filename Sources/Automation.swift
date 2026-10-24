@@ -20,6 +20,8 @@ struct WatchRule: Codable, Identifiable, Equatable {
     var enabled = true
     var processed = 0
     var lastRun: Date? = nil
+    /// 3.9 · Solo queste estensioni (nil = tutti i file del tipo): es. HEIC e WebP, non i JPG già pronti
+    var exts: [String]? = nil
 
     var folderURL: URL { URL(fileURLWithPath: folder) }
     var fileKind: Kind? { Kind(rawValue: kind) }
@@ -43,7 +45,7 @@ struct WatchRule: Codable, Identifiable, Equatable {
     }
 
     var summary: String {
-        let k = fileKind?.label ?? kind
+        let k = exts.map { $0.map { $0.uppercased() }.joined(separator: ", ") } ?? (fileKind?.label ?? kind)
         if actionId.hasPrefix("preset:"), let uuid = UUID(uuidString: String(actionId.dropFirst(7))),
            let p = PresetStore.shared.presets.first(where: { $0.id == uuid }) {
             return "\(k) → ★ \(p.name)"
@@ -87,7 +89,7 @@ final class WatchStore: ObservableObject, @unchecked Sendable {
         if !includeExisting {
             // I file già presenti non si toccano: solo quelli che arriveranno da adesso
             var s: [String: Double] = [:]
-            for f in Self.candidates(in: r.folderURL, kind: r.fileKind) { s[f.path] = Self.mtime(f) }
+            for f in Self.candidates(in: r.folderURL, kind: r.fileKind, exts: r.exts) { s[f.path] = Self.mtime(f) }
             seen[r.id.uuidString] = s
             saveSeen()
         }
@@ -123,7 +125,7 @@ final class WatchStore: ObservableObject, @unchecked Sendable {
             for r in active {
                 var batch: [URL] = []
                 let known = seenNow[r.id.uuidString] ?? [:]
-                for f in Self.candidates(in: r.folderURL, kind: r.fileKind) {
+                for f in Self.candidates(in: r.folderURL, kind: r.fileKind, exts: r.exts) {
                     let m = Self.mtime(f)
                     if let k = known[f.path], abs(k - m) < 0.5 { continue }      // già elaborato (e non cambiato)
                     let size = Job.size(of: f)
@@ -162,14 +164,50 @@ final class WatchStore: ObservableObject, @unchecked Sendable {
     }
 
     /// I file della cartella (solo il primo livello, niente nascosti né sottocartelle) del tipo giusto.
-    static func candidates(in folder: URL, kind: Kind?) -> [URL] {
+    static func candidates(in folder: URL, kind: Kind?, exts: [String]? = nil) -> [URL] {
         let fm = FileManager.default
         let items = (try? fm.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.isRegularFileKey],
                                                   options: [.skipsHiddenFiles, .skipsSubdirectoryDescendants])) ?? []
         return items.filter { u in
             guard (try? u.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true else { return false }
+            if let exts, !exts.contains(Catalog.norm(u.pathExtension)) { return false }
             return kind == nil || Catalog.kind(of: u) == kind
         }
+    }
+
+    // MARK: 3.9 · Pronte con un clic
+
+    struct Template: Identifiable {
+        let id: String
+        let title: String
+        let text: String
+        let symbol: String
+        let rule: () -> WatchRule
+        /// Da fare solo quando la attivi (es. creare la cartella)
+        var prepare: (() -> Void)? = nil
+    }
+
+    static var downloads: URL { FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first ?? Paths.home.appendingPathComponent("Downloads") }
+
+    static let templates: [Template] = [
+        Template(id: "heic-jpg", title: "Foto HEIC e WebP in Download → JPG",
+                 text: "Le foto dell’iPhone e quelle scaricate dal web che molti siti non aprono diventano JPG da sole. Gli originali restano; i JPG vanno in Download/Convertiti.",
+                 symbol: "photo.on.rectangle.angled") {
+            WatchRule(folder: downloads.path, kind: Kind.img.rawValue, actionId: "to:jpg", param: "", exts: ["heic", "webp", "avif"])
+        },
+        Template(id: "video-leggeri", title: "Cartella «Da comprimere» per i video",
+                 text: "Crea Download/Da comprimere: i video che ci metti diventano più leggeri con la stessa qualità. Ideale per liberare spazio.",
+                 symbol: "film.stack",
+                 rule: { WatchRule(folder: downloads.appendingPathComponent("Da comprimere", isDirectory: true).path,
+                                   kind: Kind.video.rawValue, actionId: "vcompress", param: "best") },
+                 prepare: { try? FileManager.default.createDirectory(at: downloads.appendingPathComponent("Da comprimere", isDirectory: true),
+                                                                     withIntermediateDirectories: true) }),
+    ]
+
+    /// Una scorciatoia pronta è già attiva? (stessa cartella e stessa azione)
+    func has(_ t: Template) -> Bool {
+        let probe = t.rule()
+        return rules.contains { $0.folder == probe.folder && $0.actionId == probe.actionId && $0.exts == probe.exts }
     }
 
     static func mtime(_ u: URL) -> Double {
@@ -203,11 +241,32 @@ struct AutomationView: View {
                     Button { creating = true } label: { Label("Nuova cartella automatica", systemImage: "plus") }
                         .buttonStyle(.borderedProminent)
                 }
-                if store.rules.isEmpty {
+                // 3.9 · Le più chieste, pronte con un clic (solo quelle non ancora attive)
+                let ready = WatchStore.templates.filter { !store.has($0) }
+                if !ready.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("PRONTE CON UN CLIC").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.brass)
+                        ForEach(ready) { t in
+                            HStack(spacing: 12) {
+                                Image(systemName: t.symbol).font(.system(size: 18)).foregroundStyle(SidebarItem.automation.color).frame(width: 28)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(t.title).font(.system(size: 13, weight: .semibold))
+                                    Text(t.text).font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                                }
+                                Spacer()
+                                Button("Attiva") { t.prepare?(); withAnimation(Motion.quick) { store.add(t.rule(), includeExisting: false) } }
+                                    .buttonStyle(.borderedProminent).tint(SidebarItem.automation.color)
+                            }
+                            .padding(12)
+                            .card(radius: 12)
+                        }
+                    }
+                }
+                if store.rules.isEmpty && ready.isEmpty {
                     EmptyState(symbol: "folder.badge.gearshape", color: SidebarItem.automation.color,
                                title: "Nessuna cartella automatica",
                                text: "Ad esempio: tutto quello che metti in «Da comprimere» diventa più leggero, da solo. Scegli una cartella, il tipo di file e cosa farne.")
-                } else {
+                } else if !store.rules.isEmpty {
                     ScrollView {
                         LazyVStack(spacing: 10) {
                             ForEach(store.rules) { r in WatchRow(rule: r) }
