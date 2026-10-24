@@ -1,3 +1,16 @@
+Novità della 3.8 «Autonoma e chiara»:
+• Niente più Homebrew per le cose di tutti i giorni: il motore audio e video (ffmpeg, versione libera LGPL) è dentro OrbitLR, per Apple Silicon e Intel
+• Video: «Togli i silenzi» nel montaggio. Clicca la clip: restano solo i pezzi in cui si parla, con tagli netti; testi e sottotitoli seguono i tagli. ⌘Z per tornare indietro
+• Video: sottotitoli «Parola per parola», come sui social: la parola detta si accende. I sottotitoli automatici lo fanno da soli, e la scegli anche su qualsiasi testo
+• «Voce più pulita» per audio e video: meno ronzio e fruscio di fondo, volume uniforme; il video non viene ricompresso
+• Trascrivi in testo e sottotitoli con macOS, sul Mac, anche senza Whisper installato
+• PDF: «Comprimi» con il motore di macOS, senza Ghostscript, con le scansioni ancora leggibili
+• Foto: rimuovi i metadati (posizione GPS, fotocamera) senza perdere qualità; WebP e ICO senza programmi aggiuntivi
+• Cartelle automatiche pronte con un clic: le foto HEIC e WebP scaricate diventano JPG da sole; i video messi in «Da comprimere» si alleggeriscono da soli
+• Le Opzioni valgono subito, senza «Applica», con nomi più chiari
+• Stessi nomi in tutta l'app: «Scorciatoie» diventa «Le mie azioni», il pulsante ⌘ diventa «Tasti»; nella scheda Video «Comprimi» è in cima
+• Componenti: ffmpeg è incluso; LibreOffice, pandoc e ImageMagick restano facoltativi, solo per i formati rari
+
 Novità della 3.6 «Sicura e leggera»:
 • Video: comprimi con «Stessa qualità, meno peso» (di solito la metà) oppure per Discord, WhatsApp ed email: prima si tengono qualità e misura, la risoluzione scende solo se serve
 • Video lunghi e pesanti (anche film di 2 ore, 5 GB): si lavorano con il chip video del Mac, senza caricare niente da nessuna parte, e OrbitLR controlla prima che ci sia spazio
