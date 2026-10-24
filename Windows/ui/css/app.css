@@ -406,3 +406,23 @@ textarea.tts:focus { border-color: var(--brass); }
 .zbox { justify-self: center; line-height: 0; }
 .zone { position: absolute; border: 2px solid var(--brass); background: color-mix(in srgb, var(--brass) 25%, transparent); border-radius: 4px; backdrop-filter: blur(6px); }
 .zx { position: absolute; top: -10px; right: -10px; width: 20px; height: 20px; border-radius: 50%; border: 0; background: var(--ink); color: var(--card); display: grid; place-items: center; cursor: pointer; padding: 0; }
+
+/* ── Schermi piccoli (portatili a 1024–1366 pixel) */
+.resultbar { flex-wrap: wrap; }
+.resultbar .tx { flex: 1 1 220px; }
+.head { flex-wrap: wrap; row-gap: 8px; }
+.seg button { white-space: nowrap; }
+@media (max-width: 1180px) {
+  .app { grid-template-columns: 204px minmax(0, 1fr); }
+  .split { grid-template-columns: minmax(0, 1fr) 300px; }
+  .ed-mid { grid-template-columns: minmax(0, 1fr) 300px; }
+  .head h1 { font-size: 23px; }
+}
+@media (max-width: 1000px) {
+  .app { grid-template-columns: 186px minmax(0, 1fr); }
+  .split { grid-template-columns: minmax(0, 1fr) 272px; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); padding: 4px 18px 20px; }
+  .head { padding: 16px 18px 10px; }
+  .resultbar { margin: 0 18px 14px; }
+  .ed-tools button { font-size: 10px; }
+}
