@@ -264,7 +264,7 @@ struct ParamView: View {
             Toggle("Inquadra le persone", isOn: $follow)
             if let sec = videoSeconds {
                 estimateLine(SizeEstimate.label(SizeEstimate.socialBytes(seconds: sec, aspect: choice.isEmpty ? "9x16" : choice))
-                             + " · ora " + ByteCountFormatter.string(fromByteCount: files.reduce(Int64(0)) { $0 + Job.size(of: $1) }, countStyle: .file))
+                             + " · ora " + Fmt.bytes(files.reduce(Int64(0)) { $0 + Job.size(of: $1) }))
             }
             note("L’inquadratura segue le persone (o ciò che si muove in primo piano) con calma, senza scatti. Con scene affollate resta al centro.")
         case .cut, .gifcut, .ringtone:

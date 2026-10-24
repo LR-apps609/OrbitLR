@@ -28,7 +28,9 @@ enum UpdateCheck {
               let assets = j["assets"] as? [[String: Any]] else { return nil }
         let version = tag.hasPrefix("v") ? String(tag.dropFirst()) : tag
         guard let a = assets.first(where: { ($0["name"] as? String)?.hasSuffix(".orbitlr") == true }),
-              let s = a["browser_download_url"] as? String, let u = URL(string: s) else { return nil }
+              let s = a["browser_download_url"] as? String, let u = URL(string: s),
+              // 3.5.2 · Solo dalla pagina ufficiale, solo in modo sicuro
+              u.scheme == "https", u.host == "github.com", u.path.lowercased().hasPrefix("/lr-apps609/orbitlr/releases/download/") else { return nil }
         let page = (j["html_url"] as? String).flatMap(URL.init(string:)) ?? URL(string: "https://github.com/LR-apps609/OrbitLR/releases")!
         return Release(version: version, asset: u, page: page)
     }
@@ -110,7 +112,7 @@ enum UpdateCheck {
             if a.runModal() == .alertFirstButtonReturn { NSWorkspace.shared.open(rel.page) }
             return
         }
-        Updater.shared.open(dest, confirmed: true)
+        Updater.shared.open(dest, confirmed: true, expectedVersion: rel.version)
     }
 
     @MainActor

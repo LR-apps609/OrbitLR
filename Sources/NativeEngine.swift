@@ -28,8 +28,20 @@ enum Destination {
         }
     }
 
+    /// Un nome di file sicuro: niente barre, niente «..», niente caratteri invisibili, non troppo lungo.
+    static func safeName(_ s: String, fallback: String = "File") -> String {
+        var t = s.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
+        t = String(t.unicodeScalars.filter { !CharacterSet.controlCharacters.contains($0) })
+        while t.hasPrefix(".") { t.removeFirst() }
+        t = t.trimmingCharacters(in: .whitespaces)
+        if t.count > 200 { t = String(t.prefix(200)) }
+        return t.isEmpty ? fallback : t
+    }
+
     /// «nome.ext», poi «nome (1).ext», «nome (2).ext»…
-    static func unique(_ dir: URL, base: String, ext: String) -> URL {
+    static func unique(_ dir: URL, base rawBase: String, ext rawExt: String) -> URL {
+        // 3.5.2 · Un nome che arriva da fuori non può mai uscire dalla cartella scelta
+        let base = safeName(rawBase), ext = safeName(rawExt, fallback: "dat")
         var u = dir.appendingPathComponent(base + "." + ext)
         var i = 1
         while FileManager.default.fileExists(atPath: u.path) {

@@ -102,6 +102,9 @@ final class ShareViewController: NSViewController {
         let scoped = u.startAccessingSecurityScopedResource()
         defer { if scoped { u.stopAccessingSecurityScopedResource() } }
         var fileName = u.lastPathComponent
+        // 3.5.2 · Il nome proposto da un'altra app: solo il nome, mai un percorso
+        let name = name.map { ($0 as NSString).lastPathComponent.replacingOccurrences(of: "/", with: "-") }
+            .map { $0.hasPrefix(".") ? "File" + $0 : $0 }
         if let name, !name.isEmpty {
             fileName = (name as NSString).pathExtension.isEmpty && !u.pathExtension.isEmpty ? name + "." + u.pathExtension : name
         }

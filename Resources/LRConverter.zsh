@@ -46,6 +46,22 @@ MODELS="$SUPPORT/models"
 LO_PROFILE="file://$CACHE/lo-profile"   # profilo separato: funziona anche con LibreOffice aperto
 LO_SLOT=""
 mkdir -p "$SUPPORT" "$CACHE" "$MODELS" "${LOG:h}" || exit 1
+
+# 3.5.2 · ImageMagick con regole di sicurezza nostre: niente formati che leggono altri file o vanno in rete
+MAGICK_POLICY_DIR="$SUPPORT/magick"
+if [[ ! -f "$MAGICK_POLICY_DIR/policy.xml" ]] || ! grep -q "OrbitLR-sicurezza-1" "$MAGICK_POLICY_DIR/policy.xml" 2>/dev/null; then
+  mkdir -p "$MAGICK_POLICY_DIR"
+  cat > "$MAGICK_POLICY_DIR/policy.xml" <<'POLICY'
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- OrbitLR-sicurezza-1 -->
+<policymap>
+  <policy domain="coder" rights="none" pattern="{MVG,MSL,TEXT,URL,HTTP,HTTPS,FTP,EPHEMERAL,SHOW,WIN,PLT,MSVG,LABEL,CAPTION,PANGO,INLINE,SCREENSHOT,X}"/>
+  <policy domain="path" rights="none" pattern="@*"/>
+  <policy domain="delegate" rights="none" pattern="*"/>
+</policymap>
+POLICY
+fi
+export MAGICK_CONFIGURE_PATH="$MAGICK_POLICY_DIR"
 WORK=$(mktemp -d "$CACHE/job.XXXXXX") || exit 1
 STATUS="$WORK/status"
 CANCEL="$WORK/cancel"
@@ -285,7 +301,11 @@ progress_set() {  # frazione (-1 = in corso senza percentuale), testo
   print -r -- "$1"$'\t'"$2" > "$STATUS.tmp" && mv -f -- "$STATUS.tmp" "$STATUS"
 }
 rp() {  # riga per l'app (solo in modalità --run): campi separati da tabulazioni
-  [[ -n $RUN_MODE ]] && print -r -- "${(pj:\t:)@}"
+  [[ -n $RUN_MODE ]] || return 0
+  # 3.5.2 · Un nome di file con «a capo» o tabulazioni non può inventare righe per l'app
+  local -a f=(); local x
+  for x in "$@"; do x=${x//$'\n'/ }; x=${x//$'\r'/ }; x=${x//$'\t'/ }; f+=("$x"); done
+  print -r -- "${(pj:\t:)f}"
   return 0
 }
 progress_job() {  # frazione del lavoro corrente → barra complessiva
@@ -1102,8 +1122,39 @@ lo_filter() {
   esac
 }
 
+# 3.5.2 · ImageMagick riconosce il formato dal NOME del file, mai dal contenuto
+# (un «foto.jpg» che in realtà contiene istruzioni di disegno non può leggere altri file)
+mk_src() {
+  local e=$(norm "${1:e}") f=""
+  case $e in
+    jpg) f=JPEG ;; png) f=PNG ;; heic) f=HEIC ;; webp) f=WEBP ;; tiff) f=TIFF ;; gif) f=GIF ;; bmp) f=BMP ;;
+    ico) f=ICO ;; svg) f=SVG ;; avif) f=AVIF ;; psd) f=PSD ;; tga) f=TGA ;; jxl) f=JXL ;; jp2) f=JP2 ;; exr) f=EXR ;;
+  esac
+  if [[ -n $f ]]; then print -r -- "$f:$1"; else print -r -- "$1"; fi
+}
+
+# 3.5.2 · LibreOffice: niente macro, niente collegamenti esterni (immagini o file presi da fuori)
+lo_harden() {  # profilo (file://…)
+  local dir=${1#file://}/user
+  local x="$dir/registrymodifications.xcu"
+  grep -q "OrbitLR-sicurezza-1" "$x" 2>/dev/null && return 0
+  mkdir -p -- "$dir"
+  cat > "$x" <<'XCU'
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- OrbitLR-sicurezza-1 -->
+<oor:items xmlns:oor="http://openoffice.org/2001/registry" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<item oor:path="/org.openoffice.Office.Common/Security/Scripting"><prop oor:name="MacroSecurityLevel" oor:op="fuse"><value>3</value></prop></item>
+<item oor:path="/org.openoffice.Office.Common/Security/Scripting"><prop oor:name="DisableMacrosExecution" oor:op="fuse"><value>true</value></prop></item>
+<item oor:path="/org.openoffice.Office.Common/Security/Scripting"><prop oor:name="BlockUntrustedRefererLinks" oor:op="fuse"><value>true</value></prop></item>
+<item oor:path="/org.openoffice.Office.Writer/Content/Update"><prop oor:name="Link" oor:op="fuse"><value>0</value></prop></item>
+<item oor:path="/org.openoffice.Office.Calc/Content/Update"><prop oor:name="Link" oor:op="fuse"><value>0</value></prop></item>
+</oor:items>
+XCU
+}
+
 lo_run() {  # cartella di uscita, tipo, formato, file…
   local dir=$1 k=$2 t=$3; shift 3
+  lo_harden "$LO_PROFILE"
   local -a args=(--headless --norestore --nolockcheck --nodefault "-env:UserInstallation=$LO_PROFILE")
   [[ $k == pdf ]] && args+=(--infilter=writer_pdf_import)
   args+=(--convert-to "$(lo_filter $k $t)" --outdir "$dir")
@@ -1113,6 +1164,8 @@ lo_run() {  # cartella di uscita, tipo, formato, file…
 pandoc_run() {  # sorgente, formato, uscita, cartella finale (per le immagini estratte)
   local src=$1 t=$2 out=$3 dest=$4
   local -a a=(--resource-path="${src:h}")
+  # 3.5.2 · Testi che possono richiamare file del Mac o indirizzi web: pandoc legge solo il file scelto
+  [[ $(norm "${src:e}") == (md|markdown|html|htm|txt|rst|tex|org|textile) ]] && a=(--sandbox)
   case $t in
     md)   a+=(-t gfm --wrap=none --extract-media="${src:t:r}_media") ;;
     html) a+=(--standalone --embed-resources -M pagetitle="${src:t:r}") ;;   # un solo file, immagini comprese
@@ -1137,7 +1190,7 @@ img_run() {  # sorgente, formato, uscita
       if [[ $t == pdf ]]; then rsvg-convert -f pdf -o "$out" "$src"; return; fi
       rsvg-convert -w 2048 -a -o "$JD/_src.png" "$src" || return 1
     elif have magick; then
-      magick -density 300 -background none "$src" "$JD/_src.png" || return 1
+      magick -density 300 -background none "$(mk_src "$src")" "$JD/_src.png" || return 1
     else
       qlmanage -t -s 2048 -o "$JD" "$src" >&2
       mv -f -- "$JD/${src:t}.png" "$JD/_src.png" 2>/dev/null || return 1
@@ -1145,8 +1198,8 @@ img_run() {  # sorgente, formato, uscita
     if [[ $t == png ]]; then mv -f -- "$JD/_src.png" "$out"; return; fi
     src="$JD/_src.png"; e=png
   fi
-  local in=$src
-  [[ $t == (jpg|png|heic|ico) ]] && in="${src}[0]"   # gif/tiff multipagina: primo fotogramma
+  local in=$(mk_src "$src")
+  [[ $t == (jpg|png|heic|ico) ]] && in="${in}[0]"   # gif/tiff multipagina: primo fotogramma
   local -a o=(-auto-orient)
   case $t in
     jpg)       o+=(-background white -alpha remove -alpha off -quality 90) ;;
@@ -1184,7 +1237,7 @@ resize_run() {  # sorgente, preset (half | 3840 | 1920 | 1280 | web)
       webp|heic) o+=(-quality 85) ;;
     esac
     [[ $p == web ]] && o+=(-strip -interlace Plane)
-    magick "$in" $o "$out" && return 0
+    magick "$(mk_src "$in")" $o "$out" && return 0
   fi
   # Ripiego nativo (senza ImageMagick): non ingrandisce mai
   local w h f
@@ -1218,7 +1271,7 @@ strip_run() {  # sorgente → copia senza metadati
       local -a o=(-auto-orient -strip)
       [[ $e == jpg ]] && o+=(-quality 95)
       [[ $e == (heic|webp) ]] && o+=(-quality 90)
-      magick "$src" $o "$out" ;;
+      magick "$(mk_src "$src")" $o "$out" ;;
     *) return 1 ;;
   esac
 }
@@ -1867,6 +1920,9 @@ if [[ $1 == --crea-installer ]]; then make_installer; exit $?; fi
 # Da qui in poi ogni errore imprevisto finisce nel log, così si può capire cosa è successo
 if [[ $1 == --run ]]; then   # usato dall'app: --run AZIONE PARAMETRO file…
   RUN_MODE=1; RUN_ACT=$2; RUN_PARAM=$3; shift 3
+  # 3.5.2 · Le password non passano tra gli argomenti (visibili ad altri programmi): arrivano a parte
+  [[ $RUN_ACT == (protect|unprotect) && -n $LR_SECRET ]] && RUN_PARAM=$LR_SECRET
+  unset LR_SECRET
   trap 'touch "$CANCEL"' TERM   # l'app chiede di annullare: si ferma in modo pulito
 fi
 exec 2>>"$LOG"

@@ -185,8 +185,22 @@ func formatTime(_ t: Double) -> String {
     let h = Int(total) / 3600
     let m = (Int(total) % 3600) / 60
     let s = total - Double(h * 3600 + m * 60)
-    if h > 0 { return String(format: "%d:%02d:%04.1f", h, m, s) }
-    return String(format: "%d:%04.1f", m, s)
+    // 3.5.2 · Decimali con la virgola, all'italiana
+    if h > 0 { return String(format: "%d:%02d:%04.1f", h, m, s).replacingOccurrences(of: ".", with: ",") }
+    return String(format: "%d:%04.1f", m, s).replacingOccurrences(of: ".", with: ",")
+}
+
+/// 3.5.2 · Numeri scritti sempre all'italiana (virgola per i decimali), qualunque sia la lingua del Mac.
+enum Fmt {
+    static func bytes(_ b: Int64) -> String {
+        let t = ByteCountFormatter.string(fromByteCount: b, countStyle: .file)
+        guard Locale.current.decimalSeparator == "." else { return t }
+        return String(t.map { $0 == "." ? "," : ($0 == "," ? "." : $0) })
+    }
+    static func secs(_ x: Double) -> String { String(format: "%.1f s", x).replacingOccurrences(of: ".", with: ",") }
+    static func decimal(_ x: Double, digits: Int = 1) -> String {
+        String(format: "%.\(digits)f", x).replacingOccurrences(of: ".", with: ",")
+    }
 }
 
 // MARK: - Vista

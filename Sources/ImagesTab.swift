@@ -258,7 +258,7 @@ struct KindTabView: View {
     /// 3.0 · «3 foto · 2,8 MB»: quanti e quanto pesano, niente istruzioni (sono nel suggerimento).
     private var subtitle: String {
         if m.files.isEmpty { return style.intro }
-        let size = ByteCountFormatter.string(fromByteCount: m.targetBytes, countStyle: .file)
+        let size = Fmt.bytes(m.targetBytes)
         if m.selection.isEmpty { return "\(m.files.count) \(style.noun) · \(size)" }
         return "\(m.selection.count) di \(m.files.count) \(style.noun) " + (fem ? "scelte" : "scelti") + " · \(size)"
     }

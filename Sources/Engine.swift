@@ -4,6 +4,8 @@ import AVFoundation
 import UserNotifications
 
 final class Job: ObservableObject, Identifiable, @unchecked Sendable {
+    /// 3.5.2 · Azioni il cui parametro è una password: mai in cronologia, mai tra gli argomenti
+    static let secretActions: Set<String> = ["protect", "unprotect"]
     enum State { case waiting, running, done, failed, cancelled }
 
     let id = UUID()
@@ -79,9 +81,7 @@ final class Job: ObservableObject, Identifiable, @unchecked Sendable {
 
     static func gain(before: Int64, after: Int64, done: Bool) -> String {
         guard done, before > 0, after > 0 else { return "" }
-        let fmt = ByteCountFormatter()
-        fmt.countStyle = .file
-        let a = fmt.string(fromByteCount: before), b = fmt.string(fromByteCount: after)
+        let a = Fmt.bytes(before), b = Fmt.bytes(after)
         let pct = Int((Double(before - after) / Double(before) * 100).rounded())
         if pct >= 5 { return "da \(a) a \(b) · −\(pct)%" }
         if pct <= -5 { return "da \(a) a \(b)" }
@@ -90,12 +90,10 @@ final class Job: ObservableObject, Identifiable, @unchecked Sendable {
 
     var sizeText: String {
         guard beforeBytes > 0 else { return "" }
-        let fmt = ByteCountFormatter()
-        fmt.countStyle = .file
         if state == .done, !outputs.isEmpty {
-            return fmt.string(fromByteCount: beforeBytes) + " → " + fmt.string(fromByteCount: afterBytes)
+            return Fmt.bytes(beforeBytes) + " → " + Fmt.bytes(afterBytes)
         }
-        return fmt.string(fromByteCount: beforeBytes)
+        return Fmt.bytes(beforeBytes)
     }
 
     static func size(of url: URL) -> Int64 {
@@ -278,10 +276,13 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
 
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/bin/zsh")
-        p.arguments = [Paths.script.path, "--run", job.action.id, job.param] + job.files.map { $0.path }
-        if let d = job.destOverride {
+        // 3.5.2 · Le password non passano tra gli argomenti (che altri programmi possono leggere)
+        let secret = Job.secretActions.contains(job.action.id)
+        p.arguments = [Paths.script.path, "--run", job.action.id, secret ? "-" : job.param] + job.files.map { $0.path }
+        if job.destOverride != nil || secret {
             var env = ProcessInfo.processInfo.environment
-            env["LR_DESTPATH"] = d.path
+            if let d = job.destOverride { env["LR_DESTPATH"] = d.path }
+            if secret { env["LR_SECRET"] = job.param }
             p.environment = env
         }
         let out = Pipe()
@@ -455,7 +456,11 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
             let text = field(2)
             if !text.isEmpty { job.status = text }
         case "OUT":
-            job.outputs.append(URL(fileURLWithPath: field(1)))
+            // 3.5.2 · Solo percorsi veri e completi di file che esistono (mai righe inventate da un nome di file)
+            let path = field(1)
+            if path.hasPrefix("/"), !path.contains("\n"), FileManager.default.fileExists(atPath: path) {
+                job.outputs.append(URL(fileURLWithPath: path))
+            }
         case "OK":
             if !field(2).isEmpty { job.info = field(2) }
         case "NOTE":
@@ -495,7 +500,8 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
                                         outputs: job.outputs.map { $0.path }, kind: job.kind?.rawValue,
                                         before: job.renames == nil ? job.beforeBytes : nil,
                                         after: job.renames == nil ? job.afterBytes : nil,
-                                        renames: job.renames, actionId: job.action.id, param: job.param,
+                                        renames: job.renames, actionId: job.action.id,
+                                        param: Job.secretActions.contains(job.action.id) ? "" : job.param,   // 3.5.2 · mai password in cronologia
                                         inputs: job.mainFiles.map { $0.path }), at: 0)
             if history.count > 300 { history.removeLast(history.count - 300) }
             saveHistory()
@@ -623,6 +629,8 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
     func forgetAll() {
         history.removeAll()
         saveHistory()
+        // 3.5.2 · Con la cronologia se ne vanno anche le miniature dei file (possono mostrare documenti privati)
+        ThumbCache.shared.forgetAll()
     }
 
     func reveal(_ paths: [String]) {

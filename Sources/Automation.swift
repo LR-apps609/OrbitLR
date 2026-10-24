@@ -150,6 +150,8 @@ final class WatchStore: ObservableObject, @unchecked Sendable {
         let action = res.0, param = res.1
         var s = seen[rule.id.uuidString] ?? [:]
         for f in files { s[f.path] = Self.mtime(f) }
+        // 3.5.2 · L'elenco dei file già visti non cresce per sempre: via quelli che non ci sono più
+        if s.count > 200 { s = s.filter { FileManager.default.fileExists(atPath: $0.key) } }
         seen[rule.id.uuidString] = s
         saveSeen()
         let out = rule.outputURL

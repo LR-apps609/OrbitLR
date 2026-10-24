@@ -12,6 +12,8 @@ import CoreImage
 
 final class ModelStore: ObservableObject, @unchecked Sendable {
     static let shared = ModelStore()
+    /// Impronta SHA-256 del modello LaMa 512 pubblicato (release «modelli-1»).
+    static let pinnedSHA256 = "aafdf2aff5e7b3e5b986662e1ef063190197481122da5d8f02ea1d28edb77027"
 
     static let side = 512
     static let name = "LaMa-512"
@@ -50,12 +52,8 @@ final class ModelStore: ObservableObject, @unchecked Sendable {
         let fm = FileManager.default
         try fm.createDirectory(at: Self.folder, withIntermediateDirectories: true)
         do {
-            // Il codice di controllo, per essere sicuri che il file arrivi intero
-            let (shaData, shaResp) = try await URLSession.shared.data(from: Self.base.appendingPathComponent(Self.name + ".sha256"))
-            guard (shaResp as? HTTPURLResponse)?.statusCode == 200,
-                  let expected = String(decoding: shaData, as: UTF8.self).split(separator: " ").first.map(String.init) else {
-                throw NativeError("il modello di IA non è ancora disponibile")
-            }
+            // 3.5.2 · L'impronta giusta è scritta DENTRO l'app: un file cambiato sul server non passa
+            let expected = Self.pinnedSHA256
             let zipURL = Self.base.appendingPathComponent(Self.name + ".mlpackage.zip")
             let (tmp, resp) = try await URLSession.shared.download(from: zipURL, delegate: ProgressDelegate { [weak self] p in self?.setProgress(p) })
             guard (resp as? HTTPURLResponse)?.statusCode == 200 else { throw NativeError("il modello di IA non è ancora disponibile") }

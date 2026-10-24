@@ -9,8 +9,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+# 3.5.2 · Compilazione e test non possono pubblicare niente: solo il lavoro «release» (alla fine) ha il permesso
 permissions:
-  contents: write        # per pubblicare la «Release» con il file .orbitlr
+  contents: read
 
 jobs:
   build:
@@ -19,6 +20,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Xcode più recente disponibile
         run: |
@@ -126,29 +129,79 @@ jobs:
       - name: Pacchetto .orbitlr
         run: |
           VERSION=$(cat version.txt)
+          APP=build/Build/Products/Release/OrbitLR.app
+          BUILD=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP/Contents/Info.plist")
           mkdir -p dist/OrbitLR
+          # Per le OrbitLR fino alla 3.5.1 (che non conoscono la firma): sorgenti e app pronta, come prima
           git archive HEAD | tar -x -C dist/OrbitLR
           rm -rf dist/OrbitLR/.github
-          # L'app già compilata: dalla 2.5.3 l'aggiornamento la installa direttamente (pochi secondi).
-          # I sorgenti restano nel pacchetto per le versioni precedenti, che compilano da sé.
           mkdir -p dist/OrbitLR/Prebuilt
-          ditto build/Build/Products/Release/OrbitLR.app dist/OrbitLR/Prebuilt/OrbitLR.app
-          ditto -c -k --keepParent dist/OrbitLR "dist/OrbitLR $VERSION.orbitlr"
-          du -h "dist/OrbitLR $VERSION.orbitlr"
+          ditto "$APP" dist/OrbitLR/Prebuilt/OrbitLR.app
+          # 3.5.2 · La parte firmata: l'app in uno zip, il manifesto con la sua impronta (la firma arriva nel lavoro «release»)
+          mkdir -p dist/OrbitLR/Firmato
+          ditto -c -k --keepParent "$APP" dist/OrbitLR/Firmato/app.zip
+          swift Tools/firma.swift manifesto "$VERSION" "$BUILD" dist/OrbitLR/Firmato/app.zip NOVITA.txt dist/OrbitLR/Firmato/manifest.json
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Controllo del pacchetto (3.5)
         run: |
           # L'app dentro il pacchetto deve dire la stessa versione del pacchetto (il bug della prima 3.3)
-          rm -rf /tmp/controllo && mkdir -p /tmp/controllo
-          ditto -x -k "dist/OrbitLR $VERSION.orbitlr" /tmp/controllo
-          APP=/tmp/controllo/OrbitLR/Prebuilt/OrbitLR.app
-          SHOWN=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")
-          if [ "$SHOWN" != "$VERSION" ]; then echo "::error::L'app nel pacchetto dice $SHOWN invece di $VERSION"; exit 1; fi
-          codesign --verify --deep "$APP" || { echo "::error::Firma dell'app nel pacchetto non valida"; exit 1; }
-          lipo -archs "$APP/Contents/MacOS/OrbitLR" | grep -q arm64 || { echo "::error::Manca la parte per Apple Silicon"; exit 1; }
-          lipo -archs "$APP/Contents/MacOS/OrbitLR" | grep -q x86_64 || { echo "::error::Manca la parte per Intel"; exit 1; }
-          echo "::notice::Pacchetto controllato: OrbitLR $SHOWN, firma valida, Apple Silicon e Intel"
+          for APP in dist/OrbitLR/Prebuilt/OrbitLR.app; do
+            SHOWN=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")
+            if [ "$SHOWN" != "$VERSION" ]; then echo "::error::L'app nel pacchetto dice $SHOWN invece di $VERSION"; exit 1; fi
+            codesign --verify --deep --strict "$APP" || { echo "::error::Firma dell'app nel pacchetto non valida"; exit 1; }
+            codesign -dv "$APP" 2>&1 | grep -q "runtime" || { echo "::error::Manca il runtime rinforzato (3.5.2)"; exit 1; }
+            lipo -archs "$APP/Contents/MacOS/OrbitLR" | grep -q arm64 || { echo "::error::Manca la parte per Apple Silicon"; exit 1; }
+            lipo -archs "$APP/Contents/MacOS/OrbitLR" | grep -q x86_64 || { echo "::error::Manca la parte per Intel"; exit 1; }
+          done
+          rm -rf /tmp/controllo && mkdir -p /tmp/controllo && ditto -x -k dist/OrbitLR/Firmato/app.zip /tmp/controllo
+          test "$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" /tmp/controllo/OrbitLR.app/Contents/Info.plist)" = "$VERSION"
+          echo "::notice::Pacchetto controllato: OrbitLR $SHOWN, firma del codice valida, Apple Silicon e Intel"
+          # Il pacchetto passa al lavoro «release» così com'è (tar conserva i collegamenti dentro l'app)
+          tar -C dist -cf pacchetto.tar OrbitLR
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: pacchetto
+          path: pacchetto.tar
+          retention-days: 3
+
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: registro-compilazione
+          path: build.log
+
+  # 3.5.2 · Solo questo lavoro vede la chiave di firma e può pubblicare. Gira solo sul ramo principale.
+  release:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: macos-15-intel
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: pacchetto
+
+      - name: Firma
+        env:
+          ORBITLR_SIGNING_KEY: ${{ secrets.ORBITLR_SIGNING_KEY }}
+        run: |
+          mkdir -p dist && tar -C dist -xf pacchetto.tar
+          swift Tools/firma.swift firma dist/OrbitLR/Firmato/manifest.json dist/OrbitLR/Firmato/manifest.sig
+          # Controllo con le chiavi scritte DENTRO l'app: se non tornano, niente pubblicazione
+          KEYS=$(grep -oE '"[A-Za-z0-9+/]{43}="' Sources/UpdatePackage.swift | tr -d '"')
+          swift Tools/firma.swift controlla dist/OrbitLR/Firmato $KEYS
+          VERSION=$(cat version.txt)
+          ditto -c -k --keepParent dist/OrbitLR "dist/OrbitLR $VERSION.orbitlr"
+          du -h "dist/OrbitLR $VERSION.orbitlr"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - uses: actions/upload-artifact@v6
         with:
@@ -156,7 +209,6 @@ jobs:
           path: dist/*.orbitlr
 
       - name: Release su GitHub
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         env:
           GH_TOKEN: ${{ github.token }}
           COMMIT_MSG: ${{ github.event.head_commit.message }}
@@ -165,18 +217,12 @@ jobs:
           FILE="dist/OrbitLR $VERSION.orbitlr"
           # Una versione già pubblicata non si sovrascrive: le modifiche in corso non arrivano a chi aggiorna.
           # Per ripubblicarla apposta: commit con «[ripubblica]» nel messaggio.
-          if gh release view "$TAG" >/dev/null 2>&1; then
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             if echo "$COMMIT_MSG" | grep -q "\[ripubblica\]"; then
-              gh release upload "$TAG" "$FILE" --clobber
+              gh release upload "$TAG" "$FILE" --clobber -R "$GITHUB_REPOSITORY"
             else
               echo "La release $TAG esiste già: non la tocco."
             fi
           else
-            gh release create "$TAG" "$FILE" --title "OrbitLR $VERSION" --notes-file NOVITA.txt
+            gh release create "$TAG" "$FILE" --title "OrbitLR $VERSION" --notes-file NOVITA.txt -R "$GITHUB_REPOSITORY"
           fi
-
-      - uses: actions/upload-artifact@v6
-        if: always()
-        with:
-          name: registro-compilazione
-          path: build.log

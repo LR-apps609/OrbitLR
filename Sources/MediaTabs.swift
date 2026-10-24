@@ -166,7 +166,7 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
             parts.append("\(Int(size.width)) × \(Int(size.height))")
         }
         if let d = try? await asset.load(.duration).seconds, d.isFinite, d > 0 { parts.append(formatShort(d)) }
-        parts.append(ByteCountFormatter.string(fromByteCount: Job.size(of: url), countStyle: .file))
+        parts.append(Fmt.bytes(Job.size(of: url)))
         guard file == url else { return }
         info = parts.joined(separator: " · ")
     }

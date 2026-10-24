@@ -148,7 +148,7 @@ final class Workspace: ObservableObject, @unchecked Sendable {
         pie.lastId = UserDefaults.standard.string(forKey: "last_" + gr.kind.rawValue)
         pie.fileName = gr.files[0].lastPathComponent
         let bytes = gr.files.reduce(Int64(0)) { $0 + Job.size(of: $1) }
-        let size = ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+        let size = Fmt.bytes(bytes)
         pie.subtitle = gr.files.count > 1 ? "e altri \(gr.files.count - 1) · \(size)" : size
         pie.icon = NSWorkspace.shared.icon(forFile: gr.files[0].path)
         pie.onClose = {}

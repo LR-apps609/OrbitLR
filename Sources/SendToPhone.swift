@@ -71,7 +71,8 @@ final class PhoneShare: ObservableObject, @unchecked Sendable {
     @Published private(set) var downloaded = false
     private var listener: NWListener?
     private var file: URL?
-    private let token = UUID().uuidString.prefix(8).lowercased()
+    /// 3.5.2 · 128 bit casuali: impossibile da indovinare
+    private let token = UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
     private let queue = DispatchQueue(label: "orbitlr.phoneshare")
     private var stopTimer: DispatchWorkItem?
 
@@ -86,7 +87,10 @@ final class PhoneShare: ObservableObject, @unchecked Sendable {
         guard let ip = SendToPhone.localAddress() else { error = "Il Mac non è collegato a una rete Wi-Fi"; return }
         file = copy
         do {
-            let l = try NWListener(using: .tcp, on: .any)
+            // 3.5.2 · In ascolto solo sull'indirizzo della rete di casa, non su tutte le reti del Mac
+            let params = NWParameters.tcp
+            params.requiredLocalEndpoint = .hostPort(host: NWEndpoint.Host(ip), port: .any)
+            let l = try NWListener(using: params)
             l.newConnectionHandler = { [weak self] c in self?.serve(c) }
             l.stateUpdateHandler = { [weak self] st in
                 guard let self else { return }
@@ -115,6 +119,9 @@ final class PhoneShare: ObservableObject, @unchecked Sendable {
         listener?.cancel()
         listener = nil
         url = nil
+        // 3.5.2 · La copia preparata per l'iPhone non resta sul Mac
+        if let f = file, f.path.hasPrefix(Paths.support.path) { try? FileManager.default.removeItem(at: f) }
+        file = nil
     }
 
     deinit { listener?.cancel() }
@@ -142,7 +149,14 @@ final class PhoneShare: ObservableObject, @unchecked Sendable {
             let encoded = name.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? "suoneria.m4a"
             send(c, status: "200 OK", type: "audio/mp4",
                  extra: "Content-Disposition: attachment; filename=\"\(ascii)\"; filename*=UTF-8''\(encoded)\r\n", body: body)
-            DispatchQueue.main.async { self.downloaded = true }
+            DispatchQueue.main.async {
+                self.downloaded = true
+                // 3.5.2 · Scaricata: la condivisione si spegne da sola poco dopo (un minuto per riprovare)
+                self.stopTimer?.cancel()
+                let w = DispatchWorkItem { [weak self] in self?.stop() }
+                self.stopTimer = w
+                DispatchQueue.main.asyncAfter(deadline: .now() + 60, execute: w)
+            }
         } else {
             send(c, status: "200 OK", type: "text/html; charset=utf-8", body: Data(Self.page(name: name, link: "/\(token)/file.m4a").utf8))
         }

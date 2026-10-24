@@ -117,7 +117,7 @@ struct CompareView: View {
             Text(title.uppercased()).font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary)
             Text(url.lastPathComponent).font(.system(size: 13, weight: .semibold)).lineLimit(1).truncationMode(.middle)
                 .frame(maxWidth: 260, alignment: .leading)
-            Text(ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file) + (info.isEmpty ? "" : " · " + info))
+            Text(Fmt.bytes(bytes) + (info.isEmpty ? "" : " · " + info))
                 .font(.system(size: 11, design: .rounded)).foregroundStyle(color)
         }
     }

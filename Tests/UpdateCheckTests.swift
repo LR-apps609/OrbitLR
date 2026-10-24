@@ -5,12 +5,18 @@ final class UpdateCheckTests: XCTestCase {
     func testParseGitHubRelease() throws {
         let json = """
         {"tag_name":"v2.8.1","html_url":"https://github.com/LR-apps609/OrbitLR/releases/tag/v2.8.1",
-         "assets":[{"name":"note.txt","browser_download_url":"https://x/note.txt"},
-                   {"name":"OrbitLR.2.8.1.orbitlr","browser_download_url":"https://x/OrbitLR.2.8.1.orbitlr"}]}
+         "assets":[{"name":"note.txt","browser_download_url":"https://github.com/LR-apps609/OrbitLR/releases/download/v2.8.1/note.txt"},
+                   {"name":"OrbitLR.2.8.1.orbitlr","browser_download_url":"https://github.com/LR-apps609/OrbitLR/releases/download/v2.8.1/OrbitLR.2.8.1.orbitlr"}]}
         """
         let r = try XCTUnwrap(UpdateCheck.parse(Data(json.utf8)))
         XCTAssertEqual(r.version, "2.8.1")
-        XCTAssertEqual(r.asset.absoluteString, "https://x/OrbitLR.2.8.1.orbitlr")
+        XCTAssertEqual(r.asset.absoluteString, "https://github.com/LR-apps609/OrbitLR/releases/download/v2.8.1/OrbitLR.2.8.1.orbitlr")
+        // 3.5.2 · Da altri siti, o non in modo sicuro: si ignora
+        for bad in ["https://x/OrbitLR.orbitlr", "http://github.com/LR-apps609/OrbitLR/releases/download/v9/OrbitLR.orbitlr",
+                    "https://github.com/altro/OrbitLR/releases/download/v9/OrbitLR.orbitlr"] {
+            let j = #"{"tag_name":"v9","assets":[{"name":"OrbitLR.orbitlr","browser_download_url":"\#(bad)"}]}"#
+            XCTAssertNil(UpdateCheck.parse(Data(j.utf8)), bad)
+        }
         XCTAssertNil(UpdateCheck.parse(Data(#"{"tag_name":"v3","assets":[]}"#.utf8)), "senza file .orbitlr non c'è niente da installare")
         XCTAssertNil(UpdateCheck.parse(Data("non json".utf8)))
     }

@@ -15,8 +15,8 @@ final class Updater: ObservableObject, @unchecked Sendable {
         var text: String {
             switch self {
             case .prepare: return "Preparo i file…"
-            case .project: return "Preparo il progetto…"
-            case .compile: return "Compilo la nuova versione…"
+            case .project: return "Controllo la firma…"
+            case .compile: return "Preparo la nuova versione…"
             case .install: return "Installo…"
             case .done: return "Fatto! Riapro OrbitLR…"
             }
@@ -43,39 +43,74 @@ final class Updater: ObservableObject, @unchecked Sendable {
     private var window: NSWindow?
     private var hidden: [NSWindow] = []
 
-    private let work = Paths.home.appendingPathComponent("Library/Caches/OrbitLR-update")
+    /// 3.5.2 · Cartella di lavoro privata, nuova a ogni aggiornamento
+    private var work = FileManager.default.temporaryDirectory
     /// Registro completo dell'ultima compilazione (errori e avvisi), utile per le segnalazioni.
     static let buildLog = Paths.home.appendingPathComponent("Library/Logs/OrbitLR-aggiornamento.log")
-    private let buildDir = Paths.home.appendingPathComponent("Library/Caches/OrbitLR-build")
 
     var currentVersion: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?" }
 
     /// `confirmed`: l'utente ha già detto sì (da «Controlla aggiornamenti»), niente seconda domanda.
-    func open(_ file: URL, confirmed: Bool = false) {
+    /// `expectedVersion`: la versione annunciata da GitHub, che deve coincidere con quella firmata.
+    func open(_ file: URL, confirmed: Bool = false, expectedVersion: String? = nil) {
         guard !busy else { window?.makeKeyAndOrderFront(nil); return }
         // Da subito «occupato»: se l'app si è appena aperta per questo aggiornamento, la finestra principale non compare
         busy = true
-        let fm = FileManager.default
-        try? fm.removeItem(at: work)
-        try? fm.createDirectory(at: work, withIntermediateDirectories: true)
-        guard sh("/usr/bin/ditto", ["-x", "-k", file.path, work.path]) == 0, let project = findProject(work) else {
-            busy = false
+        let refuse: (String) -> Void = { msg in
+            self.busy = false
             LaunchGate.release()
-            alert("Questo file non è un aggiornamento di OrbitLR valido.")
-            return
+            self.alert(msg)
         }
-        let version = (try? String(contentsOf: project.appendingPathComponent("version.txt"), encoding: .utf8))?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? "nuova"
-        let news = (try? String(contentsOf: project.appendingPathComponent("NOVITA.txt"), encoding: .utf8)) ?? ""
+        // 3.5.2 · Tutto avviene in una cartella nuova, privata, con nome imprevedibile
+        guard let dir = try? UpdatePackage.privateWorkFolder() else { return refuse(UpdatePackage.Failure.badManifest.message) }
+        work = dir
+        let outer = dir.appendingPathComponent("pacchetto", isDirectory: true)
+        guard sh("/usr/bin/ditto", ["-x", "-k", file.path, outer.path]) == 0, !UpdatePackage.hasEscapingLinks(outer) else {
+            return refuse(UpdatePackage.Failure.badManifest.message)
+        }
+        // La parte firmata: app, manifesto e firma, letti una volta sola in memoria
+        guard let signed = findSigned(outer),
+              let manifestData = try? Data(contentsOf: signed.appendingPathComponent("manifest.json")),
+              let sig = try? Data(contentsOf: signed.appendingPathComponent("manifest.sig")),
+              let payload = try? Data(contentsOf: signed.appendingPathComponent("app.zip")) else {
+            return refuse(UpdatePackage.Failure.notSigned.message)
+        }
+        let current = (version: currentVersion, build: currentBuild)
+        let manifest: UpdatePackage.Manifest
+        do {
+            manifest = try UpdatePackage.verify(manifest: manifestData, signature: sig, payload: payload, current: current)
+        } catch let f as UpdatePackage.Failure {
+            return refuse(f.message)
+        } catch {
+            return refuse(UpdatePackage.Failure.badManifest.message)
+        }
+        if let expectedVersion, expectedVersion != manifest.version {
+            return refuse(UpdatePackage.Failure.wrongApp.message)
+        }
+        // L'app si estrae dai byte già verificati, mai dal file che potrebbe cambiare nel frattempo
+        let zip = dir.appendingPathComponent("app-verificata.zip")
+        let appDir = dir.appendingPathComponent("app", isDirectory: true)
+        guard (try? payload.write(to: zip, options: .withoutOverwriting)) != nil,
+              sh("/usr/bin/ditto", ["-x", "-k", zip.path, appDir.path]) == 0,
+              !UpdatePackage.hasEscapingLinks(appDir) else {
+            return refuse(UpdatePackage.Failure.badManifest.message)
+        }
+        let app = appDir.appendingPathComponent("OrbitLR.app")
+        let info = NSDictionary(contentsOf: app.appendingPathComponent("Contents/Info.plist"))
+        guard info?["CFBundleShortVersionString"] as? String == manifest.version,
+              info?["CFBundleVersion"] as? String == manifest.build,
+              info?["CFBundleIdentifier"] as? String == Bundle.main.bundleIdentifier else {
+            return refuse(UpdatePackage.Failure.wrongApp.message)
+        }
         loadTimes()
 
-        // 2.8.1 · Solo le novità rispetto alla versione che hai, non tutta la storia dell'app
-        let items = News.items(since: currentVersion, in: news, maxVersions: 8)
+        // 2.8.1 · Solo le novità rispetto alla versione che hai (dal manifesto firmato)
+        let items = News.items(since: currentVersion, in: manifest.news, maxVersions: 8)
         let newsText = items.map { "• " + $0 }.joined(separator: "\n\n")
         if !confirmed {
             let a = NSAlert()
-            a.messageText = "Installare OrbitLR \(version)?"
-            a.informativeText = "Versione attuale: \(currentVersion).\n\nOrbitLR si chiuderà e si riaprirà da sola, già aggiornata. Tempo stimato: \(roughDuration(expected.reduce(0, +)))."
+            a.messageText = "Installare OrbitLR \(manifest.version)?"
+            a.informativeText = "Versione attuale: \(currentVersion). Aggiornamento firmato da OrbitLR e controllato.\n\nOrbitLR si chiuderà e si riaprirà da sola, già aggiornata. Ci vogliono pochi secondi."
             // 2.8.7 · Le novità in un riquadro che scorre: la finestra resta piccola e i pulsanti sempre visibili
             if !newsText.isEmpty { a.accessoryView = Self.scrollingText(newsText) }
             a.addButton(withTitle: "Installa")
@@ -88,16 +123,25 @@ final class Updater: ObservableObject, @unchecked Sendable {
             }
         }
         fromVersion = currentVersion
-        toVersion = version
+        toVersion = manifest.version
         closeEverythingElse()
         showWindow()
-        // Dalla 2.5.3 l'aggiornamento contiene l'app già pronta: si installa in pochi secondi, senza Xcode
-        let prebuilt = project.appendingPathComponent("Prebuilt/OrbitLR.app")
-        if fm.fileExists(atPath: prebuilt.path) {
-            installPrebuilt(project, app: prebuilt)
-        } else {
-            build(project)
+        installVerified(app)
+    }
+
+    var currentBuild: String { Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "0" }
+
+    /// La cartella «Firmato» dentro il pacchetto (al primo o al secondo livello).
+    private func findSigned(_ dir: URL) -> URL? {
+        let fm = FileManager.default
+        let direct = dir.appendingPathComponent("Firmato")
+        if fm.fileExists(atPath: direct.appendingPathComponent("manifest.json").path) { return direct }
+        let subs = (try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []
+        for s in subs {
+            let f = s.appendingPathComponent("Firmato")
+            if fm.fileExists(atPath: f.appendingPathComponent("manifest.json").path) { return f }
         }
+        return nil
     }
 
     /// 2.8.7 · Un testo lungo in un riquadro di misura fissa, con la barra per scorrere.
@@ -118,13 +162,6 @@ final class Updater: ObservableObject, @unchecked Sendable {
         tv.textContainer?.widthTracksTextView = true
         scroll.documentView = tv
         return scroll
-    }
-
-    private func findProject(_ dir: URL) -> URL? {
-        let fm = FileManager.default
-        if fm.fileExists(atPath: dir.appendingPathComponent("project.yml").path) { return dir }
-        let subs = (try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []
-        return subs.first { fm.fileExists(atPath: $0.appendingPathComponent("project.yml").path) }
     }
 
     // MARK: - Avanzamento realistico
@@ -169,85 +206,39 @@ final class Updater: ObservableObject, @unchecked Sendable {
         }
     }
 
-    // MARK: - Costruzione
+    // MARK: - Installazione (solo app firmate e verificate)
 
-    private func build(_ project: URL) {
-        busy = true
-        error = nil
-        lines = []
-        measured = []
-        stage = .prepare
-        stageStart = Date()
-        DispatchQueue.global(qos: .userInitiated).async { [self] in
-            let path = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-            _ = sh("/usr/bin/xattr", ["-cr", project.path])
-            if sh("/bin/zsh", ["-c", "xcode-select -p | grep -q Xcode.app"]) != 0 {
-                return fail("Xcode non è impostato. Fai una volta «Costruisci e installa.command» dalla cartella di OrbitLR.")
-            }
-
-            enter(.project)
-            if sh("/bin/zsh", ["-c", "command -v xcodegen >/dev/null || brew install --quiet xcodegen"], env: path) != 0 {
-                return fail("Non riesco a installare XcodeGen.")
-            }
-            if sh("/bin/zsh", ["-c", "cd \(q(project.path)) && xcodegen generate --quiet"], env: path) != 0 {
-                return fail("Non riesco a creare il progetto.")
-            }
-
-            enter(.compile)
-            try? FileManager.default.removeItem(at: buildDir)
-            let cmd = "cd \(q(project.path)) && xcodebuild -project OrbitLR.xcodeproj -scheme OrbitLR -configuration Release " +
-                      "-destination 'generic/platform=macOS' -derivedDataPath \(q(buildDir.path)) " +
-                      "CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= -quiet build"
-            if sh("/bin/zsh", ["-c", cmd], env: path, log: true) != 0 {
-                Thread.sleep(forTimeInterval: 0.3)
-                return fail("La compilazione non è riuscita.")
-            }
-            let built = buildDir.appendingPathComponent("Build/Products/Release/OrbitLR.app")
-            guard FileManager.default.fileExists(atPath: built.path) else { return fail("Non trovo l’app compilata.") }
-
-            install(built, project: project)
-        }
-    }
-
-
-    /// L'app arriva già compilata (dalla 2.5.3): controllo che sia integra e adatta a questo Mac, poi la installo.
-    /// Se qualcosa non torna, ricado sulla compilazione classica.
-    private func installPrebuilt(_ project: URL, app: URL) {
+    /// 3.5.2 · Niente più compilazione dal pacchetto: si installa solo l'app firmata e controllata.
+    private func installVerified(_ app: URL) {
         busy = true
         error = nil
         lines = []
         measured = []
         fast = true
-        expected = [2, 1, 1, 3]
+        expected = [1, 1, 1, 3]
         stage = .prepare
         stageStart = Date()
         DispatchQueue.global(qos: .userInitiated).async { [self] in
-            _ = sh("/usr/bin/xattr", ["-cr", project.path])
+            enter(.project)
             let exe = app.appendingPathComponent("Contents/MacOS/OrbitLR").path
             let archOK = shOut("/usr/bin/lipo", ["-archs", exe]).contains(shOut("/usr/bin/uname", ["-m"]).trimmingCharacters(in: .whitespacesAndNewlines))
-            let signOK = sh("/usr/bin/codesign", ["--verify", "--deep", app.path]) == 0
+            // L'integrità del pacchetto dell'app (nessun file cambiato dopo la firma del codice)
+            let signOK = sh("/usr/bin/codesign", ["--verify", "--deep", "--strict", app.path]) == 0
             guard archOK, signOK else {
-                DispatchQueue.main.async {
-                    self.fast = false
-                    self.loadTimes()
-                    self.lines.append("App pronta non adatta a questo Mac: la compilo.")
-                    self.build(project)
-                }
-                return
+                return fail(archOK ? "L'app dentro l'aggiornamento non è integra: non la installo." : "Questo aggiornamento non è adatto a questo Mac.")
             }
-            enter(.project)
             enter(.compile)
-            install(app, project: project)
+            install(app)
         }
     }
 
     /// Prepara l'app nuova accanto a quella attuale, poi chiude OrbitLR e uno script la sostituisce e la riapre.
-    private func install(_ built: URL, project: URL) {
+    private func install(_ built: URL) {
         enter(.install)
         // L'app nuova viene preparata accanto: quella attuale resta intatta finché non è tutto pronto
         let staged = work.appendingPathComponent("OrbitLR.app")
         try? FileManager.default.removeItem(at: staged)
-        if sh("/bin/cp", ["-R", built.path, staged.path]) != 0 { return fail("Non riesco a preparare l’installazione.") }
+        if sh("/usr/bin/ditto", [built.path, staged.path]) != 0 { return fail("Non riesco a preparare l’installazione.") }
         // La copia compilata non deve risultare come una seconda OrbitLR
         _ = sh(Self.lsregister, ["-u", built.path])
         Thread.sleep(forTimeInterval: 0.5)
@@ -261,7 +252,7 @@ final class Updater: ObservableObject, @unchecked Sendable {
         # La versione attuale si mette da parte: se la nuova non si copia, torna al suo posto (mai senza app)
         OLD="$HOME/Library/Caches/OrbitLR-precedente.app"
         rm -rf "$OLD"; mv /Applications/OrbitLR.app "$OLD" 2>/dev/null
-        if mv \(q(staged.path)) /Applications/OrbitLR.app || cp -R \(q(built.path)) /Applications/OrbitLR.app; then
+        if mv \(q(staged.path)) /Applications/OrbitLR.app; then
           rm -rf "$OLD"
         else
           rm -rf /Applications/OrbitLR.app; mv "$OLD" /Applications/OrbitLR.app; open /Applications/OrbitLR.app; exit 1
@@ -269,9 +260,7 @@ final class Updater: ObservableObject, @unchecked Sendable {
         xattr -dr com.apple.quarantine /Applications/OrbitLR.app 2>/dev/null
         \(Self.lsregister) -f /Applications/OrbitLR.app >/dev/null 2>&1
         /System/Library/CoreServices/pbs -update >/dev/null 2>&1
-        # Tiene aggiornata anche la cartella in Documenti, così «Costruisci e installa» rifà sempre l'ultima versione
-        [ -d "$HOME/Documents/OrbitLR" ] && /usr/bin/ditto \(q(project.path)) "$HOME/Documents/OrbitLR" 2>/dev/null && rm -rf "$HOME/Documents/OrbitLR/Prebuilt"
-        rm -rf \(q(buildDir.path))
+        rm -rf \(q(work.path))
         open /Applications/OrbitLR.app
         """
         let p = Process()

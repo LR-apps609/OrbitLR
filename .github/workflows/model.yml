@@ -9,21 +9,32 @@ on:
     paths: [Tools/convert_lama.py, .github/workflows/model.yml]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   convert:
+    permissions:
+      contents: write
     runs-on: macos-15-intel
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Strumenti
         run: pip install "torch==2.2.2" "coremltools==7.2" "numpy<2"
       - name: Modello originale
-        run: curl -fL --retry 3 -o big-lama.pt https://github.com/Sanster/models/releases/download/add_big_lama/big-lama.pt
+        run: |
+          curl -fL --retry 3 -o big-lama.pt https://github.com/Sanster/models/releases/download/add_big_lama/big-lama.pt
+          # 3.5.2 · Il file di partenza deve essere esattamente quello controllato la prima volta (se cambia, ci si ferma)
+          shasum -a 256 big-lama.pt
+          if [ -n "$LAMA_PT_SHA256" ]; then echo "$LAMA_PT_SHA256  big-lama.pt" | shasum -a 256 -c -; fi
+          echo "::notice::Se cambi il modello, aggiorna l'impronta nell'app (Inpaint.pinnedSHA256)"
+        env:
+          LAMA_PT_SHA256: ""
       - name: Conversione e prova
         run: python Tools/convert_lama.py 512
       - name: Pacchetto

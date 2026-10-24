@@ -96,6 +96,13 @@ final class ThumbCache: @unchecked Sendable {
         return Int(d.timeIntervalSince1970)
     }
 
+    /// 3.5.2 · Via tutte le miniature, in memoria e sul disco.
+    func forgetAll() {
+        cache.removeAllObjects()
+        latest.removeAllObjects()
+        disk.async(flags: .barrier) { try? FileManager.default.removeItem(at: Self.folder) }
+    }
+
     /// Le miniature sul disco più vecchie di 30 giorni se ne vanno (all'avvio, in sottofondo).
     static func trimDisk(olderThan days: Double = 30) {
         DispatchQueue.global(qos: .background).async {
@@ -173,7 +180,7 @@ struct CountingBytes: View, Animatable {
     }
 
     var body: some View {
-        Text(prefix + ByteCountFormatter.string(fromByteCount: Int64(max(0, value)), countStyle: .file))
+        Text(prefix + Fmt.bytes(Int64(max(0, value))))
             .font(font)
             .foregroundStyle(color)
             .monospacedDigit()

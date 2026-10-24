@@ -396,7 +396,7 @@ struct PieView: View {
                 Text(a.title).font(.system(size: 14, weight: .bold)).multilineTextAlignment(.center).lineLimit(2)
                 Text(a.hint).font(.system(size: 11)).foregroundStyle(.secondary).multilineTextAlignment(.center).lineLimit(3)
                 if let b = model.estimates[a.id] {
-                    Text(SizeEstimate.label(b) + (model.currentBytes > 0 ? " (ora " + ByteCountFormatter.string(fromByteCount: model.currentBytes, countStyle: .file) + ")" : ""))
+                    Text(SizeEstimate.label(b) + (model.currentBytes > 0 ? " (ora " + Fmt.bytes(model.currentBytes) + ")" : ""))
                         .font(.system(size: 11, weight: .semibold, design: .rounded)).monospacedDigit()
                         .foregroundStyle(estimateColor(b))
                 }

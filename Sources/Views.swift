@@ -350,7 +350,7 @@ struct ActivityView: View {
     private var subtitle: String {
         let r = store.runningJobs.count
         let w = store.jobs.filter { $0.state == .waiting }.count
-        let saved = ByteCountFormatter.string(fromByteCount: store.savedThisMonth, countStyle: .file)
+        let saved = Fmt.bytes(store.savedThisMonth)
         let now = r == 0 && w == 0 ? "Niente in corso" : "\(r) in corso" + (w > 0 ? " · \(w) in attesa" : "")
         return now + (store.savedThisMonth > 0 ? " · \(saved) risparmiati questo mese" : "")
     }
@@ -520,7 +520,7 @@ struct HistoryRow: View {
             }
             Spacer()
             if let b = entry.before, let a = entry.after, b > 0 {
-                Text(ByteCountFormatter.string(fromByteCount: b, countStyle: .file) + " → " + ByteCountFormatter.string(fromByteCount: a, countStyle: .file))
+                Text(Fmt.bytes(b) + " → " + Fmt.bytes(a))
                     .font(.system(size: 12.5, design: .rounded)).foregroundStyle(a < b ? Theme.green : .secondary)
             }
             if entry.undone {
@@ -605,7 +605,7 @@ struct DayHeader: View {
                 .font(.system(size: 11.5)).foregroundStyle(.secondary)
             Rectangle().fill(Theme.stroke).frame(height: 1)
             if day.saved > 0 {
-                Label(ByteCountFormatter.string(fromByteCount: day.saved, countStyle: .file) + " risparmiati",
+                Label(Fmt.bytes(day.saved) + " risparmiati",
                       systemImage: "arrow.down.circle.fill")
                     .font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Theme.green)
             }

@@ -1,3 +1,15 @@
+Novità della 3.5.2 · sicura:
+• Aggiornamenti firmati: OrbitLR installa solo aggiornamenti firmati da OrbitLR, integri e più nuovi di quello che hai. Un file .orbitlr falso o modificato viene rifiutato
+• Nessun altro programma può usare i permessi che hai dato a OrbitLR (runtime rinforzato di macOS)
+• Sottotitoli automatici solo sul Mac: l'audio non viene mai mandato a nessuno
+• Documenti scaricati da internet non possono più far leggere altri file del Mac durante la conversione
+• Le password dei PDF non restano nella cronologia
+• «Segnala» non allega più nomi di file né percorsi personali, e puoi vedere prima cosa parte
+• «Manda all'iPhone»: codice impossibile da indovinare, solo sulla rete di casa, e la copia si cancella da sola
+• Cancellando la cronologia se ne vanno anche le miniature dei file
+• Montaggio: se hai scelto un cursore con la tastiera, le frecce muovono lui
+• Numeri all'italiana ovunque: 2,8 MB e 0:30,5
+
 Novità della 3.5.1 · rifiniture:
 • Miniature sempre del file giusto, anche scorrendo veloce; un file cestinato non lascia più la sua miniatura
 • Video: dopo una modifica il video riparte esattamente dal punto in cui eri, senza salti dell’indicatore

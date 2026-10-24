@@ -124,7 +124,8 @@ enum IntentRunner {
                 continue
             }
             try FileManager.default.createDirectory(at: inbox, withIntermediateDirectories: true)
-            let name = f.filename.isEmpty ? "File" : f.filename
+            // 3.5.2 · Solo il nome, mai un percorso (un Comando Rapido non può scrivere fuori da Download)
+            let name = Destination.safeName((f.filename as NSString).lastPathComponent)
             let base = (name as NSString).deletingPathExtension, ext = (name as NSString).pathExtension
             let dest = Destination.unique(inbox, base: base, ext: ext.isEmpty ? "dat" : ext)
             try f.data.write(to: dest)

@@ -80,7 +80,7 @@ enum AutoSubtitles {
         }
     }
 
-    enum Failure: Error { case notAllowed, unavailable, nothingHeard }
+    enum Failure: Error { case notAllowed, unavailable, nothingHeard, notOnDevice }
 
     /// La lingua scelta in Opzioni → Avanzate (trascrizione); «automatica» = quella del Mac, se è tra quelle note.
     static func preferredLocale(setting: String = ScriptPrefs.load()["wlang"] ?? "auto", system: Locale = .current) -> Locale {
@@ -103,10 +103,12 @@ enum AutoSubtitles {
 
     /// Le parole dette in un file, con i loro tempi (secondi del file).
     static func words(in url: URL, locale: Locale = Locale(identifier: "it-IT")) async throws -> [Word] {
-        guard let rec = SFSpeechRecognizer(locale: locale) ?? SFSpeechRecognizer(), rec.isAvailable else { throw Failure.unavailable }
+        guard let rec = SFSpeechRecognizer(locale: locale), rec.isAvailable else { throw Failure.unavailable }
+        // 3.5.2 · Solo sul Mac: se questa lingua non si può riconoscere senza internet, non si manda l'audio a nessuno
+        guard rec.supportsOnDeviceRecognition else { throw Failure.notOnDevice }
         let req = SFSpeechURLRecognitionRequest(url: url)
         req.shouldReportPartialResults = false
-        if rec.supportsOnDeviceRecognition { req.requiresOnDeviceRecognition = true }      // sul Mac, senza internet
+        req.requiresOnDeviceRecognition = true
         req.addsPunctuation = true
         return try await withCheckedThrowingContinuation { c in
             var done = false
@@ -135,13 +137,20 @@ enum AutoSubtitles {
         let clips = s.project.clips, starts = s.project.starts
         var all: [Line] = []
         var cache: [String: [Word]] = [:]
+        var offline = false
         for (c, start) in zip(clips, starts) where !c.isMuted {
             let ws: [Word]
             if let hit = cache[c.path] { ws = hit } else {
-                ws = (try? await words(in: c.url, locale: preferredLocale())) ?? []
+                do { ws = try await words(in: c.url, locale: preferredLocale()) }
+                catch Failure.notOnDevice { offline = true; ws = [] }
+                catch { ws = [] }
                 cache[c.path] = ws
             }
             all += timeline(lines(ws), clip: c, clipStart: start)
+        }
+        if all.isEmpty && offline {
+            // 3.5.2 · L'audio non lascia mai il Mac: se la lingua non è pronta, si spiega come averla
+            return "Il Mac non ha ancora la lingua per riconoscere la voce senza internet. Impostazioni di Sistema → Tastiera → Dettatura: attivala con la lingua giusta, attendi lo scaricamento e riprova."
         }
         guard !all.isEmpty else { return "Non ho sentito parole nelle clip (o l’audio è spento)." }
         let new = texts(all)

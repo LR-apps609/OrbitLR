@@ -24,3 +24,16 @@ final class SecurityTests: XCTestCase {
         XCTAssertEqual(SharedFiles.receive(c.url!).map(\.path), [f.path])
     }
 }
+
+/// 3.5.2 · La segnalazione di un problema non porta con sé nomi di file né percorsi personali.
+final class BugReportPrivacyTests: XCTestCase {
+    func testNomiEPercorsiSpariscono() {
+        let files = [URL(fileURLWithPath: "/Users/mario/Documenti/Carta d'identità.pdf")]
+        let text = "Lavoro: Carta d'identità.pdf fallito in /Users/mario/Documenti/Carta d'identità.pdf e /Users/luca/x"
+        let out = BugReport.anonymize(text, names: files, home: "/Users/mario")
+        XCTAssertFalse(out.contains("identità"), out)
+        XCTAssertFalse(out.contains("mario"), out)
+        XCTAssertFalse(out.contains("luca"), out)
+        XCTAssertTrue(out.contains("file.pdf"), out)
+    }
+}

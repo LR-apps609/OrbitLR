@@ -40,12 +40,37 @@ enum BugReport {
         let log = (try? String(contentsOf: Paths.log, encoding: .utf8))
             .map { $0.split(separator: "\n").suffix(80).joined(separator: "\n") } ?? "(registro vuoto)"
         let jobs = QueueStore.shared.jobs.prefix(10).map { j in
-            "• \(j.action.title) · \(j.title) · \(j.status)" + (j.failures.isEmpty ? "" : " · " + j.failures.joined(separator: "; "))
+            "• \(j.action.title) · \(j.files.count) file \(Set(j.files.map { $0.pathExtension.lowercased() }).sorted().joined(separator: ", ")) · \(j.status)"
+                + (j.failures.isEmpty ? "" : " · " + j.failures.joined(separator: "; "))
         }.joined(separator: "\n")
+        let names = QueueStore.shared.jobs.prefix(30).flatMap { $0.files + $0.outputs }
+        return anonymize(report(comps: comps, jobs: jobs, log: log, model: String(cString: model)), names: names)
+    }
+
+    /// 3.5.2 · Niente nomi di file, nomi utente o percorsi personali nelle informazioni tecniche.
+    static func anonymize(_ text: String, names: [URL], home: String = Paths.home.path) -> String {
+        var t = text
+        // I nomi dei file usati di recente diventano «file.estensione»
+        for u in names.sorted(by: { $0.lastPathComponent.count > $1.lastPathComponent.count }) {
+            let n = u.lastPathComponent
+            guard n.count > 2 else { continue }
+            t = t.replacingOccurrences(of: n, with: "file." + u.pathExtension.lowercased())
+            let stem = u.deletingPathExtension().lastPathComponent
+            if stem.count > 3 { t = t.replacingOccurrences(of: stem, with: "file") }
+        }
+        t = t.replacingOccurrences(of: home, with: "~")
+        // Qualsiasi altro «/Users/nome/…» rimasto
+        if let re = try? NSRegularExpression(pattern: "/Users/[^/\\s]+") {
+            t = re.stringByReplacingMatches(in: t, range: NSRange(t.startIndex..., in: t), withTemplate: "/Users/…")
+        }
+        return t
+    }
+
+    private static func report(comps: String, jobs: String, log: String, model: String) -> String {
         return """
         OrbitLR \(version)
         macOS \(ProcessInfo.processInfo.operatingSystemVersionString)
-        Mac: \(String(cString: model)) · \(ProcessInfo.processInfo.processorCount) core
+        Mac: \(model) · \(ProcessInfo.processInfo.processorCount) core
         Componenti: \(comps)
 
         Ultimi lavori:
@@ -152,8 +177,19 @@ struct BugReportView: View {
                 }
             }
 
-            Toggle("Allega le informazioni tecniche (versione, macOS, ultimi lavori, registro)", isOn: $includeTech)
+            Toggle("Allega le informazioni tecniche (versione, macOS, ultimi lavori, registro), senza nomi di file", isOn: $includeTech)
                 .font(.system(size: 12))
+            if includeTech {
+                // 3.5.2 · Si vede esattamente cosa parte, prima di mandarlo
+                DisclosureGroup("Guarda cosa viene allegato") {
+                    ScrollView {
+                        Text(BugReport.diagnostics()).font(.system(size: 10, design: .monospaced))
+                            .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(height: 140)
+                }
+                .font(.system(size: 12))
+            }
 
             if let message {
                 Label(message, systemImage: "info.circle.fill").font(.system(size: 12)).foregroundStyle(Theme.brass)

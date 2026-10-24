@@ -634,12 +634,31 @@ enum Media {
             if e == "md" {
                 text = text.replacingOccurrences(of: #"[#*_>`]+"#, with: "", options: .regularExpression)
             }
+        } else if ["html", "htm", "xhtml", "webarchive"].contains(e) {
+            // 3.5.2 · Una pagina web si legge come testo puro: nessuna immagine o risorsa caricata da internet
+            text = htmlToPlainText((try? String(contentsOf: url, encoding: .utf8)) ?? (try? String(contentsOf: url, encoding: .isoLatin1)) ?? "")
         } else if let a = try? NSAttributedString(url: url, options: [:], documentAttributes: nil) {
             text = a.string
         }
         text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { throw NativeError("il file non contiene testo da leggere") }
         return text
+    }
+
+    /// Il testo visibile di una pagina HTML, senza mai aprirla nel motore web.
+    static func htmlToPlainText(_ html: String) -> String {
+        var t = html
+        for tag in ["script", "style", "head", "noscript", "template", "svg"] {
+            t = t.replacingOccurrences(of: "<\(tag)[^>]*>[\\s\\S]*?</\(tag)>", with: " ", options: [.regularExpression, .caseInsensitive])
+        }
+        t = t.replacingOccurrences(of: "<(br|/p|/div|/li|/h[1-6]|/tr)[^>]*>", with: "\n", options: [.regularExpression, .caseInsensitive])
+        t = t.replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
+        let entities = ["&nbsp;": " ", "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": "\"", "&#39;": "'", "&apos;": "'",
+                        "&egrave;": "è", "&eacute;": "é", "&agrave;": "à", "&ograve;": "ò", "&ugrave;": "ù", "&igrave;": "ì"]
+        for (k, v) in entities { t = t.replacingOccurrences(of: k, with: v) }
+        t = t.replacingOccurrences(of: "[ \t]+", with: " ", options: .regularExpression)
+        t = t.replacingOccurrences(of: "\n\\s*\n+", with: "\n\n", options: .regularExpression)
+        return t
     }
 
     /// Nome del file audio: le prime parole del testo.

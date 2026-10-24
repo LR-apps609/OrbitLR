@@ -862,7 +862,7 @@ struct VideoEditorView: View {
                     .lineLimit(1)
                 if !s.project.clips.isEmpty {
                     Text("\(s.project.clips.count) clip · \(formatShort(s.project.duration))" + (s.project.music != nil ? " · con musica" : "")
-                         + (s.estimate.map { " · ≈ " + ByteCountFormatter.string(fromByteCount: $0.bytes, countStyle: .file) } ?? ""))
+                         + (s.estimate.map { " · ≈ " + Fmt.bytes($0.bytes) } ?? ""))
                         .font(.system(size: 12.5)).foregroundStyle(.secondary).lineLimit(1)
                 }
             }
@@ -1056,9 +1056,9 @@ struct VideoEditorView: View {
                 EditSlider(title: "Volume", value: m.volume, range: 0...1, text: "\(Int((m.volume * 100).rounded()))%",
                            width: 260, s: s, undo: undo, name: "Volume della musica") { p, v in p.music?.volume = v }
                 HStack(spacing: 12) {
-                    EditSlider(title: "Entrata", value: m.fadeIn, range: 0...5, text: String(format: "%.1f s", m.fadeIn),
+                    EditSlider(title: "Entrata", value: m.fadeIn, range: 0...5, text: Fmt.secs(m.fadeIn),
                                width: 124, s: s, undo: undo, name: "Dissolvenza in entrata") { p, v in p.music?.fadeIn = v }
-                    EditSlider(title: "Uscita", value: m.fadeOut, range: 0...5, text: String(format: "%.1f s", m.fadeOut),
+                    EditSlider(title: "Uscita", value: m.fadeOut, range: 0...5, text: Fmt.secs(m.fadeOut),
                                width: 124, s: s, undo: undo, name: "Dissolvenza in uscita") { p, v in p.music?.fadeOut = v }
                 }
                 Toggle("Abbassa quando si parla", isOn: bind(\.duck, "Abbassa quando si parla")).toggleStyle(.checkbox)
@@ -1136,7 +1136,7 @@ struct VideoEditorView: View {
             }
         }
         if let e = s.estimate {
-            Text("\(Int(e.size.width)) × \(Int(e.size.height)) · circa " + ByteCountFormatter.string(fromByteCount: e.bytes, countStyle: .file))
+            Text("\(Int(e.size.width)) × \(Int(e.size.height)) · circa " + Fmt.bytes(e.bytes))
                 .font(.system(size: 12)).foregroundStyle(.secondary)
         }
     }
@@ -1183,10 +1183,10 @@ private struct EditorKeys: View {
             key("j", []) { s.step(-1) }
             key("k", []) { s.pause() }
             key("l", []) { if !s.clock.playing { s.play() } }
-            key(.leftArrow, []) { s.step(-1.0 / 30) }
-            key(.rightArrow, []) { s.step(1.0 / 30) }
-            key(.leftArrow, .shift) { s.step(-1) }
-            key(.rightArrow, .shift) { s.step(1) }
+            key(.leftArrow, []) { arrow(-1) { s.step(-1.0 / 30) } }
+            key(.rightArrow, []) { arrow(1) { s.step(1.0 / 30) } }
+            key(.leftArrow, .shift) { arrow(-1) { s.step(-1) } }
+            key(.rightArrow, .shift) { arrow(1) { s.step(1) } }
             key(.home, []) { s.pause(); s.seek(0) }
             key(.end, []) { s.pause(); s.seek(s.project.duration) }
         }
@@ -1198,6 +1198,16 @@ private struct EditorKeys: View {
 
     private func key(_ k: KeyEquivalent, _ m: EventModifiers, _ action: @escaping () -> Void) -> some View {
         Button("", action: action).keyboardShortcut(k, modifiers: m).buttonStyle(.plain)
+    }
+
+    /// 3.5.2 · Se hai scelto un cursore (o un selettore) con la tastiera, le frecce muovono lui, non l'indicatore.
+    private func arrow(_ dir: Int, otherwise: () -> Void) {
+        if let r = NSApp.keyWindow?.firstResponder as? NSView,
+           r is NSSlider || r is NSStepper || r is NSSegmentedControl || r is NSPopUpButton {
+            NSApp.sendAction(dir < 0 ? #selector(NSResponder.moveLeft(_:)) : #selector(NSResponder.moveRight(_:)), to: r, from: nil)
+            return
+        }
+        otherwise()
     }
 }
 
@@ -1986,7 +1996,7 @@ struct TransitionOptions: View {
                         if editing { before = s.project } else if let b = before { s.commit(from: b, undo, "Durata della transizione"); before = nil }
                     }
                         .frame(width: compact ? 130 : 160)
-                    Text(String(format: "%.1f s", tr.duration)).font(.callout).monospacedDigit().frame(width: 40, alignment: .trailing)
+                    Text(Fmt.secs(tr.duration)).font(.callout).monospacedDigit().frame(width: 40, alignment: .trailing)
                 }
                 Text("Se una clip è corta, la transizione si accorcia da sola.")
                     .font(.caption).foregroundStyle(.secondary)
@@ -2106,9 +2116,9 @@ private struct EffectOptions: View {
                 EditSlider(title: "Sfocatura", value: fx.blur, range: 0...1, text: fx.blur < 0.01 ? "No" : "\(Int(fx.blur * 100))%",
                            width: 260, s: s, undo: undo, name: "Sfocatura") { p, v in Self.edit(&p, i) { $0.blur = v } }
                 HStack(spacing: 12) {
-                    EditSlider(title: "Entrata", value: fx.fadeIn, range: 0...2, text: fx.fadeIn < 0.05 ? "No" : String(format: "%.1f s", fx.fadeIn),
+                    EditSlider(title: "Entrata", value: fx.fadeIn, range: 0...2, text: fx.fadeIn < 0.05 ? "No" : Fmt.secs(fx.fadeIn),
                                width: 124, s: s, undo: undo, name: "Dissolvenza in entrata") { p, v in Self.edit(&p, i) { $0.fadeIn = v < 0.05 ? 0 : v } }
-                    EditSlider(title: "Uscita", value: fx.fadeOut, range: 0...2, text: fx.fadeOut < 0.05 ? "No" : String(format: "%.1f s", fx.fadeOut),
+                    EditSlider(title: "Uscita", value: fx.fadeOut, range: 0...2, text: fx.fadeOut < 0.05 ? "No" : Fmt.secs(fx.fadeOut),
                                width: 124, s: s, undo: undo, name: "Dissolvenza in uscita") { p, v in Self.edit(&p, i) { $0.fadeOut = v < 0.05 ? 0 : v } }
                 }
                 HStack(spacing: 6) {
