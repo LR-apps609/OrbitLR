@@ -29,6 +29,16 @@ jobs:
           sudo xcode-select -s "$XCODE/Contents/Developer"
           xcodebuild -version
 
+      - name: Motori dentro l'app (ffmpeg LGPL)
+        run: |
+          # Sempre lo stesso file, controllato con l'impronta scritta nel progetto: se cambia, ci si ferma
+          curl -fL --retry 3 -o motori-1.zip https://github.com/LR-apps609/OrbitLR/releases/download/motori-1/motori-1.zip
+          shasum -a 256 -c Tools/motori.sha256
+          rm -rf Resources/Motori && ditto -x -k motori-1.zip Resources
+          for b in Resources/Motori/ffmpeg Resources/Motori/ffprobe; do codesign -f -s - --options runtime "$b"; done
+          ./Resources/Motori/ffmpeg -hide_banner -version | head -n 1
+          rm -f motori-1.zip
+
       - name: XcodeGen
         run: brew install xcodegen
 
@@ -73,6 +83,9 @@ jobs:
           test -d "$APP/Contents/PlugIns/OrbitLRShare.appex"
           test -d "$APP/Contents/Resources/Models/RealESRNet.mlpackage"
           test -f "$APP/Contents/Resources/NOVITA.txt"
+          test -x "$APP/Contents/Resources/Motori/ffmpeg"
+          "$APP/Contents/Resources/Motori/ffmpeg" -hide_banner -loglevel error -f lavfi -i "sine=duration=0.5" -c:a libmp3lame /tmp/prova-motori.mp3
+          echo "::notice::ffmpeg dentro l'app: funziona (MP3 di prova creato)"
           plutil -p "$APP/Contents/Info.plist" | grep -E "CFBundleShortVersionString|CFBundleVersion"
           # Deve girare sia sui Mac Apple Silicon sia sugli Intel
           ARCHS=$(lipo -archs "$APP/Contents/MacOS/OrbitLR"); echo "Architetture: $ARCHS"

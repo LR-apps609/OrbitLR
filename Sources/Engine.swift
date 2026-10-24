@@ -279,12 +279,10 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         // 3.5.2 · Le password non passano tra gli argomenti (che altri programmi possono leggere)
         let secret = Job.secretActions.contains(job.action.id)
         p.arguments = [Paths.script.path, "--run", job.action.id, secret ? "-" : job.param] + job.files.map { $0.path }
-        if job.destOverride != nil || secret {
-            var env = ProcessInfo.processInfo.environment
-            if let d = job.destOverride { env["LR_DESTPATH"] = d.path }
-            if secret { env["LR_SECRET"] = job.param }
-            p.environment = env
-        }
+        var extra: [String: String] = [:]
+        if let d = job.destOverride { extra["LR_DESTPATH"] = d.path }
+        if secret { extra["LR_SECRET"] = job.param }
+        p.environment = Paths.engineEnvironment(extra)          // 3.8 · con i motori dell'app
         let out = Pipe()
         p.standardOutput = out
         p.standardError = FileHandle.nullDevice

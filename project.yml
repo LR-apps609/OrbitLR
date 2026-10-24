@@ -22,6 +22,11 @@ targets:
         buildPhase: resources
       - path: NOVITA.txt              # «Cosa c'è di nuovo» dopo un aggiornamento
         buildPhase: resources
+      # 3.8 · Motori dentro l'app (ffmpeg LGPL, Apple Silicon e Intel): li prepara la compilazione su GitHub
+      - path: Resources/Motori
+        type: folder
+        buildPhase: resources
+        optional: true
       # Modelli di IA (Real-ESRGAN, BSD-3): copiati così come sono, l'app li compila al primo uso
       - path: Resources/Models
         type: folder

@@ -27,7 +27,25 @@ enum Paths {
     }
 
     /// Cerca un programma nei posti dove lo installano Homebrew e gli installer ufficiali.
+    /// 3.8 · I motori che viaggiano dentro l'app (ffmpeg in versione LGPL): nessuna installazione.
+    static var motori: URL? {
+        guard let u = Bundle.main.resourceURL?.appendingPathComponent("Motori", isDirectory: true),
+              FileManager.default.isExecutableFile(atPath: u.appendingPathComponent("ffmpeg").path) else { return nil }
+        return u
+    }
+
+    /// L'ambiente per il motore classico: prima i motori dell'app, poi quelli installati sul Mac.
+    static func engineEnvironment(_ extra: [String: String] = [:]) -> [String: String] {
+        var env = ProcessInfo.processInfo.environment
+        if let m = motori { env["LR_MOTORI"] = m.path }
+        for (k, v) in extra { env[k] = v }
+        return env
+    }
+
     static func tool(_ name: String) -> String? {
+        if let m = motori, FileManager.default.isExecutableFile(atPath: m.appendingPathComponent(name).path) {
+            return m.appendingPathComponent(name).path
+        }
         let dirs = ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/Applications/LibreOffice.app/Contents/MacOS"]
         for d in dirs {
             let p = d + "/" + name

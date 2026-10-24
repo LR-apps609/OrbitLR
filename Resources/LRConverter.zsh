@@ -33,6 +33,8 @@ SCRIPT_PATH=${0:A}
 
 APP="LRConverter"
 export PATH="/opt/homebrew/bin:/usr/local/bin:/Applications/LibreOffice.app/Contents/MacOS:/usr/bin:/bin:/usr/sbin:/sbin"
+# 3.8 · I motori dentro l'app (ffmpeg LGPL) hanno la precedenza: nessuna installazione necessaria
+[[ -n $LR_MOTORI && -x "$LR_MOTORI/ffmpeg" ]] && export PATH="$LR_MOTORI:$PATH"
 export LANG="en_US.UTF-8" LC_ALL="en_US.UTF-8"
 ARCH=$(uname -m)
 NCPU=$(sysctl -n hw.ncpu 2>/dev/null); [[ $NCPU == <-> ]] || NCPU=4
@@ -1239,6 +1241,18 @@ img_run() {  # sorgente, formato, uscita
   # Se l'estensione non corrisponde al contenuto (capita con le foto scaricate), si riprova lasciando decidere a ImageMagick
   # (le regole di sicurezza bloccano comunque i formati pericolosi)
   if have magick && { magick "$in" $o "$out" 2>/dev/null || magick "$raw" $o "$out"; }; then return 0; fi
+  # 3.8 · Senza ImageMagick: WebP e ICO con l'ffmpeg che viaggia dentro l'app (macOS legge già tutto il resto)
+  if [[ $t == (webp|ico) ]] && have ffmpeg; then
+    local png="$JD/_ff.png"
+    sips -s format png "$src" --out "$png" >&2 || return 1
+    if [[ $t == webp ]]; then
+      ffmpeg -nostdin -hide_banner -loglevel error -y -i "$png" -c:v libwebp -quality 85 -compression_level 5 "$out" && return 0
+    else
+      ffmpeg -nostdin -hide_banner -loglevel error -y -i "$png" \
+        -vf "scale=256:256:force_original_aspect_ratio=decrease,pad=256:256:(ow-iw)/2:(oh-ih)/2:color=0x00000000,format=rgba" "$out" && return 0
+    fi
+    return 1
+  fi
   local f
   case $t in jpg) f=jpeg ;; png|tiff|heic|pdf) f=$t ;; *) return 1 ;; esac
   sips -s format $f "$src" --out "$out" >&2

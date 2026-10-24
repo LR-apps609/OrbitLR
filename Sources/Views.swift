@@ -742,6 +742,7 @@ struct ComponentsView: View {
             let p = Process()
             p.executableURL = URL(fileURLWithPath: "/bin/zsh")
             p.arguments = [Paths.script.path, "--test"]
+            p.environment = Paths.engineEnvironment()
             let pipe = Pipe()
             p.standardOutput = pipe
             p.standardError = FileHandle.nullDevice
