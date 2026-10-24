@@ -220,6 +220,21 @@ fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action
     Ok(())
 }
 
+/// «Interrompi e chiudi»: ferma tutto, cancella i file a metà, poi chiude.
+#[tauri::command]
+fn quit_now(app: tauri::AppHandle, state: State<'_, Shared>) {
+    let jobs: Vec<Cancel> = state.jobs.lock().unwrap().values().cloned().collect();
+    for c in &jobs {
+        c.cancel();
+    }
+    // Un attimo per lasciare cancellare i file a metà
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(3);
+    while !state.jobs.lock().unwrap().is_empty() && std::time::Instant::now() < deadline {
+        std::thread::sleep(std::time::Duration::from_millis(50));
+    }
+    app.exit(0);
+}
+
 #[tauri::command]
 fn cancel_job(state: State<'_, Shared>, id: String) {
     if let Some(c) = state.jobs.lock().unwrap().get(&id) {
@@ -231,6 +246,27 @@ fn cancel_job(state: State<'_, Shared>, id: String) {
 #[tauri::command]
 fn files_exist(paths: Vec<String>) -> Vec<bool> {
     paths.iter().map(|p| Path::new(p).is_file()).collect()
+}
+
+#[derive(Serialize)]
+struct Startup {
+    files: Vec<String>,
+    /// Solo per le prove automatiche (variabili ORBIT_PROVA_*)
+    tab: Option<String>,
+    action: Option<String>,
+    param: Option<String>,
+}
+
+/// I file con cui è stata aperta l'app («Apri con OrbitLR» da Esplora file) e, nelle prove automatiche,
+/// cosa fare con loro.
+#[tauri::command]
+fn startup() -> Startup {
+    let mut files: Vec<String> = std::env::args().skip(1).filter(|a| !a.starts_with('-') && Path::new(a).is_file()).collect();
+    if let Ok(list) = std::env::var("ORBIT_PROVA_FILE") {
+        files.extend(list.split(';').filter(|p| Path::new(p).is_file()).map(String::from));
+    }
+    let var = |k: &str| std::env::var(k).ok().filter(|v| !v.is_empty());
+    Startup { files, tab: var("ORBIT_PROVA_SCHEDA"), action: var("ORBIT_PROVA_AZIONE"), param: var("ORBIT_PROVA_PARAMETRO") }
 }
 
 #[derive(Serialize)]
@@ -271,10 +307,27 @@ fn main() {
                     let _ = t.encoders();
                 });
             }
+            // File temporanei rimasti da una chiusura a metà lavoro: via
+            if let Ok(data) = app.path().app_data_dir() {
+                let _ = std::fs::create_dir_all(&data);
+                orbit_engine::names::set_temp_registry(data.join("temporanei.txt"));
+                std::thread::spawn(orbit_engine::names::cleanup_leftovers);
+            }
             app.manage(Arc::new(AppState { tools, jobs: Mutex::new(HashMap::new()), thumbs: Mutex::new(HashMap::new()) }));
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places])
+        .on_window_event(|window, event| {
+            // Chiudendo la finestra con dei lavori in corso: prima si chiede
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                let st = window.state::<Shared>();
+                let busy = !st.jobs.lock().unwrap().is_empty();
+                if busy {
+                    api.prevent_close();
+                    let _ = window.emit("close-requested", ());
+                }
+            }
+        })
+        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now])
         .run(tauri::generate_context!())
         .expect("OrbitLR non è riuscita ad avviarsi");
 }

@@ -68,10 +68,49 @@ pub fn ext(p: &Path) -> String {
 }
 
 /// File temporaneo accanto alla destinazione (stesso disco: alla fine basta rinominarlo).
+/// Viene annotato: se l'app si chiude a metà, al prossimo avvio si cancella.
 pub fn temp_beside(final_path: &Path, ext: &str) -> PathBuf {
     let dir = final_path.parent().unwrap_or(Path::new("."));
     let n = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or(0);
-    dir.join(format!(".orbitlr-{}-{n}.{ext}", std::process::id()))
+    let p = dir.join(format!(".orbitlr-{}-{n}.{ext}", std::process::id()));
+    track_temp(&p, true);
+    p
+}
+
+static REGISTRY: std::sync::Mutex<Option<PathBuf>> = std::sync::Mutex::new(None);
+
+/// Dove annotare i file temporanei (nella cartella dei dati dell'app).
+pub fn set_temp_registry(file: PathBuf) {
+    *REGISTRY.lock().unwrap_or_else(|e| e.into_inner()) = Some(file);
+}
+
+/// Annota (o toglie dall'elenco) un file temporaneo.
+pub fn track_temp(p: &Path, add: bool) {
+    let guard = REGISTRY.lock().unwrap_or_else(|e| e.into_inner());
+    let Some(reg) = guard.as_ref() else { return };
+    let mut list: Vec<String> = std::fs::read_to_string(reg).unwrap_or_default().lines().map(String::from).filter(|l| !l.is_empty()).collect();
+    let s = p.to_string_lossy().to_string();
+    list.retain(|l| l != &s);
+    if add {
+        list.push(s);
+    }
+    let _ = std::fs::write(reg, list.join("\n"));
+}
+
+/// All'avvio: cancella i file temporanei rimasti da una chiusura a metà lavoro (solo i nostri, dal nome).
+pub fn cleanup_leftovers() -> usize {
+    let guard = REGISTRY.lock().unwrap_or_else(|e| e.into_inner());
+    let Some(reg) = guard.as_ref() else { return 0 };
+    let mut n = 0;
+    for l in std::fs::read_to_string(reg).unwrap_or_default().lines() {
+        let p = Path::new(l);
+        let ours = p.file_name().map(|f| f.to_string_lossy().starts_with(".orbitlr-")).unwrap_or(false);
+        if ours && p.is_file() && std::fs::remove_file(p).is_ok() {
+            n += 1;
+        }
+    }
+    let _ = std::fs::remove_file(reg);
+    n
 }
 
 #[cfg(test)]

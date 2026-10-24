@@ -52,6 +52,7 @@ pub fn ffmpeg(
     cmd.args(args);
     cmd.stdout(Stdio::piped()).stderr(Stdio::piped());
     let mut child = cmd.spawn().map_err(|e| EngineError::new(format!("non riesco ad avviare il motore video: {e}")))?;
+    crate::tools::bind_to_app(&child);
     let stdout = child.stdout.take();
     let stderr = child.stderr.take();
     *cancel.0.child.lock().unwrap() = Some(child);

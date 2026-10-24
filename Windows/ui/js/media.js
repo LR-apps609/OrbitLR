@@ -149,7 +149,7 @@ export function mediaPage(kind, app) {
             renderTools();
           } },
           h("span.ic", ico(tool.icon, 18)),
-          h("span", h("b", tool.title, tool.isNew ? h("span.new", "NUOVO") : null), h("span", tooFew ? `Scegli almeno ${tool.min} file` : tool.hint)));
+          h("span.txt", h("b", tool.title, tool.isNew ? h("span.new", "NUOVO") : null), h("span", tooFew ? `Scegli almeno ${tool.min} file` : tool.hint)));
         right.append(btn);
         if (openTool === id && tool.params) right.append(paramsFor(id, actionId, tool));
       }

@@ -131,6 +131,7 @@ fn encode_with_ffmpeg(tools: &Tools, p: &Photo, ext: &str, quality: u8, out: &Pa
         }
     };
     let _ = std::fs::remove_file(&tmp);
+    names::track_temp(&tmp, false);
     r
 }
 

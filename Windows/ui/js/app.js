@@ -7,7 +7,7 @@ import { convertPage } from "./convert.js";
 import { getDrawer, running, subscribe } from "./jobs.js";
 import { mediaPage } from "./media.js";
 import { activityPage, helpPage, report, settingsPage } from "./pages.js";
-import { extOf, fmtBytes, h, ico, store, toast } from "./util.js";
+import { extOf, fmtBytes, h, ico, modal, store, toast } from "./util.js";
 
 const VERSION = "0.1.0";
 
@@ -144,6 +144,31 @@ async function boot() {
     if (!s.ready) toast("Il motore video non si è avviato: reinstalla OrbitLR.");
     if (app.current === "settings") app.pages.settings.show();
   });
+  // Chiudere con dei lavori in corso
+  window.__TAURI__?.event.listen("close-requested", async () => {
+    const n = running().length;
+    const ok = await modal("Ci sono lavori in corso", `${n === 1 ? "Un lavoro non è" : n + " lavori non sono"} ancora finit${n === 1 ? "o" : "i"}. Se chiudi adesso si interrompono e i file a metà vengono cancellati.`,
+      [{ label: "Continua a lavorare", value: false }, { label: "Interrompi e chiudi", value: true, primary: true }]);
+    if (ok) invoke("quit_now");
+  });
+  // File passati all'avvio (Apri con…); nelle prove automatiche anche scheda e azione
+  invoke("startup").then(async (st) => {
+    if (!st || !st.files?.length) return;
+    if (st.tab) {
+      show(st.tab);
+      await app.pages[st.tab].add(st.files);
+    } else {
+      await handleDrop(st.files);
+    }
+    if (st.action) {
+      const { run } = await import("./jobs.js");
+      const probed = await invoke("probe_files", { paths: st.files });
+      const files = probed.filter((p) => p.ok).map((p) => ({ path: p.info.path, name: p.info.name, size: p.info.size }));
+      let param = st.param ?? null;
+      try { param = JSON.parse(param); } catch {}
+      run(st.action, files, param, app.current);
+    }
+  }).catch(() => {});
   setTimeout(() => splash.classList.add("out"), 450);
   setTimeout(() => splash.remove(), 900);
 }

@@ -121,6 +121,8 @@ async function demo(cmd, a) {
       return demoFiles[a.path]?.kind === "image" || demoFiles[a.path]?.kind === "video" ? demoThumb(a.path) : null;
     case "waveform":
       return Array.from({ length: a.points }, (_, i) => Math.abs(Math.sin(i / 7) * 0.6 + Math.sin(i / 2.3) * 0.25) * (i % 50 > 44 ? 0.15 : 1));
+    case "startup":
+      return { files: [] };
     case "files_exist":
       return a.paths.map(() => true);
     case "start_job": {

@@ -11,3 +11,6 @@ image = { version = "0.25", default-features = false, features = ["jpeg", "png",
 fs4 = "1"
 lopdf = "0.46"
 
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_JobObjects", "Win32_System_Threading", "Win32_Security"] }

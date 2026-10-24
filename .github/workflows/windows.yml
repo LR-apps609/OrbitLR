@@ -52,11 +52,14 @@ jobs:
         env:
           ORBIT_MOTORI: ${{ github.workspace }}\Windows\src-tauri\motori
         run: |
-          set -o pipefail
+          set +e
           cargo test -p orbit_engine --release 2>&1 | tee test.log
+          st=${PIPESTATUS[0]}
           echo "::notice::$(grep -E '^test result' test.log | tr '\n' ' ')"
           for t in $(grep -E '^test .* FAILED$' test.log | awk '{print $2}'); do echo "::error::Prova fallita: $t"; done
-          grep -A12 "panicked at" test.log | head -60 | while IFS= read -r l; do echo "::error::$l"; done || true
+          grep -E -A12 "panicked at" test.log | head -80 | while IFS= read -r l; do echo "::error::$l"; done
+          grep -E -A8 "^error(\[|:)" test.log | head -60 | while IFS= read -r l; do echo "::error::$l"; done
+          exit $st
 
       - name: Codificatori di questo computer
         working-directory: Windows
@@ -67,7 +70,12 @@ jobs:
         working-directory: Windows
         run: |
           npm ci --no-audit --no-fund
-          npx tauri build --ci
+          set +e
+          npx tauri build --ci 2>&1 | tee build.log
+          st=${PIPESTATUS[0]}
+          grep -E -A8 "^(error|Error)" build.log | head -60 | while IFS= read -r l; do echo "::error::$l"; done
+          [ $st -eq 0 ] || exit $st
+          set -e
           ls -la target/release/bundle/nsis/
           f=$(ls target/release/bundle/nsis/*.exe | head -n 1)
           cp "$f" "../OrbitLR-Setup.exe"

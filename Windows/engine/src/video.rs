@@ -259,6 +259,16 @@ pub fn compress(
     ensure_space(dir, plan.bytes(info.duration))?;
     let out = names::unique(dir, &format!("{} (compresso)", names::stem(src)), "mp4");
     let tmp = names::temp_beside(&out, "mp4");
+    // Qualsiasi uscita: il temporaneo non resta annotato
+    struct Untrack<'a>(&'a Path);
+    impl Drop for Untrack<'_> {
+        fn drop(&mut self) {
+            if !self.0.exists() {
+                names::track_temp(self.0, false);
+            }
+        }
+    }
+    let _untrack = Untrack(&tmp);
     let attempts = if target.is_some() { 4 } else { 1 };
     let mut factor = 1.0;
     let mut result = Err(EngineError::new("non riesco a comprimere il video"));
@@ -305,8 +315,14 @@ pub fn compress(
             _ => break,
         }
     }
-    result?;
-    std::fs::rename(&tmp, &out)?;
+    if let Err(e) = result {
+        let _ = std::fs::remove_file(&tmp);
+        names::track_temp(&tmp, false);
+        return Err(e);
+    }
+    let r = std::fs::rename(&tmp, &out);
+    names::track_temp(&tmp, false);
+    r?;
     Ok(out)
 }
 

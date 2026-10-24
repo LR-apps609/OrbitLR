@@ -274,6 +274,7 @@ pub fn waveform(tools: &Tools, src: &Path, duration: f64, points: usize) -> Resu
         .stderr(std::process::Stdio::null())
         .spawn()
         .map_err(|e| EngineError::new(format!("non riesco ad avviare il motore audio: {e}")))?;
+    crate::tools::bind_to_app(&child);
     let mut out = child.stdout.take().ok_or_else(|| EngineError::new("nessun audio"))?;
     let mut peaks = vec![0f32; points];
     let mut buf = vec![0u8; 64 * 1024];
