@@ -1,0 +1,81 @@
+# OrbitLR per Windows · motori: ffmpeg in versione LGPL (si può distribuire dentro un'app venduta).
+# Prende la build LGPL di BtbN/FFmpeg-Builds, la prova, e la mette tra i file del nostro repository
+# (release «motori-win-1») con la sua impronta: la compilazione dell'app scarica solo da lì e controlla l'impronta.
+
+name: Motori per Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [motori-win]
+    paths: [.github/workflows/motori-windows.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  ffmpeg:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Scarica la build LGPL
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Una versione stabile (7.1 o 8.x), non «master»; solo LGPL, non «shared»
+          gh api repos/BtbN/FFmpeg-Builds/releases/latest --jq '.tag_name, (.assets[].name)' > assets.txt
+          cat assets.txt
+          NAME=$(grep -E '^ffmpeg-n[0-9]+\.[0-9]+-latest-win64-lgpl-[0-9.]+\.zip$' assets.txt | sort -V | tail -n 1)
+          [ -n "$NAME" ] || { echo "::error::nessuna build LGPL stabile"; exit 1; }
+          echo "Scelgo: $NAME"
+          TAG=$(head -n 1 assets.txt)
+          curl -fL --retry 3 -o ff.zip "https://github.com/BtbN/FFmpeg-Builds/releases/download/$TAG/$NAME"
+          unzip -q ff.zip -d ff
+          DIR=$(ls -d ff/*/ | head -n 1)
+          mkdir -p Motori
+          cp "$DIR/bin/ffmpeg.exe" "$DIR/bin/ffprobe.exe" Motori/
+          cp "$DIR/LICENSE.txt" Motori/LICENZA-ffmpeg.txt 2>/dev/null || true
+          echo "ffmpeg (LGPL) da https://github.com/BtbN/FFmpeg-Builds, release $TAG, file $NAME. Sorgenti: https://ffmpeg.org" > Motori/LEGGIMI.txt
+          echo "NAME=$NAME" >> $GITHUB_ENV
+
+      - name: Controlla e prova
+        run: |
+          set -euo pipefail
+          cd Motori
+          ./ffmpeg.exe -hide_banner -version | head -n 3
+          if ./ffmpeg.exe -hide_banner -buildconf | tr ' ' '\n' | grep -E "enable-gpl|enable-nonfree"; then echo "::error::non deve essere GPL"; exit 1; fi
+          echo "--- codificatori video"; ./ffmpeg.exe -hide_banner -encoders | grep -E "^ V" | grep -Ei "264|265|hevc|av1|vp8|vp9|mf|nvenc|qsv|amf|mjpeg|png|webp|gif|bmp|tiff" || true
+          echo "--- codificatori audio"; ./ffmpeg.exe -hide_banner -encoders | grep -E "^ A" | grep -Ei "aac|mp3|opus|vorbis|flac|pcm_s16le|alac" || true
+          echo "--- filtri"; ./ffmpeg.exe -hide_banner -filters | grep -Ei " (afftdn|loudnorm|highpass|atempo|silenceremove|scale|fps|palettegen|paletteuse|showwavespic) " || true
+          echo "--- formati"; ./ffmpeg.exe -hide_banner -demuxers | grep -Ei "mov|matroska|heif|image2|webp" || true
+          ./ffmpeg.exe -hide_banner -loglevel error -f lavfi -i "sine=frequency=440:duration=1" -c:a libmp3lame prova.mp3
+          ./ffmpeg.exe -hide_banner -loglevel error -f lavfi -i "testsrc=size=320x240:duration=0.1" -frames:v 1 -c:v libwebp prova.webp
+          ./ffmpeg.exe -hide_banner -loglevel error -f lavfi -i "testsrc=size=320x240:duration=1" -c:v libvpx-vp9 -b:v 300k prova.webm
+          ./ffmpeg.exe -hide_banner -loglevel error -f lavfi -i "testsrc=size=320x240:duration=1" -c:v h264_mf prova-mf.mp4 && echo "h264_mf: va" || echo "::warning::h264_mf non va su questo computer di prova"
+          ./ffmpeg.exe -hide_banner -loglevel error -f lavfi -i "testsrc=size=320x240:duration=1" -c:v libopenh264 prova-oh.mp4 && echo "libopenh264: va" || echo "libopenh264: non c'è"
+          ./ffmpeg.exe -hide_banner -loglevel error -f lavfi -i "testsrc=size=320x240:duration=1" -c:v libsvtav1 prova-av1.mp4 && echo "libsvtav1: va" || echo "libsvtav1: non c'è"
+          ./ffmpeg.exe -hide_banner -loglevel error -f lavfi -i "testsrc=size=320x240:duration=1" -c:v libaom-av1 -cpu-used 8 prova-aom.mp4 && echo "libaom: va" || echo "libaom: non c'è"
+          ls -la prova.*
+          rm -f prova*
+
+      - name: Impacchetta
+        run: |
+          set -euo pipefail
+          7z a -tzip motori-win-1.zip Motori >/dev/null
+          sha256sum motori-win-1.zip | tee motori-win-1.sha256
+          du -h motori-win-1.zip
+
+      - name: Tra i file scaricabili
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view motori-win-1 -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create motori-win-1 -R "$GITHUB_REPOSITORY" --prerelease --title "Motori di OrbitLR per Windows (non è un aggiornamento)" \
+              --notes "ffmpeg in versione LGPL per Windows 64 bit, incluso dentro OrbitLR per Windows. Non serve scaricarlo a mano."
+          gh release upload motori-win-1 motori-win-1.zip motori-win-1.sha256 --clobber -R "$GITHUB_REPOSITORY"
