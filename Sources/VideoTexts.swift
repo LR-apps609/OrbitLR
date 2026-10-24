@@ -24,9 +24,25 @@ struct VPText: Codable, Equatable, Identifiable, Sendable {
     var anim = "fade"
     /// «white», «black», «brass», «sage»
     var color = "white"
+    /// 4.0 · «Parola per parola»: quando inizia ogni parola, in secondi dall'inizio del testo
+    /// (dai sottotitoli automatici). Senza tempi, le parole si accendono a intervalli uguali.
+    var wordTimes: [Double]? = nil
 
     static let styles: [(id: String, name: String)] = [("title", "Titolo"), ("subtitle", "Sottotitolo"), ("caption", "Didascalia"), ("big", "Grande")]
-    static let anims: [(id: String, name: String)] = [("fade", "Dissolvenza"), ("slide", "Scorrimento"), ("pop", "Pop"), ("type", "Macchina da scrivere")]
+    static let anims: [(id: String, name: String)] = [("fade", "Dissolvenza"), ("slide", "Scorrimento"), ("pop", "Pop"),
+                                                       ("type", "Macchina da scrivere"), ("word", "Parola per parola")]
+
+    /// 4.0 · La parola accesa in un certo momento (per «Parola per parola»).
+    func wordIndex(at time: Double) -> Int {
+        let n = text.split(whereSeparator: \.isWhitespace).count
+        guard n > 0 else { return 0 }
+        let local = time - start
+        if let w = wordTimes, w.count == n {
+            return max(0, (w.lastIndex { $0 <= local + 0.001 }) ?? 0)
+        }
+        let d = max(0.1, end - start)
+        return min(n - 1, max(0, Int(local / d * Double(n))))
+    }
     static let colors: [(id: String, name: String, rgb: (Double, Double, Double))] = [
         ("white", "Bianco", (1, 1, 1)), ("black", "Nero", (0.08, 0.08, 0.08)),
         ("brass", "Ottone", (0.85, 0.67, 0.38)), ("sage", "Salvia", (0.62, 0.78, 0.63)),
@@ -61,7 +77,8 @@ enum TextRender {
             let n = Int((Double(t.text.count) * min(1, (time - t.start) / total)).rounded(.up))
             shown = String(t.text.prefix(max(1, n)))
         }
-        guard let cg = bitmap(shown, style: t.style, color: t.color, canvas: canvas) else { return nil }
+        let lit = t.anim == "word" ? t.wordIndex(at: time) : nil
+        guard let cg = bitmap(shown, style: t.style, color: t.color, canvas: canvas, highlight: lit) else { return nil }
         var img = CIImage(cgImage: cg)
         let w = img.extent.width, h = img.extent.height
         // Centro sulla tela (Core Image ha l'origine in basso), sempre dentro i bordi
@@ -102,8 +119,8 @@ enum TextRender {
     }
 
     /// Il testo disegnato (con il suo fondo, se il modello lo prevede), alla misura giusta per la tela.
-    static func bitmap(_ text: String, style: String, color: String, canvas: CGSize) -> CGImage? {
-        let key = "\(style)|\(color)|\(Int(canvas.width))x\(Int(canvas.height))|\(text)" as NSString
+    static func bitmap(_ text: String, style: String, color: String, canvas: CGSize, highlight: Int? = nil) -> CGImage? {
+        let key = "\(style)|\(color)|\(Int(canvas.width))x\(Int(canvas.height))|\(highlight ?? -1)|\(text)" as NSString
         if let c = cache.object(forKey: key) { return c }
         let H = min(canvas.height, canvas.width * 1.25)          // nei video verticali il testo non diventa enorme
         let size: CGFloat, weight: NSFont.Weight
@@ -121,7 +138,17 @@ enum TextRender {
         para.alignment = .center
         para.lineBreakMode = .byWordWrapping
         let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: fg, .paragraphStyle: para]
-        let s = NSAttributedString(string: text, attributes: attrs)
+        let m = NSMutableAttributedString(string: text, attributes: attrs)
+        if let h = highlight {
+            // 4.0 · La parola detta adesso si accende (ottone; sui testi già d'ottone, bianca)
+            let lit = color == "brass" ? NSColor.white : NSColor(srgbRed: 0.98, green: 0.78, blue: 0.36, alpha: 1)
+            // Le parole contate come in wordIndex: pezzi separati da spazi («l’acqua,» è una parola sola)
+            if let re = try? NSRegularExpression(pattern: "\\S+") {
+                let all = re.matches(in: text, range: NSRange(location: 0, length: (text as NSString).length))
+                if all.indices.contains(h) { m.addAttribute(.foregroundColor, value: lit, range: all[h].range) }
+            }
+        }
+        let s: NSAttributedString = m
         let maxW = canvas.width * 0.88
         let box = style == "subtitle" || style == "caption"
         let padX = box ? font.pointSize * 0.55 : font.pointSize * 0.25

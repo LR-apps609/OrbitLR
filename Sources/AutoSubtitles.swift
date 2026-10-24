@@ -21,6 +21,8 @@ enum AutoSubtitles {
         let text: String
         let start: Double
         let end: Double
+        /// 4.0 · Quando inizia ogni parola della riga (secondi, sulla stessa scala di start/end)
+        var wordStarts: [Double] = []
     }
 
     /// Una riga si chiude dopo 7 parole, 42 caratteri, 3,5 secondi, una pausa lunga o un punto.
@@ -34,7 +36,7 @@ enum AutoSubtitles {
             guard let a = cur.first, let b = cur.last else { return }
             let text = cur.map(\.text).joined(separator: " ")
             // Ogni riga resta almeno 1 secondo, per dare il tempo di leggerla
-            out.append(Line(text: text, start: a.start, end: max(b.end, a.start + 1)))
+            out.append(Line(text: text, start: a.start, end: max(b.end, a.start + 1), wordStarts: cur.map(\.start)))
             cur = []
         }
         for w in words where !w.text.trimmingCharacters(in: .whitespaces).isEmpty {
@@ -50,7 +52,7 @@ enum AutoSubtitles {
         flush()
         // Righe che si accavallano (per il secondo minimo): la precedente finisce dove inizia la nuova
         for i in out.indices.dropLast() where out[i].end > out[i + 1].start {
-            out[i] = Line(text: out[i].text, start: out[i].start, end: max(out[i].start + 0.3, out[i + 1].start))
+            out[i] = Line(text: out[i].text, start: out[i].start, end: max(out[i].start + 0.3, out[i + 1].start), wordStarts: out[i].wordStarts)
         }
         return out
     }
@@ -61,7 +63,8 @@ enum AutoSubtitles {
             let a = max(l.start, clip.inPoint), b = min(l.end, clip.outPoint)
             guard b - a > 0.15 else { return nil }
             return Line(text: l.text, start: clipStart + (a - clip.inPoint) / clip.speed,
-                        end: clipStart + (b - clip.inPoint) / clip.speed)
+                        end: clipStart + (b - clip.inPoint) / clip.speed,
+                        wordStarts: l.wordStarts.map { clipStart + (max($0, clip.inPoint) - clip.inPoint) / clip.speed })
         }
     }
 
@@ -74,7 +77,10 @@ enum AutoSubtitles {
             t.start = l.start
             t.end = l.end
             t.y = 0.86
-            t.anim = "fade"
+            // 4.0 · Come nei video dei social: la parola detta si accende
+            t.anim = "word"
+            let n = l.text.split(whereSeparator: \.isWhitespace).count
+            if l.wordStarts.count == n { t.wordTimes = l.wordStarts.map { max(0, $0 - l.start) } }
             t.color = "white"
             return t
         }

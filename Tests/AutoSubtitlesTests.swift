@@ -42,3 +42,42 @@ final class AutoSubtitlesTests: XCTestCase {
         XCTAssertGreaterThan(texts[0].y, 0.8, "in basso")
     }
 }
+
+/// 4.0 · Sottotitoli «Parola per parola»: si accende la parola detta in quel momento.
+final class WordHighlightTests: XCTestCase {
+    func testConITempiDelleParole() {
+        var t = VPText()
+        t.text = "Ciao a tutti."; t.start = 10; t.end = 12; t.anim = "word"
+        t.wordTimes = [0, 0.5, 0.7]
+        XCTAssertEqual(t.wordIndex(at: 10.1), 0)
+        XCTAssertEqual(t.wordIndex(at: 10.55), 1)
+        XCTAssertEqual(t.wordIndex(at: 11.9), 2)
+    }
+
+    func testSenzaTempiAIntervalliUguali() {
+        var t = VPText()
+        t.text = "uno due tre quattro"; t.start = 0; t.end = 4; t.anim = "word"
+        XCTAssertEqual(t.wordIndex(at: 0.5), 0)
+        XCTAssertEqual(t.wordIndex(at: 2.5), 2)
+        XCTAssertEqual(t.wordIndex(at: 3.99), 3)
+    }
+
+    func testISottotitoliAutomaticiLiUsano() {
+        let ws = [AutoSubtitles.Word(text: "Ciao", start: 1, end: 1.3), AutoSubtitles.Word(text: "mondo.", start: 1.4, end: 1.8)]
+        let texts = AutoSubtitles.texts(AutoSubtitles.lines(ws))
+        XCTAssertEqual(texts.first?.anim, "word")
+        XCTAssertEqual(texts.first?.wordTimes ?? [], [0, 0.4], accuracy: 0.001)
+    }
+
+    func testLaParolaAccesaCambiaIlDisegno() {
+        let a = TextRender.bitmap("Ciao mondo", style: "subtitle", color: "white", canvas: CGSize(width: 1280, height: 720), highlight: 0)
+        let b = TextRender.bitmap("Ciao mondo", style: "subtitle", color: "white", canvas: CGSize(width: 1280, height: 720), highlight: 1)
+        XCTAssertNotNil(a); XCTAssertNotNil(b)
+        XCTAssertFalse(a === b, "due disegni diversi")
+    }
+}
+
+private func XCTAssertEqual(_ a: [Double], _ b: [Double], accuracy: Double, file: StaticString = #filePath, line: UInt = #line) {
+    XCTAssertEqual(a.count, b.count, file: file, line: line)
+    for (x, y) in zip(a, b) { XCTAssertEqual(x, y, accuracy: accuracy, file: file, line: line) }
+}
