@@ -1,5 +1,6 @@
 import Foundation
 import AVFoundation
+import AppKit
 
 // ════════════════════════════════════════════════════════════════════
 //  4.0 · «Togli i silenzi» nel montaggio: le pause lunghe spariscono da sole,
