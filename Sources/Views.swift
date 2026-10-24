@@ -958,9 +958,9 @@ struct SettingsView: View {
                         }
                     }
                     Toggle("Suoni discreti (clic, scatto, fine lavoro)", isOn: $draft.sounds)
-                    Picker("Opzioni nei pannelli", selection: $draft.controlStyle) {
-                        Text("Elenco (più rapido)").tag("list")
-                        Text("Manopole (stile radio)").tag("knob")
+                    Picker("Come scegli le opzioni", selection: $draft.controlStyle) {
+                        Text("Da un elenco").tag("list")
+                        Text("Con le manopole d’ottone").tag("knob")
                     }
                 }
                 Section("Avvio") {
@@ -973,7 +973,7 @@ struct SettingsView: View {
                 Section {
                     DisclosureGroup("Avanzate", isExpanded: $advanced) {
                         Toggle("Animazione di avvio", isOn: $draft.splash)
-                        Toggle("Usa i motori di macOS quando possibile", isOn: $draft.useNative)
+                        Toggle("Lascia fare a macOS quando può (consigliato)", isOn: $draft.useNative)
                         Text("Immagini, MP4, MOV e M4A li fa direttamente macOS: più veloce e senza programmi da installare. Disattivalo solo se un risultato non ti convince.")
                             .font(.caption).foregroundStyle(.secondary)
                         Toggle("Motore video classico (senza filtri)", isOn: $classicVideo)
@@ -1003,27 +1003,17 @@ struct SettingsView: View {
             .id(settings.palette)          // ridisegna con i colori del nuovo tema
 
             HStack(spacing: 10) {
-                if changed {
-                    Label("Modifiche non ancora applicate", systemImage: "circle.fill")
-                        .font(.system(size: 12)).foregroundStyle(Theme.brass)
-                } else if saved {
-                    Label("Modifiche salvate", systemImage: "checkmark.circle.fill")
+                // 3.9 · Come in tutto il Mac: ogni scelta vale subito, senza «Applica»
+                if saved {
+                    Label("Salvato", systemImage: "checkmark.circle.fill")
                         .font(.system(size: 12)).foregroundStyle(Theme.green)
+                        .transition(.opacity)
                 }
                 Spacer()
-                Button(changed ? "Scarta" : "Chiudi") {
-                    if changed { draft = settings.draft } else { NSApp.keyWindow?.close() }
-                }
-                .keyboardShortcut(.cancelAction)
-                .help(changed ? "Butta le modifiche non applicate" : "Chiudi le Opzioni")
-                Button("Applica") {
-                    settings.apply(draft)
-                    withAnimation { saved = true }
-                }
-                .keyboardShortcut(.defaultAction)
-                .buttonStyle(.borderedProminent)
-                .tint(Theme.accent)
-                .disabled(!changed)
+                Button("Chiudi") { NSApp.keyWindow?.close() }
+                    .keyboardShortcut(.defaultAction)
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.accent)
             }
             .padding(.horizontal, 20).padding(.vertical, 14)
             .background(Theme.parchment.opacity(0.45))
@@ -1032,7 +1022,11 @@ struct SettingsView: View {
         .background(Theme.cream)
         .foregroundStyle(Theme.ink)
         .onAppear { settings.refresh(); draft = settings.draft; saved = false }
-        .onChange(of: draft) { _, _ in if changed { saved = false } }
+        .onChange(of: draft) { _, _ in
+            guard changed else { return }
+            settings.apply(draft)
+            withAnimation(Motion.quick) { saved = true }
+        }
     }
 
     private func chooseFolder() {
