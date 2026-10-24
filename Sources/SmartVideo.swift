@@ -449,6 +449,7 @@ enum SmartVideo {
             try ensureSpace(in: out.deletingLastPathComponent(), for: p.bytes(duration: src.duration))
             try await encode(asset: asset, track: track, source: src, plan: p, out: out, job: job, progress: { progress($0 * 0.97) })
             let got = Job.size(of: out)
+            if let t = targetBytes { print("TEMPO: comprimi tentativo 1: \(got / 1000) KB su \(t / 1000) KB (\(p.width)×\(p.height), \(p.videoBitrate / 1000) kbps)") }
             if let t = targetBytes, got > t {
                 // Il chip ha usato più dati del previsto (capita con immagini piene di dettagli minuti).
                 // Fino a due giri in più: si chiede meno in proporzione e, se si era sforato di molto,
@@ -465,6 +466,7 @@ enum SmartVideo {
                     try await encode(asset: asset, track: track, source: src, plan: p, out: out, job: job,
                                      progress: { _ in progress(base) })
                     last = Job.size(of: out)
+                    print("TEMPO: comprimi tentativo \(attempt + 1): \(last / 1000) KB su \(t / 1000) KB (\(p.width)×\(p.height), \(p.videoBitrate / 1000) kbps)")
                     if last <= t { break }
                 }
                 if last > t {
