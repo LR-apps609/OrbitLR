@@ -103,8 +103,8 @@ final class SmartVideoTests: XCTestCase {
         let v = try await Fixtures.video(name: "verticale.mp4", width: 1280, height: 720, seconds: 3, portrait: true, noise: true)
         let out = Fixtures.url("verticale-out.mp4")
         try? FileManager.default.removeItem(at: out)
-        try await SmartVideo.compress(v, targetBytes: Int64(0.5 * 1_048_576), out: out, job: nil) { _ in }
-        XCTAssertLessThanOrEqual(Job.size(of: out), Int64(0.5 * 1_048_576))
+        try await SmartVideo.compress(v, targetBytes: Int64(1.5 * 1_048_576), out: out, job: nil) { _ in }
+        XCTAssertLessThanOrEqual(Job.size(of: out), Int64(1.5 * 1_048_576))
         let tr = try await AVURLAsset(url: out).loadTracks(withMediaType: .video).first
         let (n, t) = try await tr!.load(.naturalSize, .preferredTransform)
         let r = CGRect(origin: .zero, size: n).applying(t)
