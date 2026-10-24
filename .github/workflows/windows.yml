@@ -114,7 +114,10 @@ jobs:
           ./Windows/target/release/orbitlr.exe &
           pid=$!
           sleep 12
-          if kill -0 $pid 2>/dev/null; then echo "::notice::L'app si avvia e resta aperta"; kill $pid || true; else echo "::error::L'app si è chiusa da sola"; exit 1; fi
+          if kill -0 $pid 2>/dev/null; then echo "::notice::L'app si avvia e resta aperta"; else echo "::error::L'app si è chiusa da sola"; exit 1; fi
+          # Chiusa davvero (OrbitLR è una sola: un'altra aperta dopo passerebbe i file a questa)
+          taskkill //IM orbitlr.exe //F || true
+          sleep 2
 
       - name: Foto dell'app (con un lavoro vero dall'inizio alla fine)
         continue-on-error: true
@@ -122,6 +125,8 @@ jobs:
         run: |
           # Un video di prova, poi l'app lo apre da sola nella scheda Video e lo comprime
           & ".\Windows\src-tauri\motori\ffmpeg.exe" -hide_banner -loglevel error -y -f lavfi -i "testsrc2=size=1280x720:rate=30:duration=8" -f lavfi -i "sine=frequency=440:duration=8" -c:v h264_mf -b:v 6M -pix_fmt nv12 -c:a aac -shortest "$env:RUNNER_TEMP\Gita al lago.mp4"
+          Get-Process orbitlr -ErrorAction SilentlyContinue | Stop-Process -Force
+          Start-Sleep -Seconds 1
           (New-Object -ComObject Shell.Application).MinimizeAll()
           Start-Sleep -Seconds 1
           $env:ORBIT_PROVA_FILE = "$env:RUNNER_TEMP\Gita al lago.mp4"
