@@ -33,7 +33,7 @@ final class IdentityTests: XCTestCase {
     func testStrumentiAudioCompleti() {
         // Quello che è uscito dalla torta per l'audio c'è nella scheda Audio
         let ids = Set(AudioTool.allCases.map { $0.rawValue })
-        for t in ["cut", "normalize", "speed", "silence", "transcribe", "ringtone", "whatsapp", "merge"] {
+        for t in ["cut", "normalize", "voiceclean", "speed", "silence", "transcribe", "ringtone", "whatsapp", "merge"] {
             XCTAssertTrue(ids.contains(t), "manca \(t) nella scheda Audio")
         }
     }
