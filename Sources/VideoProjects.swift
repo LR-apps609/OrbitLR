@@ -222,10 +222,16 @@ struct VideoProjectsView: View {
                 MediaDropZone(kind: .video, title: "Trascina qui i video",
                               subtitle: "si apre un progetto nuovo · MP4, MOV, M4V · più video vanno in fila",
                               targeted: targeted) { s.newProject(undo) }
+                // 3.9 · Per TikTok, Reels e Shorts si parte già in verticale
+                Button { s.newProject(undo, vertical: true) } label: {
+                    Label("Inizia un progetto verticale 9:16 · TikTok, Reels, Shorts", systemImage: "rectangle.portrait")
+                }
+                .buttonStyle(.link)
             } else {
                 ScrollView {
                     LazyVGrid(columns: columns, alignment: .leading, spacing: 14) {
                         NewProjectCard(tint: tint, targeted: targeted) { s.newProject(undo) }
+                        NewProjectCard(tint: tint, targeted: false, vertical: true) { s.newProject(undo, vertical: true) }
                         ForEach(s.library) { e in
                             ProjectCard(entry: e, cover: s.covers[e.id], tint: tint,
                                         open: { s.openProject(e.id, undo: undo) },
@@ -277,6 +283,8 @@ struct VideoProjectsView: View {
 private struct NewProjectCard: View {
     let tint: Color
     let targeted: Bool
+    /// 3.9 · La scheda «Nuovo verticale» (9:16)
+    var vertical = false
     let action: () -> Void
     @State private var hover = false
 
@@ -285,10 +293,10 @@ private struct NewProjectCard: View {
             VStack(spacing: 10) {
                 ZStack {
                     Circle().fill(tint.opacity(0.16)).frame(width: 54, height: 54)
-                    Image(systemName: "plus").font(.system(size: 22, weight: .bold)).foregroundStyle(tint)
+                    Image(systemName: vertical ? "rectangle.portrait" : "plus").font(.system(size: 22, weight: .bold)).foregroundStyle(tint)
                 }
-                Text("Nuovo progetto").font(.system(size: 13, weight: .semibold))
-                Text("o trascina qui dei video").font(.system(size: 11.5)).foregroundStyle(.secondary)
+                Text(vertical ? "Nuovo verticale 9:16" : "Nuovo progetto").font(.system(size: 13, weight: .semibold))
+                Text(vertical ? "TikTok, Reels, Shorts" : "o trascina qui dei video").font(.system(size: 11.5)).foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity).frame(height: 178)
             .background(RoundedRectangle(cornerRadius: 14).fill(hover || targeted ? Theme.cardHover : Theme.card))

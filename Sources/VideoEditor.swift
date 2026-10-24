@@ -528,9 +528,11 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     }
 
     /// 2.7.3 · Apre un progetto nuovo e vuoto (quello aperto resta salvato tra i Progetti).
-    func newProject(_ undo: UndoManager?) {
+    /// 3.9 · `vertical`: parte già in 9:16 (TikTok, Reels, Shorts), a 1080p.
+    func newProject(_ undo: UndoManager?, vertical: Bool = false) {
         closeProject(undo)
         var p = VideoProject()
+        if vertical { p.aspect = "9x16"; p.resolution = 1080; p.fps = 30 }
         p.name = VideoProjectLibrary.uniqueName(existing: library.map { $0.name })
         currentID = UUID()
         project = p
@@ -754,6 +756,30 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         if let m = p.music, !fm.fileExists(atPath: m.path) { p.music = nil; lost.append("la musica") }
         guard !lost.isEmpty else { return nil }
         return "Non trovo più \(lost.joined(separator: " e ")) del progetto: il file è stato cancellato o è su un disco scollegato."
+    }
+}
+
+/// 3.9 · Le impostazioni giuste per ogni social, in un clic.
+struct SocialPreset {
+    let id: String, name: String, hint: String
+    let aspect: String?, resolution: Int, fps: Int
+
+    static let all: [SocialPreset] = [
+        SocialPreset(id: "tiktok", name: "TikTok", hint: "Verticale 9:16, Full HD", aspect: "9x16", resolution: 1080, fps: 30),
+        SocialPreset(id: "reels", name: "Reels", hint: "Instagram e Facebook: verticale 9:16, Full HD", aspect: "9x16", resolution: 1080, fps: 30),
+        SocialPreset(id: "shorts", name: "Shorts", hint: "YouTube Shorts: verticale 9:16, Full HD", aspect: "9x16", resolution: 1080, fps: 30),
+        SocialPreset(id: "youtube", name: "YouTube", hint: "Orizzontale 16:9, Full HD", aspect: "16x9", resolution: 1080, fps: 30),
+        SocialPreset(id: "whatsapp", name: "WhatsApp", hint: "Forma originale, HD 720p: leggero da mandare, nitido sul telefono", aspect: nil, resolution: 720, fps: 30),
+    ]
+
+    func apply(_ p: inout VideoProject) {
+        if let a = aspect { p.aspect = a }
+        p.resolution = resolution
+        p.fps = fps
+    }
+
+    func matches(_ p: VideoProject) -> Bool {
+        (aspect == nil ? p.aspect == "orig" : p.aspect == aspect) && p.resolution == resolution && p.fps == fps
     }
 }
 
@@ -1109,6 +1135,16 @@ struct VideoEditorView: View {
     }
 
     @ViewBuilder private var formatOptions: some View {
+        // 3.9 · Pronto per…: un clic imposta forma, qualità e fluidità giuste per dove va il video
+        SectionLabel(text: "Pronto per")
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 6)], alignment: .leading, spacing: 6) {
+            ForEach(SocialPreset.all, id: \.id) { preset in
+                Chip(title: preset.name, selected: preset.matches(s.project), tint: tint) {
+                    s.change(undo, "Pronto per \(preset.name)") { preset.apply(&$0) }
+                }
+                .help(preset.hint)
+            }
+        }
         SectionLabel(text: "Forma")
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 6)], alignment: .leading, spacing: 6) {
             ForEach([("orig", "Originale"), ("9x16", "9:16 Reels"), ("1x1", "1:1 Post"), ("4x5", "4:5 Feed"), ("16x9", "16:9 YouTube")], id: \.0) { item in

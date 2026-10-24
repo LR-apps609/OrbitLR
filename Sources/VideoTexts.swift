@@ -27,6 +27,11 @@ struct VPText: Codable, Equatable, Identifiable, Sendable {
     /// 4.0 · «Parola per parola»: quando inizia ogni parola, in secondi dall'inizio del testo
     /// (dai sottotitoli automatici). Senza tempi, le parole si accendono a intervalli uguali.
     var wordTimes: [Double]? = nil
+    /// 3.9 · Come si accende la parola detta: «color» (colorata), «box» (evidenziata), «big» (più grande),
+    /// «under» (sottolineata). nil = colorata, come nella 3.8.
+    var wordStyle: String? = nil
+
+    static let wordStyles: [(id: String, name: String)] = [("color", "Colorata"), ("box", "Evidenziata"), ("big", "Più grande"), ("under", "Sottolineata")]
 
     static let styles: [(id: String, name: String)] = [("title", "Titolo"), ("subtitle", "Sottotitolo"), ("caption", "Didascalia"), ("big", "Grande")]
     static let anims: [(id: String, name: String)] = [("fade", "Dissolvenza"), ("slide", "Scorrimento"), ("pop", "Pop"),
@@ -100,7 +105,7 @@ enum TextRender {
             shown = String(t.text.prefix(max(1, n)))
         }
         let lit = t.anim == "word" ? t.wordIndex(at: time) : nil
-        guard let cg = bitmap(shown, style: t.style, color: t.color, canvas: canvas, highlight: lit) else { return nil }
+        guard let cg = bitmap(shown, style: t.style, color: t.color, canvas: canvas, highlight: lit, wordStyle: t.wordStyle) else { return nil }
         var img = CIImage(cgImage: cg)
         let w = img.extent.width, h = img.extent.height
         // Centro sulla tela (Core Image ha l'origine in basso), sempre dentro i bordi
@@ -141,8 +146,9 @@ enum TextRender {
     }
 
     /// Il testo disegnato (con il suo fondo, se il modello lo prevede), alla misura giusta per la tela.
-    static func bitmap(_ text: String, style: String, color: String, canvas: CGSize, highlight: Int? = nil) -> CGImage? {
-        let key = "\(style)|\(color)|\(Int(canvas.width))x\(Int(canvas.height))|\(highlight ?? -1)|\(text)" as NSString
+    static func bitmap(_ text: String, style: String, color: String, canvas: CGSize, highlight: Int? = nil, wordStyle: String? = nil) -> CGImage? {
+        let ws = highlight == nil ? "" : (wordStyle ?? "color")
+        let key = "\(style)|\(color)|\(Int(canvas.width))x\(Int(canvas.height))|\(highlight ?? -1)|\(ws)|\(text)" as NSString
         if let c = cache.object(forKey: key) { return c }
         let H = min(canvas.height, canvas.width * 1.25)          // nei video verticali il testo non diventa enorme
         let size: CGFloat, weight: NSFont.Weight
@@ -161,12 +167,30 @@ enum TextRender {
         para.lineBreakMode = .byWordWrapping
         let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: fg, .paragraphStyle: para]
         let m = NSMutableAttributedString(string: text, attributes: attrs)
+        // 4.0 · La parola detta adesso si accende (ottone; sui testi già d'ottone, bianca)
+        let lit = color == "brass" ? NSColor.white : NSColor(srgbRed: 0.98, green: 0.78, blue: 0.36, alpha: 1)
+        var litRange: NSRange? = nil
         if let h = highlight {
-            // 4.0 · La parola detta adesso si accende (ottone; sui testi già d'ottone, bianca)
-            let lit = color == "brass" ? NSColor.white : NSColor(srgbRed: 0.98, green: 0.78, blue: 0.36, alpha: 1)
             // Le parole contate come in wordIndex: pezzi separati da spazi («l’acqua,» è una parola sola)
             let all = VPText.wordRanges(text)
-            if all.indices.contains(h) { m.addAttribute(.foregroundColor, value: lit, range: NSRange(all[h], in: text)) }
+            if all.indices.contains(h) {
+                let r = NSRange(all[h], in: text)
+                litRange = r
+                switch ws {
+                case "box":
+                    // 3.9 · Evidenziata: la parola su un riquadro colorato (disegnato sotto), scritta scura
+                    m.addAttribute(.foregroundColor, value: NSColor(white: 0.08, alpha: 1), range: r)
+                case "big":
+                    // 3.9 · Più grande: la parola cresce e diventa più spessa
+                    let bigBase = NSFont.systemFont(ofSize: font.pointSize * 1.25, weight: .black)
+                    let big = bigBase.fontDescriptor.withDesign(.rounded).flatMap { NSFont(descriptor: $0, size: bigBase.pointSize) } ?? bigBase
+                    m.addAttributes([.font: big, .foregroundColor: lit], range: r)
+                case "under":
+                    m.addAttributes([.foregroundColor: lit, .underlineStyle: NSUnderlineStyle.thick.rawValue, .underlineColor: lit], range: r)
+                default:
+                    m.addAttribute(.foregroundColor, value: lit, range: r)
+                }
+            }
         }
         let s: NSAttributedString = m
         let maxW = canvas.width * 0.88
@@ -192,6 +216,32 @@ enum TextRender {
             sh.shadowBlurRadius = font.pointSize * 0.12
             sh.shadowOffset = NSSize(width: 0, height: -font.pointSize * 0.04)
             sh.set()
+        }
+        if ws == "box", let lr = litRange {
+            // Dove sta la parola: la stessa impaginazione del testo, con l'origine in alto
+            let storage = NSTextStorage(attributedString: s)
+            let lm = NSLayoutManager()
+            let tc = NSTextContainer(size: CGSize(width: CGFloat(w) - padX * 2, height: .greatestFiniteMagnitude))
+            tc.lineFragmentPadding = 0
+            lm.addTextContainer(tc)
+            storage.addLayoutManager(lm)
+            let glyphs = lm.glyphRange(forCharacterRange: lr, actualCharacterRange: nil)
+            let wr = lm.boundingRect(forGlyphRange: glyphs, in: tc)
+            let used = lm.usedRect(for: tc)
+            // Righe centrate: lo spostamento tra il riquadro usato e la larghezza disponibile è già dentro wr
+            let px = font.pointSize * 0.12, py = font.pointSize * 0.02
+            let rect = NSRect(x: padX + wr.minX - px, y: padY + (max(used.height, r.height) - wr.maxY) - py,
+                              width: wr.width + px * 2, height: wr.height + py * 2)
+            NSShadow().set()            // il riquadro senza ombra
+            lit.setFill()
+            NSBezierPath(roundedRect: rect, xRadius: font.pointSize * 0.22, yRadius: font.pointSize * 0.22).fill()
+            if !box {
+                let sh = NSShadow()
+                sh.shadowColor = color == "black" ? NSColor(white: 1, alpha: 0.5) : NSColor(white: 0, alpha: 0.55)
+                sh.shadowBlurRadius = font.pointSize * 0.12
+                sh.shadowOffset = NSSize(width: 0, height: -font.pointSize * 0.04)
+                sh.set()
+            }
         }
         s.draw(with: NSRect(x: padX, y: padY, width: CGFloat(w) - padX * 2, height: r.height),
                options: [.usesLineFragmentOrigin, .usesFontLeading])
@@ -304,6 +354,15 @@ struct TextOptions: View {
                         ForEach(VPText.anims, id: \.id) { Text($0.name).tag($0.id) }
                     }
                     .labelsHidden().frame(width: 150)
+                }
+                if t.anim == "word" {
+                    row("Parola detta") {
+                        Picker("", selection: Binding(get: { t.wordStyle ?? "color" }, set: { v in edit("Stile della parola detta") { $0.wordStyle = v } })) {
+                            ForEach(VPText.wordStyles, id: \.id) { Text($0.name).tag($0.id) }
+                        }
+                        .labelsHidden().frame(width: 150)
+                        .help("Come si accende la parola mentre viene detta")
+                    }
                 }
                 row("Colore") {
                     HStack(spacing: 6) {

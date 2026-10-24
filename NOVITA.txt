@@ -1,3 +1,9 @@
+Novità della 3.9 «Social»:
+• Logo nuovo: la torta di Orbit, nitida a ogni grandezza
+• Video: «Pronto per» TikTok, Reels, Shorts, YouTube e WhatsApp. Un clic imposta forma, qualità e fluidità giuste
+• Video: «Nuovo verticale 9:16» tra i Progetti, per partire subito in verticale
+• Sottotitoli «Parola per parola» in 4 stili: la parola detta colorata, evidenziata su un riquadro, più grande o sottolineata
+
 Novità della 3.8 «Autonoma e chiara»:
 • Niente più Homebrew per le cose di tutti i giorni: il motore audio e video (ffmpeg, versione libera LGPL) è dentro OrbitLR, per Apple Silicon e Intel
 • Video: «Togli i silenzi» nel montaggio. Clicca la clip: restano solo i pezzi in cui si parla, con tagli netti; testi e sottotitoli seguono i tagli. ⌘Z per tornare indietro
