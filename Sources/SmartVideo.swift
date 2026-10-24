@@ -69,7 +69,8 @@ enum SmartVideo {
 
         if let target = targetBytes {
             let budget = Double(target) * 8 * 0.95 / s.duration           // bit al secondo, con margine per il contenitore
-            let abps: Int = budget >= 1_500_000 ? 128_000 : budget >= 500_000 ? 96_000 : 64_000
+            // Senza audio, tutti i dati vanno all'immagine
+            let abps: Int = s.audioBitrate <= 0 && !s.audioIsAAC ? 0 : budget >= 1_500_000 ? 128_000 : budget >= 500_000 ? 96_000 : 64_000
             var vbps = budget - Double(abps)
             guard vbps >= 120_000 else { return .tooLong }
             // Mai più dati dell'originale, mai più di quanto serve per sembrare identico
@@ -77,7 +78,8 @@ enum SmartVideo {
             let cap = Double(full.0 * full.1) * fps * transparentBitsPerPixel(codec)
             vbps = min(vbps, cap, s.videoBitrate > 0 ? s.videoBitrate : .infinity)
             // Prima si rinuncia ai fotogrammi in più (60 → 30), poi alla risoluzione
-            if fps > 31, vbps / (Double(full.0 * full.1) * fps) < minBitsPerPixel(codec) { fps = 30 }
+            // (la metà esatta: 60 → 30, 50 → 25, 59,94 → 29,97, così il movimento resta regolare)
+            if fps > 31, vbps / (Double(full.0 * full.1) * fps) < minBitsPerPixel(codec) { fps = fps / 2 }
             // Prima la misura originale, poi i gradini più piccoli: si scende solo se i dati non bastano
             let candidates = [srcShort] + shortSides.filter { $0 < srcShort - 1 }
             var chosen = size(candidates.last!)
@@ -143,8 +145,11 @@ enum SmartVideo {
 
     /// Prima di partire: c'è posto per il risultato? (Meglio dirlo subito che fallire dopo mezz'ora.)
     static func ensureSpace(in dir: URL, for bytes: Int64) throws {
-        let free = (try? dir.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]).volumeAvailableCapacityForImportantUsage) ?? nil
-        guard let free else { return }
+        let v = try? dir.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey, .volumeAvailableCapacityKey])
+        // Alcuni dischi esterni o di rete non dicono lo spazio «importante»: si usa quello normale
+        var free = v?.volumeAvailableCapacityForImportantUsage ?? 0
+        if free <= 0 { free = Int64(v?.volumeAvailableCapacity ?? 0) }
+        guard free > 0 else { return }
         let need = Int64(Double(bytes) * 1.15) + 200_000_000
         if free < need {
             throw NativeError("spazio libero insufficiente: servono circa \(Fmt.bytes(need)), ce ne sono \(Fmt.bytes(free)). Libera un po' di spazio e riprova")
@@ -186,7 +191,22 @@ enum SmartVideo {
                        progress: @escaping (Double) -> Void) async throws {
         try? FileManager.default.removeItem(at: out)
         let keepHDR = source.hdr && plan.codec == .hevc
-        let comp = try await AVMutableVideoComposition.videoComposition(withPropertiesOf: asset)
+        // Una composizione fatta a mano: solo questa traccia, raddrizzata (anche i video girati dell'iPhone)
+        // e già alla misura finale. Così la misura è sempre esatta e il contenuto mai tagliato o stirato.
+        let (natural, pt, timeRange) = try await track.load(.naturalSize, .preferredTransform, .timeRange)
+        let box = CGRect(origin: .zero, size: natural).applying(pt)
+        guard abs(box.width) > 0, abs(box.height) > 0 else { throw NativeError("dimensioni del video non valide") }
+        let fit = pt.concatenating(CGAffineTransform(translationX: -box.minX, y: -box.minY))
+                    .concatenating(CGAffineTransform(scaleX: CGFloat(plan.width) / abs(box.width), y: CGFloat(plan.height) / abs(box.height)))
+        let layer = AVMutableVideoCompositionLayerInstruction(assetTrack: track)
+        layer.setTransform(fit, at: .zero)
+        let instruction = AVMutableVideoCompositionInstruction()
+        let assetDuration = try await asset.load(.duration)
+        instruction.timeRange = CMTimeRange(start: .zero, end: max(timeRange.end, assetDuration))
+        instruction.layerInstructions = [layer]
+        let comp = AVMutableVideoComposition()
+        comp.instructions = [instruction]
+        comp.renderSize = CGSize(width: plan.width, height: plan.height)
         comp.frameDuration = CMTime(seconds: 1 / max(1, plan.fps), preferredTimescale: 60_000)
         if keepHDR {
             comp.colorPrimaries = AVVideoColorPrimaries_ITU_R_2020
@@ -229,7 +249,6 @@ enum SmartVideo {
             AVVideoCodecKey: codecType,
             AVVideoWidthKey: plan.width,
             AVVideoHeightKey: plan.height,
-            AVVideoScalingModeKey: AVVideoScalingModeResizeAspect,
             AVVideoCompressionPropertiesKey: compression,
         ]
         settings[AVVideoColorPropertiesKey] = keepHDR ? [
@@ -270,12 +289,14 @@ enum SmartVideo {
             let w = try AVAssetWriter(outputURL: out, fileType: fileType)
             w.shouldOptimizeForNetworkUse = true
             w.metadata = metadata
+            // Prima si chiede se il Mac sa scrivere così: impostazioni non accettate farebbero chiudere l'app
+            guard w.canApply(outputSettings: settings, forMediaType: .video) else { throw NativeError("questo Mac non sa scrivere questo formato video") }
             let v = AVAssetWriterInput(mediaType: .video, outputSettings: settings)
             v.expectsMediaDataInRealTime = false
             guard w.canAdd(v) else { throw NativeError("questo Mac non sa scrivere questo formato video") }
             w.add(v)
             var a: AVAssetWriterInput? = nil
-            if aOut != nil {
+            if aOut != nil, audioSettings == nil || w.canApply(outputSettings: audioSettings, forMediaType: .audio) {
                 let i = AVAssetWriterInput(mediaType: .audio, outputSettings: audioSettings, sourceFormatHint: audioHint)
                 i.expectsMediaDataInRealTime = false
                 if w.canAdd(i) { w.add(i); a = i }
@@ -298,7 +319,21 @@ enum SmartVideo {
         writer.startSession(atSourceTime: .zero)
 
         let total = max(source.duration, 0.001)
-        final class State: @unchecked Sendable { var failed = false }
+        /// Lo stato condiviso tra le code, sempre sotto chiave.
+        final class State: @unchecked Sendable {
+            private let lock = NSLock(); private var _failed = false; private var lastStep = -1
+            var failed: Bool {
+                get { lock.lock(); defer { lock.unlock() }; return _failed }
+                set { lock.lock(); _failed = newValue; lock.unlock() }
+            }
+            /// Vero solo quando l'avanzamento sale di almeno 1% (niente migliaia di aggiornamenti al secondo).
+            func step(_ f: Double) -> Bool {
+                let k = Int(f * 100)
+                lock.lock(); defer { lock.unlock() }
+                if k > lastStep { lastStep = k; return true }
+                return false
+            }
+        }
         /// Un gruppo che si chiude una volta sola, chiunque arrivi prima (il lavoro o la sorveglianza).
         final class Once: @unchecked Sendable {
             private let lock = NSLock(); private var done = false; let group = DispatchGroup()
@@ -318,7 +353,7 @@ enum SmartVideo {
                 guard let sb = vOut.copyNextSampleBuffer() else { video.markAsFinished(); videoDone.finish(); return }
                 let t = CMSampleBufferGetPresentationTimeStamp(sb).seconds
                 if !video.append(sb) { state.failed = true; video.markAsFinished(); videoDone.finish(); return }
-                if t.isFinite { progress(min(0.99, max(0, t / total))) }
+                if t.isFinite { let f = min(0.99, max(0, t / total)); if state.step(f) { progress(f) } }
             }
         }
         if let aOut, let audio = aIn {
@@ -353,6 +388,9 @@ enum SmartVideo {
             DispatchQueue.global().async { c.resume(returning: audioDone.group.wait(timeout: .now() + 120) == .success) }
         }
         if !audioOK { state.failed = true; audioDone.finish() }
+        // Si aspetta che nessun blocco stia ancora scrivendo, prima di chiudere o annullare
+        vq.sync {}
+        aq.sync {}
 
         if job?.cancelRequested == true {
             writer.cancelWriting(); try? FileManager.default.removeItem(at: out)
@@ -431,7 +469,11 @@ enum SmartVideo {
     static func resize(_ file: URL, shortSide short: Double, out: URL, job: Job?, progress: @escaping (Double) -> Void) async throws {
         let asset = AVURLAsset(url: file)
         let (src, track) = try await source(of: asset)
-        let k = min(1, short / min(src.width, src.height))
+        let srcShort = min(src.width, src.height)
+        guard short < srcShort - 1 else {
+            throw NativeError("«\(file.lastPathComponent)» è già di \(Int(srcShort))p o meno: non serve rimpicciolirlo")
+        }
+        let k = min(1, short / srcShort)
         let w = even(src.width * k), h = even(src.height * k)
         let fps = min(src.fps > 0 ? src.fps : 30, 60)
         let bps = Int(min(Double(w * h) * fps * transparentBitsPerPixel(.h264), src.videoBitrate > 0 ? src.videoBitrate : .infinity))

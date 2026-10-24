@@ -1190,7 +1190,11 @@ pandoc_run() {  # sorgente, formato, uscita, cartella finale (per le immagini es
   local -a a=(--resource-path="${src:h}")
   # 3.5.2 · Testi che possono richiamare file del Mac o indirizzi web: un filtro toglie le immagini prese da
   # fuori dalla cartella del documento (percorsi assoluti, «..», indirizzi web) e l'HTML che richiama risorse
-  [[ $(norm "${src:e}") == (md|markdown|html|htm|txt|rst|tex|org|textile) ]] && a+=(--lua-filter="$(pandoc_filter)")
+  case $(norm "${src:e}") in
+    md|markdown|html|htm|txt) a+=(--lua-filter="$(pandoc_filter)") ;;
+    # Formati che possono «includere» altri file mentre si leggono: lettura chiusa, solo il file scelto
+    rst|tex|org|textile) a=(--sandbox) ;;
+  esac
   case $t in
     md)   a+=(-t gfm --wrap=none --extract-media="${src:t:r}_media") ;;
     html) a+=(--standalone --embed-resources -M pagetitle="${src:t:r}") ;;   # un solo file, immagini comprese
@@ -1521,7 +1525,7 @@ cut_run() {  # sorgente, inizio, fine ("" = fino alla fine), modo (cut | gif)
   local -a m=(-map 0:v:0 -map '0:a:0?') fs=()
   [[ $oe == (mp4|mov|m4v) ]] && fs=(-movflags +faststart)
   # 3.6 · Prima il taglio istantaneo senza ricodifica (secondi anche su un film); se non riesce, si ricodifica
-  if [[ $oe == ${1:e} ]] && $ff $m -c copy -avoid_negative_ts make_zero $fs "$out" && [[ -s $out ]]; then return 0; fi
+  if [[ $oe == ${1:e} ]] && $ff $m -c copy $fs "$out" && [[ -s $out ]]; then return 0; fi
   if [[ $ARCH == arm64 ]]; then
     $ff $m -c:v h264_videotoolbox -q:v 65 -pix_fmt yuv420p -c:a aac -b:a 192k $fs "$out" && return 0
   fi

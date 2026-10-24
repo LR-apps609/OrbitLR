@@ -176,10 +176,14 @@ struct VideoModeSwitch: View {
         }
     }
 
+    /// I video già portati nell'editor: tornando avanti e indietro non si creano progetti doppi.
+    private static var lastSent: [URL] = []
+
     private func openEditor() {
         let files = app.videoTools.targets
         withAnimation(Motion.page) { app.videoMode = .montage }
-        guard !files.isEmpty else { return }
+        guard !files.isEmpty, files != Self.lastSent else { return }
+        Self.lastSent = files
         let s = VideoProjectStore.shared
         s.newProject(undo)
         s.add(files, undo: undo)

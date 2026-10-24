@@ -136,7 +136,8 @@ enum Fixtures {
             AVVideoHeightKey: height,
         ])
         vIn.expectsMediaDataInRealTime = false
-        if portrait { vIn.transform = CGAffineTransform(rotationAngle: .pi / 2) }
+        // Come l'iPhone: rotazione di 90° più lo spostamento che rimette l'immagine nel riquadro
+        if portrait { vIn.transform = CGAffineTransform(a: 0, b: 1, c: -1, d: 0, tx: CGFloat(height), ty: 0) }
         let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: vIn, sourcePixelBufferAttributes: [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
             kCVPixelBufferWidthKey as String: width,

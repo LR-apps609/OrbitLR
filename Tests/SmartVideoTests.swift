@@ -109,5 +109,29 @@ final class SmartVideoTests: XCTestCase {
         let (n, t) = try await tr!.load(.naturalSize, .preferredTransform)
         let r = CGRect(origin: .zero, size: n).applying(t)
         XCTAssertLessThan(abs(r.width), abs(r.height), "resta in piedi")
+        XCTAssertGreaterThan(try await brightness(out), 0.08, "e l'immagine c'è davvero (non è nera)")
+    }
+
+    /// La luminosità media di un fotogramma a metà video (0 = nero).
+    private func brightness(_ url: URL) async throws -> Double {
+        let gen = AVAssetImageGenerator(asset: AVURLAsset(url: url))
+        gen.appliesPreferredTrackTransform = true
+        let img = try await gen.image(at: CMTime(seconds: 1, preferredTimescale: 600)).image
+        let w = 32, h = 32
+        var px = [UInt8](repeating: 0, count: w * h * 4)
+        let ctx = CGContext(data: &px, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
+                            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        ctx.draw(img, in: CGRect(x: 0, y: 0, width: w, height: h))
+        var sum = 0.0
+        for i in stride(from: 0, to: px.count, by: 4) { sum += Double(px[i]) + Double(px[i + 1]) + Double(px[i + 2]) }
+        return sum / Double(w * h * 3) / 255
+    }
+
+    func testCambiaGrandezzaNonTagliaNeStira() async throws {
+        let v = try await Fixtures.video(name: "grande-contenuto.mp4", width: 1280, height: 720, seconds: 2, noise: true)
+        let out = Fixtures.url("grande-contenuto-480.mp4")
+        try await SmartVideo.resize(v, shortSide: 480, out: out, job: nil) { _ in }
+        let a = try await brightness(v), b = try await brightness(out)
+        XCTAssertEqual(a, b, accuracy: 0.08, "stessa immagine, solo più piccola")
     }
 }

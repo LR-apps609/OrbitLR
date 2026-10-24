@@ -42,6 +42,10 @@ enum SmartImage {
             return out
         }
 
+        // Un'immagine con parti trasparenti (logo, icona) diventando JPEG le perderebbe: meglio dirlo
+        if (props[kCGImagePropertyHasAlpha] as? Bool) == true, e == "png" || e == "tiff" || e == "webp" {
+            throw NativeError("«\(src.lastPathComponent)» ha parti trasparenti: per non perderle resta com'è. Per alleggerirla usa «Ridimensiona» o un peso preciso")
+        }
         // Stessa qualità: JPEG resta JPEG, HEIC resta HEIC; il resto diventa JPEG di alta qualità
         let format: UTType = e == "heic" ? .heic : .jpeg
         let q = e == "heic" ? 0.72 : 0.82
