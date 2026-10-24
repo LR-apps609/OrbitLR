@@ -56,52 +56,26 @@ final class Updater: ObservableObject, @unchecked Sendable {
         guard !busy else { window?.makeKeyAndOrderFront(nil); return }
         // Da subito «occupato»: se l'app si è appena aperta per questo aggiornamento, la finestra principale non compare
         busy = true
-        let refuse: (String) -> Void = { msg in
-            self.busy = false
-            LaunchGate.release()
-            self.alert(msg)
-        }
-        // 3.5.2 · Tutto avviene in una cartella nuova, privata, con nome imprevedibile
-        guard let dir = try? UpdatePackage.privateWorkFolder() else { return refuse(UpdatePackage.Failure.badManifest.message) }
-        work = dir
-        let outer = dir.appendingPathComponent("pacchetto", isDirectory: true)
-        guard sh("/usr/bin/ditto", ["-x", "-k", file.path, outer.path]) == 0, !UpdatePackage.hasEscapingLinks(outer) else {
-            return refuse(UpdatePackage.Failure.badManifest.message)
-        }
-        // La parte firmata: app, manifesto e firma, letti una volta sola in memoria
-        guard let signed = findSigned(outer),
-              let manifestData = try? Data(contentsOf: signed.appendingPathComponent("manifest.json")),
-              let sig = try? Data(contentsOf: signed.appendingPathComponent("manifest.sig")),
-              let payload = try? Data(contentsOf: signed.appendingPathComponent("app.zip")) else {
-            return refuse(UpdatePackage.Failure.notSigned.message)
-        }
         let current = (version: currentVersion, build: currentBuild)
-        let manifest: UpdatePackage.Manifest
-        do {
-            manifest = try UpdatePackage.verify(manifest: manifestData, signature: sig, payload: payload, current: current)
-        } catch let f as UpdatePackage.Failure {
-            return refuse(f.message)
-        } catch {
-            return refuse(UpdatePackage.Failure.badManifest.message)
+        // 3.5.2 · I controlli (estrazione, firma, impronta) in sottofondo: la finestra non si blocca mai
+        DispatchQueue.global(qos: .userInitiated).async {
+            let result = Result { try UpdatePackage.prepare(file, current: current, expectedVersion: expectedVersion) }
+            DispatchQueue.main.async { self.verified(result, confirmed: confirmed) }
         }
-        if let expectedVersion, expectedVersion != manifest.version {
-            return refuse(UpdatePackage.Failure.wrongApp.message)
+    }
+
+    private func verified(_ result: Result<UpdatePackage.Prepared, Error>, confirmed: Bool) {
+        let ready: UpdatePackage.Prepared
+        switch result {
+        case .success(let r): ready = r
+        case .failure(let e):
+            busy = false
+            LaunchGate.release()
+            alert((e as? UpdatePackage.Failure)?.message ?? UpdatePackage.Failure.badManifest.message)
+            return
         }
-        // L'app si estrae dai byte già verificati, mai dal file che potrebbe cambiare nel frattempo
-        let zip = dir.appendingPathComponent("app-verificata.zip")
-        let appDir = dir.appendingPathComponent("app", isDirectory: true)
-        guard (try? payload.write(to: zip, options: .withoutOverwriting)) != nil,
-              sh("/usr/bin/ditto", ["-x", "-k", zip.path, appDir.path]) == 0,
-              !UpdatePackage.hasEscapingLinks(appDir) else {
-            return refuse(UpdatePackage.Failure.badManifest.message)
-        }
-        let app = appDir.appendingPathComponent("OrbitLR.app")
-        let info = NSDictionary(contentsOf: app.appendingPathComponent("Contents/Info.plist"))
-        guard info?["CFBundleShortVersionString"] as? String == manifest.version,
-              info?["CFBundleVersion"] as? String == manifest.build,
-              info?["CFBundleIdentifier"] as? String == Bundle.main.bundleIdentifier else {
-            return refuse(UpdatePackage.Failure.wrongApp.message)
-        }
+        work = ready.work
+        let manifest = ready.manifest
         loadTimes()
 
         // 2.8.1 · Solo le novità rispetto alla versione che hai (dal manifesto firmato)
@@ -117,6 +91,7 @@ final class Updater: ObservableObject, @unchecked Sendable {
             a.addButton(withTitle: "Annulla")
             NSApp.activate()
             guard a.runModal() == .alertFirstButtonReturn else {
+                try? FileManager.default.removeItem(at: ready.work)       // niente file lasciati in giro
                 busy = false
                 LaunchGate.release()
                 return
@@ -126,23 +101,10 @@ final class Updater: ObservableObject, @unchecked Sendable {
         toVersion = manifest.version
         closeEverythingElse()
         showWindow()
-        installVerified(app)
+        installVerified(ready.app)
     }
 
     var currentBuild: String { Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "0" }
-
-    /// La cartella «Firmato» dentro il pacchetto (al primo o al secondo livello).
-    private func findSigned(_ dir: URL) -> URL? {
-        let fm = FileManager.default
-        let direct = dir.appendingPathComponent("Firmato")
-        if fm.fileExists(atPath: direct.appendingPathComponent("manifest.json").path) { return direct }
-        let subs = (try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []
-        for s in subs {
-            let f = s.appendingPathComponent("Firmato")
-            if fm.fileExists(atPath: f.appendingPathComponent("manifest.json").path) { return f }
-        }
-        return nil
-    }
 
     /// 2.8.7 · Un testo lungo in un riquadro di misura fissa, con la barra per scorrere.
     static func scrollingText(_ text: String, width: CGFloat = 380, height: CGFloat = 220) -> NSView {
@@ -313,6 +275,8 @@ final class Updater: ObservableObject, @unchecked Sendable {
     private func q(_ s: String) -> String { "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'" }
 
     private func fail(_ s: String) {
+        // 3.5.2 · La cartella di lavoro dell'aggiornamento non resta sul disco
+        if work.lastPathComponent.hasPrefix("OrbitLR-aggiornamento-") { try? FileManager.default.removeItem(at: work) }
         DispatchQueue.main.async {
             let errs = self.lines.filter { $0.contains("error:") }.prefix(8).joined(separator: "\n")
             self.error = s + (errs.isEmpty ? "" : "\n\n" + errs)

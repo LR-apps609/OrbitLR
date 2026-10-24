@@ -9,3 +9,4 @@ ShareExtension/Info.plist
 ShareExtension/*.entitlements
 build-test/
 test.log
+Sources/OrbitLR.entitlements

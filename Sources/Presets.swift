@@ -80,7 +80,7 @@ final class PresetStore: ObservableObject, @unchecked Sendable {
             case "web": return "\(title) · per il web"
             default: return "\(title) · \(param) px"
             }
-        case "vcompress": return "\(title) · max \(param) MB"
+        case "vcompress": return param == "best" ? "\(title) · stessa qualità" : "\(title) · max \(param) MB"
         case "pdfcompress": return "\(title) · " + (param == "light" ? "leggera" : param == "strong" ? "forte" : "media")
         case "vresize": return "\(title) · " + (param == "hevc" ? "HEVC" : "\(param)p")
         case "speed": return "\(title) · \(param.replacingOccurrences(of: ".", with: ","))×"

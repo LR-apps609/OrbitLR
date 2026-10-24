@@ -34,7 +34,7 @@ enum Kind: String, CaseIterable, Codable {
 }
 
 enum ParamKind { case resize, pdfcompress, vcompress, cut, gifcut, extract, vresize, speed, rotate, reorder, password, unlock, rename,
-                     removebg, straighten, upscale, aienhance, stack, social, ringtone, hidemark }
+                     removebg, straighten, upscale, aienhance, stack, social, ringtone, hidemark, icompress }
 
 struct Action: Identifiable, Hashable {
     let id: String          // lo stesso identificativo dello script, es. "to:pdf" o "resize"
@@ -124,13 +124,14 @@ enum Catalog {
 
     static let tools: [String: Action] = [
         "resize": Action(id: "resize", short: "Dimensione", title: "Ridimensiona", hint: "Foto più piccole e leggere", symbol: "arrow.up.left.and.arrow.down.right", param: .resize),
+        "icompress": Action(id: "icompress", short: "Comprimi", title: "Comprimi", hint: "Più leggera senza perdere qualità, o sotto un peso preciso (moduli, documenti)", symbol: "arrow.down.right.and.arrow.up.left", param: .icompress),
         "strip": Action(id: "strip", short: "Metadati", title: "Rimuovi i metadati", hint: "Toglie posizione, modello del telefono e data dello scatto", symbol: "eye.slash"),
         "ocr": Action(id: "ocr", short: "Testo", title: "Copia il testo", hint: "Il testo scritto nella foto, pronto da incollare", symbol: "text.viewfinder"),
         "pdftext": Action(id: "pdftext", short: "Testo", title: "Copia il testo", hint: "Tutto il testo del PDF, anche dalle scansioni", symbol: "doc.text.magnifyingglass"),
         "split": Action(id: "split", short: "Dividi", title: "Dividi in pagine", hint: "Un PDF per ogni pagina", symbol: "rectangle.split.3x1"),
         "extract": Action(id: "extract", short: "Pagine", title: "Estrai alcune pagine", hint: "Scegli quali, es. 1–3, 5", symbol: "doc.on.doc", param: .extract),
         "pdfcompress": Action(id: "pdfcompress", short: "Comprimi", title: "Comprimi", hint: "Riduci il peso, per mandarlo via email", symbol: "arrow.down.right.and.arrow.up.left", param: .pdfcompress),
-        "vcompress": Action(id: "vcompress", short: "Comprimi", title: "Comprimi", hint: "Riduci il peso, per WhatsApp o email", symbol: "arrow.down.right.and.arrow.up.left", param: .vcompress),
+        "vcompress": Action(id: "vcompress", short: "Comprimi", title: "Comprimi", hint: "Più leggero senza perdere qualità, o per Discord, WhatsApp ed email", symbol: "arrow.down.right.and.arrow.up.left", param: .vcompress),
         "cut": Action(id: "cut", short: "Taglia", title: "Taglia", hint: "Tieni solo un pezzo", symbol: "scissors", param: .cut),
         "gifcut": Action(id: "gifcut", short: "GIF", title: "GIF da un pezzo", hint: "Un’animazione da un tratto del video", symbol: "photo.stack", param: .gifcut),
         "normalize": Action(id: "normalize", short: "Volume", title: "Volume uniforme", hint: "Né troppo basso né distorto", symbol: "speaker.wave.2"),
@@ -207,7 +208,7 @@ enum Catalog {
         switch kind {
         case .img:
             switch id {
-            case "resize", "removebg", "hidemark", "straighten": return "Modifica"
+            case "icompress", "resize", "removebg", "hidemark", "straighten": return "Modifica"
             case "aienhance", "upscale", "stack": return "Migliora"
             default: return "Altro"
             }
@@ -278,7 +279,7 @@ enum Catalog {
         case .pdf:   order = ["to:docx", "to:png", "to:jpg", "pdftext", "split", "extract", "pdfcompress",
                               "pdfedit", "redact", "searchable",
                               "merge", "rotate", "reorder", "protect", "unprotect", "rename"]
-        case .img:   order = ["to:jpg", "to:png", "to:heic", "resize", "strip", "ocr", "to:pdf",
+        case .img:   order = ["to:jpg", "to:png", "to:heic", "icompress", "resize", "strip", "ocr", "to:pdf",
                               "aienhance", "stack", "removebg", "hidemark", "straighten", "upscale", "searchable",
                               "to:webp", "to:tiff", "to:ico", "merge", "rename"]
         case .doc:   order = ["to:pdf", "to:docx", "to:odt", "to:txt", "to:md", "to:html", "to:rtf", "tts", "rename"]
@@ -288,10 +289,11 @@ enum Catalog {
         case .audio: order = ["to:mp3", "to:m4a", "to:wav", "cut", "normalize", "transcribe", "silence",
                               "ringtone", "whatsapp", "amerge",
                               "speed", "to:flac", "to:ogg", "rename"]
-        case .video: order = ["to:mp4", "vcompress", "cut", "gifcut", "to:mp3", "transcribe", "vresize",
-                              "speed", "to:mov", "to:mkv", "to:webm", "to:gif", "to:m4a", "normalize",
-                              "social", "vmerge", "hidemark",
-                              "subextract", "subembed", "strip", "stack", "rename"]
+        // 3.7 · Prima le cose di tutti i giorni (dalle ricerche: comprimere per le app, tagliare, cambiare grandezza)
+        case .video: order = ["vcompress", "cut", "vresize", "social", "gifcut", "to:mp4", "to:mp3",
+                              "vmerge", "speed", "transcribe", "normalize", "hidemark",
+                              "to:mov", "to:mkv", "to:webm", "to:gif", "to:m4a",
+                              "subextract", "subembed", "strip", "rename"]
         case .sub:   order = []
         }
         let hasSvg = exts.contains("svg")

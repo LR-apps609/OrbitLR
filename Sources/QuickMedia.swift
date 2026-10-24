@@ -12,7 +12,7 @@ import UniformTypeIdentifiers
 // ════════════════════════════════════════════════════════════════════
 
 enum QuickMedia {
-    static let ids: Set<String> = ["cut", "gifcut", "vcompress", "normalize"]
+    static let ids: Set<String> = ["cut", "gifcut", "vcompress", "normalize", "vresize"]
     static let videoIn: Set<String> = ["mp4", "mov", "m4v"]
     static let audioIn: Set<String> = ["m4a", "mp3", "wav", "aiff", "aac", "caf"]
 
@@ -23,7 +23,7 @@ enum QuickMedia {
         let exts = job.mainFiles.map { Catalog.norm($0.pathExtension) }
         guard !exts.isEmpty else { return false }
         switch id {
-        case "vcompress", "gifcut": return exts.allSatisfy { videoIn.contains($0) }
+        case "vcompress", "gifcut", "vresize": return exts.allSatisfy { videoIn.contains($0) }
         case "cut": return exts.allSatisfy { videoIn.contains($0) || audioIn.contains($0) }
         case "normalize": return exts.allSatisfy { audioIn.contains($0) }     // i video restano al motore classico
         default: return false
@@ -60,9 +60,27 @@ enum QuickMedia {
             try await gif(file, start: start, end: end, out: out, job: job, progress: progress)
             return out
         case "vcompress":
-            let mb = max(1, Int(job.param.trimmingCharacters(in: .whitespaces)) ?? 25)
-            let out = Destination.unique(dir, base: "\(base) (\(mb) MB)", ext: "mp4")
-            try await compress(file, megabytes: mb, out: out, job: job, progress: progress)
+            // 3.6 · «best» = stessa qualità, meno peso; un numero = peso massimo in MB
+            let p = job.param.trimmingCharacters(in: .whitespaces)
+            if let mb = Double(p.replacingOccurrences(of: ",", with: ".")), mb > 0 {
+                let label = mb == mb.rounded() ? "\(Int(mb)) MB" : Fmt.decimal(mb) + " MB"
+                let out = Destination.unique(dir, base: "\(base) (\(label))", ext: "mp4")
+                try await SmartVideo.compress(file, targetBytes: Int64(mb * 1_048_576), out: out, job: job, progress: progress)
+                return out
+            }
+            let out = Destination.unique(dir, base: "\(base) (più leggero)", ext: "mp4")
+            try await SmartVideo.compress(file, targetBytes: nil, out: out, job: job, progress: progress)
+            return out
+        case "vresize":
+            // 3.6 · Nativo: chip video del Mac, qualità piena per la nuova misura; «hevc» = stessa misura, meno peso
+            if job.param == "hevc" {
+                let out = Destination.unique(dir, base: "\(base) (più leggero)", ext: "mp4")
+                try await SmartVideo.compress(file, targetBytes: nil, out: out, job: job, progress: progress)
+                return out
+            }
+            let short = Double(job.param) ?? 1080
+            let out = Destination.unique(dir, base: "\(base) (\(Int(short))p)", ext: "mp4")
+            try await SmartVideo.resize(file, shortSide: short, out: out, job: job, progress: progress)
             return out
         default:
             throw NativeError("azione sconosciuta")
@@ -92,6 +110,9 @@ enum QuickMedia {
         let asset = AVURLAsset(url: file)
         let d = try await asset.load(.duration).seconds
         guard d.isFinite, d > 0 else { throw NativeError("non riesco a leggere la durata") }
+        // 3.6 · Prima il taglio istantaneo e senza perdita (anche su un film di 2 ore: secondi);
+        // solo se il formato non lo permette, si ricodifica
+        if try await SmartVideo.trimLossless(file, range: range(start, end, duration: d), out: out, job: job, progress: progress) { return }
         guard let s = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else {
             throw NativeError("questo video non si può tagliare")
         }
@@ -164,57 +185,6 @@ enum QuickMedia {
         progress(1)
     }
 
-    // MARK: Comprimi a un peso massimo
-
-    private static func compress(_ file: URL, megabytes mb: Int, out: URL, job: Job,
-                                 progress: @escaping (Double) -> Void) async throws {
-        let size = Job.size(of: file)
-        let limit = Int64(mb) * 1_048_576
-        if size <= limit {
-            throw NativeError("«\(file.lastPathComponent)» pesa già meno di \(mb) MB: non serve comprimerlo")
-        }
-        let asset = AVURLAsset(url: file)
-        guard let vtrack = try await asset.loadTracks(withMediaType: .video).first else { throw NativeError("il file non contiene video") }
-        let d = try await asset.load(.duration).seconds
-        guard d.isFinite, d > 0.1 else { throw NativeError("non riesco a leggere la durata") }
-        let abps = mb <= 10 ? 64_000 : 128_000
-        var vbps = Int(Double(mb) * 8_388_608 * 0.92 / d) - abps
-        guard vbps >= 100_000 else {
-            throw NativeError("il video è troppo lungo per stare in \(mb) MB: scegli un peso maggiore o taglialo prima")
-        }
-        let orient = await Media.orientation(of: asset, track: vtrack, at: CMTime(seconds: min(1, d / 2), preferredTimescale: 600))
-        let natural = try await vtrack.load(.naturalSize)
-        let sideways: [CGImagePropertyOrientation] = [.left, .right, .leftMirrored, .rightMirrored]
-        let W = Double(sideways.contains(orient) ? natural.height : natural.width)
-        let H = Double(sideways.contains(orient) ? natural.width : natural.height)
-        guard W > 0, H > 0 else { throw NativeError("dimensioni del video non valide") }
-        let full = CMTimeRange(start: .zero, duration: CMTime(seconds: d, preferredTimescale: 600))
-
-        // Fino a tre tentativi: se il file supera il peso, il successivo corregge i dati in proporzione
-        // (e, se serve molto meno, scende anche di risoluzione). Così il peso scelto è garantito.
-        var shrink = 1.0
-        for attempt in 0..<3 {
-            let longSide: Double = (vbps < 700_000 ? 854 : vbps < 1_800_000 ? 1280 : vbps < 4_500_000 ? 1920 : 3840) * shrink
-            let k = min(1, longSide / max(W, H))
-            let outW = Media.even(W * k), outH = Media.even(H * k)
-            let sx = Double(outW) / W, sy = Double(outH) / H
-            let base = Double(attempt) / 3
-            try await VideoPipeline.process(asset: asset, videoTrack: vtrack, range: full, size: CGSize(width: outW, height: outH),
-                                            out: out, job: job, videoBitrate: vbps, audioBitrate: abps,
-                                            progress: { p in progress(base + p / 3) }) { raw, _ in
-                var img = raw.oriented(orient)
-                img = img.transformed(by: CGAffineTransform(translationX: -img.extent.minX, y: -img.extent.minY))
-                return img.transformed(by: CGAffineTransform(scaleX: sx, y: sy))
-            }
-            let got = Job.size(of: out)
-            if got <= limit { progress(1); return }
-            let over = Double(got) / Double(limit)
-            vbps = max(80_000, Int(Double(vbps) / over * 0.9))
-            if over > 1.3 { shrink *= 0.75 }
-        }
-        try? FileManager.default.removeItem(at: out)
-        throw NativeError("non riesco a farlo stare in \(mb) MB: scegli un peso un po' maggiore")
-    }
 }
 
 // MARK: - Formati che macOS non apre da solo: si preparano in automatico (niente «convertilo prima»)

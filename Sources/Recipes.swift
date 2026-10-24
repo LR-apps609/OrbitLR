@@ -66,6 +66,8 @@ final class RecipeStore: ObservableObject, @unchecked Sendable {
         guard chain.count >= 2, let first = chain.first, let kind = first.kind ?? first.inputs?.first.flatMap({ Catalog.kind(of: URL(fileURLWithPath: $0))?.rawValue }) else { return nil }
         let steps = chain.compactMap { e in e.actionId.map { RecipeStep(actionId: $0, param: e.param ?? "", title: shortTitle($0, e.action)) } }
         guard steps.count == chain.count else { return nil }
+        // 3.5.2 · Una password non si salva mai in una ricetta: i passi con password restano a mano
+        guard !steps.contains(where: { Job.secretActions.contains($0.actionId) }) else { return nil }
         return Recipe(name: steps.map(\.title).joined(separator: " → "), kind: kind, steps: steps)
     }
 

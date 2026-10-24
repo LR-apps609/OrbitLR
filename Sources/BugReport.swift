@@ -44,6 +44,7 @@ enum BugReport {
                 + (j.failures.isEmpty ? "" : " · " + j.failures.joined(separator: "; "))
         }.joined(separator: "\n")
         let names = QueueStore.shared.jobs.prefix(30).flatMap { $0.files + $0.outputs }
+            + QueueStore.shared.history.prefix(100).flatMap { ($0.inputs ?? []) + $0.outputs }.map { URL(fileURLWithPath: $0) }
         return anonymize(report(comps: comps, jobs: jobs, log: log, model: String(cString: model)), names: names)
     }
 
@@ -59,6 +60,10 @@ enum BugReport {
             if stem.count > 3 { t = t.replacingOccurrences(of: stem, with: "file") }
         }
         t = t.replacingOccurrences(of: home, with: "~")
+        // Qualsiasi altro nome di file rimasto (es. dal registro di sessioni passate) diventa «file.estensione»
+        if let re = try? NSRegularExpression(pattern: "[^/\\s'\"«»()]+\\.([A-Za-z][A-Za-z0-9]{1,4})\\b") {
+            t = re.stringByReplacingMatches(in: t, range: NSRange(t.startIndex..., in: t), withTemplate: "file.$1")
+        }
         // Qualsiasi altro «/Users/nome/…» rimasto
         if let re = try? NSRegularExpression(pattern: "/Users/[^/\\s]+") {
             t = re.stringByReplacingMatches(in: t, range: NSRange(t.startIndex..., in: t), withTemplate: "/Users/…")

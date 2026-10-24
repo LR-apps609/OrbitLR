@@ -77,7 +77,7 @@ struct ParamView: View {
 
     @State var resize = "1920"
     @State var level = "medium"
-    @State var mb = "25"
+    @State var mb = "best"            // 3.6 · prima la qualità
     @State var customMB = ""
     @State var start = "0:00"
     @State var end = ""
@@ -100,7 +100,7 @@ struct ParamView: View {
     @State var follow = true        // Formato social: segui il soggetto
     @State var videoSeconds: Double? = nil   // 2.7.5 · per il peso previsto di Comprimi e Formato social
 
-    private var presetable: Bool { [.resize, .pdfcompress, .vcompress, .vresize, .speed, .rotate, .removebg, .straighten, .upscale, .aienhance, .stack, .social].contains(kind) }
+    private var presetable: Bool { [.resize, .icompress, .pdfcompress, .vcompress, .vresize, .speed, .rotate, .removebg, .straighten, .upscale, .aienhance, .stack, .social].contains(kind) }
 
     private var fileKind: Kind? { files.first.flatMap { Catalog.kind(of: $0) } }
     private var tint: Color { Theme.color(fileKind) }
@@ -182,7 +182,7 @@ struct ParamView: View {
     private var confirmTitle: String {
         switch kind {
         case .resize: return "Ridimensiona"
-        case .pdfcompress, .vcompress: return "Comprimi"
+        case .pdfcompress, .vcompress, .icompress: return "Comprimi"
         case .cut: return "Taglia"
         case .gifcut: return "Crea la GIF"
         case .extract: return "Estrai"
@@ -240,13 +240,9 @@ struct ParamView: View {
                 KnobOption(value: "strong", short: "Forte", label: "Forte (file più piccolo possibile)"),
             ], selection: $level, tint: tint)
         case .vcompress:
-            Knob(title: "Peso massimo", options: [
-                KnobOption(value: "8", short: "8", label: "8 MB"),
-                KnobOption(value: "16", short: "16", label: "16 MB"),
-                KnobOption(value: "25", short: "25", label: "25 MB (email)"),
-                KnobOption(value: "50", short: "50", label: "50 MB"),
-                KnobOption(value: "100", short: "100", label: "100 MB"),
-                KnobOption(value: "custom", short: "Altro", label: "Un altro peso, a scelta"),
+            // 3.6 · Prima la qualità: «Stessa qualità» non rovina niente; i pesi servono per i limiti delle app
+            Knob(title: "Come", options: (ParamChoices.options(for: .vcompress) ?? []) + [
+                KnobOption(value: "custom", short: "Altro", label: "Un altro peso massimo, a scelta"),
             ], selection: $mb, tint: tint)
             if mb == "custom" {
                 HStack {
@@ -254,9 +250,25 @@ struct ParamView: View {
                     Text("MB").foregroundStyle(.secondary)
                 }
             }
-            note("Risoluzione e qualità vengono scelte da sole per stare sotto il peso indicato.")
-            estimateLine(SizeEstimate.compressText(current: files.reduce(Int64(0)) { $0 + Job.size(of: $1) },
-                                                   targetMB: Int(mb == "custom" ? customMB : mb), files: files.count))
+            if mb == "best" {
+                note("Stessa misura e stessa qualità a occhio, con il formato moderno dei video (HEVC): di solito pesa la metà. Funziona anche con film lunghi.")
+            } else {
+                note("Prima si tengono qualità e misura; la risoluzione scende solo se il peso scelto non basta.")
+                estimateLine(SizeEstimate.compressText(current: files.reduce(Int64(0)) { $0 + Job.size(of: $1) },
+                                                       targetMB: Int(mb == "custom" ? customMB : mb), files: files.count))
+            }
+        case .icompress:
+            Knob(title: "Come", options: (ParamChoices.options(for: .icompress) ?? []) + [
+                KnobOption(value: "custom", short: "Altro", label: "Un altro peso massimo, a scelta"),
+            ], selection: $mb, tint: tint)
+            if mb == "custom" {
+                HStack {
+                    TextField("KB", text: $customMB).frame(width: 80)
+                    Text("KB").foregroundStyle(.secondary)
+                }
+            }
+            note(mb == "best" ? "A occhio resta identica, ma pesa meno. JPEG e HEIC restano nel loro formato."
+                              : "Si cerca la qualità più alta che sta nel peso; la foto si rimpicciolisce solo se serve. Esce in JPG, senza dati personali (va bene per moduli e siti).")
         case .hidemark:
             EmptyView()
         case .social:
@@ -407,6 +419,12 @@ struct ParamView: View {
             if mb == "custom" {
                 let v = customMB.trimmingCharacters(in: .whitespaces).lowercased().replacingOccurrences(of: "mb", with: "")
                 guard let n = Int(v), n >= 1 else { error = "Scrivi un numero intero, ad esempio 25."; return }
+                finish(String(n))
+            } else { finish(mb) }
+        case .icompress:
+            if mb == "custom" {
+                let v = customMB.trimmingCharacters(in: .whitespaces).lowercased().replacingOccurrences(of: "kb", with: "")
+                guard let n = Int(v), n >= 5 else { error = "Scrivi un numero intero di KB, ad esempio 200."; return }
                 finish(String(n))
             } else { finish(mb) }
         case .hidemark:

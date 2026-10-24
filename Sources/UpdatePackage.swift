@@ -69,6 +69,70 @@ enum UpdatePackage {
         return false
     }
 
+    /// L'identità dell'app: un aggiornamento deve contenere proprio OrbitLR.
+    static let bundleID = "it.ledion.OrbitLR"
+
+    struct Prepared { let manifest: Manifest; let app: URL; let work: URL }
+
+    /// Tutto il controllo di un pacchetto, senza finestre (si prova nei test):
+    /// estrazione in una cartella privata, firma, impronta, versione, poi l'app estratta dai byte già verificati.
+    /// In caso di problema la cartella di lavoro viene cancellata.
+    static func prepare(_ file: URL, current: (version: String, build: String), expectedVersion: String? = nil,
+                        keys: [String] = trustedKeys, bundleID: String = bundleID) throws -> Prepared {
+        let dir = try privateWorkFolder()
+        do {
+            let outer = dir.appendingPathComponent("pacchetto", isDirectory: true)
+            guard ditto(["-x", "-k", file.path, outer.path]), !hasEscapingLinks(outer) else { throw Failure.badManifest }
+            guard let signed = findSigned(outer),
+                  let manifestData = try? Data(contentsOf: signed.appendingPathComponent("manifest.json")),
+                  let sig = try? Data(contentsOf: signed.appendingPathComponent("manifest.sig")),
+                  let payload = try? Data(contentsOf: signed.appendingPathComponent("app.zip")) else {   // in memoria: nessuno può cambiarli dopo il controllo
+                throw Failure.notSigned
+            }
+            let m = try verify(manifest: manifestData, signature: sig, payload: payload, current: current, keys: keys)
+            if let expectedVersion, expectedVersion != m.version { throw Failure.wrongApp }
+            // L'app si estrae dai byte già verificati, mai dal file che potrebbe cambiare nel frattempo
+            let zip = dir.appendingPathComponent("app-verificata.zip")
+            let appDir = dir.appendingPathComponent("app", isDirectory: true)
+            try payload.write(to: zip, options: .withoutOverwriting)
+            try? FileManager.default.removeItem(at: outer)                  // il pacchetto esterno non serve più
+            guard ditto(["-x", "-k", zip.path, appDir.path]), !hasEscapingLinks(appDir) else { throw Failure.badManifest }
+            let app = appDir.appendingPathComponent("OrbitLR.app")
+            let info = NSDictionary(contentsOf: app.appendingPathComponent("Contents/Info.plist"))
+            guard info?["CFBundleShortVersionString"] as? String == m.version,
+                  info?["CFBundleVersion"] as? String == m.build,
+                  info?["CFBundleIdentifier"] as? String == bundleID else { throw Failure.wrongApp }
+            return Prepared(manifest: m, app: app, work: dir)
+        } catch {
+            try? FileManager.default.removeItem(at: dir)
+            throw error
+        }
+    }
+
+    /// La cartella «Firmato» dentro il pacchetto (al primo o al secondo livello).
+    static func findSigned(_ dir: URL) -> URL? {
+        let fm = FileManager.default
+        let direct = dir.appendingPathComponent("Firmato")
+        if fm.fileExists(atPath: direct.appendingPathComponent("manifest.json").path) { return direct }
+        let subs = (try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []
+        for s in subs {
+            let f = s.appendingPathComponent("Firmato")
+            if fm.fileExists(atPath: f.appendingPathComponent("manifest.json").path) { return f }
+        }
+        return nil
+    }
+
+    private static func ditto(_ args: [String]) -> Bool {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
+        p.arguments = args
+        p.standardOutput = FileHandle.nullDevice
+        p.standardError = FileHandle.nullDevice
+        do { try p.run() } catch { return false }
+        p.waitUntilExit()
+        return p.terminationStatus == 0
+    }
+
     /// Una cartella di lavoro nuova, visibile solo a chi usa il Mac (permessi 700), con nome imprevedibile.
     static func privateWorkFolder() throws -> URL {
         let base = FileManager.default.temporaryDirectory

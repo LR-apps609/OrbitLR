@@ -155,7 +155,13 @@ jobs:
             lipo -archs "$APP/Contents/MacOS/OrbitLR" | grep -q x86_64 || { echo "::error::Manca la parte per Intel"; exit 1; }
           done
           rm -rf /tmp/controllo && mkdir -p /tmp/controllo && ditto -x -k dist/OrbitLR/Firmato/app.zip /tmp/controllo
-          test "$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" /tmp/controllo/OrbitLR.app/Contents/Info.plist)" = "$VERSION"
+          # 3.5.2 · L'app della parte firmata passa gli stessi controlli che farà il Mac prima di installarla
+          FA=/tmp/controllo/OrbitLR.app
+          test "$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" $FA/Contents/Info.plist)" = "$VERSION"
+          test "$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" $FA/Contents/Info.plist)" = "it.ledion.OrbitLR"
+          codesign --verify --deep --strict "$FA" || { echo "::error::L'app firmata non supera codesign --strict"; exit 1; }
+          lipo -archs "$FA/Contents/MacOS/OrbitLR" | grep -q arm64 && lipo -archs "$FA/Contents/MacOS/OrbitLR" | grep -q x86_64 \
+            || { echo "::error::L'app firmata non ha entrambe le architetture"; exit 1; }
           echo "::notice::Pacchetto controllato: OrbitLR $SHOWN, firma del codice valida, Apple Silicon e Intel"
           # Il pacchetto passa al lavoro «release» così com'è (tar conserva i collegamenti dentro l'app)
           tar -C dist -cf pacchetto.tar OrbitLR

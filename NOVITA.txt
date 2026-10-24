@@ -1,9 +1,14 @@
-Novità della 3.5.2 · sicura:
-• Aggiornamenti firmati: OrbitLR installa solo aggiornamenti firmati da OrbitLR, integri e più nuovi di quello che hai. Un file .orbitlr falso o modificato viene rifiutato
-• Nessun altro programma può usare i permessi che hai dato a OrbitLR (runtime rinforzato di macOS)
+Novità della 3.6 «Sicura e leggera»:
+• Video: comprimi con «Stessa qualità, meno peso» (di solito la metà) oppure per Discord, WhatsApp ed email: prima si tengono qualità e misura, la risoluzione scende solo se serve
+• Video lunghi e pesanti (anche film di 2 ore, 5 GB): si lavorano con il chip video del Mac, senza caricare niente da nessuna parte, e OrbitLR controlla prima che ci sia spazio
+• Taglia un video in pochi secondi anche se è lunghissimo: niente ricodifica, nessuna perdita di qualità
+• Foto: «Comprimi» nuova. Stessa qualità con meno peso, oppure sotto un peso preciso (200 KB, 50 KB…) per moduli, documenti e visti
+• Scheda Video più semplice: si apre sulle cose di base; il pulsante «Editor» (⇧⌘E) apre il montaggio completo e prende i video che hai già messo
+• Aggiornamenti firmati: OrbitLR installa solo aggiornamenti firmati da OrbitLR, integri e più nuovi. Un file .orbitlr falso o modificato viene rifiutato
+• Nessun altro programma può usare i permessi che hai dato a OrbitLR
 • Sottotitoli automatici solo sul Mac: l'audio non viene mai mandato a nessuno
 • Documenti scaricati da internet non possono più far leggere altri file del Mac durante la conversione
-• Le password dei PDF non restano nella cronologia
+• Le password dei PDF non restano nella cronologia e non finiscono nelle ricette
 • «Segnala» non allega più nomi di file né percorsi personali, e puoi vedere prima cosa parte
 • «Manda all'iPhone»: codice impossibile da indovinare, solo sulla rete di casa, e la copia si cancella da sola
 • Cancellando la cronologia se ne vanno anche le miniature dei file

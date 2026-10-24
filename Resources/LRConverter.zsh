@@ -638,16 +638,17 @@ case "reorder":   // pdf uscita "3,1,2,7-5" oppure "reverse"; le pagine non indi
     }
     if !nd.write(to: URL(fileURLWithPath: arg(3))) { fail("non riesco a scrivere il PDF") }
 
-case "protect":   // pdf uscita password
+case "protect":   // pdf uscita password («-» = la password arriva a parte, in LR_PW)
     let doc = openPDF(arg(2))
-    let pw = arg(4)
+    let pw = arg(4) == "-" ? (ProcessInfo.processInfo.environment["LR_PW"] ?? "") : arg(4)
     if pw.isEmpty { fail("la password è vuota") }
     let opts: [PDFDocumentWriteOption: Any] = [.userPasswordOption: pw, .ownerPasswordOption: pw]
     if !doc.write(to: URL(fileURLWithPath: arg(3)), withOptions: opts) { fail("non riesco a scrivere il PDF protetto") }
 
 case "unprotect": // pdf uscita password
     guard let doc = PDFDocument(url: URL(fileURLWithPath: arg(2))) else { fail("PDF danneggiato o non valido") }
-    if doc.isLocked && !doc.unlock(withPassword: arg(4)) { fail("la password non è corretta") }
+    let upw = arg(4) == "-" ? (ProcessInfo.processInfo.environment["LR_PW"] ?? "") : arg(4)
+    if doc.isLocked && !doc.unlock(withPassword: upw) { fail("la password non è corretta") }
     let nd = PDFDocument()
     for i in 0..<doc.pageCount {
         if let pg = doc.page(at: i)?.copy() as? PDFPage { nd.insert(pg, at: nd.pageCount) }
@@ -1161,11 +1162,35 @@ lo_run() {  # cartella di uscita, tipo, formato, file…
   with_timeout $(( 120 + 60 * $# )) soffice $args "$@" >&2
 }
 
+pandoc_filter() {  # il filtro di sicurezza per pandoc (scritto una volta)
+  local f="$SUPPORT/pandoc-sicuro.lua"
+  if ! grep -q "OrbitLR-sicurezza-1" "$f" 2>/dev/null; then
+    cat > "$f" <<'LUA'
+-- OrbitLR-sicurezza-1: niente file presi da fuori dalla cartella del documento, niente indirizzi web
+local function unsafe(s)
+  if not s or s == "" then return false end
+  if s:match("^data:") then return false end
+  if s:match("^%a[%w+.-]*:") then return true end
+  local c = s:sub(1, 1)
+  if c == "/" or c == "~" or c == "\\" then return true end
+  if s:find("%.%.") then return true end
+  return false
+end
+function Image(el) if unsafe(el.src) then return el.caption end end
+local function risky(t) return t:lower():find("src") or t:lower():find("href") or t:lower():find("url%(") end
+function RawInline(el) if el.format:match("html") and risky(el.text) then return {} end end
+function RawBlock(el) if el.format:match("html") and risky(el.text) then return {} end end
+LUA
+  fi
+  print -r -- "$f"
+}
+
 pandoc_run() {  # sorgente, formato, uscita, cartella finale (per le immagini estratte)
   local src=$1 t=$2 out=$3 dest=$4
   local -a a=(--resource-path="${src:h}")
-  # 3.5.2 · Testi che possono richiamare file del Mac o indirizzi web: pandoc legge solo il file scelto
-  [[ $(norm "${src:e}") == (md|markdown|html|htm|txt|rst|tex|org|textile) ]] && a=(--sandbox)
+  # 3.5.2 · Testi che possono richiamare file del Mac o indirizzi web: un filtro toglie le immagini prese da
+  # fuori dalla cartella del documento (percorsi assoluti, «..», indirizzi web) e l'HTML che richiama risorse
+  [[ $(norm "${src:e}") == (md|markdown|html|htm|txt|rst|tex|org|textile) ]] && a+=(--lua-filter="$(pandoc_filter)")
   case $t in
     md)   a+=(-t gfm --wrap=none --extract-media="${src:t:r}_media") ;;
     html) a+=(--standalone --embed-resources -M pagetitle="${src:t:r}") ;;   # un solo file, immagini comprese
@@ -1189,8 +1214,9 @@ img_run() {  # sorgente, formato, uscita
     if have rsvg-convert; then
       if [[ $t == pdf ]]; then rsvg-convert -f pdf -o "$out" "$src"; return; fi
       rsvg-convert -w 2048 -a -o "$JD/_src.png" "$src" || return 1
-    elif have magick; then
-      magick -density 300 -background none "$(mk_src "$src")" "$JD/_src.png" || return 1
+    elif have magick && { magick -density 300 -background none "$(mk_src "$src")" "$JD/_src.png" 2>/dev/null \
+                          || magick -density 300 -background none "$src" "$JD/_src.png" 2>/dev/null; }; then
+      :
     else
       qlmanage -t -s 2048 -o "$JD" "$src" >&2
       mv -f -- "$JD/${src:t}.png" "$JD/_src.png" 2>/dev/null || return 1
@@ -1198,15 +1224,17 @@ img_run() {  # sorgente, formato, uscita
     if [[ $t == png ]]; then mv -f -- "$JD/_src.png" "$out"; return; fi
     src="$JD/_src.png"; e=png
   fi
-  local in=$(mk_src "$src")
-  [[ $t == (jpg|png|heic|ico) ]] && in="${in}[0]"   # gif/tiff multipagina: primo fotogramma
+  local in=$(mk_src "$src") raw=$src
+  [[ $t == (jpg|png|heic|ico) ]] && { in="${in}[0]"; raw="${src}[0]"; }   # gif/tiff multipagina: primo fotogramma
   local -a o=(-auto-orient)
   case $t in
     jpg)       o+=(-background white -alpha remove -alpha off -quality 90) ;;
     webp|heic) o+=(-quality 85) ;;
     ico)       o=(-background none -resize 256x256 -gravity center -extent 256x256 -define icon:auto-resize=256,128,64,48,32,16) ;;
   esac
-  if have magick && magick "$in" $o "$out"; then return 0; fi
+  # Se l'estensione non corrisponde al contenuto (capita con le foto scaricate), si riprova lasciando decidere a ImageMagick
+  # (le regole di sicurezza bloccano comunque i formati pericolosi)
+  if have magick && { magick "$in" $o "$out" 2>/dev/null || magick "$raw" $o "$out"; }; then return 0; fi
   local f
   case $t in jpg) f=jpeg ;; png|tiff|heic|pdf) f=$t ;; *) return 1 ;; esac
   sips -s format $f "$src" --out "$out" >&2
@@ -1237,7 +1265,7 @@ resize_run() {  # sorgente, preset (half | 3840 | 1920 | 1280 | web)
       webp|heic) o+=(-quality 85) ;;
     esac
     [[ $p == web ]] && o+=(-strip -interlace Plane)
-    magick "$(mk_src "$in")" $o "$out" && return 0
+    { magick "$(mk_src "$in")" $o "$out" 2>/dev/null || magick "$in" $o "$out"; } && return 0
   fi
   # Ripiego nativo (senza ImageMagick): non ingrandisce mai
   local w h f
@@ -1271,7 +1299,7 @@ strip_run() {  # sorgente → copia senza metadati
       local -a o=(-auto-orient -strip)
       [[ $e == jpg ]] && o+=(-quality 95)
       [[ $e == (heic|webp) ]] && o+=(-quality 90)
-      magick "$(mk_src "$src")" $o "$out" ;;
+      magick "$(mk_src "$src")" $o "$out" 2>/dev/null || magick "$src" $o "$out" ;;
     *) return 1 ;;
   esac
 }
@@ -1390,7 +1418,8 @@ av_run() {  # sorgente, formato, uscita
   esac
 }
 
-vcompress_run() {  # video, MB massimi
+vcompress_run() {  # video, MB massimi (oppure «best» = stessa qualità, meno peso)
+  [[ $2 == best ]] && { vresize_run "$1" hevc; return }
   local src=$1 mb=$2 base=${1:t:r}
   local out="$JD/out/$base ($mb MB).mp4"
   local size=$(stat -f %z "$src")
@@ -1491,6 +1520,8 @@ cut_run() {  # sorgente, inizio, fine ("" = fino alla fine), modo (cut | gif)
   out="$JD/out/$base (taglio).$oe"
   local -a m=(-map 0:v:0 -map '0:a:0?') fs=()
   [[ $oe == (mp4|mov|m4v) ]] && fs=(-movflags +faststart)
+  # 3.6 · Prima il taglio istantaneo senza ricodifica (secondi anche su un film); se non riesce, si ricodifica
+  if [[ $oe == ${1:e} ]] && $ff $m -c copy -avoid_negative_ts make_zero $fs "$out" && [[ -s $out ]]; then return 0; fi
   if [[ $ARCH == arm64 ]]; then
     $ff $m -c:v h264_videotoolbox -q:v 65 -pix_fmt yuv420p -c:a aac -b:a 192k $fs "$out" && return 0
   fi
@@ -1614,8 +1645,8 @@ run_job() {
     speed)       speed_run "$src" "$p" ;;
     rotate)      "$HELPER" rotate "$src" "$JD/out/$base (ruotato).pdf" "$p" > "$JOB_PROG" ;;
     reorder)     "$HELPER" reorder "$src" "$JD/out/$base (riordinato).pdf" "$p" > "$JOB_PROG" ;;
-    protect)     "$HELPER" protect "$src" "$JD/out/$base (protetto).pdf" "$p" > "$JOB_PROG" ;;
-    unprotect)   "$HELPER" unprotect "$src" "$JD/out/$base (sbloccato).pdf" "$p" > "$JOB_PROG" ;;
+    protect)     LR_PW="$p" "$HELPER" protect "$src" "$JD/out/$base (protetto).pdf" - > "$JOB_PROG" ;;
+    unprotect)   LR_PW="$p" "$HELPER" unprotect "$src" "$JD/out/$base (sbloccato).pdf" - > "$JOB_PROG" ;;
     *) return 1 ;;
   esac
 }
@@ -1921,7 +1952,10 @@ if [[ $1 == --crea-installer ]]; then make_installer; exit $?; fi
 if [[ $1 == --run ]]; then   # usato dall'app: --run AZIONE PARAMETRO file…
   RUN_MODE=1; RUN_ACT=$2; RUN_PARAM=$3; shift 3
   # 3.5.2 · Le password non passano tra gli argomenti (visibili ad altri programmi): arrivano a parte
-  [[ $RUN_ACT == (protect|unprotect) && -n $LR_SECRET ]] && RUN_PARAM=$LR_SECRET
+  if [[ $RUN_ACT == (protect|unprotect) ]]; then
+    RUN_PARAM=$LR_SECRET
+    if [[ -z $RUN_PARAM ]]; then print -r -- "FAIL"$'\t'"-"$'\t'"serve una password: scrivila quando OrbitLR te la chiede"; exit 1; fi
+  fi
   unset LR_SECRET
   trap 'touch "$CANCEL"' TERM   # l'app chiede di annullare: si ferma in modo pulito
 fi

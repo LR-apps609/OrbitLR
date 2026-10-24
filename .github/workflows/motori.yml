@@ -1,0 +1,125 @@
+# 3.8 · Motori dentro l'app: ffmpeg compilato in versione LGPL (si può distribuire con un'app a pagamento),
+# per Apple Silicon e Intel insieme. Si costruisce una volta sola e si conserva tra i file scaricabili
+# (versione «motori-1»); la compilazione dell'app lo prende da lì, controllando l'impronta.
+# Parte solo a mano o con una modifica a questo file sul ramo «motori».
+name: Motori
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [motori]
+    paths: [.github/workflows/motori.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  ffmpeg:
+    runs-on: macos-15-intel
+    timeout-minutes: 180
+    permissions:
+      contents: write
+    env:
+      FFMPEG: "7.1"
+      LAME: "3.100"
+      OPUS: "1.5.2"
+      VPX: "1.14.1"
+      WEBP: "1.4.0"
+      MACOSX_DEPLOYMENT_TARGET: "14.0"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Strumenti
+        run: brew install nasm pkg-config
+
+      - name: Sorgenti
+        run: |
+          mkdir -p src && cd src
+          curl -fL --retry 3 -o ffmpeg.tar.xz https://ffmpeg.org/releases/ffmpeg-$FFMPEG.tar.xz
+          curl -fL --retry 3 -o lame.tar.gz https://downloads.sourceforge.net/project/lame/lame/$LAME/lame-$LAME.tar.gz
+          curl -fL --retry 3 -o opus.tar.gz https://downloads.xiph.org/releases/opus/opus-$OPUS.tar.gz
+          curl -fL --retry 3 -o vpx.tar.gz https://github.com/webmproject/libvpx/archive/refs/tags/v$VPX.tar.gz
+          curl -fL --retry 3 -o webp.tar.gz https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-$WEBP.tar.gz
+          shasum -a 256 *
+          for f in *.tar.*; do tar -xf "$f"; done
+          ls
+
+      - name: Compilazione (Intel e Apple Silicon)
+        run: |
+          set -e
+          ROOT=$PWD
+          for ARCH in x86_64 arm64; do
+            P=$ROOT/out/$ARCH
+            mkdir -p $P
+            if [ $ARCH = arm64 ]; then HOST=aarch64-apple-darwin; else HOST=x86_64-apple-darwin; fi
+            export CFLAGS="-arch $ARCH -O2 -mmacosx-version-min=14.0"
+            export LDFLAGS="-arch $ARCH -mmacosx-version-min=14.0"
+            export PKG_CONFIG_PATH=$P/lib/pkgconfig
+            export PKG_CONFIG_LIBDIR=$P/lib/pkgconfig
+
+            cd $ROOT/src/lame-$LAME
+            make distclean >/dev/null 2>&1 || true
+            ./configure --host=$HOST --prefix=$P --disable-shared --enable-static --disable-frontend --disable-dependency-tracking
+            make -j4 && make install
+
+            cd $ROOT/src/opus-$OPUS
+            make distclean >/dev/null 2>&1 || true
+            ./configure --host=$HOST --prefix=$P --disable-shared --enable-static --disable-doc --disable-extra-programs
+            make -j4 && make install
+
+            cd $ROOT/src/libwebp-$WEBP
+            make distclean >/dev/null 2>&1 || true
+            ./configure --host=$HOST --prefix=$P --disable-shared --enable-static --disable-gl --disable-sdl --disable-png --disable-jpeg --disable-tiff --disable-gif
+            make -j4 && make install
+
+            cd $ROOT/src/libvpx-$VPX
+            make distclean >/dev/null 2>&1 || true
+            if [ $ARCH = arm64 ]; then T=arm64-darwin20-gcc; else T=x86_64-darwin20-gcc; fi
+            ./configure --target=$T --prefix=$P --disable-shared --enable-static --disable-examples --disable-tools --disable-docs --disable-unit-tests --enable-vp9-highbitdepth
+            make -j4 && make install
+
+            cd $ROOT/src/ffmpeg-$FFMPEG
+            make distclean >/dev/null 2>&1 || true
+            ./configure --prefix=$P --arch=$ARCH --target-os=darwin --enable-cross-compile \
+              --cc="clang -arch $ARCH" --extra-cflags="-I$P/include $CFLAGS" --extra-ldflags="-L$P/lib $LDFLAGS" \
+              --pkg-config-flags="--static" \
+              --disable-gpl --disable-nonfree --disable-debug --disable-doc --disable-ffplay --disable-network \
+              --enable-static --disable-shared \
+              --enable-libmp3lame --enable-libopus --enable-libvpx --enable-libwebp \
+              --enable-videotoolbox --enable-audiotoolbox
+            make -j4
+            make install
+            file $P/bin/ffmpeg
+          done
+
+      - name: Programmi universali e controllo
+        run: |
+          set -e
+          mkdir -p Motori
+          for b in ffmpeg ffprobe; do
+            lipo -create out/x86_64/bin/$b out/arm64/bin/$b -output Motori/$b
+            lipo -archs Motori/$b
+          done
+          ./Motori/ffmpeg -hide_banner -version | head -n 3
+          ./Motori/ffmpeg -hide_banner -buildconf | tr ' ' '\n' | grep -E "enable-gpl|enable-nonfree" && { echo "::error::non deve essere GPL"; exit 1; } || true
+          # Prove: MP3, WebM, WebP, Opus
+          ./Motori/ffmpeg -hide_banner -loglevel error -f lavfi -i "sine=frequency=440:duration=1" -c:a libmp3lame prova.mp3
+          ./Motori/ffmpeg -hide_banner -loglevel error -f lavfi -i "testsrc=size=320x240:duration=1" -c:v libvpx-vp9 -b:v 500k prova.webm
+          ./Motori/ffmpeg -hide_banner -loglevel error -f lavfi -i "testsrc=size=320x240:duration=0.1" -frames:v 1 -c:v libwebp prova.webp
+          ls -la prova.*
+          cp src/ffmpeg-$FFMPEG/COPYING.LGPLv2.1 Motori/LICENZA-ffmpeg-LGPL.txt
+          echo "ffmpeg $FFMPEG (LGPL), lame $LAME, opus $OPUS, libvpx $VPX, libwebp $WEBP. Sorgenti: https://ffmpeg.org/releases/ffmpeg-$FFMPEG.tar.xz" > Motori/LEGGIMI.txt
+          ditto -c -k --keepParent Motori motori-1.zip
+          shasum -a 256 motori-1.zip | tee motori-1.sha256
+          du -h motori-1.zip
+
+      - name: Tra i file scaricabili
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view motori-1 -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create motori-1 -R "$GITHUB_REPOSITORY" --prerelease --title "Motori di OrbitLR (non è un aggiornamento)" \
+              --notes "ffmpeg in versione LGPL per Apple Silicon e Intel, incluso dentro OrbitLR. Non serve scaricarlo a mano."
+          gh release upload motori-1 motori-1.zip motori-1.sha256 --clobber -R "$GITHUB_REPOSITORY"

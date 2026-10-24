@@ -21,8 +21,9 @@ final class AppState: ObservableObject, @unchecked Sendable {
     let filesTab = KindTabModel(accepts: [.pdf, .doc, .sheet, .slide, .text])
     /// 3.0 · Gli strumenti veloci della scheda Video (comprimi, taglia, GIF…), tolti dal menu a torta.
     let videoTools = KindTabModel(accepts: [.video])
-    /// 3.0 · La scheda Video mostra il montaggio o gli strumenti veloci.
-    @Published var videoMode: VideoMode = .montage
+    /// 3.7 · La scheda Video si apre sulle cose di base (taglia, comprimi, Discord, WhatsApp…);
+    /// «Editor» apre il montaggio completo.
+    @Published var videoMode: VideoMode = .tools
     /// La finestra principale, per riportarla in primo piano senza aprirne una seconda.
     weak var mainWindow: NSWindow?
     /// 3.5 · La finestra di cui si sorveglia la chiusura (una volta sola)

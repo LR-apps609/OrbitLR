@@ -287,13 +287,25 @@ enum ParamChoices {
             KnobOption(value: "1920", short: "1920", label: "Lato lungo 1920 px"),
             KnobOption(value: "3840", short: "4K", label: "Lato lungo 3840 px (4K)"),
             KnobOption(value: "half", short: "50%", label: "Metà (50%)")]
+        case .icompress: return [
+            KnobOption(value: "best", short: "Uguale", label: "Stessa qualità, meno peso"),
+            KnobOption(value: "1000", short: "1 MB", label: "Sotto 1 MB"),
+            KnobOption(value: "500", short: "500 KB", label: "Sotto 500 KB"),
+            KnobOption(value: "200", short: "200 KB", label: "Sotto 200 KB (moduli online)"),
+            KnobOption(value: "100", short: "100 KB", label: "Sotto 100 KB"),
+            KnobOption(value: "50", short: "50 KB", label: "Sotto 50 KB (documenti, visti)"),
+            KnobOption(value: "20", short: "20 KB", label: "Sotto 20 KB")]
         case .pdfcompress: return [
             KnobOption(value: "light", short: "Leggera", label: "Leggera (qualità di stampa)"),
             KnobOption(value: "medium", short: "Media", label: "Media (consigliata)"),
             KnobOption(value: "strong", short: "Forte", label: "Forte (file più piccolo possibile)")]
         case .vcompress: return [
-            KnobOption(value: "8", short: "8", label: "8 MB"), KnobOption(value: "16", short: "16", label: "16 MB"),
-            KnobOption(value: "25", short: "25", label: "25 MB (email)"), KnobOption(value: "50", short: "50", label: "50 MB"),
+            // 3.6 · Prima la qualità: «stessa qualità» non rovina niente; i pesi servono per i limiti delle app
+            KnobOption(value: "best", short: "Uguale", label: "Stessa qualità, meno peso"),
+            KnobOption(value: "9", short: "Discord", label: "Discord (sotto 10 MB)"),
+            KnobOption(value: "15", short: "WhatsApp", label: "WhatsApp (sotto 16 MB)"),
+            KnobOption(value: "24", short: "Email", label: "Email (sotto 25 MB)"),
+            KnobOption(value: "50", short: "50", label: "50 MB"),
             KnobOption(value: "100", short: "100", label: "100 MB")]
         case .vresize: return [
             KnobOption(value: "480", short: "480p", label: "480p (leggero)"), KnobOption(value: "720", short: "720p", label: "720p (HD)"),
@@ -340,8 +352,9 @@ enum ParamChoices {
     static func defaultValue(for k: ParamKind) -> String {
         switch k {
         case .resize: return "1920"
+        case .icompress: return "best"
         case .pdfcompress: return "medium"
-        case .vcompress: return "25"
+        case .vcompress: return "best"
         case .vresize: return "1080"
         case .speed: return "1.5"
         case .rotate: return "90"

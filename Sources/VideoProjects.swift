@@ -138,7 +138,7 @@ enum VideoProjectLibrary {
 
 // MARK: - La schermata Progetti
 
-/// 3.0 · La scheda Video: il montaggio (progetti) oppure gli strumenti veloci su uno o più video.
+/// 3.7 · La scheda Video: la base (strumenti su uno o più video) oppure l'editor completo (progetti).
 struct VideoTabView: View {
     @ObservedObject var s: VideoProjectStore
     @ObservedObject private var app = AppState.shared
@@ -152,19 +152,37 @@ struct VideoTabView: View {
     }
 }
 
-/// Montaggio · Strumenti veloci, in cima alla scheda Video.
+/// 3.7 · Un pulsante solo: dalla base si apre l'editor completo (stile CapCut), dall'editor si torna alla base.
+/// Se nella base ci sono già dei video, l'editor li prende in un progetto nuovo: nessun file da ritrascinare.
 struct VideoModeSwitch: View {
     @ObservedObject private var app = AppState.shared
+    @Environment(\.undoManager) private var undo
 
     var body: some View {
-        Picker("", selection: $app.videoMode) {
-            Text("Montaggio").tag(VideoMode.montage)
-            Text("Strumenti veloci").tag(VideoMode.tools)
+        if app.videoMode == .tools {
+            Button { openEditor() } label: {
+                Label("Editor", systemImage: "film.stack")
+                    .font(.system(size: 12.5, weight: .semibold))
+            }
+            .buttonStyle(.borderedProminent).tint(Theme.color(.video))
+            .keyboardShortcut("e", modifiers: [.command, .shift])
+            .help("Apri l’editor completo: più video in fila, testi, sottotitoli, musica ed effetti (⇧⌘E)")
+        } else {
+            Button { withAnimation(Motion.page) { app.videoMode = .tools } } label: {
+                Label("Base", systemImage: "chevron.left").font(.system(size: 12.5, weight: .semibold))
+            }
+            .keyboardShortcut("e", modifiers: [.command, .shift])
+            .help("Torna alle cose di base: taglia, comprimi, cambia grandezza, Discord e WhatsApp (⇧⌘E)")
         }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        .fixedSize()
-        .help("Montaggio: più video, testi e musica in un progetto. Strumenti veloci: comprimi, taglia, GIF e altro, su uno o tanti video")
+    }
+
+    private func openEditor() {
+        let files = app.videoTools.targets
+        withAnimation(Motion.page) { app.videoMode = .montage }
+        guard !files.isEmpty else { return }
+        let s = VideoProjectStore.shared
+        s.newProject(undo)
+        s.add(files, undo: undo)
     }
 }
 

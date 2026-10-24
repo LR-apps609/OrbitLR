@@ -34,7 +34,7 @@ enum Destination {
         t = String(t.unicodeScalars.filter { !CharacterSet.controlCharacters.contains($0) })
         while t.hasPrefix(".") { t.removeFirst() }
         t = t.trimmingCharacters(in: .whitespaces)
-        if t.count > 200 { t = String(t.prefix(200)) }
+        while t.utf8.count > 200 { t.removeLast() }          // il Mac accetta nomi fino a 255 byte
         return t.isEmpty ? fallback : t
     }
 
@@ -83,6 +83,7 @@ enum NativeEngine {
             return false
         }
         if id == "resize" { return exts.allSatisfy { imageIn.contains($0) && $0 != "gif" } }
+        if id == "icompress" { return exts.allSatisfy { imageIn.contains($0) && $0 != "gif" } }      // 3.6
         if id == "vresize" && job.param == "hevc" { return exts.allSatisfy { videoIn.contains($0) } }
         return false
     }
@@ -110,6 +111,14 @@ enum NativeEngine {
             return try await Task.detached(priority: .userInitiated) {
                 try await Tools.run(job: job, file: file, dir: dir, progress: progress)
             }.value
+        }
+
+        if id == "icompress" {
+            // 3.6 · «best» = stessa qualità, meno peso; un numero = peso massimo in KB
+            let kb = Int(job.param.trimmingCharacters(in: .whitespaces))
+            let out = try SmartImage.compress(file, targetBytes: kb.map { $0 * 1000 }, dir: dir)
+            progress(1)
+            return out
         }
 
         if id == "resize" {
@@ -232,7 +241,7 @@ enum NativeEngine {
         }
     }
 
-    private static func flatten(_ img: CGImage) -> CGImage? {
+    static func flatten(_ img: CGImage) -> CGImage? {
         guard let cs = CGColorSpace(name: CGColorSpace.sRGB),
               let ctx = CGContext(data: nil, width: img.width, height: img.height, bitsPerComponent: 8, bytesPerRow: 0,
                                   space: cs, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return nil }

@@ -634,7 +634,7 @@ enum Media {
             if e == "md" {
                 text = text.replacingOccurrences(of: #"[#*_>`]+"#, with: "", options: .regularExpression)
             }
-        } else if ["html", "htm", "xhtml", "webarchive"].contains(e) {
+        } else if ["html", "htm", "xhtml"].contains(e) {
             // 3.5.2 · Una pagina web si legge come testo puro: nessuna immagine o risorsa caricata da internet
             text = htmlToPlainText((try? String(contentsOf: url, encoding: .utf8)) ?? (try? String(contentsOf: url, encoding: .isoLatin1)) ?? "")
         } else if let a = try? NSAttributedString(url: url, options: [:], documentAttributes: nil) {
@@ -655,7 +655,23 @@ enum Media {
         t = t.replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
         let entities = ["&nbsp;": " ", "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": "\"", "&#39;": "'", "&apos;": "'",
                         "&egrave;": "è", "&eacute;": "é", "&agrave;": "à", "&ograve;": "ò", "&ugrave;": "ù", "&igrave;": "ì"]
-        for (k, v) in entities { t = t.replacingOccurrences(of: k, with: v) }
+        for (k, v) in entities where k != "&amp;" { t = t.replacingOccurrences(of: k, with: v) }
+        // Entità numeriche: &#8217; &#x2019;
+        if let re = try? NSRegularExpression(pattern: "&#(x?)([0-9A-Fa-f]+);") {
+            let ns = t as NSString
+            var outText = ""
+            var last = 0
+            for m in re.matches(in: t, range: NSRange(location: 0, length: ns.length)) {
+                outText += ns.substring(with: NSRange(location: last, length: m.range.location - last))
+                let hex = ns.substring(with: m.range(at: 1)) == "x"
+                let num = ns.substring(with: m.range(at: 2))
+                if let v = UInt32(num, radix: hex ? 16 : 10), let u = Unicode.Scalar(v) { outText.append(Character(u)) }
+                last = m.range.location + m.range.length
+            }
+            outText += ns.substring(from: last)
+            t = outText
+        }
+        t = t.replacingOccurrences(of: "&amp;", with: "&")          // per ultima, così «&amp;lt;» resta «&lt;»
         t = t.replacingOccurrences(of: "[ \t]+", with: " ", options: .regularExpression)
         t = t.replacingOccurrences(of: "\n\\s*\n+", with: "\n\n", options: .regularExpression)
         return t
