@@ -47,6 +47,11 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     /// 3.4.6 · Il lettore dell'anteprima. Dopo una modifica se ne prepara uno nuovo e si scambia solo quando
     /// è pronto sullo stesso punto: niente schermo nero tra la versione vecchia e quella nuova.
     @Published private(set) var player = AVPlayer()
+    /// 3.5 · Il lettore nuovo, già sul punto giusto, che aspetta di avere l'immagine pronta sullo schermo
+    @Published private(set) var incoming: AVPlayer? = nil
+    /// I lettori da mostrare: quello attuale e, durante lo scambio, quello nuovo (invisibile finché non è pronto)
+    var screens: [AVPlayer] { incoming.map { [player, $0] } ?? [player] }
+    private var promoteFallback: DispatchWorkItem?
     private var observer: Any?
     /// 3.4.6 · Spostamenti dell'indicatore «a inseguimento»: uno alla volta, sempre verso l'ultimo punto chiesto
     private var seekTarget: Double? = nil
@@ -305,6 +310,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             guard p.clips.contains(where: { inf[$0.path] != nil }) else {
                 self.pause()
                 self.player.replaceCurrentItem(with: nil)
+                self.incoming = nil
                 self.previewDuration = 0
                 return
             }
@@ -315,6 +321,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             guard let built else {
                 self.pause()
                 self.player.replaceCurrentItem(with: nil)
+                self.incoming = nil
                 self.previewDuration = 0
                 return
             }
@@ -328,20 +335,38 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             next.automaticallyWaitsToMinimizeStalling = false
             _ = await next.seek(to: VideoProjectBuilder.cm(t), toleranceBefore: .zero, toleranceAfter: .zero)
             guard !Task.isCancelled else { return }
-            let wasPlaying = self.clock.playing
-            let old = self.player
             let now = min(self.clock.time, max(0, built.duration - 0.05))
             if abs(now - t) > 0.02 { _ = await next.seek(to: VideoProjectBuilder.cm(now), toleranceBefore: .zero, toleranceAfter: .zero) }
             guard !Task.isCancelled else { return }
-            old.pause()
-            self.player = next
-            self.attachObserver()
             self.previewDuration = built.duration
-            self.clock.time = now
-            if wasPlaying { next.play() }
-            old.replaceCurrentItem(with: nil)
-            Perf.end(.previewRebuild)
+            // Si mostra, invisibile, sopra quello vecchio; lo scambio avviene quando ha l'immagine pronta
+            // (o dopo mezzo secondo al massimo, se nessuno lo sta guardando)
+            if let pending = self.incoming, pending !== next { pending.replaceCurrentItem(with: nil) }
+            self.incoming = next
+            self.promoteFallback?.cancel()
+            let w = DispatchWorkItem { [weak self, weak next] in if let next { self?.promote(next) } }
+            self.promoteFallback = w
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: w)
         }
+    }
+
+    /// 3.5 · Il lettore nuovo prende il posto di quello vecchio, senza fotogrammi neri in mezzo.
+    func promote(_ next: AVPlayer) {
+        guard incoming === next else { return }
+        promoteFallback?.cancel()
+        let wasPlaying = clock.playing
+        let old = player
+        let now = min(clock.time, max(0, previewDuration - 0.05))
+        if abs(next.currentTime().seconds - now) > 0.05 {
+            next.seek(to: VideoProjectBuilder.cm(now), toleranceBefore: .zero, toleranceAfter: .zero)
+        }
+        old.pause()
+        player = next
+        incoming = nil
+        attachObserver()
+        if wasPlaying { next.play() }
+        old.replaceCurrentItem(with: nil)
+        Perf.end(.previewRebuild)
     }
 
     func togglePlay() { clock.playing ? pause() : play() }
@@ -532,6 +557,8 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         notice = nil
         lastJob = nil
         player.replaceCurrentItem(with: nil)
+        incoming?.replaceCurrentItem(with: nil)
+        incoming = nil
         previewDuration = 0
         clock.time = 0
         refreshLibrary()
@@ -1234,7 +1261,8 @@ private struct EditSlider: View {
 
 private struct EditorPreview: View {
     @ObservedObject var s: VideoProjectStore
-    @ObservedObject var clock: PlayClock
+    /// 3.5 · Non osservato qui: solo la barra in basso (e i testi) si aggiornano 60 volte al secondo
+    let clock: PlayClock
     /// 2.9.9 · nel passo «Testi» i testi si trascinano sull'anteprima
     var editTexts = false
     /// 2.9.10 · «T+ Testo» sull'anteprima
@@ -1242,8 +1270,15 @@ private struct EditorPreview: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            PlayerPreview(player: s.player)
-                .background(Color.black)
+            // 3.5 · Due lettori sovrapposti durante lo scambio: quello nuovo resta invisibile finché
+            // non ha davvero l'immagine pronta, poi prende il posto del vecchio (niente nero)
+            ZStack {
+                ForEach(s.screens, id: \.self) { p in
+                    PlayerPreview(player: p, onReady: p === s.incoming ? { s.promote(p) } : nil)
+                        .opacity(p === s.incoming ? 0.001 : 1)
+                }
+            }
+            .background(Color.black)
             if let r = s.project.aspectRatio {
                 FormatFrame(canvas: s.canvasSize, ratio: r).allowsHitTesting(false)
             }
@@ -1270,25 +1305,35 @@ private struct EditorPreview: View {
                 Spacer()
             }
             .padding(10)
-            HStack {
-                Button { s.togglePlay() } label: {
-                    Image(systemName: clock.playing ? "pause.fill" : "play.fill").font(.system(size: 13, weight: .bold))
-                        .frame(width: 34, height: 34).background(Circle().fill(Color.white.opacity(0.9)))
-                        .foregroundStyle(Color.black)
-                }
-                .buttonStyle(.plain)
-                .keyboardShortcut(s.typing ? nil : KeyboardShortcut(.space, modifiers: []))
-                .help("Riproduci / pausa (Spazio)")
-                .accessibilityLabel(clock.playing ? "Pausa" : "Riproduci")
-                Spacer()
-                Text("\(formatTime(clock.time)) / \(formatTime(s.project.duration))")
-                    .font(.system(size: 12, design: .rounded)).monospacedDigit().foregroundStyle(Color.white.opacity(0.9))
-            }
-            .padding(10)
+            PlaybackBar(s: s, clock: clock)
         }
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .frame(minHeight: 200)
+    }
+}
+
+/// 3.5 · Riproduci/pausa e tempo: l'unica parte dell'anteprima che cambia a ogni fotogramma.
+private struct PlaybackBar: View {
+    @ObservedObject var s: VideoProjectStore
+    @ObservedObject var clock: PlayClock
+
+    var body: some View {
+        HStack {
+            Button { s.togglePlay() } label: {
+                Image(systemName: clock.playing ? "pause.fill" : "play.fill").font(.system(size: 13, weight: .bold))
+                    .frame(width: 34, height: 34).background(Circle().fill(Color.white.opacity(0.9)))
+                    .foregroundStyle(Color.black)
+            }
+            .buttonStyle(Pressable())
+            .keyboardShortcut(s.typing ? nil : KeyboardShortcut(.space, modifiers: []))
+            .help("Riproduci / pausa (Spazio)")
+            .accessibilityLabel(clock.playing ? "Pausa" : "Riproduci")
+            Spacer()
+            Text("\(formatTime(clock.time)) / \(formatTime(s.project.duration))")
+                .font(.system(size: 12, design: .rounded)).monospacedDigit().foregroundStyle(Color.white.opacity(0.9))
+        }
+        .padding(10)
     }
 }
 
@@ -1681,7 +1726,7 @@ private struct ProjectTimeline: View {
                     .onChanged { v in
                         if dragBefore == nil { dragBefore = s.project; dragStartOffset = m.offset }
                         let raw = min(max(0, dragStartOffset + Double(v.translation.width / pps)), max(0, total - 0.5))
-                        let o = Snap.to(raw, Snap.marks(s.project, playhead: clock.time), pps: pps, id: "m")
+                        let o = min(max(0, Snap.to(raw, Snap.marks(s.project, playhead: clock.time), pps: pps, id: "m")), max(0, total - 0.5))
                         s.live { $0.music?.offset = o }
                     }
                     .onEnded { _ in

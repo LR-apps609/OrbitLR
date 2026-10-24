@@ -169,6 +169,7 @@ struct VideoModeSwitch: View {
 
 struct VideoProjectsView: View {
     @ObservedObject var s: VideoProjectStore
+    @ObservedObject private var app = AppState.shared
     @Environment(\.undoManager) private var undo
     @State private var targeted = false
 
@@ -225,7 +226,7 @@ struct VideoProjectsView: View {
             return true
         }
         .onAppear { s.refreshLibrary() }
-        .onChange(of: AppState.shared.selection) { _, now in if now == .video { s.refreshLibrary() } }   // 3.4.2 · la scheda resta viva
+        .onChange(of: app.selection) { _, now in if now == .video { s.refreshLibrary() } }   // 3.4.2 · la scheda resta viva
     }
 
     private func rename(_ e: VPEntry) {

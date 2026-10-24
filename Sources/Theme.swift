@@ -216,6 +216,42 @@ enum Motion {
     static var page: Animation { reduced ? .easeOut(duration: 0.1) : .smooth(duration: 0.28) }
 }
 
+/// 3.5 · Vero se la scheda è quella davanti (le schede vive ma nascoste fermano le loro animazioni)
+private struct FrontTabKey: EnvironmentKey { static let defaultValue = true }
+extension EnvironmentValues {
+    var isFrontTab: Bool {
+        get { self[FrontTabKey.self] }
+        set { self[FrontTabKey.self] = newValue }
+    }
+}
+
+/// 3.5 · Un movimento continuo che gira solo quando si vede: scheda davanti e finestra attiva.
+struct LoopDriver: ViewModifier {
+    @Binding var on: Bool
+    let animation: Animation
+    @Environment(\.isFrontTab) private var front
+    @Environment(\.controlActiveState) private var active
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var running: Bool { front && active != .inactive && !reduceMotion }
+
+    func body(content: Content) -> some View {
+        content
+            .onAppear { update(running) }
+            .onChange(of: running) { _, r in update(r) }
+    }
+
+    private func update(_ r: Bool) {
+        if r {
+            withAnimation(animation) { on = true }
+        } else {
+            var t = Transaction()
+            t.disablesAnimations = true
+            withTransaction(t) { on = false }
+        }
+    }
+}
+
 /// 3.4.9 · Il tocco di tutti i pulsanti «disegnati a mano» (strumenti, formati, pastiglie):
 /// al clic si abbassano appena e tornano su, sempre allo stesso modo.
 struct Pressable: ButtonStyle {

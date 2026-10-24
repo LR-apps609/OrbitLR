@@ -433,6 +433,8 @@ final class SpeechPreview: NSObject, ObservableObject, AVSpeechSynthesizerDelega
 
 struct AudioTabView: View {
     @ObservedObject var m: MediaTabModel
+    /// 3.5 · La scheda resta viva: si guarda quale scheda è davanti per fermare la voce e aggiornare i progetti
+    @ObservedObject private var app = AppState.shared
     @State private var tool: AudioTool = .ringtone
 
     init(m: MediaTabModel, startTool: AudioTool = .ringtone) {
@@ -485,7 +487,9 @@ struct AudioTabView: View {
             return true
         }
         .onAppear { applyTrimRules(); m.currentTool = tool.rawValue; m.refreshProjects() }
-        .onChange(of: AppState.shared.selection) { _, now in if now == .audio { m.refreshProjects() } }   // 3.4.2
+        .onChange(of: app.selection) { _, now in
+            if now == .audio { m.refreshProjects() } else { preview.stop(); m.trim?.pause() }
+        }
         .onChange(of: m.restoredTool) { _, v in
             // 2.8.5 · progetto ripreso: torna lo strumento che usavi
             if let v, let t = AudioTool(rawValue: v) { tool = t }

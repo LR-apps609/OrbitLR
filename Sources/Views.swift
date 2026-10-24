@@ -15,7 +15,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     /// 3.0 · Coda e Cronologia sono una pagina sola: «Attività».
     static let activities: [SidebarItem] = [.activity]
     /// 3.4.2 · Le schede che restano vive (le più usate); le altre si ricostruiscono quando servono.
-    static let kept: [SidebarItem] = tabs + [.activity]
+    static let kept: [SidebarItem] = tabs
     /// Per chi vuole di più: chiuso di base, si apre con un clic.
     static let advanced: [SidebarItem] = [.automation, .presets, .components]
     var symbol: String {
@@ -78,7 +78,6 @@ struct MainWindow: View {
         switch item {
         case .video?:
             VideoProjectStore.shared.pause()
-            VideoProjectStore.shared.typing = false
         case .audio?:
             AppState.shared.audioTab.trim?.pause()
         default: break
@@ -170,6 +169,7 @@ struct MainWindow: View {
                 ForEach(SidebarItem.kept.filter { visited.contains($0) || $0 == current }) { item in
                     let on = current == item
                     page(item)
+                        .environment(\.isFrontTab, on)
                         .opacity(on ? 1 : 0)
                         .offset(y: on || Motion.reduced ? 0 : 4)
                         .allowsHitTesting(on)

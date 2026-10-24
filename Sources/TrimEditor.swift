@@ -434,12 +434,39 @@ struct TrimTimeline: View {
 /// Anteprima video senza controlli (li gestiamo noi).
 struct PlayerPreview: NSViewRepresentable {
     let player: AVPlayer
+    /// 3.5 · Chiamato una volta quando la prima immagine è pronta sullo schermo
+    var onReady: (() -> Void)? = nil
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
     func makeNSView(context: Context) -> AVPlayerView {
         let v = AVPlayerView()
         v.player = player
         v.controlsStyle = .none
         v.videoGravity = .resizeAspect
+        context.coordinator.watch(v, onReady)
         return v
     }
-    func updateNSView(_ v: AVPlayerView, context: Context) { v.player = player }
+
+    func updateNSView(_ v: AVPlayerView, context: Context) {
+        if v.player !== player { v.player = player }          // 3.5 · niente riassegnazioni a ogni fotogramma
+        context.coordinator.watch(v, onReady)
+    }
+
+    final class Coordinator {
+        private var token: NSKeyValueObservation?
+        private var fired = false
+
+        func watch(_ v: AVPlayerView, _ onReady: (() -> Void)?) {
+            guard let onReady else { token = nil; return }
+            guard token == nil, !fired else { return }
+            if v.isReadyForDisplay { fired = true; DispatchQueue.main.async { onReady() }; return }
+            token = v.observe(\.isReadyForDisplay, options: [.new]) { [weak self] view, _ in
+                guard let self, !self.fired, view.isReadyForDisplay else { return }
+                self.fired = true
+                self.token = nil
+                DispatchQueue.main.async { onReady() }
+            }
+        }
+    }
 }

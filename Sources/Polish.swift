@@ -22,7 +22,11 @@ final class ThumbCache: @unchecked Sendable {
     private let disk = DispatchQueue(label: "orbitlr.miniature", qos: .utility, attributes: .concurrent)
     static var folder: URL { Paths.home.appendingPathComponent("Library/Caches/OrbitLR/Miniature", isDirectory: true) }
 
-    init() { cache.countLimit = 600 }
+    /// L'ultima miniatura per file e misura, senza guardare la data del file: si legge dal thread principale
+    /// senza toccare il disco (la versione giusta arriva comunque da `image`, controllata in sottofondo)
+    private let latest = NSCache<NSString, NSImage>()
+
+    init() { cache.countLimit = 600; latest.countLimit = 600 }
 
     private static func key(_ url: URL, _ side: CGFloat) -> String { "\(url.path)|\(Int(side))|\(stamp(url))" }
 
@@ -36,34 +40,39 @@ final class ThumbCache: @unchecked Sendable {
     /// Solo dalla memoria, subito (per mostrare la miniatura già al primo disegno, senza dissolvenze).
     func cached(for url: URL?, side: CGFloat) -> NSImage? {
         guard let url else { return nil }
-        return cache.object(forKey: Self.key(url, side) as NSString)
+        return latest.object(forKey: "\(url.path)|\(Int(side))" as NSString)
     }
 
     func image(for url: URL, side: CGFloat, done: @escaping (NSImage?) -> Void) {
-        let k = Self.key(url, side)
-        if let img = cache.object(forKey: k as NSString) { done(img); return }
-        guard FileManager.default.fileExists(atPath: url.path) else { done(nil); return }
+        let quick = "\(url.path)|\(Int(side))" as NSString
         let t0 = CACurrentMediaTime()
+        // 3.5 · Tutto quello che tocca il disco (data del file, file sul disco) avviene in sottofondo
         disk.async { [weak self] in
+            guard let self else { return }
+            guard FileManager.default.fileExists(atPath: url.path) else { DispatchQueue.main.async { done(nil) }; return }
+            let k = Self.key(url, side)
+            if let img = self.cache.object(forKey: k as NSString) { DispatchQueue.main.async { done(img) }; return }
             let file = Self.diskURL(k)
             if let img = NSImage(contentsOf: file) {
-                self?.cache.setObject(img, forKey: k as NSString)
+                self.cache.setObject(img, forKey: k as NSString)
+                self.latest.setObject(img, forKey: quick)
                 Perf.record(.thumbnail, CACurrentMediaTime() - t0)
                 DispatchQueue.main.async { done(img) }
                 return
             }
             let req = QLThumbnailGenerator.Request(fileAt: url, size: CGSize(width: side, height: side),
                                                    scale: 2, representationTypes: .thumbnail)
-            QLThumbnailGenerator.shared.generateBestRepresentation(for: req) { rep, _ in
+            QLThumbnailGenerator.shared.generateBestRepresentation(for: req) { [weak self] rep, _ in
                 let img = rep?.nsImage
-                if let img {
-                    self?.cache.setObject(img, forKey: k as NSString)
+                if let img, let self {
+                    self.cache.setObject(img, forKey: k as NSString)
+                    self.latest.setObject(img, forKey: quick)
                     Perf.record(.thumbnail, CACurrentMediaTime() - t0)
                     if let cg = rep?.cgImage {
-                        self?.disk.async {
+                        self.disk.async {
                             try? FileManager.default.createDirectory(at: Self.folder, withIntermediateDirectories: true)
-                            let rep = NSBitmapImageRep(cgImage: cg)
-                            try? rep.representation(using: .png, properties: [:])?.write(to: file, options: .atomic)
+                            let bitmap = NSBitmapImageRep(cgImage: cg)
+                            try? bitmap.representation(using: .png, properties: [:])?.write(to: file, options: .atomic)
                         }
                     }
                 }
@@ -130,9 +139,9 @@ struct FileThumb: View {
         .animation(Motion.quick, value: image != nil)
         .task(id: url?.path) {
             guard let url else { image = nil; return }
-            if let hit = ThumbCache.shared.cached(for: url, side: size * 2) { image = hit; return }
-            image = nil
-            ThumbCache.shared.image(for: url, side: size * 2) { img in image = img }
+            let hit = ThumbCache.shared.cached(for: url, side: size * 2)
+            if hit == nil { image = nil } else if image == nil { image = hit }
+            ThumbCache.shared.image(for: url, side: size * 2) { img in if img !== image { image = img } }
         }
     }
 }
@@ -345,11 +354,8 @@ struct RadioIllustration: View {
                 .offset(y: 52)
         }
         .frame(width: 200, height: 170)
-        .onAppear {
-            guard !reduceMotion else { return }
-            withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) { bob = true }
-            withAnimation(.easeInOut(duration: 4.5).repeatForever(autoreverses: true)) { sweep = true }
-        }
+        .modifier(LoopDriver(on: $bob, animation: .easeInOut(duration: 2.2).repeatForever(autoreverses: true)))
+        .modifier(LoopDriver(on: $sweep, animation: .easeInOut(duration: 4.5).repeatForever(autoreverses: true)))
         .accessibilityHidden(true)
     }
 }

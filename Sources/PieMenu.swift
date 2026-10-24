@@ -587,7 +587,10 @@ final class PieController: @unchecked Sendable {
         model.fileName = files.count == 1 ? files[0].lastPathComponent : "\(files.count) \(kind.name)"
         model.icon = NSWorkspace.shared.icon(forFile: files[0].path)
         // 3.4.3 · I pesi previsti si calcolano a torta aperta: l'animazione d'apertura ha tutta la macchina per sé
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak model] in model?.loadEstimates(files: files, kind: kind) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self, weak model] in
+            guard let self, let model, self.model === model else { return }        // torta già chiusa: niente stime inutili
+            model.loadEstimates(files: files, kind: kind)
+        }
         model.lastId = UserDefaults.standard.string(forKey: "last_" + kind.rawValue)
         if let a = model.lastAction { model.subtitle = "Invio: " + a.short }
         else if let s = model.suggestedAction { model.subtitle = "Consigliato: " + s.short }

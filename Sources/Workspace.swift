@@ -643,11 +643,8 @@ struct EmptyOrbit: View {
         }
         .frame(width: 176, height: 176)
         .animation(Motion.spring(0.35, 0.7), value: open)
-        .onAppear {
-            guard !reduceMotion else { return }
-            withAnimation(.linear(duration: 40).repeatForever(autoreverses: false)) { spin = true }
-            withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) { breathe = true }
-        }
+        .modifier(LoopDriver(on: $spin, animation: .linear(duration: 40).repeatForever(autoreverses: false)))
+        .modifier(LoopDriver(on: $breathe, animation: .easeInOut(duration: 2).repeatForever(autoreverses: true)))
         .accessibilityHidden(true)
     }
 }

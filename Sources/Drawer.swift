@@ -70,7 +70,11 @@ final class Drawer: ObservableObject, @unchecked Sendable {
             .combineLatest($hidden)
             .debounce(for: .milliseconds(150), scheduler: DispatchQueue.main)
             .sink { [weak self] history, hidden in self?.refresh(history, hidden) }
+        // Tornando in OrbitLR (magari dopo aver cestinato un file nel Finder) il Cassetto si ricontrolla
+        active = NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+            .sink { [weak self] _ in guard let self else { return }; self.refresh(QueueStore.shared.history, self.hidden) }
     }
+    private var active: AnyCancellable?
 
     private func refresh(_ history: [HistoryEntry], _ hidden: Set<String>) {
         work.async { [weak self] in

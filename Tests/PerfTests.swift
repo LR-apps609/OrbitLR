@@ -56,7 +56,7 @@ final class PerfTests: XCTestCase {
 
     func testLeSchedeDiLavoroRestanoVive() {
         for t in SidebarItem.tabs { XCTAssertTrue(SidebarItem.kept.contains(t), "\(t.rawValue) deve restare viva") }
-        XCTAssertTrue(SidebarItem.kept.contains(.activity))
+        XCTAssertFalse(SidebarItem.kept.contains(.activity), "Attività si ricostruisce: viva ricalcolerebbe la cronologia a ogni avanzamento")
     }
 
     /// Torta: costruire gli spicchi e impaginare la torta.
