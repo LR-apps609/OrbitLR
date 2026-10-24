@@ -1,0 +1,80 @@
+# OrbitLR per Windows · motori della voce: whisper.cpp (licenza MIT) per trascrivere e fare i sottotitoli
+# sul computer. Prende la versione ufficiale per Windows, la prova e la mette tra i file del repository
+# (release «motori-win-voce-1») con la sua impronta. Calcola anche l'impronta del modello italiano
+# che l'app scarica al primo uso (Hugging Face, ggml-org/whisper.cpp).
+
+name: Motori della voce per Windows
+
+on:
+  push:
+    branches: [motori-win-voce]
+    paths: [.github/workflows/motori-windows-voce.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  whisper:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Scarica whisper.cpp per Windows
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/ggml-org/whisper.cpp/releases/latest --jq '.tag_name, (.assets[].name)' > assets.txt
+          cat assets.txt
+          TAG=$(head -n 1 assets.txt)
+          NAME=$(grep -E '^whisper-bin-x64\.zip$' assets.txt || true)
+          [ -n "$NAME" ] || NAME=$(grep -E 'bin-x64.*\.zip$' assets.txt | grep -viE 'cublas|cuda|blas|vulkan' | head -n 1)
+          [ -n "$NAME" ] || { echo "::error::nessun pacchetto per Windows"; exit 1; }
+          echo "Scelgo $TAG / $NAME"
+          curl -fL --retry 3 -o w.zip "https://github.com/ggml-org/whisper.cpp/releases/download/$TAG/$NAME"
+          unzip -q w.zip -d w
+          find w -maxdepth 3 -type f | head -50
+          mkdir -p Voce
+          EXE=$(find w -iname 'whisper-cli.exe' | head -n 1)
+          [ -n "$EXE" ] || EXE=$(find w -iname 'main.exe' | head -n 1)
+          [ -n "$EXE" ] || { echo "::error::whisper-cli.exe non trovato"; exit 1; }
+          DIR=$(dirname "$EXE")
+          cp "$EXE" Voce/whisper-cli.exe
+          cp "$DIR"/*.dll Voce/ 2>/dev/null || true
+          curl -fL --retry 3 -o Voce/LICENZA-whisper.txt "https://raw.githubusercontent.com/ggml-org/whisper.cpp/$TAG/LICENSE"
+          echo "whisper.cpp $TAG (licenza MIT), file $NAME da https://github.com/ggml-org/whisper.cpp" > Voce/LEGGIMI.txt
+          ls -la Voce
+          echo "::notice::whisper.cpp $TAG"
+
+      - name: Modello e prova
+        run: |
+          set -euo pipefail
+          M=ggml-small-q5_1.bin
+          curl -fL --retry 3 -o $M "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/$M"
+          SHA=$(sha256sum $M | cut -d' ' -f1)
+          SIZE=$(stat -c %s $M)
+          echo "::notice::modello $M sha256=$SHA byte=$SIZE"
+          # Prova: una voce sintetica di Windows in italiano, poi la trascrizione
+          powershell -NoProfile -Command "Add-Type -AssemblyName System.Speech; \$s=New-Object System.Speech.Synthesis.SpeechSynthesizer; \$s.SetOutputToWaveFile('prova.wav'); \$s.Speak('Hello, this is a short test of the transcription.'); \$s.Dispose()"
+          ./Voce/whisper-cli.exe -m $M -f prova.wav -l auto -oj -ojf -of risultato -np 2>&1 | tail -5 || true
+          ls -la risultato* || true
+          head -c 600 risultato.json || true
+          echo
+          echo "::notice::trascrizione: $(grep -o '"text": *"[^"]*"' risultato.json | head -3 | tr '\n' ' ')"
+
+      - name: Impacchetta e pubblica
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          7z a -tzip motori-win-voce-1.zip Voce >/dev/null
+          sha256sum motori-win-voce-1.zip | tee motori-win-voce-1.sha256
+          echo "::notice::pacchetto $(cat motori-win-voce-1.sha256)"
+          gh release view motori-win-voce-1 -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create motori-win-voce-1 -R "$GITHUB_REPOSITORY" --prerelease --latest=false --title "Motori della voce di OrbitLR per Windows (non è un aggiornamento)" \
+              --notes "whisper.cpp (licenza MIT) per trascrivere sul computer, incluso in OrbitLR per Windows."
+          gh release upload motori-win-voce-1 motori-win-voce-1.zip motori-win-voce-1.sha256 --clobber -R "$GITHUB_REPOSITORY"
