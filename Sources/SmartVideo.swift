@@ -452,17 +452,21 @@ enum SmartVideo {
             if let t = targetBytes { print("TEMPO: comprimi tentativo 1: \(got / 1000) KB su \(t / 1000) KB (\(p.width)×\(p.height), \(p.videoBitrate / 1000) kbps)") }
             if let t = targetBytes, got > t {
                 // Il chip ha usato più dati del previsto (capita con immagini piene di dettagli minuti).
-                // Fino a due giri in più: si chiede meno in proporzione e, se si era sforato di molto,
-                // si rifà il piano con meno dati, così scende anche la misura invece di riempirsi di quadretti.
+                // Fino a tre giri in più, rifacendo il piano: scende anche la misura invece di riempirsi di quadretti.
+                // Quanto il codificatore sfora rispetto a quanto chiesto: si ricorda da un giro all'altro,
+                // così ogni giro si avvicina invece di ripartire da capo
                 var last = got
-                for attempt in 1...2 {
-                    let ratio = Double(t) / Double(last)
-                    if ratio < 0.8, case .plan(let smaller) = plan(src, targetBytes: Int64(Double(t) * ratio * 0.95), codec: codec) {
-                        p = smaller
+                var factor = 1.0
+                var expected = p.bytes(duration: src.duration)
+                for attempt in 1...3 {
+                    factor *= Double(expected) / Double(max(1, last))
+                    if case .plan(let next) = plan(src, targetBytes: Int64(Double(t) * factor * 0.95), codec: codec) {
+                        p = next
                     } else {
-                        p.videoBitrate = max(80_000, Int(Double(p.videoBitrate) * ratio * 0.9))
+                        p.videoBitrate = max(80_000, Int(Double(p.videoBitrate) * Double(t) / Double(last) * 0.9))
                     }
-                    let base = 0.97 + Double(attempt - 1) * 0.015
+                    expected = p.bytes(duration: src.duration)
+                    let base = 0.97 + Double(attempt - 1) * 0.01
                     try await encode(asset: asset, track: track, source: src, plan: p, out: out, job: job,
                                      progress: { _ in progress(base) })
                     last = Job.size(of: out)
