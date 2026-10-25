@@ -39,4 +39,14 @@ final class MusicLinkTests: XCTestCase {
         XCTAssertEqual(s, 69.5, accuracy: 1.0, "il riquadro va sul ritornello, non sul finale")
         XCTAssertEqual(TrimModel.loudestWindow(peaks: [0.5, 0.5], duration: 10, length: 30), 0, "canzone più corta della suoneria")
     }
+
+    func testFormatiVideo() {
+        let v = MusicLink.formatArgs(.video).joined(separator: " ")
+        XCTAssertTrue(v.contains("avc1") && v.contains("height<=1080"), "di base MP4 H.264 fino a 1080p")
+        XCTAssertTrue(v.contains("--merge-output-format mp4"))
+        XCTAssertFalse(v.contains("-x"), "il video non diventa solo audio")
+        let b = MusicLink.formatArgs(.videoBest).joined(separator: " ")
+        XCTAssertFalse(b.contains("1080"), "massima qualità: nessun limite")
+        XCTAssertTrue(MusicLink.formatArgs(.audio).contains("-x"))
+    }
 }

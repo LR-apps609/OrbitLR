@@ -190,6 +190,8 @@ struct KindTabView: View {
     @ObservedObject var m: KindTabModel
     let style: KindTabStyle
     @State private var targeted = false
+    /// 4.1.3 · «Da un link…» (solo nella scheda Video)
+    @State private var showLink = false
     private var tint: Color { Theme.color(style.kind) }
     private let columns = [GridItem(.adaptive(minimum: 116, maximum: 160), spacing: 10)]
 
@@ -231,6 +233,9 @@ struct KindTabView: View {
         .sheet(item: $m.pending) { p in
             ParamView(kind: p.kind, action: p.action, files: p.files) { v in m.confirm(p, value: v) }
         }
+        .sheet(isPresented: $showLink) {
+            LinkSheet(video: true, onDone: { file in m.add([file]) }, close: { showLink = false })
+        }
     }
 
     private var header: some View {
@@ -243,6 +248,11 @@ struct KindTabView: View {
             }
             if style.kind == .video { VideoModeSwitch().padding(.leading, 8) }
             Spacer()
+            // 4.1.3 · Discreto, come nella scheda Audio
+            if style.kind == .video {
+                Button { showLink = true } label: { Label("Da un link…", systemImage: "link") }
+                    .help("Incolla il link di un video: arriva qui, pronto da tagliare, comprimere o montare")
+            }
             if !m.files.isEmpty {
                 if !m.selection.isEmpty {
                     Button(fem ? "Tutte" : "Tutti") { m.selection = []; m.refreshEstimates() }

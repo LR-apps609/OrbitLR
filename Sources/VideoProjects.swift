@@ -194,6 +194,7 @@ struct VideoProjectsView: View {
     @ObservedObject var s: VideoProjectStore
     @Environment(\.undoManager) private var undo
     @State private var targeted = false
+    @State private var showLink = false
 
     private let tint = Theme.color(.video)
     private let columns = [GridItem(.adaptive(minimum: 190, maximum: 260), spacing: 14)]
@@ -210,6 +211,8 @@ struct VideoProjectsView: View {
                 }
                 VideoModeSwitch().padding(.leading, 8)
                 Spacer()
+                Button { showLink = true } label: { Label("Da un link…", systemImage: "link") }
+                    .help("Incolla il link di un video: si apre in un progetto nuovo")
                 Button { s.newProject(undo) } label: { Label("Nuovo progetto", systemImage: "plus") }
                     .buttonStyle(.borderedProminent).tint(Theme.accent).controlSize(.large)
                     .keyboardShortcut("n", modifiers: [.command, .shift])
@@ -253,6 +256,9 @@ struct VideoProjectsView: View {
                 s.add(urls, undo: undo)
             }
             return true
+        }
+        .sheet(isPresented: $showLink) {
+            LinkSheet(video: true, onDone: { file in s.newProject(undo); s.add([file], undo: undo) }, close: { showLink = false })
         }
         .onAppear { s.refreshLibrary() }
         .onReceive(AppState.shared.$selection.dropFirst().removeDuplicates()) { now in if now == .video { s.refreshLibrary() } }   // 3.4.2 · la scheda resta viva

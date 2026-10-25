@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import CryptoKit
+import AVFoundation
 
 // ════════════════════════════════════════════════════════════════════
 //  4.1 · «Da un link…» nella scheda Audio: incolli il link di una canzone, arriva nella scheda come
@@ -100,17 +101,32 @@ enum MusicLink {
         return "Non sono riuscito a scaricare l’audio da questo link."
     }
 
-    /// Scarica l'audio del link in M4A dentro `folder`. Restituisce il file.
-    static func download(_ link: URL, to folder: URL, job: LinkJob) async throws -> URL {
+    /// 4.1.3 · Come scaricare: solo l'audio (M4A), il video in MP4 fino a 1080p (si apre ovunque),
+    /// o il video alla massima qualità che c'è (anche 4K, a volte in formati da convertire).
+    enum Mode: String { case audio, video, videoBest }
+
+    static func formatArgs(_ mode: Mode) -> [String] {
+        switch mode {
+        case .audio:
+            return ["-f", "bestaudio[ext=m4a]/bestaudio/best", "-x", "--audio-format", "m4a", "--audio-quality", "0"]
+        case .video:
+            return ["-f", "bv*[vcodec^=avc1][height<=1080]+ba[ext=m4a]/b[ext=mp4][height<=1080]/bv*[height<=1080]+ba/b[height<=1080]/b",
+                    "--merge-output-format", "mp4"]
+        case .videoBest:
+            return ["-f", "bv*+ba/b", "-S", "res,vcodec:h264,acodec:m4a", "--merge-output-format", "mp4/mkv"]
+        }
+    }
+
+    /// Scarica dal link dentro `folder` (audio M4A o video). Restituisce il file.
+    static func download(_ link: URL, to folder: URL, job: LinkJob, mode: Mode = .audio) async throws -> URL {
         let work = FileManager.default.temporaryDirectory.appendingPathComponent("orbitlr-link-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: work) }
         let p = Process()
         p.executableURL = exe
-        var args = ["--no-playlist", "--no-warnings", "--newline", "--progress", "--no-mtime", "--no-part",
-                    "-f", "bestaudio[ext=m4a]/bestaudio/best", "-x", "--audio-format", "m4a", "--audio-quality", "0",
-                    "-o", work.appendingPathComponent("%(title).120B.%(ext)s").path,
-                    "--print", "after_move:filepath"]
+        var args = ["--no-playlist", "--no-warnings", "--newline", "--progress", "--no-mtime", "--no-part"]
+            + formatArgs(mode)
+            + ["-o", work.appendingPathComponent("%(title).120B.%(ext)s").path, "--print", "after_move:filepath"]
         if let m = Paths.motori { args += ["--ffmpeg-location", m.path] }
         args += ["--", link.absoluteString]
         p.arguments = args
@@ -149,7 +165,13 @@ enum MusicLink {
         let made = printed ?? (try? FileManager.default.contentsOfDirectory(at: work, includingPropertiesForKeys: nil))?.first
         guard let made, FileManager.default.fileExists(atPath: made.path) else { throw Failure(message: "Non ho trovato l’audio scaricato.") }
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        let dest = uniqueURL(in: folder, name: made.lastPathComponent)
+        var name = made.lastPathComponent
+        // Un video in un formato che il Mac non apre da solo (VP9, AV1 su Mac vecchi): con l'estensione .mkv
+        // OrbitLR lo riconosce e lo prepara in MP4 aprendolo nella scheda Video
+        if mode != .audio, !(try await AVURLAsset(url: made).load(.isPlayable)) {
+            name = (name as NSString).deletingPathExtension + ".mkv"
+        }
+        let dest = uniqueURL(in: folder, name: name)
         try FileManager.default.moveItem(at: made, to: dest)
         return dest
     }
@@ -196,20 +218,35 @@ final class LinkJob: ObservableObject {
 
 /// La finestrella «Da un link…».
 struct LinkSheet: View {
+    /// 4.1.3 · Video (scheda Video) o solo audio (scheda Audio)
+    var video = false
     let onDone: (URL) -> Void
     let close: () -> Void
     @State private var text = ""
+    @State private var best = false
     @StateObject private var job = LinkJob()
 
     private var link: URL? { MusicLink.link(from: text) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Audio da un link").font(.system(size: 17, weight: .bold, design: .rounded))
-            TextField("Incolla qui il link della canzone", text: $text)
+            Text(video ? "Video da un link" : "Audio da un link").font(.system(size: 17, weight: .bold, design: .rounded))
+            TextField(video ? "Incolla qui il link del video" : "Incolla qui il link della canzone", text: $text)
                 .textFieldStyle(.roundedBorder)
                 .disabled(job.running)
                 .onSubmit { if link != nil { start() } }
+            if video {
+                Picker("Qualità", selection: $best) {
+                    Text("MP4 fino a 1080p · si apre ovunque").tag(false)
+                    Text("Massima qualità (anche 4K)").tag(true)
+                }
+                .pickerStyle(.radioGroup)
+                .disabled(job.running)
+                if best {
+                    Text("Il 4K spesso arriva in un formato che il Mac non apre da solo: OrbitLR lo converte in MP4, e ci vuole più tempo.")
+                        .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+            }
             if job.running {
                 ProgressBar(value: job.progress > 0 ? job.progress : -1, tint: Theme.color(.audio))
                 Text(job.status).font(.system(size: 12)).foregroundStyle(.secondary)
@@ -217,7 +254,8 @@ struct LinkSheet: View {
                 Label(e, systemImage: "exclamationmark.triangle").font(.system(size: 12)).foregroundStyle(.orange)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Text("Solo contenuti che hai il diritto di scaricare: tuoi, liberi o con il permesso di chi li ha creati. L’audio arriva in Download e si apre qui, pronto per suoneria, taglio e conversione.")
+            Text(video ? "Solo contenuti che hai il diritto di scaricare: tuoi, liberi o con il permesso di chi li ha creati. Il video arriva in Download e si apre qui, pronto da tagliare, comprimere o montare."
+                       : "Solo contenuti che hai il diritto di scaricare: tuoi, liberi o con il permesso di chi li ha creati. L’audio arriva in Download e si apre qui, pronto per suoneria, taglio e conversione.")
                 .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             HStack {
                 Spacer()
@@ -247,9 +285,10 @@ struct LinkSheet: View {
         Task {
             do {
                 try await MusicLink.ensureEngine { s in Task { @MainActor in job.status = s } }
-                await MainActor.run { job.status = "Scarico l’audio…"; job.progress = 0 }
+                let mode: MusicLink.Mode = video ? (best ? .videoBest : .video) : .audio
+                await MainActor.run { job.status = video ? "Scarico il video…" : "Scarico l’audio…"; job.progress = 0 }
                 let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first ?? Paths.home
-                let file = try await MusicLink.download(link, to: downloads, job: job)
+                let file = try await MusicLink.download(link, to: downloads, job: job, mode: mode)
                 await MainActor.run {
                     job.running = false
                     Sounds.drop()
