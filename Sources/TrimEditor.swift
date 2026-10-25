@@ -18,6 +18,8 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
     @Published var peaks: [Float] = []
     @Published var thumbs: [NSImage] = []
     @Published var loading = true
+    /// 4.1 · Da fare appena la forma d'onda è pronta (per esempio proporre il ritornello)
+    var onLoaded: (() -> Void)?
     /// Durata massima della selezione (es. 30 s per le suonerie), nil = libera.
     var maxLength: Double? = nil
 
@@ -76,6 +78,8 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
         peaks = built.first(where: { $0.count <= 1400 }) ?? built.last ?? []
         if video { thumbs = await TrimModel.thumbnails(url: url, count: 12, duration: dur) }
         loading = false
+        onLoaded?()
+        onLoaded = nil
     }
 
     // MARK: Comandi
@@ -187,6 +191,35 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
             cur = next
         }
         return out
+    }
+
+    // MARK: Il ritornello
+
+    /// 4.1 · Dove comincia il pezzo più «pieno» della canzone (di solito il ritornello): la finestra di
+    /// `length` secondi con il volume medio più alto, lontano dall'introduzione e dal finale.
+    static func loudestWindow(peaks: [Float], duration: Double, length: Double) -> Double {
+        let n = peaks.count
+        guard n > 4, duration > length + 1 else { return 0 }
+        let perSec = Double(n) / duration
+        let w = max(1, Int(length * perSec))
+        let from = Int(duration * 0.12 * perSec), to = Int((duration * 0.92 - length) * perSec)
+        guard to > from, to + w <= n else { return max(0, min(duration - length, duration * 0.3)) }
+        var sum: Float = peaks[from..<(from + w)].reduce(0, +)
+        var best = sum, bestAt = from
+        for i in (from + 1)...to {
+            sum += peaks[i + w - 1] - peaks[i - 1]
+            if sum > best { best = sum; bestAt = i }
+        }
+        // Si parte un attimo prima, sul battere più vicino: mezzo secondo di respiro
+        return max(0, Double(bestAt) / perSec - 0.5)
+    }
+
+    /// Mette la selezione sul ritornello (e ci porta la testina).
+    func suggestChorus(length: Double) {
+        let s = Self.loudestWindow(peaks: levels.first(where: { $0.count <= 20_000 }) ?? peaks, duration: duration, length: length)
+        start = s
+        end = min(duration, s + length)
+        if !playing { seek(start) }
     }
 
     func markIn() { setStart(playhead) }

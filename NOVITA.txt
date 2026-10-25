@@ -1,3 +1,8 @@
+Novità della 4.1 «Da un link»:
+• Audio: «Da un link…» accanto ad «Apri un altro…». Incolli il link di una canzone e l’audio arriva in Download e si apre nella scheda, pronto per suoneria, taglio e conversione. Solo contenuti che hai il diritto di scaricare
+• Suoneria: «Vai al ritornello» sposta il riquadro sul pezzo più pieno della canzone. Con una canzone presa da un link ci va da solo
+• Il motore per i link si scarica la prima volta dal sito ufficiale (circa 35 MB, impronta controllata) e si rinnova da solo ogni due settimane
+
 Novità della 4.0 «Carattere»:
 • Nella nuvoletta del risultato: «Annulla» manda nel Cestino il file appena creato (l'originale resta), e per le compressioni quanto hai risparmiato (−62% · risparmiati 4,1 MB)
 • Nel menu in alto: «Questo mese hai risparmiato 3,4 GB»

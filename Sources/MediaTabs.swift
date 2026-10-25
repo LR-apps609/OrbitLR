@@ -453,6 +453,8 @@ struct AudioTabView: View {
     @State private var allLanguages = false
     @State private var targeted = false
     @StateObject private var preview = SpeechPreview()
+    /// 4.1 · «Da un link…»
+    @State private var showLink = false
 
     private let tint = Theme.color(.audio)
 
@@ -505,6 +507,16 @@ struct AudioTabView: View {
             if t != .tts { preview.stop() }
         }
         .onDisappear { preview.stop(); m.trim?.pause() }
+        .sheet(isPresented: $showLink) {
+            LinkSheet(onDone: { file in
+                m.load([file])
+                // Suoneria: il riquadro va già sul ritornello
+                if tool == .ringtone, let t = m.trim {
+                    let len = ringLength
+                    if t.loading { t.onLoaded = { [weak t] in t?.suggestChorus(length: len) } } else { t.suggestChorus(length: len) }
+                }
+            }, close: { showLink = false })
+        }
     }
 
     // MARK: Intestazione
@@ -528,6 +540,11 @@ struct AudioTabView: View {
             }
             Spacer(minLength: 8)
             if let trim = m.trim, tool != .tts { PlayButton(trim: trim, tint: tint) }
+            // 4.1 · Discreto: un pulsante come gli altri, accanto ad «Apri un altro…»
+            if tool != .tts {
+                Button { showLink = true } label: { Label("Da un link…", systemImage: "link") }
+                    .help("Incolla il link di una canzone: arriva qui, pronta per suoneria e taglio")
+            }
             if m.file != nil && tool != .tts {
                 Button("Apri un altro…") { m.choose(append: false) }
                     .help("Apri un altro file audio (questo resta tra i progetti)")
@@ -629,6 +646,11 @@ struct AudioTabView: View {
             }
             .pickerStyle(.segmented).labelsHidden()
             .onChange(of: ringLength) { _, v in m.trim?.setLength(v); applyTrimRules() }
+            if let t = m.trim {
+                Button { t.suggestChorus(length: ringLength) } label: { Label("Vai al ritornello", systemImage: "music.note") }
+                    .controlSize(.small)
+                    .help("Sposta il riquadro sul pezzo più pieno della canzone, di solito il ritornello")
+            }
             Toggle("Dissolvenza all’inizio e alla fine", isOn: $fade).toggleStyle(.checkbox)
             Toggle("Volume uniforme", isOn: $normalize).toggleStyle(.checkbox)
             note("Alla fine puoi mandarla all’iPhone con AirDrop o con il codice QR.")
