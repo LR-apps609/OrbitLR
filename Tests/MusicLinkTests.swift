@@ -26,6 +26,7 @@ final class MusicLinkTests: XCTestCase {
         XCTAssertTrue(MusicLink.friendly("ERROR: Unsupported URL: https://x.it").contains("non so prendere"))
         XCTAssertTrue(MusicLink.friendly("ERROR: Private video. Sign in").contains("privato"))
         XCTAssertTrue(MusicLink.friendly("HTTP Error 403: Forbidden").contains("rifiutato"))
+        XCTAssertTrue(MusicLink.friendly("ERROR: [Netflix] This video is DRM protected").contains("DRM"), "Netflix e simili: un messaggio chiaro")
     }
 
     func testRitornello() {

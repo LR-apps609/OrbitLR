@@ -56,10 +56,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
         // ⌥⌘C sui file selezionati nel Finder
         Hotkey.shared.action = {
+            // 4.1.5 · Solo dal Finder (la scorciatoia è attiva solo lì)
+            guard NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.apple.finder" else { return }
             let files = FinderSelection.current()
             if files.isEmpty { NSSound.beep() } else { PieController.shared.present(files: files) }
         }
-        if UserDefaults.standard.object(forKey: "hotkey") as? Bool ?? true { Hotkey.shared.register() }
+        Hotkey.shared.setEnabled(UserDefaults.standard.object(forKey: "hotkey") as? Bool ?? true)
         Hotkey.shared.presetAction = { n in PresetStore.shared.run(hotkey: n) }
         PresetStore.shared.registerHotkeys()
 

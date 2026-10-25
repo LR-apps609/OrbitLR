@@ -42,14 +42,22 @@ enum Destination {
     static func unique(_ dir: URL, base rawBase: String, ext rawExt: String) -> URL {
         // 3.5.2 · Un nome che arriva da fuori non può mai uscire dalla cartella scelta
         let base = safeName(rawBase), ext = safeName(rawExt, fallback: "dat")
+        // 4.1.5 · Due lavori in parallelo non scelgono mai lo stesso nome: un nome dato resta prenotato
+        // (il file arriva dopo, a fine conversione)
+        reservedLock.lock(); defer { reservedLock.unlock() }
         var u = dir.appendingPathComponent(base + "." + ext)
         var i = 1
-        while FileManager.default.fileExists(atPath: u.path) {
+        while FileManager.default.fileExists(atPath: u.path) || reserved.contains(u.path) {
             u = dir.appendingPathComponent("\(base) (\(i)).\(ext)")
             i += 1
         }
+        reserved.insert(u.path)
+        if reserved.count > 5000 { reserved.removeAll() }      // nomi vecchi: ormai i file esistono
         return u
     }
+
+    private static var reserved = Set<String>()
+    private static let reservedLock = NSLock()
 }
 
 /// Conversioni fatte direttamente da macOS (ImageIO, AVFoundation, PDFKit):

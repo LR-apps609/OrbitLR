@@ -1,3 +1,11 @@
+Novità della 4.1.5 «Downloader»:
+• «Audio Downloader» e «Video Downloader»: funzionano con migliaia di siti, incolli il link. Anche una riga sotto lo spazio vuoto di Audio e Video. I siti protetti (Netflix, Spotify…) non si scaricano: OrbitLR lo dice chiaramente
+• Video: testi e sottotitoli seguono le clip quando le tagli, le dividi, le sposti, le elimini o cambi la velocità. Quello che scrivi in un testo si annulla con ⌘Z
+• ⌥⌘C vale solo nel Finder: nelle altre app (Pages, Mail…) torna la loro scorciatoia
+• Cartelle automatiche: i file creati da OrbitLR non vengono mai rielaborati (niente giri infiniti tra due regole), e un file ancora in copia lenta aspetta di essere finito
+• Due lavori in parallelo non scelgono più lo stesso nome di file
+• «Comprimi» a peso preciso col motore classico: il secondo tentativo chiede meno davvero, e un file sopra il limite non risulta mai «riuscito»
+
 Novità della 4.1.4 «Revisione»:
 • Revisione completa del codice: corretti i problemi trovati, nessuna funzione nuova
 • «Sposta l'originale nel Cestino»: ora va nel Cestino solo l'originale che ha davvero un file nuovo (mai quelli saltati perché già nel formato giusto o già compressi, mai un PDF da cui hai preso solo le immagini o un video da cui hai preso l'audio)

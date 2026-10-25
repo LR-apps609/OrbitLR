@@ -544,7 +544,7 @@ struct AudioTabView: View {
             if let trim = m.trim, tool != .tts { PlayButton(trim: trim, tint: tint) }
             // 4.1 · Discreto: un pulsante come gli altri, accanto ad «Apri un altro…»
             if tool != .tts {
-                Button { showLink = true } label: { Label("Da un link…", systemImage: "link") }
+                Button { showLink = true } label: { Label("Audio Downloader", systemImage: "arrow.down.circle") }
                     .help("Incolla il link di una canzone: arriva qui, pronta per suoneria e taglio")
             }
             if m.file != nil && tool != .tts {
@@ -585,10 +585,13 @@ struct AudioTabView: View {
         } else if let trim = m.trim {
             AudioWave(trim: trim, tint: tint, selection: tool.usesSelection)
         } else {
-            MediaDropZone(kind: .audio, title: "Trascina qui un file audio",
-                          subtitle: "oppure clicca per sceglierlo · MP3, M4A, WAV e altri · anche un video, per usarne l’audio",
-                          targeted: targeted) { m.choose(append: false) }
-                .frame(minHeight: 200)
+            VStack(spacing: 10) {
+                MediaDropZone(kind: .audio, title: "Trascina qui un file audio",
+                              subtitle: "oppure clicca per sceglierlo · MP3, M4A, WAV e altri · anche un video, per usarne l’audio",
+                              targeted: targeted) { m.choose(append: false) }
+                    .frame(minHeight: 200)
+                DownloaderRow(video: false) { showLink = true }
+            }
         }
     }
 

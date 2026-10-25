@@ -93,6 +93,8 @@ enum MusicLink {
     /// Dagli errori di yt-dlp a una frase che si capisce.
     static func friendly(_ stderr: String) -> String {
         let s = stderr.lowercased()
+        // Netflix, Disney+, Prime Video, Spotify…: contenuti cifrati, non si scaricano (e non si aggira la protezione)
+        if s.contains("drm") { return "Questo sito protegge i suoi contenuti (DRM): non si possono scaricare." }
         if s.contains("unsupported url") { return "Da questo link non so prendere l’audio. Prova con il link diretto della canzone." }
         if s.contains("private") || s.contains("sign in") || s.contains("login") || s.contains("members") {
             return "Il contenuto è privato o richiede l’accesso: non si può scaricare."
@@ -266,7 +268,10 @@ struct LinkSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(video ? "Video da un link" : "Audio da un link").font(.system(size: 17, weight: .bold, design: .rounded))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(video ? "Video Downloader" : "Audio Downloader").font(.system(size: 17, weight: .bold, design: .rounded))
+                Text("Funziona con migliaia di siti · incolla il link").font(.system(size: 12)).foregroundStyle(.secondary)
+            }
             TextField(video ? "Incolla qui il link del video" : "Incolla qui il link della canzone", text: $text)
                 .textFieldStyle(.roundedBorder)
                 .disabled(job.running)
@@ -341,5 +346,26 @@ struct LinkSheet: View {
                 }
             }
         }
+    }
+}
+
+/// 4.1.5 · Sotto lo spazio vuoto di Audio e Video: «oppure incolla un link → Audio/Video Downloader».
+struct DownloaderRow: View {
+    let video: Bool
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.down.circle.fill").foregroundStyle(Theme.color(video ? .video : .audio))
+                Text("oppure incolla un link →").foregroundStyle(.secondary)
+                Text(video ? "Video Downloader" : "Audio Downloader").fontWeight(.semibold)
+                Text("· funziona con migliaia di siti").foregroundStyle(.secondary)
+            }
+            .font(.system(size: 12.5))
+            .padding(.horizontal, 12).padding(.vertical, 8)
+            .background(Capsule().fill(Theme.ink.opacity(0.05)))
+        }
+        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
     }
 }

@@ -66,7 +66,8 @@ final class WatchStore: ObservableObject, @unchecked Sendable {
     /// File già visti per ogni regola (percorso → data di modifica): non vengono rielaborati, nemmeno dopo un riavvio.
     private var seen: [String: [String: Double]] = [:]
     /// File appena comparsi, in attesa che finiscano di copiarsi: percorso → (peso, data di modifica).
-    private var settling: [String: (Int64, Double)] = [:]
+    /// Peso, data e quante volte di fila sono rimasti uguali (4.1.5: servono due controlli, per le copie lente)
+    private var settling: [String: (Int64, Double, Int)] = [:]
     private var timer: Timer?
     private var scanning = false
 
@@ -119,21 +120,26 @@ final class WatchStore: ObservableObject, @unchecked Sendable {
         scanning = true
         let seenNow = seen
         let settlingNow = settling
+        // 4.1.5 · I file creati da OrbitLR non si rielaborano mai (anche se finiscono nella cartella di un'altra regola)
+        let made = Set(QueueStore.shared.history.prefix(300).flatMap { $0.outputs })
+            .union(QueueStore.shared.jobs.flatMap { $0.outputs.map(\.path) })
         DispatchQueue.global(qos: .utility).async {
             var ready: [(WatchRule, [URL])] = []
-            var newSettling: [String: (Int64, Double)] = [:]
+            var newSettling: [String: (Int64, Double, Int)] = [:]
             for r in active {
                 var batch: [URL] = []
                 let known = seenNow[r.id.uuidString] ?? [:]
                 for f in Self.candidates(in: r.folderURL, kind: r.fileKind, exts: r.exts) {
                     let m = Self.mtime(f)
                     if let k = known[f.path], abs(k - m) < 0.5 { continue }      // già elaborato (e non cambiato)
+                    if made.contains(f.path) { continue }
                     let size = Job.size(of: f)
-                    // Pronto solo se peso e data non cambiano tra due controlli (il file ha finito di copiarsi)
+                    // Pronto solo se peso e data non cambiano per due controlli di fila (circa 6 secondi):
+                    // un file ancora in copia (rete, iCloud) non viene preso a metà
                     if let prev = settlingNow[f.path], prev.0 == size, abs(prev.1 - m) < 0.01, size > 0 {
-                        batch.append(f)
+                        if prev.2 >= 1 { batch.append(f) } else { newSettling[f.path] = (size, m, prev.2 + 1) }
                     } else {
-                        newSettling[f.path] = (size, m)
+                        newSettling[f.path] = (size, m, 0)
                     }
                 }
                 if !batch.isEmpty { ready.append((r, batch)) }
@@ -552,6 +558,10 @@ struct NewWatchView: View {
         if chosen == nil { return "Scegli cosa fare con i file." }
         if output == "fixed" && outputPath.isEmpty { return "Scegli la cartella per i risultati." }
         if output == "fixed" && outputPath == f.path { return "I risultati devono andare in un’altra cartella, non in quella sorvegliata." }
+        // 4.1.5 · Niente giri infiniti: i risultati non vanno in una cartella sorvegliata da un'altra regola
+        if output == "fixed", WatchStore.shared.rules.contains(where: { $0.enabled && $0.folder == outputPath }) {
+            return "Quella cartella è già sorvegliata da un’altra regola: i file andrebbero avanti e indietro. Scegline un’altra."
+        }
         if WatchStore.shared.rules.contains(where: { $0.folder == f.path && $0.kind == kind.rawValue }) {
             return "Per questa cartella c’è già una regola per questo tipo di file."
         }

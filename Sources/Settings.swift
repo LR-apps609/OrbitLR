@@ -48,7 +48,7 @@ final class SettingsModel: ObservableObject {
     @Published var hotkey: Bool {
         didSet {
             UserDefaults.standard.set(hotkey, forKey: "hotkey")
-            if hotkey { Hotkey.shared.register() } else { Hotkey.shared.unregister() }
+            Hotkey.shared.setEnabled(hotkey)
         }
     }
     @Published var launchAtLogin: Bool {

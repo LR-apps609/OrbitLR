@@ -741,3 +741,58 @@ extension VPClip {
         "Clip \(index + 1) di \(count), \(formatShort(length))" + (isMuted ? ", senza audio" : "")
     }
 }
+
+
+// MARK: - 4.1.5 · Testi e sottotitoli che seguono le clip
+
+extension VideoProject {
+    /// Le clip come contano per i tempi: quale file, quale pezzo, a che velocità, in che ordine.
+    var timingSignature: [String] { clips.map { "\($0.id)|\($0.path)|\($0.inPoint)|\($0.outPoint)|\($0.speed)" } }
+
+    /// Dove finisce un istante del montaggio dopo una modifica delle clip: si segue il punto del file
+    /// (stessa clip se c'è ancora, altrimenti un pezzo dello stesso file che lo contiene). nil = quel pezzo non c'è più.
+    static func retime(_ t: Double, from old: VideoProject, to new: VideoProject) -> Double? {
+        guard let hit = old.clip(at: t), old.clips.indices.contains(hit.index) else { return nil }
+        let i = hit.index, src = hit.local
+        let oc = old.clips[i]
+        var best: Int? = nil
+        for (j, c) in new.clips.enumerated() where c.path == oc.path && src >= c.inPoint - 0.001 && src <= c.outPoint + 0.001 {
+            if c.id == oc.id { best = j; break }
+            if best == nil { best = j }
+        }
+        guard let j = best else { return nil }
+        let c = new.clips[j]
+        return new.starts[j] + max(0, src - c.inPoint) / c.speed
+    }
+
+    /// I testi spostati insieme ai tagli, alle velocità, agli spostamenti e alle eliminazioni delle clip.
+    /// Un testo che stava solo su un pezzo tolto se ne va con lui (⌘Z lo riporta).
+    static func retimeTexts(_ texts: [VPText], from old: VideoProject, to new: VideoProject) -> [VPText] {
+        let total = new.duration
+        return texts.compactMap { t in
+            var n = t
+            let len = t.end - t.start
+            let s = retime(t.start, from: old, to: new)
+            let e = retime(max(t.start, t.end - 0.001), from: old, to: new)
+            switch (s, e) {
+            case let (s?, e?) where e > s: n.start = s; n.end = e
+            case let (s?, _): n.start = s; n.end = s + len
+            case let (nil, e?): n.end = e; n.start = max(0, e - len)
+            default: return nil
+            }
+            n.end = min(n.end, total)
+            guard n.end - n.start > 0.15 else { return nil }
+            if let w = t.wordTimes {
+                let k = (n.end - n.start) / max(0.001, len)
+                n.wordTimes = w.map { wt in
+                    (retime(t.start + wt, from: old, to: new).map { $0 - n.start } ?? wt * k).clamped(0, n.end - n.start)
+                }
+            }
+            return n
+        }
+    }
+}
+
+private extension Double {
+    func clamped(_ a: Double, _ b: Double) -> Double { Swift.min(Swift.max(self, a), Swift.max(a, b)) }
+}

@@ -30,6 +30,27 @@ final class Hotkey {
         installed = true
     }
 
+    /// 4.1.5 · ⌥⌘C vale solo mentre il Finder è in primo piano: nelle altre app (Pages, Mail, TextEdit…)
+    /// resta la loro scorciatoia («Copia stile»). `enabled` = l'opzione in Opzioni.
+    private var enabled = false
+    private var activationObserver: NSObjectProtocol?
+
+    func setEnabled(_ on: Bool) {
+        enabled = on
+        if activationObserver == nil {
+            activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+                forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] n in
+                let app = n.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+                self?.follow(app?.bundleIdentifier)
+            }
+        }
+        follow(NSWorkspace.shared.frontmostApplication?.bundleIdentifier)
+    }
+
+    private func follow(_ front: String?) {
+        if enabled && front == "com.apple.finder" { register() } else { unregister() }
+    }
+
     func register() {
         installHandler()
         guard mainRef == nil else { return }

@@ -250,7 +250,7 @@ struct KindTabView: View {
             Spacer()
             // 4.1.3 · Discreto, come nella scheda Audio
             if style.kind == .video {
-                Button { showLink = true } label: { Label("Da un link…", systemImage: "link") }
+                Button { showLink = true } label: { Label("Video Downloader", systemImage: "arrow.down.circle") }
                     .help("Incolla il link di un video: arriva qui, pronto da tagliare, comprimere o montare")
             }
             if !m.files.isEmpty {

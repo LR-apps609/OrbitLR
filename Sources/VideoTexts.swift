@@ -260,6 +260,7 @@ struct TextOptions: View {
     let tint: Color
     let add: () -> Void
     @FocusState private var focused: Bool
+    @State private var typingBefore: VideoProject? = nil
     /// 3.3 · Sottotitoli automatici in corso, e l'esito in una frase.
     @State private var listening = false
     @State private var subsNote: String? = nil
@@ -400,7 +401,11 @@ struct TextOptions: View {
             if s.selectedText == nil { s.selectedText = texts.first?.id }
             focusIfAsked()
         }
-        .onChange(of: focused) { _, f in s.typing = f }
+        .onChange(of: focused) { _, f in
+            s.typing = f
+            // 4.1.5 · Quello che scrivi si annulla con ⌘Z (una volta, quando esci dal campo)
+            if f { typingBefore = s.project } else if let b = typingBefore { s.commit(from: b, undo, "Scrivi il testo"); typingBefore = nil }
+        }
         .onChange(of: s.focusTextPending) { _, _ in focusIfAsked() }
         .onDisappear { s.typing = false }
     }

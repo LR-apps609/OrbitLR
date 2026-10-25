@@ -1384,9 +1384,7 @@ probe() {  # v|a, file → codec del primo flusso
   ffprobe -v error -select_streams $1:0 -show_entries stream=codec_name -of default=nw=1:nk=1 "$2" 2>/dev/null | head -n 1
 }
 
-has_enc() {  # questo ffmpeg ha il codificatore indicato?
-  ffmpeg -hide_banner -loglevel error -h encoder=$1 2>/dev/null | grep -q "Encoder $1"
-}
+# 4.1.5 · has_enc è definita una volta sola, in alto (con la memoria: un controllo per codificatore)
 
 acodec_for() {  # estensione → opzioni del codec audio (con alternative se ffmpeg non ha quello preferito)
   case $1 in
@@ -1483,16 +1481,29 @@ vcompress_run() {  # video, MB massimi (oppure «best» = stessa qualità, meno 
                -map 0:v:0 -map '0:a:0?' -map_metadata 0 -vf "$vf" -pix_fmt yuv420p)
   local -a a=(-c:a aac -b:a $abps -movflags +faststart)
   (( limit = mb * 1048576 ))
-  if [[ $ARCH == arm64 ]] && $ff -c:v h264_videotoolbox -b:v $vbps $a "$out" && (( $(stat -f %z "$out") <= limit )); then
-    print "LRINFO: da $(hsize $size) a $(hsize $(stat -f %z "$out"))" >&2
-    return 0
+  local first=0 got=0
+  if [[ $ARCH == arm64 ]] && $ff -c:v h264_videotoolbox -b:v $vbps $a "$out"; then
+    first=$(stat -f %z "$out")
+    if (( first <= limit )); then
+      print "LRINFO: da $(hsize $size) a $(hsize $first)" >&2
+      return 0
+    fi
+    # 4.1.5 · Troppo grande: il secondo giro chiede meno, in proporzione a quanto ha sforato
+    (( vbps = vbps * limit / first * 92 / 100 ))
   fi
   if has_enc libx264; then
     $ff -c:v libx264 -preset medium -b:v $vbps -maxrate $(( vbps * 3 / 2 )) -bufsize $(( vbps * 2 )) $a "$out" || return 1
   else
     $ff -c:v h264_videotoolbox -allow_sw 1 -b:v $vbps $a "$out" || return 1
   fi
-  print "LRINFO: da $(hsize $size) a $(hsize $(stat -f %z "$out"))" >&2
+  got=$(stat -f %z "$out")
+  # 4.1.5 · Mai «riuscito» sopra il limite scelto
+  if (( got > limit )); then
+    rm -f -- "$out"
+    print "LRERR: non riesco a farlo stare sotto $mb MB (verrebbe $(hsize $got)): scegli un peso maggiore o taglialo prima" >&2
+    return 1
+  fi
+  print "LRINFO: da $(hsize $size) a $(hsize $got)" >&2
 }
 
 vresize_run() {  # video, preset (1080 | 720 | 480 | hevc)

@@ -131,8 +131,17 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         var p = project
         body(&p)
         guard p != before else { return }
+        Self.followClips(&p, from: before)
         apply(p)
         registerUndo(undo, name, before: before)
+    }
+
+    /// 4.1.5 · Clip tagliate, divise, spostate, eliminate o accelerate: i testi le seguono
+    /// (se la modifica non ha già sistemato i testi da sé, come «Togli i silenzi»).
+    static func followClips(_ p: inout VideoProject, from before: VideoProject) {
+        guard let texts = p.texts, !texts.isEmpty, p.texts == before.texts,
+              p.timingSignature != before.timingSignature else { return }
+        p.texts = VideoProject.retimeTexts(texts, from: before, to: p)
     }
 
     /// Durante un trascinamento: si vede subito, l'annullamento si registra alla fine (uno solo).
@@ -144,6 +153,10 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
 
     func commit(from before: VideoProject, _ undo: UndoManager?, _ name: String) {
         guard before != project else { return }
+        // 4.1.5 · Alla fine di un trascinamento sulle clip, anche i testi si spostano
+        var p = project
+        Self.followClips(&p, from: before)
+        if p != project { apply(p) }
         registerUndo(undo, name, before: before)
     }
 
