@@ -27,6 +27,8 @@ final class UpdateCheckTests: XCTestCase {
         XCTAssertTrue(UpdateCheck.shouldAutoCheck(now: now, defaults: d), "mai controllato")
         d.set(now.timeIntervalSince1970 - 3600, forKey: UpdateCheck.lastKey)
         XCTAssertFalse(UpdateCheck.shouldAutoCheck(now: now, defaults: d), "un'ora fa: no")
+        d.set(now.timeIntervalSince1970 - 4 * 3600, forKey: UpdateCheck.lastKey)
+        XCTAssertTrue(UpdateCheck.shouldAutoCheck(now: now, defaults: d), "4.1.2 · dopo 3 ore si ricontrolla")
         d.set(now.timeIntervalSince1970 - 21 * 3600, forKey: UpdateCheck.lastKey)
         XCTAssertTrue(UpdateCheck.shouldAutoCheck(now: now, defaults: d))
         d.set(false, forKey: UpdateCheck.autoKey)

@@ -1,3 +1,7 @@
+Novità della 4.1.2 «Sempre aggiornata»:
+• Quando esce una versione nuova, in alto a destra nella finestra compare il pulsante «Nuovo aggiornamento»: un clic e si installa. Anche nel menu in alto
+• OrbitLR controlla da sola ogni poche ore mentre è aperta, senza finestre che interrompono
+
 Novità della 4.1.1 «Onda nuova»:
 • Audio: la forma d'onda è più bassa di base; «Altezza +» allarga tutto il riquadro, senza più barre che diventano un blocco unico
 • Onda a due toni: chiara per i picchi, piena per il volume vero. Si vede subito dove la canzone è piena e dove è vuota

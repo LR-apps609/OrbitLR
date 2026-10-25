@@ -230,6 +230,7 @@ struct MainWindow: View {
         .sheet(isPresented: $app.showBugReport) { BugReportView { app.showBugReport = false } }
         .toolbar {
             // Sempre visibile, in ogni pagina: l'elenco delle scorciatoie
+            ToolbarItem(placement: .primaryAction) { UpdateBadgeButton() }      // 4.1.2 · solo se c'è una versione nuova
             ToolbarItem(placement: .primaryAction) { ShortcutsButton() }
         }
         .tint(Theme.accent)
@@ -832,6 +833,8 @@ struct MenuBarView: View {
                 Text("OrbitLR").font(.system(size: 13, weight: .bold, design: .rounded))
                 Spacer()
             }
+            // 4.1.2 · Versione nuova: si vede anche dal menu in alto
+            MenuUpdateRow()
             MenuDropZone()
             // 4.0 · Quanto hai risparmiato questo mese
             if store.savedThisMonth > 0 {
@@ -1058,5 +1061,26 @@ struct SettingsView: View {
         p.canChooseFiles = false
         p.allowsMultipleSelection = false
         if p.runModal() == .OK, let u = p.url { draft.destPath = u.path }
+    }
+}
+
+/// 4.1.2 · Nel menu in alto: «Nuova versione 4.2 · Installa».
+struct MenuUpdateRow: View {
+    @ObservedObject var badge = UpdateBadge.shared
+    var body: some View {
+        if let rel = badge.available {
+            Button { Task { @MainActor in await UpdateCheck.install(rel) } } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "arrow.down.circle.fill").foregroundStyle(Theme.brass)
+                    Text(badge.installing ? "Scarico l’aggiornamento…" : "Nuova versione \(rel.version) · Installa")
+                        .font(.system(size: 12.5, weight: .semibold))
+                    Spacer()
+                }
+                .padding(8)
+                .background(RoundedRectangle(cornerRadius: 8).fill(Theme.brass.opacity(0.14)))
+            }
+            .buttonStyle(.plain)
+            .disabled(badge.installing)
+        }
     }
 }

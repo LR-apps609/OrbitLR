@@ -35,11 +35,11 @@ enum UpdateCheck {
         return Release(version: version, asset: u, page: page)
     }
 
-    /// Controllo automatico: al massimo una volta ogni 20 ore, se non è stato spento.
+    /// Controllo automatico: al massimo una volta ogni 3 ore (4.1.2: prima ogni 20), se non è stato spento.
     static func shouldAutoCheck(now: Date = Date(), defaults: UserDefaults = .standard) -> Bool {
         if defaults.object(forKey: autoKey) as? Bool == false { return false }
         let last = defaults.double(forKey: lastKey)
-        return last == 0 || now.timeIntervalSince1970 - last > 20 * 3600
+        return last == 0 || now.timeIntervalSince1970 - last > 3 * 3600
     }
 
     static func latest() async throws -> Release? {
@@ -51,11 +51,14 @@ enum UpdateCheck {
         return parse(data)
     }
 
-    /// All'avvio, dopo qualche secondo: in silenzio, parla solo se c'è una versione nuova.
+    /// All'avvio, dopo qualche secondo, e poi ogni ora (controlla davvero al massimo ogni 3 ore):
+    /// in silenzio. Se c'è una versione nuova compare il pulsante «Aggiornamento disponibile» in alto a destra.
     static func autoCheckSoon() {
-        guard shouldAutoCheck() else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 8) {
-            Task { @MainActor in await check(userInitiated: false) }
+            Task { @MainActor in if shouldAutoCheck() { await check(userInitiated: false) } }
+        }
+        Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { _ in
+            Task { @MainActor in if shouldAutoCheck() { await check(userInitiated: false) } }
         }
     }
 
@@ -73,11 +76,17 @@ enum UpdateCheck {
             return
         }
         guard News.newer(rel.version, than: current) else {
+            UpdateBadge.shared.available = nil
             if userInitiated { info("Hai già l’ultima versione", "OrbitLR \(current) è la più recente.") }
             return
         }
         // Una versione che hai scelto di saltare non si ripropone da sola (ma «Controlla aggiornamenti» sì)
         if !userInitiated, UserDefaults.standard.string(forKey: skipKey) == rel.version { return }
+        // 4.1.2 · Il controllo automatico non interrompe più con una finestra: compare il pulsante in alto a destra
+        if !userInitiated {
+            UpdateBadge.shared.available = rel
+            return
+        }
         let a = NSAlert()
         a.messageText = "È disponibile OrbitLR \(rel.version)"
         a.informativeText = "Hai la \(current). La scarico e la installo? Ci vogliono pochi secondi e OrbitLR si riapre da sola."
@@ -90,6 +99,14 @@ enum UpdateCheck {
         case .alertThirdButtonReturn: UserDefaults.standard.set(rel.version, forKey: skipKey)
         default: break
         }
+    }
+
+    /// 4.1.2 · Dal pulsante «Aggiornamento disponibile»: scarica e installa subito (il clic è già la conferma).
+    @MainActor
+    static func install(_ rel: Release) async {
+        UpdateBadge.shared.installing = true
+        await download(rel)
+        UpdateBadge.shared.installing = false
     }
 
     @MainActor
@@ -123,5 +140,37 @@ enum UpdateCheck {
         a.addButton(withTitle: "OK")
         NSApp.activate()
         a.runModal()
+    }
+}
+
+/// 4.1.2 · La versione nuova trovata dal controllo automatico: fa comparire il pulsante in alto a destra
+/// (e una riga nel menu in alto). Sparisce quando non serve più.
+@MainActor
+final class UpdateBadge: ObservableObject {
+    static let shared = UpdateBadge()
+    @Published var available: UpdateCheck.Release? = nil
+    @Published var installing = false
+}
+
+/// Il pulsante in alto a destra nella finestra, accanto a «Tasti».
+struct UpdateBadgeButton: View {
+    @ObservedObject var badge = UpdateBadge.shared
+
+    var body: some View {
+        if let rel = badge.available {
+            Button { Task { @MainActor in await UpdateCheck.install(rel) } } label: {
+                Label(badge.installing ? "Scarico l’aggiornamento…" : "Nuovo aggiornamento: \(rel.version)",
+                      systemImage: badge.installing ? "arrow.down.circle" : "arrow.down.circle.fill")
+                    .labelStyle(.titleAndIcon)
+                    .font(.system(size: 12.5, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10).padding(.vertical, 4)
+                    .background(Capsule().fill(Theme.brass))
+            }
+            .buttonStyle(.plain)
+            .disabled(badge.installing)
+            .help("È uscita OrbitLR \(rel.version): un clic la scarica e la installa, e OrbitLR si riapre da sola")
+            .accessibilityLabel("Installa l’aggiornamento \(rel.version)")
+        }
     }
 }
