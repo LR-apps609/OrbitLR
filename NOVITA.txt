@@ -1,4 +1,4 @@
-Novità della 3.9.1:
+Novità della 3.9.1 «Ripiano»:
 • Ripiano: quando trascini dei file da qualsiasi parte (Finder, Scrivania, Mail…), OrbitLR compare al bordo destro dello schermo. Rilasci lì e si apre la torta: non serve più arrivare alla barra dei menu. Si spegne in Opzioni → Avvio
 
 Novità della 3.9 «Social»:
