@@ -128,6 +128,7 @@ struct HelpView: View {
                         .font(.system(size: 12.5)).foregroundStyle(.secondary)
                 }
                 Spacer()
+                Button { Feedback.show() } label: { Label("Suggerisci un’idea", systemImage: "lightbulb") }
                 Button { app.showBugReport = true } label: { Label("Segnala un problema", systemImage: "ladybug") }
             }
             HStack(spacing: 8) {

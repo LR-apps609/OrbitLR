@@ -833,6 +833,11 @@ struct MenuBarView: View {
                 Spacer()
             }
             MenuDropZone()
+            // 4.0 · Quanto hai risparmiato questo mese
+            if store.savedThisMonth > 0 {
+                Label("Questo mese hai risparmiato \(Fmt.bytes(store.savedThisMonth))", systemImage: "arrow.down.circle.fill")
+                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.green)
+            }
             if store.runningJobs.isEmpty {
                 Text("Niente in corso").font(.system(size: 12.5)).foregroundStyle(.secondary)
             } else {
@@ -859,6 +864,8 @@ struct MenuBarView: View {
             }
             .buttonStyle(.plain)
             Button("Guida rapida") { WelcomeController.shared.showGuide() }
+                .buttonStyle(.plain)
+            Button("Suggerisci un’idea…") { Feedback.show() }
                 .buttonStyle(.plain)
             SettingsLink { Text("Opzioni…") }.buttonStyle(.plain)
             Button("Esci") { NSApp.terminate(nil) }.buttonStyle(.plain)

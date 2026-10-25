@@ -1,3 +1,8 @@
+Novità della 4.0 «Carattere»:
+• Nella nuvoletta del risultato: «Annulla» manda nel Cestino il file appena creato (l'originale resta), e per le compressioni quanto hai risparmiato (−62% · risparmiati 4,1 MB)
+• Nel menu in alto: «Questo mese hai risparmiato 3,4 GB»
+• «Suggerisci un’idea»: tre faccine e una riga, nel menu in alto e nell’Aiuto. Arriva per email, senza nomi di file. Dopo qualche lavoro riuscito OrbitLR te lo chiede una volta sola, nella nuvoletta
+
 Novità della 3.9.3 «Linguetta»:
 • Ripiano spostato: una linguetta sottile sul lato destro, a metà altezza (lontana dal bordo in alto, dove macOS apre Mission Control). Con il file sopra si apre verso il centro. In Opzioni → Avvio puoi metterla a sinistra
 
