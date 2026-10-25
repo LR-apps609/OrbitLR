@@ -631,7 +631,7 @@ final class PieController: @unchecked Sendable {
             let go: (String) -> Void = { param in
                 let job = QueueStore.shared.enqueue(files: targets, action: action, param: param)
                 // 3.9.2 · Dove finisce il file: la nuvoletta sotto il punto della torta
-                ResultBubble.shared.track(job, near: point)
+                MainActor.assumeIsolated { ResultBubble.shared.track(job, near: point) }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { self.showNext(at: point) }
             }
             if let p = presetParam {
