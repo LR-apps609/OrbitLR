@@ -247,6 +247,7 @@ struct KindTabView: View {
                 Text(subtitle).font(.system(size: 12.5)).foregroundStyle(.secondary)
                     .help(m.files.isEmpty ? "" : (fem ? "Clic su una foto per sceglierla, ⌘-clic per sceglierne più di una" : "Clic su un file per sceglierlo, ⌘-clic per sceglierne più di uno"))
             }
+            .layoutPriority(1)          // 4.1.6 · prima il titolo; la barra del downloader prende lo spazio che resta
             if style.kind == .video { VideoModeSwitch().padding(.leading, 8) }
             Spacer()
             // 4.1.3 · Discreto, come nella scheda Audio
