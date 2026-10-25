@@ -3,7 +3,9 @@ import AppKit
 
 // ════════════════════════════════════════════════════════════════════
 //  3.9.1 · Il ripiano di OrbitLR: quando trascini dei file da qualsiasi parte (Finder, Scrivania, Mail…)
-//  al bordo destro dello schermo compare un bersaglio con la torta. Rilasci lì → si apre la torta.
+//  compare un bersaglio con la torta. Rilasci lì → si apre la torta.
+//  3.9.2 · Più discreto: una pillola piccola in alto al centro, sotto la barra dei menu (lontana dagli
+//  angoli e dai bordi, dove macOS mostra la Scrivania); si allarga solo quando ci passi sopra.
 //  Non serve andare nella barra dei menu (dove macOS può mostrare la Scrivania e il menu si chiude).
 //
 //  Come lo sa: al clic del mouse in un'altra app si ricorda il contatore degli appunti del trascinamento;
@@ -77,14 +79,17 @@ final class DropShelf: NSObject {
         return types.contains(.fileURL) || types.contains(NSPasteboard.PasteboardType("NSFilenamesPboardType"))
     }
 
-    /// Dove sta il ripiano: bordo destro dello schermo col puntatore, a metà altezza.
+    /// Dove sta il ripiano: in alto al centro dello schermo col puntatore, subito sotto la barra dei menu.
     static func frame(for screen: NSRect, size: NSSize) -> NSRect {
-        NSRect(x: screen.maxX - size.width - 18, y: screen.midY - size.height / 2, width: size.width, height: size.height)
+        NSRect(x: screen.midX - size.width / 2, y: screen.maxY - size.height - 4, width: size.width, height: size.height)
     }
+
+    /// Lo spazio della finestra (trasparente): la pillola dentro si allarga quando ci passi sopra.
+    static let panelSize = NSSize(width: 260, height: 84)
 
     private func show() {
         hideWork?.cancel()
-        let size = NSSize(width: 150, height: 172)
+        let size = Self.panelSize
         let mouse = NSEvent.mouseLocation
         let screen = NSScreen.screens.first { NSMouseInRect(mouse, $0.frame, false) } ?? NSScreen.main
         guard let vis = screen?.visibleFrame else { return }
@@ -92,7 +97,7 @@ final class DropShelf: NSObject {
         let p = panel ?? makePanel(size: size)
         panel = p
         model.targeted = false
-        p.setFrame(target.offsetBy(dx: 40, dy: 0), display: false)
+        p.setFrame(target.offsetBy(dx: 0, dy: 24), display: false)
         p.alphaValue = 0
         p.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup { c in
@@ -124,7 +129,8 @@ final class DropShelf: NSObject {
         let files = urls.filter { $0.isFileURL }
         guard !files.isEmpty else { return }
         Sounds.drop()
-        let at = panel.map { NSPoint(x: $0.frame.minX - 40, y: $0.frame.midY) }
+        // La torta sotto la pillola, non attaccata al bordo
+        let at = panel.map { NSPoint(x: $0.frame.midX, y: $0.frame.minY - 230) }
         hide(animated: true)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { PieController.shared.present(files: files, at: at) }
     }
@@ -149,34 +155,36 @@ final class ShelfModel: ObservableObject {
     @Published var targeted = false
 }
 
-/// Il bersaglio: la torta di Orbit in un cerchio, che si allarga quando ci passi sopra con il file.
+/// Il bersaglio: una pillola con il logo, che si allarga quando ci passi sopra con il file.
 struct ShelfView: View {
     @ObservedObject var model: ShelfModel
     let onDrop: ([URL]) -> Void
 
     var body: some View {
-        VStack(spacing: 8) {
-            ZStack {
-                Circle().fill(.regularMaterial)
-                Circle().strokeBorder(Theme.accent.opacity(model.targeted ? 0.95 : 0.45),
-                                      style: StrokeStyle(lineWidth: 2, dash: model.targeted ? [] : [6, 4]))
-                Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 62, height: 62)
-                    .scaleEffect(model.targeted ? 1.12 : 1)
+        VStack {
+            HStack(spacing: 8) {
+                Image(nsImage: NSApp.applicationIconImage).resizable()
+                    .frame(width: model.targeted ? 30 : 22, height: model.targeted ? 30 : 22)
+                Text(model.targeted ? "Rilascia per la torta" : "OrbitLR")
+                    .font(.system(size: model.targeted ? 13 : 11.5, weight: .bold, design: .rounded))
+                    .lineLimit(1)
             }
-            .frame(width: 118, height: 118)
-            .shadow(color: .black.opacity(0.28), radius: 12, y: 4)
-            Text(model.targeted ? "Rilascia qui" : "OrbitLR")
-                .font(.system(size: 12, weight: .bold, design: .rounded))
-                .padding(.horizontal, 10).padding(.vertical, 4)
-                .background(Capsule().fill(.regularMaterial))
+            .padding(.horizontal, model.targeted ? 16 : 10)
+            .frame(height: model.targeted ? 50 : 34)
+            .background(Capsule().fill(.regularMaterial))
+            .overlay(Capsule().strokeBorder(Theme.accent.opacity(model.targeted ? 0.95 : 0.4),
+                                            style: StrokeStyle(lineWidth: model.targeted ? 2 : 1.2, dash: model.targeted ? [] : [5, 3])))
+            .shadow(color: .black.opacity(0.22), radius: 8, y: 3)
+            Spacer(minLength: 0)
         }
+        .padding(.top, 4)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
         .dropDestination(for: URL.self) { urls, _ in
             onDrop(urls)
             return true
         } isTargeted: { model.targeted = $0 }
-        .animation(.spring(response: 0.25, dampingFraction: 0.7), value: model.targeted)
+        .animation(.spring(response: 0.25, dampingFraction: 0.75), value: model.targeted)
         .accessibilityLabel("Ripiano di OrbitLR: rilascia qui i file per aprire la torta")
     }
 }

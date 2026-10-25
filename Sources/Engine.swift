@@ -39,6 +39,8 @@ final class Job: ObservableObject, Identifiable, @unchecked Sendable {
     @Published var missing: [String] = []      // programmi mancanti segnalati dal motore
     /// Cartella di destinazione solo per questo lavoro (es. cartelle automatiche); altrimenti valgono le Opzioni.
     var destOverride: URL? = nil
+    /// 3.9.2 · Lo segue la nuvoletta della torta: niente notifica di macOS doppia
+    var quietNotify = false
     var startedAt: Date? = nil
     /// Secondi previsti, in base a quanto ci hanno messo lavori simili su questo Mac.
     var expectedSeconds: Double = 0
@@ -579,7 +581,7 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
     // MARK: - Notifiche
 
     private func notify(_ job: Job) {
-        guard job.state != .cancelled else { return }
+        guard job.state != .cancelled, !job.quietNotify else { return }
         let c = UNMutableNotificationContent()
         if job.state == .done {
             c.title = job.outputs.count == 1 ? "Creato «\(job.outputs[0].lastPathComponent)»" : (job.outputs.isEmpty ? job.title : "\(job.outputs.count) file pronti")

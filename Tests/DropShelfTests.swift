@@ -17,13 +17,29 @@ final class DropShelfTests: XCTestCase {
 
     func testPosizione() {
         let screen = NSRect(x: 0, y: 0, width: 1440, height: 875)
-        let f = DropShelf.frame(for: screen, size: NSSize(width: 150, height: 172))
-        XCTAssertEqual(f.maxX, 1440 - 18, accuracy: 0.5, "al bordo destro, staccato di poco")
-        XCTAssertEqual(f.midY, screen.midY, accuracy: 0.5, "a metà altezza")
+        let size = DropShelf.panelSize
+        let f = DropShelf.frame(for: screen, size: size)
+        XCTAssertEqual(f.midX, screen.midX, accuracy: 0.5, "in alto al centro")
+        XCTAssertEqual(f.maxY, screen.maxY - 4, accuracy: 0.5, "subito sotto la barra dei menu")
         XCTAssertTrue(screen.contains(f))
+        XCTAssertGreaterThan(f.minX, 200, "lontano dagli angoli")
         // Secondo schermo a sinistra (coordinate negative)
         let left = NSRect(x: -1920, y: 0, width: 1920, height: 1080)
-        XCTAssertTrue(left.contains(DropShelf.frame(for: left, size: NSSize(width: 150, height: 172))))
+        XCTAssertTrue(left.contains(DropShelf.frame(for: left, size: size)))
+    }
+
+    func testNuvolettaSempreNelloSchermo() {
+        let vis = NSRect(x: 0, y: 0, width: 1440, height: 875)
+        for p in [NSPoint(x: 720, y: 450), NSPoint(x: 5, y: 5), NSPoint(x: 1435, y: 870), NSPoint(x: 700, y: 100)] {
+            for stack in [0.0, 1, 2] {
+                let o = ResultBubble.origin(near: p, in: vis, stack: CGFloat(stack))
+                let r = NSRect(origin: o, size: ResultBubble.size)
+                XCTAssertTrue(vis.contains(r), "\(p) pila \(stack): \(r)")
+            }
+        }
+        // Di base sotto la torta
+        let o = ResultBubble.origin(near: NSPoint(x: 720, y: 600), in: vis, stack: 0)
+        XCTAssertLessThan(o.y, 600)
     }
 
     func testAccesoDiBase() {
