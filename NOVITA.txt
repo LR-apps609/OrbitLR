@@ -1,3 +1,6 @@
+Novità della 4.1.6 «Downloader in vista»:
+• In alto a destra in Audio e Video: la barra «Audio Downloader» / «Video Downloader» con il posto per incollare il link e «Scarica». Invio e parte subito
+
 Novità della 4.1.5 «Downloader»:
 • «Audio Downloader» e «Video Downloader»: funzionano con migliaia di siti, incolli il link. Anche una riga sotto lo spazio vuoto di Audio e Video. I siti protetti (Netflix, Spotify…) non si scaricano: OrbitLR lo dice chiaramente
 • Video: testi e sottotitoli seguono le clip quando le tagli, le dividi, le sposti, le elimini o cambi la velocità. Quello che scrivi in un testo si annulla con ⌘Z

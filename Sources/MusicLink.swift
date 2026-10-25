@@ -258,6 +258,8 @@ final class LinkJob: ObservableObject {
 struct LinkSheet: View {
     /// 4.1.3 · Video (scheda Video) o solo audio (scheda Audio)
     var video = false
+    /// 4.1.6 · Il link scritto nella barra in alto: la finestrella parte subito con quello
+    var initial = ""
     let onDone: (URL) -> Void
     let close: () -> Void
     @State private var text = ""
@@ -310,8 +312,13 @@ struct LinkSheet: View {
         .padding(20)
         .frame(width: 420)
         .onAppear {
-            // Un link già copiato: si propone da solo
-            if let s = NSPasteboard.general.string(forType: .string), MusicLink.link(from: s) != nil { text = s.trimmingCharacters(in: .whitespacesAndNewlines) }
+            if MusicLink.link(from: initial) != nil {
+                text = initial.trimmingCharacters(in: .whitespacesAndNewlines)
+                start()
+            } else if let s = NSPasteboard.general.string(forType: .string), MusicLink.link(from: s) != nil {
+                // Un link già copiato: si propone da solo
+                text = s.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
         }
     }
 
@@ -367,5 +374,68 @@ struct DownloaderRow: View {
         }
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity)
+    }
+}
+
+/// 4.1.6 · In alto a destra in Audio e Video: «Audio/Video Downloader» ben visibile, il campo per il link e «Scarica».
+struct DownloaderBar: View {
+    let video: Bool
+    let go: (String) -> Void
+    @State private var text = ""
+    @FocusState private var focused: Bool
+
+    private var tint: Color { Theme.color(video ? .video : .audio) }
+    private var ok: Bool { MusicLink.link(from: text) != nil }
+
+    var body: some View {
+        // Finestra stretta: l'etichetta si accorcia, il campo per il link resta
+        ViewThatFits(in: .horizontal) {
+            bar(full: true)
+            bar(full: false)
+        }
+    }
+
+    private func bar(full: Bool) -> some View {
+        HStack(spacing: 0) {
+            Group {
+                if full {
+                    Label(video ? "Video Downloader" : "Audio Downloader", systemImage: "arrow.down.circle.fill")
+                } else {
+                    Image(systemName: "arrow.down.circle.fill")
+                }
+            }
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 12).padding(.vertical, 7)
+                .background(tint)
+                .fixedSize()
+                .help(video ? "Video Downloader" : "Audio Downloader")
+            TextField("Incolla un link · funziona con migliaia di siti", text: $text)
+                .textFieldStyle(.plain)
+                .font(.system(size: 13))
+                .focused($focused)
+                .padding(.horizontal, 10)
+                .frame(minWidth: full ? 230 : 150, idealWidth: 290, maxWidth: 320)
+                .onSubmit { submit() }
+            Button(action: submit) {
+                Text("Scarica").font(.system(size: 12.5, weight: .bold))
+                    .foregroundStyle(ok ? .white : .secondary)
+                    .padding(.horizontal, 12).padding(.vertical, 7)
+                    .background(ok ? tint : Theme.ink.opacity(0.08))
+            }
+            .buttonStyle(.plain)
+            .help("Scarica dal link (oppure premi Invio)")
+        }
+        .background(Theme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous).strokeBorder(tint.opacity(focused ? 0.9 : 0.55), lineWidth: 1.5))
+        .shadow(color: tint.opacity(0.25), radius: 6, y: 1)
+        .accessibilityElement(children: .contain)
+    }
+
+    private func submit() {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        go(t)               // con un link valido parte subito; altrimenti si apre la finestrella per incollarlo
+        if MusicLink.link(from: t) != nil { text = "" }
     }
 }

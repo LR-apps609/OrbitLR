@@ -192,6 +192,7 @@ struct KindTabView: View {
     @State private var targeted = false
     /// 4.1.3 · «Da un link…» (solo nella scheda Video)
     @State private var showLink = false
+    @State private var linkText = ""
     private var tint: Color { Theme.color(style.kind) }
     private let columns = [GridItem(.adaptive(minimum: 116, maximum: 160), spacing: 10)]
 
@@ -234,7 +235,7 @@ struct KindTabView: View {
             ParamView(kind: p.kind, action: p.action, files: p.files) { v in m.confirm(p, value: v) }
         }
         .sheet(isPresented: $showLink) {
-            LinkSheet(video: true, onDone: { file in m.add([file]) }, close: { showLink = false })
+            LinkSheet(video: true, initial: linkText, onDone: { file in m.add([file]) }, close: { showLink = false })
         }
     }
 
@@ -250,7 +251,7 @@ struct KindTabView: View {
             Spacer()
             // 4.1.3 · Discreto, come nella scheda Audio
             if style.kind == .video {
-                Button { showLink = true } label: { Label("Video Downloader", systemImage: "arrow.down.circle") }
+                DownloaderBar(video: true) { t in linkText = t; showLink = true }
                     .help("Incolla il link di un video: arriva qui, pronto da tagliare, comprimere o montare")
             }
             if !m.files.isEmpty {

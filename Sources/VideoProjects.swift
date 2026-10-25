@@ -195,6 +195,7 @@ struct VideoProjectsView: View {
     @Environment(\.undoManager) private var undo
     @State private var targeted = false
     @State private var showLink = false
+    @State private var linkText = ""
 
     private let tint = Theme.color(.video)
     private let columns = [GridItem(.adaptive(minimum: 190, maximum: 260), spacing: 14)]
@@ -211,7 +212,7 @@ struct VideoProjectsView: View {
                 }
                 VideoModeSwitch().padding(.leading, 8)
                 Spacer()
-                Button { showLink = true } label: { Label("Video Downloader", systemImage: "arrow.down.circle") }
+                DownloaderBar(video: true) { t in linkText = t; showLink = true }
                     .help("Incolla il link di un video: si apre in un progetto nuovo")
                 Button { s.newProject(undo) } label: { Label("Nuovo progetto", systemImage: "plus") }
                     .buttonStyle(.borderedProminent).tint(Theme.accent).controlSize(.large)
@@ -225,7 +226,7 @@ struct VideoProjectsView: View {
                 MediaDropZone(kind: .video, title: "Trascina qui i video",
                               subtitle: "si apre un progetto nuovo · MP4, MOV, M4V · più video vanno in fila",
                               targeted: targeted) { s.newProject(undo) }
-                DownloaderRow(video: true) { showLink = true }
+                DownloaderRow(video: true) { linkText = ""; showLink = true }
                 // 3.9 · Per TikTok, Reels e Shorts si parte già in verticale
                 Button { s.newProject(undo, vertical: true) } label: {
                     Label("Inizia un progetto verticale 9:16 · TikTok, Reels, Shorts", systemImage: "rectangle.portrait")
@@ -259,7 +260,7 @@ struct VideoProjectsView: View {
             return true
         }
         .sheet(isPresented: $showLink) {
-            LinkSheet(video: true, onDone: { file in s.newProject(undo); s.add([file], undo: undo) }, close: { showLink = false })
+            LinkSheet(video: true, initial: linkText, onDone: { file in s.newProject(undo); s.add([file], undo: undo) }, close: { showLink = false })
         }
         .onAppear { s.refreshLibrary() }
         .onReceive(AppState.shared.$selection.dropFirst().removeDuplicates()) { now in if now == .video { s.refreshLibrary() } }   // 3.4.2 · la scheda resta viva

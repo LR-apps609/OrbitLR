@@ -457,6 +457,7 @@ struct AudioTabView: View {
     @StateObject private var preview = SpeechPreview()
     /// 4.1 · «Da un link…»
     @State private var showLink = false
+    @State private var linkText = ""
 
     private let tint = Theme.color(.audio)
 
@@ -510,7 +511,7 @@ struct AudioTabView: View {
         }
         .onDisappear { preview.stop(); m.trim?.pause() }
         .sheet(isPresented: $showLink) {
-            LinkSheet(onDone: { file in
+            LinkSheet(initial: linkText, onDone: { file in
                 m.load([file])
                 // Suoneria: il riquadro va già sul ritornello
                 if tool == .ringtone, let t = m.trim {
@@ -544,8 +545,7 @@ struct AudioTabView: View {
             if let trim = m.trim, tool != .tts { PlayButton(trim: trim, tint: tint) }
             // 4.1 · Discreto: un pulsante come gli altri, accanto ad «Apri un altro…»
             if tool != .tts {
-                Button { showLink = true } label: { Label("Audio Downloader", systemImage: "arrow.down.circle") }
-                    .help("Incolla il link di una canzone: arriva qui, pronta per suoneria e taglio")
+                DownloaderBar(video: false) { t in linkText = t; showLink = true }
             }
             if m.file != nil && tool != .tts {
                 Button("Apri un altro…") { m.choose(append: false) }
@@ -590,7 +590,7 @@ struct AudioTabView: View {
                               subtitle: "oppure clicca per sceglierlo · MP3, M4A, WAV e altri · anche un video, per usarne l’audio",
                               targeted: targeted) { m.choose(append: false) }
                     .frame(minHeight: 200)
-                DownloaderRow(video: false) { showLink = true }
+                DownloaderRow(video: false) { linkText = ""; showLink = true }
             }
         }
     }
