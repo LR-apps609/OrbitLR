@@ -15,7 +15,8 @@ final class WaveLookTests: XCTestCase {
         let lv = TrimModel.pyramid([0, 1, 1, 1, 0, 0, 0, 0] + [Float](repeating: 0.5, count: 2000), average: true)
         XCTAssertEqual(lv[1][0], 0.5, accuracy: 0.0001, "la media, non il massimo")
         XCTAssertEqual(lv[1][1], 1, accuracy: 0.0001)
-        XCTAssertEqual(TrimModel.pyramid([0, 1, 0.2, 0.4])[1], [1, 0.4], "i picchi restano il massimo")
+        let pk = TrimModel.pyramid([0, 1, 0.2, 0.4] + [Float](repeating: 0, count: 2000))
+        XCTAssertEqual(Array(pk[1].prefix(2)), [1, 0.4], "i picchi restano il massimo")
     }
 
     @MainActor
