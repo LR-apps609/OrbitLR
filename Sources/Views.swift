@@ -877,6 +877,12 @@ struct MenuDropZone: View {
             Image(systemName: "chart.pie.fill").font(.system(size: 18, weight: .semibold)).foregroundStyle(Theme.accent)
             Text(targeted ? "Rilascia qui" : "Trascina qui un file").font(.system(size: 12.5, weight: .semibold))
             Text("si apre la torta, senza aprire la finestra").font(.system(size: 11)).foregroundStyle(.secondary)
+            if UserDefaults.standard.object(forKey: "dropShelf") as? Bool ?? true {
+                // 3.9.1 · Più comodo: il ripiano compare da solo al bordo destro
+                Text("Più comodo: trascina un file da dove vuoi, OrbitLR compare a destra dello schermo")
+                    .font(.system(size: 10.5)).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    .padding(.horizontal, 8).padding(.top, 2)
+            }
         }
         .frame(maxWidth: .infinity).padding(.vertical, 12)
         .background(RoundedRectangle(cornerRadius: 12).fill(Theme.accent.opacity(targeted ? 0.16 : 0.06)))
@@ -916,6 +922,8 @@ struct SettingsView: View {
     @AppStorage(UpdateCheck.autoKey) private var autoUpdate = true
     /// 2.9 · Motore video classico (senza filtri)
     @AppStorage(VideoProjectBuilder.classicKey) private var classicVideo = false
+    /// 3.9.1 · Il ripiano al bordo dello schermo
+    @AppStorage("dropShelf") private var dropShelf = true
     @State var saved = false
     @State private var advanced = false
 
@@ -966,6 +974,7 @@ struct SettingsView: View {
                 Section("Avvio") {
                     Toggle("Apri OrbitLR all’accesso al Mac (il menu si apre all’istante)", isOn: $draft.launchAtLogin)
                     Toggle("Scorciatoia ⌥⌘C sui file selezionati nel Finder", isOn: $draft.hotkey)
+                    Toggle("Ripiano: quando trascini dei file, OrbitLR compare al bordo destro dello schermo", isOn: $dropShelf)
                     Toggle("Controlla da sola se c’è una versione nuova (una volta al giorno)", isOn: $autoUpdate)
                     Button("Controlla adesso…") { Task { @MainActor in await UpdateCheck.check(userInitiated: true) } }
                 }

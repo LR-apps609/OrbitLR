@@ -1,3 +1,6 @@
+Novità della 3.9.1:
+• Ripiano: quando trascini dei file da qualsiasi parte (Finder, Scrivania, Mail…), OrbitLR compare al bordo destro dello schermo. Rilasci lì e si apre la torta: non serve più arrivare alla barra dei menu. Si spegne in Opzioni → Avvio
+
 Novità della 3.9 «Social»:
 • Logo nuovo: la torta di Orbit, nitida a ogni grandezza
 • Video: «Pronto per» TikTok, Reels, Shorts, YouTube e WhatsApp. Un clic imposta forma, qualità e fluidità giuste

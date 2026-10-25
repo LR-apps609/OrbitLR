@@ -41,6 +41,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
         Paths.installScript()
         WatchStore.shared.start()            // cartelle automatiche
+        DropShelf.shared.start()             // 3.9.1 · il ripiano al bordo dello schermo quando trascini dei file
         UpdateCheck.autoCheckSoon()          // 2.8.1 · una volta al giorno, in silenzio
         Appearance.apply()
         Sounds.shared.prepare()
