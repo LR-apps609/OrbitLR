@@ -1,3 +1,9 @@
+Novità della 4.1.1 «Onda nuova»:
+• Audio: la forma d'onda è più bassa di base; «Altezza +» allarga tutto il riquadro, senza più barre che diventano un blocco unico
+• Onda a due toni: chiara per i picchi, piena per il volume vero. Si vede subito dove la canzone è piena e dove è vuota
+• Righello dei tempi in alto (fino ai millesimi con lo zoom) e il tempo esatto sotto il puntatore
+• Con gli strumenti che lavorano su tutto il file (Volume, Silenzi, WhatsApp…) il riquadro di selezione non compare più
+
 Novità della 4.1 «Da un link»:
 • Audio: «Da un link…» accanto ad «Apri un altro…». Incolli il link di una canzone e l’audio arriva in Download e si apre nella scheda, pronto per suoneria, taglio e conversione. Solo contenuti che hai il diritto di scaricare
 • Suoneria: «Vai al ritornello» sposta il riquadro sul pezzo più pieno della canzone. Con una canzone presa da un link ci va da solo

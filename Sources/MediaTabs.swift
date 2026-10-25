@@ -805,9 +805,10 @@ private struct AudioWave: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             zoomBar
-            // 3.8 · Altezza fissa come prima (non riempie più tutta la finestra); per vedere di più c'è lo zoom
-            TrimTimeline(m: trim, tint: tint)
-                .frame(height: 150)
+            // 4.1.1 · Bassa di base; «Altezza +» allarga il riquadro (le barre restano in proporzione)
+            TrimTimeline(m: trim, tint: tint, showSelection: selection, showRuler: true)
+                .frame(height: 96 * trim.gain)
+                .animation(.easeOut(duration: 0.18), value: trim.gain)
                 .overlay { if trim.loading { ProgressView().controlSize(.small) } }
                 .padding(.top, 6)
             if trim.zoom > 1 { WaveOverview(m: trim, tint: tint).frame(height: 14) }
@@ -845,9 +846,9 @@ private struct AudioWave: View {
                      canMinus: trim.zoom > 1, canPlus: trim.zoom < trim.maxZoom,
                      help: "Allarga o restringi il tempo: al massimo si vede un quarto di secondo, per tagliare al millesimo. Anche pizzicando il trackpad o con ⌘ e la rotellina.")
             zoomPair(icon: "arrow.up.and.down", label: "Altezza",
-                     minus: { trim.gain = max(1, trim.gain / 1.5) }, plus: { trim.gain = min(8, trim.gain * 1.5) },
-                     canMinus: trim.gain > 1, canPlus: trim.gain < 8,
-                     help: "Onda più alta: si vedono meglio i suoni bassi e i silenzi")
+                     minus: { trim.gain = max(1, trim.gain / 1.5) }, plus: { trim.gain = min(TrimModel.maxGain, trim.gain * 1.5) },
+                     canMinus: trim.gain > 1.01, canPlus: trim.gain < TrimModel.maxGain - 0.01,
+                     help: "Riquadro più alto: si vedono meglio i suoni bassi e i silenzi")
             if selection {
                 Button("Selezione") { trim.zoomToSelection() }.controlSize(.small)
                     .help("Ingrandisce sul pezzo scelto, per rifinire inizio e fine")

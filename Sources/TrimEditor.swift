@@ -28,10 +28,13 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
     @Published var zoom: Double = 1
     /// Il primo secondo visibile quando lo zoom è attivo.
     @Published var viewStart: Double = 0
-    /// Altezza dell'onda: 1 = normale, fino a 8.
+    /// 4.1.1 · Altezza della forma d'onda: 1 = normale (bassa), fino a `maxGain`. Cresce il riquadro, non le barre.
     @Published var gain: Double = 1
+    static let maxGain = 3.4
     /// L'onda a più risoluzioni: levels[0] = un picco ogni millesimo di secondo, ogni livello dopo la metà.
     private(set) var levels: [[Float]] = []
+    /// 4.1.1 · Il volume medio (RMS), agli stessi livelli: il «corpo» pieno dell'onda, dentro i picchi.
+    private(set) var rmsLevels: [[Float]] = []
     static let hiresRate = 1000.0
 
     private var observer: Any?
@@ -72,8 +75,10 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
         let video = isVideo
         // Un picco al millesimo di secondo (al massimo 4 milioni: più di un'ora), poi i livelli più radi
         let hiresBins = max(700, min(4_000_000, Int(dur * TrimModel.hiresRate)))
-        let hires = await TrimModel.waveform(url: url, duration: dur, bins: hiresBins)
+        let both = await TrimModel.waveformLevels(url: url, duration: dur, bins: hiresBins)
+        let hires = both.peaks, hiresRMS = both.rms
         let built = await Task.detached(priority: .userInitiated) { TrimModel.pyramid(hires) }.value
+        rmsLevels = await Task.detached(priority: .userInitiated) { TrimModel.pyramid(hiresRMS, average: true) }.value
         levels = built
         peaks = built.first(where: { $0.count <= 1400 }) ?? built.last ?? []
         if video { thumbs = await TrimModel.thumbnails(url: url, count: 12, duration: dur) }
@@ -155,7 +160,11 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
     private func clampedView(_ s: Double) -> Double { min(max(0, s), max(0, duration - span)) }
 
     /// I picchi da disegnare per la parte visibile: `count` barre, prese dal livello giusto (veloce anche su file lunghi).
-    func visiblePeaks(count: Int) -> [Float] {
+    func visiblePeaks(count: Int) -> [Float] { sample(levels, count: count, average: false) }
+    /// 4.1.1 · Il volume medio della parte visibile (stesse barre di `visiblePeaks`).
+    func visibleRMS(count: Int) -> [Float] { sample(rmsLevels, count: count, average: true) }
+
+    private func sample(_ levels: [[Float]], count: Int, average: Bool) -> [Float] {
         guard count > 0, duration > 0, let base = levels.first, !base.isEmpty else { return [] }
         let rate0 = Double(base.count) / duration                 // picchi al secondo del livello 0
         let perBar = span * rate0 / Double(count)
@@ -170,22 +179,25 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
             var a = Int(t0 * rate), b = Int(t1 * rate)
             a = min(max(0, a), lv.count - 1)
             b = min(max(a, b), lv.count - 1)
-            var mx: Float = 0
-            if b > a { for j in a..<b where lv[j] > mx { mx = lv[j] } } else { mx = lv[a] }
-            out[i] = mx
+            var v: Float = 0
+            if b > a {
+                if average { var sum: Float = 0; for j in a..<b { sum += lv[j] }; v = sum / Float(b - a) }
+                else { for j in a..<b where lv[j] > v { v = lv[j] } }
+            } else { v = lv[a] }
+            out[i] = v
         }
         return out
     }
 
     /// Ogni livello è il precedente con i picchi a coppie.
-    static func pyramid(_ base: [Float]) -> [[Float]] {
+    static func pyramid(_ base: [Float], average: Bool = false) -> [[Float]] {
         var out = [base]
         var cur = base
         while cur.count > 700 {
             var next = [Float](repeating: 0, count: (cur.count + 1) / 2)
             for i in 0..<next.count {
                 let a = cur[2 * i]
-                next[i] = 2 * i + 1 < cur.count ? max(a, cur[2 * i + 1]) : a
+                next[i] = 2 * i + 1 < cur.count ? (average ? (a + cur[2 * i + 1]) / 2 : max(a, cur[2 * i + 1])) : a
             }
             out.append(next)
             cur = next
@@ -245,10 +257,15 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
 
     /// Picchi del volume, normalizzati 0…1, per disegnare la forma d'onda.
     static func waveform(url: URL, duration: Double, bins: Int) async -> [Float] {
-        await Task.detached(priority: .userInitiated) { () -> [Float] in
+        await waveformLevels(url: url, duration: duration, bins: bins).peaks
+    }
+
+    /// 4.1.1 · Picchi e volume medio (RMS) insieme, nella stessa lettura del file.
+    static func waveformLevels(url: URL, duration: Double, bins: Int) async -> (peaks: [Float], rms: [Float]) {
+        await Task.detached(priority: .userInitiated) { () -> (peaks: [Float], rms: [Float]) in
             let asset = AVURLAsset(url: url)
             guard let track = try? await asset.loadTracks(withMediaType: .audio).first,
-                  let reader = try? AVAssetReader(asset: asset) else { return [] }
+                  let reader = try? AVAssetReader(asset: asset) else { return ([], []) }
             let rate = 8000.0
             let settings: [String: Any] = [
                 AVFormatIDKey: kAudioFormatLinearPCM,
@@ -260,13 +277,16 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
                 AVSampleRateKey: rate,
             ]
             let output = AVAssetReaderTrackOutput(track: track, outputSettings: settings)
-            guard reader.canAdd(output) else { return [] }
+            guard reader.canAdd(output) else { return ([], []) }
             reader.add(output)
-            guard reader.startReading() else { return [] }
+            guard reader.startReading() else { return ([], []) }
             let perBin = max(1, Int(duration * rate / Double(bins)))
             var peaks: [Float] = []
+            var rms: [Float] = []
             peaks.reserveCapacity(bins + 8)
+            rms.reserveCapacity(bins + 8)
             var cur: Float = 0
+            var sq: Float = 0
             var n = 0
             while let sb = output.copyNextSampleBuffer() {
                 guard let block = CMSampleBufferGetDataBuffer(sb) else { continue }
@@ -279,13 +299,15 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
                 for v in data {
                     let a = Float(abs(Int32(v))) / 32768
                     if a > cur { cur = a }
+                    sq += a * a
                     n += 1
-                    if n >= perBin { peaks.append(cur); cur = 0; n = 0 }
+                    if n >= perBin { peaks.append(cur); rms.append(sqrt(sq / Float(n))); cur = 0; sq = 0; n = 0 }
                 }
             }
-            if n > 0 { peaks.append(cur) }
+            if n > 0 { peaks.append(cur); rms.append(sqrt(sq / Float(n))) }
             let m = peaks.max() ?? 0
-            return m > 0 ? peaks.map { sqrt($0 / m) } : peaks      // radice: anche le parti basse restano visibili
+            // radice: anche le parti basse restano visibili (stessa scala per picchi e volume medio)
+            return m > 0 ? (peaks.map { sqrt($0 / m) }, rms.map { sqrt(min(1, $0 / m)) }) : (peaks, rms)
         }.value
     }
 
@@ -470,6 +492,25 @@ struct TrimTimeline: View {
 
     @ObservedObject var m: TrimModel
     let tint: Color
+    /// 4.1.1 · Selezione e maniglie (no per gli strumenti che lavorano su tutto il file)
+    var showSelection = true
+    /// 4.1.1 · Righello dei tempi in alto e tempo sotto il puntatore
+    var showRuler = false
+    @State private var hoverX: CGFloat? = nil
+
+    /// Ogni quanto un segno sul righello: circa ogni 80 punti, su un passo «tondo».
+    static func tickStep(span: Double, width: CGFloat) -> Double {
+        let target = span / Double(max(1, width / 80))
+        let steps: [Double] = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 1800, 3600]
+        return steps.first { $0 >= target } ?? 3600
+    }
+
+    static func tickLabel(_ t: Double, step: Double) -> String {
+        if step < 0.01 { return formatTimeMs(t) }
+        if step < 1 { return formatTime(t) }
+        let s = Int(t.rounded())
+        return s >= 3600 ? String(format: "%d:%02d:%02d", s / 3600, (s % 3600) / 60, s % 60) : String(format: "%d:%02d", s / 60, s % 60)
+    }
 
     /// Quante barre disegnare per una larghezza.
     private func bars(_ w: CGFloat) -> Int { max(40, Int(w / 2.2)) }
@@ -493,7 +534,7 @@ struct TrimTimeline: View {
     }
 
     private func barHeight(_ p: Float, area: CGFloat) -> CGFloat {
-        min(area - 4, max(2, CGFloat(p) * CGFloat(m.gain) * (area - 10)))
+        min(area - 4, max(2, CGFloat(p) * (area - 10)))
     }
 
     var body: some View {
@@ -504,10 +545,15 @@ struct TrimTimeline: View {
             let span = m.zoom > 1 ? m.span : max(m.duration, 0.001)
             let toX = { (t: Double) -> CGFloat in CGFloat((t - v0) / span) * w }
             let toT = { (x: CGFloat) -> Double in v0 + Double(x / max(w, 1)) * span }
-            let xs = toX(m.start)
-            let xe = toX(m.end)
+            let xs0 = toX(m.start)
+            let xe0 = toX(m.end)
             let xp = toX(m.playhead)
-            let peaks = m.zoom > 1 || m.levels.isEmpty ? m.visiblePeaks(count: bars(w)) : m.peaks
+            let ruler: CGFloat = showRuler ? 16 : 0
+            let peaks = m.levels.isEmpty ? m.peaks : m.visiblePeaks(count: bars(w))
+            let rms = m.visibleRMS(count: peaks.count)
+            let sel = showSelection
+            let xs = sel ? xs0 : -100
+            let xe = sel ? xe0 : w + 100
             ZStack(alignment: .topLeading) {
                 // Sfondo: clic = sposta la testina
                 RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.parchment.opacity(0.55))
@@ -539,16 +585,38 @@ struct TrimTimeline: View {
                         Canvas { ctx, size in
                             let n = peaks.count
                             guard n > 0 else { return }
-                            let top: CGFloat = m.isVideo ? size.height * 0.5 : 0
+                            let top: CGFloat = m.isVideo ? size.height * 0.5 : ruler
                             let area = size.height - top
                             let bw = size.width / CGFloat(n)
+                            let hasRMS = rms.count == n
                             for (i, p) in peaks.enumerated() {
                                 let x = CGFloat(i) * bw
                                 let bh = barHeight(p, area: area)
                                 let inside = x >= xs && x <= xe
                                 let rect = CGRect(x: x, y: top + (area - bh) / 2, width: max(1, bw - 0.6), height: bh)
+                                // 4.1.1 · Due toni: i picchi chiari, il volume medio pieno dentro
                                 ctx.fill(Path(roundedRect: rect, cornerRadius: min(1.5, bw / 2)),
-                                         with: .color(inside ? tint : Theme.ink.opacity(0.22)))
+                                         with: .color(inside ? tint.opacity(hasRMS ? 0.45 : 1) : Theme.ink.opacity(hasRMS ? 0.14 : 0.22)))
+                                if hasRMS {
+                                    let rh = min(bh, max(1.5, barHeight(rms[i], area: area)))
+                                    let r = CGRect(x: x, y: top + (area - rh) / 2, width: max(1, bw - 0.6), height: rh)
+                                    ctx.fill(Path(roundedRect: r, cornerRadius: min(1.5, bw / 2)),
+                                             with: .color(inside ? tint : Theme.ink.opacity(0.32)))
+                                }
+                            }
+                            // Righello: un segno e un tempo «tondo» ogni 80 punti circa
+                            if showRuler {
+                                let step = Self.tickStep(span: span, width: size.width)
+                                var t = (v0 / step).rounded(.up) * step
+                                while t <= v0 + span {
+                                    let x = CGFloat((t - v0) / span) * size.width
+                                    ctx.fill(Path(CGRect(x: x, y: 0, width: 1, height: 5)), with: .color(Theme.ink.opacity(0.35)))
+                                    if x < size.width - 30 {
+                                        ctx.draw(Text(Self.tickLabel(t, step: step)).font(.system(size: 9.5)).foregroundColor(Theme.ink.opacity(0.55)),
+                                                 at: CGPoint(x: x + 3, y: 1), anchor: .topLeading)
+                                    }
+                                    t += step
+                                }
                             }
                         }
                     }
@@ -557,11 +625,13 @@ struct TrimTimeline: View {
 
                 // Zone escluse un po' scure
                 let cs = min(max(0, xs), w), ce = min(max(0, xe), w)
-                Rectangle().fill(Theme.cream.opacity(0.65)).frame(width: cs, height: h).allowsHitTesting(false)
-                Rectangle().fill(Theme.cream.opacity(0.65)).frame(width: max(0, w - ce), height: h).offset(x: ce).allowsHitTesting(false)
+                if sel {
+                    Rectangle().fill(Theme.cream.opacity(0.65)).frame(width: cs, height: h).allowsHitTesting(false)
+                    Rectangle().fill(Theme.cream.opacity(0.65)).frame(width: max(0, w - ce), height: h).offset(x: ce).allowsHitTesting(false)
+                }
 
                 // Bordo della selezione (solo la parte visibile)
-                if ce > cs || (xe >= 0 && xs <= w) {
+                if sel && (ce > cs || (xe >= 0 && xs <= w)) {
                     RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(tint, lineWidth: 2)
                         .frame(width: max(4, ce - cs), height: h).offset(x: cs).allowsHitTesting(false)
                 }
@@ -572,15 +642,26 @@ struct TrimTimeline: View {
                         .shadow(color: Theme.ivory, radius: 1).allowsHitTesting(false)
                 }
 
+                // 4.1.1 · Il tempo sotto il puntatore
+                if showRuler, let hx = hoverX, hx >= 0, hx <= w {
+                    Rectangle().fill(Theme.ink.opacity(0.35)).frame(width: 1, height: h).offset(x: hx).allowsHitTesting(false)
+                    Text(m.zoom > 1 ? formatTimeMs(toT(hx)) : formatTime(toT(hx)))
+                        .font(.system(size: 10.5, weight: .semibold)).monospacedDigit()
+                        .padding(.horizontal, 5).padding(.vertical, 2)
+                        .background(Capsule().fill(.regularMaterial))
+                        .offset(x: min(max(0, hx + 4), w - 70), y: h - 22)
+                        .allowsHitTesting(false)
+                }
+
                 // Maniglie (solo se si vedono)
-                if xs >= -7 && xs <= w + 7 {
+                if sel && xs >= -7 && xs <= w + 7 {
                     handle(height: h).offset(x: xs - 7, y: -6)
                         .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("timeline")).onChanged { v in
                             if dragBefore == nil { dragBefore = (m.start, m.end) }
                             m.setStart(toT(v.location.x))
                         }.onEnded { _ in endDrag("Sposta l’inizio") })
                 }
-                if xe >= -7 && xe <= w + 7 {
+                if sel && xe >= -7 && xe <= w + 7 {
                     handle(height: h).offset(x: xe - 7, y: -6)
                         .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("timeline")).onChanged { v in
                             if dragBefore == nil { dragBefore = (m.start, m.end) }
@@ -595,6 +676,12 @@ struct TrimTimeline: View {
                     canScroll: m.zoom > 1)
             }
             .coordinateSpace(name: "timeline")
+            .onContinuousHover(coordinateSpace: .named("timeline")) { phase in
+                switch phase {
+                case .active(let p): hoverX = p.x
+                case .ended: hoverX = nil
+                }
+            }
             .clipped()
         }
     }
