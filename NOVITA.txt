@@ -1,3 +1,6 @@
+Novità della 3.9.3 «Linguetta»:
+• Ripiano spostato: una linguetta sottile sul lato destro, a metà altezza (lontana dal bordo in alto, dove macOS apre Mission Control). Con il file sopra si apre verso il centro. In Opzioni → Avvio puoi metterla a sinistra
+
 Novità della 3.9.2 «Dove l'ho salvato»:
 • Dopo la torta, una nuvoletta dice dov'è stato salvato il file (per esempio «Salvato in Download»), con «Mostra nella cartella» e «Apri». Sparisce da sola dopo qualche secondo, resta finché ci tieni sopra il puntatore
 • Ripiano più discreto: una piccola pillola in alto al centro, sotto la barra dei menu, che si allarga solo quando ci passi sopra con il file

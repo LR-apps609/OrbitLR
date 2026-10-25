@@ -18,14 +18,17 @@ final class DropShelfTests: XCTestCase {
     func testPosizione() {
         let screen = NSRect(x: 0, y: 0, width: 1440, height: 875)
         let size = DropShelf.panelSize
-        let f = DropShelf.frame(for: screen, size: size)
-        XCTAssertEqual(f.midX, screen.midX, accuracy: 0.5, "in alto al centro")
-        XCTAssertEqual(f.maxY, screen.maxY - 4, accuracy: 0.5, "subito sotto la barra dei menu")
-        XCTAssertTrue(screen.contains(f))
-        XCTAssertGreaterThan(f.minX, 200, "lontano dagli angoli")
+        let r = DropShelf.frame(for: screen, size: size)
+        XCTAssertEqual(r.maxX, screen.maxX - 12, accuracy: 0.5, "a destra, staccato dal bordo")
+        XCTAssertEqual(r.midY, screen.midY, accuracy: 0.5, "a metà altezza: lontano dal bordo in alto e dagli angoli")
+        XCTAssertLessThan(r.maxY, screen.maxY - 200)
+        XCTAssertGreaterThan(r.minY, screen.minY + 200)
+        let l = DropShelf.frame(for: screen, size: size, left: true)
+        XCTAssertEqual(l.minX, screen.minX + 12, accuracy: 0.5, "a sinistra se scelto")
         // Secondo schermo a sinistra (coordinate negative)
-        let left = NSRect(x: -1920, y: 0, width: 1920, height: 1080)
-        XCTAssertTrue(left.contains(DropShelf.frame(for: left, size: size)))
+        let other = NSRect(x: -1920, y: 0, width: 1920, height: 1080)
+        XCTAssertTrue(other.contains(DropShelf.frame(for: other, size: size)))
+        XCTAssertTrue(other.contains(DropShelf.frame(for: other, size: size, left: true)))
     }
 
     func testNuvolettaSempreNelloSchermo() {

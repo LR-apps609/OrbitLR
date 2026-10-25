@@ -4,8 +4,9 @@ import AppKit
 // ════════════════════════════════════════════════════════════════════
 //  3.9.1 · Il ripiano di OrbitLR: quando trascini dei file da qualsiasi parte (Finder, Scrivania, Mail…)
 //  compare un bersaglio con la torta. Rilasci lì → si apre la torta.
-//  3.9.2 · Più discreto: una pillola piccola in alto al centro, sotto la barra dei menu (lontana dagli
-//  angoli e dai bordi, dove macOS mostra la Scrivania); si allarga solo quando ci passi sopra.
+//  3.9.3 · Una linguetta sottile sul lato (destro, o sinistro da Opzioni), a metà altezza: lontana dal bordo
+//  in alto e dagli angoli, dove macOS reagisce (Mission Control, Spazi, Scrivania). Si apre verso il centro
+//  solo quando ci passi sopra con il file.
 //  Non serve andare nella barra dei menu (dove macOS può mostrare la Scrivania e il menu si chiude).
 //
 //  Come lo sa: al clic del mouse in un'altra app si ricorda il contatore degli appunti del trascinamento;
@@ -79,13 +80,18 @@ final class DropShelf: NSObject {
         return types.contains(.fileURL) || types.contains(NSPasteboard.PasteboardType("NSFilenamesPboardType"))
     }
 
-    /// Dove sta il ripiano: in alto al centro dello schermo col puntatore, subito sotto la barra dei menu.
-    static func frame(for screen: NSRect, size: NSSize) -> NSRect {
-        NSRect(x: screen.midX - size.width / 2, y: screen.maxY - size.height - 4, width: size.width, height: size.height)
+    static let sideKey = "dropShelfSide"
+    /// «right» (di base) o «left».
+    static var leftSide: Bool { UserDefaults.standard.string(forKey: sideKey) == "left" }
+
+    /// Dove sta il ripiano: sul lato scelto, a metà altezza, staccato di poco dal bordo.
+    static func frame(for screen: NSRect, size: NSSize, left: Bool = false) -> NSRect {
+        let x = left ? screen.minX + 12 : screen.maxX - size.width - 12
+        return NSRect(x: x, y: screen.midY - size.height / 2, width: size.width, height: size.height)
     }
 
-    /// Lo spazio della finestra (trasparente): la pillola dentro si allarga quando ci passi sopra.
-    static let panelSize = NSSize(width: 260, height: 84)
+    /// Lo spazio della finestra (trasparente): la linguetta dentro si apre verso il centro quando ci passi sopra.
+    static let panelSize = NSSize(width: 170, height: 130)
 
     private func show() {
         hideWork?.cancel()
@@ -93,11 +99,13 @@ final class DropShelf: NSObject {
         let mouse = NSEvent.mouseLocation
         let screen = NSScreen.screens.first { NSMouseInRect(mouse, $0.frame, false) } ?? NSScreen.main
         guard let vis = screen?.visibleFrame else { return }
-        let target = Self.frame(for: vis, size: size)
+        let left = Self.leftSide
+        model.left = left
+        let target = Self.frame(for: vis, size: size, left: left)
         let p = panel ?? makePanel(size: size)
         panel = p
         model.targeted = false
-        p.setFrame(target.offsetBy(dx: 0, dy: 24), display: false)
+        p.setFrame(target.offsetBy(dx: left ? -20 : 20, dy: 0), display: false)
         p.alphaValue = 0
         p.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup { c in
@@ -129,8 +137,9 @@ final class DropShelf: NSObject {
         let files = urls.filter { $0.isFileURL }
         guard !files.isEmpty else { return }
         Sounds.drop()
-        // La torta sotto la pillola, non attaccata al bordo
-        let at = panel.map { NSPoint(x: $0.frame.midX, y: $0.frame.minY - 230) }
+        // La torta accanto alla linguetta, verso il centro dello schermo
+        let left = Self.leftSide
+        let at = panel.map { NSPoint(x: left ? $0.frame.maxX + 220 : $0.frame.minX - 220, y: $0.frame.midY) }
         hide(animated: true)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { PieController.shared.present(files: files, at: at) }
     }
@@ -153,31 +162,36 @@ final class DropShelf: NSObject {
 
 final class ShelfModel: ObservableObject {
     @Published var targeted = false
+    @Published var left = false
 }
 
-/// Il bersaglio: una pillola con il logo, che si allarga quando ci passi sopra con il file.
+/// Il bersaglio: una linguetta sottile con il logo; con il file sopra si apre verso il centro.
 struct ShelfView: View {
     @ObservedObject var model: ShelfModel
     let onDrop: ([URL]) -> Void
 
     var body: some View {
-        VStack {
-            HStack(spacing: 8) {
+        HStack(spacing: 0) {
+            if !model.left { Spacer(minLength: 0) }
+            VStack(spacing: 6) {
                 Image(nsImage: NSApp.applicationIconImage).resizable()
-                    .frame(width: model.targeted ? 30 : 22, height: model.targeted ? 30 : 22)
-                Text(model.targeted ? "Rilascia per la torta" : "OrbitLR")
-                    .font(.system(size: model.targeted ? 13 : 11.5, weight: .bold, design: .rounded))
-                    .lineLimit(1)
+                    .frame(width: model.targeted ? 40 : 24, height: model.targeted ? 40 : 24)
+                if model.targeted {
+                    Text("Rilascia\nper la torta").font(.system(size: 12, weight: .bold, design: .rounded))
+                        .multilineTextAlignment(.center).fixedSize()
+                } else {
+                    Image(systemName: model.left ? "chevron.right" : "chevron.left")
+                        .font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary)
+                }
             }
-            .padding(.horizontal, model.targeted ? 16 : 10)
-            .frame(height: model.targeted ? 50 : 34)
-            .background(Capsule().fill(.regularMaterial))
-            .overlay(Capsule().strokeBorder(Theme.accent.opacity(model.targeted ? 0.95 : 0.4),
-                                            style: StrokeStyle(lineWidth: model.targeted ? 2 : 1.2, dash: model.targeted ? [] : [5, 3])))
+            .frame(width: model.targeted ? 130 : 34, height: model.targeted ? 120 : 92)
+            .background(RoundedRectangle(cornerRadius: model.targeted ? 18 : 17, style: .continuous).fill(.regularMaterial))
+            .overlay(RoundedRectangle(cornerRadius: model.targeted ? 18 : 17, style: .continuous)
+                .strokeBorder(Theme.accent.opacity(model.targeted ? 0.95 : 0.4),
+                              style: StrokeStyle(lineWidth: model.targeted ? 2 : 1.2, dash: model.targeted ? [] : [5, 3])))
             .shadow(color: .black.opacity(0.22), radius: 8, y: 3)
-            Spacer(minLength: 0)
+            if model.left { Spacer(minLength: 0) }
         }
-        .padding(.top, 4)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
         .dropDestination(for: URL.self) { urls, _ in

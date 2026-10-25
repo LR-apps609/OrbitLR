@@ -879,7 +879,7 @@ struct MenuDropZone: View {
             Text("si apre la torta, senza aprire la finestra").font(.system(size: 11)).foregroundStyle(.secondary)
             if UserDefaults.standard.object(forKey: "dropShelf") as? Bool ?? true {
                 // 3.9.1 · Più comodo: il ripiano compare da solo al bordo destro
-                Text("Più comodo: trascina un file da dove vuoi, OrbitLR compare in alto al centro")
+                Text("Più comodo: trascina un file da dove vuoi, OrbitLR compare sul lato dello schermo")
                     .font(.system(size: 10.5)).foregroundStyle(.secondary).multilineTextAlignment(.center)
                     .padding(.horizontal, 8).padding(.top, 2)
             }
@@ -924,6 +924,7 @@ struct SettingsView: View {
     @AppStorage(VideoProjectBuilder.classicKey) private var classicVideo = false
     /// 3.9.1 · Il ripiano al bordo dello schermo
     @AppStorage("dropShelf") private var dropShelf = true
+    @AppStorage("dropShelfSide") private var dropShelfSide = "right"
     @State var saved = false
     @State private var advanced = false
 
@@ -974,7 +975,13 @@ struct SettingsView: View {
                 Section("Avvio") {
                     Toggle("Apri OrbitLR all’accesso al Mac (il menu si apre all’istante)", isOn: $draft.launchAtLogin)
                     Toggle("Scorciatoia ⌥⌘C sui file selezionati nel Finder", isOn: $draft.hotkey)
-                    Toggle("Ripiano: quando trascini dei file, OrbitLR compare in alto al centro dello schermo", isOn: $dropShelf)
+                    Toggle("Ripiano: quando trascini dei file, OrbitLR compare sul lato dello schermo", isOn: $dropShelf)
+                    if dropShelf {
+                        Picker("Lato del ripiano", selection: $dropShelfSide) {
+                            Text("Destra").tag("right")
+                            Text("Sinistra").tag("left")
+                        }
+                    }
                     Toggle("Controlla da sola se c’è una versione nuova (una volta al giorno)", isOn: $autoUpdate)
                     Button("Controlla adesso…") { Task { @MainActor in await UpdateCheck.check(userInitiated: true) } }
                 }
