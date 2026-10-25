@@ -6,9 +6,15 @@ final class ParamController: @unchecked Sendable {
     static let shared = ParamController()
     private var panel: NSPanel?
     private var callback: ((String?) -> Void)?
+    /// 4.1.4 · Una richiesta arrivata mentre un pannello è aperto (per esempio la password di un PDF in coda)
+    /// aspetta il suo turno invece di annullare quella aperta.
+    private var waiting: [(ParamKind, Action, [URL], NSPoint, (String?) -> Void)] = []
 
     func ask(_ kind: ParamKind, action: Action, files: [URL], at point: NSPoint, done: @escaping (String?) -> Void) {
-        close(nil)
+        if panel != nil {
+            waiting.append((kind, action, files, point, done))
+            return
+        }
         callback = done
         let isTrim = kind == .cut || kind == .gifcut || kind == .ringtone
         let view: AnyView
@@ -37,8 +43,14 @@ final class ParamController: @unchecked Sendable {
         }
         p.setFrameOrigin(origin)
         if isTrim || kind == .hidemark { p.center() }
-        WindowClose.once(p) { [weak self] in
-            if self?.panel === p { self?.panel = nil; let cb = self?.callback; self?.callback = nil; cb?(nil) }
+        p.isReleasedWhenClosed = false
+        WindowClose.once(p) { [weak self, weak p] in
+            guard let self, let p, self.panel === p else { return }
+            self.panel = nil
+            let cb = self.callback
+            self.callback = nil
+            cb?(nil)
+            self.showNextWaiting()
         }
         panel = p
         NSApp.activate()
@@ -50,8 +62,16 @@ final class ParamController: @unchecked Sendable {
         callback = nil
         let p = panel
         panel = nil
-        p?.orderOut(nil)
+        // 4.1.4 · Chiusa davvero (non solo nascosta): la finestra e quello che contiene (anche il lettore del taglio) se ne vanno
+        p?.close()
         cb?(value)
+        showNextWaiting()
+    }
+
+    private func showNextWaiting() {
+        guard panel == nil, !waiting.isEmpty else { return }
+        let (k, a, f, pt, d) = waiting.removeFirst()
+        DispatchQueue.main.async { self.ask(k, action: a, files: f, at: pt, done: d) }
     }
 }
 
@@ -207,15 +227,18 @@ struct ParamView: View {
     /// 2.7.5 · Il peso che avrà il risultato, prima di confermare.
     private func estimateLine(_ t: String) -> some View {
         Label(t, systemImage: "scalemass").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.green)
-            .task(id: files) {
-                guard kind == .social, videoSeconds == nil else { return }
-                var s = 0.0
-                for f in files.prefix(20) {
-                    let d = (try? await AVURLAsset(url: f).load(.duration).seconds) ?? 0
-                    if d.isFinite { s += max(0, d) }
-                }
-                if s > 0 { videoSeconds = s }
-            }
+    }
+
+    /// 4.1.4 · La durata dei video per la stima di «Formato social» (prima non partiva mai: era attaccata
+    /// alla riga che compare solo dopo averla calcolata).
+    private func loadVideoSeconds() async {
+        guard kind == .social, videoSeconds == nil else { return }
+        var s = 0.0
+        for f in files.prefix(20) {
+            let d = (try? await AVURLAsset(url: f).load(.duration).seconds) ?? 0
+            if d.isFinite { s += max(0, d) }
+        }
+        if s > 0 { videoSeconds = s }
     }
 
     private func note(_ t: String) -> some View {
@@ -273,6 +296,7 @@ struct ParamView: View {
             EmptyView()
         case .social:
             Knob(title: "Formato", options: ParamChoices.options(for: .social) ?? [], selection: $choice, tint: tint)
+                .task(id: files) { await loadVideoSeconds() }
             Toggle("Inquadra le persone", isOn: $follow)
             if let sec = videoSeconds {
                 estimateLine(SizeEstimate.label(SizeEstimate.socialBytes(seconds: sec, aspect: choice.isEmpty ? "9x16" : choice))

@@ -549,6 +549,9 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             return
         }
         notice = Self.relink(&p)
+        // 4.1.4 · Video su un disco scollegato: il progetto sul disco resta com'era finché non lo modifichi
+        // (prima chiudendolo si salvava senza quelle clip, o si cancellava del tutto)
+        openedIncomplete = notice != nil ? p : nil
         currentID = id
         project = p
         saved = p
@@ -712,15 +715,20 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     private func scheduleSave() {
         saveWork?.cancel()
         guard let url = saveURL else { return }
+        if let o = openedIncomplete, o == saved { return }
         let p = saved
         let w = DispatchWorkItem { VideoProjectLibrary.save(p, to: url) }
         saveWork = w
         VideoProjectLibrary.queue.asyncAfter(deadline: .now() + 0.6, execute: w)
     }
 
+    /// Il progetto come si è aperto quando mancava qualche file (nil = tutto a posto).
+    private var openedIncomplete: VideoProject? = nil
+
     /// Salva subito (alla chiusura del progetto).
     func saveNow() {
         guard let url = saveURL else { return }
+        if let o = openedIncomplete, o == saved { return }
         let p = saved
         VideoProjectLibrary.queue.sync { VideoProjectLibrary.save(p, to: url) }   // in coda dopo eventuali salvataggi in corso
     }

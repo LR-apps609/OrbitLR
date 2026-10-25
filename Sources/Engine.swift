@@ -291,9 +291,11 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         job.process = p
 
         var buffer = Data()
+        let bufferLock = NSLock()          // 4.1.4 · il tubo e la fine del processo arrivano da thread diversi
         out.fileHandleForReading.readabilityHandler = { [weak self] h in
             let chunk = h.availableData
             if chunk.isEmpty { return }
+            bufferLock.lock(); defer { bufferLock.unlock() }
             buffer.append(chunk)
             while let nl = buffer.firstIndex(of: 0x0A) {
                 let lineData = buffer.subdata(in: buffer.startIndex..<nl)
@@ -305,7 +307,21 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         }
         p.terminationHandler = { [weak self] proc in
             out.fileHandleForReading.readabilityHandler = nil
-            DispatchQueue.main.async { self?.verifyThenFinish(job, code: proc.terminationStatus) }
+            // 4.1.4 · Le ultime righe (OUT, FAIL, OK) possono essere ancora nel tubo: si leggono prima di chiudere
+            bufferLock.lock()
+            buffer.append(out.fileHandleForReading.readDataToEndOfFile())
+            var lines: [String] = []
+            while let nl = buffer.firstIndex(of: 0x0A) {
+                if let line = String(data: buffer.subdata(in: buffer.startIndex..<nl), encoding: .utf8) { lines.append(line) }
+                buffer.removeSubrange(buffer.startIndex...nl)
+            }
+            if !buffer.isEmpty, let line = String(data: buffer, encoding: .utf8) { lines.append(line) }
+            buffer = Data()
+            bufferLock.unlock()
+            DispatchQueue.main.async {
+                for l in lines { self?.handle(l, for: job) }
+                self?.verifyThenFinish(job, code: proc.terminationStatus)
+            }
         }
         do {
             try p.run()
@@ -523,8 +539,19 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
               job.state == .done, job.failures.isEmpty, !job.outputs.isEmpty else { return }
         let id = job.action.id
         let replaces = id.hasPrefix("to:") || ["resize", "strip", "pdfcompress", "vcompress", "normalize", "voiceclean"].contains(id)
-        guard replaces else { return }
-        for f in job.mainFiles { try? FileManager.default.trashItem(at: f, resultingItemURL: nil) }
+        guard replaces, job.notes.isEmpty else { return }       // 4.1.4 · un file saltato («già compresso»…) non si tocca
+        for f in job.mainFiles {
+            let kind = Catalog.kind(of: f)
+            // 4.1.4 · Mai per le conversioni che tengono solo una parte: audio o GIF da un video, immagini da un PDF
+            if kind == .video, ["to:mp3", "to:m4a", "to:wav", "to:gif", "to:aac", "to:flac"].contains(id) { continue }
+            if kind == .pdf, ["to:png", "to:jpg", "to:jpeg", "to:heic", "to:webp", "to:tiff"].contains(id) { continue }
+            // Solo se c'è davvero un file creato da questo originale (stesso nome di partenza)
+            let stem = f.deletingPathExtension().lastPathComponent
+            let made = job.outputs.contains { o in
+                o.path != f.path && FileManager.default.fileExists(atPath: o.path) && o.deletingPathExtension().lastPathComponent.hasPrefix(stem)
+            }
+            if made { try? FileManager.default.trashItem(at: f, resultingItemURL: nil) }
+        }
     }
 
     /// Spazio risparmiato nel mese corrente con compressioni e conversioni (escluse quelle annullate).

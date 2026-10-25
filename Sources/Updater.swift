@@ -212,24 +212,35 @@ final class Updater: ObservableObject, @unchecked Sendable {
         let script = """
         while kill -0 \(pid) 2>/dev/null; do sleep 0.2; done
         # La versione attuale si mette da parte: se la nuova non si copia, torna al suo posto (mai senza app)
+        APP=\(q(Self.installedAppPath))
         OLD="$HOME/Library/Caches/OrbitLR-precedente.app"
-        rm -rf "$OLD"; mv /Applications/OrbitLR.app "$OLD" 2>/dev/null
-        if mv \(q(staged.path)) /Applications/OrbitLR.app; then
+        rm -rf "$OLD"
+        # 4.1.4 · Se l'app attuale non si sposta, ci si ferma: mai una nuova dentro la vecchia, mai senza app
+        if [ -e "$APP" ] && ! mv "$APP" "$OLD"; then open "$APP"; exit 1; fi
+        if [ ! -e "$APP" ] && mv \(q(staged.path)) "$APP"; then
           rm -rf "$OLD"
         else
-          rm -rf /Applications/OrbitLR.app; mv "$OLD" /Applications/OrbitLR.app; open /Applications/OrbitLR.app; exit 1
+          [ -d "$OLD" ] && { rm -rf "$APP"; mv "$OLD" "$APP"; }
+          open "$APP"; exit 1
         fi
-        xattr -dr com.apple.quarantine /Applications/OrbitLR.app 2>/dev/null
-        \(Self.lsregister) -f /Applications/OrbitLR.app >/dev/null 2>&1
+        xattr -dr com.apple.quarantine "$APP" 2>/dev/null
+        \(Self.lsregister) -f "$APP" >/dev/null 2>&1
         /System/Library/CoreServices/pbs -update >/dev/null 2>&1
         rm -rf \(q(work.path))
-        open /Applications/OrbitLR.app
+        open "$APP"
         """
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/bin/zsh")
         p.arguments = ["-c", script]
-        try? p.run()
+        // 4.1.4 · Se lo script non parte, OrbitLR resta aperta (prima si chiudeva e non tornava)
+        do { try p.run() } catch { return }
         DispatchQueue.main.async { NSApp.terminate(nil) }
+    }
+
+    /// 4.1.4 · Dove sta davvero OrbitLR (anche fuori da /Applicazioni): si aggiorna quella, non una copia nuova.
+    static var installedAppPath: String {
+        let p = Bundle.main.bundlePath
+        return p.hasSuffix(".app") && !p.contains("/Library/Caches/") ? p : "/Applications/OrbitLR.app"
     }
 
     // MARK: - Finestre

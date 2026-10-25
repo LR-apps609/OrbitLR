@@ -319,7 +319,8 @@ progress_start() {
   PROGRESS_PID=$!
 }
 progress_set() {  # frazione (-1 = in corso senza percentuale), testo
-  if [[ -n $RUN_MODE ]]; then print -r -- "P"$'\t'"$1"$'\t'"$2"; return 0; fi
+  # 4.1.4 · Il testo contiene nomi di file: niente «a capo» o tabulazioni che inventino righe per l'app
+  if [[ -n $RUN_MODE ]]; then local t=${2//[$'\n\r\t']/ }; print -r -- "P"$'\t'"$1"$'\t'"$t"; return 0; fi
   [[ -n $PROGRESS_PID ]] || return 0
   print -r -- "$1"$'\t'"$2" > "$STATUS.tmp" && mv -f -- "$STATUS.tmp" "$STATUS"
 }

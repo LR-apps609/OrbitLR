@@ -147,7 +147,11 @@ final class Inpainter: @unchecked Sendable {
                 filled = prev.applyingFilter("CIDissolveTransition", parameters: ["inputTargetImage": filled, "inputTime": 1 - smoothing])
                     .cropped(to: filled.extent)
             }
-            if time != nil { previous[i] = filled }
+            // 4.1.4 · Si ricorda il fotogramma già calcolato, non la ricetta: prima la catena cresceva a ogni
+            // fotogramma (memoria e tempi enormi su video lunghi)
+            if time != nil, let cg = ctx.createCGImage(filled, from: filled.extent) {
+                previous[i] = CIImage(cgImage: cg).transformed(by: CGAffineTransform(translationX: filled.extent.minX, y: filled.extent.minY))
+            }
             out = filled.composited(over: out).cropped(to: ext)
         }
         return out

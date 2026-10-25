@@ -116,6 +116,7 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
 
     func open(_ url: URL) {
         trim?.pause()
+        trim?.cancelLoading()
         file = url
         remember(url)
         lastJob = nil
@@ -134,6 +135,7 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
 
     func close() {
         trim?.pause()
+        trim?.cancelLoading()
         scheduleProjectSave()
         selectionCancellable = nil
         restoreCancellable = nil
@@ -726,7 +728,8 @@ struct AudioTabView: View {
         switch tool {
         case .tts: return !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         case .merge: return m.allFiles.count >= 2
-        default: return m.file != nil
+        // 4.1.4 · Suoneria e Taglia aspettano la forma d'onda: prima la selezione vale 0–0
+        default: return m.file != nil && !(tool.usesSelection && (m.trim?.loading ?? true))
         }
     }
 

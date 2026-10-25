@@ -701,6 +701,9 @@ final class PieController: @unchecked Sendable {
         NSApp.activate()
         p.makeKeyAndOrderFront(nil)
 
+        // 4.1.4 · Mai due monitor della tastiera insieme (una torta aperta mentre un'altra si chiudeva)
+        for m in monitors { NSEvent.removeMonitor(m) }
+        monitors = []
         if let m = NSEvent.addLocalMonitorForEvents(matching: .keyDown, handler: { [weak self] e in
             guard let self, self.panel != nil else { return e }
             return PieKeys.handle(e, model: model, close: { self.close(); self.pending = [] }) ? nil : e
@@ -743,7 +746,9 @@ enum PieKeys {
             if let t = target, let i = model.items.firstIndex(where: { $0.id == t }) { model.pick(i); return true }
             return false
         }
-        if let ch = e.charactersIgnoringModifiers, let n = Int(ch), n >= 1, n <= model.items.count {
+        // 4.1.4 · Solo il numero da solo: ⌘1, ⌃2… non scelgono uno spicchio
+        if e.modifierFlags.intersection([.command, .control, .option]).isEmpty,
+           let ch = e.charactersIgnoringModifiers, let n = Int(ch), n >= 1, n <= model.items.count {
             model.pick(n - 1)
             return true
         }

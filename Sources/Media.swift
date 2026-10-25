@@ -538,9 +538,11 @@ enum Media {
                     if let sb = makeSampleBuffer(buf, frames: frames, pts: pts, format: format) {
                         while !input.isReadyForMoreMediaData {
                             if job.cancelRequested { return }
+                            // 4.1.4 · Il file non si scrive più (disco pieno…): niente attesa infinita
+                            if writer.status == .failed { throw writer.error ?? NativeError("Non riesco a scrivere il file: c’è spazio sul disco?") }
                             usleep(5_000)
                         }
-                        input.append(sb)
+                        if !input.append(sb) { throw writer.error ?? NativeError("Non riesco a scrivere il file: c’è spazio sul disco?") }
                     }
                     written += Double(frames)
                     progress(base + (1 - base) * min(1, written / totalFrames))

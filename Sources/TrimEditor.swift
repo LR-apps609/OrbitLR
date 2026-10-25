@@ -39,6 +39,17 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
 
     private var observer: Any?
 
+    static func forTrim(url: URL, isVideo: Bool, mode: ParamKind) -> TrimModel {
+        let m = TrimModel(url: url, isVideo: isVideo, defaultLength: mode == .gifcut ? 5 : (mode == .ringtone ? 30 : nil))
+        if mode == .ringtone { m.maxLength = 30 }
+        return m
+    }
+
+    /// 4.1.4 · Ferma la lettura della forma d'onda (file chiuso o cambiato)
+    final class StopFlag: @unchecked Sendable { var stop = false }
+    let stopFlag = StopFlag()
+    func cancelLoading() { stopFlag.stop = true }
+
     init(url: URL, isVideo: Bool, defaultLength: Double?) {
         self.url = url
         self.isVideo = isVideo
@@ -52,7 +63,8 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
             if self.playing && self.zoom > 1 && (s < self.viewStart || s > self.viewStart + self.span) {
                 self.pan(to: s - self.span * 0.05)
             }
-            if self.playing && s >= self.end {
+            // 4.1.4 · Con la fine della selezione sulla fine del file il lettore si ferma un soffio prima
+            if self.playing && s >= self.end - 0.03 {
                 if self.loop { self.seek(self.start) } else { self.pause(); self.seek(self.start) }
             }
         }
@@ -62,6 +74,7 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
     deinit {
         if let o = observer { player.removeTimeObserver(o) }
         player.pause()
+        stopFlag.stop = true
     }
 
     @MainActor
@@ -75,7 +88,8 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
         let video = isVideo
         // Un picco al millesimo di secondo (al massimo 4 milioni: più di un'ora), poi i livelli più radi
         let hiresBins = max(700, min(4_000_000, Int(dur * TrimModel.hiresRate)))
-        let both = await TrimModel.waveformLevels(url: url, duration: dur, bins: hiresBins)
+        let both = await TrimModel.waveformLevels(url: url, duration: dur, bins: hiresBins, stop: stopFlag)
+        if stopFlag.stop { loading = false; return }
         let hires = both.peaks, hiresRMS = both.rms
         let built = await Task.detached(priority: .userInitiated) { TrimModel.pyramid(hires) }.value
         rmsLevels = await Task.detached(priority: .userInitiated) { TrimModel.pyramid(hiresRMS, average: true) }.value
@@ -261,7 +275,7 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
     }
 
     /// 4.1.1 · Picchi e volume medio (RMS) insieme, nella stessa lettura del file.
-    static func waveformLevels(url: URL, duration: Double, bins: Int) async -> (peaks: [Float], rms: [Float]) {
+    static func waveformLevels(url: URL, duration: Double, bins: Int, stop: StopFlag? = nil) async -> (peaks: [Float], rms: [Float]) {
         await Task.detached(priority: .userInitiated) { () -> (peaks: [Float], rms: [Float]) in
             let asset = AVURLAsset(url: url)
             guard let track = try? await asset.loadTracks(withMediaType: .audio).first,
@@ -289,6 +303,7 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
             var sq: Float = 0
             var n = 0
             while let sb = output.copyNextSampleBuffer() {
+                if stop?.stop == true { reader.cancelReading(); break }
                 guard let block = CMSampleBufferGetDataBuffer(sb) else { continue }
                 let len = CMBlockBufferGetDataLength(block)
                 guard len > 1 else { continue }
@@ -330,7 +345,7 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
 
 func formatTime(_ t: Double) -> String {
     guard t.isFinite else { return "0:00.0" }
-    let total = max(0, t)
+    let total = (max(0, t) * 10).rounded() / 10          // 4.1.4 · 59,96 → «1:00,0», mai «0:60,0»
     let h = Int(total) / 3600
     let m = (Int(total) % 3600) / 60
     let s = total - Double(h * 3600 + m * 60)
@@ -342,7 +357,7 @@ func formatTime(_ t: Double) -> String {
 /// 3.8 · Con i millesimi (zoom attivo): 1:02,345
 func formatTimeMs(_ t: Double) -> String {
     guard t.isFinite else { return "0:00,000" }
-    let total = max(0, t)
+    let total = (max(0, t) * 1000).rounded() / 1000
     let h = Int(total) / 3600
     let m = (Int(total) % 3600) / 60
     let s = total - Double(h * 3600 + m * 60)
@@ -377,10 +392,9 @@ struct TrimEditorView: View {
 
     init(url: URL, mode: ParamKind, onDone: @escaping (String?) -> Void) {
         let kind = Catalog.kind(of: url)
-        let model = TrimModel(url: url, isVideo: kind == .video,
-                              defaultLength: mode == .gifcut ? 5 : (mode == .ringtone ? 30 : nil))
-        if mode == .ringtone { model.maxLength = 30 }
-        _m = StateObject(wrappedValue: model)
+        // 4.1.4 · Il modello nasce una volta sola (StateObject lo crea alla prima apparizione): prima ogni
+        // ridisegno della finestra ne creava uno nuovo, con un'altra lettura completa del file
+        _m = StateObject(wrappedValue: TrimModel.forTrim(url: url, isVideo: kind == .video, mode: mode))
         self.mode = mode
         self.tint = Theme.color(kind)
         self.fileName = url.lastPathComponent

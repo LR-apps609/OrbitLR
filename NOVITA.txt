@@ -1,3 +1,13 @@
+Novità della 4.1.4 «Revisione»:
+• Revisione completa del codice: corretti i problemi trovati, nessuna funzione nuova
+• «Sposta l'originale nel Cestino»: ora va nel Cestino solo l'originale che ha davvero un file nuovo (mai quelli saltati perché già nel formato giusto o già compressi, mai un PDF da cui hai preso solo le immagini o un video da cui hai preso l'audio)
+• Conversioni: le ultime righe del motore non si perdono più (prima un lavoro poteva risultare riuscito o fallito per sbaglio)
+• Aggiornamenti: se qualcosa va storto mentre si installa, OrbitLR resta com'era e si riapre (mai un'app rotta); si aggiorna anche se non è in Applicazioni
+• Video: un progetto con video su un disco scollegato non perde più le clip quando lo chiudi
+• Audio: la forma d'onda di un file chiuso smette di caricarsi; «Crea la suoneria» aspetta che il file sia pronto; download da link più affidabile (fine e «Interrompi»)
+• Pannelli delle opzioni chiusi davvero (prima restavano in memoria), e due richieste insieme non si annullano più
+• Stima del peso in «Formato social», ⌘1 nella torta, tempi come «0:60,0», icona nuova nel Dock dopo l'aggiornamento, e altro
+
 Novità della 4.1.3 «Anche video»:
 • Video: «Da un link…» anche nella scheda Video e tra i Progetti. Il video arriva in Download in MP4 fino a 1080p (si apre ovunque), oppure alla massima qualità (anche 4K). Solo contenuti che hai il diritto di scaricare
 

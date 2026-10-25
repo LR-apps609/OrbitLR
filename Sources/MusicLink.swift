@@ -73,7 +73,11 @@ enum MusicLink {
             try? FileManager.default.removeItem(at: staged)
             try FileManager.default.moveItem(at: tmp, to: staged)
             try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: staged.path)
-            _ = try FileManager.default.replaceItemAt(exe, withItemAt: staged)
+            if FileManager.default.fileExists(atPath: exe.path) {
+                _ = try FileManager.default.replaceItemAt(exe, withItemAt: staged)
+            } else {
+                try FileManager.default.moveItem(at: staged, to: exe)        // la prima volta non c'è niente da sostituire
+            }
         } catch {
             if hadOne { return }            // il rinnovo può aspettare: si usa quello che c'è
             throw (error as? Failure) ?? Failure(message: "serve internet per scaricare il motore la prima volta")
@@ -137,23 +141,38 @@ enum MusicLink {
         let collected = Collected()
         let handle: @Sendable (FileHandle, Bool) -> Void = { h, isErr in
             let d = h.availableData
-            guard !d.isEmpty, let s = String(data: d, encoding: .utf8) else { return }
-            for line in s.split(whereSeparator: \.isNewline).map(String.init) {
+            guard !d.isEmpty else { return }
+            // 4.1.4 · Righe intere: un blocco letto può fermarsi a metà riga
+            for line in collected.feed(d, isErr: isErr) {
                 if let v = percent(in: line) { Task { @MainActor in job.progress = v } }
                 collected.add(line, isErr: isErr)
             }
         }
         out.fileHandleForReading.readabilityHandler = { handle($0, false) }
         err.fileHandleForReading.readabilityHandler = { handle($0, true) }
+        defer {
+            out.fileHandleForReading.readabilityHandler = nil
+            err.fileHandleForReading.readabilityHandler = nil
+        }
         try p.run()
         await MainActor.run { job.process = p }
+        // «Interrompi» premuto mentre partiva
+        if await job.cancelled { p.terminate(); p.waitUntilExit(); throw CancellationError() }
         let start = Date()
         while p.isRunning {
             try await Task.sleep(nanoseconds: 200_000_000)
-            if Date().timeIntervalSince(start) > 900 { p.terminate(); throw Failure(message: "Ci mette troppo: riprova più tardi.") }
+            if Date().timeIntervalSince(start) > 900 {
+                p.terminate()
+                p.waitUntilExit()
+                throw Failure(message: "Ci mette troppo: riprova più tardi.")
+            }
         }
+        // 4.1.4 · Quello che è rimasto nei tubi dopo la fine (l'ultima riga è proprio il file scaricato)
         out.fileHandleForReading.readabilityHandler = nil
         err.fileHandleForReading.readabilityHandler = nil
+        for (h, isErr) in [(out.fileHandleForReading, false), (err.fileHandleForReading, true)] {
+            for line in collected.feed(h.readDataToEndOfFile(), isErr: isErr, flush: true) { collected.add(line, isErr: isErr) }
+        }
         if await job.cancelled { throw CancellationError() }
         guard p.terminationStatus == 0 else {
             let e = collected.errors
@@ -161,7 +180,8 @@ enum MusicLink {
             throw Failure(message: friendly(e))
         }
         // Il file: quello stampato da yt-dlp, altrimenti l'unico nella cartella di lavoro
-        let printed = collected.lines.reversed().first { $0.hasPrefix(work.path) }.map { URL(fileURLWithPath: $0) }
+        let printed = collected.lines.reversed().first { $0.hasPrefix(work.path) && FileManager.default.fileExists(atPath: $0) }
+            .map { URL(fileURLWithPath: $0) }
         let made = printed ?? (try? FileManager.default.contentsOfDirectory(at: work, includingPropertiesForKeys: nil))?.first
         guard let made, FileManager.default.fileExists(atPath: made.path) else { throw Failure(message: "Non ho trovato l’audio scaricato.") }
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -191,6 +211,22 @@ enum MusicLink {
         private let lock = NSLock()
         private var out: [String] = []
         private var err = ""
+        private var partial: [Bool: Data] = [:]
+
+        /// I nuovi dati di un tubo → le righe complete (il pezzo finale senza «a capo» aspetta il prossimo blocco).
+        func feed(_ d: Data, isErr: Bool, flush: Bool = false) -> [String] {
+            lock.lock(); defer { lock.unlock() }
+            var buf = (partial[isErr] ?? Data()) + d
+            var lines: [String] = []
+            while let i = buf.firstIndex(where: { $0 == 10 || $0 == 13 }) {
+                let line = String(decoding: buf[buf.startIndex..<i], as: UTF8.self)
+                if !line.isEmpty { lines.append(line) }
+                buf = Data(buf[buf.index(after: i)...])
+            }
+            if flush, !buf.isEmpty { lines.append(String(decoding: buf, as: UTF8.self)); buf = Data() }
+            partial[isErr] = buf
+            return lines
+        }
         func add(_ l: String, isErr: Bool) {
             lock.lock(); defer { lock.unlock() }
             if isErr { err += l + "\n"; if err.count > 8000 { err = String(err.suffix(8000)) } } else { out.append(l); if out.count > 200 { out.removeFirst() } }
@@ -285,6 +321,7 @@ struct LinkSheet: View {
         Task {
             do {
                 try await MusicLink.ensureEngine { s in Task { @MainActor in job.status = s } }
+                if job.cancelled { throw CancellationError() }
                 let mode: MusicLink.Mode = video ? (best ? .videoBest : .video) : .audio
                 await MainActor.run { job.status = video ? "Scarico il video…" : "Scarico l’audio…"; job.progress = 0 }
                 let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first ?? Paths.home

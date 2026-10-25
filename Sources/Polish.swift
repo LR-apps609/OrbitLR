@@ -514,7 +514,7 @@ enum WindowClose {
 /// Quando l'icona è cambiata rispetto all'ultima vista su questo Mac, si avvisa macOS e il Dock si ridisegna (una volta sola).
 enum DockIcon {
     /// Da aumentare ogni volta che cambia l'icona dell'app (2 = quadrante della 2.7).
-    static let revision = 2
+    static let revision = 3          // 3 = la torta di Orbit (3.9)
     static let key = "dockIconRevision"
 
     static func needsRefresh(stored: Int) -> Bool { stored < revision }
