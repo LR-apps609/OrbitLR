@@ -3,7 +3,8 @@ import XCTest
 /// 3.8 · Onda bassa come prima, con lo zoom in larghezza (fino al millesimo) e in altezza.
 final class WaveZoomTests: XCTestCase {
     func testMillesimiAllItaliana() {
-        XCTAssertEqual(formatTimeMs(1.2345), "0:01,234")
+        XCTAssertEqual(formatTimeMs(1.2344), "0:01,234")
+        XCTAssertEqual(formatTimeMs(59.9996), "1:00,000", "arrotondato, mai «0:60,000»")
         XCTAssertEqual(formatTimeMs(62.5), "1:02,500")
         XCTAssertEqual(formatTimeMs(3725.001), "1:02:05,001")
     }
