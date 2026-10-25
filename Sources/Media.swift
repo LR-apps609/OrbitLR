@@ -516,9 +516,11 @@ enum Media {
         let fadeInFrames = fadeIn * rate, fadeOutFrames = fadeOut * rate
         var written: Double = 0
         let base = normalize ? 0.3 : 0.0
+        var writeError: Error? = nil          // 4.1.4 · un errore di scrittura ferma il lavoro (prima: attesa infinita)
         do {
             for (a, t, r) in parts {
                 try readPCM(a, track: t, range: r, channels: channels, job: job) { samples in
+                    if writeError != nil { return }
                     var buf = samples
                     let frames = buf.count / channels
                     for f in 0..<frames {
@@ -539,15 +541,16 @@ enum Media {
                         while !input.isReadyForMoreMediaData {
                             if job.cancelRequested { return }
                             // 4.1.4 · Il file non si scrive più (disco pieno…): niente attesa infinita
-                            if writer.status == .failed { throw writer.error ?? NativeError("Non riesco a scrivere il file: c’è spazio sul disco?") }
+                            if writer.status == .failed { writeError = writer.error ?? NativeError("Non riesco a scrivere il file: c’è spazio sul disco?"); return }
                             usleep(5_000)
                         }
-                        if !input.append(sb) { throw writer.error ?? NativeError("Non riesco a scrivere il file: c’è spazio sul disco?") }
+                        if !input.append(sb) { writeError = writer.error ?? NativeError("Non riesco a scrivere il file: c’è spazio sul disco?"); return }
                     }
                     written += Double(frames)
                     progress(base + (1 - base) * min(1, written / totalFrames))
                 }
             }
+            if let e = writeError { throw e }
         } catch {
             writer.cancelWriting()
             try? FileManager.default.removeItem(at: tmp)
