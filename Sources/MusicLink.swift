@@ -392,6 +392,15 @@ struct DownloaderBar: View {
         ViewThatFits(in: .horizontal) {
             bar(full: true)
             bar(full: false)
+            // Finestra molto stretta: solo il pulsante, che apre la finestrella per il link
+            Button { go("") } label: {
+                Label(video ? "Video Downloader" : "Audio Downloader", systemImage: "arrow.down.circle.fill")
+                    .font(.system(size: 12.5, weight: .bold)).foregroundStyle(.white)
+                    .padding(.horizontal, 10).padding(.vertical, 5)
+                    .background(Capsule().fill(tint))
+            }
+            .buttonStyle(.plain)
+            .fixedSize()
         }
     }
 
