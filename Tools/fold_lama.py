@@ -59,6 +59,57 @@ live_init = [t for t in g.initializer if t.name in alive]
 del g.initializer[:]
 g.initializer.extend(live_init)
 del g.value_info[:]
+
+# Einsum → Transpose + Reshape + MatMul (tract non compila alcuni Einsum). Le misure si leggono da un'esecuzione.
+eins = [n for n in g.node if n.op_type == "Einsum"]
+m3 = onnx.ModelProto(); m3.CopyFrom(m)
+probe = sorted({x for n in eins for x in n.input})
+for x in probe:
+    m3.graph.output.append(helper.ValueInfoProto(name=x))
+s3 = ort.InferenceSession(m3.SerializeToString(), so, providers=["CPUExecutionProvider"])
+shp = {o.name: v.shape for o, v in zip(s3.get_outputs(), s3.run(None, feeds))}
+eqs = collections.Counter(helper.get_node_attr_value(n, "equation").decode() if isinstance(helper.get_node_attr_value(n, "equation"), bytes) else helper.get_node_attr_value(n, "equation") for n in eins)
+print("Einsum:", dict(eqs))
+cnt = [0]
+def const(arr):
+    cnt[0] += 1
+    name = f"orbit_c{cnt[0]}"
+    g.initializer.append(numpy_helper.from_array(np.asarray(arr, dtype=np.int64), name=name))
+    return name
+new_nodes = []
+for n in g.node:
+    if n.op_type != "Einsum":
+        new_nodes.append(n); continue
+    eq = helper.get_node_attr_value(n, "equation")
+    eq = eq.decode() if isinstance(eq, bytes) else eq
+    lhs, out = eq.replace(" ", "").split("->")
+    a, b = lhs.split(",")
+    A, B = n.input
+    sa, sb = shp[A], shp[B]
+    dim = {}
+    for ch, d in list(zip(a, sa)) + list(zip(b, sb)):
+        assert dim.get(ch, d) == d, (eq, sa, sb)
+        dim[ch] = d
+    assert len(set(a)) == len(a) and len(set(b)) == len(b) and set(out) <= set(a) | set(b), eq
+    assert all(c in b or c in out for c in a) and all(c in a or c in out for c in b), eq
+    bat = [c for c in out if c in a and c in b]
+    con = [c for c in a if c in b and c not in out]
+    lef = [c for c in a if c not in b]
+    rig = [c for c in b if c not in a]
+    pfx = n.output[0] + "_orbit"
+    ta = [a.index(c) for c in bat + lef + con]
+    tb = [b.index(c) for c in bat + con + rig]
+    P = lambda cs: int(np.prod([dim[c] for c in cs])) if cs else 1
+    new_nodes.append(helper.make_node("Transpose", [A], [pfx + "_ta"], perm=ta))
+    new_nodes.append(helper.make_node("Reshape", [pfx + "_ta", const([P(bat), P(lef), P(con)])], [pfx + "_ra"]))
+    new_nodes.append(helper.make_node("Transpose", [B], [pfx + "_tb"], perm=tb))
+    new_nodes.append(helper.make_node("Reshape", [pfx + "_tb", const([P(bat), P(con), P(rig)])], [pfx + "_rb"]))
+    new_nodes.append(helper.make_node("MatMul", [pfx + "_ra", pfx + "_rb"], [pfx + "_mm"]))
+    mid = bat + lef + rig
+    new_nodes.append(helper.make_node("Reshape", [pfx + "_mm", const([dim[c] for c in mid])], [pfx + "_rs"]))
+    new_nodes.append(helper.make_node("Transpose", [pfx + "_rs"], [n.output[0]], perm=[mid.index(c) for c in out]))
+del g.node[:]
+g.node.extend(new_nodes)
 onnx.save(m, dst)
 
 # Prova: stesso risultato del modello originale
