@@ -372,9 +372,15 @@ enum Fmt {
         guard Locale.current.decimalSeparator == "." else { return t }
         return String(t.map { $0 == "." ? "," : ($0 == "," ? "." : $0) })
     }
-    static func secs(_ x: Double) -> String { String(format: "%.1f s", x).replacingOccurrences(of: ".", with: ",") }
+    /// 4.2 · Virgola in italiano, punto in inglese
+    private static var comma: Bool { AppLanguage.active == "it" }
+    static func secs(_ x: Double) -> String {
+        let s = String(format: "%.1f s", x)
+        return comma ? s.replacingOccurrences(of: ".", with: ",") : s
+    }
     static func decimal(_ x: Double, digits: Int = 1) -> String {
-        String(format: "%.\(digits)f", x).replacingOccurrences(of: ".", with: ",")
+        let s = String(format: "%.\(digits)f", x)
+        return comma ? s.replacingOccurrences(of: ".", with: ",") : s
     }
 }
 

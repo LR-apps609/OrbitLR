@@ -23,7 +23,7 @@ jobs:
           sudo xcode-select -s "$XCODE/Contents/Developer"
           xcodebuild -version
       - name: XcodeGen
-        run: brew install xcodegen && xcodegen generate
+        run: mkdir -p Resources/Motori && brew install xcodegen && xcodegen generate
       - name: Compilazione con raccolta dei testi
         run: |
           status=0

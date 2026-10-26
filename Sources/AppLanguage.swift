@@ -12,10 +12,13 @@ enum AppLanguage {
     static var current: String { UserDefaults.standard.string(forKey: key) ?? "auto" }
 
     /// La lingua in cui OrbitLR sta parlando adesso ("it" o "en").
-    static var active: String {
+    /// Solo l'app vera ha i testi inglesi: nei test (e se mancassero) si resta in italiano.
+    static let active: String = {
         let l = Bundle.main.preferredLocalizations.first ?? "it"
-        return l.hasPrefix("en") ? "en" : "it"
-    }
+        guard l.hasPrefix("en"), Bundle.main.url(forResource: "Localizable", withExtension: "strings", subdirectory: nil, localization: "en") != nil
+        else { return "it" }
+        return "en"
+    }()
 
     static func set(_ value: String) {
         UserDefaults.standard.set(value, forKey: key)

@@ -574,7 +574,7 @@ struct HistoryDay: Identifiable {
         let cal = Calendar.current
         let now = Date()
         let month = DateFormatter()
-        month.locale = Locale(identifier: "it_IT")
+        month.locale = Locale(identifier: AppLanguage.active == "en" ? "en_US" : "it_IT")
         month.dateFormat = "LLLL yyyy"
         var order: [String] = []
         var titles: [String: String] = [:]
