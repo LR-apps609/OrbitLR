@@ -1,0 +1,46 @@
+# Pubblica il sito di OrbitLR (cartella web/) su GitHub Pages: https://lr-apps609.github.io/OrbitLR/
+# Parte da solo quando cambia il sito sul ramo main; si può anche avviare a mano.
+# Se la prima volta si ferma su «configure-pages»: Settings → Pages → Source: «GitHub Actions».
+name: Pubblica il sito
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - '.github/workflows/sito.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Prepara i file
+        run: |
+          mkdir -p _site
+          cp -r web/. _site/
+          rm -f _site/LEGGIMI.md
+          touch _site/.nojekyll
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

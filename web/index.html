@@ -1,349 +1,190 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OrbitLR Web</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>OrbitLR</title>
+<meta name="description" content="OrbitLR converte, comprime e sistema foto, video, audio e PDF sul tuo computer. Prova la torta qui: funziona davvero.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500&display=swap">
-<style>
-/* Layout: una barra in alto, al centro il «quadrante» (la zona dove si trascina e si apre la torta), sotto la striscia del risultato. Come l'app per Mac. */
-:root{
-  --bg:#EEF0E6; --panel:#FBF7EC; --ink:#2F3328; --quiet:#6B6F60; --line:#D9D6C4;
-  --sage:#8FB489; --sage-deep:#5E8F78; --brass:#C1913E; --brass-soft:#F1E0BC; --terra:#C76B4F;
-  --ok:#3E8E5B; --ring:#F4EEDC;
-  --display:"Nunito", ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
-  --body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
-}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#1C201B; --panel:#252A23; --ink:#ECEBDF; --quiet:#A6A893; --line:#3A4036;
-  --sage:#6F9A69; --sage-deep:#7FB39A; --brass:#D9AA57; --brass-soft:#4A3D22; --terra:#D98266;
-  --ok:#6CC08A; --ring:#2E342B; color-scheme:dark }}
-:root[data-theme="dark"]{
-  --bg:#1C201B; --panel:#252A23; --ink:#ECEBDF; --quiet:#A6A893; --line:#3A4036;
-  --sage:#6F9A69; --sage-deep:#7FB39A; --brass:#D9AA57; --brass-soft:#4A3D22; --terra:#D98266;
-  --ok:#6CC08A; --ring:#2E342B; color-scheme:dark }
-*{box-sizing:border-box}
-[hidden]{display:none!important}
-html,body{min-height:100%}
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
-.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
-header{display:flex;align-items:center;gap:12px;padding-block:18px 4px;flex-wrap:wrap}
-.mark{width:38px;height:38px;flex:none}
-.brand{font-family:var(--display);font-weight:900;font-size:22px;letter-spacing:-.01em}
-.brand small{font-weight:700;color:var(--brass);font-size:13px;margin-left:6px;letter-spacing:.06em;text-transform:uppercase}
-.promise{margin-left:auto;color:var(--quiet);font-size:13.5px}
-.promise b{color:var(--ink)}
-h1{font-family:var(--display);font-weight:900;font-size:clamp(26px,4.4vw,40px);line-height:1.1;margin:6px 0 0;text-wrap:balance;letter-spacing:-.015em}
-.sub{color:var(--quiet);margin:0;max-width:60ch}
-.stage{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
-@media (max-width:820px){.stage{grid-template-columns:minmax(0,1fr)}}
-.dial{position:relative;background:var(--panel);border:2px dashed color-mix(in srgb,var(--sage) 70%,transparent);border-radius:28px;
-  min-height:470px;display:grid;place-items:center;padding:20px;transition:background .2s,border-color .2s;overflow:hidden}
-.dial.over{background:color-mix(in srgb,var(--sage) 16%,var(--panel));border-color:var(--sage-deep)}
-.dial input{position:absolute;inset:0;opacity:0;cursor:pointer}
-.dial.loaded input{pointer-events:none}
-svg.pie{width:min(440px,100%);height:auto;display:block;overflow:visible}
-.petal{cursor:pointer;outline:none}
-.petal circle.bg{fill:var(--panel);stroke:color-mix(in srgb,var(--ink) 14%,transparent);stroke-width:1.2;transition:transform .18s}
-.petal text{fill:var(--ink);font-family:var(--display);font-weight:800;font-size:15px;text-anchor:middle;pointer-events:none}
-.petal text.est{font-family:var(--mono);font-weight:500;font-size:10.5px;fill:var(--quiet)}
-.petal text.est.down{fill:var(--ok)}
-.petal:hover circle.bg,.petal:focus-visible circle.bg{fill:var(--sage-deep);stroke:var(--sage-deep)}
-.petal:hover text,.petal:focus-visible text,.petal:hover text.est,.petal:focus-visible text.est{fill:#fff}
-.petal.edit circle.bg{fill:var(--brass-soft);stroke:var(--brass)}
-.petal.star circle.bg{stroke:var(--brass);stroke-width:2.5}
-.center-name{font-family:var(--display);font-weight:800;font-size:14px;fill:var(--ink);text-anchor:middle}
-.center-sub{font-family:var(--mono);font-size:11px;fill:var(--quiet);text-anchor:middle}
-.empty{display:grid;justify-items:center;gap:8px;text-align:center;pointer-events:none}
-.empty b{font-family:var(--display);font-size:22px;font-weight:900}
-.empty span{color:var(--quiet);font-size:13.5px}
-.chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:6px}
-.chip{font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;background:color-mix(in srgb,var(--sage) 22%,transparent);color:var(--sage-deep)}
-aside{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:14px}
-.lbl{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--brass)}
-.hint{color:var(--quiet);font-size:13.5px;margin:0}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-button{font:inherit;font-weight:700;font-size:13.5px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:7px 12px;cursor:pointer}
-button:hover{border-color:var(--sage-deep)}
-button:focus-visible,.petal:focus-visible{outline:3px solid color-mix(in srgb,var(--brass) 60%,transparent);outline-offset:2px}
-button.primary{background:var(--sage-deep);border-color:var(--sage-deep);color:#fff}
-input[type=range]{width:100%;accent-color:var(--sage-deep)}
-.kv{display:flex;justify-content:space-between;font-size:13px;color:var(--quiet)}
-.kv b{color:var(--ink);font-family:var(--mono);font-weight:500}
-.result{display:flex;gap:14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:12px 14px;flex-wrap:wrap}
-.result img{width:58px;height:58px;object-fit:cover;border-radius:10px;background:var(--ring)}
-.result .t{flex:1;min-width:0}
-.result .t b{display:block;font-family:var(--display);font-weight:800}
-.result .gain{font-family:var(--mono);color:var(--ok);font-size:13px}
-.result button.primary{background:var(--ok);border-color:var(--ok)}
-.note{color:var(--quiet);font-size:12.5px}
-.privacy{display:flex;gap:10px;align-items:center;color:var(--quiet);font-size:13px}
-.privacy svg{flex:none}
-@media (prefers-reduced-motion:no-preference){
-  .pie .petal{animation:bloom .42s cubic-bezier(.3,1.4,.5,1) backwards}
-  @keyframes bloom{from{opacity:0;transform:rotate(-40deg) scale(.6)}}
-}
-</style>
-</head><body>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="style.css">
 
-<div class="wrap">
-  <header>
-    <svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
-      <rect x="2" y="2" width="60" height="60" rx="14" fill="var(--sage)"/>
-      <circle cx="32" cy="32" r="22" fill="var(--ring)" stroke="var(--brass)" stroke-width="3"/>
-      <g stroke="var(--panel)" stroke-width="2">
-        <path d="M32 32 L32 10 A22 22 0 0 1 51 21 Z" fill="#7C9AC8"/><path d="M32 32 L51 21 A22 22 0 0 1 51 43 Z" fill="#C76B4F"/>
-        <path d="M32 32 L51 43 A22 22 0 0 1 32 54 Z" fill="#9A7FC0"/><path d="M32 32 L32 54 A22 22 0 0 1 13 43 Z" fill="#D9A441"/>
-        <path d="M32 32 L13 43 A22 22 0 0 1 13 21 Z" fill="#5E8F78"/><path d="M32 32 L13 21 A22 22 0 0 1 32 10 Z" fill="#6AAFA8"/>
-      </g>
-      <circle cx="32" cy="32" r="9" fill="var(--panel)" stroke="var(--brass)" stroke-width="2"/>
-      <line x1="32" y1="32" x2="36" y2="27" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/>
-    </svg>
-    <span class="brand">OrbitLR<small>Web · prova</small></span>
-    <span class="promise"><b>Qualsiasi file, come lo vuoi tu.</b> In un clic, nel tuo browser.</span>
-  </header>
-
-  <div>
-    <h1>Trascina un file. Scegli cosa farne.</h1>
-    <p class="sub">Foto, audio e testi si convertono qui, senza account. Il menu a torta è lo stesso dell’app per Mac; per montaggi, suonerie e PDF c’è l’app.</p>
+<meta property="og:title" content="OrbitLR · Un file. Uno spicchio. Fatto.">
+<meta property="og:description" content="Converti, comprimi e sistema foto, video, audio e PDF sul tuo computer. Per Mac e Windows.">
+<meta property="og:image" content="https://lr-apps609.github.io/OrbitLR/img/orbitlr.png">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/png" href="img/orbitlr.png">
+<link rel="apple-touch-icon" href="img/orbitlr.png">
+</head>
+<body>
+<div class="top gutter">
+  <div class="inner">
+    <a class="logo" href="#prova" aria-label="OrbitLR">
+      <img src="img/orbitlr.png" alt="" width="40" height="40">
+      <b>Orbit<span>LR</span></b>
+    </a>
+    <nav class="nav" aria-label="Sezioni">
+      <a class="lnk" href="#peso" data-en="Weight">Il peso</a>
+      <a class="lnk" href="#torta" data-en="The app">L’app</a>
+      <div class="lang" role="group" aria-label="Lingua · Language">
+        <button type="button" id="lang-it" aria-pressed="true">IT</button>
+        <button type="button" id="lang-en" aria-pressed="false">EN</button>
+      </div>
+      <a class="btn gold" href="#scarica" data-en="Get the app">Prendi l’app</a>
+    </nav>
   </div>
-
-  <div class="stage">
-    <div class="dial" id="dial">
-      <input type="file" id="file" aria-label="Scegli un file da convertire">
-      <div class="empty" id="empty" hidden>
-        <b>Rilascia qui il file</b>
-        <span>oppure clicca per sceglierlo</span>
-        <div class="chips"><span class="chip">JPG</span><span class="chip">PNG</span><span class="chip">WEBP</span><span class="chip">HEIC dell’iPhone</span><span class="chip">WAV</span><span class="chip">Testo</span></div>
-      </div>
-      <svg class="pie" id="pie" viewBox="-230 -230 460 460" role="group" aria-label="Menu a torta dei formati"></svg>
-    </div>
-
-    <aside>
-      <div>
-        <div class="lbl" id="sideTitle">Modifica</div>
-        <p class="hint" id="sideHint">Lo spicchio «Modifica» apre qui le regolazioni prima di convertire.</p>
-      </div>
-      <div id="tools">
-        <div class="kv"><span>Grandezza</span><b id="scaleTxt">100%</b></div>
-        <input type="range" id="scale" min="10" max="100" step="5" value="100" aria-label="Grandezza dell’immagine">
-        <div class="kv"><span>Qualità (JPG e WEBP)</span><b id="qTxt">85</b></div>
-        <input type="range" id="q" min="40" max="100" step="5" value="85" aria-label="Qualità">
-        <div class="row" style="margin-top:8px">
-          <button id="rot" type="button">Ruota ↻</button>
-          <button id="reset" type="button">Com’era</button>
-        </div>
-        <p class="note" style="margin:10px 0 0">Ogni regolazione aggiorna i pesi sugli spicchi.</p>
-      </div>
-      <div class="kv"><span>File</span><b id="fname">—</b></div>
-      <div class="kv"><span>Peso adesso</span><b id="fsize">—</b></div>
-      <button id="clear" type="button">Togli il file</button>
-      <div class="privacy">
-        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3" fill="none" stroke="var(--sage-deep)" stroke-width="2"/><rect x="4" y="10" width="16" height="11" rx="3" fill="var(--sage-deep)"/></svg>
-        Il file resta sul tuo computer: niente viene caricato su internet.
-      </div>
-    </aside>
-  </div>
-
-  <div class="result" id="result" hidden>
-    <img id="rimg" alt="Anteprima del risultato">
-    <div class="t"><b id="rname">—</b><span class="gain" id="rgain"></span></div>
-    <button id="rdl" class="primary" type="button">Scarica</button>
-  </div>
-  <p class="note">Prototipo della versione web: stessa torta, stesse parole, stessi colori dell’app per Mac. La foto iniziale è un esempio disegnato dalla pagina.</p>
 </div>
 
-<script>
-const $ = s => document.querySelector(s);
-const pie = $('#pie'), dial = $('#dial');
-const fmt = b => b < 1024 ? b + ' B' : b < 1048576 ? (b/1024).toFixed(0) + ' KB' : (b/1048576).toFixed(1).replace('.', ',') + ' MB';
-let state = { file: null, kind: null, img: null, rot: 0, text: null, audio: null, est: {} };
+<main>
+<section class="hero gutter" id="prova">
+  <div class="bgfx" data-fx="hero" aria-hidden="true"></div>
+  <div class="glow" id="glow" aria-hidden="true"></div>
+  <div class="inner">
+    <div class="h-title">
+      <p class="eyebrow" data-en="OrbitLR · file converter for Mac and Windows">OrbitLR · convertitore per Mac e Windows</p>
+      <h1 class="big" data-en="<span>One file.</span> <span>One slice.</span> <span class=&quot;done&quot;>Done.</span>"><span>Un file.</span> <span>Uno spicchio.</span> <span class="done">Fatto.</span></h1>
+    </div>
 
-function sample(){
-  const c = document.createElement('canvas'); c.width = 1600; c.height = 1200;
-  const g = c.getContext('2d');
-  const sky = g.createLinearGradient(0,0,0,1200); sky.addColorStop(0,'#8EC0EA'); sky.addColorStop(.62,'#F6D9A8'); sky.addColorStop(1,'#E7B98A');
-  g.fillStyle = sky; g.fillRect(0,0,1600,1200);
-  g.fillStyle = '#FFE39A'; g.beginPath(); g.arc(1150,520,110,0,7); g.fill();
-  g.fillStyle = '#3F7FA6'; g.fillRect(0,760,1600,440);
-  for (let i=0;i<5000;i++){ g.fillStyle = `rgba(255,255,255,${Math.random()*.25})`; g.fillRect(Math.random()*1600, 760+Math.random()*440, 2+Math.random()*16, 2); }
-  g.fillStyle = '#5E8F78'; g.beginPath(); g.moveTo(0,820); g.bezierCurveTo(400,640,700,760,1000,800); g.lineTo(1000,1200); g.lineTo(0,1200); g.fill();
-  return new Promise(r => c.toBlob(b => r(new File([b], 'Vacanze al mare.png', {type:'image/png'})), 'image/png'));
-}
+    <div class="stage">
+      <div class="tilt" id="tilt">
+        <div class="dial" id="dial" data-drop="Lascia andare" data-drop-en="Let go">
+          <svg class="pie" id="pie" viewBox="-250 -250 500 500" role="group" aria-label="Menu a torta"></svg>
+        </div>
+      </div>
+      <div class="readout">
+        <div class="caption" id="caption" aria-live="polite"></div>
+        <div class="out" id="out" aria-live="polite"></div>
+      </div>
+    </div>
 
-function kindOf(f){
-  const e = f.name.split('.').pop().toLowerCase();
-  if (f.type.startsWith('image/') || ['heic','heif','webp','avif'].includes(e)) return 'img';
-  if (f.type.startsWith('audio/') || ['wav','mp3','m4a','ogg','flac','aac'].includes(e)) return 'audio';
-  if (f.type.startsWith('text/') || ['txt','md','markdown','csv','html'].includes(e)) return 'text';
-  return 'other';
-}
-const base = f => f.name.replace(/\.[^.]+$/, '');
+    <div class="h-copy">
+      <p class="lede" data-en="This pie <b>really works</b>: throw a file in, pick a slice or pull it out, download the result. All in your browser, nothing gets uploaded.">Questa torta <b>funziona davvero</b>: lancia dentro un file, tocca uno spicchio o tiralo fuori, scarica il risultato. Tutto nel browser, niente viene caricato.</p>
+      <div class="deck-wrap">
+        <p class="deck-lbl" data-en="Throw one into the pie ↗">Lanciane uno nella torta ↗</p>
+        <div class="deck" id="deck">
+          <button class="fcard" type="button" data-sample="photo" style="--c:var(--s4)"><i>PNG</i><span><b data-en="Seaside">Mare</b><small data-en="photo">foto</small></span></button>
+          <button class="fcard" type="button" data-sample="photos" style="--c:var(--s7)"><i>3×</i><span><b data-en="Trip">Gita</b><small data-en="3 photos">3 foto</small></span></button>
+          <button class="fcard" type="button" data-sample="audio" style="--c:var(--s2)"><i>WAV</i><span><b data-en="Tune">Melodia</b><small>audio</small></span></button>
+          <button class="fcard" type="button" data-sample="video" style="--c:var(--s3)"><i>MP4</i><span><b data-en="Mountain">Montagna</b><small>video</small></span></button>
+          <button class="fcard" type="button" data-sample="pdf" style="--c:var(--s1)"><i>PDF</i><span><b data-en="Contract">Contratto</b><small>PDF</small></span></button>
+          <button class="fcard own" type="button" id="pickBtn"><i>
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></i>
+            <span><b data-en="Yours">Il tuo</b><small data-en="choose">scegli</small></span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="file" multiple hidden>
+</section>
 
-async function load(f){
-  state = { file: f, kind: kindOf(f), img: null, rot: 0, text: null, audio: null, est: {} };
-  $('#scale').value = 100; $('#q').value = 85; syncLabels();
-  $('#fname').textContent = f.name; $('#fsize').textContent = fmt(f.size);
-  $('#result').hidden = true;
-  dial.classList.add('loaded'); $('#empty').hidden = true;
-  try {
-    if (state.kind === 'img') state.img = await createImageBitmap(f);
-    else if (state.kind === 'text') state.text = await f.text();
-    else if (state.kind === 'audio') {
-      const ctx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 44100, 44100);
-      state.audio = await ctx.decodeAudioData(await f.arrayBuffer());
-    }
-  } catch (e) { state.kind = 'other'; }
-  $('#tools').hidden = state.kind !== 'img';
-  $('#sideHint').textContent = state.kind === 'img' ? 'Regola grandezza e qualità: i pesi sugli spicchi si aggiornano.'
-    : state.kind === 'other' ? 'Questo formato lo apre l’app per Mac, con tutte le modifiche.' : 'Scegli un formato sulla torta.';
-  draw(); estimate();
-}
+<section id="peso" class="weigh gutter">
+  <div class="bgfx" data-fx="weigh" aria-hidden="true"></div>
+  <div class="inner">
+    <div class="sec-head">
+      <p class="eyebrow" data-en="Weight, at a glance">Il peso, a vista</p>
+      <h2 data-en="Drag. Look. <em>Weigh less.</em>">Trascina. Guarda. <em>Pesa meno.</em></h2>
+    </div>
+    <div class="weigh-grid">
+      <div class="compare-col">
+        <div class="compare" id="compare">
+          <img id="cmpBefore" alt="" draggable="false">
+          <div class="after" id="cmpAfterWrap"><img id="cmpAfter" alt="" draggable="false"></div>
+          <div class="handle" id="cmpHandle" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-label="Prima e dopo"><span></span></div>
+          <span class="tag l" id="cmpL"></span><span class="tag r" id="cmpR"></span>
+        </div>
+        <div class="qrow">
+          <label for="q" data-en="JPG quality">Qualità JPG</label>
+          <input type="range" id="q" min="5" max="95" step="5" value="35">
+          <output id="qOut">35</output>
+        </div>
+      </div>
+      <div class="quiz" id="quiz" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
 
-function petals(){
-  const k = state.kind;
-  if (k === 'img') return [['jpg','JPG'],['png','PNG'],['webp','WEBP'],['pdf','PDF'],['__edit','Modifica']];
-  if (k === 'audio') return [['wav','WAV'],['ring','Suoneria 30 s'],['__mac','Altro su Mac']];
-  if (k === 'text') return [['html','Pagina web'],['txt','Solo testo'],['__mac','Altro su Mac']];
-  return [['__mac','Apri su Mac']];
-}
+<section id="torta" class="manifesto">
+  <div class="sticky gutter">
+    <div class="bgfx" data-fx="man" aria-hidden="true"></div>
+    <div class="m-inner">
+      <div class="m-text">
+        <p class="eyebrow" data-en="Here you tasted it">Qui l’hai assaggiata</p>
+        <div class="m-lines" id="mLines">
+          <p class="m-line"><span class="o" data-en="That was">Quello era</span><span class="f" data-en="That was">Quello era</span></p>
+          <p class="m-line"><span class="o" data-en="one slice.">uno spicchio.</span><span class="f" data-en="one slice.">uno spicchio.</span></p>
+          <p class="m-line gold"><span class="o" data-en="The app is">L’app è</span><span class="f" data-en="The app is">L’app è</span></p>
+          <p class="m-line gold"><span class="o" data-en="the whole pie.">la torta intera.</span><span class="f" data-en="the whole pie.">la torta intera.</span></p>
+        </div>
+        <div class="m-cta">
+          <a class="btn gold big" href="#scarica" data-en="Discover the app">Scopri l’app</a>
+          <span class="m-note" data-en="Photos, video, audio, PDF. On your computer, even offline.">Foto, video, audio, PDF. Sul tuo computer, anche senza internet.</span>
+        </div>
+      </div>
+      <div class="m-pie">
+        <div class="m-rot" id="mRot"><svg id="bigpie" viewBox="-250 -250 500 500" aria-hidden="true"></svg></div>
+        <div class="m-center" aria-live="off"><small id="mGroup"></small><b id="mTool"></b></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-function draw(){
-  pie.innerHTML = '';
-  if (!state.file) return;
-  const ns = 'http://www.w3.org/2000/svg', el = (t, a) => { const n = document.createElementNS(ns, t); for (const k in a) n.setAttribute(k, a[k]); return n; };
-  pie.append(el('circle', {r: 200, fill: 'var(--ring)', stroke: 'var(--brass)', 'stroke-width': 4}));
-  pie.append(el('circle', {r: 84, fill: 'var(--panel)', stroke: 'var(--brass)', 'stroke-width': 2}));
-  const list = petals(), n = list.length;
-  const name = el('text', {class: 'center-name', y: -2}); name.textContent = state.file.name.length > 22 ? state.file.name.slice(0, 20) + '…' : state.file.name;
-  const sub = el('text', {class: 'center-sub', y: 18}); sub.textContent = fmt(state.file.size);
-  pie.append(name, sub);
-  list.forEach(([id, label], i) => {
-    const a = (-90 + i * 360 / n) * Math.PI / 180, x = Math.cos(a) * 142, y = Math.sin(a) * 142;
-    const g = el('g', {class: 'petal' + (id.startsWith('__') ? ' edit' : '') + (i === 0 ? ' star' : ''), tabindex: 0, role: 'button',
-      transform: `translate(${x.toFixed(1)} ${y.toFixed(1)})`, 'aria-label': label, style: `animation-delay:${i*45}ms`});
-    g.append(el('circle', {class: 'bg', r: 46}));
-    const t = el('text', {y: state.est[id] ? -2 : 5}); t.textContent = label.length > 10 ? label.split(' ')[0] : label;
-    g.append(t);
-    if (state.est[id]) { const e = el('text', {class: 'est' + (state.est[id] < state.file.size ? ' down' : ''), y: 15}); e.textContent = '≈ ' + fmt(state.est[id]); g.append(e); }
-    const go = () => pick(id, label);
-    g.addEventListener('click', go);
-    g.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } });
-    pie.append(g);
-  });
-}
+<section id="scarica" class="gutter">
+  <div class="bgfx" data-fx="dl" aria-hidden="true"></div>
+  <div class="cloud" id="cloud" aria-hidden="true"></div>
+  <div class="inner">
+    <div class="sec-head">
+      <p class="eyebrow" data-en="Download">Scarica</p>
+      <h2 data-en="Put the pie <em>on your computer.</em>">Metti la torta <em>sul tuo computer.</em></h2>
+      <p data-en="Free on GitHub. Italian and English, no account, nothing uploaded.">Gratis su GitHub. In italiano e in inglese, senza account, niente caricato.</p>
+    </div>
+    <div class="dls">
+      <a class="dlc" href="https://github.com/LR-apps609/OrbitLR/releases" target="_blank" rel="noopener">
+        <span class="shine" aria-hidden="true"></span>
+        <span class="plat">
+          <svg width="40" height="40" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 20h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span class="pname">Mac</span>
+        </span>
+        <span class="ver" data-en="4.2.1 «English Names»">4.2.1 «Nomi in inglese»</span>
+        <span class="facts" data-en="Apple Silicon and Intel · updates itself, signed · ⌥⌘C in the Finder">Apple Silicon e Intel · si aggiorna da sola, firmata · ⌥⌘C nel Finder</span>
+        <span class="go"><span data-en="Download for Mac">Scarica per Mac</span> <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m0 0l-5-5m5 5l-5 5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </a>
+      <a class="dlc" href="https://github.com/LR-apps609/OrbitLR/releases/tag/windows-anteprima" target="_blank" rel="noopener">
+        <span class="shine" aria-hidden="true"></span>
+        <span class="plat">
+          <svg width="40" height="40" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.5l7.5-1v7H3zM12 4.3L21 3v8.5h-9zM3 12.5h7.5v7L3 18.5zM12 12.5h9V21l-9-1.3z" fill="currentColor"/></svg>
+          <span class="pname">Windows</span>
+        </span>
+        <span class="ver" data-en="Preview 0.5.0 «Shortcuts»">Anteprima 0.5.0 «Scorciatoie»</span>
+        <span class="facts" data-en="Windows 10 and 11, 64-bit · Ctrl+Alt+C in File Explorer · «To Phone» with a QR code">Windows 10 e 11, 64 bit · Ctrl+Alt+C in Esplora file · «Al telefono» con un QR</span>
+        <span class="go"><span data-en="Download for Windows">Scarica per Windows</span> <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m0 0l-5-5m5 5l-5 5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </a>
+    </div>
+    <p class="smart" data-en="<b>Windows, first launch:</b> until the app has Microsoft’s signature you’ll see «Windows protected your PC». Click «More info», then «Run anyway»."><b>Windows, primo avvio:</b> finché l’app non ha la firma di Microsoft vedrai «Windows ha protetto il PC». Clicca «Ulteriori informazioni» e poi «Esegui comunque».</p>
+  </div>
+</section>
+</main>
 
-function canvasFor(){
-  const s = $('#scale').value / 100, im = state.img, r = state.rot % 180 !== 0;
-  const w = Math.max(1, Math.round(im.width * s)), h = Math.max(1, Math.round(im.height * s));
-  const c = document.createElement('canvas'); c.width = r ? h : w; c.height = r ? w : h;
-  const g = c.getContext('2d'); g.translate(c.width / 2, c.height / 2); g.rotate(state.rot * Math.PI / 180); g.drawImage(im, -w / 2, -h / 2, w, h);
-  return c;
-}
-const toBlob = (c, type, q) => new Promise(r => c.toBlob(r, type, q));
+<footer class="gutter">
+  <div class="bgfx" data-fx="foot" aria-hidden="true"></div>
+  <div class="inner">
+    <img src="img/orbitlr.png" alt="">
+    <span data-en="OrbitLR is part of LRApps, a small family of apps that each solve one real problem.">OrbitLR fa parte di LRApps, una piccola famiglia di app che risolvono un problema vero ciascuna.</span>
+    <a href="https://github.com/LR-apps609/OrbitLR/releases" target="_blank" rel="noopener" data-en="Release notes">Note delle versioni</a>
+  </div>
+</footer>
 
-async function convert(id){
-  const q = $('#q').value / 100;
-  if (state.kind === 'img') {
-    const c = canvasFor();
-    if (id === 'jpg') { const g = c.getContext('2d'); g.globalCompositeOperation = 'destination-over'; g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); return toBlob(c, 'image/jpeg', q); }
-    if (id === 'png') return toBlob(c, 'image/png');
-    if (id === 'webp') return toBlob(c, 'image/webp', q);
-    if (id === 'pdf') return pdfFrom(c, q);
-  }
-  if (state.kind === 'audio') return wavFrom(state.audio, id === 'ring' ? 30 : Infinity);
-  if (state.kind === 'text') {
-    if (id === 'txt') return new Blob([state.text.replace(/[#*_`>]/g, '')], {type: 'text/plain'});
-    const esc = state.text.replace(/&/g, '&amp;').replace(/</g, '&lt;');
-    const html = esc.split(/\n{2,}/).map(p => p.startsWith('# ') ? `<h1>${p.slice(2)}</h1>` : `<p>${p.replace(/\n/g, '<br>')}</p>`).join('\n');
-    return new Blob([`<!doctype html><meta charset="utf-8"><title>${base(state.file)}</title><body style="font-family:system-ui;max-width:42rem;margin:2rem auto;line-height:1.6">${html}</body>`], {type: 'text/html'});
-  }
-  return null;
-}
+<div class="bar gutter" id="bar" aria-hidden="true">
+  <div class="inner">
+    <img src="img/orbitlr.png" alt="">
+    <p data-en="The whole pie is in the app. <span>Video, PDF, AI, many files at once.</span>">La torta intera è nell’app. <span>Video, PDF, IA, tanti file insieme.</span></p>
+    <a class="btn gold" href="https://github.com/LR-apps609/OrbitLR/releases" target="_blank" rel="noopener">Mac</a>
+    <a class="btn ghost" href="https://github.com/LR-apps609/OrbitLR/releases/tag/windows-anteprima" target="_blank" rel="noopener">Windows</a>
+    <button class="x" type="button" id="barX" aria-label="Chiudi">×</button>
+  </div>
+</div>
 
-// Un PDF di una pagina con la foto dentro (JPEG), scritto a mano: niente librerie
-async function pdfFrom(c, q){
-  const g = c.getContext('2d'); g.globalCompositeOperation = 'destination-over'; g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
-  const jpg = new Uint8Array(await (await toBlob(c, 'image/jpeg', q)).arrayBuffer());
-  const W = 595, H = Math.round(595 * c.height / c.width), enc = new TextEncoder(), parts = [], offs = [];
-  let len = 0; const add = x => { const b = typeof x === 'string' ? enc.encode(x) : x; parts.push(b); len += b.length; };
-  add('%PDF-1.4\n');
-  const obj = (n, body, stream) => { offs[n] = len; add(`${n} 0 obj\n${body}\n`); if (stream) { add('stream\n'); add(stream); add('\nendstream\n'); } add('endobj\n'); };
-  const content = enc.encode(`q ${W} 0 0 ${H} 0 0 cm /Im0 Do Q`);
-  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
-  obj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
-  obj(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
-  obj(4, `<< /Type /XObject /Subtype /Image /Width ${c.width} /Height ${c.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>`, jpg);
-  obj(5, `<< /Length ${content.length} >>`, content);
-  const xref = len;
-  add(`xref\n0 6\n0000000000 65535 f \n${[1,2,3,4,5].map(n => String(offs[n]).padStart(10, '0') + ' 00000 n \n').join('')}trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
-  return new Blob(parts, {type: 'application/pdf'});
-}
+<script src="app.js"></script>
 
-function wavFrom(buf, maxSec){
-  const ch = Math.min(2, buf.numberOfChannels), sr = buf.sampleRate, n = Math.min(buf.length, isFinite(maxSec) ? Math.round(maxSec * sr) : buf.length);
-  const out = new DataView(new ArrayBuffer(44 + n * ch * 2)), s = (o, t) => [...t].forEach((x, i) => out.setUint8(o + i, x.charCodeAt(0)));
-  s(0, 'RIFF'); out.setUint32(4, 36 + n * ch * 2, true); s(8, 'WAVEfmt '); out.setUint32(16, 16, true); out.setUint16(20, 1, true); out.setUint16(22, ch, true);
-  out.setUint32(24, sr, true); out.setUint32(28, sr * ch * 2, true); out.setUint16(32, ch * 2, true); out.setUint16(34, 16, true); s(36, 'data'); out.setUint32(40, n * ch * 2, true);
-  const data = [...Array(ch)].map((_, i) => buf.getChannelData(i)), fade = isFinite(maxSec) ? Math.round(sr * 1.5) : 0;
-  for (let i = 0, o = 44; i < n; i++) for (let k = 0; k < ch; k++, o += 2) {
-    let v = data[k][i]; if (fade && i > n - fade) v *= (n - i) / fade;
-    out.setInt16(o, Math.max(-1, Math.min(1, v)) * 32767, true);
-  }
-  return new Blob([out], {type: 'audio/wav'});
-}
-
-const ext = {jpg: 'jpg', png: 'png', webp: 'webp', pdf: 'pdf', wav: 'wav', ring: 'wav', html: 'html', txt: 'txt'};
-let estToken = 0;
-async function estimate(){
-  const t = ++estToken; state.est = {};
-  for (const [id] of petals()) {
-    if (id.startsWith('__')) continue;
-    const b = await convert(id); if (t !== estToken) return;
-    if (b) { state.est[id] = b.size; draw(); }
-  }
-}
-
-async function pick(id, label){
-  if (id === '__edit') { $('#tools').scrollIntoView({behavior: 'smooth', block: 'nearest'}); $('#scale').focus(); return; }
-  if (id === '__mac') { showResult(null, 'Questo lo fa l’app OrbitLR per Mac', 'Montaggi, suonerie, PDF, documenti e 60 formati in più.'); return; }
-  const b = await convert(id); if (!b) return;
-  const name = base(state.file) + (id === 'ring' ? ' (suoneria)' : '') + '.' + ext[id];
-  const before = state.file.size, pct = Math.round((before - b.size) / before * 100);
-  showResult(b, name, 'Fatto · da ' + fmt(before) + ' a ' + fmt(b.size) + (pct >= 5 ? ' · −' + pct + '%' : ''));
-}
-
-function showResult(blob, name, gain){
-  const r = $('#result'), dl = $('#rdl'), img = $('#rimg');
-  $('#rname').textContent = name; $('#rgain').textContent = gain;
-  if (blob) { const u = URL.createObjectURL(blob); current = {blob, name}; dl.hidden = false; img.src = blob.type.startsWith('image/') ? u : ''; img.hidden = !blob.type.startsWith('image/'); }
-  else { dl.hidden = true; img.hidden = true; }
-  r.hidden = false;
-}
-
-// Scarica: dentro Claude passa dalla conferma del visualizzatore; sul sito vero è un normale download
-let current = null, saver = undefined;
-(window.claude?.use ? window.claude.use('downloads') : Promise.resolve(null)).then(d => { saver = d; }, () => { saver = null; });
-$('#rdl').addEventListener('click', async () => {
-  if (!current) return;
-  if (saver) {
-    try { await saver.save({filename: current.name, data: current.blob}); $('#rgain').textContent += ' · scaricato'; }
-    catch (e) { if (e && e.code === 'rejected_extension') $('#rgain').textContent = 'Questo formato si scarica dal sito vero, non dall’anteprima.'; }
-    return;
-  }
-  const a = document.createElement('a'); a.href = URL.createObjectURL(current.blob); a.download = current.name; document.body.append(a); a.click(); a.remove();
-});
-
-function syncLabels(){ $('#scaleTxt').textContent = $('#scale').value + '%'; $('#qTxt').textContent = $('#q').value; }
-['scale', 'q'].forEach(id => $('#' + id).addEventListener('input', () => { syncLabels(); clearTimeout(window._e); window._e = setTimeout(estimate, 180); }));
-$('#rot').addEventListener('click', () => { state.rot = (state.rot + 90) % 360; estimate(); });
-$('#reset').addEventListener('click', () => { state.rot = 0; $('#scale').value = 100; $('#q').value = 85; syncLabels(); estimate(); });
-$('#clear').addEventListener('click', () => { state = {file: null, est: {}}; pie.innerHTML = ''; dial.classList.remove('loaded'); $('#empty').hidden = false; $('#result').hidden = true; $('#fname').textContent = '—'; $('#fsize').textContent = '—'; });
-$('#file').addEventListener('change', e => { if (e.target.files[0]) load(e.target.files[0]); e.target.value = ''; });
-['dragenter', 'dragover'].forEach(t => dial.addEventListener(t, e => { e.preventDefault(); dial.classList.add('over'); }));
-['dragleave', 'drop'].forEach(t => dial.addEventListener(t, e => { e.preventDefault(); dial.classList.remove('over'); }));
-dial.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) load(f); });
-window.addEventListener('dragover', e => e.preventDefault()); window.addEventListener('drop', e => e.preventDefault());
-sample().then(load);
-</script>
-</body></html>
+</body>
+</html>

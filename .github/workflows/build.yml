@@ -6,6 +6,8 @@ name: Compila OrbitLR
 on:
   push:
     branches-ignore: [foto, foto-richiesta, motori, modello-lama]
+    # Il sito (web/) si pubblica da solo con «sito.yml»: non serve ricompilare l'app
+    paths-ignore: ['web/**', '.github/workflows/sito.yml']
   pull_request:
   workflow_dispatch:
 

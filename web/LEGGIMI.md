@@ -1,11 +1,7 @@
-# OrbitLR Web (prototipo)
+# Il sito di OrbitLR
 
-La versione web di OrbitLR: stessa torta, stesse parole, stessi colori dell’app per Mac.
-Tutto avviene nel browser: il file non viene caricato su internet.
+Pubblicato da solo su GitHub Pages (https://lr-apps609.github.io/OrbitLR/) a ogni modifica di questa cartella, con `.github/workflows/sito.yml`.
 
-Oggi converte:
-- foto in JPG, PNG, WEBP e PDF, con grandezza, qualità e rotazione;
-- audio in WAV e suoneria di 30 secondi (WAV);
-- testi in pagina web e solo testo.
-
-Per provarla basta aprire `index.html` in Chrome o Safari. Per pubblicarla: GitHub Pages sulla cartella `web/`.
+- `index.html`, `style.css`, `app.js`, `img/orbitlr.png`: tutto il sito, senza compilazione.
+- La torta converte davvero nel browser (foto, più foto in PDF, audio, testi): niente viene caricato.
+- Le funzioni che solo l'app fa invitano a scaricarla per Mac o Windows.
