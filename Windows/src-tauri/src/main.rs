@@ -406,7 +406,7 @@ fn watch_set(state: State<'_, Shared>, rules: Vec<orbit_engine::watch::Rule>) ->
 
 /// Un file arrivato in una cartella automatica: si lavora come un lavoro normale e si vede in Attività.
 fn run_auto(app: &tauri::AppHandle, st: &Shared, w: &mut orbit_engine::watch::Watcher, rule: &orbit_engine::watch::Rule, file: &Path) {
-    let Some(pr) = orbit_engine::watch::preset(&rule.kind) else { return };
+    let Some(pr) = orbit_engine::watch::preset_of(rule) else { return };
     let out_dir = rule.out_dir();
     if let Some(d) = &out_dir {
         let _ = std::fs::create_dir_all(d);
@@ -434,7 +434,7 @@ fn run_auto(app: &tauri::AppHandle, st: &Shared, w: &mut orbit_engine::watch::Wa
         }
     };
     let files = [file.to_path_buf()];
-    let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run_action(&ctx, pr.action, &files, &param, &cancel, &mut progress)))
+    let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run_action(&ctx, &pr.action, &files, &param, &cancel, &mut progress)))
         .unwrap_or_else(|_| Err(orbit_engine::EngineError::new("errore imprevisto: segnalalo con «Segnala», per favore")));
     let state = match r {
         Ok(outs) => {

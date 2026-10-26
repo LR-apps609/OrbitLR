@@ -3,6 +3,15 @@
 
 import { invoke, pickFolder, reveal } from "./api.js";
 import { h, ico, toast } from "./util.js";
+import { presets, suggestName } from "./presets.js";
+
+// Le mie azioni che una cartella può fare da sola (come nel motore: mai rinomina, password o unioni)
+const AUTO_OK = {
+  image: (a) => a.startsWith("to:") || ["icompress", "resize", "rotate", "strip", "removebg", "aienhance", "upscale", "ocr"].includes(a),
+  video: (a) => a.startsWith("to:") || ["vcompress", "vresize", "social", "speed", "mute", "rotate", "voiceclean", "normalize"].includes(a),
+  audio: (a) => a.startsWith("to:") || ["normalize", "voiceclean", "silence", "whatsapp", "speed"].includes(a),
+  pdf: (a) => ["pdfcompress", "split"].includes(a),
+};
 
 const KINDS = [
   {
@@ -84,9 +93,39 @@ export function autoPage() {
     return h("div.set.auto" + (r?.enabled ? ".on" : ""), head, ...body);
   }
 
+  function mineCard(r) {
+    const set = (patch) => save(rules.map((x) => (x.id === r.id ? { ...x, ...patch } : x)));
+    return h("div.set.auto" + (r.enabled ? ".on" : ""),
+      h("div.top", h("span", { style: { color: "var(--brass)", fontWeight: 900 } }, "★"), h("b", r.name || r.action), h("div.grow"),
+        h("label.check", h("input", { type: "checkbox", checked: r.enabled || null, onchange: (e) => set({ enabled: e.target.checked }) }), r.enabled ? "Attiva" : "Spenta")),
+      h("p", `${suggestName(r.action, r.param)} · i risultati vanno nella sottocartella «Convertiti».`),
+      h("div.out", ico("folder-input", 15), h("span.n", { title: r.path }, r.path),
+        h("button.btn", { onclick: () => reveal(r.path) }, "Mostra"),
+        h("button.btn.icon.ghost", { "aria-label": "Togli", title: "Togli questa cartella automatica", onclick: () => save(rules.filter((x) => x.id !== r.id)) }, ico("x", 14))));
+  }
+
+  function mineSection() {
+    const usable = presets().filter((p) => AUTO_OK[p.kind]?.(p.action) && (p.param == null || typeof p.param !== "object"));
+    const rows = usable.map((p) => h("div.preset-row", h("span.n", "★ " + p.name), h("span.s", suggestName(p.action, p.param)),
+      h("button.btn", {
+        onclick: async () => {
+          const path = await pickFolder();
+          if (!path) return;
+          const id = ("m" + p.id).slice(0, 40);
+          await save([...rules.filter((x) => x.id !== id), { id, kind: "mia", path, param: p.param == null ? "" : String(p.param), enabled: true, action: p.action, media: p.kind, name: p.name }]);
+          toast(`Attiva: «${p.name}» su ${path}`);
+        },
+      }, ico("folder-open", 15), "Usa su una cartella…")));
+    return h("div.set", h("h3", "Con una delle mie azioni"),
+      usable.length ? h("p", "Scegli una cartella: ogni file nuovo che ci arriva viene lavorato con questa azione.") : h("p", "Salva prima una tua azione (per esempio «Comprimi · 200 KB» nelle Immagini, con «★ Salva come mia azione»): qui potrai farla fare a una cartella da sola."),
+      ...rows);
+  }
+
   function render() {
     list.replaceChildren(
       ...KINDS.map(card),
+      ...rules.filter((r) => r.kind === "mia").map(mineCard),
+      mineSection(),
       h("div.set", h("h3", "Come funziona"),
         h("p", "OrbitLR controlla le cartelle ogni pochi secondi mentre è aperta (anche ridotta a icona). Prende solo i file arrivati dopo l'attivazione, e solo quando hanno finito di scaricarsi o copiarsi."),
         h("p", "Ogni lavoro compare in Attività, come quelli fatti a mano. Gli originali non si toccano mai.")));

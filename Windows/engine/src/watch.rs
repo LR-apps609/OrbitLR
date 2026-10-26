@@ -22,6 +22,14 @@ pub struct Rule {
     pub param: String,
     #[serde(default = "yes")]
     pub enabled: bool,
+    /// Solo per «mia» (una delle mie azioni): l'azione e i file che prende ("image", "video", "audio", "pdf")
+    #[serde(default)]
+    pub action: String,
+    #[serde(default)]
+    pub media: String,
+    /// Il nome della mia azione (per Attività)
+    #[serde(default)]
+    pub name: String,
 }
 
 fn yes() -> bool {
@@ -30,27 +38,66 @@ fn yes() -> bool {
 
 /// Cosa fa ogni tipo di cartella.
 pub struct Preset {
-    pub name: &'static str,
+    pub name: String,
     pub exts: &'static [&'static str],
-    pub action: &'static str,
+    pub action: String,
     pub default_param: &'static str,
     /// Dove vanno i risultati: una sottocartella (che non viene guardata), o None = accanto all'originale
     pub subfolder: Option<&'static str>,
 }
 
+const IMG: &[&str] = &["jpg", "jpeg", "png", "heic", "heif", "webp", "avif", "bmp", "tif", "tiff", "gif", "jfif"];
+const VID: &[&str] = &["mp4", "mov", "mkv", "avi", "webm", "m4v", "wmv"];
+const AUD: &[&str] = &["mp3", "m4a", "wav", "flac", "ogg", "opus", "aac", "wma", "aiff"];
+
+/// Le azioni che una cartella automatica può fare da sola (mai rinomina, password o lavori su più file).
+pub fn allowed(action: &str, media: &str) -> bool {
+    let ok = match media {
+        "image" => action.starts_with("to:") || ["icompress", "resize", "rotate", "strip", "removebg", "aienhance", "upscale", "ocr"].contains(&action),
+        "video" => action.starts_with("to:") || ["vcompress", "vresize", "social", "speed", "mute", "rotate", "voiceclean", "normalize"].contains(&action),
+        "audio" => action.starts_with("to:") || ["normalize", "voiceclean", "silence", "whatsapp", "speed"].contains(&action),
+        "pdf" => ["pdfcompress", "split"].contains(&action),
+        _ => false,
+    };
+    ok && action.len() <= 16 && action.chars().all(|c| c.is_ascii_alphanumeric() || c == ':')
+}
+
 pub fn preset(kind: &str) -> Option<Preset> {
     Some(match kind {
-        "foto" => Preset { name: "Foto in JPG", exts: &["heic", "heif", "webp", "avif"], action: "to:jpg", default_param: "", subfolder: None },
-        "video" => Preset { name: "Comprimi i video", exts: &["mp4", "mov", "mkv", "avi", "webm", "m4v", "wmv"], action: "vcompress", default_param: "best", subfolder: Some("Compressi") },
-        "pdf" => Preset { name: "Comprimi i PDF", exts: &["pdf"], action: "pdfcompress", default_param: "medium", subfolder: Some("Compressi") },
+        "foto" => Preset { name: "Foto in JPG".into(), exts: &["heic", "heif", "webp", "avif"], action: "to:jpg".into(), default_param: "", subfolder: None },
+        "video" => Preset { name: "Comprimi i video".into(), exts: VID, action: "vcompress".into(), default_param: "best", subfolder: Some("Compressi") },
+        "pdf" => Preset { name: "Comprimi i PDF".into(), exts: &["pdf"], action: "pdfcompress".into(), default_param: "medium", subfolder: Some("Compressi") },
         _ => return None,
     })
+}
+
+/// La regola com'è davvero: un tipo fisso o una delle mie azioni.
+pub fn preset_of(r: &Rule) -> Option<Preset> {
+    if r.kind != "mia" {
+        return preset(&r.kind);
+    }
+    if !allowed(&r.action, &r.media) {
+        return None;
+    }
+    let exts = match r.media.as_str() {
+        "image" => IMG,
+        "video" => VID,
+        "audio" => AUD,
+        _ => &["pdf"],
+    };
+    let name = if r.name.trim().is_empty() { r.action.clone() } else { r.name.chars().take(40).collect() };
+    Some(Preset { name, exts, action: r.action.clone(), default_param: "", subfolder: Some("Convertiti") })
 }
 
 impl Rule {
     /// Il parametro da dare all'azione (controllato: solo valori conosciuti).
     pub fn action_param(&self) -> Value {
         let p = self.param.as_str();
+        if self.kind == "mia" {
+            // Il valore scelto nella mia azione: corto e senza percorsi
+            let clean = p.len() <= 40 && !p.contains(['/', '\\', ':']) && !p.contains("..");
+            return if p.is_empty() || !clean { Value::Null } else { Value::String(p.to_string()) };
+        }
         let ok = match self.kind.as_str() {
             "video" => ["best", "9", "15", "18", "50", "100"].contains(&p),
             "pdf" => ["light", "medium", "strong"].contains(&p),
@@ -64,7 +111,7 @@ impl Rule {
 
     /// Dove mettere i risultati.
     pub fn out_dir(&self) -> Option<PathBuf> {
-        preset(&self.kind).and_then(|p| p.subfolder).map(|s| self.path.join(s))
+        preset_of(self).and_then(|p| p.subfolder).map(|s| self.path.join(s))
     }
 }
 
@@ -79,7 +126,7 @@ pub fn sanitize(rules: Vec<Rule>) -> Vec<Rule> {
     let mut seen = std::collections::HashSet::new();
     rules
         .into_iter()
-        .filter(|r| preset(&r.kind).is_some() && r.path.is_absolute() && !r.id.is_empty() && r.id.len() <= 40)
+        .filter(|r| preset_of(r).is_some() && r.path.is_absolute() && !r.id.is_empty() && r.id.len() <= 40)
         .filter(|r| seen.insert(r.id.clone()))
         .take(20)
         .collect()
@@ -138,7 +185,7 @@ impl Watcher {
         let mut ready = Vec::new();
         self.states.retain(|id, _| rules.iter().any(|r| &r.id == id && r.enabled));
         for r in rules.iter().filter(|r| r.enabled) {
-            let Some(p) = preset(&r.kind) else { continue };
+            let Some(p) = preset_of(r) else { continue };
             let now = listing(&r.path, p.exts);
             let st = self.states.entry(r.id.clone()).or_default();
             if st.path != r.path || st.kind != r.kind {
@@ -189,7 +236,7 @@ mod tests {
     }
 
     fn rule(kind: &str, path: &Path) -> Rule {
-        Rule { id: format!("r{kind}"), kind: kind.into(), path: path.into(), param: String::new(), enabled: true }
+        Rule { id: format!("r{kind}"), kind: kind.into(), path: path.into(), param: String::new(), enabled: true, action: String::new(), media: String::new(), name: String::new() }
     }
 
     #[test]
@@ -247,5 +294,22 @@ mod tests {
         save(&f, &ok).unwrap();
         assert_eq!(load(&f), ok);
         let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[test]
+    fn mie_azioni_controllate() {
+        let base = std::env::temp_dir();
+        let mut m = Rule { kind: "mia".into(), action: "icompress".into(), media: "image".into(), param: "200".into(), name: "Moduli".into(), ..rule("x", &base) };
+        assert!(preset_of(&m).is_some());
+        assert_eq!(m.action_param(), Value::String("200".into()));
+        assert_eq!(m.out_dir(), Some(base.join("Convertiti")));
+        m.param = "..\\x".into();
+        assert_eq!(m.action_param(), Value::Null);
+        m.action = "rename".into();
+        assert!(preset_of(&m).is_none(), "rinomina: mai in automatico");
+        m.action = "protect".into();
+        assert!(preset_of(&m).is_none());
+        m.action = "vcompress".into();
+        assert!(preset_of(&m).is_none(), "azione video su una cartella di foto");
     }
 }
