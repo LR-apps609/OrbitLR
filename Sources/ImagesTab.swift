@@ -74,7 +74,15 @@ final class KindTabModel: ObservableObject, @unchecked Sendable {
     }
 
     /// Il peso dei file su cui si lavora.
-    var targetBytes: Int64 { targets.reduce(Int64(0)) { $0 + Job.size(of: $1) } }
+    /// 4.1.7 · Ricordato finché i file non cambiano (prima: una lettura del disco per file a ogni ridisegno)
+    var targetBytes: Int64 {
+        let t = targets
+        if let c = bytesCache, c.files == t { return c.bytes }
+        let b = t.reduce(Int64(0)) { $0 + Job.size(of: $1) }
+        bytesCache = (t, b)
+        return b
+    }
+    private var bytesCache: (files: [URL], bytes: Int64)? = nil
 
     func add(_ urls: [URL]) {
         let all = PieController.expand(urls)

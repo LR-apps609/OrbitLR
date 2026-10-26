@@ -1,5 +1,7 @@
 Novità della 4.1.6 «Downloader in vista»:
 • In alto a destra in Audio e Video: la barra «Audio Downloader» / «Video Downloader» con il posto per incollare il link e «Scarica». Invio e parte subito
+• Mac con processore Intel: «Comprimi» e «Ridimensiona» danno video molto più leggeri. Se un video era già compresso al massimo, OrbitLR lo dice invece di crearne una copia quasi uguale
+• Più veloce con centinaia di file: pesi ed errori calcolati una volta sola, non a ogni ridisegno
 
 Novità della 4.1.5 «Downloader»:
 • «Audio Downloader» e «Video Downloader»: funzionano con migliaia di siti, incolli il link. Anche una riga sotto lo spazio vuoto di Audio e Video. I siti protetti (Netflix, Spotify…) non si scaricano: OrbitLR lo dice chiaramente

@@ -401,6 +401,15 @@ struct DownloaderBar: View {
             }
             .buttonStyle(.plain)
             .fixedSize()
+            // 4.1.7 · Ancora più stretta (tanti pulsanti accanto): solo l'icona colorata
+            Button { go("") } label: {
+                Image(systemName: "arrow.down.circle.fill")
+                    .font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
+                    .padding(6).background(Circle().fill(tint))
+            }
+            .buttonStyle(.plain)
+            .fixedSize()
+            .help(video ? "Video Downloader · incolla un link" : "Audio Downloader · incolla un link")
         }
     }
 

@@ -21,8 +21,16 @@ final class Job: ObservableObject, Identifiable, @unchecked Sendable {
     /// Ogni errore entra già tradotto in una frase chiara con la soluzione (FriendlyError).
     @Published var failures: [String] = [] {
         didSet {
-            let friendly = failures.map(FriendlyError.text)
-            if friendly != failures { failures = friendly }
+            // 4.1.7 · Si traducono solo gli errori nuovi (prima: tutti a ogni aggiunta, lentissimo con migliaia di file)
+            let start = failures.count >= oldValue.count && Array(failures.prefix(oldValue.count)) == oldValue ? oldValue.count : 0
+            guard start < failures.count else { return }
+            var changed = false
+            var f = failures
+            for i in start..<f.count {
+                let t = FriendlyError.text(f[i])
+                if t != f[i] { f[i] = t; changed = true }
+            }
+            if changed { failures = f }
         }
     }
     @Published var notes: [String] = []
@@ -68,7 +76,14 @@ final class Job: ObservableObject, Identifiable, @unchecked Sendable {
         case .failed, .cancelled: return max(0, progress >= 0 ? progress : estimate)
         }
     }
-    var afterBytes: Int64 { outputs.reduce(Int64(0)) { $0 + Job.size(of: $1) } }
+    /// 4.1.7 · Calcolato una volta a lavoro finito (prima: una lettura del disco per file a ogni ridisegno)
+    private var afterCache: (count: Int, bytes: Int64)? = nil
+    var afterBytes: Int64 {
+        if state == .done || state == .failed || state == .cancelled, let c = afterCache, c.count == outputs.count { return c.bytes }
+        let b = outputs.reduce(Int64(0)) { $0 + Job.size(of: $1) }
+        if state == .done || state == .failed || state == .cancelled { afterCache = (outputs.count, b) }
+        return b
+    }
 
     /// File «veri» (esclusi i .srt passati solo come supporto per i sottotitoli).
     var mainFiles: [URL] { files.filter { Catalog.kind(of: $0) != .sub } }
@@ -79,7 +94,10 @@ final class Job: ObservableObject, Identifiable, @unchecked Sendable {
     }
 
     /// 3.1 · Il guadagno in parole: «da 48 MB a 9 MB · −81%». Vuoto se non c'è niente di utile da dire.
-    var gainText: String { Job.gain(before: beforeBytes, after: afterBytes, done: state == .done && !outputs.isEmpty) }
+    var gainText: String {
+        guard state == .done, !outputs.isEmpty else { return "" }       // 4.1.7 · niente letture del disco prima della fine
+        return Job.gain(before: beforeBytes, after: afterBytes, done: true)
+    }
 
     static func gain(before: Int64, after: Int64, done: Bool) -> String {
         guard done, before > 0, after > 0 else { return "" }

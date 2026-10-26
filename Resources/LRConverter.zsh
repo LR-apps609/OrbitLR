@@ -1511,12 +1511,28 @@ vresize_run() {  # video, preset (1080 | 720 | 480 | hevc)
   local -a ff=(ffmpeg -nostdin -hide_banner -loglevel error -y -progress "$JOB_PROG" -nostats -i "$src"
                -map 0:v:0 -map '0:a:0?' -map_metadata 0)
   local -a a=(-c:a aac -b:a 160k -movflags +faststart)
+  local size=$(stat -f %z "$src") dur=$(media_dur "$src")
+  integer sbps=0
+  [[ -n $dur ]] && (( sbps = size * 8 / dur ))
   if [[ $p == hevc ]]; then
     out="$JD/out/$base (HEVC).mp4"
-    if [[ $ARCH == arm64 ]]; then $ff -c:v hevc_videotoolbox -q:v 60 -tag:v hvc1 $a "$out" && return 0; fi
-    if has_enc libx265; then $ff -c:v libx265 -preset medium -crf 26 -tag:v hvc1 -pix_fmt yuv420p $a "$out"
-    else $ff -c:v hevc_videotoolbox -allow_sw 1 -b:v 6M -tag:v hvc1 $a "$out"; fi
-    return
+    local ok=0
+    if [[ $ARCH == arm64 ]] && $ff -c:v hevc_videotoolbox -q:v 60 -tag:v hvc1 $a "$out"; then ok=1
+    elif has_enc libx265; then $ff -c:v libx265 -preset medium -crf 26 -tag:v hvc1 -pix_fmt yuv420p $a "$out" && ok=1
+    else
+      # 4.1.7 · Su Intel senza libx265: circa metà del bitrate del video di partenza (prima 6 Mbps fissi)
+      integer hb=6000000
+      (( sbps > 0 )) && (( hb = sbps * 55 / 100 ))
+      (( hb < 500000 )) && hb=500000
+      $ff -c:v hevc_videotoolbox -allow_sw 1 -b:v $hb -tag:v hvc1 $a "$out" && ok=1
+    fi
+    (( ok )) || return 1
+    # 4.1.7 · «Stessa qualità, meno peso»: se non pesa almeno il 3% in meno, non serve (e l'originale non si tocca)
+    if (( $(stat -f %z "$out") * 100 >= size * 97 )); then
+      rm -f -- "$out"
+      print "LRNOTE: «${src:t}» era già compresso al massimo" >&2
+    fi
+    return 0
   fi
   # Il lato corto diventa 1080/720/480 (vale anche per i video verticali); mai ingrandire
   vf="scale='if(gt(iw,ih),-2,trunc(min($p,iw)/2)*2)':'if(gt(iw,ih),trunc(min($p,ih)/2)*2,-2)'"
@@ -1524,7 +1540,10 @@ vresize_run() {  # video, preset (1080 | 720 | 480 | hevc)
   if [[ $ARCH == arm64 ]]; then
     $ff -vf "$vf" -c:v h264_videotoolbox -q:v 62 -pix_fmt yuv420p $a "$out" && return 0
   fi
-  $ff -vf "$vf" ${=$(enc264 21)} -pix_fmt yuv420p $a "$out"
+  # 4.1.7 · Su Intel senza libx264: bitrate secondo la misura scelta (prima 8 Mbps fissi, anche per 480p)
+  local rb=5M
+  case $p in 480) rb=1200k ;; 720) rb=2500k ;; esac
+  $ff -vf "$vf" ${=$(enc264 21 $rb)} -pix_fmt yuv420p $a "$out"
 }
 
 silence_run() {  # audio → senza le pause lunghe
