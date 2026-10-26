@@ -29,7 +29,7 @@ struct WatchRule: Codable, Identifiable, Equatable {
     /// Dove finiscono i file creati. Mai la cartella sorvegliata stessa, altrimenti i risultati verrebbero rielaborati.
     var outputURL: URL {
         if output == "fixed", !outputPath.isEmpty, outputPath != folder { return URL(fileURLWithPath: outputPath) }
-        return folderURL.appendingPathComponent("Convertiti")
+        return folderURL.appendingPathComponent(AppLanguage.subfolder)
     }
 
     /// L'azione vera e il suo parametro (anche se la regola usa un preset).
@@ -204,9 +204,9 @@ final class WatchStore: ObservableObject, @unchecked Sendable {
         Template(id: "video-leggeri", title: String(localized: "Cartella «Da comprimere» per i video"),
                  text: String(localized: "Crea Download/Da comprimere: i video che ci metti diventano più leggeri con la stessa qualità. Ideale per liberare spazio."),
                  symbol: "film.stack",
-                 rule: { WatchRule(folder: downloads.appendingPathComponent("Da comprimere", isDirectory: true).path,
+                 rule: { WatchRule(folder: downloads.appendingPathComponent(AppLanguage.active == "en" ? "To Compress" : "Da comprimere", isDirectory: true).path,
                                    kind: Kind.video.rawValue, actionId: "vcompress", param: "best") },
-                 prepare: { try? FileManager.default.createDirectory(at: downloads.appendingPathComponent("Da comprimere", isDirectory: true),
+                 prepare: { try? FileManager.default.createDirectory(at: downloads.appendingPathComponent(AppLanguage.active == "en" ? "To Compress" : "Da comprimere", isDirectory: true),
                                                                      withIntermediateDirectories: true) }),
     ]
 
@@ -312,7 +312,7 @@ struct WatchRow: View {
             VStack(alignment: .trailing, spacing: 3) {
                 HStack(spacing: 5) {
                     Circle().fill(rule.enabled ? Theme.green : Color.secondary).frame(width: 7, height: 7)
-                    Text(rule.enabled ? String(localized: "Attiva") : String(localized: "In pausa")).font(.system(size: 11, weight: .semibold))
+                    Text(rule.enabled ? String(localized: "status.active", defaultValue: "Attiva", comment: "Stato di una regola (non il pulsante)") : String(localized: "In pausa")).font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(rule.enabled ? Theme.green : .secondary)
                 }
                 Text(rule.processed == 1 ? String(localized: "1 file elaborato") : String(localized: "\(rule.processed) file elaborati"))

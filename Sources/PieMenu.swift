@@ -563,7 +563,7 @@ final class PieController: @unchecked Sendable {
             if isDir.boolValue && !packages.contains(u.pathExtension.lowercased()) {
                 if let en = fm.enumerator(at: u, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles]) {
                     for case let f as URL in en {
-                        if f.path.contains("/Convertiti/") { continue }
+                        if AppLanguage.subfolders.contains(where: { f.path.contains("/\($0)/") }) { continue }
                         if packages.contains(f.pathExtension.lowercased()) { out.append(f); en.skipDescendants(); continue }
                         if (try? f.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true { out.append(f) }
                     }

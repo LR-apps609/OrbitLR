@@ -1,0 +1,91 @@
+{
+  "sourceLanguage": "it",
+  "strings": {
+    "NSAppleEventsUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrbitLR reads the files selected in the Finder when you use the keyboard shortcut."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrbitLR legge i file selezionati nel Finder quando usi la scorciatoia da tastiera."
+          }
+        }
+      }
+    },
+    "NSDesktopFolderUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrbitLR converts and saves the files you keep on your Desktop."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrbitLR converte e salva i file che tieni sulla Scrivania."
+          }
+        }
+      }
+    },
+    "NSDocumentsFolderUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrbitLR opens and saves your files and projects in Documents."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrbitLR apre e salva i tuoi file e progetti in Documenti."
+          }
+        }
+      }
+    },
+    "NSDownloadsFolderUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrbitLR converts downloaded files and saves the results there."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrbitLR converte i file scaricati e salva lì i risultati."
+          }
+        }
+      }
+    },
+    "NSSpeechRecognitionUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrbitLR listens to the clips in your edit to write automatic subtitles, on your Mac."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrbitLR ascolta le clip del montaggio per scrivere i sottotitoli automatici, sul tuo Mac."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

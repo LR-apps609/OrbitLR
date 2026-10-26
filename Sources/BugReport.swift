@@ -131,7 +131,7 @@ struct BugReportView: View {
 
             field(String(localized: "Categoria")) {
                 Picker("", selection: $category) {
-                    ForEach(BugReport.categories, id: \.self) { Text(String(localized: String.LocalizationValue($0))).tag($0) }
+                    ForEach(BugReport.categories, id: \.self) { Text($0 == "Altro" ? String(localized: "bug.other", defaultValue: "Altro", comment: "Categoria: altro problema") : String(localized: String.LocalizationValue($0))).tag($0) }
                 }
                 .labelsHidden()
                 .frame(width: 240)

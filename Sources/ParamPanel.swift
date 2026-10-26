@@ -265,7 +265,7 @@ struct ParamView: View {
         case .vcompress:
             // 3.6 · Prima la qualità: «Stessa qualità» non rovina niente; i pesi servono per i limiti delle app
             Knob(title: String(localized: "Come"), options: (ParamChoices.options(for: .vcompress) ?? []) + [
-                KnobOption(value: "custom", short: String(localized: "Altro"), label: String(localized: "Un altro peso massimo, a scelta")),
+                KnobOption(value: "custom", short: String(localized: "param.custom", defaultValue: "Altro", comment: "Un valore scelto a mano"), label: String(localized: "Un altro peso massimo, a scelta")),
             ], selection: $mb, tint: tint)
             if mb == "custom" {
                 HStack {
@@ -282,7 +282,7 @@ struct ParamView: View {
             }
         case .icompress:
             Knob(title: String(localized: "Come"), options: (ParamChoices.options(for: .icompress) ?? []) + [
-                KnobOption(value: "custom", short: String(localized: "Altro"), label: String(localized: "Un altro peso massimo, a scelta")),
+                KnobOption(value: "custom", short: String(localized: "param.custom", defaultValue: "Altro", comment: "Un valore scelto a mano"), label: String(localized: "Un altro peso massimo, a scelta")),
             ], selection: $mb, tint: tint)
             if mb == "custom" {
                 HStack {

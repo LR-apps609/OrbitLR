@@ -922,7 +922,7 @@ struct VideoEditorView: View {
                 Button { undo?.undo() } label: { Image(systemName: "arrow.uturn.backward") }
                     .help("Annulla l’ultima modifica (⌘Z)").accessibilityLabel("Annulla l’ultima modifica")
                 Button { undo?.redo() } label: { Image(systemName: "arrow.uturn.forward") }
-                    .help("Ripeti (⇧⌘Z)").accessibilityLabel("Ripeti")
+                    .help("Ripeti (⇧⌘Z)").accessibilityLabel(String(localized: "edit.redo", defaultValue: "Ripeti", comment: "Rifà la modifica annullata (⇧⌘Z)"))
                 Button { choose(audio: false) } label: { Label("Video", systemImage: "plus") }
                     .help("Aggiungi altri video in fondo")
                 Button("Esporta") { s.export() }
@@ -1044,8 +1044,8 @@ struct VideoEditorView: View {
                     .help("Divide la clip nel punto dell’indicatore (S)")
             }
             HStack(spacing: 6) {
-                Button { s.move(-1, undo) } label: { Label("Prima", systemImage: "arrow.left") }.help("Sposta la clip prima")
-                Button { s.move(1, undo) } label: { Label("Dopo", systemImage: "arrow.right") }.help("Sposta la clip dopo")
+                Button { s.move(-1, undo) } label: { Label(String(localized: "clip.moveEarlier", defaultValue: "Prima", comment: "Sposta la clip prima"), systemImage: "arrow.left") }.help("Sposta la clip prima")
+                Button { s.move(1, undo) } label: { Label(String(localized: "clip.moveLater", defaultValue: "Dopo", comment: "Sposta la clip dopo"), systemImage: "arrow.right") }.help("Sposta la clip dopo")
                 Button("Intera") { s.restoreClip(undo) }.help("Riporta la clip alla sua durata intera")
             }
             // 4.0 · Le pause lunghe spariscono da sole (tagli netti, come nei video dei social)

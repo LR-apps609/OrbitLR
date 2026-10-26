@@ -25,6 +25,10 @@ targets:
       # 4.2 · I testi in inglese (lingua di partenza: italiano)
       - path: Resources/Localizable.xcstrings
         buildPhase: resources
+      - path: Resources/InfoPlist.xcstrings
+        buildPhase: resources
+      - path: NEWS.txt                # «What's new» in inglese
+        buildPhase: resources
       # 3.8 · Motori dentro l'app (ffmpeg LGPL, Apple Silicon e Intel): li prepara la compilazione su GitHub
       - path: Resources/Motori
         type: folder

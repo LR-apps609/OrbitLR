@@ -217,7 +217,9 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
 
 enum News {
     static let text: String = {
-        guard let url = Bundle.main.url(forResource: "NOVITA", withExtension: "txt"),
+        // 4.2 · In inglese le novità arrivano da NEWS.txt
+        let name = AppLanguage.active == "en" && Bundle.main.url(forResource: "NEWS", withExtension: "txt") != nil ? "NEWS" : "NOVITA"
+        guard let url = Bundle.main.url(forResource: name, withExtension: "txt"),
               let t = try? String(contentsOf: url, encoding: .utf8) else { return "" }
         return t
     }()
@@ -245,8 +247,8 @@ enum News {
 
     /// «Novità della 2.7.4 «Passo dopo passo»:» → «2.7.4»
     static func version(inHeader line: String) -> String? {
-        guard line.hasPrefix("Novità della ") else { return nil }
-        let rest = line.dropFirst("Novità della ".count)
+        guard let head = ["Novità della ", "What’s new in "].first(where: { line.hasPrefix($0) }) else { return nil }
+        let rest = line.dropFirst(head.count)
         let v = rest.prefix { $0.isNumber || $0 == "." }
         return v.isEmpty ? nil : String(v)
     }
@@ -263,11 +265,11 @@ enum News {
     /// 2.7.5 · Dove si trova la novità: la scheda da aprire con «Mostra».
     static func place(of item: String) -> SidebarItem? {
         let s = item.lowercased()
-        if s.hasPrefix("video") || s.contains("progetti") || s.contains("montaggio") { return .video }
-        if s.hasPrefix("cronologia") || s.hasPrefix("attività") { return .activity }
-        if s.hasPrefix("audio") || s.contains("testo in voce") { return .audio }
-        if s.hasPrefix("coda") { return .activity }
-        if s.contains("torta") || s.contains("spicchi") || s.hasPrefix("conversione") { return .workspace }
+        if s.hasPrefix("video") || s.contains("progetti") || s.contains("montaggio") || s.contains("projects") || s.contains("editor") { return .video }
+        if s.hasPrefix("cronologia") || s.hasPrefix("attività") || s.hasPrefix("history") || s.hasPrefix("activity") { return .activity }
+        if s.hasPrefix("audio") || s.contains("testo in voce") || s.contains("text to speech") { return .audio }
+        if s.hasPrefix("coda") || s.hasPrefix("queue") { return .activity }
+        if s.contains("torta") || s.contains("spicchi") || s.hasPrefix("conversione") || s.contains("pie") || s.hasPrefix("convert") { return .workspace }
         return nil
     }
 }

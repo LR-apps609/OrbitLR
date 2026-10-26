@@ -20,6 +20,11 @@ enum AppLanguage {
         return "en"
     }()
 
+    /// La sottocartella dei file creati, nella lingua dell'app.
+    static var subfolder: String { active == "en" ? "Converted" : "Convertiti" }
+    /// Le sottocartelle di OrbitLR in tutte le lingue (per non rielaborare mai i file creati).
+    static let subfolders = ["Convertiti", "Converted"]
+
     static func set(_ value: String) {
         UserDefaults.standard.set(value, forKey: key)
         if value == "auto" {

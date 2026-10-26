@@ -280,13 +280,22 @@ struct KindTabView: View {
     private var subtitle: String {
         if m.files.isEmpty { return style.intro }
         let size = Fmt.bytes(m.targetBytes)
-        let noun = String(localized: String.LocalizationValue(style.noun))
+        // 4.2 · Un file solo: il nome al singolare (in inglese «1 photo», non «1 photos»)
+        let noun = m.files.count == 1 ? Self.singular(style.noun) : String(localized: String.LocalizationValue(style.noun))
         if m.selection.isEmpty { return String(localized: "\(m.files.count) \(noun) · \(size)") }
         return fem ? String(localized: "\(m.selection.count) di \(m.files.count) \(noun) scelte · \(size)")
                    : String(localized: "\(m.selection.count) di \(m.files.count) \(noun) scelti · \(size)")
     }
 
     private var fem: Bool { style.noun == "foto" }
+
+    static func singular(_ noun: String) -> String {
+        switch noun {
+        case "foto": return String(localized: "noun.photo", defaultValue: "foto")
+        case "video": return String(localized: "noun.video", defaultValue: "video")
+        default: return String(localized: "noun.file", defaultValue: "file")
+        }
+    }
 
     private func choose() {
         let p = NSOpenPanel()
@@ -419,7 +428,7 @@ private struct ImagesInspector: View {
         let shown = String(localized: String.LocalizationValue(noun))
         if m.files.isEmpty { return fem ? String(localized: "Aggiungi delle foto per iniziare.") : (noun == "video" ? String(localized: "Aggiungi dei video per iniziare.") : String(localized: "Aggiungi dei file per iniziare.")) }
         let n = m.targets.count
-        if !m.selection.isEmpty { return n == 1 ? (fem ? String(localized: "Sulla foto scelta") : String(localized: "Sul \(shown) scelto")) : (fem ? String(localized: "Sulle \(n) foto scelte") : String(localized: "Sui \(n) \(shown) scelti")) }
+        if !m.selection.isEmpty { return n == 1 ? (fem ? String(localized: "Sulla foto scelta") : (noun == "video" ? String(localized: "Sul video scelto") : String(localized: "Sul file scelto"))) : (fem ? String(localized: "Sulle \(n) foto scelte") : String(localized: "Sui \(n) \(shown) scelti")) }
         if n == 1 { return fem ? String(localized: "Sulla foto") : (noun == "video" ? String(localized: "Sul video") : String(localized: "Sul file")) }
         return fem ? String(localized: "Su tutte le \(n) foto") : String(localized: "Su tutti i \(n) \(shown)")
     }

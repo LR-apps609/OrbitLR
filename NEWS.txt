@@ -1,0 +1,2 @@
+What’s new in 4.2 “English”:
+• OrbitLR now speaks English. It follows your Mac’s language, or you can choose it in Options → Appearance → Language

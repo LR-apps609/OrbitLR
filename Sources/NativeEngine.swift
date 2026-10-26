@@ -19,7 +19,7 @@ enum Destination {
         let here = src.deletingLastPathComponent()
         switch p["dest"] {
         case "sub":
-            return here.appendingPathComponent("Convertiti")
+            return here.appendingPathComponent(AppLanguage.subfolder)
         case "fixed":
             if let d = p["destpath"], FileManager.default.fileExists(atPath: d) { return URL(fileURLWithPath: d) }
             return here

@@ -248,7 +248,7 @@ dest_dir() {  # cartella dell'originale → cartella di destinazione
   # Cartella scelta dall'app per questo lavoro (es. cartelle automatiche): ha la precedenza sulle Opzioni
   if [[ -n $LR_DESTPATH ]]; then print -r -- "$LR_DESTPATH"; return; fi
   case ${PREF[dest]} in
-    sub)   print -r -- "$1/Convertiti" ;;
+    sub)   print -r -- "$1/${LR_SUBDIR:-Convertiti}" ;;
     fixed) if [[ -d ${PREF[destpath]} ]]; then print -r -- "${PREF[destpath]}"; else print -r -- "$1"; fi ;;
     *)     print -r -- "$1" ;;
   esac
@@ -2070,7 +2070,7 @@ for f in "$@"; do
     if (( ${PKG_EXTS[(Ie)$(norm "${f:e}")]} )); then add_file "$f"; continue; fi   # Pages, Numbers, Keynote
     (( nfolders += 1 ))
     for g in "$f"/**/*(.N) "$f"/**/*.(pages|numbers|key|rtfd)(/N); do
-      [[ $g == */Convertiti/* ]] && continue
+      [[ $g == */Convertiti/* || $g == */Converted/* ]] && continue
       [[ $g == *.(pages|numbers|key|rtfd)/* ]] && continue
       add_file "$g" quiet
     done

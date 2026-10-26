@@ -138,7 +138,7 @@ struct ResultBubbleView: View {
                             Button("Apri") { NSWorkspace.shared.open(job.outputs[0]); close() }
                         }
                         if canUndo {
-                            Button("Annulla") { undo() }
+                            Button(String(localized: "bubble.undo", defaultValue: "Annulla", comment: "Disfa il lavoro appena fatto (non «Cancel»)")) { undo() }
                                 .help("Manda nel Cestino il file appena creato")
                         }
                     }

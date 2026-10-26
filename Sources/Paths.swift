@@ -38,6 +38,7 @@ enum Paths {
     static func engineEnvironment(_ extra: [String: String] = [:]) -> [String: String] {
         var env = ProcessInfo.processInfo.environment
         if let m = motori { env["LR_MOTORI"] = m.path } else { env["LR_MOTORI"] = nil }
+        env["LR_SUBDIR"] = AppLanguage.subfolder          // 4.2 · «Convertiti» / «Converted»
         for (k, v) in extra { env[k] = v }
         return env
     }
