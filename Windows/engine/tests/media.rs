@@ -177,6 +177,11 @@ fn formato_social_e_velocita() {
     let s = act("social", &[&v], json!("9x16")).unwrap();
     let i = info(&s[0]);
     assert_eq!((i.width, i.height), (1080, 1920));
+    // «Inquadra le persone»: riempie lo schermo con un ritaglio che si muove
+    let g = act("social", &[&v], json!("9x16|1")).unwrap();
+    let i = info(&g[0]);
+    assert_eq!((i.width, i.height), (1080, 1920));
+    assert!(i.duration > 1.5, "{}", i.duration);
     let f = act("speed", &[&v], json!(2)).unwrap();
     assert!((info(&f[0]).duration - 1.0).abs() < 0.2, "{}", info(&f[0]).duration);
 }

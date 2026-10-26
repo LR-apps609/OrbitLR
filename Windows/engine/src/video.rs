@@ -445,7 +445,13 @@ pub fn speed(tools: &Tools, src: &Path, info: &FileInfo, factor: f64, dir: &Path
 
 /// Formato per i social: 9:16 (Reels, TikTok, Shorts), 1:1, 4:5, 16:9. Il video resta intero,
 /// i bordi si riempiono con lo stesso video sfocato.
+/// `aspect` «9x16», «1x1», «4x5», «16x9»; con «|1» il video riempie lo schermo e l'inquadratura segue le persone
+/// («Inquadra le persone», come sul Mac); senza, il video resta intero con i bordi sfocati.
 pub fn social(tools: &Tools, src: &Path, info: &FileInfo, aspect: &str, dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<PathBuf> {
+    let (aspect, follow) = match aspect.split_once('|') {
+        Some((a, f)) => (a, f.trim() == "1"),
+        None => (aspect, false),
+    };
     let (w, h, label) = match aspect {
         "1x1" => (1080, 1080, "1-1"),
         "4x5" => (1080, 1350, "4-5"),
@@ -454,6 +460,23 @@ pub fn social(tools: &Tools, src: &Path, info: &FileInfo, aspect: &str, dir: &Pa
     };
     let of = names::OutFile::new(dir, &format!("{} ({label})", names::stem(src)), "mp4")?;
     let fps = if info.fps > 0.0 { info.fps.min(60.0) } else { 30.0 };
+    let (cw, ch) = crate::reframe::crop_size(info.width.max(2), info.height.max(2), w, h);
+    if follow && info.width > 0 && info.height > 0 && (cw + 4 < info.width || ch + 4 < info.height) {
+        let path = crate::reframe::subject_path(tools, src, info, cancel, &mut |p| progress(p * 0.25))?;
+        let cmds = crate::reframe::commands(&path, info.duration.max(0.1), info.width, info.height, cw, ch, 400);
+        let (x0, y0) = cmds.split(';').next().and_then(|c| {
+            let n: Vec<&str> = c.split_whitespace().collect();
+            Some((n.get(3)?.trim_end_matches(',').to_string(), n.get(6)?.to_string()))
+        }).unwrap_or(("0".into(), "0".into()));
+        let graph = format!("[0:v]sendcmd=c='{cmds}',crop@f={cw}:{ch}:{x0}:{y0},scale={w}:{h}:flags=lanczos,setsar=1,format=yuv420p[v]");
+        let pre = args!["-i", src];
+        let mut f = args!["-filter_complex", graph, "-map", "[v]", "-map", "0:a:0?", "-map_metadata", "0"];
+        if info.fps > 60.0 {
+            f.extend(args!["-r", "60"]);
+        }
+        reencode(tools, pre, f, w as f64 * h as f64 * fps, info.has_audio, info.duration, &of.tmp, cancel, &mut |p| progress(0.25 + p * 0.75))?;
+        return of.commit();
+    }
     let graph = format!(
         "[0:v]scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},gblur=sigma=36:steps=2,colorchannelmixer=rr=0.9:gg=0.9:bb=0.9[bg];\
          [0:v]scale={w}:{h}:force_original_aspect_ratio=decrease:flags=lanczos[fg];\

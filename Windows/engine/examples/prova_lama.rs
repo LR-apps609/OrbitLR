@@ -24,7 +24,7 @@ fn main() -> TractResult<()> {
     let t1 = std::time::Instant::now();
     let out = model.run(tvec!(img.into(), mask.into()))?;
     println!("eseguito in {:?}", t1.elapsed());
-    let o = out[0].to_array_view::<f32>()?;
+    let o = out[0].to_plain_array_view::<f32>()?;
     println!("uscita {:?}", o.shape());
     let (mut mi, mut ma) = (f32::MAX, f32::MIN);
     for v in o.iter() { mi = mi.min(*v); ma = ma.max(*v); }

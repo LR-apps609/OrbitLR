@@ -12,7 +12,7 @@ fs4 = "1"
 lopdf = "0.46"
 ureq = "3"
 sha2 = "0.11"
-tract-onnx = "0.21"
+tract-onnx = "0.23"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 ed25519-dalek = "2"
 base64 = "0.22"
@@ -23,4 +23,4 @@ qrcode = { version = "0.14", default-features = false, features = ["svg"] }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_JobObjects", "Win32_System_Threading", "Win32_Security"] }
-windows = { version = "0.62", features = ["Foundation", "Globalization", "Graphics_Imaging", "Media_Ocr", "Storage", "Storage_Streams", "Storage_Search", "Data_Pdf"] }
+windows = { version = "0.62", features = ["Foundation", "Globalization", "Graphics_Imaging", "Media_Ocr", "Media_FaceAnalysis", "Storage", "Storage_Streams", "Storage_Search", "Data_Pdf"] }
