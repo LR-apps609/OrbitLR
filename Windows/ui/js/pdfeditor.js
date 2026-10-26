@@ -22,13 +22,17 @@ export async function openPdfEditor(file) {
   let mode = "text"; // text | sign | redact
   let signature = null; // { png, ratio }
   let selected = null;
+  let freshBox = null;
 
   const img = h("img.pe-img", { alt: "", draggable: "false" });
+  img.addEventListener("error", () => (img.style.visibility = "hidden"));
+  img.addEventListener("load", () => (img.style.visibility = ""));
   const layer = h("div.pe-layer");
   const sheet = h("div.pe-sheet", img, layer);
   const stage = h("div.pe-stage", sheet);
   const pageLabel = h("span.pe-pn");
   const side = h("aside.pe-side");
+  const countEl = h("p.hint");
   const bg = h("div.pe-bg", { role: "dialog", "aria-modal": "true", "aria-label": t("Editor PDF") });
 
   const count = () => marks.texts.length + marks.images.length + marks.redactions.length + changedFields.size;
@@ -68,7 +72,7 @@ export async function openPdfEditor(file) {
     });
     marks.texts.forEach((m, i) => {
       if (m.page !== page) return;
-      const ta = h("textarea.pe-text", { rows: 1, spellcheck: "false", style: { fontSize: px(m.size), lineHeight: "1" } });
+      const ta = h("textarea.pe-text", { rows: 1, spellcheck: "false", style: { fontSize: px(m.size), lineHeight: "1.15" } });
       ta.value = m.text;
       const fit = () => { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; ta.style.width = Math.max(40, ...ta.value.split("\n").map((l) => l.length * m.size * s * 0.56)) + 8 + "px"; };
       ta.addEventListener("input", () => { m.text = ta.value; fit(); });
@@ -77,9 +81,11 @@ export async function openPdfEditor(file) {
         h("button.pe-x", { "aria-label": t("Togli"), onpointerdown: (e) => e.stopPropagation(), onclick: () => { marks.texts.splice(i, 1); draw(); } }, ico("x", 11)),
         h("span.pe-move", { title: t("Trascina per spostare"), onpointerdown: (e) => moveMark(e, m) }, ico("move", 11)));
       kids.push(box);
-      setTimeout(() => { fit(); if (m.fresh) { m.fresh = false; ta.focus(); } }, 0);
+      if (m.fresh) { m.fresh = false; freshBox = ta; }
+      setTimeout(fit, 0);
     });
     layer.replaceChildren(...kids);
+    if (freshBox) { freshBox.focus(); freshBox = null; }
     renderSide();
   }
 
@@ -127,6 +133,7 @@ export async function openPdfEditor(file) {
     if (e.button !== 0 || e.target !== layer) return;
     const p0 = pointAt(e);
     if (mode === "text") {
+      e.preventDefault();
       marks.texts.push({ page, x: p0.x, y: p0.y - 6, size: 12, text: "", fresh: true });
       draw();
     } else if (mode === "sign") {
@@ -196,8 +203,8 @@ export async function openPdfEditor(file) {
         : t("Trascina sopra quello che vuoi nascondere. Le pagine oscurate diventano un'immagine: il testo sotto sparisce davvero.");
     const flist = (info.fields || []).map((f) => {
       const input = f.kind === "check"
-        ? h("input", { type: "checkbox", checked: fields[f.name] && fields[f.name] !== "Off" ? true : null, onchange: (e) => { fields[f.name] = e.target.checked ? "Yes" : "Off"; changedFields.add(f.name); } })
-        : h("input.pe-field", { type: "text", value: fields[f.name] || "", oninput: (e) => { fields[f.name] = e.target.value; changedFields.add(f.name); } });
+        ? h("input", { type: "checkbox", checked: fields[f.name] && fields[f.name] !== "Off" ? true : null, onchange: (e) => { fields[f.name] = e.target.checked ? "Yes" : "Off"; changedFields.add(f.name); updateCount(); } })
+        : h("input.pe-field", { type: "text", value: fields[f.name] || "", oninput: (e) => { fields[f.name] = e.target.value; changedFields.add(f.name); updateCount(); } });
       return h("label.pe-frow", h("span", f.name.split(".").pop()), input);
     });
     side.replaceChildren(
@@ -210,7 +217,12 @@ export async function openPdfEditor(file) {
       flist.length ? h("div.group", t`Campi del modulo (${flist.length})`) : null,
       flist.length ? h("div.pe-fields", ...flist) : null,
       h("div.grow"),
-      h("p.hint", count() ? t`${count()} modifiche` : t("Nessuna modifica ancora")));
+      countEl);
+    updateCount();
+  }
+
+  function updateCount() {
+    countEl.textContent = count() ? t`${count()} modifiche` : t("Nessuna modifica ancora");
   }
 
   async function save() {

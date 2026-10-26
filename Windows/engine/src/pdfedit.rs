@@ -412,7 +412,8 @@ pub fn apply(src: &Path, edits: &Edits, dir: &Path, cancel: &Cancel, progress: &
         let size = t.size.clamp(4.0, 96.0);
         let buf = per_page.entry(t.page).or_default();
         for (i, line) in t.text.lines().enumerate() {
-            let (x, y) = to_pdf(b, t.x, t.y + size * (i as f64 + 1.0) * 1.0);
+            // Come nell'editor: righe alte 1,15 volte il carattere, la base a circa l'80% della prima riga
+            let (x, y) = to_pdf(b, t.x + 1.5, t.y + 1.0 + size * (0.85 + i as f64 * 1.15));
             buf.extend_from_slice(format!("BT /OrbF1 {size:.2} Tf 0 0 0 rg {x:.2} {y:.2} Td (").as_bytes());
             buf.extend_from_slice(&escape(&win_ansi(line)));
             buf.extend_from_slice(b") Tj ET\n");

@@ -310,3 +310,50 @@ pub fn waveform(tools: &Tools, src: &Path, duration: f64, points: usize) -> Resu
     }
     Ok(peaks)
 }
+
+/// Le pause (più lunghe di `min_len` secondi) in un file, per «Togli i silenzi» nel montaggio: (inizio, fine).
+pub fn silences(tools: &Tools, src: &Path, info: &FileInfo, min_len: f64) -> Result<Vec<(f64, f64)>> {
+    if !info.has_audio {
+        return Err(EngineError::new("il file non contiene audio"));
+    }
+    let mut c = tools.ffmpeg_cmd();
+    c.arg("-hide_banner").arg("-nostats").arg("-i").arg(src).args(["-map", "0:a:0", "-vn", "-af"]);
+    c.arg(format!("silencedetect=noise=-40dB:d={:.2}", min_len.clamp(0.3, 5.0)));
+    c.args(["-f", "null", "-"]);
+    let out = crate::tools::output_timeout(c, 900).map_err(|e| EngineError::new(format!("non riesco ad ascoltare il file: {e}")))?;
+    Ok(parse_silences(&String::from_utf8_lossy(&out.stderr), info.duration))
+}
+
+/// «silence_start: 3.2» … «silence_end: 5.1 | silence_duration: 1.9» → [(3.2, 5.1)]
+pub fn parse_silences(log: &str, duration: f64) -> Vec<(f64, f64)> {
+    let mut out = Vec::new();
+    let mut start: Option<f64> = None;
+    let num = |l: &str, key: &str| l.split(key).nth(1).and_then(|r| r.split_whitespace().next()).and_then(|v| v.trim_end_matches('|').parse::<f64>().ok());
+    for l in log.lines() {
+        if let Some(s) = num(l, "silence_start: ") {
+            start = Some(s.max(0.0));
+        } else if let Some(e) = num(l, "silence_end: ") {
+            if let Some(s) = start.take() {
+                if e > s {
+                    out.push((s, e));
+                }
+            }
+        }
+    }
+    // Silenzio fino alla fine del file
+    if let (Some(s), true) = (start, duration > 0.0) {
+        if duration > s {
+            out.push((s, duration));
+        }
+    }
+    out
+}
+
+#[cfg(test)]
+mod silence_tests {
+    #[test]
+    fn legge_le_pause() {
+        let log = "[silencedetect @ 0x1] silence_start: 1.5\n[silencedetect @ 0x1] silence_end: 3.25 | silence_duration: 1.75\nsize=N/A\n[silencedetect @ 0x1] silence_start: 9\n";
+        assert_eq!(super::parse_silences(log, 10.0), vec![(1.5, 3.25), (9.0, 10.0)]);
+    }
+}

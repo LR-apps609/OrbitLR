@@ -9,6 +9,7 @@ import { resultBar } from "./resultbar.js";
 import { createTrim } from "./trim.js";
 import { createZones } from "./zones.js";
 import { downloaderBar } from "./downloader.js";
+import { openPdfEditor } from "./pdfeditor.js";
 import { addPreset, askName, presets, suggestName } from "./presets.js";
 import { fmtBytes, fmtTime, h, ico, store, toast } from "./util.js";
 import { t, tr, tc } from "./i18n.js";
@@ -176,6 +177,10 @@ export function mediaPage(kind, app, opts = {}) {
             if (!tool.params) return go(actionId, null);
             if (tool.params === "trim") return openTrim(id);
             if (tool.params === "zones") return openZones(id);
+            if (tool.params === "pdfedit") {
+              const one = tg.length === 1 ? tg[0] : null;
+              return one ? openPdfEditor(one) : toast(t("Scegli un PDF solo (clic sulla miniatura) e poi «Compila, firma e oscura»."));
+            }
             openTool = openTool === id ? null : id;
             renderTools();
           } },

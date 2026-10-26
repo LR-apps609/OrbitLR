@@ -137,6 +137,10 @@ async function demo(cmd, a) {
       return Array.from({ length: a.points }, (_, i) => Math.abs(Math.sin(i / 7) * 0.6 + Math.sin(i / 2.3) * 0.25) * (i % 50 > 44 ? 0.15 : 1));
     case "startup":
       return { files: [] };
+    case "pdf_info":
+      return { pages: [{ width: 595, height: 842 }, { width: 595, height: 842 }], fields: [{ name: "nome", value: "", kind: "text" }, { name: "privacy", value: "Off", kind: "check" }] };
+    case "pdf_page":
+      return "";
     case "files_exist":
       return a.paths.map(() => true);
     case "start_job": {

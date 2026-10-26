@@ -689,3 +689,76 @@ mod tests {
         assert_eq!(fit_short(853, 480, 1080), (854, 480));
     }
 }
+
+/// «Estrai i sottotitoli»: un .srt per ogni traccia di sottotitoli scritti (non quelli in immagini dei Blu-ray).
+pub fn subtitles_out(tools: &Tools, src: &Path, dir: &Path, cancel: &Cancel) -> Result<Vec<PathBuf>> {
+    let mut c = tools.ffprobe_cmd();
+    c.args(["-v", "error", "-select_streams", "s", "-show_entries", "stream=codec_name:stream_tags=language", "-of", "csv=p=0"]).arg(src);
+    let out = crate::tools::output_timeout(c, 60).map_err(|e| EngineError::new(format!("non riesco a leggere il video: {e}")))?;
+    let list: Vec<(String, String)> = String::from_utf8_lossy(&out.stdout)
+        .lines()
+        .filter(|l| !l.trim().is_empty())
+        .map(|l| {
+            let mut p = l.split(',');
+            (p.next().unwrap_or("").trim().to_string(), p.next().unwrap_or("").trim().to_string())
+        })
+        .collect();
+    if list.is_empty() {
+        return Err(EngineError::new("il video non contiene sottotitoli"));
+    }
+    let base = names::stem(src);
+    let mut made = Vec::new();
+    for (i, (codec, lang)) in list.iter().enumerate() {
+        cancel.check()?;
+        if !["subrip", "srt", "ass", "ssa", "mov_text", "webvtt", "text"].contains(&codec.as_str()) {
+            continue;
+        }
+        let name = if list.len() == 1 { base.clone() } else if lang.is_empty() { format!("{base}.{}", i + 1) } else { format!("{base}.{}.{lang}", i + 1) };
+        let of = names::OutFile::new(dir, &name, "srt")?;
+        let mut a = tools.ffmpeg_cmd();
+        a.args(["-nostdin", "-hide_banner", "-loglevel", "error", "-y", "-i"]).arg(src).args(["-map", &format!("0:s:{i}"), "-c:s", "srt", "-f", "srt"]).arg(&of.tmp);
+        let r = crate::tools::output_timeout(a, 600).map_err(|e| EngineError::new(e.to_string()))?;
+        if r.status.success() && of.tmp.metadata().map(|m| m.len() > 0).unwrap_or(false) {
+            made.push(of.commit()?);
+        }
+    }
+    if made.is_empty() {
+        return Err(EngineError::new("i sottotitoli di questo video sono immagini (es. Blu-ray), non convertibili in testo"));
+    }
+    Ok(made)
+}
+
+/// «Aggiungi i sottotitoli»: il video e un .srt (stesso nome, accanto) → video con sottotitoli da accendere nel lettore.
+pub fn subtitles_in(tools: &Tools, src: &Path, srt: &Path, info: &FileInfo, dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<PathBuf> {
+    let e = names::ext(src);
+    let (oe, sc) = match e.as_str() {
+        "mp4" | "mov" | "m4v" => (e.clone(), "mov_text"),
+        "mkv" => (e.clone(), "srt"),
+        _ => ("mkv".to_string(), "srt"),
+    };
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), names::tag("con sottotitoli")), &oe)?;
+    let mut last = None;
+    // Molti .srt italiani non sono in UTF-8
+    for enc in ["UTF-8", "CP1252"] {
+        let mut a = args!["-i", src, "-sub_charenc", enc, "-i", srt, "-map", "0:v", "-map", "0:a?", "-map", "1:0", "-c:v", "copy", "-c:a", "copy", "-c:s", sc, "-disposition:s:0", "default"];
+        if oe != "mkv" {
+            a.extend(args!["-movflags", "+faststart"]);
+        }
+        a.push(of.tmp.clone().into());
+        match run::ffmpeg(tools, &a, info.duration, cancel, progress) {
+            Ok(_) => return of.commit(),
+            Err(err) if err.is_cancelled() => return Err(err),
+            Err(err) => last = Some(err),
+        }
+    }
+    Err(last.unwrap_or_else(|| EngineError::new("non riesco ad aggiungere i sottotitoli")))
+}
+
+/// «Rimuovi i metadati» dai video: posizione, data e dispositivo via, senza ricodificare.
+pub fn strip(tools: &Tools, src: &Path, info: &FileInfo, dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<PathBuf> {
+    let ext = names::ext(src);
+    let ext = if ["mp4", "mov", "m4v", "mkv", "webm"].contains(&ext.as_str()) { ext } else { "mp4".into() };
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), names::tag("senza metadati")), &ext)?;
+    run::ffmpeg(tools, &args!["-i", src, "-map", "0", "-c", "copy", "-map_metadata", "-1", "-map_chapters", "-1", "-metadata:s", "location=", "-metadata:s", "creation_time=", of.tmp.clone()], info.duration, cancel, progress)?;
+    of.commit()
+}

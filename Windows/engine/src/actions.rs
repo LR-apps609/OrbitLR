@@ -69,6 +69,10 @@ fn field(v: &Value, k: &str) -> Option<f64> {
     num(&v[k])
 }
 
+fn names_ext(p: &Path) -> String {
+    crate::names::ext(p)
+}
+
 fn tools(ctx: &Ctx) -> Result<&Tools> {
     ctx.tools.as_ref().ok_or_else(|| EngineError::new("manca il motore video (ffmpeg): reinstalla OrbitLR"))
 }
@@ -221,9 +225,21 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
         "strip" => {
             if kind == Kind::Image {
                 vec![images::strip(src, &dir)?]
+            } else if kind == Kind::Video {
+                vec![video::strip(tools(ctx)?, src, &info, &dir, cancel, progress)?]
             } else {
-                return Err(EngineError::new("per ora i metadati si tolgono dalle foto (JPG, PNG, WebP)"));
+                return Err(EngineError::new("i metadati si tolgono da foto e video"));
             }
+        }
+        "subextract" => video::subtitles_out(tools(ctx)?, src, &dir, cancel)?,
+        "subembed" => {
+            // Il .srt con lo stesso nome, accanto al video (o scelto insieme)
+            let srt = files.iter().find(|f| names_ext(f) == "srt").cloned().or_else(|| {
+                let p = src.with_extension("srt");
+                p.is_file().then_some(p)
+            });
+            let srt = srt.ok_or_else(|| EngineError::new("non ho trovato un file .srt con lo stesso nome del video (selezionali insieme)"))?;
+            vec![video::subtitles_in(tools(ctx)?, src, &srt, &info, &dir, cancel, progress)?]
         }
         "ocr" => vec![crate::ocr::to_file(t, src, &dir)?],
         // ── Con l'IA, sul computer (i modelli si scaricano la prima volta)

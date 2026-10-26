@@ -691,6 +691,48 @@ export function editorPage(app, onBack) {
     });
   }
 
+  // «Togli i silenzi»: la clip si divide e le pause lunghe spariscono (tagli netti, come nei video dei social)
+  async function removeSilences(ci) {
+    const c = p.clips[ci];
+    if (!c) return;
+    toast(t("Ascolto la clip per trovare le pause…"));
+    let gaps;
+    try {
+      gaps = await invoke("silences", { path: c.path });
+    } catch (e) {
+      return toast(tr(String(e)));
+    }
+    const keep = 0.12; // un respiro prima e dopo ogni pezzo
+    const parts = [];
+    let from = c.in;
+    for (const [s, e] of gaps || []) {
+      if (e <= c.in || s >= c.out) continue;
+      const a = Math.max(c.in, s + keep), b = Math.min(c.out, e - keep);
+      if (b - a < 0.3) continue;
+      if (a - from > 0.15) parts.push([from, a]);
+      from = b;
+    }
+    if (c.out - from > 0.15) parts.push([from, c.out]);
+    if (parts.length <= 1 && (!parts.length || parts[0][1] - parts[0][0] > c.out - c.in - 0.3)) return toast(t("Non ho trovato pause lunghe in questa clip."));
+    const before = clipLen(c);
+    change((pp) => {
+      const base = pp.clips[ci];
+      const made = parts.map(([a, b], k) => {
+        const x = JSON.parse(JSON.stringify(base));
+        x.id = uid();
+        x.in = a;
+        x.out = b;
+        if (k > 0) x.transition = null;
+        if (x.fx) { if (k > 0) x.fx.fadeIn = 0; if (k < parts.length - 1) x.fx.fadeOut = 0; }
+        return x;
+      });
+      pp.clips.splice(ci, 1, ...made);
+      sel = { kind: "clip", index: ci };
+    });
+    const after = parts.reduce((a, [x, y]) => a + (y - x), 0) / (c.fx?.speed || 1);
+    toast(t`Tolti ${fmtTime(before - after, true)} di pause in ${parts.length} pezzi. Ctrl+Z per tornare indietro.`);
+  }
+
   function deleteSelected() {
     if (sel.kind === "text") {
       if (!p.texts[sel.index]) return;
@@ -771,6 +813,7 @@ export function editorPage(app, onBack) {
         box.push(h("div.group", t`Clip ${ci + 1} di ${p.clips.length}`), h("p.hint", t`${baseName(c.path)} · da ${fmtTime(c.in, true)} a ${fmtTime(c.out, true)} · ${fmtTime(clipLen(c), true)}`),
           h("div.btns",
             h("button.btn", { onclick: splitHere }, ico("scissors", 14), t("Dividi qui")),
+            h("button.btn", { title: t("Toglie le pause lunghe: utile per i video in cui parli"), onclick: () => removeSilences(ci) }, ico("audio-waveform", 14), t("Togli i silenzi")),
             h("button.btn", { onclick: () => change((pp) => pp.clips.splice(ci + 1, 0, { ...JSON.parse(JSON.stringify(c)), id: uid(), transition: null })) }, t("Duplica")),
             h("button.btn", { onclick: () => change((pp) => (pp.clips[ci].muted = !pp.clips[ci].muted)) }, ico(c.muted ? "volume-2" : "volume-x", 14), c.muted ? t("Riattiva l'audio") : t("Togli l'audio")),
             h("button.btn", { disabled: ci === 0 || null, onclick: () => change((pp) => { const [x] = pp.clips.splice(ci, 1); pp.clips.splice(ci - 1, 0, x); sel.index = ci - 1; }) }, t("◀ Sposta")),

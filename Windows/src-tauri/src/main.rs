@@ -480,6 +480,20 @@ async fn office_install() -> Result<bool, String> {
     .map_err(|e| e.to_string())?
 }
 
+/// Montaggio, «Togli i silenzi»: le pause lunghe di un file (inizio, fine) in secondi.
+#[tauri::command]
+async fn silences(state: State<'_, Shared>, path: String) -> Result<Vec<(f64, f64)>, String> {
+    let f = checked_file(&path)?;
+    let st = state.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let t = st.tools.as_ref().ok_or("manca il motore audio")?;
+        let info = probe(Some(t), &f).map_err(|e| e.0)?;
+        orbit_engine::audio::silences(t, &f, &info, 0.7).map_err(|e| e.0)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 /// Editor PDF: pagine (misure in punti) e campi del modulo.
 #[tauri::command]
 async fn pdf_info(path: String) -> Result<orbit_engine::pdfedit::PdfInfo, String> {
@@ -865,7 +879,7 @@ fn main() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install, update_check, update_install, undo_result, allow_made, set_lang, pdf_info, pdf_page])
+        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install, update_check, update_install, undo_result, allow_made, set_lang, pdf_info, pdf_page, silences])
         .run(tauri::generate_context!())
         .expect("OrbitLR non è riuscita ad avviarsi");
 }

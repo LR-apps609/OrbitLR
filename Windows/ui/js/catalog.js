@@ -64,6 +64,9 @@ export const TOOLS = {
   normalize: { title: t("Volume uniforme"), hint: t("Né troppo basso né distorto"), icon: "volume-2" },
   voiceclean: { title: t("Voce più pulita"), hint: t("Meno ronzio e fruscio di fondo; il video non si ricomprime"), icon: "mic", isNew: true },
   transcribe: { title: t("Trascrivi"), hint: t("Le parole diventano testo e sottotitoli (.srt), sul computer"), icon: "file-text", isNew: true },
+  subextract: { title: t("Estrai i sottotitoli"), hint: t("In un file .srt, da aprire o modificare"), icon: "file-text", isNew: true },
+  subembed: { title: t("Aggiungi i sottotitoli"), hint: t("Da un file .srt con lo stesso nome, accanto al video: si accendono nel lettore"), icon: "captions", isNew: true },
+  vstrip: { title: t("Rimuovi i metadati"), hint: t("Posizione, data e telefono: via, senza ricodificare"), icon: "eye-off", id: "strip", isNew: true },
   mute: { title: t("Togli l'audio"), hint: t("Istantaneo: il video non si tocca"), icon: "volume-x" },
   vrotate: { title: t("Ruota"), hint: t("Senza ricodificare: istantaneo"), icon: "rotate-cw", params: "rotate", id: "rotate" },
   // PDF
@@ -71,6 +74,7 @@ export const TOOLS = {
   pdfmerge: { title: t("Unisci"), hint: t("Più PDF in uno, nell'ordine dell'elenco"), icon: "combine", min: 2 },
   split: { title: t("Dividi in pagine"), hint: t("Un PDF per ogni pagina"), icon: "split" },
   extract: { title: t("Estrai alcune pagine"), hint: t("Scegli quali, per esempio 1-3, 5"), icon: "file-output", params: "pages" },
+  pdfedit: { title: t("Compila, firma e oscura"), hint: t("Scrivi sul PDF, metti la firma, compila i moduli, nascondi i dati"), icon: "file-pen", params: "pdfedit", isNew: true },
   pdftext: { title: t("Estrai il testo"), hint: t("In un file di testo; dai PDF scansionati lo legge dalle pagine"), icon: "file-text", isNew: true },
   protect: { title: t("Proteggi con password"), hint: t("Serve la password per aprirlo (AES-256)"), icon: "lock", params: "password", isNew: true },
   unprotect: { title: t("Togli la password"), hint: t("Se la conosci: una copia che si apre senza"), icon: "lock-open", params: "password", isNew: true },
@@ -88,10 +92,10 @@ export const GROUPS = {
   video: [
     [t("Peso e grandezza"), ["vcompress", "vresize", "social"]],
     [t("Taglia e unisci"), ["cut", "gifcut", "vmerge", "speed"]],
-    [t("Audio e sottotitoli"), ["transcribe", "voiceclean", "normalize", "mute"]],
-    [t("Altro"), ["hidemark", "vrotate", "rename"]],
+    [t("Audio e sottotitoli"), ["transcribe", "voiceclean", "normalize", "mute", "subextract", "subembed"]],
+    [t("Altro"), ["hidemark", "vrotate", "vstrip", "rename"]],
   ],
-  pdf: [[t("Peso"), ["pdfcompress"]], [t("Organizza"), ["pdfmerge", "split", "extract", "reorder", "prot"]], [t("Testo"), ["pdftext"]], [t("Proteggi"), ["protect", "unprotect"]], [t("Altro"), ["rename"]]],
+  pdf: [[t("Modifica"), ["pdfedit"]], [t("Peso"), ["pdfcompress"]], [t("Organizza"), ["pdfmerge", "split", "extract", "reorder", "prot"]], [t("Testo"), ["pdftext"]], [t("Proteggi"), ["protect", "unprotect"]], [t("Altro"), ["rename"]]],
 };
 
 /** Le scelte dei parametri, come le manopole dell'app per Mac. */
@@ -223,7 +227,7 @@ export function kindOfExt(ext) {
 export const ACTION_NAMES = {
   vcompress: t("Comprimi"), icompress: t("Comprimi"), vresize: t("Cambia la grandezza"), social: t("Formato social"), cut: t("Taglia"), gifcut: t("GIF da un pezzo"),
   speed: t("Cambia la velocità"), vmerge: t("Unisci i video"), amerge: t("Unisci"), normalize: t("Volume uniforme"), voiceclean: t("Voce più pulita"), mute: t("Togli l'audio"),
-  rotate: t("Ruota"), hidemark: t("Nascondi un logo"), ocr: t("Estrai il testo"), pdftext: t("Estrai il testo"), resize: t("Ridimensiona"), strip: t("Rimuovi i metadati"), merge: t("Unisci in un PDF"), pdfmerge: t("Unisci i PDF"), split: t("Dividi in pagine"),
+  rotate: t("Ruota"), hidemark: t("Nascondi un logo"), ocr: t("Estrai il testo"), pdftext: t("Estrai il testo"), pdfedit: t("Compila, firma e oscura"), subextract: t("Estrai i sottotitoli"), subembed: t("Aggiungi i sottotitoli"), resize: t("Ridimensiona"), strip: t("Rimuovi i metadati"), merge: t("Unisci in un PDF"), pdfmerge: t("Unisci i PDF"), split: t("Dividi in pagine"),
   extract: t("Estrai pagine"), pdfcompress: t("Comprimi il PDF"), vproject: t("Esporta il montaggio"), ringtone: t("Suoneria"), silence: t("Togli i silenzi"), whatsapp: t("Vocale per WhatsApp"), tts: t("Testo in voce"), transcribe: t("Trascrivi"),
   removebg: t("Rimuovi lo sfondo"), aienhance: t("Migliora con l'IA"), upscale: t("Ingrandisci"), link: t("Scarica da un link"), protect: t("Proteggi con password"), unprotect: t("Togli la password"), reorder: t("Riordina le pagine"), rename: t("Rinomina tutti"),
 };

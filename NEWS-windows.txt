@@ -1,4 +1,4 @@
-Novità per Windows 0.3.1:
-• PDF in immagini (PNG o JPG, una per pagina) e «Estrai il testo» dai PDF, anche scansionati
-• In inglese anche i nomi dei file creati: «photo (compressed).jpg», «song (trimmed).mp3»
-• Aiuto più completo: 36 domande e risposte
+Novità per Windows 0.4.0 «Editor PDF»:
+• File → «Compila, firma e oscura»: scrivi sul PDF, disegna e metti la firma, compila i campi dei moduli, oscura i dati (oscuramento vero: il testo sotto sparisce)
+• Montaggio: «Togli i silenzi» nella clip, per i video in cui parli
+• Video: estrai o aggiungi i sottotitoli (.srt) e togli i metadati (posizione, data, telefono)
