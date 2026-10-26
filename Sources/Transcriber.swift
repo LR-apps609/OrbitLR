@@ -24,9 +24,9 @@ enum Transcriber {
         let words = try await recognize(file, locale: AutoSubtitles.preferredLocale(), job: job, progress: progress)
         guard !words.isEmpty else { throw NativeError(String(localized: "non ho sentito parole in «\(file.lastPathComponent)»")) }
         let base = file.deletingPathExtension().lastPathComponent
-        let txt = Destination.unique(dir, base: "\(base) (trascrizione)", ext: "txt")
+        let txt = Destination.unique(dir, base: "\(base) (\(FileTag.t("trascrizione")))", ext: "txt")
         try paragraphs(words).write(to: txt, atomically: true, encoding: .utf8)
-        let srtURL = Destination.unique(dir, base: "\(base) (trascrizione)", ext: "srt")
+        let srtURL = Destination.unique(dir, base: "\(base) (\(FileTag.t("trascrizione")))", ext: "srt")
         try srt(AutoSubtitles.lines(words)).write(to: srtURL, atomically: true, encoding: .utf8)
         // Il testo arriva per primo tra i file creati (è quello che si apre), poi i sottotitoli
         extra(txt)

@@ -77,7 +77,7 @@ enum Stacker {
         let base = first.deletingPathExtension().lastPathComponent
         let e = Catalog.norm(first.pathExtension)
         let ext = ["jpg", "png", "heic", "tiff"].contains(e) ? e : "jpg"
-        let label = "\(aligned.count) scatti" + (scale > 1 ? " 2×" : "")
+        let label = "\(aligned.count) \(FileTag.t("scatti"))" + (scale > 1 ? " 2×" : "")
         let out = Destination.unique(dir, base: "\(base) (\(label))", ext: ext)
         guard let cg = ci.createCGImage(result, from: outRect) else { throw NativeError(String(localized: "Non riesco a creare l’immagine")) }
         try Tools.write(cg, to: out, quality: 0.93)

@@ -223,7 +223,7 @@ final class PDFEditorModel: ObservableObject, @unchecked Sendable {
     func save() {
         let dir = Destination.dir(for: source)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let out = Destination.unique(dir, base: source.deletingPathExtension().lastPathComponent + " (\(outputSuffix))", ext: "pdf")
+        let out = Destination.unique(dir, base: source.deletingPathExtension().lastPathComponent + " (\(FileTag.t(outputSuffix)))", ext: "pdf")
         let flatten = flattenForms || !redactions.isEmpty || added.values.contains(where: { $0 is ImageStampAnnotation })
         saving = true
         message = nil

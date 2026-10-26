@@ -25,7 +25,7 @@ enum SmartPDF {
         guard let doc = PDFDocument(url: src) else { throw NativeError(String(localized: "PDF danneggiato o non valido")) }
         if doc.isLocked { throw NativeError(String(localized: "il PDF è protetto da password: toglila prima con «Togli la password»")) }
         let base = src.deletingPathExtension().lastPathComponent
-        let out = Destination.unique(dir, base: "\(base) (compresso)", ext: "pdf")
+        let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("compresso")))", ext: "pdf")
         let before = Job.size(of: src)
 
         // 1) Filtro con qualità e risoluzione scelte da noi

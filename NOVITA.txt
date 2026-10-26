@@ -1,3 +1,6 @@
+Novità della 4.2.1 «Nomi in inglese»:
+• Con OrbitLR in inglese anche i file creati hanno il nome in inglese: «photo (smaller).jpg», «song (trimmed).mp3», «video (with music).mp4». In italiano tutto resta com’era
+
 Novità della 4.2 «English»:
 • OrbitLR parla inglese: segue la lingua del Mac, oppure la scegli in Opzioni → Aspetto → «Lingua · Language» (OrbitLR si riapre da solo)
 • In inglese anche i messaggi del motore, i numeri col punto, i mesi della cronologia e le cartelle «Converted» e «To Compress»

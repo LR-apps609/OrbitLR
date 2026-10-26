@@ -39,6 +39,7 @@ enum Paths {
         var env = ProcessInfo.processInfo.environment
         if let m = motori { env["LR_MOTORI"] = m.path } else { env["LR_MOTORI"] = nil }
         env["LR_SUBDIR"] = AppLanguage.subfolder          // 4.2 · «Convertiti» / «Converted»
+        env["LR_LANG"] = AppLanguage.active               // 4.2.1 · nomi dei file creati in inglese
         for (k, v) in extra { env[k] = v }
         return env
     }

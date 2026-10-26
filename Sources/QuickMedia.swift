@@ -40,23 +40,23 @@ enum QuickMedia {
         case "cut":
             if videoIn.contains(e) {
                 let ext = e == "mov" ? "mov" : "mp4"
-                let out = Destination.unique(dir, base: "\(base) (taglio)", ext: ext)
+                let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("taglio")))", ext: ext)
                 try await cutVideo(file, start: start, end: end, out: out, job: job, progress: progress)
                 return out
             }
             let (fmt, ext) = audioFormat(for: e)
-            let out = Destination.unique(dir, base: "\(base) (taglio)", ext: ext)
+            let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("taglio")))", ext: ext)
             try await Media.renderAudio([(file, start, end)], out: out, bitrate: 256_000, channels: 2, fadeIn: 0, fadeOut: 0,
                                         normalize: false, maxSeconds: nil, format: fmt, job: job, progress: progress)
             return out
         case "normalize":
             let (fmt, ext) = audioFormat(for: e)
-            let out = Destination.unique(dir, base: "\(base) (normalizzato)", ext: ext)
+            let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("normalizzato")))", ext: ext)
             try await Media.renderAudio([(file, nil, nil)], out: out, bitrate: 256_000, channels: 2, fadeIn: 0, fadeOut: 0,
                                         normalize: true, maxSeconds: nil, format: fmt, job: job, progress: progress)
             return out
         case "gifcut":
-            let out = Destination.unique(dir, base: "\(base) (pezzo)", ext: "gif")
+            let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("pezzo")))", ext: "gif")
             try await gif(file, start: start, end: end, out: out, job: job, progress: progress)
             return out
         case "vcompress":
@@ -68,13 +68,13 @@ enum QuickMedia {
                 try await SmartVideo.compress(file, targetBytes: Int64(mb * 1_048_576), out: out, job: job, progress: progress)
                 return out
             }
-            let out = Destination.unique(dir, base: "\(base) (più leggero)", ext: "mp4")
+            let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("più leggero")))", ext: "mp4")
             try await SmartVideo.compress(file, targetBytes: nil, out: out, job: job, progress: progress)
             return out
         case "vresize":
             // 3.6 · Nativo: chip video del Mac, qualità piena per la nuova misura; «hevc» = stessa misura, meno peso
             if job.param == "hevc" {
-                let out = Destination.unique(dir, base: "\(base) (più leggero)", ext: "mp4")
+                let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("più leggero")))", ext: "mp4")
                 try await SmartVideo.compress(file, targetBytes: nil, out: out, job: job, progress: progress)
                 return out
             }

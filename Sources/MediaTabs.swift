@@ -761,7 +761,7 @@ struct AudioTabView: View {
         guard !t.isEmpty else { NSSound.beep(); return }
         let dir = Paths.support.appendingPathComponent("Testo in voce")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let name = Media.ttsName(t, fallback: "Testo").replacingOccurrences(of: " (voce)", with: "")
+        let name = FileTag.all("voce").reduce(Media.ttsName(t, fallback: "Testo")) { $0.replacingOccurrences(of: " (\($1))", with: "") }
         let src = dir.appendingPathComponent(name + ".txt")
         do { try t.write(to: src, atomically: true, encoding: .utf8) } catch { NSSound.beep(); return }
         let prefs = ScriptPrefs.load()

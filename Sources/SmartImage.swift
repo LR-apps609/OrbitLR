@@ -56,7 +56,7 @@ enum SmartImage {
         if original > 0, Int64(data.count) >= original * 9 / 10 {
             throw NativeError(String(localized: "«\(src.lastPathComponent)» è già compressa al meglio: ricomprimerla la peggiorerebbe senza farla pesare meno"))
         }
-        let out = Destination.unique(dir, base: "\(base) (più leggera)", ext: format == .heic ? "heic" : "jpg")
+        let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("più leggera")))", ext: format == .heic ? "heic" : "jpg")
         try data.write(to: out)
         return out
     }
@@ -138,7 +138,7 @@ enum SmartImage {
         }
         let props = (CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]) ?? [:]
         let base = src.deletingPathExtension().lastPathComponent
-        let out = Destination.unique(dir, base: "\(base) (senza metadati)", ext: src.pathExtension.isEmpty ? "jpg" : src.pathExtension)
+        let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("senza metadati")))", ext: src.pathExtension.isEmpty ? "jpg" : src.pathExtension)
         guard let dest = CGImageDestinationCreateWithURL(out as CFURL, type, 1, nil) else {
             throw NativeError(String(localized: "macOS non sa scrivere questo formato"))
         }

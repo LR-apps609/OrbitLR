@@ -19,7 +19,7 @@ enum SendToPhone {
         let dir = Paths.support.appendingPathComponent("Da mandare", isDirectory: true)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let name = file.deletingPathExtension().lastPathComponent
-            .replacingOccurrences(of: " (suoneria)", with: "")
+            .replacingOccurrences(of: " (suoneria)", with: "").replacingOccurrences(of: " (ringtone)", with: "")
         let out = dir.appendingPathComponent(name + ".m4a")
         try? FileManager.default.removeItem(at: out)
         try FileManager.default.copyItem(at: file, to: out)

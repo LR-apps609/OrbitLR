@@ -125,6 +125,12 @@ save_prefs() {
 
 typeset -A WMODEL=(small ggml-small.bin turbo ggml-large-v3-turbo.bin)
 typeset -A WSIZE=(small "470 MB" turbo "1,6 GB")
+# 4.2.1 · Le parole nei nomi dei file creati, nella lingua dell'app (LR_LANG=en dall'app)
+typeset -A SX_EN=("senza metadati" "no metadata" "senza silenzi" "no silences" "taglio" "trimmed" "normalizzato" "normalized"
+  "voce pulita" "clean voice" "con sottotitoli" "with subtitles" "compresso" "compressed" "pagine" "pages" "pezzo" "clip"
+  "protetto" "protected" "riordinato" "reordered" "ruotato" "rotated" "sbloccato" "unlocked" "testo" "text"
+  "trascrizione" "transcript" "velocità" "speed")
+sx() { if [[ $LR_LANG == en && -n ${SX_EN[$1]} ]]; then print -r -- ${SX_EN[$1]}; else print -r -- $1; fi }
 wq() { local q=${PREF[wq]}; [[ -n ${WMODEL[$q]} ]] || q=small; print -r -- $q }
 model_path() { print -r -- "$MODELS/${WMODEL[$(wq)]}" }
 
@@ -1325,7 +1331,7 @@ resize_run() {  # sorgente, preset (half | 3840 | 1920 | 1280 | web)
 
 strip_run() {  # sorgente → copia senza metadati
   local src=$1 e=$(norm "${1:e}") base=${1:t:r}
-  local out="$JD/out/$base (senza metadati).${1:e}"
+  local out="$JD/out/$base ($(sx 'senza metadati')).${1:e}"
   case $(kind_of $e) in
     video|audio)
       local -a fs=(); [[ $e == (mp4|mov|m4v|m4a) ]] && fs=(-movflags +faststart)
@@ -1352,7 +1358,7 @@ pdfimg_run() {  # pdf, formato → un'immagine per pagina
     local -a pages=("$JD/pages"/*(N))
     (( $#pages )) || return 1
     if (( $#pages == 1 )); then mv -f -- "$pages[1]" "$JD/out/$base.$t"
-    else mv -f -- "$JD/pages" "$JD/out/$base (pagine)"
+    else mv -f -- "$JD/pages" "$JD/out/$base ($(sx 'pagine'))"
     fi
     return 0
   fi
@@ -1368,7 +1374,7 @@ pdfimg_run() {  # pdf, formato → un'immagine per pagina
 pdfc_run() {  # pdf, livello (light | medium | strong)
   local src=$1 base=${1:t:r} set
   case $2 in light) set=/printer ;; strong) set=/screen ;; *) set=/ebook ;; esac
-  local out="$JD/out/$base (compresso).pdf"
+  local out="$JD/out/$base ($(sx 'compresso')).pdf"
   gs -q -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dCompatibilityLevel=1.6 -dPDFSETTINGS=$set \
      -dDetectDuplicateImages=true -dAutoRotatePages=/None "-sOutputFile=$out" "$src" || return 1
   local a=$(stat -f %z "$src") b=$(stat -f %z "$out")
@@ -1551,7 +1557,7 @@ silence_run() {  # audio → senza le pause lunghe
   [[ $e == (wma|aac) ]] && oe=m4a
   local af="silenceremove=start_periods=1:start_duration=0.2:start_threshold=-45dB:stop_periods=-1:stop_duration=0.7:stop_threshold=-45dB"
   ffmpeg -nostdin -hide_banner -loglevel error -y -progress "$JOB_PROG" -nostats -i "$src" -map_metadata 0 \
-         -map 0:a:0 -af "$af" ${=$(acodec_for $(norm $oe))} "$JD/out/$base (senza silenzi).$oe"
+         -map 0:a:0 -af "$af" ${=$(acodec_for $(norm $oe))} "$JD/out/$base ($(sx 'senza silenzi')).$oe"
 }
 
 speed_run() {  # audio o video, velocità (0.5 · 0.75 · 1.25 · 1.5 · 2)
@@ -1560,10 +1566,10 @@ speed_run() {  # audio o video, velocità (0.5 · 0.75 · 1.25 · 1.5 · 2)
   local -a ff=(ffmpeg -nostdin -hide_banner -loglevel error -y -progress "$JOB_PROG" -nostats -i "$src" -map_metadata 0)
   if [[ $k == audio ]]; then
     local oe=${1:e}; [[ $e == (wma|aac) ]] && oe=m4a
-    $ff -map 0:a:0 -af "atempo=$sp" ${=$(acodec_for $(norm $oe))} "$JD/out/$base (velocità $lbl).$oe"
+    $ff -map 0:a:0 -af "atempo=$sp" ${=$(acodec_for $(norm $oe))} "$JD/out/$base ($(sx 'velocità') $lbl).$oe"
     return
   fi
-  local out="$JD/out/$base (velocità $lbl).mp4"
+  local out="$JD/out/$base ($(sx 'velocità') $lbl).mp4"
   local -a fc
   if [[ -n $(probe a "$src") ]]; then fc=(-filter_complex "[0:v:0]setpts=PTS/$sp[v];[0:a:0]atempo=$sp[a]" -map "[v]" -map "[a]")
   else fc=(-map 0:v:0 -vf "setpts=PTS/$sp")
@@ -1582,18 +1588,18 @@ cut_run() {  # sorgente, inizio, fine ("" = fino alla fine), modo (cut | gif)
   local -a ff=(ffmpeg -nostdin -hide_banner -loglevel error -y -progress "$JOB_PROG" -nostats -ss $s -i "$src" $tt -map_metadata 0)
   if [[ $mode == gif ]]; then
     $ff -an -vf "fps=12,scale='min(720,iw)':-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4" \
-        "$JD/out/$base (pezzo).gif"
+        "$JD/out/$base ($(sx 'pezzo')).gif"
     return
   fi
   if [[ $k == audio ]]; then
     oe=${1:e}; [[ $e == wma ]] && oe=mp3
-    out="$JD/out/$base (taglio).$oe"
+    out="$JD/out/$base ($(sx 'taglio')).$oe"
     if [[ $e != wma ]]; then $ff -map 0:a -c copy "$out" && return 0; fi
     $ff -map 0:a ${=$(acodec_for $(norm $oe))} "$out"
     return
   fi
   oe=${1:e}; [[ $e == (mp4|mov|mkv|m4v) ]] || oe=mp4
-  out="$JD/out/$base (taglio).$oe"
+  out="$JD/out/$base ($(sx 'taglio')).$oe"
   local -a m=(-map 0:v:0 -map '0:a:0?') fs=()
   [[ $oe == (mp4|mov|m4v) ]] && fs=(-movflags +faststart)
   # 3.6 · Prima il taglio istantaneo senza ricodifica (secondi anche su un film); se non riesce, si ricodifica
@@ -1609,8 +1615,8 @@ norm_run() {  # sorgente [clean] → volume uniforme; con «clean» anche la voc
   local k=$(kind_of $e) oe=${1:e} out
   # Voce più pulita: via il rombo sotto gli 80 Hz, il fruscio costante attenuato con delicatezza
   # (12 dB: di più la voce diventa metallica), poi il volume uniforme. Il video non si tocca.
-  local chain="loudnorm=I=-16:TP=-1.5:LRA=11" tag="normalizzato"
-  [[ $mode == clean ]] && { chain="highpass=f=80,afftdn=nr=12:nf=-35:tn=1,$chain"; tag="voce pulita" }
+  local chain="loudnorm=I=-16:TP=-1.5:LRA=11" tag="$(sx 'normalizzato')"
+  [[ $mode == clean ]] && { chain="highpass=f=80,afftdn=nr=12:nf=-35:tn=1,$chain"; tag="$(sx 'voce pulita')" }
   local sr=$(ffprobe -v error -select_streams a:0 -show_entries stream=sample_rate -of default=nw=1:nk=1 "$src" 2>/dev/null | head -n 1)
   [[ -n $sr ]] || { print "LRERR: il file non contiene audio" >&2; return 1 }
   [[ $sr == <-> ]] || sr=48000
@@ -1638,7 +1644,7 @@ transcribe_run() {  # audio o video → testo + sottotitoli
          -vn -ac 1 -ar 16000 -c:a pcm_s16le "$JD/audio.wav" || return 1
   local th=$NCPU; (( th > 8 )) && th=8
   $wb -m "$model" -f "$JD/audio.wav" -l ${PREF[wlang]:-auto} -t $th -pp -otxt -osrt \
-      -of "$JD/out/$base (trascrizione)" 2>"$JOB_PROG" >/dev/null
+      -of "$JD/out/$base ($(sx 'trascrizione'))" 2>"$JOB_PROG" >/dev/null
   local rc=$?
   cat "$JOB_PROG" >&2
   return $rc
@@ -1669,7 +1675,7 @@ sube_run() {  # video, srt → video con sottotitoli selezionabili
   elif [[ $e != (mp4|mov|m4v) ]]; then oe=mkv; sc=srt
   fi
   local -a fs=(); [[ $oe == (mp4|mov|m4v) ]] && fs=(-movflags +faststart)
-  local out="$JD/out/$base (con sottotitoli).$oe"
+  local out="$JD/out/$base ($(sx 'con sottotitoli')).$oe"
   local enc
   for enc in UTF-8 CP1252; do   # molti .srt italiani non sono in UTF-8
     ffmpeg -nostdin -hide_banner -loglevel error -y -progress "$JOB_PROG" -nostats -i "$src" -sub_charenc $enc -i "$srt" \
@@ -1705,11 +1711,11 @@ run_job() {
     to:*)        conv_job $j ;;
     resize)      resize_run "$src" "$p" ;;
     strip)       strip_run "$src" ;;
-    ocr)         "$HELPER" ocr "$src" "$JD/out/$base (testo).txt" "$(ocr_langs)" > "$JOB_PROG" ;;
+    ocr)         "$HELPER" ocr "$src" "$JD/out/$base ($(sx 'testo')).txt" "$(ocr_langs)" > "$JOB_PROG" ;;
     pdftext)     "$HELPER" text "$src" "$JD/out/$base.txt" "$(ocr_langs)" > "$JOB_PROG" ;;
     merge)       "$HELPER" merge "$JD/out/PDF unito.pdf" "${(@f)$(<"$JD/inputs")}" > "$JOB_PROG" ;;
-    split)       "$HELPER" split "$src" "$JD/out/$base (pagine)" "$base" > "$JOB_PROG" ;;
-    extract)     "$HELPER" extract "$src" "$JD/out/$base (pagine $p).pdf" "$p" > "$JOB_PROG" ;;
+    split)       "$HELPER" split "$src" "$JD/out/$base ($(sx 'pagine'))" "$base" > "$JOB_PROG" ;;
+    extract)     "$HELPER" extract "$src" "$JD/out/$base ($(sx 'pagine') $p).pdf" "$p" > "$JOB_PROG" ;;
     pdfcompress) pdfc_run "$src" "$p" ;;
     vcompress)   vcompress_run "$src" "$p" ;;
     cut)         cut_run "$src" "${p%%|*}" "${p#*|}" cut ;;
@@ -1724,10 +1730,10 @@ run_job() {
     vresize)     vresize_run "$src" "$p" ;;
     silence)     silence_run "$src" ;;
     speed)       speed_run "$src" "$p" ;;
-    rotate)      "$HELPER" rotate "$src" "$JD/out/$base (ruotato).pdf" "$p" > "$JOB_PROG" ;;
-    reorder)     "$HELPER" reorder "$src" "$JD/out/$base (riordinato).pdf" "$p" > "$JOB_PROG" ;;
-    protect)     LR_PW="$p" "$HELPER" protect "$src" "$JD/out/$base (protetto).pdf" - > "$JOB_PROG" ;;
-    unprotect)   LR_PW="$p" "$HELPER" unprotect "$src" "$JD/out/$base (sbloccato).pdf" - > "$JOB_PROG" ;;
+    rotate)      "$HELPER" rotate "$src" "$JD/out/$base ($(sx 'ruotato')).pdf" "$p" > "$JOB_PROG" ;;
+    reorder)     "$HELPER" reorder "$src" "$JD/out/$base ($(sx 'riordinato')).pdf" "$p" > "$JOB_PROG" ;;
+    protect)     LR_PW="$p" "$HELPER" protect "$src" "$JD/out/$base ($(sx 'protetto')).pdf" - > "$JOB_PROG" ;;
+    unprotect)   LR_PW="$p" "$HELPER" unprotect "$src" "$JD/out/$base ($(sx 'sbloccato')).pdf" - > "$JOB_PROG" ;;
     *) return 1 ;;
   esac
 }

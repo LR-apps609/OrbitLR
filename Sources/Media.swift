@@ -49,12 +49,12 @@ enum Media {
             let mode = String(p[p.startIndex..<bar])
             let music = URL(fileURLWithPath: String(p[p.index(after: bar)...]))
             guard FileManager.default.fileExists(atPath: music.path) else { throw NativeError(String(localized: "non trovo il file della musica")) }
-            let out = Destination.unique(dir, base: "\(base) (con musica)", ext: "mp4")
+            let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("con musica")))", ext: "mp4")
             try await addMusic(file, music: music, replace: mode == "replace", out: out, job: job, progress: progress)
             return out
         case "ringtone":
             let r = RingParam(job.param)
-            let out = Destination.unique(dir, base: "\(base) (suoneria)", ext: "m4r")
+            let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("suoneria")))", ext: "m4r")
             try await renderAudio([(file, r.start, r.end)], out: out, bitrate: 192_000, channels: 2,
                                   fadeIn: r.fade ? 0.6 : 0, fadeOut: r.fade ? 1.5 : 0, normalize: r.normalize,
                                   maxSeconds: 30, job: job, progress: progress)     // 2.9.4 · limite dell'iPhone
@@ -83,19 +83,19 @@ enum Media {
         let base = first.deletingPathExtension().lastPathComponent
         switch job.action.id {
         case "vproject":
-            let out = Destination.unique(dir, base: "\(base) (montaggio)", ext: "mp4")
+            let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("montaggio")))", ext: "mp4")
             try await VideoProjectExport.run(snapshot: URL(fileURLWithPath: job.param), out: out, job: job, progress: progress)
             return out
         case "vmerge":
             let videos = files.filter { Catalog.kind(of: $0) == .video }
             guard videos.count >= 2 else { throw NativeError(String(localized: "servono almeno 2 video")) }
-            let out = Destination.unique(dir, base: "\(base) (\(videos.count) video uniti)", ext: "mp4")
+            let out = Destination.unique(dir, base: "\(base) (\(videos.count) \(FileTag.t("video uniti")))", ext: "mp4")
             try await mergeVideos(videos, out: out, job: job, progress: progress)
             return out
         case "amerge":
             let audios = files.filter { [.audio, .video].contains(Catalog.kind(of: $0)) }
             guard audios.count >= 2 else { throw NativeError(String(localized: "servono almeno 2 file audio")) }
-            let out = Destination.unique(dir, base: "\(base) (\(audios.count) audio uniti)", ext: "m4a")
+            let out = Destination.unique(dir, base: "\(base) (\(audios.count) \(FileTag.t("audio uniti")))", ext: "m4a")
             try await renderAudio(audios.map { ($0, nil, nil) }, out: out, bitrate: 192_000, channels: 2,
                                   fadeIn: 0, fadeOut: 0, normalize: false, maxSeconds: nil, job: job, progress: progress)
             return out
@@ -687,7 +687,7 @@ enum Media {
         let words = text.split(whereSeparator: { $0.isWhitespace || $0.isNewline }).prefix(6).joined(separator: " ")
         let clean = words.replacingOccurrences(of: #"[/:\\?%*|"<>]"#, with: "", options: .regularExpression)
         let name = String(clean.prefix(48)).trimmingCharacters(in: .whitespacesAndNewlines)
-        return (name.isEmpty ? fallback : name) + " (voce)"
+        return (name.isEmpty ? fallback : name) + " (\(FileTag.t("voce")))"
     }
 }
 

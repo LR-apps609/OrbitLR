@@ -28,7 +28,7 @@ enum Tools {
         let kind = Catalog.kind(of: file)
         switch job.action.id {
         case "searchable":
-            let out = Destination.unique(dir, base: "\(base) (ricercabile)", ext: "pdf")
+            let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("ricercabile")))", ext: "pdf")
             if kind == .pdf {
                 try makeSearchablePDF(file, out: out, progress: progress)
             } else {
@@ -47,25 +47,25 @@ enum Tools {
                 await MainActor.run { job.status = String(localized: "Ricostruisco la zona con l’IA…") }
             }
             if kind == .video {
-                let out = Destination.unique(dir, base: "\(base) (senza logo)", ext: "mp4")
+                let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("senza logo")))", ext: "mp4")
                 try await HideMark.video(file, spec: spec, out: out, job: job, inpainter: inpainter, progress: progress)
                 return out
             }
             let e = Catalog.norm(file.pathExtension)
-            let out = Destination.unique(dir, base: "\(base) (senza logo)", ext: ["jpg", "png", "heic", "tiff"].contains(e) ? e : "png")
+            let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("senza logo")))", ext: ["jpg", "png", "heic", "tiff"].contains(e) ? e : "png")
             try HideMark.image(file, spec: spec, out: out, inpainter: inpainter)
             progress(1)
             return out
         case "removebg":
             let mode = job.param.isEmpty ? "transparent" : job.param
             let ext = mode == "white" ? "jpg" : "png"
-            let out = Destination.unique(dir, base: "\(base) (senza sfondo)", ext: ext)
+            let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("senza sfondo")))", ext: ext)
             try removeBackground(file, mode: mode, out: out)
             progress(1)
             return out
         case "straighten":
             let mode = job.param.isEmpty ? "color-jpg" : job.param
-            let out = Destination.unique(dir, base: "\(base) (raddrizzato)", ext: mode.hasSuffix("pdf") ? "pdf" : "jpg")
+            let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("raddrizzato")))", ext: mode.hasSuffix("pdf") ? "pdf" : "jpg")
             try straighten(file, bw: mode.hasPrefix("bw"), out: out)
             progress(1)
             return out
@@ -82,7 +82,7 @@ enum Tools {
             let e = Catalog.norm(file.pathExtension)
             let ext = ["jpg", "png", "heic", "tiff"].contains(e) ? e : "png"
             let parsed = AIEnhance.parse(p)
-            let label = parsed.factor == 1 ? "migliorata" : "IA \(parsed.factor)×"
+            let label = parsed.factor == 1 ? FileTag.t("migliorata") : "\(FileTag.t("IA")) \(parsed.factor)×"
             let out = Destination.unique(dir, base: "\(base) (\(label))", ext: ext)
             try AIEnhance.run(file, param: p, out: out, progress: progress)
             return out
