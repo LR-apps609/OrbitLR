@@ -4,6 +4,7 @@
 
 import { run, subscribe } from "./jobs.js";
 import { h, ico, toast } from "./util.js";
+import { t, tr } from "./i18n.js";
 
 /** Un link valido: http/https, senza spazi, con un dominio vero. */
 export function linkFrom(text) {
@@ -21,8 +22,8 @@ export function linkFrom(text) {
 /** video: true per i video (MP4 fino a 1080p), false per l'audio (M4A). onFile(path) quando è pronto. */
 export function downloaderBar({ video, onFile }) {
   const name = video ? "Video Downloader" : "Audio Downloader";
-  const input = h("input.dl-in", { type: "text", spellcheck: "false", placeholder: "Incolla un link · funziona con migliaia di siti", "aria-label": name + ": incolla un link" });
-  const go = h("button.dl-go", { type: "button", title: "Scarica dal link (oppure premi Invio)" }, "Scarica");
+  const input = h("input.dl-in", { type: "text", spellcheck: "false", placeholder: t("Incolla un link · funziona con migliaia di siti"), "aria-label": t`${name}: incolla un link` });
+  const go = h("button.dl-go", { type: "button", title: t("Scarica dal link (oppure premi Invio)") }, t("Scarica"));
   const el = h("div.dl" + (video ? ".video" : ".audio"), { role: "group", "aria-label": name },
     h("span.dl-label", ico("circle-arrow-down", 15), h("span.dl-name", name)), input, go);
 
@@ -33,15 +34,15 @@ export function downloaderBar({ video, onFile }) {
 
   async function start() {
     const link = linkFrom(input.value);
-    if (!link) return toast("Copia il link intero, con https:// davanti.");
+    if (!link) return toast(t("Copia il link intero, con https:// davanti."));
     input.value = "";
     update();
-    toast(video ? "Scarico il video… lo trovi qui quando è pronto." : "Scarico l’audio… lo trovi qui quando è pronto.");
+    toast(video ? t("Scarico il video… lo trovi qui quando è pronto.") : t("Scarico l’audio… lo trovi qui quando è pronto."));
     const job = await run("link", [], { link, mode: video ? "video" : "audio" }, video ? "video" : "audio");
     const done = (j) => {
       const out = j.results.flatMap((r) => r.outputs)[0];
       if (out) onFile?.(out.path);
-      else if (j.state === "failed") toast(j.results.find((r) => r.error)?.error || "Non sono riuscito a scaricare da questo link.");
+      else if (j.state === "failed") toast(tr(j.results.find((r) => r.error)?.error) || t("Non sono riuscito a scaricare da questo link."));
     };
     if (job.state !== "running") return done(job);
     const off = subscribe((j) => {

@@ -1,9 +1,11 @@
 // Filtri e regolazioni: la stessa matematica del motore (engine/src/look.rs), così l'anteprima
 // coincide con il video esportato. Il colore è una matrice 3×4 usata da un feColorMatrix SVG.
 
+import { t } from "./i18n.js";
+
 export const PRESETS = [
-  ["none", "Nessuno"], ["vivid", "Vivido"], ["warm", "Caldo"], ["cool", "Freddo"], ["mono", "Bianco e nero"], ["sepia", "Seppia"],
-  ["vintage", "Vintage"], ["film", "Pellicola"], ["night", "Notte"], ["dream", "Sogno"], ["drama", "Drammatico"], ["pastel", "Pastello"], ["radio", "Radio"],
+  ["none", t("Nessuno")], ["vivid", t("Vivido")], ["warm", t("Caldo")], ["cool", t("Freddo")], ["mono", t("Bianco e nero")], ["sepia", t("Seppia")],
+  ["vintage", t("Vintage")], ["film", t("Pellicola")], ["night", t("Notte")], ["dream", t("Sogno")], ["drama", t("Drammatico")], ["pastel", t("Pastello")], ["radio", t("Radio")],
 ];
 
 const ID = { m: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], o: [0, 0, 0] };

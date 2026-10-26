@@ -111,7 +111,7 @@ impl Rule {
 
     /// Dove mettere i risultati.
     pub fn out_dir(&self) -> Option<PathBuf> {
-        preset_of(self).and_then(|p| p.subfolder).map(|s| self.path.join(s))
+        preset_of(self).and_then(|p| p.subfolder).map(|s| self.path.join(crate::names::tag(s)))
     }
 }
 

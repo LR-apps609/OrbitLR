@@ -2,18 +2,19 @@
 // pannello con Clip, Filtri, Effetti, Testi, Audio, Formato. ⌘Z/Ctrl+Z annulla, si salva da solo.
 
 import { DEMO, fileUrl, invoke, pickFiles, setDemoPick } from "./api.js";
+import { dec, t, tr, tc, LOCALE } from "./i18n.js";
 import { run } from "./jobs.js";
 import { PRESETS, emptyLook, feMatrix, isIdentity, resolve } from "./look.js";
 import { resultBar } from "./resultbar.js";
 import { ANIMS, COLORS, STYLES, drawText, exportOverlay, newText, stateAt } from "./textdraw.js";
 import { baseName, fmtTime, h, ico, modal, store, toast } from "./util.js";
 
-const TRANSITIONS = [["fade", "Dissolvenza"], ["black", "Al nero"], ["white", "Al bianco"], ["slide", "Scorrimento"], ["zoom", "Zoom"], ["blur", "Sfocatura"]];
+const TRANSITIONS = [["fade", t("Dissolvenza")], ["black", t("Al nero")], ["white", t("Al bianco")], ["slide", t("Scorrimento")], ["zoom", t("Zoom")], ["blur", t("Sfocatura")]];
 const SPEEDS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
-const TOOLS = [["clip", "Clip", "scissors"], ["look", "Filtri", "sparkles"], ["fx", "Effetti", "wand-sparkles"], ["text", "Testi", "file-text"], ["audio", "Audio", "music"], ["format", "Formato", "crop"]];
+const TOOLS = [["clip", t("Clip"), "scissors"], ["look", t("Filtri"), "sparkles"], ["fx", t("Effetti"), "wand-sparkles"], ["text", t("Testi"), "file-text"], ["audio", t("Audio"), "music"], ["format", t("Formato"), "crop"]];
 
 function newProject(n) {
-  return { name: `Progetto ${n}`, clips: [], texts: [], music: null, originalVolume: 1, originalMuted: false, aspect: "orig", resolution: 1080, fps: 30, look: null };
+  return { name: t`Progetto ${n}`, clips: [], texts: [], music: null, originalVolume: 1, originalMuted: false, aspect: "orig", resolution: 1080, fps: 30, look: null };
 }
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -49,7 +50,7 @@ export function editorPage(app, onBack) {
       current.updated = Date.now();
       if (!saveLibrary() && !saveWarned) {
         saveWarned = true;
-        toast("Non riesco a salvare il progetto: troppi progetti grandi. Eliminane qualcuno da «Progetti».");
+        toast(t("Non riesco a salvare il progetto: troppi progetti grandi. Eliminane qualcuno da «Progetti»."));
       }
     }, 400);
   }
@@ -61,7 +62,7 @@ export function editorPage(app, onBack) {
     const grid = h("div.grid", { style: { padding: "4px 0 24px" } },
       h("div.tile", { role: "button", tabindex: "0", onclick: () => openProject(null) },
         h("div.th", { style: { background: "color-mix(in srgb, var(--sage) 18%, var(--bg-2))", color: "var(--sage-deep)" } }, ico("plus", 40)),
-        h("div.nm", "Nuovo progetto"), h("div.mt", "Video, testi e musica")),
+        h("div.nm", t("Nuovo progetto")), h("div.mt", t("Video, testi e musica"))),
       library.slice().sort((a, b) => b.updated - a.updated).map((item) => {
         const d = item.data;
         const dur = (d.clips || []).reduce((a, c) => a + clipLen(c), 0);
@@ -69,10 +70,10 @@ export function editorPage(app, onBack) {
         const tile = h("div.tile", { role: "button", tabindex: "0", onclick: () => openProject(item) },
           h("div.th", cover ? h("img", { src: cover, alt: "" }) : ico("film", 34)),
           h("span.dur", fmtTime(dur)),
-          h("div.nm", item.name), h("div.mt", new Date(item.updated).toLocaleDateString("it-IT", { day: "numeric", month: "short" })),
-          h("button.rm", { title: "Elimina", "aria-label": "Elimina " + item.name, onclick: async (e) => {
+          h("div.nm", item.name), h("div.mt", new Date(item.updated).toLocaleDateString(LOCALE, { day: "numeric", month: "short" })),
+          h("button.rm", { title: t("Elimina"), "aria-label": t`Elimina ${item.name}`, onclick: async (e) => {
             e.stopPropagation();
-            if (await modal(`Eliminare «${item.name}»?`, "I video non si toccano: si elimina solo il progetto.", [{ label: "Annulla", value: false }, { label: "Elimina", value: true, primary: true }])) {
+            if (await modal(t`Eliminare «${item.name}»?`, t("I video non si toccano: si elimina solo il progetto."), [{ label: t("Annulla"), value: false }, { label: t("Elimina"), value: true, primary: true }])) {
               library = library.filter((x) => x !== item);
               saveLibrary();
               showProjects();
@@ -82,8 +83,8 @@ export function editorPage(app, onBack) {
         return tile;
       }));
     el.replaceChildren(
-      h("div.head", h("div", h("h1", "Progetti"), h("div.sub", "Montaggi con tagli, filtri, testi e musica: si salvano da soli")), h("div.grow"),
-        h("div.seg", h("button", { onclick: onBack }, "Strumenti veloci"), h("button.on", ico("film", 14), " Editor"))),
+      h("div.head", h("div", h("h1", t("Progetti")), h("div.sub", t("Montaggi con tagli, filtri, testi e musica: si salvano da soli"))), h("div.grow"),
+        h("div.seg", h("button", { onclick: onBack }, t("Strumenti veloci")), h("button.on", ico("film", 14), " Editor"))),
       h("div.page-scroll", grid));
   }
 
@@ -118,7 +119,7 @@ export function editorPage(app, onBack) {
       if (lost.length) {
         p.clips = p.clips.filter((c) => !lost.includes(c.path));
         if (p.music && lost.includes(p.music.path)) p.music = null;
-        toast(`Non trovo più ${lost.length === 1 ? "un file" : lost.length + " file"} del progetto: spostato o cancellato.`);
+        toast(t`Non trovo più ${lost.length === 1 ? t("un file") : t`${lost.length} file`} del progetto: spostato o cancellato.`);
       }
     }
     buildEditor();
@@ -153,7 +154,7 @@ export function editorPage(app, onBack) {
   async function addClips(paths) {
     const probed = await invoke("probe_files", { paths });
     const ok = probed.filter((r) => r.ok && (r.info.kind === "video" || (r.info.kind === "image")));
-    if (!ok.length) return toast("Aggiungi dei video.");
+    if (!ok.length) return toast(t("Aggiungi dei video."));
     change((pp) => {
       for (const r of ok) {
         infos[r.info.path] = r.info;
@@ -428,23 +429,23 @@ export function editorPage(app, onBack) {
   // ── Struttura dell'editor
   let playBtn, timeLabel, nameInput, timelineEl, inspector, playheadEl, toolbar;
   function buildEditor() {
-    nameInput = h("input.name", { value: p.name, "aria-label": "Nome del progetto", onchange: () => change((pp) => (pp.name = nameInput.value.trim() || pp.name)) });
-    playBtn = h("button.btn.icon", { "aria-label": "Riproduci", title: "Riproduci (Spazio)", onclick: () => (playing ? stop() : play()) }, ico("play", 18));
+    nameInput = h("input.name", { value: p.name, "aria-label": t("Nome del progetto"), onchange: () => change((pp) => (pp.name = nameInput.value.trim() || pp.name)) });
+    playBtn = h("button.btn.icon", { "aria-label": t("Riproduci"), title: t("Riproduci (Spazio)"), onclick: () => (playing ? stop() : play()) }, ico("play", 18));
     timeLabel = h("span.tlabel");
     toolbar = h("div.ed-tools", TOOLS.map(([id, label, icn]) => h("button" + (tool === id ? ".on" : ""), { "data-tool": id, onclick: () => { tool = id; renderInspector(); renderToolbar(); } }, ico(icn, 17), label)));
     inspector = h("div.inspector");
     timelineEl = h("div.timeline");
     const top = h("div.ed-top",
-      h("button.btn", { onclick: () => { stop(); showProjects(); } }, "‹ Progetti"),
+      h("button.btn", { onclick: () => { stop(); showProjects(); } }, t("‹ Progetti")),
       nameInput,
       h("div.grow"),
-      h("button.btn.icon", { title: "Annulla (Ctrl+Z)", "aria-label": "Annulla", onclick: doUndo }, ico("undo-2", 16)),
-      h("button.btn.icon", { title: "Rifai (Ctrl+Y)", "aria-label": "Rifai", onclick: doRedo, style: { transform: "scaleX(-1)" } }, ico("undo-2", 16)),
-      h("button.btn", { onclick: pickClips }, ico("plus", 15), "Aggiungi video"),
-      h("button.btn.brass", { onclick: exportVideo }, ico("download", 15), "Esporta"));
+      h("button.btn.icon", { title: t("Annulla (Ctrl+Z)"), "aria-label": tc("undo", "Annulla"), onclick: doUndo }, ico("undo-2", 16)),
+      h("button.btn.icon", { title: t("Rifai (Ctrl+Y)"), "aria-label": t("Rifai"), onclick: doRedo, style: { transform: "scaleX(-1)" } }, ico("undo-2", 16)),
+      h("button.btn", { onclick: pickClips }, ico("plus", 15), t("Aggiungi video")),
+      h("button.btn.brass", { onclick: exportVideo }, ico("download", 15), t("Esporta")));
     const ctrl = h("div.ed-ctrl", playBtn, timeLabel, h("div.grow"),
-      h("button.btn", { title: "Testo (T)", onclick: addText }, ico("plus", 14), "Testo"),
-      h("button.btn", { title: "Dividi qui (S)", onclick: splitHere }, ico("scissors", 14), "Dividi"));
+      h("button.btn", { title: t("Testo (T)"), onclick: addText }, ico("plus", 14), t("Testo")),
+      h("button.btn", { title: t("Dividi qui (S)"), onclick: splitHere }, ico("scissors", 14), t("Dividi")));
     el.replaceChildren(h("div.ed", top, h("div.ed-mid", h("div.ed-left", stage, ctrl), h("div.ed-right", toolbar, inspector)), timelineEl, bar.el));
     activeIndex = -1;
     requestAnimationFrame(() => { layoutStage(); renderAll(); });
@@ -489,20 +490,20 @@ export function editorPage(app, onBack) {
         title: `${baseName(c.path)} · ${fmtTime(clipLen(c), true)}`,
         onpointerdown: (e) => dragClip(e, i),
       },
-      h("span.lbl", (c.fx?.speed && c.fx.speed !== 1 ? `${String(c.fx.speed).replace(".", ",")}× · ` : "") + baseName(c.path)),
+      h("span.lbl", (c.fx?.speed && c.fx.speed !== 1 ? `${dec(String(c.fx.speed).replace(".", ","))}× · ` : "") + baseName(c.path)),
       c.muted ? h("span.badge-ic", ico("volume-x", 12)) : null,
       (c.look && !isIdentity(c.look)) ? h("span.badge-ic.l", ico("sparkles", 12)) : null,
       h("div.edge.l", { onpointerdown: (e) => trimClip(e, i, "in") }),
       h("div.edge.r", { onpointerdown: (e) => trimClip(e, i, "out") }));
       clipsRow.append(blk);
       if (i > 0) {
-        const t = c.transition;
-        clipsRow.append(h("button.tdot" + (t ? ".on" : ""), { style: { left: x - 9 + "px" }, title: t ? `Transizione: ${TRANSITIONS.find((k) => k[0] === t.kind)?.[1]}` : "Aggiungi una transizione",
-          onclick: (e) => { e.stopPropagation(); transitionMenu(i, e.currentTarget); } }, t ? ico("sparkles", 11) : ico("plus", 11)));
+        const trn = c.transition;
+        clipsRow.append(h("button.tdot" + (trn ? ".on" : ""), { style: { left: x - 9 + "px" }, title: trn ? t`Transizione: ${TRANSITIONS.find((k) => k[0] === trn.kind)?.[1]}` : t("Aggiungi una transizione"),
+          onclick: (e) => { e.stopPropagation(); transitionMenu(i, e.currentTarget); } }, trn ? ico("sparkles", 11) : ico("plus", 11)));
       }
       x += w;
     });
-    if (!p.clips.length) clipsRow.append(h("div.hint", { style: { left: "12px" } }, "Aggiungi dei video: trascinali qui o premi «Aggiungi video»"));
+    if (!p.clips.length) clipsRow.append(h("div.hint", { style: { left: "12px" } }, t("Aggiungi dei video: trascinali qui o premi «Aggiungi video»")));
     const textRow = h("div.row.texts", { style: { width: width + "px" } },
       p.texts.map((t, k) => h("div.tblk" + (sel.kind === "text" && sel.index === k ? ".on" : ""), {
         style: { left: 12 + t.start * pps + "px", width: Math.max(12, (t.end - t.start) * pps) + "px" },
@@ -522,7 +523,7 @@ export function editorPage(app, onBack) {
       inner.onpointermove = move;
       inner.onpointerup = () => { inner.onpointermove = null; };
     });
-    const zoom = h("input", { type: "range", min: 8, max: 200, value: pps, "aria-label": "Zoom della sequenza", oninput: (e) => { pps = Number(e.target.value); renderTimeline(); } });
+    const zoom = h("input", { type: "range", min: 8, max: 200, value: pps, "aria-label": t("Zoom della sequenza"), oninput: (e) => { pps = Number(e.target.value); renderTimeline(); } });
     const scroller = h("div.tl-scroll", inner);
     const prevScroll = timelineEl.querySelector(".tl-scroll")?.scrollLeft || 0;
     timelineEl.replaceChildren(h("div.tl-side", h("span", ico("film", 14)), h("span", ico("file-text", 14)), h("span", ico("music", 14)), h("div.zoom", ico("search", 13), zoom)), scroller);
@@ -649,12 +650,12 @@ export function editorPage(app, onBack) {
     const c = p.clips[i];
     const cur = c.transition;
     const pop = h("div.pop", { role: "dialog" },
-      h("b", "Transizione"),
-      h("div.opts", h("button.opt" + (!cur ? ".on" : ""), { onclick: () => { change((pp) => (pp.clips[i].transition = null)); pop.remove(); } }, "Nessuna"),
+      h("b", t("Transizione")),
+      h("div.opts", h("button.opt" + (!cur ? ".on" : ""), { onclick: () => { change((pp) => (pp.clips[i].transition = null)); pop.remove(); } }, t("Nessuna")),
         TRANSITIONS.map(([k, l]) => h("button.opt" + (cur?.kind === k ? ".on" : ""), { onclick: () => { change((pp) => (pp.clips[i].transition = { kind: k, duration: cur?.duration || 0.6 })); pop.remove(); } }, l))),
-      h("div", { style: { fontSize: "12.5px", color: "var(--quiet)" } }, "Durata"),
-      h("div.opts", [0.3, 0.6, 1, 1.5].map((d) => h("button.opt" + (cur?.duration === d ? ".on" : ""), { onclick: () => { change((pp) => (pp.clips[i].transition = { kind: cur?.kind || "fade", duration: d })); pop.remove(); } }, String(d).replace(".", ",") + " s"))),
-      h("button.btn", { onclick: () => { change((pp) => pp.clips.forEach((cc, k) => { if (k > 0) cc.transition = { kind: cur?.kind || "fade", duration: cur?.duration || 0.6 }; })); pop.remove(); } }, "Applica a tutte le clip"));
+      h("div", { style: { fontSize: "12.5px", color: "var(--quiet)" } }, t("Durata")),
+      h("div.opts", [0.3, 0.6, 1, 1.5].map((d) => h("button.opt" + (cur?.duration === d ? ".on" : ""), { onclick: () => { change((pp) => (pp.clips[i].transition = { kind: cur?.kind || "fade", duration: d })); pop.remove(); } }, dec(String(d).replace(".", ",") + " s")))),
+      h("button.btn", { onclick: () => { change((pp) => pp.clips.forEach((cc, k) => { if (k > 0) cc.transition = { kind: cur?.kind || "fade", duration: cur?.duration || 0.6 }; })); pop.remove(); } }, t("Applica a tutte le clip")));
     const r = anchor.getBoundingClientRect();
     pop.style.left = Math.max(10, Math.min(window.innerWidth - 300, r.left - 130)) + "px";
     pop.style.top = Math.max(10, r.top - 230) + "px";
@@ -665,7 +666,7 @@ export function editorPage(app, onBack) {
   // ── Azioni
   async function pickClips() {
     setDemoPick("video");
-    const paths = await pickFiles([{ name: "Video e foto", extensions: ["mp4", "mov", "m4v", "mkv", "webm", "avi", "wmv", "mts", "m2ts", "3gp", "jpg", "jpeg", "png", "heic", "webp"] }]);
+    const paths = await pickFiles([{ name: t("Video e foto"), extensions: ["mp4", "mov", "m4v", "mkv", "webm", "avi", "wmv", "mts", "m2ts", "3gp", "jpg", "jpeg", "png", "heic", "webp"] }]);
     if (paths.length) addClips(paths);
   }
 
@@ -675,7 +676,7 @@ export function editorPage(app, onBack) {
     const c = p.clips[at.i];
     const speed = c.fx?.speed || 1;
     const cut = c.in + at.local * speed;
-    if (cut - c.in < 0.1 || c.out - cut < 0.1) return toast("Sposta l'indicatore un po' dentro la clip per dividerla.");
+    if (cut - c.in < 0.1 || c.out - cut < 0.1) return toast(t("Sposta l'indicatore un po' dentro la clip per dividerla."));
     change((pp) => {
       const a = pp.clips[at.i];
       const b = JSON.parse(JSON.stringify(a));
@@ -708,10 +709,10 @@ export function editorPage(app, onBack) {
   }
 
   function addText() {
-    if (!p.clips.length) return toast("Aggiungi prima un video.");
-    const t = newText(Math.min(time, Math.max(0, total() - 1)));
-    t.end = Math.min(total(), t.start + 3);
-    change((pp) => pp.texts.push(t));
+    if (!p.clips.length) return toast(t("Aggiungi prima un video."));
+    const nt = newText(Math.min(time, Math.max(0, total() - 1)));
+    nt.end = Math.min(total(), nt.start + 3);
+    change((pp) => pp.texts.push(nt));
     sel = { kind: "text", index: p.texts.length - 1 };
     tool = "text";
     renderToolbar();
@@ -765,17 +766,17 @@ export function editorPage(app, onBack) {
     const ci = c ? p.clips.indexOf(c) : -1;
     const box = [];
     if (tool === "clip") {
-      if (!c) box.push(h("p.hint", "Aggiungi dei video con «Aggiungi video» o trascinandoli qui."));
+      if (!c) box.push(h("p.hint", t("Aggiungi dei video con «Aggiungi video» o trascinandoli qui.")));
       else {
-        box.push(h("div.group", `Clip ${ci + 1} di ${p.clips.length}`), h("p.hint", `${baseName(c.path)} · da ${fmtTime(c.in, true)} a ${fmtTime(c.out, true)} · ${fmtTime(clipLen(c), true)}`),
+        box.push(h("div.group", t`Clip ${ci + 1} di ${p.clips.length}`), h("p.hint", t`${baseName(c.path)} · da ${fmtTime(c.in, true)} a ${fmtTime(c.out, true)} · ${fmtTime(clipLen(c), true)}`),
           h("div.btns",
-            h("button.btn", { onclick: splitHere }, ico("scissors", 14), "Dividi qui"),
-            h("button.btn", { onclick: () => change((pp) => pp.clips.splice(ci + 1, 0, { ...JSON.parse(JSON.stringify(c)), id: uid(), transition: null })) }, "Duplica"),
-            h("button.btn", { onclick: () => change((pp) => (pp.clips[ci].muted = !pp.clips[ci].muted)) }, ico(c.muted ? "volume-2" : "volume-x", 14), c.muted ? "Riattiva l'audio" : "Togli l'audio"),
-            h("button.btn", { disabled: ci === 0 || null, onclick: () => change((pp) => { const [x] = pp.clips.splice(ci, 1); pp.clips.splice(ci - 1, 0, x); sel.index = ci - 1; }) }, "◀ Sposta"),
-            h("button.btn", { disabled: ci === p.clips.length - 1 || null, onclick: () => change((pp) => { const [x] = pp.clips.splice(ci, 1); pp.clips.splice(ci + 1, 0, x); sel.index = ci + 1; }) }, "Sposta ▶"),
-            h("button.btn", { onclick: () => { sel = { kind: "clip", index: ci }; deleteSelected(); } }, ico("trash-2", 14), "Elimina")),
-          h("p.hint", "Trascina i bordi della clip nella sequenza per accorciarla; trascinala per spostarla. Tasti: S divide, Canc elimina, Ctrl+Z annulla."));
+            h("button.btn", { onclick: splitHere }, ico("scissors", 14), t("Dividi qui")),
+            h("button.btn", { onclick: () => change((pp) => pp.clips.splice(ci + 1, 0, { ...JSON.parse(JSON.stringify(c)), id: uid(), transition: null })) }, t("Duplica")),
+            h("button.btn", { onclick: () => change((pp) => (pp.clips[ci].muted = !pp.clips[ci].muted)) }, ico(c.muted ? "volume-2" : "volume-x", 14), c.muted ? t("Riattiva l'audio") : t("Togli l'audio")),
+            h("button.btn", { disabled: ci === 0 || null, onclick: () => change((pp) => { const [x] = pp.clips.splice(ci, 1); pp.clips.splice(ci - 1, 0, x); sel.index = ci - 1; }) }, t("◀ Sposta")),
+            h("button.btn", { disabled: ci === p.clips.length - 1 || null, onclick: () => change((pp) => { const [x] = pp.clips.splice(ci, 1); pp.clips.splice(ci + 1, 0, x); sel.index = ci + 1; }) }, t("Sposta ▶")),
+            h("button.btn", { onclick: () => { sel = { kind: "clip", index: ci }; deleteSelected(); } }, ico("trash-2", 14), t("Elimina"))),
+          h("p.hint", t("Trascina i bordi della clip nella sequenza per accorciarla; trascinala per spostarla. Tasti: S divide, Canc elimina, Ctrl+Z annulla.")));
       }
     } else if (tool === "look") {
       const scopeAll = store.get("ed.lookAll", false);
@@ -785,7 +786,7 @@ export function editorPage(app, onBack) {
         if (target) fn(target);
       });
       const L = getL();
-      box.push(chips([[false, "Questa clip"], [true, "Tutto il video"]], scopeAll, (v) => { store.set("ed.lookAll", v); renderInspector(); }));
+      box.push(chips([[false, t("Questa clip")], [true, t("Tutto il video")]], scopeAll, (v) => { store.set("ed.lookAll", v); renderInspector(); }));
       const th = c && thumbs[c.path];
       box.push(h("div.looks", PRESETS.map(([id, name]) => {
         const r = resolve({ ...emptyLook(), preset: id, amount: 1 });
@@ -793,93 +794,93 @@ export function editorPage(app, onBack) {
           h("span.im", { style: { backgroundImage: th ? `url(${th})` : "none", filter: id === "none" ? "none" : `url(#pv-${id})` } }), name);
       })));
       ensurePresetDefs();
-      box.push(slider("Forza", L.amount, 0, 1, 0.05, (v) => setDirect((l) => (l.amount = v)), (v) => Math.round(v * 100) + "%"));
-      box.push(h("div.group", "Regolazioni"));
-      for (const [k, label] of [["brightness", "Luminosità"], ["contrast", "Contrasto"], ["saturation", "Saturazione"], ["warmth", "Calore"]]) {
+      box.push(slider(t("Forza"), L.amount, 0, 1, 0.05, (v) => setDirect((l) => (l.amount = v)), (v) => Math.round(v * 100) + "%"));
+      box.push(h("div.group", t("Regolazioni")));
+      for (const [k, label] of [["brightness", t("Luminosità")], ["contrast", t("Contrasto")], ["saturation", t("Saturazione")], ["warmth", t("Calore")]]) {
         box.push(slider(label, L[k], -1, 1, 0.05, (v) => setDirect((l) => (l[k] = v)), pct));
       }
-      box.push(slider("Nitidezza", L.sharpness, 0, 1, 0.05, (v) => setDirect((l) => (l.sharpness = v)), (v) => Math.round(v * 100)));
-      box.push(slider("Vignettatura", L.vignette, 0, 1, 0.05, (v) => setDirect((l) => (l.vignette = v)), (v) => Math.round(v * 100)));
-      box.push(h("button.btn", { onclick: () => change((pp) => { if (scopeAll) pp.look = null; else if (c) pp.clips[ci].look = null; }) }, "Togli filtro e regolazioni"));
+      box.push(slider(t("Nitidezza"), L.sharpness, 0, 1, 0.05, (v) => setDirect((l) => (l.sharpness = v)), (v) => Math.round(v * 100)));
+      box.push(slider(t("Vignettatura"), L.vignette, 0, 1, 0.05, (v) => setDirect((l) => (l.vignette = v)), (v) => Math.round(v * 100)));
+      box.push(h("button.btn", { onclick: () => change((pp) => { if (scopeAll) pp.look = null; else if (c) pp.clips[ci].look = null; }) }, t("Togli filtro e regolazioni")));
       function setDirect(fn) {
         const target = scopeAll ? (p.look = p.look || emptyLook()) : c ? (p.clips[ci].look = p.clips[ci].look || emptyLook()) : null;
         if (target) fn(target);
       }
     } else if (tool === "fx") {
-      if (!c) box.push(h("p.hint", "Scegli una clip nella sequenza."));
+      if (!c) box.push(h("p.hint", t("Scegli una clip nella sequenza.")));
       else {
         const fx = c.fx || {};
         const setFx = (fn) => change((pp) => { const f = (pp.clips[ci].fx = pp.clips[ci].fx || {}); fn(f); });
-        box.push(h("div.group", "Velocità"), chips(SPEEDS.map((s) => [s, String(s).replace(".", ",") + "×"]), fx.speed || 1, (v) => setFx((f) => (f.speed = v))),
-          h("p.hint", "La voce mantiene il suo tono."),
-          h("div.group", "Zoom lento"), chips([["none", "Nessuno"], ["in", "Avvicina"], ["out", "Allontana"]], fx.zoom || "none", (v) => setFx((f) => (f.zoom = v))),
-          h("div.group", "Capovolgi e ruota"),
+        box.push(h("div.group", t("Velocità")), chips(SPEEDS.map((s) => [s, dec(String(s).replace(".", ",") + "×")]), fx.speed || 1, (v) => setFx((f) => (f.speed = v))),
+          h("p.hint", t("La voce mantiene il suo tono.")),
+          h("div.group", t("Zoom lento")), chips([["none", t("Nessuno")], ["in", t("Avvicina")], ["out", t("Allontana")]], fx.zoom || "none", (v) => setFx((f) => (f.zoom = v))),
+          h("div.group", t("Capovolgi e ruota")),
           h("div.btns",
-            h("button.btn" + (fx.flipH ? ".brass" : ""), { onclick: () => setFx((f) => (f.flipH = !f.flipH)) }, "Specchia"),
-            h("button.btn" + (fx.flipV ? ".brass" : ""), { onclick: () => setFx((f) => (f.flipV = !f.flipV)) }, "Capovolgi"),
-            h("button.btn", { onclick: () => setFx((f) => (f.rotate = ((f.rotate || 0) + 90) % 360)) }, ico("rotate-cw", 14), `Ruota${fx.rotate ? ` (${fx.rotate}°)` : ""}`)),
-          h("div.group", "Altro"),
-          slider("Sfocatura", fx.blur || 0, 0, 1, 0.05, (v) => { (p.clips[ci].fx = p.clips[ci].fx || {}).blur = v; }, (v) => Math.round(v * 100)),
-          slider("Dissolvenza in entrata", fx.fadeIn || 0, 0, 3, 0.1, (v) => { (p.clips[ci].fx = p.clips[ci].fx || {}).fadeIn = v; }, (v) => String(v.toFixed(1)).replace(".", ",") + " s"),
-          slider("Dissolvenza in uscita", fx.fadeOut || 0, 0, 3, 0.1, (v) => { (p.clips[ci].fx = p.clips[ci].fx || {}).fadeOut = v; }, (v) => String(v.toFixed(1)).replace(".", ",") + " s"),
-          h("button.btn", { onclick: () => change((pp) => pp.clips.forEach((cc) => (cc.fx = JSON.parse(JSON.stringify(fx))))) }, "Applica a tutte le clip"));
+            h("button.btn" + (fx.flipH ? ".brass" : ""), { onclick: () => setFx((f) => (f.flipH = !f.flipH)) }, t("Specchia")),
+            h("button.btn" + (fx.flipV ? ".brass" : ""), { onclick: () => setFx((f) => (f.flipV = !f.flipV)) }, t("Capovolgi")),
+            h("button.btn", { onclick: () => setFx((f) => (f.rotate = ((f.rotate || 0) + 90) % 360)) }, ico("rotate-cw", 14), t`Ruota${fx.rotate ? ` (${fx.rotate}°)` : ""}`)),
+          h("div.group", t("Altro")),
+          slider(t("Sfocatura"), fx.blur || 0, 0, 1, 0.05, (v) => { (p.clips[ci].fx = p.clips[ci].fx || {}).blur = v; }, (v) => Math.round(v * 100)),
+          slider(t("Dissolvenza in entrata"), fx.fadeIn || 0, 0, 3, 0.1, (v) => { (p.clips[ci].fx = p.clips[ci].fx || {}).fadeIn = v; }, (v) => dec(String(v.toFixed(1)).replace(".", ",") + " s")),
+          slider(t("Dissolvenza in uscita"), fx.fadeOut || 0, 0, 3, 0.1, (v) => { (p.clips[ci].fx = p.clips[ci].fx || {}).fadeOut = v; }, (v) => dec(String(v.toFixed(1)).replace(".", ",") + " s")),
+          h("button.btn", { onclick: () => change((pp) => pp.clips.forEach((cc) => (cc.fx = JSON.parse(JSON.stringify(fx))))) }, t("Applica a tutte le clip")));
       }
     } else if (tool === "text") {
-      const t = sel.kind === "text" ? p.texts[sel.index] : null;
-      box.push(h("div.btns", h("button.btn.primary", { onclick: addText }, ico("plus", 14), "Aggiungi un testo"),
-        subsBusy ? h("button.btn", { onclick: () => subsJob && invoke("cancel_job", { id: subsJob }) }, "Interrompi")
-          : h("button.btn", { onclick: autoSubtitles }, ico("message-circle", 14), "Sottotitoli automatici")),
+      const tx = sel.kind === "text" ? p.texts[sel.index] : null;
+      box.push(h("div.btns", h("button.btn.primary", { onclick: addText }, ico("plus", 14), t("Aggiungi un testo")),
+        subsBusy ? h("button.btn", { onclick: () => subsJob && invoke("cancel_job", { id: subsJob }) }, t("Interrompi"))
+          : h("button.btn", { onclick: autoSubtitles }, ico("message-circle", 14), t("Sottotitoli automatici"))),
         subsStatus,
-        h("p.hint", "Il testo compare all'indicatore per 3 secondi. Trascinalo sull'anteprima per spostarlo, e nella riga «Testi» per cambiare quando si vede."));
-      if (t) {
+        h("p.hint", t("Il testo compare all'indicatore per 3 secondi. Trascinalo sull'anteprima per spostarlo, e nella riga «Testi» per cambiare quando si vede.")));
+      if (tx) {
         const k = sel.index;
-        const ta = h("textarea", { rows: 3, "aria-label": "Testo" });
-        ta.value = t.text;
+        const ta = h("textarea", { rows: 3, "aria-label": t("Testo") });
+        ta.value = tx.text;
         let before = null;
         ta.addEventListener("focus", () => (before = JSON.stringify(p)));
-        ta.addEventListener("input", () => { t.text = ta.value; drawOverlay(time); });
+        ta.addEventListener("input", () => { tx.text = ta.value; drawOverlay(time); });
         ta.addEventListener("blur", () => { if (before && before !== JSON.stringify(p)) { undo.push(before); redo = []; afterChange(); } });
         const setT = (fn) => change((pp) => fn(pp.texts[k]));
-        box.push(h("div.group", "Testo"), ta,
-          h("div.group", "Modello"), chips(STYLES, t.style, (v) => setT((x) => { x.style = v; if (v === "subtitle") x.y = 0.86; if (v === "caption") x.y = 0.85; })),
-          h("div.group", "Animazione"), chips(ANIMS, t.anim, (v) => setT((x) => (x.anim = v))),
-          h("div.group", "Colore"), h("div.opts", COLORS.map(([id, name, hex]) => h("button.opt" + (t.color === id ? ".on" : ""), { onclick: () => setT((x) => (x.color = id)) }, h("span.sw", { style: { background: hex } }), name))),
-          h("div.group", "Quando"), h("p.hint", `Da ${fmtTime(t.start, true)} a ${fmtTime(t.end, true)}`),
+        box.push(h("div.group", t("Testo")), ta,
+          h("div.group", t("Modello")), chips(STYLES, tx.style, (v) => setT((x) => { x.style = v; if (v === "subtitle") x.y = 0.86; if (v === "caption") x.y = 0.85; })),
+          h("div.group", t("Animazione")), chips(ANIMS, tx.anim, (v) => setT((x) => (x.anim = v))),
+          h("div.group", t("Colore")), h("div.opts", COLORS.map(([id, name, hex]) => h("button.opt" + (tx.color === id ? ".on" : ""), { onclick: () => setT((x) => (x.color = id)) }, h("span.sw", { style: { background: hex } }), name))),
+          h("div.group", t("Quando")), h("p.hint", t`Da ${fmtTime(tx.start, true)} a ${fmtTime(tx.end, true)}`),
           h("div.btns",
-            h("button.btn", { onclick: () => setT((x) => { x.start = Math.min(time, x.end - 0.3); }) }, "Inizia qui"),
-            h("button.btn", { onclick: () => setT((x) => { x.end = Math.max(time, x.start + 0.3); }) }, "Finisci qui"),
-            h("button.btn", { onclick: () => { deleteSelected(); } }, ico("trash-2", 14), "Elimina")));
+            h("button.btn", { onclick: () => setT((x) => { x.start = Math.min(time, x.end - 0.3); }) }, t("Inizia qui")),
+            h("button.btn", { onclick: () => setT((x) => { x.end = Math.max(time, x.start + 0.3); }) }, t("Finisci qui")),
+            h("button.btn", { onclick: () => { deleteSelected(); } }, ico("trash-2", 14), t("Elimina"))));
       } else if (p.texts.length) {
-        box.push(h("div.group", "Testi"), p.texts.map((t, k) => h("button.tool", { onclick: () => { sel = { kind: "text", index: k }; seekTo(t.start + 0.05); renderAll(); } },
+        box.push(h("div.group", t("Testi")), p.texts.map((t, k) => h("button.tool", { onclick: () => { sel = { kind: "text", index: k }; seekTo(t.start + 0.05); renderAll(); } },
           h("span.ic", ico("file-text", 16)), h("span.txt", h("b", t.text.slice(0, 40)), h("span", `${fmtTime(t.start)} – ${fmtTime(t.end)}`)))));
       }
     } else if (tool === "audio") {
-      box.push(h("div.group", "Audio dei video"),
-        h("label.check", h("input", { type: "checkbox", checked: p.originalMuted || null, onchange: (e) => change((pp) => (pp.originalMuted = e.target.checked)) }), "Senza audio originale"),
-        slider("Volume", p.originalVolume ?? 1, 0, 2, 0.05, (v) => (p.originalVolume = v), (v) => Math.round(v * 100) + "%"));
-      box.push(h("div.group", "Musica"));
+      box.push(h("div.group", t("Audio dei video")),
+        h("label.check", h("input", { type: "checkbox", checked: p.originalMuted || null, onchange: (e) => change((pp) => (pp.originalMuted = e.target.checked)) }), t("Senza audio originale")),
+        slider(t("Volume"), p.originalVolume ?? 1, 0, 2, 0.05, (v) => (p.originalVolume = v), (v) => Math.round(v * 100) + "%"));
+      box.push(h("div.group", t("Musica")));
       if (!p.music) {
-        box.push(h("button.btn.primary", { onclick: pickMusic }, ico("music", 14), "Aggiungi musica"), h("p.hint", "Una canzone o l'audio di un video. Si abbassa da sola quando nel video si parla."));
+        box.push(h("button.btn.primary", { onclick: pickMusic }, ico("music", 14), t("Aggiungi musica")), h("p.hint", t("Una canzone o l'audio di un video. Si abbassa da sola quando nel video si parla.")));
       } else {
         const m = p.music;
         const setM = (fn) => change((pp) => fn(pp.music));
         box.push(h("p.hint", baseName(m.path)),
-          slider("Volume", m.volume ?? 0.8, 0, 1.5, 0.05, (v) => (p.music.volume = v), (v) => Math.round(v * 100) + "%"),
-          h("label.check", h("input", { type: "checkbox", checked: m.duck !== false || null, onchange: (e) => setM((x) => (x.duck = e.target.checked)) }), "Abbassa la musica quando si parla"),
-          h("label.check", h("input", { type: "checkbox", checked: m.looped || null, onchange: (e) => setM((x) => (x.looped = e.target.checked)) }), "Ricomincia finché il video non finisce"),
-          slider("Dissolvenza iniziale", m.fadeIn ?? 1, 0, 5, 0.5, (v) => (p.music.fadeIn = v), (v) => String(v).replace(".", ",") + " s"),
-          slider("Dissolvenza finale", m.fadeOut ?? 2, 0, 5, 0.5, (v) => (p.music.fadeOut = v), (v) => String(v).replace(".", ",") + " s"),
+          slider(t("Volume"), m.volume ?? 0.8, 0, 1.5, 0.05, (v) => (p.music.volume = v), (v) => Math.round(v * 100) + "%"),
+          h("label.check", h("input", { type: "checkbox", checked: m.duck !== false || null, onchange: (e) => setM((x) => (x.duck = e.target.checked)) }), t("Abbassa la musica quando si parla")),
+          h("label.check", h("input", { type: "checkbox", checked: m.looped || null, onchange: (e) => setM((x) => (x.looped = e.target.checked)) }), t("Ricomincia finché il video non finisce")),
+          slider(t("Dissolvenza iniziale"), m.fadeIn ?? 1, 0, 5, 0.5, (v) => (p.music.fadeIn = v), (v) => dec(String(v).replace(".", ",") + " s")),
+          slider(t("Dissolvenza finale"), m.fadeOut ?? 2, 0, 5, 0.5, (v) => (p.music.fadeOut = v), (v) => dec(String(v).replace(".", ",") + " s")),
           h("div.btns",
-            h("button.btn", { onclick: () => setM((x) => (x.offset = time)) }, "Parte qui"),
-            h("button.btn", { onclick: pickMusic }, "Cambia"),
-            h("button.btn", { onclick: () => change((pp) => (pp.music = null)) }, ico("trash-2", 14), "Togli")));
+            h("button.btn", { onclick: () => setM((x) => (x.offset = time)) }, t("Parte qui")),
+            h("button.btn", { onclick: pickMusic }, t("Cambia")),
+            h("button.btn", { onclick: () => change((pp) => (pp.music = null)) }, ico("trash-2", 14), t("Togli"))));
       }
     } else if (tool === "format") {
       const [w, hh] = canvasSize();
-      box.push(h("div.group", "Formato"), chips([["orig", "Originale"], ["9x16", "9:16 Reels"], ["1x1", "1:1 Post"], ["4x5", "4:5 Feed"], ["16x9", "16:9 YouTube"]], p.aspect, (v) => change((pp) => (pp.aspect = v))),
-        h("div.group", "Risoluzione"), chips([[720, "720p"], [1080, "1080p"], [2160, "4K"]], p.resolution, (v) => change((pp) => (pp.resolution = v))),
-        h("div.group", "Fluidità"), chips([[24, "24"], [30, "30"], [60, "60"]], p.fps, (v) => change((pp) => (pp.fps = v))),
-        h("p.hint", `Il video sarà ${w}×${hh}, ${p.fps} fotogrammi al secondo, ${fmtTime(total())}. Mai più grande dell'originale.`));
+      box.push(h("div.group", t("Formato")), chips([["orig", t("Originale")], ["9x16", "9:16 Reels"], ["1x1", "1:1 Post"], ["4x5", "4:5 Feed"], ["16x9", "16:9 YouTube"]], p.aspect, (v) => change((pp) => (pp.aspect = v))),
+        h("div.group", t("Risoluzione")), chips([[720, "720p"], [1080, "1080p"], [2160, "4K"]], p.resolution, (v) => change((pp) => (pp.resolution = v))),
+        h("div.group", t("Fluidità")), chips([[24, "24"], [30, "30"], [60, "60"]], p.fps, (v) => change((pp) => (pp.fps = v))),
+        h("p.hint", t`Il video sarà ${w}×${hh}, ${p.fps} fotogrammi al secondo, ${fmtTime(total())}. Mai più grande dell'originale.`));
     }
     inspector.replaceChildren(...box.flat());
   }
@@ -928,25 +929,25 @@ export function editorPage(app, onBack) {
     return out;
   }
   async function autoSubtitles() {
-    if (!p.clips.length) return toast("Aggiungi prima un video.");
-    if (DEMO) return toast("Nella prova non si può ascoltare: funziona nell'app.");
+    if (!p.clips.length) return toast(t("Aggiungi prima un video."));
+    if (DEMO) return toast(t("Nella prova non si può ascoltare: funziona nell'app."));
     subsBusy = true;
     renderInspector();
     const lang = store.get("voiceLang", "auto");
     const paths = [...new Set(p.clips.filter((c) => infos[c.path]?.has_audio).map((c) => c.path))];
-    if (!paths.length) { subsBusy = false; renderInspector(); return toast("Le clip non hanno audio."); }
+    if (!paths.length) { subsBusy = false; renderInspector(); return toast(t("Le clip non hanno audio.")); }
     let which = 0;
     const startedOn = current;
     subsJob = "v" + uid();
     const un = await window.__TAURI__.event.listen("voice-progress", (e) => {
       const { stage, progress } = e.payload;
-      subsStatus.textContent = stage === "modello" ? `Scarico il modello della voce (solo la prima volta)… ${Math.round(progress * 100)}%`
-        : `Ascolto ${paths.length > 1 ? `la clip ${which + 1} di ${paths.length}` : "la clip"}… ${Math.round(progress * 100)}%`;
+      subsStatus.textContent = stage === "modello" ? t`Scarico il modello della voce (solo la prima volta)… ${Math.round(progress * 100)}%`
+        : t`Ascolto ${paths.length > 1 ? t`la clip ${which + 1} di ${paths.length}` : t("la clip")}… ${Math.round(progress * 100)}%`;
     });
     const byPath = {};
     try {
       for (which = 0; which < paths.length; which++) {
-        subsStatus.textContent = "Preparo…";
+        subsStatus.textContent = t("Preparo…");
         const segs = await invoke("transcribe_words", { path: paths[which], lang, id: subsJob });
         if (current !== startedOn || !p) throw new Error("annullato");
         byPath[paths[which]] = segs.flatMap((s) => (s.words?.length ? s.words : s.text.split(/\s+/).map((t, k, all) => ({ text: t, start: s.start + ((s.end - s.start) * k) / all.length, end: s.start + ((s.end - s.start) * (k + 1)) / all.length }))));
@@ -958,7 +959,7 @@ export function editorPage(app, onBack) {
       subsStatus.textContent = "";
       if (current === startedOn && p) renderInspector();
       if (String(e).includes("annullato") || String(e).includes("interrotto")) return;
-      return toast(String(e));
+      return toast(tr(String(e)));
     }
     un();
     subsJob = null;
@@ -981,24 +982,24 @@ export function editorPage(app, onBack) {
       }
     });
     subsBusy = false;
-    subsStatus.textContent = made.length ? `Fatto: ${made.length} righe di sottotitoli. Correggile come gli altri testi; Ctrl+Z le toglie tutte.` : "Non ho sentito parole nelle clip.";
+    subsStatus.textContent = made.length ? t`Fatto: ${made.length} righe di sottotitoli. Correggile come gli altri testi; Ctrl+Z le toglie tutte.` : t("Non ho sentito parole nelle clip.");
     if (made.length) change((pp) => pp.texts.push(...made));
     else renderInspector();
   }
 
   async function pickMusic() {
     setDemoPick("audio");
-    const paths = await pickFiles([{ name: "Musica", extensions: ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aac", "mp4", "mov"] }]);
+    const paths = await pickFiles([{ name: t("Musica"), extensions: ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aac", "mp4", "mov"] }]);
     if (!paths.length) return;
     const r = (await invoke("probe_files", { paths: [paths[0]] }))[0];
-    if (!r?.ok || !r.info.has_audio) return toast("In questo file non c'è audio.");
+    if (!r?.ok || !r.info.has_audio) return toast(t("In questo file non c'è audio."));
     infos[r.info.path] = r.info;
     change((pp) => (pp.music = { path: r.info.path, offset: 0, in: 0, looped: false, volume: 0.8, fadeIn: 1, fadeOut: 2, duck: true }));
   }
 
   // ── Esportazione
   async function exportVideo() {
-    if (!p.clips.length) return toast("Aggiungi almeno un video.");
+    if (!p.clips.length) return toast(t("Aggiungi almeno un video."));
     stop();
     const [W, H] = canvasSize();
     const overlays = [];
@@ -1016,7 +1017,7 @@ export function editorPage(app, onBack) {
         }
       }
     } catch (e) {
-      return toast("Non riesco a preparare i testi: " + e);
+      return toast(t`Non riesco a preparare i testi: ${tr(String(e))}`);
     }
     const lk = (l) => (l && !isIdentity(l) ? { preset: l.preset, amount: l.amount, brightness: l.brightness, contrast: l.contrast, saturation: l.saturation, warmth: l.warmth, sharpness: l.sharpness, vignette: l.vignette } : null);
     const project = {

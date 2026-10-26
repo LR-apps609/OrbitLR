@@ -480,6 +480,12 @@ async fn office_install() -> Result<bool, String> {
     .map_err(|e| e.to_string())?
 }
 
+/// La lingua dell'interfaccia: il motore la usa per i nomi dei file creati.
+#[tauri::command]
+fn set_lang(lang: String) {
+    orbit_engine::names::set_lang(&lang);
+}
+
 /// «Annulla» nella barra del risultato: i file appena creati vanno nel Cestino (solo file creati da OrbitLR).
 #[tauri::command]
 fn undo_result(state: State<'_, Shared>, paths: Vec<String>) -> Result<usize, String> {
@@ -827,7 +833,7 @@ fn main() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install, update_check, update_install, undo_result, allow_made])
+        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install, update_check, update_install, undo_result, allow_made, set_lang])
         .run(tauri::generate_context!())
         .expect("OrbitLR non è riuscita ad avviarsi");
 }

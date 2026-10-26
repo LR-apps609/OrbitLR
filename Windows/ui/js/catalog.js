@@ -1,12 +1,14 @@
 // Le azioni con le parole dell'app per Mac. Gli id sono gli stessi (vcompress, cut, to:mp3…).
 
+import { t, tc } from "./i18n.js";
+
 export const KINDS = {
-  image: { label: "Immagini", icon: "image", color: "#3F8F86" },
-  video: { label: "Video", icon: "film", color: "#7E5FA8" },
-  audio: { label: "Audio", icon: "audio-lines", color: "#C38A2E" },
+  image: { label: t("Immagini"), icon: "image", color: "#3F8F86" },
+  video: { label: t("Video"), icon: "film", color: "#7E5FA8" },
+  audio: { label: t("Audio"), icon: "audio-lines", color: "#C38A2E" },
   pdf: { label: "PDF", icon: "file-text", color: "#C2553F" },
-  doc: { label: "Documenti", icon: "file-text", color: "#4F74B3" },
-  other: { label: "Altro", icon: "file", color: "#77796B" },
+  doc: { label: t("Documenti"), icon: "file-text", color: "#4F74B3" },
+  other: { label: tc("kind", "Altro"), icon: "file", color: "#77796B" },
 };
 
 export const IMAGE_EXTS = ["jpg", "jpeg", "png", "heic", "heif", "webp", "avif", "gif", "bmp", "tif", "tiff", "ico", "jfif"];
@@ -41,75 +43,75 @@ export const fmtIcon = (f) => FMT_ICON[f] || "file";
 /** Le azioni (non conversioni). `min`: quanti file servono almeno. `params`: come si sceglie. */
 export const TOOLS = {
   // Foto
-  icompress: { title: "Comprimi", hint: "Stessa qualità con meno peso, o sotto un peso preciso (moduli, documenti, visti)", icon: "minimize-2", params: "icompress" },
-  resize: { title: "Ridimensiona", hint: "Più piccola, in percentuale o in pixel", icon: "move-diagonal-2", params: "resize" },
-  rotate: { title: "Ruota", hint: "Di 90° a destra o a sinistra, o capovolgi", icon: "rotate-cw", params: "rotate" },
-  hidemark: { title: "Nascondi un logo", hint: "Sfoca o copri a quadretti una scritta o un logo", icon: "eye-off", params: "zones", isNew: true },
-  strip: { title: "Rimuovi i metadati", hint: "Posizione GPS, fotocamera e date: via, senza perdere qualità", icon: "eye-off" },
-  ocr: { title: "Estrai il testo", hint: "Dalle foto e dagli screenshot, in un file di testo (con il riconoscimento di Windows)", icon: "file-text", isNew: true },
-  merge: { title: "Unisci in un PDF", hint: "Una foto per pagina, nell'ordine dell'elenco", icon: "file-stack", min: 2 },
-  removebg: { title: "Rimuovi lo sfondo", hint: "Resta solo il soggetto, su sfondo trasparente (la prima volta scarica il modello, 179 MB)", icon: "scissors", params: "removebg", isNew: true },
-  aienhance: { title: "Migliora con l'IA", hint: "Più nitida e pulita, senza inventare dettagli (la prima volta scarica il motore, 45 MB)", icon: "sparkles", params: "aienhance", isNew: true },
-  upscale: { title: "Ingrandisci", hint: "Due o quattro volte più grande, con i contorni nitidi", icon: "zoom-in", params: "upscale", isNew: true },
+  icompress: { title: t("Comprimi"), hint: t("Stessa qualità con meno peso, o sotto un peso preciso (moduli, documenti, visti)"), icon: "minimize-2", params: "icompress" },
+  resize: { title: t("Ridimensiona"), hint: t("Più piccola, in percentuale o in pixel"), icon: "move-diagonal-2", params: "resize" },
+  rotate: { title: t("Ruota"), hint: t("Di 90° a destra o a sinistra, o capovolgi"), icon: "rotate-cw", params: "rotate" },
+  hidemark: { title: t("Nascondi un logo"), hint: t("Sfoca o copri a quadretti una scritta o un logo"), icon: "eye-off", params: "zones", isNew: true },
+  strip: { title: t("Rimuovi i metadati"), hint: t("Posizione GPS, fotocamera e date: via, senza perdere qualità"), icon: "eye-off" },
+  ocr: { title: t("Estrai il testo"), hint: t("Dalle foto e dagli screenshot, in un file di testo (con il riconoscimento di Windows)"), icon: "file-text", isNew: true },
+  merge: { title: t("Unisci in un PDF"), hint: t("Una foto per pagina, nell'ordine dell'elenco"), icon: "file-stack", min: 2 },
+  removebg: { title: t("Rimuovi lo sfondo"), hint: t("Resta solo il soggetto, su sfondo trasparente (la prima volta scarica il modello, 179 MB)"), icon: "scissors", params: "removebg", isNew: true },
+  aienhance: { title: t("Migliora con l'IA"), hint: t("Più nitida e pulita, senza inventare dettagli (la prima volta scarica il motore, 45 MB)"), icon: "sparkles", params: "aienhance", isNew: true },
+  upscale: { title: t("Ingrandisci"), hint: t("Due o quattro volte più grande, con i contorni nitidi"), icon: "zoom-in", params: "upscale", isNew: true },
   // Video
-  vcompress: { title: "Comprimi", hint: "Più leggero senza perdere qualità, o per Discord, WhatsApp ed email", icon: "minimize-2", params: "vcompress" },
-  vresize: { title: "Cambia la grandezza", hint: "Full HD, HD o più piccolo, per pesare meno", icon: "monitor-smartphone", params: "vresize" },
-  social: { title: "Formato social", hint: "Verticale, quadrato o 4:5 per Reels, TikTok e post", icon: "smartphone", params: "social" },
-  cut: { title: "Taglia", hint: "Tieni solo un pezzo: istantaneo e senza perdita", icon: "scissors", params: "trim" },
-  gifcut: { title: "GIF da un pezzo", hint: "Un'animazione da un tratto del video", icon: "film", params: "trim" },
-  speed: { title: "Cambia la velocità", hint: "Da un quarto a quattro volte; la voce mantiene il tono", icon: "gauge", params: "speed" },
-  vmerge: { title: "Unisci i video", hint: "Uno dopo l'altro, nell'ordine dell'elenco", icon: "combine", min: 2 },
-  normalize: { title: "Volume uniforme", hint: "Né troppo basso né distorto", icon: "volume-2" },
-  voiceclean: { title: "Voce più pulita", hint: "Meno ronzio e fruscio di fondo; il video non si ricomprime", icon: "mic", isNew: true },
-  transcribe: { title: "Trascrivi", hint: "Le parole diventano testo e sottotitoli (.srt), sul computer", icon: "file-text", isNew: true },
-  mute: { title: "Togli l'audio", hint: "Istantaneo: il video non si tocca", icon: "volume-x" },
-  vrotate: { title: "Ruota", hint: "Senza ricodificare: istantaneo", icon: "rotate-cw", params: "rotate", id: "rotate" },
+  vcompress: { title: t("Comprimi"), hint: t("Più leggero senza perdere qualità, o per Discord, WhatsApp ed email"), icon: "minimize-2", params: "vcompress" },
+  vresize: { title: t("Cambia la grandezza"), hint: t("Full HD, HD o più piccolo, per pesare meno"), icon: "monitor-smartphone", params: "vresize" },
+  social: { title: t("Formato social"), hint: t("Verticale, quadrato o 4:5 per Reels, TikTok e post"), icon: "smartphone", params: "social" },
+  cut: { title: t("Taglia"), hint: t("Tieni solo un pezzo: istantaneo e senza perdita"), icon: "scissors", params: "trim" },
+  gifcut: { title: t("GIF da un pezzo"), hint: t("Un'animazione da un tratto del video"), icon: "film", params: "trim" },
+  speed: { title: t("Cambia la velocità"), hint: t("Da un quarto a quattro volte; la voce mantiene il tono"), icon: "gauge", params: "speed" },
+  vmerge: { title: t("Unisci i video"), hint: t("Uno dopo l'altro, nell'ordine dell'elenco"), icon: "combine", min: 2 },
+  normalize: { title: t("Volume uniforme"), hint: t("Né troppo basso né distorto"), icon: "volume-2" },
+  voiceclean: { title: t("Voce più pulita"), hint: t("Meno ronzio e fruscio di fondo; il video non si ricomprime"), icon: "mic", isNew: true },
+  transcribe: { title: t("Trascrivi"), hint: t("Le parole diventano testo e sottotitoli (.srt), sul computer"), icon: "file-text", isNew: true },
+  mute: { title: t("Togli l'audio"), hint: t("Istantaneo: il video non si tocca"), icon: "volume-x" },
+  vrotate: { title: t("Ruota"), hint: t("Senza ricodificare: istantaneo"), icon: "rotate-cw", params: "rotate", id: "rotate" },
   // PDF
-  pdfcompress: { title: "Comprimi", hint: "Riduci il peso, per mandarlo via email: testo e link restano come sono", icon: "minimize-2", params: "pdfcompress", isNew: true },
-  pdfmerge: { title: "Unisci", hint: "Più PDF in uno, nell'ordine dell'elenco", icon: "combine", min: 2 },
-  split: { title: "Dividi in pagine", hint: "Un PDF per ogni pagina", icon: "split" },
-  extract: { title: "Estrai alcune pagine", hint: "Scegli quali, per esempio 1-3, 5", icon: "file-output", params: "pages" },
-  protect: { title: "Proteggi con password", hint: "Serve la password per aprirlo (AES-256)", icon: "lock", params: "password", isNew: true },
-  unprotect: { title: "Togli la password", hint: "Se la conosci: una copia che si apre senza", icon: "lock-open", params: "password", isNew: true },
-  prot: { title: "Ruota le pagine", hint: "Tutte le pagine di 90° o capovolte", icon: "rotate-cw", params: "rotate", id: "rotate", isNew: true },
-  rename: { title: "Rinomina tutti", hint: "Per esempio Vacanze 001, Vacanze 002…", icon: "text-cursor-input", params: "rename", min: 1, isNew: true },
-  reorder: { title: "Riordina le pagine", hint: "Scrivi il nuovo ordine, per esempio 3, 1, 2", icon: "list-ordered", params: "order", isNew: true },
+  pdfcompress: { title: t("Comprimi"), hint: t("Riduci il peso, per mandarlo via email: testo e link restano come sono"), icon: "minimize-2", params: "pdfcompress", isNew: true },
+  pdfmerge: { title: t("Unisci"), hint: t("Più PDF in uno, nell'ordine dell'elenco"), icon: "combine", min: 2 },
+  split: { title: t("Dividi in pagine"), hint: t("Un PDF per ogni pagina"), icon: "split" },
+  extract: { title: t("Estrai alcune pagine"), hint: t("Scegli quali, per esempio 1-3, 5"), icon: "file-output", params: "pages" },
+  protect: { title: t("Proteggi con password"), hint: t("Serve la password per aprirlo (AES-256)"), icon: "lock", params: "password", isNew: true },
+  unprotect: { title: t("Togli la password"), hint: t("Se la conosci: una copia che si apre senza"), icon: "lock-open", params: "password", isNew: true },
+  prot: { title: t("Ruota le pagine"), hint: t("Tutte le pagine di 90° o capovolte"), icon: "rotate-cw", params: "rotate", id: "rotate", isNew: true },
+  rename: { title: t("Rinomina tutti"), hint: t("Per esempio Vacanze 001, Vacanze 002…"), icon: "text-cursor-input", params: "rename", min: 1, isNew: true },
+  reorder: { title: t("Riordina le pagine"), hint: t("Scrivi il nuovo ordine, per esempio 3, 1, 2"), icon: "list-ordered", params: "order", isNew: true },
 };
 
 export const GROUPS = {
   image: [
-    ["Modifica", ["icompress", "resize", "removebg", "rotate", "hidemark", "strip"]],
-    ["Migliora", ["aienhance", "upscale"]],
-    ["Testo e più foto", ["ocr", "merge", "rename"]],
+    [t("Modifica"), ["icompress", "resize", "removebg", "rotate", "hidemark", "strip"]],
+    [t("Migliora"), ["aienhance", "upscale"]],
+    [t("Testo e più foto"), ["ocr", "merge", "rename"]],
   ],
   video: [
-    ["Peso e grandezza", ["vcompress", "vresize", "social"]],
-    ["Taglia e unisci", ["cut", "gifcut", "vmerge", "speed"]],
-    ["Audio e sottotitoli", ["transcribe", "voiceclean", "normalize", "mute"]],
-    ["Altro", ["hidemark", "vrotate", "rename"]],
+    [t("Peso e grandezza"), ["vcompress", "vresize", "social"]],
+    [t("Taglia e unisci"), ["cut", "gifcut", "vmerge", "speed"]],
+    [t("Audio e sottotitoli"), ["transcribe", "voiceclean", "normalize", "mute"]],
+    [t("Altro"), ["hidemark", "vrotate", "rename"]],
   ],
-  pdf: [["Peso", ["pdfcompress"]], ["Organizza", ["pdfmerge", "split", "extract", "reorder", "prot"]], ["Proteggi", ["protect", "unprotect"]], ["Altro", ["rename"]]],
+  pdf: [[t("Peso"), ["pdfcompress"]], [t("Organizza"), ["pdfmerge", "split", "extract", "reorder", "prot"]], [t("Proteggi"), ["protect", "unprotect"]], [t("Altro"), ["rename"]]],
 };
 
 /** Le scelte dei parametri, come le manopole dell'app per Mac. */
 export const KNOBS = {
   vcompress: {
-    hint: "Prima si tengono qualità e misura; la risoluzione scende solo se serve.",
+    hint: t("Prima si tengono qualità e misura; la risoluzione scende solo se serve."),
     options: [
-      { value: "best", label: "Stessa qualità, meno peso", small: "di solito la metà" },
+      { value: "best", label: t("Stessa qualità, meno peso"), small: t("di solito la metà") },
       { value: "9", label: "Discord", small: "9 MB" },
       { value: "15", label: "WhatsApp", small: "15 MB" },
-      { value: "18", label: "Email", small: "18 MB" },
+      { value: "18", label: t("Email"), small: "18 MB" },
       { value: "50", label: "50 MB" },
       { value: "100", label: "100 MB" },
     ],
-    custom: { label: "Altro peso", unit: "MB", placeholder: "es. 30" },
+    custom: { label: t("Altro peso"), unit: "MB", placeholder: t("es. 30") },
     default: "best",
   },
   icompress: {
-    hint: "Per moduli e documenti scegli il peso richiesto: OrbitLR tiene la qualità più alta possibile.",
+    hint: t("Per moduli e documenti scegli il peso richiesto: OrbitLR tiene la qualità più alta possibile."),
     options: [
-      { value: "best", label: "Stessa qualità, meno peso" },
+      { value: "best", label: t("Stessa qualità, meno peso") },
       { value: "1000", label: "1 MB" },
       { value: "500", label: "500 KB" },
       { value: "200", label: "200 KB" },
@@ -117,7 +119,7 @@ export const KNOBS = {
       { value: "50", label: "50 KB" },
       { value: "20", label: "20 KB" },
     ],
-    custom: { label: "Altro peso", unit: "KB", placeholder: "es. 300" },
+    custom: { label: t("Altro peso"), unit: "KB", placeholder: t("es. 300") },
     default: "best",
   },
   vresize: {
@@ -126,7 +128,7 @@ export const KNOBS = {
       { value: "720", label: "HD", small: "720p" },
       { value: "480", label: "480p" },
       { value: "360", label: "360p" },
-      { value: "hevc", label: "Stessa misura in HEVC", small: "più leggero" },
+      { value: "hevc", label: t("Stessa misura in HEVC"), small: t("più leggero") },
     ],
     default: "720",
   },
@@ -137,15 +139,15 @@ export const KNOBS = {
       { value: "4x5", label: "4:5", small: "feed" },
       { value: "16x9", label: "16:9", small: "YouTube" },
     ],
-    hint: "Il video resta intero: i bordi si riempiono con lo stesso video sfocato.",
+    hint: t("Il video resta intero: i bordi si riempiono con lo stesso video sfocato."),
     default: "9x16",
   },
   speed: {
     options: [
-      { value: "0.5", label: "0,5×" },
-      { value: "0.75", label: "0,75×" },
-      { value: "1.25", label: "1,25×" },
-      { value: "1.5", label: "1,5×" },
+      { value: "0.5", label: t("0,5×") },
+      { value: "0.75", label: t("0,75×") },
+      { value: "1.25", label: t("1,25×") },
+      { value: "1.5", label: t("1,5×") },
       { value: "2", label: "2×" },
       { value: "4", label: "4×" },
     ],
@@ -160,48 +162,48 @@ export const KNOBS = {
       { value: "1920", label: "1920 px" },
       { value: "1280", label: "1280 px" },
     ],
-    custom: { label: "Lato lungo", unit: "px", placeholder: "es. 1600" },
+    custom: { label: t("Lato lungo"), unit: "px", placeholder: t("es. 1600") },
     default: "50%",
   },
   pdfcompress: {
-    hint: "Le foto dentro il PDF vengono ricompresse; testo, link e moduli restano come sono.",
+    hint: t("Le foto dentro il PDF vengono ricompresse; testo, link e moduli restano come sono."),
     options: [
-      { value: "medium", label: "Schermo ed email", small: "consigliato" },
-      { value: "light", label: "Qualità di stampa" },
-      { value: "strong", label: "Il più leggero" },
+      { value: "medium", label: t("Schermo ed email"), small: t("consigliato") },
+      { value: "light", label: t("Qualità di stampa") },
+      { value: "strong", label: t("Il più leggero") },
     ],
     default: "medium",
   },
   removebg: {
     options: [
-      { value: "transparent", label: "Trasparente", small: "PNG" },
-      { value: "white", label: "Su bianco", small: "JPG" },
-      { value: "crop", label: "Ritagliato", small: "attorno al soggetto" },
+      { value: "transparent", label: t("Trasparente"), small: "PNG" },
+      { value: "white", label: t("Su bianco"), small: "JPG" },
+      { value: "crop", label: t("Ritagliato"), small: t("attorno al soggetto") },
     ],
-    hint: "Tutto sul computer: la foto non va su internet.",
+    hint: t("Tutto sul computer: la foto non va su internet."),
     default: "transparent",
   },
   aienhance: {
     options: [
-      { value: "70", label: "Naturale", small: "consigliato" },
-      { value: "100", label: "Più nitida" },
-      { value: "anime", label: "Disegni e anime" },
+      { value: "70", label: t("Naturale"), small: t("consigliato") },
+      { value: "100", label: t("Più nitida") },
+      { value: "anime", label: t("Disegni e anime") },
     ],
-    hint: "Usa la scheda video del PC. Stessa misura, meno rumore e più dettaglio.",
+    hint: t("Usa la scheda video del PC. Stessa misura, meno rumore e più dettaglio."),
     default: "70",
   },
   upscale: {
     options: [
-      { value: "2", label: "2×", small: "il doppio" },
-      { value: "4", label: "4×", small: "quattro volte" },
+      { value: "2", label: "2×", small: t("il doppio") },
+      { value: "4", label: "4×", small: t("quattro volte") },
     ],
     default: "2",
   },
   rotate: {
     options: [
-      { value: "90", label: "A destra", small: "90°" },
-      { value: "270", label: "A sinistra", small: "90°" },
-      { value: "180", label: "Capovolgi", small: "180°" },
+      { value: "90", label: t("A destra"), small: "90°" },
+      { value: "270", label: t("A sinistra"), small: "90°" },
+      { value: "180", label: t("Capovolgi"), small: "180°" },
     ],
     default: "90",
   },
@@ -218,14 +220,14 @@ export function kindOfExt(ext) {
 }
 
 export const ACTION_NAMES = {
-  vcompress: "Comprimi", icompress: "Comprimi", vresize: "Cambia la grandezza", social: "Formato social", cut: "Taglia", gifcut: "GIF da un pezzo",
-  speed: "Cambia la velocità", vmerge: "Unisci i video", amerge: "Unisci", normalize: "Volume uniforme", voiceclean: "Voce più pulita", mute: "Togli l'audio",
-  rotate: "Ruota", hidemark: "Nascondi un logo", ocr: "Estrai il testo", resize: "Ridimensiona", strip: "Rimuovi i metadati", merge: "Unisci in un PDF", pdfmerge: "Unisci i PDF", split: "Dividi in pagine",
-  extract: "Estrai pagine", pdfcompress: "Comprimi il PDF", vproject: "Esporta il montaggio", ringtone: "Suoneria", silence: "Togli i silenzi", whatsapp: "Vocale per WhatsApp", tts: "Testo in voce", transcribe: "Trascrivi",
-  removebg: "Rimuovi lo sfondo", aienhance: "Migliora con l'IA", upscale: "Ingrandisci", link: "Scarica da un link", protect: "Proteggi con password", unprotect: "Togli la password", reorder: "Riordina le pagine", rename: "Rinomina tutti",
+  vcompress: t("Comprimi"), icompress: t("Comprimi"), vresize: t("Cambia la grandezza"), social: t("Formato social"), cut: t("Taglia"), gifcut: t("GIF da un pezzo"),
+  speed: t("Cambia la velocità"), vmerge: t("Unisci i video"), amerge: t("Unisci"), normalize: t("Volume uniforme"), voiceclean: t("Voce più pulita"), mute: t("Togli l'audio"),
+  rotate: t("Ruota"), hidemark: t("Nascondi un logo"), ocr: t("Estrai il testo"), resize: t("Ridimensiona"), strip: t("Rimuovi i metadati"), merge: t("Unisci in un PDF"), pdfmerge: t("Unisci i PDF"), split: t("Dividi in pagine"),
+  extract: t("Estrai pagine"), pdfcompress: t("Comprimi il PDF"), vproject: t("Esporta il montaggio"), ringtone: t("Suoneria"), silence: t("Togli i silenzi"), whatsapp: t("Vocale per WhatsApp"), tts: t("Testo in voce"), transcribe: t("Trascrivi"),
+  removebg: t("Rimuovi lo sfondo"), aienhance: t("Migliora con l'IA"), upscale: t("Ingrandisci"), link: t("Scarica da un link"), protect: t("Proteggi con password"), unprotect: t("Togli la password"), reorder: t("Riordina le pagine"), rename: t("Rinomina tutti"),
 };
 
 export function actionName(id) {
-  if (id.startsWith("to:")) return "Converti in " + id.slice(3).toUpperCase();
+  if (id.startsWith("to:")) return t`Converti in ${id.slice(3).toUpperCase()}`;
   return ACTION_NAMES[id] || id;
 }

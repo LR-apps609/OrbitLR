@@ -1,6 +1,7 @@
 // Piccoli aiuti: creare elementi, numeri all'italiana, memoria delle preferenze, avvisi.
 
 import { icon } from "./icons.js";
+import { t, isEn } from "./i18n.js";
 
 /** h("div.cls", {attrs}, ...figli) */
 export function h(tag, attrs, ...kids) {
@@ -35,7 +36,7 @@ export function ico(name, size = 18, cls = "") {
 export function fmtDecimal(x, digits = 1) {
   let s = Number(x).toFixed(digits);
   if (s.includes(".")) s = s.replace(/0+$/, "").replace(/\.$/, "");
-  return s.replace(".", ",");
+  return isEn ? s : s.replace(".", ",");
 }
 
 export function fmtBytes(b) {
@@ -58,7 +59,7 @@ export function fmtTime(s, tenths = false) {
 export function gainText(before, after) {
   if (!before || !after) return "";
   const pct = Math.round((1 - after / before) * 100);
-  const base = `da ${fmtBytes(before)} a ${fmtBytes(after)}`;
+  const base = t`da ${fmtBytes(before)} a ${fmtBytes(after)}`;
   return pct >= 3 ? `${base} · −${pct}%` : pct <= -3 ? `${base} · +${-pct}%` : base;
 }
 

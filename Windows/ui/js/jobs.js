@@ -3,6 +3,7 @@
 import { invoke, onAutoJob, onJob } from "./api.js";
 import { actionName } from "./catalog.js";
 import { store } from "./util.js";
+import { t } from "./i18n.js";
 
 const jobs = new Map(); // id → lavoro
 const subs = new Set();
@@ -100,7 +101,7 @@ onAutoJob((a) => {
   const job = {
     id: a.id,
     action: a.action,
-    title: `${a.rule} · in automatico`,
+    title: t`${a.rule} · in automatico`,
     origin: "auto",
     files: a.files,
     param: a.param,

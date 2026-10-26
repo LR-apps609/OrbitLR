@@ -3,6 +3,7 @@
 
 import { fileUrl, DEMO } from "./api.js";
 import { fmtTime, h, ico } from "./util.js";
+import { t } from "./i18n.js";
 
 export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange }) {
   let start = 0;
@@ -13,26 +14,26 @@ export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange 
   let previewOk = !DEMO;
   player.addEventListener("error", () => {
     previewOk = false;
-    if (media === "video") box.replaceChildren(h("div.nopreview", "Anteprima non disponibile per questo formato.", h("br"), "Il taglio funziona lo stesso: scegli i tempi qui sotto."));
+    if (media === "video") box.replaceChildren(h("div.nopreview", t("Anteprima non disponibile per questo formato."), h("br"), t("Il taglio funziona lo stesso: scegli i tempi qui sotto.")));
   });
-  const box = media === "video" ? h("div.player", DEMO ? h("div.nopreview", "Anteprima del video") : player) : h("div");
+  const box = media === "video" ? h("div.player", DEMO ? h("div.nopreview", t("Anteprima del video")) : player) : h("div");
   if (media !== "video") box.append(player);
 
   const canvas = h("canvas");
   const sel = h("div.sel");
-  const hA = h("div.hd", { role: "slider", tabindex: "0", "aria-label": "Inizio" });
-  const hB = h("div.hd", { role: "slider", tabindex: "0", "aria-label": "Fine" });
+  const hA = h("div.hd", { role: "slider", tabindex: "0", "aria-label": t("Inizio") });
+  const hB = h("div.hd", { role: "slider", tabindex: "0", "aria-label": t("Fine") });
   const ph = h("div.ph");
   const rail = h("div.rail", canvas, sel, ph, hA, hB);
   const tStart = h("span.t");
   const tEnd = h("span.t");
   const tLen = h("span.t");
-  const playBtn = h("button.btn", { onclick: () => playSelection() }, ico("play", 14), "Ascolta il pezzo");
+  const playBtn = h("button.btn", { onclick: () => playSelection() }, ico("play", 14), t("Ascolta il pezzo"));
   const row = h("div.trim-row",
-    h("span", "Da "), tStart, h("span", " a "), tEnd, h("span", " · "), tLen,
+    h("span", t("Da ")), tStart, h("span", t(" a ")), tEnd, h("span", " · "), tLen,
     h("span.grow"),
-    h("button.btn", { onclick: () => setStart(player.currentTime) }, "Inizio qui"),
-    h("button.btn", { onclick: () => setEnd(player.currentTime) }, "Fine qui"),
+    h("button.btn", { onclick: () => setStart(player.currentTime) }, t("Inizio qui")),
+    h("button.btn", { onclick: () => setEnd(player.currentTime) }, t("Fine qui")),
     playBtn);
   el.append(box, rail, row);
 
@@ -134,8 +135,8 @@ export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange 
     stopAt = end;
     player.play().catch(() => {});
   }
-  player.addEventListener("play", () => playBtn.replaceChildren(ico("pause", 14), "Ferma"));
-  player.addEventListener("pause", () => playBtn.replaceChildren(ico("play", 14), "Ascolta il pezzo"));
+  player.addEventListener("play", () => playBtn.replaceChildren(ico("pause", 14), t("Ferma")));
+  player.addEventListener("pause", () => playBtn.replaceChildren(ico("play", 14), t("Ascolta il pezzo")));
   let raf = 0;
   const tick = () => {
     // Pagina nascosta: niente animazione; si riprende quando torna visibile

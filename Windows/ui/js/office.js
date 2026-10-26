@@ -3,6 +3,7 @@
 
 import { invoke, openUrl } from "./api.js";
 import { modal, toast } from "./util.js";
+import { t } from "./i18n.js";
 
 let installing = null;
 
@@ -18,24 +19,24 @@ export async function officeReady(app) {
 export async function askOffice(app) {
   if (await officeReady(app)) return true;
   if (installing) {
-    toast("Sto già installando LibreOffice: ancora qualche minuto");
+    toast(t("Sto già installando LibreOffice: ancora qualche minuto"));
     return installing;
   }
-  const go = await modal("Serve LibreOffice",
-    "Per convertire Word, Excel e PowerPoint OrbitLR usa LibreOffice: gratuito, sicuro, circa 350 MB. Si installa una volta sola; Windows ti chiederà il permesso. OrbitLR lo usa in silenzio, senza aprire finestre.",
-    [{ label: "Non ora", value: false }, { label: "Installa LibreOffice", value: true, primary: true }]);
+  const go = await modal(t("Serve LibreOffice"),
+    t("Per convertire Word, Excel e PowerPoint OrbitLR usa LibreOffice: gratuito, sicuro, circa 350 MB. Si installa una volta sola; Windows ti chiederà il permesso. OrbitLR lo usa in silenzio, senza aprire finestre."),
+    [{ label: t("Non ora"), value: false }, { label: t("Installa LibreOffice"), value: true, primary: true }]);
   if (!go) return false;
   return install(app);
 }
 
 export function install(app) {
   if (installing) return installing;
-  toast("Installo LibreOffice… ci vogliono alcuni minuti");
+  toast(t("Installo LibreOffice… ci vogliono alcuni minuti"));
   installing = invoke("office_install")
     .then((ok) => {
       if (ok) {
         if (app.engine) app.engine.office = true;
-        toast("LibreOffice è pronto");
+        toast(t("LibreOffice è pronto"));
         return true;
       }
       fallback();
@@ -55,5 +56,5 @@ export const isInstalling = () => !!installing;
 
 function fallback() {
   openUrl("https://www.libreoffice.org/download/download-libreoffice/");
-  toast("Scaricalo dalla pagina ufficiale che si è aperta, installalo e poi riprova");
+  toast(t("Scaricalo dalla pagina ufficiale che si è aperta, installalo e poi riprova"));
 }

@@ -8,6 +8,7 @@ import { run } from "./jobs.js";
 import { resultBar } from "./resultbar.js";
 import { fmtBytes, h, ico, store, toast } from "./util.js";
 import { presets } from "./presets.js";
+import { t, tr } from "./i18n.js";
 
 export function convertPage(app) {
   let files = [];
@@ -22,7 +23,7 @@ export function convertPage(app) {
     const probed = await invoke("probe_files", { paths });
     for (const p of probed) {
       if (!p.ok) {
-        toast(p.error);
+        toast(tr(p.error));
         continue;
       }
       if (!files.some((f) => f.path === p.info.path)) files.push({ path: p.info.path, name: p.info.name, size: p.info.size, info: p.info, kind: p.info.kind });
@@ -85,25 +86,25 @@ export function convertPage(app) {
       for (const p of mine) slices.push({ id: p.id, label: p.name, icon: "sparkles", mine: true, go: () => run(p.action, list, p.param, "convert") });
     }
     if (more) {
-      slices.push({ id: "back", label: "Indietro", icon: "rotate-ccw", edit: true, go: () => { moreFor = null; render(); } });
+      slices.push({ id: "back", label: t("Indietro"), icon: "rotate-ccw", edit: true, go: () => { moreFor = null; render(); } });
     } else if (formats.length > shown.length) {
-      slices.push({ id: "more", label: "Altro", icon: "ellipsis", edit: true, go: () => { moreFor = kind; render(); } });
+      slices.push({ id: "more", label: t("Altro"), icon: "ellipsis", edit: true, go: () => { moreFor = kind; render(); } });
     }
     if (!more && kind !== "other" && kind !== "doc") {
       const tab = kind === "pdf" ? "pdf" : kind;
-      slices.push({ id: "edit", label: "Modifica", icon: "sliders-horizontal", edit: true, go: () => app.openIn(tab, list.map((f) => f.path)) });
+      slices.push({ id: "edit", label: t("Modifica"), icon: "sliders-horizontal", edit: true, go: () => app.openIn(tab, list.map((f) => f.path)) });
     }
-    const node = h("div.pie", { style: { width: size + "px", height: size + "px" }, role: "group", "aria-label": `Formati per ${KINDS[kind].label}` }, h("div.pie-disc"));
+    const node = h("div.pie", { style: { width: size + "px", height: size + "px" }, role: "group", "aria-label": t`Formati per ${KINDS[kind].label}` }, h("div.pie-disc"));
     const one = list.length === 1 ? list[0] : null;
     const cs = Math.round(size * 0.4);
     node.append(h("div.pie-center", { style: { width: cs + "px", height: cs + "px" } },
       h("div",
         one?.thumb ? h("img", { src: one.thumb, alt: "" }) : h("div", { style: { color: KINDS[kind].color, display: "grid", placeItems: "center" } }, ico(KINDS[kind].icon, size > 300 ? 46 : 30)),
-        h("div.nm", one ? one.name : `${list.length} file`),
+        h("div.nm", one ? one.name : t`${list.length} file`),
         h("div.sz", one ? fmtBytes(one.size) : `${KINDS[kind].label} · ${fmtBytes(list.reduce((a, f) => a + f.size, 0))}`))));
     if (!slices.length) {
       node.append(h("div", { style: { position: "absolute", bottom: "14%", left: "15%", right: "15%", textAlign: "center", fontSize: "12.5px", zIndex: 3 } },
-        kind === "doc" ? "Questo documento non lo so ancora convertire (Word, Excel e PowerPoint sì)" : "Questo formato non lo so ancora lavorare"));
+        kind === "doc" ? t("Questo documento non lo so ancora convertire (Word, Excel e PowerPoint sì)") : t("Questo formato non lo so ancora lavorare")));
     }
     const ring = R * 0.72;
     slices.forEach((s, i) => {
@@ -112,7 +113,7 @@ export function convertPage(app) {
       if (n <= 9) keyMap.push(s.go);
       const b = h("button.slice" + (s.edit ? ".edit" : "") + (s.mine ? ".mine" : ""), {
         style: { left: R + Math.cos(a) * ring + "px", top: R + Math.sin(a) * ring + "px", animationDelay: i * 30 + "ms" },
-        onclick: s.go, title: s.mine ? "Una delle mie azioni" : s.id === "more" ? "Altri formati" : s.id === "back" ? "Torna ai formati principali" : s.edit ? "Apri nella sua scheda con tutti gli strumenti" : `Converti in ${s.label}`,
+        onclick: s.go, title: s.mine ? t("Una delle mie azioni") : s.id === "more" ? t("Altri formati") : s.id === "back" ? t("Torna ai formati principali") : s.edit ? t("Apri nella sua scheda con tutti gli strumenti") : t`Converti in ${s.label}`,
       }, n <= 9 ? h("span.k", String(n)) : null, ico(s.icon, 18), s.label);
       node.append(b);
     });
@@ -125,8 +126,8 @@ export function convertPage(app) {
       const dz = h("div.dropzone", { role: "button", tabindex: "0", onclick: pick, onkeydown: (e) => e.key === "Enter" && pick() },
         h("div.dz-inner",
           logoRing(),
-          h("h2", "Trascina un file. Scegli cosa farne."),
-          h("p", "oppure clicca per sceglierlo · funziona anche con più file e con le cartelle"),
+          h("h2", t("Trascina un file. Scegli cosa farne.")),
+          h("p", t("oppure clicca per sceglierlo · funziona anche con più file e con le cartelle")),
           h("div.chips", ["pdf", "image", "video", "audio", "doc"].map((k) => h("span.chip-k", { style: { background: KINDS[k].color + "22", color: KINDS[k].color } }, ico(KINDS[k].icon, 13), KINDS[k].label)))));
       stage.replaceChildren(dz);
       app.dropTarget = dz;
@@ -135,11 +136,11 @@ export function convertPage(app) {
     const groups = byKind();
     const size = groups.length === 1 ? 470 : groups.length === 2 ? 330 : 260;
     const pies = h("div.pies", groups.map(([k, list]) => pie(k, list, size)));
-    const close = h("button.btn", { onclick: () => { files = []; moreFor = null; bar.clear(); render(); } }, ico("x", 15), "Togli tutto");
+    const close = h("button.btn", { onclick: () => { files = []; moreFor = null; bar.clear(); render(); } }, ico("x", 15), t("Togli tutto"));
     stage.replaceChildren(
       h("div.pie-stage", pies),
-      h("div.pie-top", h("button.btn", { onclick: pick }, ico("plus", 15), "Aggiungi file…"), close),
-      h("div.pie-hint", h("span", ico("arrow-left-right", 14), "Clic su un formato"), h("span", "1–9 · Invio = ultima scelta"), h("span", "Esc per togliere")));
+      h("div.pie-top", h("button.btn", { onclick: pick }, ico("plus", 15), t("Aggiungi file…")), close),
+      h("div.pie-hint", h("span", ico("arrow-left-right", 14), t("Clic su un formato")), h("span", t("1–9 · Invio = ultima scelta")), h("span", t("Esc per togliere"))));
     app.dropTarget = null;
   }
 

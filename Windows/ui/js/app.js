@@ -11,6 +11,7 @@ import { activityPage, helpPage, report, settingsPage } from "./pages.js";
 import { autoPage } from "./auto.js";
 import { showFeedback } from "./feedback.js";
 import { extOf, fmtBytes, h, ico, modal, store, toast } from "./util.js";
+import { t, tr, LANG } from "./i18n.js";
 
 const VERSION = "0.2.1";
 // Numero della compilazione (lo scrive GitHub quando crea l'installazione)
@@ -37,27 +38,27 @@ const app = {
 window.orbit = app;
 
 const TABS = [
-  { id: "convert", label: "Conversione", icon: "arrow-left-right", make: () => convertPage(app) },
-  { id: "image", label: "Immagini", icon: "image", make: () => mediaPage("image", app) },
-  { id: "video", label: "Video", icon: "film", make: () => videoTab(app) },
-  { id: "audio", label: "Audio", icon: "audio-lines", make: () => audioPage(app) },
-  { id: "pdf", label: "File", icon: "file-text", make: () => mediaPage("pdf", app) },
+  { id: "convert", label: t("Conversione"), icon: "arrow-left-right", make: () => convertPage(app) },
+  { id: "image", label: t("Immagini"), icon: "image", make: () => mediaPage("image", app) },
+  { id: "video", label: t("Video"), icon: "film", make: () => videoTab(app) },
+  { id: "audio", label: t("Audio"), icon: "audio-lines", make: () => audioPage(app) },
+  { id: "pdf", label: t("File"), icon: "file-text", make: () => mediaPage("pdf", app) },
 ];
 const EXTRA = {
-  activity: { label: "Attività", make: () => activityPage(app) },
-  auto: { label: "Cartelle automatiche", make: () => autoPage(app) },
-  settings: { label: "Opzioni", make: () => settingsPage(app) },
-  help: { label: "Aiuto", make: () => helpPage(app) },
+  activity: { label: t("Attività"), make: () => activityPage(app) },
+  auto: { label: t("Cartelle automatiche"), make: () => autoPage(app) },
+  settings: { label: t("Opzioni"), make: () => settingsPage(app) },
+  help: { label: t("Aiuto"), make: () => helpPage(app) },
 };
 
 const main = h("main.main");
 const navButtons = {};
 const activityBadge = h("span.badge", { hidden: true });
 const drawerList = h("ul");
-const drawerEmpty = h("p", "I file che crei finiscono qui: un clic per vederli nella cartella.");
+const drawerEmpty = h("p", t("I file che crei finiscono qui: un clic per vederli nella cartella."));
 const updateLink = h("button.btn.brass", { hidden: true, style: { width: "100%", marginBottom: "8px" }, onclick: () => askUpdate() });
 // Come sul Mac: in alto a destra, appena c'è un aggiornamento
-const updateCorner = h("button.update-corner", { hidden: true, onclick: () => askUpdate() }, ico("circle-arrow-down", 15), "Nuovo aggiornamento disponibile");
+const updateCorner = h("button.update-corner", { hidden: true, onclick: () => askUpdate() }, ico("circle-arrow-down", 15), t("Nuovo aggiornamento disponibile"));
 let pendingUpdate = null;
 
 function show(id) {
@@ -73,36 +74,36 @@ function show(id) {
 }
 
 function sidebar() {
-  const nav = h("nav.nav", { "aria-label": "Schede" });
+  const nav = h("nav.nav", { "aria-label": t("Schede") });
   for (const t of TABS) {
     navButtons[t.id] = h("button", { onclick: () => show(t.id) }, ico(t.icon, 18), t.label);
     nav.append(navButtons[t.id]);
   }
   nav.append(h("div.nav-sep"));
-  navButtons.activity = h("button", { onclick: () => show("activity") }, ico("clock", 18), "Attività", activityBadge);
+  navButtons.activity = h("button", { onclick: () => show("activity") }, ico("clock", 18), t("Attività"), activityBadge);
   nav.append(navButtons.activity);
-  navButtons.auto = h("button", { onclick: () => show("auto") }, ico("folder-input", 18), "Cartelle automatiche");
+  navButtons.auto = h("button", { onclick: () => show("auto") }, ico("folder-input", 18), t("Cartelle automatiche"));
   nav.append(navButtons.auto);
   const foot = h("div.foot",
-    (navButtons.settings = h("button", { onclick: () => show("settings") }, ico("settings", 17), "Opzioni")),
-    (navButtons.help = h("button", { onclick: () => show("help") }, ico("circle-help", 17), "Aiuto")),
-    h("button", { onclick: () => report(app) }, ico("bug", 17), "Segnala"),
-    h("button", { title: "Un’idea, una cosa che manca: mi arriva per email", onclick: () => showFeedback(VERSION) }, ico("lightbulb", 17), "Idea"));
+    (navButtons.settings = h("button", { onclick: () => show("settings") }, ico("settings", 17), t("Opzioni"))),
+    (navButtons.help = h("button", { onclick: () => show("help") }, ico("circle-help", 17), t("Aiuto"))),
+    h("button", { onclick: () => report(app) }, ico("bug", 17), t("Segnala")),
+    h("button", { title: t("Un’idea, una cosa che manca: mi arriva per email"), onclick: () => showFeedback(VERSION) }, ico("lightbulb", 17), t("Idea")));
   return h("aside.side",
-    h("div.brand", h("img", { src: "img/icona.png", alt: "" }), h("div", h("b", "OrbitLR"), h("small", "per Windows"))),
+    h("div.brand", h("img", { src: "img/icona.png", alt: "" }), h("div", h("b", "OrbitLR"), h("small", t("per Windows")))),
     nav,
     h("div.side-fill"),
     updateLink,
-    h("div.drawer", h("h4", ico("archive", 15), "Cassetto"), drawerEmpty, drawerList),
+    h("div.drawer", h("h4", ico("archive", 15), t("Cassetto")), drawerEmpty, drawerList),
     foot,
-    h("div.ver", `OrbitLR ${VERSION}${BUILD ? ` (${BUILD})` : ""}${DEMO ? " · prova" : ""}`));
+    h("div.ver", `OrbitLR ${VERSION}${BUILD ? ` (${BUILD})` : ""}${DEMO ? t(" · prova") : ""}`));
 }
 
 function renderDrawer() {
   const items = getDrawer().slice(0, 12);
   drawerEmpty.hidden = items.length > 0;
   let clickTimer;
-  drawerList.replaceChildren(...items.map((d) => h("li", { title: `${d.name}\nClic: mostra nella cartella · Doppio clic: apri`,
+  drawerList.replaceChildren(...items.map((d) => h("li", { title: t`${d.name}\nClic: mostra nella cartella · Doppio clic: apri`,
     onclick: () => { clearTimeout(clickTimer); clickTimer = setTimeout(() => reveal(d.path), 260); },
     ondblclick: () => { clearTimeout(clickTimer); openPath(d.path); } },
     ico(iconFor(d.name), 15), h("span.n", d.name), h("span.s", fmtBytes(d.size)))));
@@ -128,7 +129,7 @@ async function handleDrop(paths) {
   if (kinds.size === 1) {
     const k = [...kinds][0];
     const tab = k === "doc" || k === "other" ? "convert" : k;
-    toast(`Li apro in ${TABS.find((t) => t.id === tab).label}`);
+    toast(t`Li apro in ${TABS.find((t) => t.id === tab).label}`);
     show(tab);
     return app.pages[tab].add(paths);
   }
@@ -148,7 +149,7 @@ async function checkUpdate(force = false) {
     if (u) {
       pendingUpdate = u;
       updateLink.hidden = false;
-      updateLink.textContent = `Aggiorna alla ${u.version}`;
+      updateLink.textContent = t`Aggiorna alla ${u.version}`;
       updateCorner.hidden = false;
       document.body.classList.add("has-update");
       return u.version;
@@ -161,14 +162,14 @@ async function askUpdate() {
   if (!pendingUpdate) return;
   const u = pendingUpdate;
   const busy = running().length;
-  const text = [u.notes, `Si scarica (${fmtBytes(u.size)}), OrbitLR si chiude, si aggiorna da sola e si riapre.`, busy ? `Attenzione: ${busy === 1 ? "c'è un lavoro in corso" : `ci sono ${busy} lavori in corso`}, verrà interrotto.` : ""].filter(Boolean).join("\n\n");
-  const ok = await modal(`OrbitLR ${u.version}`, text, [{ label: "Più tardi", value: false }, { label: "Aggiorna adesso", value: true, primary: true }]);
+  const text = [u.notes, t`Si scarica (${fmtBytes(u.size)}), OrbitLR si chiude, si aggiorna da sola e si riapre.`, busy ? t`Attenzione: ${busy === 1 ? t("c'è un lavoro in corso") : t`ci sono ${busy} lavori in corso`}, verrà interrotto.` : ""].filter(Boolean).join("\n\n");
+  const ok = await modal(`OrbitLR ${u.version}`, text, [{ label: t("Più tardi"), value: false }, { label: t("Aggiorna adesso"), value: true, primary: true }]);
   if (!ok) return;
   // Le novità si mostrano alla prossima apertura, dalla versione nuova
   store.set("newsPending", { version: u.version, notes: u.notes || "" });
   updateCorner.disabled = true;
   updateLink.disabled = true;
-  const show = (p) => { updateCorner.textContent = `Scarico l’aggiornamento… ${Math.round(p * 100)}%`; };
+  const show = (p) => { updateCorner.textContent = t`Scarico l’aggiornamento… ${Math.round(p * 100)}%`; };
   show(0);
   const off = window.__TAURI__?.event?.listen ? await window.__TAURI__.event.listen("update-progress", (e) => show(Number(e.payload) || 0)) : null;
   try {
@@ -177,8 +178,8 @@ async function askUpdate() {
     off?.();
     updateCorner.disabled = false;
     updateLink.disabled = false;
-    updateCorner.replaceChildren(ico("circle-arrow-down", 15), "Nuovo aggiornamento disponibile");
-    toast("L’aggiornamento non è riuscito: " + e);
+    updateCorner.replaceChildren(ico("circle-arrow-down", 15), t("Nuovo aggiornamento disponibile"));
+    toast(t`L’aggiornamento non è riuscito: ${tr(String(e))}`);
   }
 }
 
@@ -189,6 +190,7 @@ function newer(a, b) {
 }
 
 async function boot() {
+  invoke("set_lang", { lang: LANG }).catch(() => {});
   app.applyTheme();
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => app.applyTheme());
   const splash = h("div.splash", h("img", { src: "img/icona.png", alt: "OrbitLR" }));
@@ -212,14 +214,14 @@ async function boot() {
   if (!DEMO) document.addEventListener("contextmenu", (e) => { if (!(e.target instanceof Element && e.target.closest("input, textarea"))) e.preventDefault(); });
   invoke("engine_status").then((s) => {
     app.engine = s;
-    if (!s.ready) toast("Il motore video non si è avviato: reinstalla OrbitLR.");
+    if (!s.ready) toast(t("Il motore video non si è avviato: reinstalla OrbitLR."));
     if (app.current === "settings") app.pages.settings.show();
   });
   // Chiudere con dei lavori in corso
   window.__TAURI__?.event.listen("close-requested", async () => {
     const n = running().length;
-    const ok = await modal("Ci sono lavori in corso", `${n === 1 ? "Un lavoro non è" : n + " lavori non sono"} ancora finit${n === 1 ? "o" : "i"}. Se chiudi adesso si interrompono e i file a metà vengono cancellati.`,
-      [{ label: "Continua a lavorare", value: false }, { label: "Interrompi e chiudi", value: true, primary: true }]);
+    const ok = await modal(t("Ci sono lavori in corso"), t`${n === 1 ? t("Un lavoro non è") : t`${n} lavori non sono`} ancora finit${n === 1 ? "o" : "i"}. Se chiudi adesso si interrompono e i file a metà vengono cancellati.`,
+      [{ label: t("Continua a lavorare"), value: false }, { label: t("Interrompi e chiudi"), value: true, primary: true }]);
     if (ok) invoke("quit_now");
   });
   // «Apri con OrbitLR» mentre l'app è già aperta
@@ -247,7 +249,7 @@ async function boot() {
   const news = store.get("newsPending", null);
   if (news && news.version === VERSION) {
     store.set("newsPending", null);
-    setTimeout(() => modal(`Benvenuto nella ${VERSION}`, news.notes || "OrbitLR è aggiornata.", [{ label: "Bene!", value: true, primary: true }]), 1200);
+    setTimeout(() => modal(t`Benvenuto nella ${VERSION}`, news.notes || t("OrbitLR è aggiornata."), [{ label: t("Bene!"), value: true, primary: true }]), 1200);
   } else if (news && news.version !== VERSION && Date.now() - store.get("updateCheck", 0) > 7 * 86400e3) {
     store.set("newsPending", null);
   }

@@ -1,6 +1,7 @@
 // «Nascondi un logo»: si disegnano una o più zone sull'immagine (in proporzione, 0…1).
 
 import { invoke } from "./api.js";
+import { t } from "./i18n.js";
 import { h, ico } from "./util.js";
 
 export function createZones({ path, onChange }) {
@@ -8,12 +9,12 @@ export function createZones({ path, onChange }) {
   const img = h("img", { alt: "", draggable: "false" });
   const layer = h("div.zlayer");
   const box = h("div.zbox", img, layer);
-  const el = h("div.zones", h("p.hint", "Trascina sopra il logo o la scritta per disegnare una zona. Puoi disegnarne più di una; × la toglie."), box);
+  const el = h("div.zones", h("p.hint", t("Trascina sopra il logo o la scritta per disegnare una zona. Puoi disegnarne più di una; × la toglie.")), box);
   invoke("thumbnail", { path, side: 960 }).then((t) => { if (t) img.src = t; });
 
   function draw() {
     layer.replaceChildren(...zones.map((z, i) => h("div.zone", { style: { left: z.x * 100 + "%", top: z.y * 100 + "%", width: z.w * 100 + "%", height: z.h * 100 + "%" } },
-      h("button.zx", { "aria-label": "Togli la zona", onpointerdown: (e) => e.stopPropagation(), onclick: () => { zones.splice(i, 1); draw(); } }, ico("x", 12)))));
+      h("button.zx", { "aria-label": t("Togli la zona"), onpointerdown: (e) => e.stopPropagation(), onclick: () => { zones.splice(i, 1); draw(); } }, ico("x", 12)))));
     onChange?.(zones);
   }
 

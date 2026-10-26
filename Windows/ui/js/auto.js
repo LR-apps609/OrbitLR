@@ -4,6 +4,7 @@
 import { invoke, pickFolder, reveal } from "./api.js";
 import { h, ico, toast } from "./util.js";
 import { presets, suggestName } from "./presets.js";
+import { t, tr, tc } from "./i18n.js";
 
 // Le mie azioni che una cartella può fare da sola (come nel motore: mai rinomina, password o unioni)
 const AUTO_OK = {
@@ -17,35 +18,35 @@ const KINDS = [
   {
     kind: "foto",
     icon: "image",
-    title: "Foto HEIC e WebP in JPG",
-    text: "Le foto dell'iPhone (HEIC) e le immagini WebP scaricate diventano JPG da sole, con posizione e data. Il JPG va accanto all'originale.",
+    title: t("Foto HEIC e WebP in JPG"),
+    text: t("Le foto dell'iPhone (HEIC) e le immagini WebP scaricate diventano JPG da sole, con posizione e data. Il JPG va accanto all'originale."),
     where: (p) => p.downloads,
     whereLabel: "Download",
   },
   {
     kind: "video",
     icon: "film",
-    title: "Video da comprimere",
-    text: "Metti un video nella cartella: si alleggerisce da solo. Il video leggero va nella sottocartella «Compressi», l'originale resta dov'è.",
+    title: t("Video da comprimere"),
+    text: t("Metti un video nella cartella: si alleggerisce da solo. Il video leggero va nella sottocartella «Compressi», l'originale resta dov'è."),
     where: (p) => (p.videos ? p.videos + "\\Da comprimere" : null),
     whereLabel: "Video\\Da comprimere",
-    options: [["best", "Stessa qualità, meno peso"], ["15", "WhatsApp"], ["9", "Discord"], ["18", "Email"]],
+    options: [["best", t("Stessa qualità, meno peso")], ["15", "WhatsApp"], ["9", "Discord"], ["18", "Email"]],
   },
   {
     kind: "pdf",
     icon: "file-text",
-    title: "PDF da comprimere",
-    text: "I PDF messi nella cartella diventano leggeri per l'email (testo e link intatti). Vanno nella sottocartella «Compressi».",
+    title: t("PDF da comprimere"),
+    text: t("I PDF messi nella cartella diventano leggeri per l'email (testo e link intatti). Vanno nella sottocartella «Compressi»."),
     where: (p) => (p.documents ? p.documents + "\\PDF da comprimere" : null),
     whereLabel: "Documenti\\PDF da comprimere",
-    options: [["medium", "Schermo ed email"], ["light", "Leggera"], ["strong", "Forte"]],
+    options: [["medium", t("Schermo ed email")], ["light", t("Leggera")], ["strong", t("Forte")]],
   },
 ];
 
 export function autoPage() {
   const list = h("div.list");
   const el = h("div.page",
-    h("div.head", h("div", h("h1", "Cartelle automatiche"), h("div.sub", "File nuovi in una cartella → lavorati da soli"))),
+    h("div.head", h("div", h("h1", t("Cartelle automatiche")), h("div.sub", t("File nuovi in una cartella → lavorati da soli")))),
     h("div.page-scroll", list));
   let rules = [];
 
@@ -53,7 +54,7 @@ export function autoPage() {
     try {
       rules = await invoke("watch_set", { rules: next });
     } catch (e) {
-      toast(String(e));
+      toast(tr(String(e)));
     }
     render();
   }
@@ -62,7 +63,7 @@ export function autoPage() {
     const r = rules.find((x) => x.kind === k.kind);
     const set = (patch) => save(rules.map((x) => (x.kind === k.kind ? { ...x, ...patch } : x)));
     const head = h("div.top", ico(k.icon, 20), h("b", k.title), h("div.grow"),
-      r ? h("label.check", h("input", { type: "checkbox", checked: r.enabled || null, onchange: (e) => set({ enabled: e.target.checked }) }), r.enabled ? "Attiva" : "Spenta") : null);
+      r ? h("label.check", h("input", { type: "checkbox", checked: r.enabled || null, onchange: (e) => set({ enabled: e.target.checked }) }), r.enabled ? tc("state", "Attiva") : t("Spenta")) : null);
     const body = [h("p", k.text)];
     if (!r) {
       body.push(h("div.acts",
@@ -72,20 +73,20 @@ export function autoPage() {
             const path = k.where(places) || (await pickFolder());
             if (!path) return;
             await save([...rules, { id: k.kind, kind: k.kind, path, param: k.options?.[0][0] || "", enabled: true }]);
-            toast(`Attiva: ${k.title}`);
+            toast(t`Attiva: ${k.title}`);
           },
-        }, ico("check", 15), `Attiva su «${k.whereLabel}»`),
+        }, ico("check", 15), t`Attiva su «${k.whereLabel}»`),
         h("button.btn", {
           onclick: async () => {
             const path = await pickFolder();
             if (path) await save([...rules, { id: k.kind, kind: k.kind, path, param: k.options?.[0][0] || "", enabled: true }]);
           },
-        }, ico("folder-open", 15), "Scegli un'altra cartella")));
+        }, ico("folder-open", 15), t("Scegli un'altra cartella"))));
     } else {
       body.push(h("div.out", ico("folder-input", 15), h("span.n", { title: r.path }, r.path),
-        h("button.btn", { onclick: () => reveal(r.path) }, "Mostra"),
-        h("button.btn", { onclick: async () => { const p = await pickFolder(); if (p) set({ path: p }); } }, "Cambia"),
-        h("button.btn.icon.ghost", { "aria-label": "Togli", title: "Togli questa cartella automatica", onclick: () => save(rules.filter((x) => x.kind !== k.kind)) }, ico("x", 14))));
+        h("button.btn", { onclick: () => reveal(r.path) }, t("Mostra")),
+        h("button.btn", { onclick: async () => { const p = await pickFolder(); if (p) set({ path: p }); } }, t("Cambia")),
+        h("button.btn.icon.ghost", { "aria-label": t("Togli"), title: t("Togli questa cartella automatica"), onclick: () => save(rules.filter((x) => x.kind !== k.kind)) }, ico("x", 14))));
       if (k.options) {
         body.push(h("div.opts", k.options.map(([v, l]) => h("button.opt" + ((r.param || k.options[0][0]) === v ? ".on" : ""), { onclick: () => set({ param: v }) }, l))));
       }
@@ -97,11 +98,11 @@ export function autoPage() {
     const set = (patch) => save(rules.map((x) => (x.id === r.id ? { ...x, ...patch } : x)));
     return h("div.set.auto" + (r.enabled ? ".on" : ""),
       h("div.top", h("span", { style: { color: "var(--brass)", fontWeight: 900 } }, "★"), h("b", r.name || r.action), h("div.grow"),
-        h("label.check", h("input", { type: "checkbox", checked: r.enabled || null, onchange: (e) => set({ enabled: e.target.checked }) }), r.enabled ? "Attiva" : "Spenta")),
-      h("p", `${suggestName(r.action, r.param)} · i risultati vanno nella sottocartella «Convertiti».`),
+        h("label.check", h("input", { type: "checkbox", checked: r.enabled || null, onchange: (e) => set({ enabled: e.target.checked }) }), r.enabled ? tc("state", "Attiva") : t("Spenta"))),
+      h("p", t`${suggestName(r.action, r.param)} · i risultati vanno nella sottocartella «Convertiti».`),
       h("div.out", ico("folder-input", 15), h("span.n", { title: r.path }, r.path),
-        h("button.btn", { onclick: () => reveal(r.path) }, "Mostra"),
-        h("button.btn.icon.ghost", { "aria-label": "Togli", title: "Togli questa cartella automatica", onclick: () => save(rules.filter((x) => x.id !== r.id)) }, ico("x", 14))));
+        h("button.btn", { onclick: () => reveal(r.path) }, t("Mostra")),
+        h("button.btn.icon.ghost", { "aria-label": t("Togli"), title: t("Togli questa cartella automatica"), onclick: () => save(rules.filter((x) => x.id !== r.id)) }, ico("x", 14))));
   }
 
   function mineSection() {
@@ -113,11 +114,11 @@ export function autoPage() {
           if (!path) return;
           const id = ("m" + p.id).slice(0, 40);
           await save([...rules.filter((x) => x.id !== id), { id, kind: "mia", path, param: p.param == null ? "" : String(p.param), enabled: true, action: p.action, media: p.kind, name: p.name }]);
-          toast(`Attiva: «${p.name}» su ${path}`);
+          toast(t`Attiva: «${p.name}» su ${path}`);
         },
-      }, ico("folder-open", 15), "Usa su una cartella…")));
-    return h("div.set", h("h3", "Con una delle mie azioni"),
-      usable.length ? h("p", "Scegli una cartella: ogni file nuovo che ci arriva viene lavorato con questa azione.") : h("p", "Salva prima una tua azione (per esempio «Comprimi · 200 KB» nelle Immagini, con «★ Salva come mia azione»): qui potrai farla fare a una cartella da sola."),
+      }, ico("folder-open", 15), t("Usa su una cartella…"))));
+    return h("div.set", h("h3", t("Con una delle mie azioni")),
+      usable.length ? h("p", t("Scegli una cartella: ogni file nuovo che ci arriva viene lavorato con questa azione.")) : h("p", t("Salva prima una tua azione (per esempio «Comprimi · 200 KB» nelle Immagini, con «★ Salva come mia azione»): qui potrai farla fare a una cartella da sola.")),
       ...rows);
   }
 
@@ -126,9 +127,9 @@ export function autoPage() {
       ...KINDS.map(card),
       ...rules.filter((r) => r.kind === "mia").map(mineCard),
       mineSection(),
-      h("div.set", h("h3", "Come funziona"),
-        h("p", "OrbitLR controlla le cartelle ogni pochi secondi mentre è aperta (anche ridotta a icona). Prende solo i file arrivati dopo l'attivazione, e solo quando hanno finito di scaricarsi o copiarsi."),
-        h("p", "Ogni lavoro compare in Attività, come quelli fatti a mano. Gli originali non si toccano mai.")));
+      h("div.set", h("h3", t("Come funziona")),
+        h("p", t("OrbitLR controlla le cartelle ogni pochi secondi mentre è aperta (anche ridotta a icona). Prende solo i file arrivati dopo l'attivazione, e solo quando hanno finito di scaricarsi o copiarsi.")),
+        h("p", t("Ogni lavoro compare in Attività, come quelli fatti a mano. Gli originali non si toccano mai."))));
   }
 
   return {

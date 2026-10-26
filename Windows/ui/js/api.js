@@ -1,6 +1,8 @@
 // Il ponte con il motore. Dentro l'app usa Tauri; aperto in un browser normale (per le prove e le foto)
 // risponde con dati di esempio, così ogni schermata si può vedere anche senza Windows.
 
+import { tr } from "./i18n.js";
+
 const T = window.__TAURI__;
 export const DEMO = !T;
 
@@ -53,7 +55,7 @@ export async function reveal(path) {
 }
 
 export async function openPath(path) {
-  if (T) return T.core.invoke("open_result", { path }).catch((e) => import("./util.js").then((u) => u.toast(String(e))));
+  if (T) return T.core.invoke("open_result", { path }).catch((e) => import("./util.js").then((u) => u.toast(tr(String(e)))));
 }
 
 export async function openUrl(url) {

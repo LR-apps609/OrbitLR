@@ -3,6 +3,7 @@
 
 import { KNOBS, TOOLS, actionName } from "./catalog.js";
 import { h, store } from "./util.js";
+import { t } from "./i18n.js";
 
 const KEY = "presets";
 const MAX = 24;
@@ -45,13 +46,13 @@ export function renamePreset(id, name) {
 /** Una finestrella con un campo di testo; risolve con il testo o null. */
 export function askName(title, value, hint) {
   return new Promise((resolve) => {
-    const input = h("input", { type: "text", value, maxlength: "40", "aria-label": "Nome", style: { width: "100%", boxSizing: "border-box", padding: "8px 10px", borderRadius: "10px", border: "1px solid var(--line-2)", background: "var(--card)", color: "var(--ink)", font: "inherit" } });
+    const input = h("input", { type: "text", value, maxlength: "40", "aria-label": t("Nome"), style: { width: "100%", boxSizing: "border-box", padding: "8px 10px", borderRadius: "10px", border: "1px solid var(--line-2)", background: "var(--card)", color: "var(--ink)", font: "inherit" } });
     const bg = h("div.modal-bg");
     const close = (v) => { bg.remove(); resolve(v); };
-    const ok = h("button.btn.primary", { type: "button", onclick: () => close(input.value.trim() || null) }, "Salva");
+    const ok = h("button.btn.primary", { type: "button", onclick: () => close(input.value.trim() || null) }, t("Salva"));
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") ok.click(); if (e.key === "Escape") close(null); });
     bg.append(h("div.modal", { role: "dialog", "aria-modal": "true" }, h("h3", title), hint ? h("p", hint) : null, input,
-      h("div.row", h("button.btn", { type: "button", onclick: () => close(null) }, "Annulla"), ok)));
+      h("div.row", h("button.btn", { type: "button", onclick: () => close(null) }, t("Annulla")), ok)));
     bg.addEventListener("click", (e) => e.target === bg && close(null));
     document.body.append(bg);
     input.select();

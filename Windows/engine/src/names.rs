@@ -266,6 +266,7 @@ pub fn tag(it: &str) -> String {
         "compresso" => "compressed", "taglio" => "trimmed", "più leggero" => "smaller", "più leggera" => "smaller",
         "senza metadati" => "no metadata", "senza sfondo" => "no background", "migliorata" => "enhanced",
         "trascrizione" => "transcript", "suoneria" => "ringtone", "voce" => "voice", "pagine" => "pages", "uniti" => "merged",
+        "Compressi" => "Compressed", "Convertiti" => "Converted",
         other => other,
     };
     en.to_string()

@@ -3,6 +3,7 @@
 
 import { openUrl } from "./api.js";
 import { h, store } from "./util.js";
+import { t } from "./i18n.js";
 
 const RECIPIENT = "ledion.proaccs@gmail.com";
 export const FACES = [["meh", "😕", "Così così"], ["ok", "🙂", "Bene"], ["love", "😍", "Benissimo"]];
@@ -21,9 +22,9 @@ export function showFeedback(version, face = null) {
   let chosen = face;
   const faces = h("div.fb-faces");
   const draw = () => faces.replaceChildren(...FACES.map(([id, emoji, name]) =>
-    h("button.fb-face" + (chosen === id ? ".on" : ""), { type: "button", "aria-pressed": chosen === id ? "true" : "false", onclick: () => { chosen = id; draw(); check(); } }, h("span.e", emoji), h("span", name))));
-  const ta = h("textarea.fb-text", { rows: 5, placeholder: "Un’idea, una cosa che manca, una che non ti piace…", "aria-label": "La tua idea" });
-  const send = h("button.btn.primary", { type: "button" }, "Scrivi l’email");
+    h("button.fb-face" + (chosen === id ? ".on" : ""), { type: "button", "aria-pressed": chosen === id ? "true" : "false", onclick: () => { chosen = id; draw(); check(); } }, h("span.e", emoji), h("span", t(name)))));
+  const ta = h("textarea.fb-text", { rows: 5, placeholder: t("Un’idea, una cosa che manca, una che non ti piace…"), "aria-label": t("La tua idea") });
+  const send = h("button.btn.primary", { type: "button" }, t("Scrivi l’email"));
   const check = () => (send.disabled = !chosen && !ta.value.trim());
   ta.addEventListener("input", check);
   const bg = h("div.modal-bg");
@@ -31,10 +32,10 @@ export function showFeedback(version, face = null) {
   send.addEventListener("click", () => { openUrl(mailFor(chosen, ta.value, version)); close(); });
   draw();
   check();
-  bg.append(h("div.modal.fb", { role: "dialog", "aria-modal": "true", "aria-label": "Suggerisci un’idea" },
-    h("h3", "Come ti trovi con OrbitLR?"), faces, ta,
-    h("p.fb-note", "Si apre un’email già pronta: contiene solo quello che scrivi e la versione di OrbitLR, niente nomi di file."),
-    h("div.row", h("button.btn", { type: "button", onclick: close }, "Annulla"), send)));
+  bg.append(h("div.modal.fb", { role: "dialog", "aria-modal": "true", "aria-label": t("Suggerisci un’idea") },
+    h("h3", t("Come ti trovi con OrbitLR?")), faces, ta,
+    h("p.fb-note", t("Si apre un’email già pronta: contiene solo quello che scrivi e la versione di OrbitLR, niente nomi di file.")),
+    h("div.row", h("button.btn", { type: "button", onclick: close }, t("Annulla")), send)));
   bg.addEventListener("click", (e) => e.target === bg && close());
   document.body.append(bg);
   ta.focus();
@@ -48,7 +49,7 @@ export function askFeedbackOnce(bar) {
   if (n < THRESHOLD) return;
   store.set("feedbackAsked", true);
   const version = window.__orbitVersion || "";
-  bar.append(h("div.fb-ask", h("span", "Ti piace OrbitLR?"),
-    ...FACES.map(([id, emoji, name]) => h("button.fb-mini", { type: "button", title: name, "aria-label": name, onclick: () => showFeedback(version, id) }, emoji)),
-    h("button.linkish", { type: "button", onclick: (e) => e.target.closest(".fb-ask")?.remove() }, "No grazie")));
+  bar.append(h("div.fb-ask", h("span", t("Ti piace OrbitLR?")),
+    ...FACES.map(([id, emoji, name]) => h("button.fb-mini", { type: "button", title: t(name), "aria-label": t(name), onclick: () => showFeedback(version, id) }, emoji)),
+    h("button.linkish", { type: "button", onclick: (e) => e.target.closest(".fb-ask")?.remove() }, t("No grazie"))));
 }

@@ -1,15 +1,17 @@
 // I testi del montaggio, disegnati su un canvas: lo stesso disegno per l'anteprima e per l'esportazione
 // (dove ogni testo diventa un PNG trasparente grande come il video).
 
-export const STYLES = [["title", "Titolo"], ["subtitle", "Sottotitolo"], ["caption", "Didascalia"], ["big", "Grande"]];
-export const ANIMS = [["fade", "Dissolvenza"], ["slide", "Scorrimento"], ["pop", "Pop"], ["type", "Macchina da scrivere"], ["word", "Parola per parola"]];
-export const COLORS = [["white", "Bianco", "#FFFFFF"], ["black", "Nero", "#141414"], ["brass", "Ottone", "#D9AB61"], ["sage", "Salvia", "#9EC7A1"]];
+import { t } from "./i18n.js";
+
+export const STYLES = [["title", t("Titolo")], ["subtitle", t("Sottotitolo")], ["caption", t("Didascalia")], ["big", t("Grande")]];
+export const ANIMS = [["fade", t("Dissolvenza")], ["slide", t("Scorrimento")], ["pop", t("Pop")], ["type", t("Macchina da scrivere")], ["word", t("Parola per parola")]];
+export const COLORS = [["white", t("Bianco"), "#FFFFFF"], ["black", t("Nero"), "#141414"], ["brass", t("Ottone"), "#D9AB61"], ["sage", t("Salvia"), "#9EC7A1"]];
 export const IN_TIME = 0.45, OUT_TIME = 0.35;
 
 const SIZE = { big: [0.12, 900], title: [0.075, 800], subtitle: [0.05, 700], caption: [0.042, 600] };
 
 export function newText(at, canvasH) {
-  return { id: "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), text: "Il tuo testo", style: "title", start: at, end: at + 3, x: 0.5, y: 0.5, anim: "fade", color: "white", wordTimes: null };
+  return { id: "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), text: t("Il tuo testo"), style: "title", start: at, end: at + 3, x: 0.5, y: 0.5, anim: "fade", color: "white", wordTimes: null };
 }
 
 export function words(text) {

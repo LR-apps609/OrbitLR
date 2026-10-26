@@ -3,6 +3,7 @@
 
 import { KNOBS } from "./catalog.js";
 import { fmtBytes, h, store } from "./util.js";
+import { t, dec } from "./i18n.js";
 
 /**
  * kind: chiave di KNOBS. onGo(value). extra: { estimate(value) → testo, goLabel }
@@ -13,7 +14,7 @@ export function knobPanel(kind, onGo, extra = {}) {
   if (!k.options.some((o) => o.value === value) && !k.custom) value = k.default;
   const est = h("div.est");
   const input = k.custom ? h("input", { type: "text", inputmode: "decimal", placeholder: k.custom.placeholder, "aria-label": k.custom.label }) : null;
-  if (input && !k.options.some((o) => o.value === value)) input.value = String(value).replace(".", ",");
+  if (input && !k.options.some((o) => o.value === value)) input.value = dec(String(value).replace(".", ","));
 
   const opts = h("div.opts", { role: "radiogroup" });
   function draw() {
@@ -36,9 +37,9 @@ export function knobPanel(kind, onGo, extra = {}) {
       store.set("knob." + kind, value);
       onGo(value);
     },
-  }, extra.goLabel || "Avvia");
+  }, extra.goLabel || t("Avvia"));
   // «Salva come mia azione»: la scelta di adesso, con un nome, in cima agli strumenti e nella torta
-  const star = extra.onSave ? h("button.btn.ghost.save-preset", { type: "button", title: "La ritrovi in cima agli strumenti e nella torta", onclick: () => extra.onSave(value) }, "★ Salva come mia azione") : null;
+  const star = extra.onSave ? h("button.btn.ghost.save-preset", { type: "button", title: t("La ritrovi in cima agli strumenti e nella torta"), onclick: () => extra.onSave(value) }, t("★ Salva come mia azione")) : null;
   return h("div.params",
     k.hint ? h("p.hint", k.hint) : null,
     opts,
@@ -53,13 +54,13 @@ export function videoEstimate(files) {
   return (v) => {
     const total = files.reduce((a, f) => a + (f.size || 0), 0);
     if (!total) return "";
-    if (v === "best") return `≈ ${fmtBytes(total * 0.5)} (dipende dal video)`;
+    if (v === "best") return t`≈ ${fmtBytes(total * 0.5)} (dipende dal video)`;
     const mb = Number(String(v).replace(",", "."));
     if (!mb) return "";
     const each = mb * 1e6;
     const fits = files.filter((f) => f.size > each).length;
-    if (!fits) return "Pesa già meno: non serve comprimere.";
-    return files.length > 1 ? `Ogni video sotto ${fmtBytes(each)}` : `Da ${fmtBytes(total)} a meno di ${fmtBytes(each)}`;
+    if (!fits) return t("Pesa già meno: non serve comprimere.");
+    return files.length > 1 ? t`Ogni video sotto ${fmtBytes(each)}` : t`Da ${fmtBytes(total)} a meno di ${fmtBytes(each)}`;
   };
 }
 
@@ -67,8 +68,8 @@ export function imageEstimate(files) {
   return (v) => {
     const total = files.reduce((a, f) => a + (f.size || 0), 0);
     if (!total) return "";
-    if (v === "best") return `≈ ${fmtBytes(total * 0.45)} (dipende dalla foto)`;
+    if (v === "best") return t`≈ ${fmtBytes(total * 0.45)} (dipende dalla foto)`;
     const kb = Number(String(v).replace(",", "."));
-    return kb ? `Ogni foto sotto ${fmtBytes(kb * 1000)}` : "";
+    return kb ? t`Ogni foto sotto ${fmtBytes(kb * 1000)}` : "";
   };
 }
