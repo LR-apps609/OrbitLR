@@ -52,6 +52,8 @@ export const TOOLS = {
   merge: { title: t("Unisci in un PDF"), hint: t("Una foto per pagina, nell'ordine dell'elenco"), icon: "file-stack", min: 2 },
   removebg: { title: t("Rimuovi lo sfondo"), hint: t("Resta solo il soggetto, su sfondo trasparente (la prima volta scarica il modello, 179 MB)"), icon: "scissors", params: "removebg", isNew: true },
   aienhance: { title: t("Migliora con l'IA"), hint: t("Più nitida e pulita, senza inventare dettagli (la prima volta scarica il motore, 45 MB)"), icon: "sparkles", params: "aienhance", isNew: true },
+  straighten: { title: t("Raddrizza un documento"), hint: t("La foto storta di un foglio diventa una pagina dritta, come uno scanner"), icon: "crop", params: "straighten", isNew: true },
+  stack: { title: t("Unisci più scatti"), hint: t("Più foto della stessa scena, allineate e fuse: meno rumore al buio"), icon: "layers", min: 2, isNew: true },
   upscale: { title: t("Ingrandisci"), hint: t("Due o quattro volte più grande, con i contorni nitidi"), icon: "zoom-in", params: "upscale", isNew: true },
   // Video
   vcompress: { title: t("Comprimi"), hint: t("Più leggero senza perdere qualità, o per Discord, WhatsApp ed email"), icon: "minimize-2", params: "vcompress" },
@@ -86,8 +88,8 @@ export const TOOLS = {
 export const GROUPS = {
   image: [
     [t("Modifica"), ["icompress", "resize", "removebg", "rotate", "hidemark", "strip"]],
-    [t("Migliora"), ["aienhance", "upscale"]],
-    [t("Testo e più foto"), ["ocr", "merge", "rename"]],
+    [t("Migliora"), ["aienhance", "upscale", "stack"]],
+    [t("Documenti e più foto"), ["straighten", "ocr", "merge", "rename"]],
   ],
   video: [
     [t("Peso e grandezza"), ["vcompress", "vresize", "social"]],
@@ -179,6 +181,14 @@ export const KNOBS = {
     ],
     default: "medium",
   },
+  straighten: {
+    options: [
+      { value: "jpg", label: t("Foto dritta"), small: "JPG" },
+      { value: "pdf", label: t("Pagina PDF"), small: "PDF" },
+    ],
+    hint: t("Fotografa il foglio su un fondo scuro, con tutti e quattro gli angoli dentro la foto."),
+    default: "jpg",
+  },
   removebg: {
     options: [
       { value: "transparent", label: t("Trasparente"), small: "PNG" },
@@ -229,7 +239,7 @@ export const ACTION_NAMES = {
   speed: t("Cambia la velocità"), vmerge: t("Unisci i video"), amerge: t("Unisci"), normalize: t("Volume uniforme"), voiceclean: t("Voce più pulita"), mute: t("Togli l'audio"),
   rotate: t("Ruota"), hidemark: t("Nascondi un logo"), ocr: t("Estrai il testo"), pdftext: t("Estrai il testo"), pdfedit: t("Compila, firma e oscura"), subextract: t("Estrai i sottotitoli"), subembed: t("Aggiungi i sottotitoli"), resize: t("Ridimensiona"), strip: t("Rimuovi i metadati"), merge: t("Unisci in un PDF"), pdfmerge: t("Unisci i PDF"), split: t("Dividi in pagine"),
   extract: t("Estrai pagine"), pdfcompress: t("Comprimi il PDF"), vproject: t("Esporta il montaggio"), ringtone: t("Suoneria"), silence: t("Togli i silenzi"), whatsapp: t("Vocale per WhatsApp"), tts: t("Testo in voce"), transcribe: t("Trascrivi"),
-  removebg: t("Rimuovi lo sfondo"), aienhance: t("Migliora con l'IA"), upscale: t("Ingrandisci"), link: t("Scarica da un link"), protect: t("Proteggi con password"), unprotect: t("Togli la password"), reorder: t("Riordina le pagine"), rename: t("Rinomina tutti"),
+  removebg: t("Rimuovi lo sfondo"), aienhance: t("Migliora con l'IA"), upscale: t("Ingrandisci"), link: t("Scarica da un link"), protect: t("Proteggi con password"), unprotect: t("Togli la password"), reorder: t("Riordina le pagine"), rename: t("Rinomina tutti"), straighten: t("Raddrizza un documento"), stack: t("Unisci più scatti"),
 };
 
 export function actionName(id) {

@@ -269,7 +269,7 @@ pub fn tag(it: &str) -> String {
         "Compressi" => "Compressed", "Convertiti" => "Converted",
         "tagliato" => "trimmed", "senza pause" => "no pauses", "vocale" => "voice note", "logo nascosto" => "logo hidden",
         "ruotata" => "rotated", "testo" => "text", "senza audio" => "no audio", "sfondo bianco" => "white background",
-        "voce pulita" => "clean voice", "con sottotitoli" => "with subtitles", "volume uniforme" => "even volume", "pagina" => "page", "Testo" => "Text", "Montaggio" => "Edit",
+        "voce pulita" => "clean voice", "con sottotitoli" => "with subtitles", "volume uniforme" => "even volume", "pagina" => "page", "Testo" => "Text", "Montaggio" => "Edit", "raddrizzato" => "straightened", "scatti" => "shots",
         other => other,
     };
     en.to_string()

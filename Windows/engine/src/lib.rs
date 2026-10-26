@@ -26,6 +26,7 @@ pub mod phone;
 pub mod pdfrender;
 pub mod probe;
 pub mod run;
+pub mod scan;
 pub mod speech;
 pub mod tools;
 pub mod update;

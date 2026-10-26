@@ -37,7 +37,7 @@ impl Output {
 
 /// Le azioni che lavorano su tutti i file insieme (una sola volta).
 pub fn is_multi(id: &str) -> bool {
-    matches!(id, "vmerge" | "amerge" | "merge" | "pdfmerge" | "vproject" | "rename")
+    matches!(id, "vmerge" | "amerge" | "merge" | "pdfmerge" | "vproject" | "rename" | "stack")
 }
 
 /// «2,8 MB», «850 KB»: numeri all'italiana.
@@ -125,6 +125,7 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
                 if id == "vmerge" { video::merge(tt, &infos, &dir, cancel, progress)? } else { audio::merge(tt, &infos, &dir, cancel, progress)? }
             }
             "merge" => images::to_pdf(t, files, &dir, cancel, progress)?,
+            "stack" => crate::scan::stack(t, files, &dir)?,
             _ => pdf::merge(files, &dir)?,
         };
         return Ok(vec![Output::of(&out)]);
@@ -242,6 +243,13 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
             vec![video::subtitles_in(tools(ctx)?, src, &srt, &info, &dir, cancel, progress)?]
         }
         "ocr" => vec![crate::ocr::to_file(t, src, &dir)?],
+        // «Raddrizza» la foto di un documento: JPG o PDF
+        "straighten" => {
+            if kind != Kind::Image {
+                return Err(EngineError::new("funziona sulle foto di documenti"));
+            }
+            vec![crate::scan::straighten(t, src, p_str == "pdf", &dir)?]
+        }
         // ── Con l'IA, sul computer (i modelli si scaricano la prima volta)
         "removebg" | "aienhance" | "upscale" => {
             if kind != Kind::Image {

@@ -11,3 +11,9 @@ build-test/
 test.log
 Sources/OrbitLR.entitlements
 Resources/Motori/
+
+# Foto delle prove automatiche (Windows)
+Windows/it-*.png
+Windows/en-*.png
+Windows/en-text.txt
+Windows/shots/
