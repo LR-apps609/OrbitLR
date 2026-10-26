@@ -12,7 +12,7 @@ import { autoPage } from "./auto.js";
 import { showFeedback } from "./feedback.js";
 import { extOf, fmtBytes, h, ico, modal, store, toast } from "./util.js";
 
-const VERSION = "0.2.0";
+const VERSION = "0.2.1";
 // Numero della compilazione (lo scrive GitHub quando crea l'installazione)
 const BUILD = 0;
 

@@ -1,5 +1,6 @@
 // Attività, Opzioni, Aiuto e «Segnala un problema».
 
+import { askName, presets, removePreset, renamePreset, suggestName } from "./presets.js";
 import { invoke, openPath, openUrl, pickFolder, reveal } from "./api.js";
 import { actionName } from "./catalog.js";
 import { clearHistory, getHistory, removeFromHistory, running, subscribe, cancel } from "./jobs.js";
@@ -89,6 +90,11 @@ export function settingsPage(app) {
         h("div.set", h("h3", "Lingua del parlato"), h("p", "Per «Trascrivi» e i sottotitoli automatici. «Automatica» la riconosce da sola."),
           h("div.opts", [["auto", "Automatica"], ["it", "Italiano"], ["en", "English"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["pt", "Português"], ["sq", "Shqip"]].map(([v, l]) =>
             h("button.opt" + (v === store.get("voiceLang", "auto") ? ".on" : ""), { onclick: () => { store.set("voiceLang", v); render(); } }, l)))),
+        h("div.set", h("h3", "Le mie azioni"),
+          presets().length ? h("p", "Le trovi in cima agli strumenti della scheda e come spicchi con la stella nella torta.") : h("p", "Nessuna ancora: apri uno strumento con delle scelte (per esempio «Comprimi»), scegli e premi «★ Salva come mia azione»."),
+          ...presets().map((p) => h("div.preset-row", h("span.n", "★ " + p.name), h("span.s", suggestName(p.action, p.param)),
+            h("button.btn.ghost", { onclick: async () => { const n = await askName("Rinomina", p.name); if (n) { renamePreset(p.id, n); render(); } } }, "Rinomina"),
+            h("button.btn.ghost", { onclick: () => { removePreset(p.id); render(); } }, "Togli")))),
         h("div.set", h("h3", "Aspetto"),
           h("div.opts", [["auto", "Come Windows"], ["light", "Chiaro"], ["dark", "Radio di notte"]].map(([v, l]) =>
             h("button.opt" + (v === theme ? ".on" : ""), { onclick: () => { store.set("theme", v); app.applyTheme(); render(); } }, l)))),

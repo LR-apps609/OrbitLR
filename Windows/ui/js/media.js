@@ -9,6 +9,7 @@ import { resultBar } from "./resultbar.js";
 import { createTrim } from "./trim.js";
 import { createZones } from "./zones.js";
 import { downloaderBar } from "./downloader.js";
+import { addPreset, askName, presets, suggestName } from "./presets.js";
 import { fmtBytes, fmtTime, h, ico, store, toast } from "./util.js";
 
 const COPY = {
@@ -149,6 +150,14 @@ export function mediaPage(kind, app, opts = {}) {
     right.replaceChildren(
       h("h2", "Cosa vuoi fare?"),
       h("div.sub", !files.length ? `Aggiungi ${kind === "image" ? "delle foto" : kind === "video" ? "dei video" : "dei PDF"} per iniziare` : n === 1 ? `Su «${t[0].name}»` : `Su ${n === files.length ? "tutti i" : ""} ${n} ${c.many}`.replace("  ", " ")));
+    const mine = presets(kind);
+    if (mine.length) {
+      right.append(h("div.group", "Le mie azioni"));
+      for (const p of mine) {
+        right.append(h("button.tool.mine", { disabled: !files.length || null, onclick: () => go(p.action, p.param), title: suggestName(p.action, p.param) },
+          h("span.ic", "★"), h("span.txt", h("b", p.name), h("span", suggestName(p.action, p.param)))));
+      }
+    }
     if (CONVERT[kind].length) {
       right.append(h("div.group", "Converti in"),
         h("div.fmt-grid", CONVERT[kind].map((f) => h("button.fmt", { onclick: () => go("to:" + f), disabled: !files.length || null, title: `Converti in ${f.toUpperCase()}` }, f.toUpperCase()))));
@@ -219,6 +228,13 @@ export function mediaPage(kind, app, opts = {}) {
     }
     const extra = {
       goLabel: tool.title,
+      onSave: async (v) => {
+        const name = await askName("Salva come mia azione", suggestName(actionId, v), "La ritrovi in cima agli strumenti e come spicchio con la stella nella torta.");
+        if (!name) return;
+        addPreset(kind, actionId, v, name);
+        toast(`«${name}» salvata in Le mie azioni.`);
+        renderTools();
+      },
       estimate: id === "vcompress" ? videoEstimate(t) : id === "icompress" ? imageEstimate(t) : null,
     };
     return knobPanel(tool.params, (v) => go(actionId, v), extra);

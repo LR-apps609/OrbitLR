@@ -1,4 +1,4 @@
-Novità per Windows:
-• Immagini: «Rimuovi lo sfondo», «Migliora con l’IA» e «Ingrandisci», tutto sul computer
-• Audio e Video: Audio Downloader e Video Downloader in alto a destra (incolli un link, funziona con migliaia di siti)
-• Aggiornamenti automatici: quando c’è una versione nuova compare in alto a destra «Nuovo aggiornamento disponibile»
+Novità per Windows 0.2.1:
+• «Le mie azioni»: salva una scelta con un nome (★ Salva come mia azione) e la ritrovi in cima agli strumenti e come spicchio con la stella nella torta
+• Torta: lo spicchio «Altro» apre un secondo anello con tutti i formati
+• Prima prova dell'aggiornamento automatico: questa versione arriva da sola dalla 0.2.0

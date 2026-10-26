@@ -7,6 +7,7 @@ import { askOffice } from "./office.js";
 import { run } from "./jobs.js";
 import { resultBar } from "./resultbar.js";
 import { fmtBytes, h, ico, store, toast } from "./util.js";
+import { presets } from "./presets.js";
 
 export function convertPage(app) {
   let files = [];
@@ -14,6 +15,8 @@ export function convertPage(app) {
   const stage = h("div.dial-wrap");
   const el = h("div.page", stage, bar.el);
   let keyMap = [];
+  // «Altro»: il secondo anello con i formati che non stanno nel primo
+  let moreFor = null;
 
   async function add(paths) {
     const probed = await invoke("probe_files", { paths });
@@ -73,8 +76,20 @@ export function convertPage(app) {
     const formats = kind === "doc"
       ? list.map((f) => docTargets(f.info?.ext || f.name.split(".").pop())).reduce((a, b) => a.filter((x) => b.includes(x)))
       : CONVERT[kind] || [];
-    const slices = formats.slice(0, 7).map((f) => ({ id: f, label: f.toUpperCase(), icon: fmtIcon(f), go: () => choose(kind, list, f) }));
-    if (kind !== "other" && kind !== "doc") {
+    const mine = presets(kind).slice(0, 3);
+    const more = moreFor === kind;
+    const room = Math.max(3, 7 - mine.length);
+    const shown = more ? formats.slice(room) : formats.slice(0, formats.length > room + 1 ? room : room + 1);
+    const slices = shown.map((f) => ({ id: f, label: f.toUpperCase(), icon: fmtIcon(f), go: () => choose(kind, list, f) }));
+    if (!more) {
+      for (const p of mine) slices.push({ id: p.id, label: p.name, icon: "sparkles", mine: true, go: () => run(p.action, list, p.param, "convert") });
+    }
+    if (more) {
+      slices.push({ id: "back", label: "Indietro", icon: "rotate-ccw", edit: true, go: () => { moreFor = null; render(); } });
+    } else if (formats.length > shown.length) {
+      slices.push({ id: "more", label: "Altro", icon: "ellipsis", edit: true, go: () => { moreFor = kind; render(); } });
+    }
+    if (!more && kind !== "other" && kind !== "doc") {
       const tab = kind === "pdf" ? "pdf" : kind;
       slices.push({ id: "edit", label: "Modifica", icon: "sliders-horizontal", edit: true, go: () => app.openIn(tab, list.map((f) => f.path)) });
     }
@@ -95,9 +110,9 @@ export function convertPage(app) {
       const a = (-90 + (i * 360) / slices.length) * (Math.PI / 180);
       const n = keyMap.length + 1;
       if (n <= 9) keyMap.push(s.go);
-      const b = h("button.slice" + (s.edit ? ".edit" : ""), {
+      const b = h("button.slice" + (s.edit ? ".edit" : "") + (s.mine ? ".mine" : ""), {
         style: { left: R + Math.cos(a) * ring + "px", top: R + Math.sin(a) * ring + "px", animationDelay: i * 30 + "ms" },
-        onclick: s.go, title: s.edit ? "Apri nella sua scheda con tutti gli strumenti" : `Converti in ${s.label}`,
+        onclick: s.go, title: s.mine ? "Una delle mie azioni" : s.id === "more" ? "Altri formati" : s.id === "back" ? "Torna ai formati principali" : s.edit ? "Apri nella sua scheda con tutti gli strumenti" : `Converti in ${s.label}`,
       }, n <= 9 ? h("span.k", String(n)) : null, ico(s.icon, 18), s.label);
       node.append(b);
     });
@@ -120,7 +135,7 @@ export function convertPage(app) {
     const groups = byKind();
     const size = groups.length === 1 ? 470 : groups.length === 2 ? 330 : 260;
     const pies = h("div.pies", groups.map(([k, list]) => pie(k, list, size)));
-    const close = h("button.btn", { onclick: () => { files = []; bar.clear(); render(); } }, ico("x", 15), "Togli tutto");
+    const close = h("button.btn", { onclick: () => { files = []; moreFor = null; bar.clear(); render(); } }, ico("x", 15), "Togli tutto");
     stage.replaceChildren(
       h("div.pie-stage", pies),
       h("div.pie-top", h("button.btn", { onclick: pick }, ico("plus", 15), "Aggiungi file…"), close),
@@ -142,6 +157,9 @@ export function convertPage(app) {
         const last = store.get("lastFmt." + k, null);
         if (last && CONVERT[k]?.includes(last)) choose(k, list, last);
       }
+    } else if (e.key === "Escape" && moreFor) {
+      moreFor = null;
+      render();
     } else if (e.key === "Escape") {
       files = [];
       render();

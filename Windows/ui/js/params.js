@@ -37,12 +37,15 @@ export function knobPanel(kind, onGo, extra = {}) {
       onGo(value);
     },
   }, extra.goLabel || "Avvia");
+  // «Salva come mia azione»: la scelta di adesso, con un nome, in cima agli strumenti e nella torta
+  const star = extra.onSave ? h("button.btn.ghost.save-preset", { type: "button", title: "La ritrovi in cima agli strumenti e nella torta", onclick: () => extra.onSave(value) }, "★ Salva come mia azione") : null;
   return h("div.params",
     k.hint ? h("p.hint", k.hint) : null,
     opts,
     input ? h("div.field", input, h("span", { style: { color: "var(--quiet)", fontSize: "12.5px" } }, k.custom.unit)) : null,
     est,
-    go);
+    go,
+    star);
 }
 
 /** Peso stimato di «Comprimi» per i video. */
