@@ -966,6 +966,7 @@ struct SettingsView: View {
                     Toggle("Conserva le date originali dei file", isOn: $draft.keepDates)
                 }
                 Section("Aspetto") {
+                    LanguagePicker()
                     Picker("Chiaro o scuro", selection: $draft.appearance) {
                         Text("Come il Mac").tag("auto")
                         Text("Chiaro").tag("light")

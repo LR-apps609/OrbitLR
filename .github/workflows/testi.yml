@@ -1,0 +1,56 @@
+# 4.2 · Raccoglie tutti i testi dell'app da tradurre (SWIFT_EMIT_LOC_STRINGS) e aggiorna il catalogo.
+# Il catalogo aggiornato si scarica dagli «Artifacts» (testi-catalogo). Non pubblica niente.
+name: Testi da tradurre
+
+on:
+  push:
+    branches: [inglese]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testi:
+    runs-on: macos-15-intel
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Xcode più recente disponibile
+        run: |
+          XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -n 1)
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+      - name: XcodeGen
+        run: brew install xcodegen && xcodegen generate
+      - name: Compilazione con raccolta dei testi
+        run: |
+          status=0
+          xcodebuild -project OrbitLR.xcodeproj -scheme OrbitLR -configuration Debug \
+            -destination 'generic/platform=macOS' -derivedDataPath build ARCHS=x86_64 ONLY_ACTIVE_ARCH=YES \
+            SWIFT_EMIT_LOC_STRINGS=YES CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= \
+            build > build.log 2>&1 || status=$?
+          grep -E "^/.*:[0-9]+:[0-9]+: error:" build.log | sort -u | head -n 30 | while IFS= read -r l; do
+            f=$(echo "$l" | cut -d: -f1); n=$(echo "$l" | cut -d: -f2); m=$(echo "$l" | cut -d: -f5-)
+            echo "::error file=${f#$GITHUB_WORKSPACE/},line=$n::$m"
+          done
+          grep -E "BUILD (SUCCEEDED|FAILED)" build.log || true
+          exit $status
+      - name: Catalogo aggiornato
+        run: |
+          mkdir -p out
+          find build -name "*.stringsdata" > list.txt
+          echo "::notice::File stringsdata: $(wc -l < list.txt)"
+          cp Resources/Localizable.xcstrings out/Localizable.xcstrings
+          xcrun xcstringstool sync out/Localizable.xcstrings --stringsdata $(tr '\n' ' ' < list.txt) 2>&1 | tail -n 20 || xcrun xcstringstool --help
+          mkdir -p out/stringsdata && while read -r f; do cp "$f" out/stringsdata/; done < list.txt
+          echo "::notice::Voci nel catalogo: $(python3 -c 'import json;print(len(json.load(open("out/Localizable.xcstrings"))["strings"]))')"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: testi-catalogo
+          path: |
+            out
+            build.log
