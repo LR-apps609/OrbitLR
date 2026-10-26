@@ -26,7 +26,8 @@ function readQuoted(s, i) {
   return [null, s.length];
 }
 
-// Legge un template `…` a partire da i; i pezzi ${…} diventano {n}
+let currentFile = "";
+// Legge un template `…` a partire da i; i pezzi ${…} diventano {n} (e i testi dentro si raccolgono anche loro)
 function readTemplate(s, i) {
   let r = "", n = 0;
   for (let j = i + 1; j < s.length; j++) {
@@ -47,14 +48,14 @@ function readTemplate(s, i) {
         k++;
       }
       r += `{${n++}}`;
+      scan(s.slice(j + 2, k - 1), currentFile);
       j = k - 1;
     } else r += c;
   }
   return [null, s.length];
 }
 
-for (const f of fs.readdirSync(dir).filter((x) => x.endsWith(".js") && x !== "en.js" && x !== "icons.js" && x !== "i18n.js")) {
-  const s = fs.readFileSync(path.join(dir, f), "utf8");
+function scan(s, f) {
   for (let i = 0; i < s.length; i++) {
     // Un «t» da solo (non parte di un altro nome), seguito da ( o `
     if (s[i] !== "t" || /[\w$.]/.test(s[i - 1] || "")) continue;
@@ -74,5 +75,10 @@ for (const f of fs.readdirSync(dir).filter((x) => x.endsWith(".js") && x !== "en
       }
     }
   }
+}
+
+for (const f of fs.readdirSync(dir).filter((x) => x.endsWith(".js") && x !== "en.js" && x !== "icons.js" && x !== "i18n.js")) {
+  currentFile = f;
+  scan(fs.readFileSync(path.join(dir, f), "utf8"), f);
 }
 process.stdout.write(JSON.stringify(out, null, 1));

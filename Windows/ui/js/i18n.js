@@ -49,7 +49,8 @@ export function tr(text) {
   if (EN[s] !== undefined) return EN[s];
   for (const [re, out] of EN_PATTERNS) {
     const m = s.match(re);
-    if (m) return out.replace(/\$(\d)/g, (_, i) => m[Number(i)] ?? "");
+    // Le parti variabili si traducono anche loro, se sono testi conosciuti («il modello della voce»)
+    if (m) return out.replace(/\$(\d)/g, (_, i) => { const v = m[Number(i)] ?? ""; return EN[v] ?? v; });
   }
   // «nome.ext: messaggio» → si traduce solo il messaggio
   const i = s.indexOf(": ");

@@ -1,4 +1,4 @@
-Novità per Windows 0.2.1:
-• «Le mie azioni»: salva una scelta con un nome (★ Salva come mia azione) e la ritrovi in cima agli strumenti e come spicchio con la stella nella torta
-• Torta: lo spicchio «Altro» apre un secondo anello con tutti i formati
-• Prima prova dell'aggiornamento automatico: questa versione arriva da sola dalla 0.2.0
+Novità per Windows 0.3.0 «English»:
+• OrbitLR parla inglese: segue la lingua di Windows, oppure la scegli in Opzioni → «Lingua · Language» · OrbitLR now speaks English: it follows Windows, or choose it in Settings → “Lingua · Language”
+• Cartelle automatiche anche con «Le mie azioni»
+• Dopo un aggiornamento, le novità si vedono alla prima apertura
