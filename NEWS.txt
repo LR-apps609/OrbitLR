@@ -1,2 +1,3 @@
 What’s new in 4.2 “English”:
-• OrbitLR now speaks English. It follows your Mac’s language, or you can choose it in Options → Appearance → Language
+• OrbitLR now speaks English: it follows your Mac’s language, or you can choose it in Settings → Appearance → “Language · Lingua” (OrbitLR reopens by itself)
+• Everything is in English, including engine messages, numbers with a decimal point, History months, and the “Converted” and “To Compress” folders

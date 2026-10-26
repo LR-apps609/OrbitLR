@@ -5701,7 +5701,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Spreadsheets"
+            "value": "Sheets"
           }
         }
       }
@@ -13431,16 +13431,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "On files selected in Finder"
-          }
-        }
-      }
-    },
-    "Sul %@ scelto": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "On the selected %@"
           }
         }
       }

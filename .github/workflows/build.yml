@@ -83,6 +83,13 @@ jobs:
           test -d "$APP/Contents/PlugIns/OrbitLRShare.appex"
           test -d "$APP/Contents/Resources/Models/RealESRNet.mlpackage"
           test -f "$APP/Contents/Resources/NOVITA.txt"
+          # 4.2 · L'inglese: testi tradotti, permessi e novità
+          test -f "$APP/Contents/Resources/NEWS.txt"
+          ls "$APP/Contents/Resources/en.lproj"
+          N=$(plutil -p "$APP/Contents/Resources/en.lproj/Localizable.strings" | grep -c "=>")
+          plutil -p "$APP/Contents/Resources/en.lproj/Localizable.strings" | grep -q "Show in Folder"
+          plutil -p "$APP/Contents/Resources/en.lproj/InfoPlist.strings" | grep -q "NSDesktopFolderUsageDescription"
+          echo "::notice::Inglese dentro l'app: $N testi"
           test -x "$APP/Contents/Resources/Motori/ffmpeg"
           "$APP/Contents/Resources/Motori/ffmpeg" -hide_banner -loglevel error -f lavfi -i "sine=duration=0.5" -c:a libmp3lame /tmp/prova-motori.mp3
           echo "::notice::ffmpeg dentro l'app: funziona (MP3 di prova creato)"

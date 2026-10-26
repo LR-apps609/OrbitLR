@@ -1,3 +1,7 @@
+Novità della 4.2 «English»:
+• OrbitLR parla inglese: segue la lingua del Mac, oppure la scegli in Opzioni → Aspetto → «Lingua · Language» (OrbitLR si riapre da solo)
+• In inglese anche i messaggi del motore, i numeri col punto, i mesi della cronologia e le cartelle «Converted» e «To Compress»
+
 Novità della 4.1.6 «Downloader in vista»:
 • In alto a destra in Audio e Video: la barra «Audio Downloader» / «Video Downloader» con il posto per incollare il link e «Scarica». Invio e parte subito
 • Mac con processore Intel: «Comprimi» e «Ridimensiona» danno video molto più leggeri. Se un video era già compresso al massimo, OrbitLR lo dice invece di crearne una copia quasi uguale
