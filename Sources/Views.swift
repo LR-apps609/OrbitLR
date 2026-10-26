@@ -127,7 +127,7 @@ struct MainWindow: View {
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        .help(advancedOpen ? "Nascondi Automazioni, Le mie azioni e Componenti" : "Mostra Automazioni, Le mie azioni e Componenti")
+                        .help(advancedOpen ? String(localized: "Nascondi Automazioni, Le mie azioni e Componenti") : String(localized: "Mostra Automazioni, Le mie azioni e Componenti"))
                     }
                 }
                 .listStyle(.sidebar)
@@ -139,10 +139,10 @@ struct MainWindow: View {
 
                     // 3.0 · Opzioni, Aiuto e Segnala un problema: una riga sola
                     HStack(spacing: 6) {
-                        FooterButton(title: "Opzioni", symbol: "gearshape.fill", help: "Dove salvare i file, aspetto, avvio (⌘,)") { openSettings() }
-                        FooterButton(title: "Aiuto", symbol: "questionmark.circle.fill", help: "Guida, domande frequenti e scorciatoie",
+                        FooterButton(title: String(localized: "Opzioni"), symbol: "gearshape.fill", help: String(localized: "Dove salvare i file, aspetto, avvio (⌘,)")) { openSettings() }
+                        FooterButton(title: String(localized: "Aiuto"), symbol: "questionmark.circle.fill", help: String(localized: "Guida, domande frequenti e scorciatoie"),
                                      selected: app.selection == .help) { app.selection = .help }
-                        FooterButton(title: "Segnala", symbol: "ladybug.fill", help: "Segnala un problema: mi arriva con uno screenshot") { app.showBugReport = true }
+                        FooterButton(title: String(localized: "Segnala"), symbol: "ladybug.fill", help: String(localized: "Segnala un problema: mi arriva con uno screenshot")) { app.showBugReport = true }
                             .accessibilityLabel("Segnala un problema")
                     }
 
@@ -190,7 +190,7 @@ struct MainWindow: View {
                 }
             }
             .animation(Motion.quick, value: app.selection)
-            .navigationTitle(current.rawValue)
+            .navigationTitle(String(localized: String.LocalizationValue(current.rawValue)))
             .onAppear {
                 visited.insert(current)
                 // 3.4.2 · Dopo l'avvio, a macchina libera, le altre schede si preparano una alla volta:
@@ -241,7 +241,7 @@ struct MainWindow: View {
     @ViewBuilder private func sidebarRow(_ item: SidebarItem) -> some View {
         HStack(spacing: 6) {
             Label {
-                Text(item.rawValue)
+                Text(String(localized: String.LocalizationValue(item.rawValue)))
             } icon: {
                 Image(systemName: item.symbol).foregroundStyle(item.color)
             }
@@ -298,7 +298,7 @@ struct ActivityView: View {
         ZStack {
             Theme.background.ignoresSafeArea()
             VStack(alignment: .leading, spacing: 18) {
-                PageHeader(title: "Attività", subtitle: subtitle, color: SidebarItem.activity.color) {
+                PageHeader(title: String(localized: "Attività"), subtitle: subtitle, color: SidebarItem.activity.color) {
                     if store.jobs.contains(where: { $0.state != .running && $0.state != .waiting }) {
                         Button("Togli i completati") { store.clearFinished() }
                             .help("Toglie dall’elenco i lavori finiti, non riusciti o interrotti (i file restano)")
@@ -306,18 +306,18 @@ struct ActivityView: View {
                     if !store.history.isEmpty {
                         Button(role: .destructive) {
                             let a = NSAlert()
-                            a.messageText = "Svuotare la cronologia?"
-                            a.informativeText = "Spariscono tutte le voci dall’elenco. I file creati restano dove sono."
-                            a.addButton(withTitle: "Svuota")
-                            a.addButton(withTitle: "Annulla")
+                            a.messageText = String(localized: "Svuotare la cronologia?")
+                            a.informativeText = String(localized: "Spariscono tutte le voci dall’elenco. I file creati restano dove sono.")
+                            a.addButton(withTitle: String(localized: "Svuota"))
+                            a.addButton(withTitle: String(localized: "Annulla"))
                             Sheet.confirm(a) { ok in if ok { withAnimation(Motion.quick) { store.forgetAll() } } }
                         } label: { Label("Svuota la cronologia…", systemImage: "trash") }
                         .help("Svuota la cronologia (i file non vengono toccati)")
                     }
                 }
                 if open.isEmpty && store.history.isEmpty {
-                    EmptyState(symbol: "clock", color: SidebarItem.activity.color, title: "Ancora nessun lavoro",
-                               text: "Qui vedi quello che OrbitLR sta facendo e tutto quello che hai creato, giorno per giorno.")
+                    EmptyState(symbol: "clock", color: SidebarItem.activity.color, title: String(localized: "Ancora nessun lavoro"),
+                               text: String(localized: "Qui vedi quello che OrbitLR sta facendo e tutto quello che hai creato, giorno per giorno."))
                 } else {
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 8, pinnedViews: [.sectionHeaders]) {
@@ -325,7 +325,7 @@ struct ActivityView: View {
                                 Section {
                                     ForEach(open) { job in JobCard(job: job) { preview = $0 } }
                                 } header: {
-                                    ActivityHeader(title: "Adesso", detail: openDetail)
+                                    ActivityHeader(title: String(localized: "Adesso"), detail: openDetail)
                                 }
                             }
                             if !store.history.isEmpty {
@@ -352,13 +352,13 @@ struct ActivityView: View {
         let r = store.runningJobs.count
         let w = store.jobs.filter { $0.state == .waiting }.count
         let saved = Fmt.bytes(store.savedThisMonth)
-        let now = r == 0 && w == 0 ? "Niente in corso" : "\(r) in corso" + (w > 0 ? " · \(w) in attesa" : "")
-        return now + (store.savedThisMonth > 0 ? " · \(saved) risparmiati questo mese" : "")
+        let now = r == 0 && w == 0 ? String(localized: "Niente in corso") : String(localized: "\(r) in corso") + (w > 0 ? " · " + String(localized: "\(w) in attesa") : "")
+        return now + (store.savedThisMonth > 0 ? " · " + String(localized: "\(saved) risparmiati questo mese") : "")
     }
 
     private var openDetail: String {
         let n = open.count
-        return n == 1 ? "1 lavoro" : "\(n) lavori"
+        return n == 1 ? String(localized: "1 lavoro") : String(localized: "\(n) lavori")
     }
 }
 
@@ -473,14 +473,14 @@ struct MonthStatsRow: View {
     let stats: MonthStats
     var body: some View {
         HStack(spacing: 12) {
-            tile(symbol: "doc.on.doc.fill", color: Theme.accent, title: "File creati questo mese") {
+            tile(symbol: "doc.on.doc.fill", color: Theme.accent, title: String(localized: "File creati questo mese")) {
                 Text("\(stats.files)").font(.system(size: 24, weight: .bold, design: .rounded)).monospacedDigit()
                     .contentTransition(.numericText())
             }
-            tile(symbol: "arrow.down.circle.fill", color: Theme.green, title: "Spazio risparmiato") {
+            tile(symbol: "arrow.down.circle.fill", color: Theme.green, title: String(localized: "Spazio risparmiato")) {
                 CountingBytes(value: Double(stats.saved), font: .system(size: 24, weight: .bold, design: .rounded), color: Theme.green)
             }
-            tile(symbol: "star.fill", color: Theme.brass, title: "L’azione che usi di più") {
+            tile(symbol: "star.fill", color: Theme.brass, title: String(localized: "L’azione che usi di più")) {
                 Text(stats.topAction ?? "—").font(.system(size: 18, weight: .bold, design: .rounded)).lineLimit(1)
                     .minimumScaleFactor(0.7)
             }
@@ -537,10 +537,10 @@ struct HistoryRow: View {
                 if !entry.undone {
                     Button("Elimina i file creati…") {
                         let a = NSAlert()
-                        a.messageText = entry.outputs.count == 1 ? "Spostare il file nel Cestino?" : "Spostare \(entry.outputs.count) file nel Cestino?"
-                        a.informativeText = "Si possono ancora recuperare dal Cestino."
-                        a.addButton(withTitle: "Sposta nel Cestino")
-                        a.addButton(withTitle: "Annulla")
+                        a.messageText = entry.outputs.count == 1 ? String(localized: "Spostare il file nel Cestino?") : String(localized: "Spostare \(entry.outputs.count) file nel Cestino?")
+                        a.informativeText = String(localized: "Si possono ancora recuperare dal Cestino.")
+                        a.addButton(withTitle: String(localized: "Sposta nel Cestino"))
+                        a.addButton(withTitle: String(localized: "Annulla"))
                         Sheet.confirm(a) { ok in if ok { store.undo(entry) } }
                     }
                 }
@@ -581,10 +581,10 @@ struct HistoryDay: Identifiable {
         var buckets: [String: [HistoryEntry]] = [:]
         for e in list {
             let key: String, title: String
-            if cal.isDateInToday(e.date) { key = "0"; title = "Oggi" }
-            else if cal.isDateInYesterday(e.date) { key = "1"; title = "Ieri" }
-            else if cal.isDate(e.date, equalTo: now, toGranularity: .weekOfYear) { key = "2"; title = "Questa settimana" }
-            else if cal.isDate(e.date, equalTo: now, toGranularity: .month) { key = "3"; title = "Questo mese" }
+            if cal.isDateInToday(e.date) { key = "0"; title = String(localized: "Oggi") }
+            else if cal.isDateInYesterday(e.date) { key = "1"; title = String(localized: "Ieri") }
+            else if cal.isDate(e.date, equalTo: now, toGranularity: .weekOfYear) { key = "2"; title = String(localized: "Questa settimana") }
+            else if cal.isDate(e.date, equalTo: now, toGranularity: .month) { key = "3"; title = String(localized: "Questo mese") }
             else {
                 let c = cal.dateComponents([.year, .month], from: e.date)
                 key = "m\(c.year ?? 0)-\(c.month ?? 0)"
@@ -602,11 +602,11 @@ struct DayHeader: View {
     var body: some View {
         HStack(spacing: 10) {
             Text(day.title).font(.system(size: 13, weight: .bold, design: .rounded)).foregroundStyle(Theme.ink)
-            Text(day.entries.count == 1 ? "1 lavoro" : "\(day.entries.count) lavori")
+            Text(day.entries.count == 1 ? String(localized: "1 lavoro") : String(localized: "\(day.entries.count) lavori"))
                 .font(.system(size: 11.5)).foregroundStyle(.secondary)
             Rectangle().fill(Theme.stroke).frame(height: 1)
             if day.saved > 0 {
-                Label(Fmt.bytes(day.saved) + " risparmiati",
+                Label(String(localized: "\(Fmt.bytes(day.saved)) risparmiati"),
                       systemImage: "arrow.down.circle.fill")
                     .font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Theme.green)
             }
@@ -629,10 +629,10 @@ struct ComponentsView: View {
             Theme.background.ignoresSafeArea()
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    PageHeader(title: "Componenti",
-                               subtitle: "I programmi che fanno il lavoro. Quelli mancanti servono solo ad alcune funzioni.",
+                    PageHeader(title: String(localized: "Componenti"),
+                               subtitle: String(localized: "I programmi che fanno il lavoro. Quelli mancanti servono solo ad alcune funzioni."),
                                color: Theme.green) {
-                        Button(testing ? "Controllo in corso…" : "Controllo automatico") { runTest() }
+                        Button(testing ? String(localized: "Controllo in corso…") : String(localized: "Controllo automatico")) { runTest() }
                             .disabled(testing)
                         if !installer.missing.isEmpty && installer.brewPath != nil {
                             Button("Installa tutti i mancanti") { installer.install(installer.missing, id: "all") }
@@ -738,7 +738,7 @@ struct ComponentsView: View {
 
     private func runTest() {
         testing = true
-        testOutput = "Provo tutte le funzioni con file di prova (circa un minuto)…"
+        testOutput = String(localized: "Provo tutte le funzioni con file di prova (circa un minuto)…")
         DispatchQueue.global().async {
             let p = Process()
             p.executableURL = URL(fileURLWithPath: "/bin/zsh")
@@ -885,7 +885,7 @@ struct MenuDropZone: View {
     var body: some View {
         VStack(spacing: 4) {
             Image(systemName: "chart.pie.fill").font(.system(size: 18, weight: .semibold)).foregroundStyle(Theme.accent)
-            Text(targeted ? "Rilascia qui" : "Trascina qui un file").font(.system(size: 12.5, weight: .semibold))
+            Text(targeted ? String(localized: "Rilascia qui") : String(localized: "Trascina qui un file")).font(.system(size: 12.5, weight: .semibold))
             Text("si apre la torta, senza aprire la finestra").font(.system(size: 11)).foregroundStyle(.secondary)
             if UserDefaults.standard.object(forKey: "dropShelf") as? Bool ?? true {
                 // 3.9.1 · Più comodo: il ripiano compare da solo al bordo destro
@@ -951,7 +951,7 @@ struct SettingsView: View {
                     }
                     if draft.dest == "fixed" {
                         HStack {
-                            Text(draft.destPath.isEmpty ? "Nessuna cartella scelta" : draft.destPath)
+                            Text(draft.destPath.isEmpty ? String(localized: "Nessuna cartella scelta") : draft.destPath)
                                 .lineLimit(1).truncationMode(.middle).foregroundStyle(.secondary)
                             Spacer()
                             Button("Scegli…") { chooseFolder() }
@@ -1073,7 +1073,7 @@ struct MenuUpdateRow: View {
             Button { Task { @MainActor in await UpdateCheck.install(rel) } } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "arrow.down.circle.fill").foregroundStyle(Theme.brass)
-                    Text(badge.installing ? "Scarico l’aggiornamento…" : "Nuova versione \(rel.version) · Installa")
+                    Text(badge.installing ? String(localized: "Scarico l’aggiornamento…") : String(localized: "Nuova versione \(rel.version) · Installa"))
                         .font(.system(size: 12.5, weight: .semibold))
                     Spacer()
                 }

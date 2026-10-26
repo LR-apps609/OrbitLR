@@ -18,14 +18,14 @@ enum DrawerTarget: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .video: return "Aggiungi al Video"
-        case .music: return "Usa come musica nel Video"
-        case .videoTools: return "Comprimi, taglia e altro (Video)"
-        case .audio: return "Apri in Audio"
-        case .images: return "Apri in Immagini"
-        case .files: return "Apri in File"
-        case .convert: return "Converti…"
-        case .finder: return "Mostra nel Finder"
+        case .video: return String(localized: "Aggiungi al Video")
+        case .music: return String(localized: "Usa come musica nel Video")
+        case .videoTools: return String(localized: "Comprimi, taglia e altro (Video)")
+        case .audio: return String(localized: "Apri in Audio")
+        case .images: return String(localized: "Apri in Immagini")
+        case .files: return String(localized: "Apri in File")
+        case .convert: return String(localized: "Converti…")
+        case .finder: return String(localized: "Mostra nel Finder")
         }
     }
 

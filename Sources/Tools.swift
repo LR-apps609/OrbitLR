@@ -38,13 +38,13 @@ enum Tools {
             return out
         case "hidemark":
             // 2.9.4 · Nascondi filigrana, su una foto o un video
-            guard let spec = HideMark.parse(job.param) else { throw NativeError("nessuna zona da coprire") }
+            guard let spec = HideMark.parse(job.param) else { throw NativeError(String(localized: "nessuna zona da coprire")) }
             // 2.9.7 · Rimozione con l'IA: il modello si scarica la prima volta
             var inpainter: Inpainter? = nil
             if spec.style == "ai" {
-                if !ModelStore.shared.isReady { await MainActor.run { job.status = "Scarico il modello di IA (solo la prima volta)…" } }
+                if !ModelStore.shared.isReady { await MainActor.run { job.status = String(localized: "Scarico il modello di IA (solo la prima volta)…") } }
                 inpainter = Inpainter(model: try await ModelStore.shared.lama())
-                await MainActor.run { job.status = "Ricostruisco la zona con l’IA…" }
+                await MainActor.run { job.status = String(localized: "Ricostruisco la zona con l’IA…") }
             }
             if kind == .video {
                 let out = Destination.unique(dir, base: "\(base) (senza logo)", ext: "mp4")
@@ -87,7 +87,7 @@ enum Tools {
             try AIEnhance.run(file, param: p, out: out, progress: progress)
             return out
         default:
-            throw NativeError("Strumento sconosciuto")
+            throw NativeError(String(localized: "Strumento sconosciuto"))
         }
     }
 
@@ -98,13 +98,13 @@ enum Tools {
     /// L'immagine già girata nel verso giusto (le foto dell'iPhone hanno l'orientamento nei metadati).
     static func orientedImage(_ url: URL) throws -> CIImage {
         guard let img = CIImage(contentsOf: url, options: [.applyOrientationProperty: true]) else {
-            throw NativeError("Non riesco ad aprire l’immagine")
+            throw NativeError(String(localized: "Non riesco ad aprire l’immagine"))
         }
         return img
     }
 
     static func cgImage(_ img: CIImage) throws -> CGImage {
-        guard let cg = ci.createCGImage(img, from: img.extent) else { throw NativeError("Non riesco a elaborare l’immagine") }
+        guard let cg = ci.createCGImage(img, from: img.extent) else { throw NativeError(String(localized: "Non riesco a elaborare l’immagine")) }
         return cg
     }
 
@@ -118,10 +118,10 @@ enum Tools {
         default: type = .png
         }
         guard let dest = CGImageDestinationCreateWithURL(out as CFURL, type.identifier as CFString, 1, nil) else {
-            throw NativeError("Non riesco a creare il file")
+            throw NativeError(String(localized: "Non riesco a creare il file"))
         }
         CGImageDestinationAddImage(dest, cg, [kCGImageDestinationLossyCompressionQuality: quality] as CFDictionary)
-        guard CGImageDestinationFinalize(dest) else { throw NativeError("Non riesco a salvare l’immagine") }
+        guard CGImageDestinationFinalize(dest) else { throw NativeError(String(localized: "Non riesco a salvare l’immagine")) }
     }
 
     /// Una pagina PDF con un'immagine (per documenti raddrizzati e foto rese ricercabili). 200 punti per pollice.
@@ -206,9 +206,9 @@ enum Tools {
     }
 
     static func makeSearchablePDF(_ src: URL, out: URL, progress: @escaping (Double) -> Void) throws {
-        guard let doc = PDFDocument(url: src) else { throw NativeError("Non riesco ad aprire il PDF") }
-        guard !doc.isLocked else { throw NativeError("Il PDF è protetto da password") }
-        guard let ctx = CGContext(out as CFURL, mediaBox: nil, nil) else { throw NativeError("Non riesco a creare il PDF") }
+        guard let doc = PDFDocument(url: src) else { throw NativeError(String(localized: "Non riesco ad aprire il PDF")) }
+        guard !doc.isLocked else { throw NativeError(String(localized: "Il PDF è protetto da password")) }
+        guard let ctx = CGContext(out as CFURL, mediaBox: nil, nil) else { throw NativeError(String(localized: "Non riesco a creare il PDF")) }
         var recognized = 0
         for i in 0..<doc.pageCount {
             guard let page = doc.page(at: i) else { continue }
@@ -229,7 +229,7 @@ enum Tools {
         ctx.closePDF()
         if recognized == 0 {
             try? FileManager.default.removeItem(at: out)
-            throw NativeError("Il PDF ha già il testo ricercabile in tutte le pagine")
+            throw NativeError(String(localized: "Il PDF ha già il testo ricercabile in tutte le pagine"))
         }
     }
 
@@ -237,7 +237,7 @@ enum Tools {
         let cg = try cgImage(try orientedImage(src))
         let size = pageSize(for: cg)
         var box = CGRect(origin: .zero, size: size)
-        guard let ctx = CGContext(out as CFURL, mediaBox: &box, nil) else { throw NativeError("Non riesco a creare il PDF") }
+        guard let ctx = CGContext(out as CFURL, mediaBox: &box, nil) else { throw NativeError(String(localized: "Non riesco a creare il PDF")) }
         ctx.beginPage(mediaBox: &box)
         ctx.draw(cg, in: box)
         drawInvisibleText(try recognize(cg), in: ctx, size: size)
@@ -254,7 +254,7 @@ enum Tools {
         let handler = VNImageRequestHandler(cgImage: cg, options: [:])
         try handler.perform([req])
         guard let obs = req.results?.first, !obs.allInstances.isEmpty else {
-            throw NativeError("Non trovo un soggetto da ritagliare in questa foto")
+            throw NativeError(String(localized: "Non trovo un soggetto da ritagliare in questa foto"))
         }
         let buffer = try obs.generateMaskedImage(ofInstances: obs.allInstances, from: handler,
                                                  croppedToInstancesExtent: mode == "crop")
@@ -287,7 +287,7 @@ enum Tools {
             try? handler.perform([rect])
             quad = rect.results?.first
         }
-        guard let q = quad else { throw NativeError("Non trovo il foglio nella foto. Prova con uno sfondo più scuro del foglio.") }
+        guard let q = quad else { throw NativeError(String(localized: "Non trovo il foglio nella foto. Prova con uno sfondo più scuro del foglio.")) }
 
         // 2. Prospettiva corretta
         func pt(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x * w, y: p.y * h) }
@@ -297,7 +297,7 @@ enum Tools {
         fix.topRight = pt(q.topRight)
         fix.bottomLeft = pt(q.bottomLeft)
         fix.bottomRight = pt(q.bottomRight)
-        guard var img = fix.outputImage else { throw NativeError("Non riesco a raddrizzare il foglio") }
+        guard var img = fix.outputImage else { throw NativeError(String(localized: "Non riesco a raddrizzare il foglio")) }
 
         // 3. Pulizia, come una scansione
         if bw {
@@ -317,7 +317,7 @@ enum Tools {
 
         if Catalog.norm(out.pathExtension) == "pdf" {
             var box = CGRect(origin: .zero, size: pageSize(for: result))
-            guard let ctx = CGContext(out as CFURL, mediaBox: &box, nil) else { throw NativeError("Non riesco a creare il PDF") }
+            guard let ctx = CGContext(out as CFURL, mediaBox: &box, nil) else { throw NativeError(String(localized: "Non riesco a creare il PDF")) }
             ctx.beginPage(mediaBox: &box)
             ctx.draw(result, in: box)
             ctx.endPage()
@@ -411,7 +411,7 @@ enum Tools {
         sharp.inputImage = scale.outputImage
         sharp.radius = 1.6
         sharp.intensity = 0.45
-        guard let img = sharp.outputImage else { throw NativeError("Non riesco a ingrandire l’immagine") }
+        guard let img = sharp.outputImage else { throw NativeError(String(localized: "Non riesco a ingrandire l’immagine")) }
         return try cgImage(img.cropped(to: CGRect(x: 0, y: 0, width: cg.width * 2, height: cg.height * 2)))
     }
 }

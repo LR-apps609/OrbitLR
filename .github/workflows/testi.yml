@@ -7,8 +7,9 @@ on:
     branches: [inglese]
   workflow_dispatch:
 
+# Scrive il risultato sul ramo «testi-out» (senza codice: lì non parte nessuna compilazione)
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   testi:
@@ -16,8 +17,6 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
       - name: Xcode più recente disponibile
         run: |
           XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -n 1)
@@ -36,7 +35,9 @@ jobs:
             f=$(echo "$l" | cut -d: -f1); n=$(echo "$l" | cut -d: -f2); m=$(echo "$l" | cut -d: -f5-)
             echo "::error file=${f#$GITHUB_WORKSPACE/},line=$n::$m"
           done
-          grep -E "BUILD (SUCCEEDED|FAILED)" build.log || true
+          grep -E "error:|BUILD (SUCCEEDED|FAILED)" build.log | grep -vE "^/.*:[0-9]+:[0-9]+: error:" | sort -u | head -n 15 | while IFS= read -r l; do
+            echo "::error::${l:0:400}"
+          done
           exit $status
       - name: Catalogo aggiornato
         run: |
@@ -47,10 +48,12 @@ jobs:
           xcrun xcstringstool sync out/Localizable.xcstrings --stringsdata $(tr '\n' ' ' < list.txt) 2>&1 | tail -n 20 || xcrun xcstringstool --help
           mkdir -p out/stringsdata && while read -r f; do cp "$f" out/stringsdata/; done < list.txt
           echo "::notice::Voci nel catalogo: $(python3 -c 'import json;print(len(json.load(open("out/Localizable.xcstrings"))["strings"]))')"
-      - uses: actions/upload-artifact@v4
+      - name: Risultato sul ramo testi-out
         if: always()
-        with:
-          name: testi-catalogo
-          path: |
-            out
-            build.log
+        run: |
+          mkdir -p out && cp build.log out/ 2>/dev/null || true
+          cd out
+          git init -q -b testi-out
+          git config user.name "OrbitLR CI"; git config user.email "ci@users.noreply.github.com"
+          git add -A && git commit -qm "Testi da ${GITHUB_SHA:0:7}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" testi-out

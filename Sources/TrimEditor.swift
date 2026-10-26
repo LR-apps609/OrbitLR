@@ -252,7 +252,7 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
     func markOut() { setEnd(playhead) }
 
     /// 2.8.4 · ⌘Z sulla selezione: si registra una volta, alla fine del trascinamento.
-    func commitSelection(from before: (Double, Double), undo: UndoManager?, name: String = "Cambia la selezione") {
+    func commitSelection(from before: (Double, Double), undo: UndoManager?, name: String = String(localized: "Cambia la selezione")) {
         let after = (start, end)
         guard abs(before.0 - after.0) > 0.001 || abs(before.1 - after.1) > 0.001, let undo else { return }
         undo.registerUndo(withTarget: self) { m in m.restoreSelection(before, redo: after, undo: undo, name: name) }
@@ -406,7 +406,7 @@ struct TrimEditorView: View {
             HStack(spacing: 12) {
                 KindBadge(kind: m.isVideo ? Kind.video : Kind.audio, size: 36)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(mode == .gifcut ? "GIF da un pezzo" : (mode == .ringtone ? "Suoneria iPhone" : "Taglia")).font(.system(size: 16, weight: .bold))
+                    Text(mode == .gifcut ? String(localized: "GIF da un pezzo") : (mode == .ringtone ? String(localized: "Suoneria iPhone") : String(localized: "Taglia"))).font(.system(size: 16, weight: .bold))
                     Text(fileName).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                 }
                 Spacer()
@@ -428,7 +428,7 @@ struct TrimEditorView: View {
 
             HStack(spacing: 10) {
                 Button { m.togglePlay() } label: {
-                    Label(m.playing ? "Pausa" : "Riproduci la selezione", systemImage: m.playing ? "pause.fill" : "play.fill")
+                    Label(m.playing ? String(localized: "Pausa") : String(localized: "Riproduci la selezione"), systemImage: m.playing ? "pause.fill" : "play.fill")
                         .frame(minWidth: 170)
                 }
                 .keyboardShortcut(.space, modifiers: [])
@@ -441,10 +441,10 @@ struct TrimEditorView: View {
             }
 
             HStack(spacing: 18) {
-                timeField("Inizio", text: $startText, minus: { m.setStart(m.start - 0.1) }, plus: { m.setStart(m.start + 0.1) }) {
+                timeField(String(localized: "Inizio"), text: $startText, minus: { m.setStart(m.start - 0.1) }, plus: { m.setStart(m.start + 0.1) }) {
                     if let v = parseTime(startText) { m.setStart(v) } else { startText = formatTime(m.start) }
                 }
-                timeField("Fine", text: $endText, minus: { m.setEnd(m.end - 0.1) }, plus: { m.setEnd(m.end + 0.1) }) {
+                timeField(String(localized: "Fine"), text: $endText, minus: { m.setEnd(m.end - 0.1) }, plus: { m.setEnd(m.end + 0.1) }) {
                     if let v = parseTime(endText) { m.setEnd(v) } else { endText = formatTime(m.end) }
                 }
                 VStack(alignment: .leading, spacing: 4) {
@@ -455,14 +455,14 @@ struct TrimEditorView: View {
             }
 
             Text(mode == .ringtone
-                 ? "Fino a 30 secondi. Si crea un file .m4r: collega l’iPhone, aprilo nel Finder e trascinaci la suoneria."
-                 : "Trascina le maniglie colorate, clicca sulla forma d’onda per spostarti. Spazio = riproduci, I/O = inizio/fine.")
+                 ? String(localized: "Fino a 30 secondi. Si crea un file .m4r: collega l’iPhone, aprilo nel Finder e trascinaci la suoneria.")
+                 : String(localized: "Trascina le maniglie colorate, clicca sulla forma d’onda per spostarti. Spazio = riproduci, I/O = inizio/fine."))
                 .font(.system(size: 11)).foregroundStyle(.secondary)
 
             HStack {
                 Spacer()
                 Button("Annulla") { m.pause(); onDone(nil) }.keyboardShortcut(.cancelAction)
-                Button(mode == .gifcut ? "Crea la GIF" : (mode == .ringtone ? "Crea la suoneria" : "Taglia")) {
+                Button(mode == .gifcut ? String(localized: "Crea la GIF") : (mode == .ringtone ? String(localized: "Crea la suoneria") : String(localized: "Taglia"))) {
                     m.pause()
                     onDone(String(format: "%.3f|%.3f", m.start, m.end) + (mode == .ringtone ? "|1|1" : ""))
                 }
@@ -673,14 +673,14 @@ struct TrimTimeline: View {
                         .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("timeline")).onChanged { v in
                             if dragBefore == nil { dragBefore = (m.start, m.end) }
                             m.setStart(toT(v.location.x))
-                        }.onEnded { _ in endDrag("Sposta l’inizio") })
+                        }.onEnded { _ in endDrag(String(localized: "Sposta l’inizio")) })
                 }
                 if sel && xe >= -7 && xe <= w + 7 {
                     handle(height: h).offset(x: xe - 7, y: -6)
                         .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("timeline")).onChanged { v in
                             if dragBefore == nil { dragBefore = (m.start, m.end) }
                             m.setEnd(toT(v.location.x))
-                        }.onEnded { _ in endDrag("Sposta la fine") })
+                        }.onEnded { _ in endDrag(String(localized: "Sposta la fine")) })
                 }
 
                 // Rotellina e trackpad: scorrere sposta la vista (con lo zoom), pizzicare ingrandisce

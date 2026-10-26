@@ -195,7 +195,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         let videos = all.filter { Catalog.kind(of: $0) == .video }
         let audios = all.filter { Catalog.kind(of: $0) == .audio }
         guard !videos.isEmpty || !audios.isEmpty else {
-            notice = "Qui si aprono video (e un brano audio, per la musica)."
+            notice = String(localized: "Qui si aprono video (e un brano audio, per la musica).")
             NSSound.beep()
             return
         }
@@ -206,14 +206,16 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         let otherAudio = okAudio == nil ? audios.first : nil
         notice = nil
         if !otherVideos.isEmpty {
-            notice = "Preparo \(otherVideos.count == 1 ? "«" + otherVideos[0].lastPathComponent + "»" : "\(otherVideos.count) video"): entrano nel progetto tra poco."
+            notice = otherVideos.count == 1
+                ? String(localized: "Preparo «\(otherVideos[0].lastPathComponent)»: entrano nel progetto tra poco.")
+                : String(localized: "Preparo \(otherVideos.count) video: entrano nel progetto tra poco.")
             AutoConvert.prepare(otherVideos, to: "mp4", kind: .video) { [weak self] ready in
                 self?.notice = nil
                 self?.add(ready, undo: undo)
             }
         }
         if let a = otherAudio {
-            notice = "Preparo «\(a.lastPathComponent)» per la musica…"
+            notice = String(localized: "Preparo «\(a.lastPathComponent)» per la musica…")
             AutoConvert.prepare([a], to: "m4a", kind: .audio) { [weak self] ready in
                 guard let self, let r = ready.first else { return }
                 self.notice = nil
@@ -227,16 +229,16 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             for u in okVideos {
                 do {
                     let info = try await VPMediaInfo.load(u)
-                    guard info.hasVideo else { self.notice = "«\(u.lastPathComponent)» non contiene video."; continue }
+                    guard info.hasVideo else { self.notice = String(localized: "«\(u.lastPathComponent)» non contiene video."); continue }
                     self.infos[u.path] = info
                     loaded.append(VPClip(path: u.path, inPoint: 0, outPoint: info.videoDuration))
                     self.loadThumbs(u.path, duration: info.videoDuration)
                 } catch {
-                    self.notice = "«\(u.lastPathComponent)» non si apre: \(error.localizedDescription)"
+                    self.notice = String(localized: "«\(u.lastPathComponent)» non si apre: \(error.localizedDescription)")
                 }
             }
             if !loaded.isEmpty {
-                self.change(undo, loaded.count == 1 ? "Aggiungi video" : "Aggiungi \(loaded.count) video") { $0.clips += loaded }
+                self.change(undo, loaded.count == 1 ? String(localized: "Aggiungi video") : String(localized: "Aggiungi \(loaded.count) video")) { $0.clips += loaded }
             }
             if let a = okAudio { await self.setMusic(a, undo: undo) }
         }
@@ -246,9 +248,9 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     func setMusic(_ url: URL, undo: UndoManager?) async {
         do {
             let info = try await VPMediaInfo.load(url)
-            guard info.hasAudio else { notice = "«\(url.lastPathComponent)» non contiene audio."; NSSound.beep(); return }
+            guard info.hasAudio else { notice = String(localized: "«\(url.lastPathComponent)» non contiene audio."); NSSound.beep(); return }
             infos[url.path] = info
-            change(undo, "Aggiungi musica") { p in
+            change(undo, String(localized: "Aggiungi musica")) { p in
                 var m = p.music ?? VPMusic(path: url.path)
                 m.path = url.path
                 m.inPoint = 0
@@ -257,7 +259,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
                 p.music = m
             }
         } catch {
-            notice = "La musica non si apre: \(error.localizedDescription)"
+            notice = String(localized: "La musica non si apre: \(error.localizedDescription)")
             NSSound.beep()
         }
     }
@@ -277,7 +279,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
                     self.ensureSpeech()
                     self.scheduleRebuild()
                 } else {
-                    self.notice = "«\(URL(fileURLWithPath: path).lastPathComponent)» non si apre più."
+                    self.notice = String(localized: "«\(URL(fileURLWithPath: path).lastPathComponent)» non si apre più.")
                 }
             }
         }
@@ -451,12 +453,12 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         let c = project.clips[hit.index]
         let l = hit.local
         guard l - c.inPoint > 0.1, c.outPoint - l > 0.1 else {
-            notice = "Per dividere, porta l’indicatore dentro una clip (non sul bordo)."
+            notice = String(localized: "Per dividere, porta l’indicatore dentro una clip (non sul bordo).")
             NSSound.beep()
             return
         }
         notice = nil
-        change(undo, "Dividi") { p in
+        change(undo, String(localized: "Dividi")) { p in
             var a = c, b = c
             a.outPoint = l
             b.id = UUID()
@@ -479,7 +481,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         let i = hit.index, c = project.clips[i]
         guard c.outPoint - hit.local > 0.1 else { NSSound.beep(); return }
         let clipStart = project.starts[i]
-        change(undo, "Taglia l’inizio") { $0.clips[i].inPoint = hit.local }
+        change(undo, String(localized: "Taglia l’inizio")) { $0.clips[i].inPoint = hit.local }
         seek(clipStart)
     }
 
@@ -487,12 +489,12 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         guard let hit = project.clip(at: clock.time) else { NSSound.beep(); return }
         let i = hit.index, c = project.clips[i]
         guard hit.local - c.inPoint > 0.1 else { NSSound.beep(); return }
-        change(undo, "Taglia la fine") { $0.clips[i].outPoint = hit.local }
+        change(undo, String(localized: "Taglia la fine")) { $0.clips[i].outPoint = hit.local }
     }
 
     func restoreClip(_ undo: UndoManager?) {
         guard let i = targetIndex, let info = infos[project.clips[i].path] else { NSSound.beep(); return }
-        change(undo, "Clip intera") { p in
+        change(undo, String(localized: "Clip intera")) { p in
             p.clips[i].inPoint = 0
             p.clips[i].outPoint = info.videoDuration
         }
@@ -503,7 +505,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         let j = i + delta
         guard project.clips.indices.contains(j) else { NSSound.beep(); return }
         let id = project.clips[i].id
-        change(undo, "Sposta la clip") { $0.clips.swapAt(i, j) }
+        change(undo, String(localized: "Sposta la clip")) { $0.clips.swapAt(i, j) }
         selected = id
         seek(project.starts[j])
     }
@@ -512,7 +514,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     func toggleClipAudio(_ undo: UndoManager?) {
         guard let i = targetIndex else { NSSound.beep(); return }
         let off = !project.clips[i].isMuted
-        change(undo, off ? "Spegni l’audio della clip" : "Riaccendi l’audio della clip") { $0.clips[i].muted = off ? true : nil }
+        change(undo, off ? String(localized: "Spegni l’audio della clip") : String(localized: "Riaccendi l’audio della clip")) { $0.clips[i].muted = off ? true : nil }
     }
 
     /// 2.7.4 · Toglie l'audio da qui alla fine della clip (divide nel punto dell'indicatore).
@@ -520,10 +522,10 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         guard let hit = project.clip(at: clock.time) else { NSSound.beep(); return }
         let c = project.clips[hit.index]
         guard hit.local - c.inPoint > 0.1, c.outPoint - hit.local > 0.1 else {
-            change(undo, "Spegni l’audio della clip") { $0.clips[hit.index].muted = true }
+            change(undo, String(localized: "Spegni l’audio della clip")) { $0.clips[hit.index].muted = true }
             return
         }
-        change(undo, "Spegni l’audio da qui") { p in
+        change(undo, String(localized: "Spegni l’audio da qui")) { p in
             var a = c, b = c
             a.outPoint = hit.local
             b.id = UUID()
@@ -536,7 +538,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
 
     func deleteClip(_ undo: UndoManager?) {
         guard let i = targetIndex else { NSSound.beep(); return }
-        change(undo, "Elimina la clip") { $0.clips.remove(at: i) }
+        change(undo, String(localized: "Elimina la clip")) { $0.clips.remove(at: i) }
         selected = nil
     }
 
@@ -557,7 +559,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     func openProject(_ id: UUID, undo: UndoManager?) {
         closeProject(undo)
         guard var p = VideoProjectLibrary.read(VideoProjectLibrary.url(for: id, in: folder)) else {
-            notice = "Questo progetto non si apre più."
+            notice = String(localized: "Questo progetto non si apre più.")
             refreshLibrary()
             return
         }
@@ -669,30 +671,30 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
 
     func musicStartHere(_ undo: UndoManager?) {
         let t = clock.time
-        change(undo, "Musica da qui") { $0.music?.offset = t }
+        change(undo, String(localized: "Musica da qui")) { $0.music?.offset = t }
     }
 
     /// Fa finire la canzone insieme al video (sceglie da che punto farla partire).
     func alignMusicEnd(_ undo: UndoManager?) {
         guard let m = project.music, let sd = songDuration else { return }
         let room = max(0, project.duration - m.offset)
-        change(undo, "Finale insieme al video") { p in
+        change(undo, String(localized: "Finale insieme al video")) { p in
             p.music?.inPoint = max(0, sd - room)
             p.music?.loop = false
         }
     }
 
     func removeMusic(_ undo: UndoManager?) {
-        change(undo, "Rimuovi la musica") { $0.music = nil }
+        change(undo, String(localized: "Rimuovi la musica")) { $0.music = nil }
     }
 
     // MARK: Esportazione
 
     func export() {
         guard !project.clips.isEmpty else { NSSound.beep(); return }
-        guard project.duration > 0.1 else { notice = "Il montaggio è vuoto."; NSSound.beep(); return }
+        guard project.duration > 0.1 else { notice = String(localized: "Il montaggio è vuoto."); NSSound.beep(); return }
         if !analyzing.isEmpty {
-            notice = "Un attimo: sto ancora trovando le voci nel video per abbassare la musica."
+            notice = String(localized: "Un attimo: sto ancora trovando le voci nel video per abbassare la musica.")
             NSSound.beep()
             return
         }
@@ -706,7 +708,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             notice = nil
             lastJob = QueueStore.shared.enqueue(files: files, action: action, param: snap.path)
         } catch {
-            notice = "Non riesco a preparare l’esportazione: \(error.localizedDescription)"
+            notice = String(localized: "Non riesco a preparare l’esportazione: \(error.localizedDescription)")
         }
     }
 
@@ -773,10 +775,11 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         if let m = p.music, !fm.fileExists(atPath: m.path) { p.music?.path = Self.resolve(m.bookmark) ?? m.path }
         p.clips = p.clips.filter { fm.fileExists(atPath: $0.path) && $0.length > 0.05 }
         var lost: [String] = []
-        if p.clips.count < before { lost.append(before - p.clips.count == 1 ? "1 clip" : "\(before - p.clips.count) clip") }
-        if let m = p.music, !fm.fileExists(atPath: m.path) { p.music = nil; lost.append("la musica") }
+        if p.clips.count < before { lost.append(before - p.clips.count == 1 ? String(localized: "1 clip") : String(localized: "\(before - p.clips.count) clip")) }
+        if let m = p.music, !fm.fileExists(atPath: m.path) { p.music = nil; lost.append(String(localized: "la musica")) }
         guard !lost.isEmpty else { return nil }
-        return "Non trovo più \(lost.joined(separator: " e ")) del progetto: il file è stato cancellato o è su un disco scollegato."
+        let and = String(localized: " e ")
+        return String(localized: "Non trovo più \(lost.joined(separator: and)) del progetto: il file è stato cancellato o è su un disco scollegato.")
     }
 }
 
@@ -786,11 +789,11 @@ struct SocialPreset {
     let aspect: String?, resolution: Int, fps: Int
 
     static let all: [SocialPreset] = [
-        SocialPreset(id: "tiktok", name: "TikTok", hint: "Verticale 9:16, Full HD", aspect: "9x16", resolution: 1080, fps: 30),
-        SocialPreset(id: "reels", name: "Reels", hint: "Instagram e Facebook: verticale 9:16, Full HD", aspect: "9x16", resolution: 1080, fps: 30),
-        SocialPreset(id: "shorts", name: "Shorts", hint: "YouTube Shorts: verticale 9:16, Full HD", aspect: "9x16", resolution: 1080, fps: 30),
-        SocialPreset(id: "youtube", name: "YouTube", hint: "Orizzontale 16:9, Full HD", aspect: "16x9", resolution: 1080, fps: 30),
-        SocialPreset(id: "whatsapp", name: "WhatsApp", hint: "Forma originale, HD 720p: leggero da mandare, nitido sul telefono", aspect: nil, resolution: 720, fps: 30),
+        SocialPreset(id: "tiktok", name: "TikTok", hint: String(localized: "Verticale 9:16, Full HD"), aspect: "9x16", resolution: 1080, fps: 30),
+        SocialPreset(id: "reels", name: "Reels", hint: String(localized: "Instagram e Facebook: verticale 9:16, Full HD"), aspect: "9x16", resolution: 1080, fps: 30),
+        SocialPreset(id: "shorts", name: "Shorts", hint: String(localized: "YouTube Shorts: verticale 9:16, Full HD"), aspect: "9x16", resolution: 1080, fps: 30),
+        SocialPreset(id: "youtube", name: "YouTube", hint: String(localized: "Orizzontale 16:9, Full HD"), aspect: "16x9", resolution: 1080, fps: 30),
+        SocialPreset(id: "whatsapp", name: "WhatsApp", hint: String(localized: "Forma originale, HD 720p: leggero da mandare, nitido sul telefono"), aspect: nil, resolution: 720, fps: 30),
     ]
 
     func apply(_ p: inout VideoProject) {
@@ -823,12 +826,12 @@ enum VideoEditTool: String, CaseIterable, Identifiable {
     /// Cosa si fa qui, in una frase.
     var hint: String {
         switch self {
-        case .clip: return "Taglia, dividi, sposta e togli le clip. I bordi d’ottone di una clip si trascinano per accorciarla."
-        case .looks: return "Un filtro per tutto il video o solo per la clip scelta, e le regolazioni di luce e colore."
-        case .effects: return "Effetti della clip scelta: velocità, zoom lento, gira, sfocatura, dissolvenze."
-        case .texts: return "Titoli e scritte: premi «Testo» sull’anteprima (o il tasto T), poi trascinali dove vuoi."
-        case .audio: return "Il volume dei tuoi video e la musica."
-        case .format: return "La forma del video e la qualità dell’esportazione."
+        case .clip: return String(localized: "Taglia, dividi, sposta e togli le clip. I bordi d’ottone di una clip si trascinano per accorciarla.")
+        case .looks: return String(localized: "Un filtro per tutto il video o solo per la clip scelta, e le regolazioni di luce e colore.")
+        case .effects: return String(localized: "Effetti della clip scelta: velocità, zoom lento, gira, sfocatura, dissolvenze.")
+        case .texts: return String(localized: "Titoli e scritte: premi «Testo» sull’anteprima (o il tasto T), poi trascinali dove vuoi.")
+        case .audio: return String(localized: "Il volume dei tuoi video e la musica.")
+        case .format: return String(localized: "La forma del video e la qualità dell’esportazione.")
         }
     }
 }
@@ -861,8 +864,8 @@ struct VideoEditorView: View {
         VStack(alignment: .leading, spacing: 10) {
             header
             if s.project.clips.isEmpty {
-                MediaDropZone(kind: .video, title: "Trascina qui i video",
-                              subtitle: "oppure clicca per sceglierli · MP4, MOV, M4V · più video vanno in fila · un brano audio diventa la musica",
+                MediaDropZone(kind: .video, title: String(localized: "Trascina qui i video"),
+                              subtitle: String(localized: "oppure clicca per sceglierli · MP4, MOV, M4V · più video vanno in fila · un brano audio diventa la musica"),
                               targeted: targeted) { choose(audio: false) }
             } else {
                 HStack(alignment: .top, spacing: 12) {
@@ -908,7 +911,7 @@ struct VideoEditorView: View {
                     .font(.system(size: s.project.clips.isEmpty ? 22 : 15, weight: .bold, design: s.project.clips.isEmpty ? .rounded : .default))
                     .lineLimit(1)
                 if !s.project.clips.isEmpty {
-                    Text("\(s.project.clips.count) clip · \(formatShort(s.project.duration))" + (s.project.music != nil ? " · con musica" : "")
+                    Text(String(localized: "\(s.project.clips.count) clip · \(formatShort(s.project.duration))") + (s.project.music != nil ? String(localized: " · con musica") : "")
                          + (s.estimate.map { " · ≈ " + Fmt.bytes($0.bytes) } ?? ""))
                         .font(.system(size: 12.5)).foregroundStyle(.secondary).lineLimit(1)
                 }
@@ -1029,10 +1032,10 @@ struct VideoEditorView: View {
         VStack(alignment: .leading, spacing: 10) {
             if let i = s.targetIndex, s.project.clips.indices.contains(i) {
                 let c = s.project.clips[i]
-                Text("Clip \(i + 1) di \(s.project.clips.count) · \(formatShort(c.length))" + (abs(c.speed - 1) > 0.001 ? " · " + EffectOptions.speedLabel(c.speed) : ""))
+                Text(String(localized: "Clip \(i + 1) di \(s.project.clips.count) · \(formatShort(c.length))") + (abs(c.speed - 1) > 0.001 ? " · " + EffectOptions.speedLabel(c.speed) : ""))
                     .font(.system(size: 12.5, weight: .semibold))
             }
-            SectionLabel(text: "Taglia")
+            SectionLabel(text: String(localized: "Taglia"))
             HStack(spacing: 6) {
                 Button("Inizio qui") { s.trimStartHere(undo) }.help("Taglia la clip da qui in poi")
                 Button("Fine qui") { s.trimEndHere(undo) }.help("Taglia la clip fino a qui")
@@ -1048,14 +1051,14 @@ struct VideoEditorView: View {
             // 4.0 · Le pause lunghe spariscono da sole (tagli netti, come nei video dei social)
             Button { s.removeSilences(undo) } label: { Label("Togli i silenzi", systemImage: "waveform.badge.minus") }
                 .help("Ascolta la clip e toglie le pause lunghe: restano solo i pezzi in cui si parla. ⌘Z per tornare indietro")
-            SectionLabel(text: "Audio della clip")
+            SectionLabel(text: String(localized: "Audio della clip"))
             HStack(spacing: 6) { clipAudioButtons }
             if let i = s.targetIndex, i > 0, s.project.clips.indices.contains(i) {
-                SectionLabel(text: "Transizione prima di questa clip")
+                SectionLabel(text: String(localized: "Transizione prima di questa clip"))
                 Text("Oppure clicca il pallino tra due clip nella sequenza.").font(.system(size: 11.5)).foregroundStyle(.secondary)
                 TransitionOptions(s: s, clipID: s.project.clips[i].id, tint: tint, undo: undo, compact: true)
             }
-            SectionLabel(text: "Altro")
+            SectionLabel(text: String(localized: "Altro"))
             HStack(spacing: 6) {
                 Button(role: .destructive) { s.deleteClip(undo) } label: { Label("Togli", systemImage: "trash") }
                     .keyboardShortcut(s.typing ? nil : KeyboardShortcut(.delete, modifiers: []))
@@ -1080,7 +1083,7 @@ struct VideoEditorView: View {
     }
 
     @ViewBuilder private var musicOptions: some View {
-        SectionLabel(text: "Musica")
+        SectionLabel(text: String(localized: "Musica"))
         if let m = s.project.music {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 6) {
@@ -1097,21 +1100,21 @@ struct VideoEditorView: View {
                         .help("Sceglie da dove far partire la canzone perché finisca insieme al video")
                 }
                 .controlSize(.small)
-                Toggle("Ripeti finché il video finisce", isOn: bind(\.loop, "Ripeti la musica")).toggleStyle(.checkbox)
+                Toggle("Ripeti finché il video finisce", isOn: bind(\.loop, String(localized: "Ripeti la musica"))).toggleStyle(.checkbox)
                     .font(.system(size: 12))
                 if let sd = s.songDuration, sd > 1 {
-                    EditSlider(title: "Parte dal", value: m.inPoint, range: 0...max(1, sd - 1), text: formatShort(m.inPoint),
-                               width: 260, s: s, undo: undo, name: "Punto della canzone") { p, v in p.music?.inPoint = v }
+                    EditSlider(title: String(localized: "Parte dal"), value: m.inPoint, range: 0...max(1, sd - 1), text: formatShort(m.inPoint),
+                               width: 260, s: s, undo: undo, name: String(localized: "Punto della canzone")) { p, v in p.music?.inPoint = v }
                 }
-                EditSlider(title: "Volume", value: m.volume, range: 0...1, text: "\(Int((m.volume * 100).rounded()))%",
-                           width: 260, s: s, undo: undo, name: "Volume della musica") { p, v in p.music?.volume = v }
+                EditSlider(title: String(localized: "Volume"), value: m.volume, range: 0...1, text: "\(Int((m.volume * 100).rounded()))%",
+                           width: 260, s: s, undo: undo, name: String(localized: "Volume della musica")) { p, v in p.music?.volume = v }
                 HStack(spacing: 12) {
-                    EditSlider(title: "Entrata", value: m.fadeIn, range: 0...5, text: Fmt.secs(m.fadeIn),
-                               width: 124, s: s, undo: undo, name: "Dissolvenza in entrata") { p, v in p.music?.fadeIn = v }
-                    EditSlider(title: "Uscita", value: m.fadeOut, range: 0...5, text: Fmt.secs(m.fadeOut),
-                               width: 124, s: s, undo: undo, name: "Dissolvenza in uscita") { p, v in p.music?.fadeOut = v }
+                    EditSlider(title: String(localized: "Entrata"), value: m.fadeIn, range: 0...5, text: Fmt.secs(m.fadeIn),
+                               width: 124, s: s, undo: undo, name: String(localized: "Dissolvenza in entrata")) { p, v in p.music?.fadeIn = v }
+                    EditSlider(title: String(localized: "Uscita"), value: m.fadeOut, range: 0...5, text: Fmt.secs(m.fadeOut),
+                               width: 124, s: s, undo: undo, name: String(localized: "Dissolvenza in uscita")) { p, v in p.music?.fadeOut = v }
                 }
-                Toggle("Abbassa quando si parla", isOn: bind(\.duck, "Abbassa quando si parla")).toggleStyle(.checkbox)
+                Toggle("Abbassa quando si parla", isOn: bind(\.duck, String(localized: "Abbassa quando si parla"))).toggleStyle(.checkbox)
                     .font(.system(size: 12))
                 if !s.analyzing.isEmpty {
                     HStack(spacing: 5) { ProgressView().controlSize(.mini); Text("Cerco le voci…") }
@@ -1137,66 +1140,66 @@ struct VideoEditorView: View {
     @ViewBuilder private var clipAudioButtons: some View {
         let muted = s.targetIndex.map { s.project.clips[$0].isMuted } ?? false
         Button { s.toggleClipAudio(undo) } label: {
-            Label(muted ? "Riaccendi" : "Spegni", systemImage: muted ? "speaker.wave.2" : "speaker.slash")
+            Label(muted ? String(localized: "Riaccendi") : String(localized: "Spegni"), systemImage: muted ? "speaker.wave.2" : "speaker.slash")
         }
-        .help(muted ? "Riaccende l’audio di questa clip" : "Spegne l’audio solo di questa clip (la musica resta)")
+        .help(muted ? String(localized: "Riaccende l’audio di questa clip") : String(localized: "Spegne l’audio solo di questa clip (la musica resta)"))
         Button { s.muteFromHere(undo) } label: { Label("Spegni da qui", systemImage: "speaker.slash.circle") }
             .help("Spegne l’audio dall’indicatore alla fine della clip. Per un tratto in mezzo: dividi (S) e togli l’audio solo da quel pezzo")
     }
 
     @ViewBuilder private var originalOptions: some View {
-        SectionLabel(text: "Audio dei video")
+        SectionLabel(text: String(localized: "Audio dei video"))
         Toggle("Muto", isOn: Binding(get: { s.project.originalMuted },
-                                      set: { v in s.change(undo, v ? "Audio originale muto" : "Audio originale attivo") { $0.originalMuted = v } }))
+                                      set: { v in s.change(undo, v ? String(localized: "Audio originale muto") : String(localized: "Audio originale attivo")) { $0.originalMuted = v } }))
             .toggleStyle(.checkbox)
-        EditSlider(title: "Volume", value: s.project.originalVolume, range: 0...1,
+        EditSlider(title: String(localized: "Volume"), value: s.project.originalVolume, range: 0...1,
                    text: "\(Int((s.project.originalVolume * 100).rounded()))%", width: 260, s: s, undo: undo,
-                   name: "Volume dell’audio originale") { p, v in p.originalVolume = v }
+                   name: String(localized: "Volume dell’audio originale")) { p, v in p.originalVolume = v }
             .disabled(s.project.originalMuted)
     }
 
     @ViewBuilder private var formatOptions: some View {
         // 3.9 · Pronto per…: un clic imposta forma, qualità e fluidità giuste per dove va il video
-        SectionLabel(text: "Pronto per")
+        SectionLabel(text: String(localized: "Pronto per"))
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 6)], alignment: .leading, spacing: 6) {
             ForEach(SocialPreset.all, id: \.id) { preset in
                 Chip(title: preset.name, selected: preset.matches(s.project), tint: tint) {
-                    s.change(undo, "Pronto per \(preset.name)") { preset.apply(&$0) }
+                    s.change(undo, String(localized: "Pronto per \(preset.name)")) { preset.apply(&$0) }
                 }
                 .help(preset.hint)
             }
         }
-        SectionLabel(text: "Forma")
+        SectionLabel(text: String(localized: "Forma"))
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 6)], alignment: .leading, spacing: 6) {
-            ForEach([("orig", "Originale"), ("9x16", "9:16 Reels"), ("1x1", "1:1 Post"), ("4x5", "4:5 Feed"), ("16x9", "16:9 YouTube")], id: \.0) { item in
+            ForEach([("orig", String(localized: "Originale")), ("9x16", "9:16 Reels"), ("1x1", String(localized: "1:1 Post")), ("4x5", String(localized: "4:5 Feed")), ("16x9", "16:9 YouTube")], id: \.0) { item in
                 Chip(title: item.1, selected: s.project.aspect == item.0, tint: tint) {
-                    s.change(undo, "Formato \(item.1)") { $0.aspect = item.0 }
+                    s.change(undo, String(localized: "Formato \(item.1)")) { $0.aspect = item.0 }
                 }
             }
         }
         Toggle("Inquadra le persone", isOn: Binding(get: { s.project.follow },
-                                                   set: { v in s.change(undo, "Inquadra le persone") { $0.follow = v } }))
+                                                   set: { v in s.change(undo, String(localized: "Inquadra le persone")) { $0.follow = v } }))
             .toggleStyle(.checkbox).font(.system(size: 12))
             .disabled(s.project.aspect == "orig")
             .help("Nel video finale l’inquadratura segue le persone con calma (in anteprima resta al centro)")
-        SectionLabel(text: "Qualità dell’esportazione")
+        SectionLabel(text: String(localized: "Qualità dell’esportazione"))
         HStack(spacing: 6) {
             ForEach([(720, "HD 720p"), (1080, "Full HD 1080p"), (2160, "4K")], id: \.0) { item in
                 Chip(title: item.1, selected: s.project.resolution == item.0, tint: tint) {
-                    s.change(undo, "Risoluzione \(item.1)") { $0.resolution = item.0 }
+                    s.change(undo, String(localized: "Risoluzione \(item.1)")) { $0.resolution = item.0 }
                 }
             }
         }
         HStack(spacing: 6) {
             ForEach([30, 60], id: \.self) { f in
-                Chip(title: f == 60 ? "Più fluido (60)" : "Normale (30)", selected: s.project.fps == f, tint: tint) {
-                    s.change(undo, "\(f) fotogrammi al secondo") { $0.fps = f }
+                Chip(title: f == 60 ? String(localized: "Più fluido (60)") : String(localized: "Normale (30)"), selected: s.project.fps == f, tint: tint) {
+                    s.change(undo, String(localized: "\(f) fotogrammi al secondo")) { $0.fps = f }
                 }
-                .help(f == 60 ? "Solo se i video sono girati a 60: non si inventano fotogrammi" : "")
+                .help(f == 60 ? String(localized: "Solo se i video sono girati a 60: non si inventano fotogrammi") : "")
             }
         }
         if let e = s.estimate {
-            Text("\(Int(e.size.width)) × \(Int(e.size.height)) · circa " + Fmt.bytes(e.bytes))
+            Text(String(localized: "\(Int(e.size.width)) × \(Int(e.size.height)) · circa \(Fmt.bytes(e.bytes))"))
                 .font(.system(size: 12)).foregroundStyle(.secondary)
         }
     }
@@ -1208,7 +1211,7 @@ struct VideoEditorView: View {
         p.allowsMultipleSelection = !audio
         p.canChooseDirectories = false
         p.allowedContentTypes = audio ? [.audio, .movie] : [.movie]
-        p.prompt = audio ? "Scegli" : "Aggiungi"
+        p.prompt = audio ? String(localized: "Scegli") : String(localized: "Aggiungi")
         let store = s, undo = undo
         Sheet.choose(p) { urls in
             guard !urls.isEmpty else { return }
@@ -1282,7 +1285,7 @@ struct ToolTab: View {
     let action: () -> Void
 
     init(tool: VideoEditTool, selected: Bool, used: Bool, tint: Color, action: @escaping () -> Void) {
-        self.init(title: tool.rawValue, symbol: tool.symbol, hint: tool.hint, selected: selected, used: used, tint: tint, action: action)
+        self.init(title: String(localized: String.LocalizationValue(tool.rawValue)), symbol: tool.symbol, hint: tool.hint, selected: selected, used: used, tint: tint, action: action)
     }
 
     init(title: String, symbol: String, hint: String, selected: Bool, used: Bool = false, tint: Color, action: @escaping () -> Void) {
@@ -1415,7 +1418,7 @@ private struct PlaybackBar: View {
             .buttonStyle(Pressable())
             .keyboardShortcut(s.typing ? nil : KeyboardShortcut(.space, modifiers: []))
             .help("Riproduci / pausa (Spazio)")
-            .accessibilityLabel(clock.playing ? "Pausa" : "Riproduci")
+            .accessibilityLabel(clock.playing ? String(localized: "Pausa") : String(localized: "Riproduci"))
             Spacer()
             Text("\(formatTime(clock.time)) / \(formatTime(s.project.duration))")
                 .font(.system(size: 12, design: .rounded)).monospacedDigit().foregroundStyle(Color.white.opacity(0.9))
@@ -1618,13 +1621,13 @@ private struct ProjectTimeline: View {
                             moving = nil
                             moveDX = 0
                             guard let old = s.project.clips.firstIndex(where: { $0.id == c.id }), newIndex != old else { return }
-                            s.change(undo, "Sposta la clip") { p in
+                            s.change(undo, String(localized: "Sposta la clip")) { p in
                                 let moved = p.clips.remove(at: old)
                                 p.clips.insert(moved, at: min(newIndex, p.clips.count))
                             }
                             s.selected = c.id
                         })
-                    .help(c.url.lastPathComponent + " · clic per sceglierla, trascina per spostarla")
+                    .help(String(localized: "\(c.url.lastPathComponent) · clic per sceglierla, trascina per spostarla"))
             }
         }
     }
@@ -1643,8 +1646,8 @@ private struct ProjectTimeline: View {
                 .shadow(color: .black.opacity(0.2), radius: 1.5, y: 1)
         }
         .buttonStyle(.plain)
-        .help(tr == nil ? "Aggiungi una transizione" : "Transizione: " + VPTransition.name(tr!.kind))
-        .accessibilityLabel(tr == nil ? "Aggiungi transizione" : "Transizione " + VPTransition.name(tr!.kind))
+        .help(tr == nil ? String(localized: "Aggiungi una transizione") : String(localized: "Transizione: \(VPTransition.name(tr!.kind))"))
+        .accessibilityLabel(tr == nil ? String(localized: "Aggiungi transizione") : String(localized: "Transizione \(VPTransition.name(tr!.kind))"))
         .popover(isPresented: Binding(get: { transitionFor == c.id }, set: { if !$0 { transitionFor = nil } }), arrowEdge: .top) {
             TransitionOptions(s: s, clipID: c.id, tint: tint, undo: undo)
         }
@@ -1685,10 +1688,10 @@ private struct ProjectTimeline: View {
                     s.seek(shown)
                 }
                 .onEnded { _ in
-                    if let b = trimBefore { s.commit(from: b, undo, left ? "Taglia l’inizio" : "Taglia la fine") }
+                    if let b = trimBefore { s.commit(from: b, undo, left ? String(localized: "Taglia l’inizio") : String(localized: "Taglia la fine")) }
                     trimBefore = nil
                 })
-            .help(left ? "Trascina per tagliare l’inizio" : "Trascina per tagliare la fine")
+            .help(left ? String(localized: "Trascina per tagliare l’inizio") : String(localized: "Trascina per tagliare la fine"))
     }
 
     private struct Slot: Identifiable {
@@ -1726,7 +1729,7 @@ private struct ProjectTimeline: View {
                 let on = s.selectedText == t.id
                 HStack(spacing: 0) {
                     edge(t, mode: 1, pps: pps, total: total)
-                    Text(t.text.isEmpty ? "Testo" : t.text).font(.system(size: 10.5, weight: .semibold)).lineLimit(1)
+                    Text(t.text.isEmpty ? String(localized: "Testo") : t.text).font(.system(size: 10.5, weight: .semibold)).lineLimit(1)
                         .padding(.horizontal, 3)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
@@ -1789,7 +1792,7 @@ private struct ProjectTimeline: View {
 
     private func endTextDrag() {
         Snap.reset()
-        if let b = dragBefore { s.commit(from: b, undo, "Sposta il testo") }
+        if let b = dragBefore { s.commit(from: b, undo, String(localized: "Sposta il testo")) }
         dragBefore = nil
         textDrag = nil
     }
@@ -1821,7 +1824,7 @@ private struct ProjectTimeline: View {
                     }
                     .onEnded { _ in
                         Snap.reset()
-                        if let b = dragBefore { s.commit(from: b, undo, "Sposta la musica") }
+                        if let b = dragBefore { s.commit(from: b, undo, String(localized: "Sposta la musica")) }
                         dragBefore = nil
                     })
                 .onTapGesture { openMusic() }
@@ -1971,27 +1974,27 @@ private struct LookOptions: View {
                 ForEach(VideoLooks.presets) { preset in
                     PresetChip(preset: preset, selected: look.preset == preset.id, tint: tint,
                                image: s.lookThumbnail(preset.id, clip: s.targetIndex ?? 0)) {
-                        s.change(undo, "Filtro \(preset.name)") { p in edit(&p) { $0.preset = preset.id; if $0.amount < 0.05 { $0.amount = 1 } } }
+                        s.change(undo, String(localized: "Filtro \(preset.name)")) { p in edit(&p) { $0.preset = preset.id; if $0.amount < 0.05 { $0.amount = 1 } } }
                     }
                 }
             }
-            EditSlider(title: "Forza del filtro", value: look.amount, range: 0...1, text: "\(Int((look.amount * 100).rounded()))%",
-                       width: 260, s: s, undo: undo, name: "Forza del filtro") { p, v in edit(&p) { $0.amount = v } }
+            EditSlider(title: String(localized: "Forza del filtro"), value: look.amount, range: 0...1, text: "\(Int((look.amount * 100).rounded()))%",
+                       width: 260, s: s, undo: undo, name: String(localized: "Forza del filtro")) { p, v in edit(&p) { $0.amount = v } }
                 .disabled(look.preset == "none")
-            SectionLabel(text: "Regolazioni")
-            adjust("Luminosità", \.brightness, range: -1...1)
-            adjust("Contrasto", \.contrast, range: -1...1)
-            adjust("Saturazione", \.saturation, range: -1...1)
-            adjust("Calore", \.warmth, range: -1...1)
-            adjust("Nitidezza", \.sharpness, range: 0...1)
-            adjust("Vignetta", \.vignette, range: 0...1)
+            SectionLabel(text: String(localized: "Regolazioni"))
+            adjust(String(localized: "Luminosità"), \.brightness, range: -1...1)
+            adjust(String(localized: "Contrasto"), \.contrast, range: -1...1)
+            adjust(String(localized: "Saturazione"), \.saturation, range: -1...1)
+            adjust(String(localized: "Calore"), \.warmth, range: -1...1)
+            adjust(String(localized: "Nitidezza"), \.sharpness, range: 0...1)
+            adjust(String(localized: "Vignetta"), \.vignette, range: 0...1)
             Button("Ripristina") {
-                s.change(undo, "Rimuovi il filtro") { p in
+                s.change(undo, String(localized: "Rimuovi il filtro")) { p in
                     if let i = clipIndex, p.clips.indices.contains(i) { p.clips[i].look = nil } else { p.look = nil }
                 }
             }
             .controlSize(.small)
-            .help(onlyClip ? "Toglie filtro e regolazioni da questa clip (torna quello del video)" : "Toglie filtro e regolazioni da tutto il video")
+            .help(onlyClip ? String(localized: "Toglie filtro e regolazioni da questa clip (torna quello del video)") : String(localized: "Toglie filtro e regolazioni da tutto il video"))
         }
     }
 
@@ -2049,14 +2052,14 @@ struct TransitionOptions: View {
         VStack(alignment: .leading, spacing: 10) {
             if !compact { Text("Transizione").font(.headline) }
             LazyVGrid(columns: Array(repeating: GridItem(.fixed(compact ? 80 : 78), spacing: 6), count: compact ? 3 : 4), spacing: 6) {
-                chip(nil, "Nessuna", "minus")
+                chip(nil, String(localized: "Nessuna"), "minus")
                 ForEach(VPTransition.kinds, id: \.id) { k in chip(k.id, k.name, k.symbol) }
             }
             if let tr = current {
                 HStack {
                     Text("Durata").font(.callout)
                     Slider(value: Binding(get: { tr.duration }, set: { v in set { $0?.duration = v } }), in: 0.2...2, step: 0.1) { editing in
-                        if editing { before = s.project } else if let b = before { s.commit(from: b, undo, "Durata della transizione"); before = nil }
+                        if editing { before = s.project } else if let b = before { s.commit(from: b, undo, String(localized: "Durata della transizione")); before = nil }
                     }
                         .frame(width: compact ? 130 : 160)
                     Text(Fmt.secs(tr.duration)).font(.callout).monospacedDigit().frame(width: 40, alignment: .trailing)
@@ -2064,7 +2067,7 @@ struct TransitionOptions: View {
                 Text("Se una clip è corta, la transizione si accorcia da sola.")
                     .font(.caption).foregroundStyle(.secondary)
                 Button("Applica a tutte le clip") {
-                    s.change(undo, "Transizione a tutte") { p in
+                    s.change(undo, String(localized: "Transizione a tutte")) { p in
                         for i in p.clips.indices.dropFirst() { p.clips[i].transition = tr }
                     }
                 }
@@ -2078,7 +2081,7 @@ struct TransitionOptions: View {
     private func chip(_ id: String?, _ name: String, _ symbol: String) -> some View {
         let on = current?.kind == id
         return Button {
-            s.change(undo, id == nil ? "Rimuovi la transizione" : "Transizione") { p in
+            s.change(undo, id == nil ? String(localized: "Rimuovi la transizione") : String(localized: "Transizione")) { p in
                 guard let i = p.clips.firstIndex(where: { $0.id == clipID }) else { return }
                 if let id {
                     p.clips[i].transition = VPTransition(kind: id, duration: p.clips[i].transition?.duration ?? 0.6)
@@ -2142,7 +2145,7 @@ private struct EffectOptions: View {
                     Spacer()
                     Menu {
                         ForEach(VPEffects.speeds, id: \.self) { v in
-                            Button(Self.speedLabel(v)) { change("Velocità") { $0.speed = v } }
+                            Button(Self.speedLabel(v)) { change(String(localized: "Velocità")) { $0.speed = v } }
                         }
                     } label: {
                         Label(Self.speedLabel(fx.speed), systemImage: "speedometer")
@@ -2153,7 +2156,7 @@ private struct EffectOptions: View {
                 HStack {
                     Text("Zoom lento").font(.system(size: 12))
                     Spacer()
-                    Picker("", selection: Binding(get: { fx.zoom }, set: { v in change("Zoom lento") { $0.zoom = v } })) {
+                    Picker("", selection: Binding(get: { fx.zoom }, set: { v in change(String(localized: "Zoom lento")) { $0.zoom = v } })) {
                         Text("No").tag("none")
                         Image(systemName: "plus.magnifyingglass").tag("in").help("Si avvicina piano")
                         Image(systemName: "minus.magnifyingglass").tag("out").help("Si allontana piano")
@@ -2163,36 +2166,36 @@ private struct EffectOptions: View {
                 HStack {
                     Text("Gira").font(.system(size: 12))
                     Spacer()
-                    Toggle(isOn: Binding(get: { fx.flipH }, set: { v in change("Capovolgi") { $0.flipH = v } })) {
+                    Toggle(isOn: Binding(get: { fx.flipH }, set: { v in change(String(localized: "Capovolgi")) { $0.flipH = v } })) {
                         Image(systemName: "arrow.left.and.right.righttriangle.left.righttriangle.right")
                     }
                     .toggleStyle(.button).help("Specchia (destra ↔ sinistra)")
-                    Toggle(isOn: Binding(get: { fx.flipV }, set: { v in change("Capovolgi") { $0.flipV = v } })) {
+                    Toggle(isOn: Binding(get: { fx.flipV }, set: { v in change(String(localized: "Capovolgi")) { $0.flipV = v } })) {
                         Image(systemName: "arrow.up.and.down.righttriangle.up.righttriangle.down")
                     }
                     .toggleStyle(.button).help("Capovolgi (sopra ↔ sotto)")
-                    Button { change("Ruota") { $0.rotate = ($0.rotate + 90) % 360 } } label: {
+                    Button { change(String(localized: "Ruota")) { $0.rotate = ($0.rotate + 90) % 360 } } label: {
                         Image(systemName: "rotate.right")
                     }
                     .help("Ruota di 90° · ora \(fx.rotate)°")
                 }
-                EditSlider(title: "Sfocatura", value: fx.blur, range: 0...1, text: fx.blur < 0.01 ? "No" : "\(Int(fx.blur * 100))%",
-                           width: 260, s: s, undo: undo, name: "Sfocatura") { p, v in Self.edit(&p, i) { $0.blur = v } }
+                EditSlider(title: String(localized: "Sfocatura"), value: fx.blur, range: 0...1, text: fx.blur < 0.01 ? String(localized: "No") : "\(Int(fx.blur * 100))%",
+                           width: 260, s: s, undo: undo, name: String(localized: "Sfocatura")) { p, v in Self.edit(&p, i) { $0.blur = v } }
                 HStack(spacing: 12) {
-                    EditSlider(title: "Entrata", value: fx.fadeIn, range: 0...2, text: fx.fadeIn < 0.05 ? "No" : Fmt.secs(fx.fadeIn),
-                               width: 124, s: s, undo: undo, name: "Dissolvenza in entrata") { p, v in Self.edit(&p, i) { $0.fadeIn = v < 0.05 ? 0 : v } }
-                    EditSlider(title: "Uscita", value: fx.fadeOut, range: 0...2, text: fx.fadeOut < 0.05 ? "No" : Fmt.secs(fx.fadeOut),
-                               width: 124, s: s, undo: undo, name: "Dissolvenza in uscita") { p, v in Self.edit(&p, i) { $0.fadeOut = v < 0.05 ? 0 : v } }
+                    EditSlider(title: String(localized: "Entrata"), value: fx.fadeIn, range: 0...2, text: fx.fadeIn < 0.05 ? String(localized: "No") : Fmt.secs(fx.fadeIn),
+                               width: 124, s: s, undo: undo, name: String(localized: "Dissolvenza in entrata")) { p, v in Self.edit(&p, i) { $0.fadeIn = v < 0.05 ? 0 : v } }
+                    EditSlider(title: String(localized: "Uscita"), value: fx.fadeOut, range: 0...2, text: fx.fadeOut < 0.05 ? String(localized: "No") : Fmt.secs(fx.fadeOut),
+                               width: 124, s: s, undo: undo, name: String(localized: "Dissolvenza in uscita")) { p, v in Self.edit(&p, i) { $0.fadeOut = v < 0.05 ? 0 : v } }
                 }
                 HStack(spacing: 6) {
                     Button("A tutte le clip") {
                         let e = fx
-                        s.change(undo, "Effetti a tutte le clip") { p in
+                        s.change(undo, String(localized: "Effetti a tutte le clip")) { p in
                             for k in p.clips.indices { p.clips[k].fx = e.isIdentity ? nil : e }
                         }
                     }
                     .help("Copia questi effetti su tutte le clip")
-                    Button("Ripristina") { change("Rimuovi gli effetti") { $0 = VPEffects() } }
+                    Button("Ripristina") { change(String(localized: "Rimuovi gli effetti")) { $0 = VPEffects() } }
                         .disabled(fx.isIdentity)
                 }
                 .controlSize(.small)
@@ -2201,7 +2204,7 @@ private struct EffectOptions: View {
                     .font(.system(size: 12.5)).foregroundStyle(.secondary)
             }
             Divider()
-            SectionLabel(text: "Su tutto il video")
+            SectionLabel(text: String(localized: "Su tutto il video"))
             hideButton
         }
         .sheet(isPresented: $showHide) { hideSheet }
@@ -2210,10 +2213,10 @@ private struct EffectOptions: View {
     /// 2.9.8 · Nascondi un logo su tutto il montaggio (sfocatura o pixel).
     private var hideButton: some View {
         HStack(spacing: 6) {
-            Button { showHide = true } label: { Label(s.project.hide == nil ? "Nascondi un logo…" : "Logo nascosto ✓", systemImage: "eye.slash") }
+            Button { showHide = true } label: { Label(s.project.hide == nil ? String(localized: "Nascondi un logo…") : String(localized: "Logo nascosto ✓"), systemImage: "eye.slash") }
                 .controlSize(.small).help("Sfoca o copri a pixel un logo o una scritta in tutto il video")
             if s.project.hide != nil {
-                Button("Rimuovi") { s.change(undo, "Rimuovi la copertura") { $0.hide = nil } }.controlSize(.small)
+                Button("Rimuovi") { s.change(undo, String(localized: "Rimuovi la copertura")) { $0.hide = nil } }.controlSize(.small)
             }
         }
     }
@@ -2226,7 +2229,7 @@ private struct EffectOptions: View {
         let frames = MontageFrames(project: plain, infos: infos)
         return HideMarkEditor(url: URL(fileURLWithPath: "/montaggio.mp4"), onDone: { v in
             showHide = false
-            if let v { s.change(undo, "Nascondi un logo") { $0.hide = v } }
+            if let v { s.change(undo, String(localized: "Nascondi un logo")) { $0.hide = v } }
         }, frameSource: { t in await frames.frame(at: t) }, montageDuration: project.duration,
            initial: HideMark.parse(project.hide ?? ""), allowAI: false)
     }

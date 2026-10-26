@@ -121,7 +121,7 @@ struct BugReportView: View {
                 }
             }
 
-            field("La tua email (per risponderti)") {
+            field(String(localized: "La tua email (per risponderti)")) {
                 TextField("nome@esempio.it", text: $email)
                     .textFieldStyle(.roundedBorder)
                 if !emailOK {
@@ -129,15 +129,15 @@ struct BugReportView: View {
                 }
             }
 
-            field("Categoria") {
+            field(String(localized: "Categoria")) {
                 Picker("", selection: $category) {
-                    ForEach(BugReport.categories, id: \.self) { Text($0).tag($0) }
+                    ForEach(BugReport.categories, id: \.self) { Text(String(localized: String.LocalizationValue($0))).tag($0) }
                 }
                 .labelsHidden()
                 .frame(width: 240)
             }
 
-            field("Cosa è successo") {
+            field(String(localized: "Cosa è successo")) {
                 TextEditor(text: $text)
                     .font(.system(size: 13))
                     .scrollContentBackground(.hidden)
@@ -155,7 +155,7 @@ struct BugReportView: View {
                     }
             }
 
-            field("Screenshot") {
+            field(String(localized: "Screenshot")) {
                 HStack(spacing: 8) {
                     Button { capture() } label: { Label("Cattura una parte dello schermo", systemImage: "camera.viewfinder") }
                         .disabled(capturing)
@@ -300,6 +300,6 @@ struct BugReportView: View {
         try? note.write(to: folder.appendingPathComponent("Segnalazione.txt"), atomically: true, encoding: .utf8)
         for a in attachments { try? fm.copyItem(at: a, to: folder.appendingPathComponent(a.lastPathComponent)) }
         NSWorkspace.shared.activateFileViewerSelecting([folder])
-        message = "Mail non è configurata: ho salvato la segnalazione sulla Scrivania. Inviala a \(BugReport.recipient)."
+        message = String(localized: "Mail non è configurata: ho salvato la segnalazione sulla Scrivania. Inviala a \(BugReport.recipient).")
     }
 }

@@ -76,27 +76,27 @@ final class PresetStore: ObservableObject, @unchecked Sendable {
         switch actionId {
         case "resize":
             switch param {
-            case "half": return "\(title) · metà"
-            case "web": return "\(title) · per il web"
-            default: return "\(title) · \(param) px"
+            case "half": return String(localized: "\(title) · metà")
+            case "web": return String(localized: "\(title) · per il web")
+            default: return String(localized: "\(title) · \(param) px")
             }
-        case "vcompress": return param == "best" ? "\(title) · stessa qualità" : "\(title) · max \(param) MB"
-        case "pdfcompress": return "\(title) · " + (param == "light" ? "leggera" : param == "strong" ? "forte" : "media")
+        case "vcompress": return param == "best" ? String(localized: "\(title) · stessa qualità") : String(localized: "\(title) · max \(param) MB")
+        case "pdfcompress": return "\(title) · " + (param == "light" ? String(localized: "leggera") : param == "strong" ? String(localized: "forte") : String(localized: "media"))
         case "vresize": return "\(title) · " + (param == "hevc" ? "HEVC" : "\(param)p")
         case "speed": return "\(title) · \(param.replacingOccurrences(of: ".", with: ","))×"
         case "rotate": return "\(title) · \(param)°"
         case "upscale": return "\(title) · \(param)×"
         case "aienhance":
             let p = AIEnhance.parse(param)
-            let style: String = p.strength == 0 ? "fedele" : (p.strength == 100 ? "più nitido" : "intensità \(p.strength)%")
-            let size: String = p.factor == 1 ? "stessa dimensione" : "\(p.factor)×"
+            let style: String = p.strength == 0 ? String(localized: "fedele") : (p.strength == 100 ? String(localized: "più nitido") : String(localized: "intensità \(p.strength)%"))
+            let size: String = p.factor == 1 ? String(localized: "stessa dimensione") : "\(p.factor)×"
             return "\(title) · \(style), \(size)"
-        case "stack": return "\(title) · " + (param == "1" ? "meno rumore" : "2×")
+        case "stack": return "\(title) · " + (param == "1" ? String(localized: "meno rumore") : "2×")
         case "removebg":
-            let how: String = param == "white" ? "sfondo bianco" : (param == "crop" ? "ritagliato" : "trasparente")
+            let how: String = param == "white" ? String(localized: "sfondo bianco") : (param == "crop" ? String(localized: "ritagliato") : String(localized: "trasparente"))
             return "\(title) · \(how)"
         case "straighten":
-            let color: String = param.hasPrefix("bw") ? "b/n" : "colori"
+            let color: String = param.hasPrefix("bw") ? String(localized: "b/n") : String(localized: "colori")
             let format: String = param.hasSuffix("pdf") ? "PDF" : "JPG"
             return "\(title) · \(color), \(format)"
         default: return param.isEmpty ? title : "\(title) · \(param)"
@@ -132,15 +132,15 @@ struct PresetsView: View {
         ZStack {
             Theme.background.ignoresSafeArea()
             VStack(alignment: .leading, spacing: 18) {
-                PageHeader(title: "Le mie azioni",
-                           subtitle: "Le azioni e le ricette che usi spesso, con le opzioni già scelte. Compaiono nel menu a torta del loro tipo di file.",
+                PageHeader(title: String(localized: "Le mie azioni"),
+                           subtitle: String(localized: "Le azioni e le ricette che usi spesso, con le opzioni già scelte. Compaiono nel menu a torta del loro tipo di file."),
                            color: Theme.brass) {
                     Button { customizing = true } label: { Label("Personalizza il menu a torta", systemImage: "chart.pie") }
                 }
                 RecipesSection()
                 if store.presets.isEmpty {
-                    EmptyState(symbol: "star.circle", color: Theme.brass, title: "Ancora nessuna azione salvata",
-                               text: "Quando scegli un’azione con delle opzioni (ridimensiona, comprimi, velocità…), spunta «Salva tra le mie azioni». La ritroverai qui e nel menu a torta.")
+                    EmptyState(symbol: "star.circle", color: Theme.brass, title: String(localized: "Ancora nessuna azione salvata"),
+                               text: String(localized: "Quando scegli un’azione con delle opzioni (ridimensiona, comprimi, velocità…), spunta «Salva tra le mie azioni». La ritroverai qui e nel menu a torta."))
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 10) {

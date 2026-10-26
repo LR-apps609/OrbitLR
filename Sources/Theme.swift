@@ -31,9 +31,9 @@ enum Palette: String, CaseIterable, Identifiable {
 
     var name: String {
         switch self {
-        case .sage: return "Salvia (la radio classica)"
-        case .sky: return "Crema e celeste"
-        case .terracotta: return "Crema e terracotta"
+        case .sage: return String(localized: "Salvia (la radio classica)")
+        case .sky: return String(localized: "Crema e celeste")
+        case .terracotta: return String(localized: "Crema e terracotta")
         }
     }
 

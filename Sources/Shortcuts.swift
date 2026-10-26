@@ -34,44 +34,44 @@ struct ShortcutsPanel: View {
 
     private var groups: [KeyGroup] {
         var list = [
-            KeyGroup(title: "Aprire il menu", symbol: "circle.circle", rows: [
-                Row(keys: ["⌥", "⌘", "C"], text: "Sui file selezionati nel Finder"),
-                Row(keys: ["Clic destro"], text: "Nel Finder → OrbitLR (o in Servizi)"),
-                Row(keys: ["Trascina"], text: "Nella finestra o sull’icona nel Dock"),
+            KeyGroup(title: String(localized: "Aprire il menu"), symbol: "circle.circle", rows: [
+                Row(keys: ["⌥", "⌘", "C"], text: String(localized: "Sui file selezionati nel Finder")),
+                Row(keys: [String(localized: "Clic destro")], text: String(localized: "Nel Finder → OrbitLR (o in Servizi)")),
+                Row(keys: [String(localized: "Trascina")], text: String(localized: "Nella finestra o sull’icona nel Dock")),
             ]),
-            KeyGroup(title: "Nel menu a torta", symbol: "chart.pie.fill", rows: [
-                Row(keys: ["1", "…", "8"], text: "Sceglie lo spicchio"),
-                Row(keys: ["↩"], text: "Ripete l’ultima scelta (o quella consigliata)"),
-                Row(keys: ["esc"], text: "Torna indietro o chiude"),
-                Row(keys: ["Spazio"], text: "Anteprima del file"),
-                Row(keys: ["a", "…", "z"], text: "Scrivi per cercare un’azione, ↑↓ e ↩ per sceglierla"),
+            KeyGroup(title: String(localized: "Nel menu a torta"), symbol: "chart.pie.fill", rows: [
+                Row(keys: ["1", "…", "8"], text: String(localized: "Sceglie lo spicchio")),
+                Row(keys: ["↩"], text: String(localized: "Ripete l’ultima scelta (o quella consigliata)")),
+                Row(keys: ["esc"], text: String(localized: "Torna indietro o chiude")),
+                Row(keys: [String(localized: "Spazio")], text: String(localized: "Anteprima del file")),
+                Row(keys: ["a", "…", "z"], text: String(localized: "Scrivi per cercare un’azione, ↑↓ e ↩ per sceglierla")),
             ]),
-            KeyGroup(title: "Manopole", symbol: "dial.medium", rows: [
-                Row(keys: ["←", "→"], text: "Posizione precedente / successiva"),
-                Row(keys: ["Rotellina"], text: "Gira la manopola"),
-                Row(keys: ["Clic"], text: "Passa alla posizione successiva"),
+            KeyGroup(title: String(localized: "Manopole"), symbol: "dial.medium", rows: [
+                Row(keys: ["←", "→"], text: String(localized: "Posizione precedente / successiva")),
+                Row(keys: [String(localized: "Rotellina")], text: String(localized: "Gira la manopola")),
+                Row(keys: [String(localized: "Clic")], text: String(localized: "Passa alla posizione successiva")),
             ]),
             // 3.4.8 · Il montaggio dalla tastiera
-            KeyGroup(title: "Montaggio video", symbol: "film", rows: [
-                Row(keys: ["Spazio"], text: "Riproduci / pausa"),
-                Row(keys: ["J", "K", "L"], text: "Indietro di un secondo · pausa · riproduci"),
-                Row(keys: ["←", "→"], text: "Un fotogramma indietro / avanti"),
-                Row(keys: ["⇧", "←", "→"], text: "Un secondo indietro / avanti"),
-                Row(keys: ["↖", "↘"], text: "Inizio / fine del montaggio (fn ← / fn →)"),
-                Row(keys: ["S"], text: "Dividi la clip"),
-                Row(keys: ["T"], text: "Aggiungi un testo"),
-                Row(keys: ["⌫"], text: "Togli la clip scelta"),
-                Row(keys: ["⌘", "↩"], text: "Applica le modifiche"),
-                Row(keys: ["⌘", "E"], text: "Esporta"),
+            KeyGroup(title: String(localized: "Montaggio video"), symbol: "film", rows: [
+                Row(keys: [String(localized: "Spazio")], text: String(localized: "Riproduci / pausa")),
+                Row(keys: ["J", "K", "L"], text: String(localized: "Indietro di un secondo · pausa · riproduci")),
+                Row(keys: ["←", "→"], text: String(localized: "Un fotogramma indietro / avanti")),
+                Row(keys: ["⇧", "←", "→"], text: String(localized: "Un secondo indietro / avanti")),
+                Row(keys: ["↖", "↘"], text: String(localized: "Inizio / fine del montaggio (fn ← / fn →)")),
+                Row(keys: ["S"], text: String(localized: "Dividi la clip")),
+                Row(keys: ["T"], text: String(localized: "Aggiungi un testo")),
+                Row(keys: ["⌫"], text: String(localized: "Togli la clip scelta")),
+                Row(keys: ["⌘", "↩"], text: String(localized: "Applica le modifiche")),
+                Row(keys: ["⌘", "E"], text: String(localized: "Esporta")),
             ]),
-            KeyGroup(title: "Finestra", symbol: "macwindow", rows: [
-                Row(keys: ["⌘", "/"], text: "Questo elenco"),
-                Row(keys: ["⌘", ","], text: "Opzioni"),
+            KeyGroup(title: String(localized: "Finestra"), symbol: "macwindow", rows: [
+                Row(keys: ["⌘", "/"], text: String(localized: "Questo elenco")),
+                Row(keys: ["⌘", ","], text: String(localized: "Opzioni")),
             ]),
         ]
         let assigned = presets.presets.filter { $0.hotkey != nil }.sorted { ($0.hotkey ?? 0) < ($1.hotkey ?? 0) }
-        list.insert(KeyGroup(title: "Le mie azioni", symbol: "star.circle.fill", rows: assigned.isEmpty
-            ? [Row(keys: ["⌃", "⌥", "1…9"], text: "Nessuna ancora: si assegnano nella pagina «Le mie azioni»")]
+        list.insert(KeyGroup(title: String(localized: "Le mie azioni"), symbol: "star.circle.fill", rows: assigned.isEmpty
+            ? [Row(keys: ["⌃", "⌥", "1…9"], text: String(localized: "Nessuna ancora: si assegnano nella pagina «Le mie azioni»"))]
             : assigned.map { Row(keys: ["⌃", "⌥", "\($0.hotkey ?? 0)"], text: $0.name) }), at: 2)
         return list
     }

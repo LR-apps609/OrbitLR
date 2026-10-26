@@ -107,11 +107,12 @@ enum SizeEstimate {
     /// 2.7.5 · Comprimi a X MB: il risultato starà sotto il peso scelto (o resta com'è se è già più leggero).
     static func compressText(current: Int64, targetMB: Int?, files: Int) -> String {
         let now = Fmt.bytes(current)
-        guard let mb = targetMB, mb > 0 else { return "Ora pesa \(now)" }
+        guard let mb = targetMB, mb > 0 else { return String(localized: "Ora pesa \(now)") }
         let target = Int64(mb) * 1_000_000 * Int64(max(1, files))
-        if current > 0 && current <= target { return "Pesa già \(now): è sotto il limite scelto" }
-        return "Ora \(now) → al massimo \(Fmt.bytes(target))"
-            + (files > 1 ? " in tutto" : "")
+        if current > 0 && current <= target { return String(localized: "Pesa già \(now): è sotto il limite scelto") }
+        let limit = Fmt.bytes(target)
+        return files > 1 ? String(localized: "Ora \(now) → al massimo \(limit) in tutto")
+                         : String(localized: "Ora \(now) → al massimo \(limit)")
     }
 
     /// «≈ 1,2 MB»

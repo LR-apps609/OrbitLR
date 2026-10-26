@@ -34,7 +34,7 @@ enum Media {
             let p = SocialParam(job.param)
             let out = Destination.unique(dir, base: "\(base) (\(p.label))", ext: "mp4")
             let info = try await VPMediaInfo.load(file)
-            guard info.hasVideo else { throw NativeError("il file non contiene video") }
+            guard info.hasVideo else { throw NativeError(String(localized: "il file non contiene video")) }
             var project = VideoProject()
             project.clips = [VPClip(path: file.path, inPoint: max(0, p.start ?? 0), outPoint: min(info.videoDuration, p.end ?? info.videoDuration))]
             project.aspect = "\(Int(p.aw))x\(Int(p.ah))"
@@ -45,10 +45,10 @@ enum Media {
             return out
         case "music":
             let p = job.param
-            guard let bar = p.firstIndex(of: "|") else { throw NativeError("manca la musica da aggiungere") }
+            guard let bar = p.firstIndex(of: "|") else { throw NativeError(String(localized: "manca la musica da aggiungere")) }
             let mode = String(p[p.startIndex..<bar])
             let music = URL(fileURLWithPath: String(p[p.index(after: bar)...]))
-            guard FileManager.default.fileExists(atPath: music.path) else { throw NativeError("non trovo il file della musica") }
+            guard FileManager.default.fileExists(atPath: music.path) else { throw NativeError(String(localized: "non trovo il file della musica")) }
             let out = Destination.unique(dir, base: "\(base) (con musica)", ext: "mp4")
             try await addMusic(file, music: music, replace: mode == "replace", out: out, job: job, progress: progress)
             return out
@@ -74,12 +74,12 @@ enum Media {
             try await Speech.write(text: text, voice: voice, rate: rate, out: out, job: job, progress: progress)
             return out
         default:
-            throw NativeError("azione sconosciuta")
+            throw NativeError(String(localized: "azione sconosciuta"))
         }
     }
 
     static func runMulti(job: Job, files: [URL], dir: URL, progress: @escaping (Double) -> Void) async throws -> URL {
-        guard let first = files.first else { throw NativeError("nessun file") }
+        guard let first = files.first else { throw NativeError(String(localized: "nessun file")) }
         let base = first.deletingPathExtension().lastPathComponent
         switch job.action.id {
         case "vproject":
@@ -88,19 +88,19 @@ enum Media {
             return out
         case "vmerge":
             let videos = files.filter { Catalog.kind(of: $0) == .video }
-            guard videos.count >= 2 else { throw NativeError("servono almeno 2 video") }
+            guard videos.count >= 2 else { throw NativeError(String(localized: "servono almeno 2 video")) }
             let out = Destination.unique(dir, base: "\(base) (\(videos.count) video uniti)", ext: "mp4")
             try await mergeVideos(videos, out: out, job: job, progress: progress)
             return out
         case "amerge":
             let audios = files.filter { [.audio, .video].contains(Catalog.kind(of: $0)) }
-            guard audios.count >= 2 else { throw NativeError("servono almeno 2 file audio") }
+            guard audios.count >= 2 else { throw NativeError(String(localized: "servono almeno 2 file audio")) }
             let out = Destination.unique(dir, base: "\(base) (\(audios.count) audio uniti)", ext: "m4a")
             try await renderAudio(audios.map { ($0, nil, nil) }, out: out, bitrate: 192_000, channels: 2,
                                   fadeIn: 0, fadeOut: 0, normalize: false, maxSeconds: nil, job: job, progress: progress)
             return out
         default:
-            throw NativeError("azione sconosciuta")
+            throw NativeError(String(localized: "azione sconosciuta"))
         }
     }
 
@@ -286,7 +286,7 @@ enum Media {
     private static func mergeVideos(_ files: [URL], out: URL, job: Job, progress: @escaping (Double) -> Void) async throws {
         let comp = AVMutableComposition()
         guard let vComp = comp.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
-            throw NativeError("non riesco a preparare il video")
+            throw NativeError(String(localized: "non riesco a preparare il video"))
         }
         let aComp = comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)
         var segments: [(start: CMTime, transform: CGAffineTransform, size: CGSize, natural: CGSize)] = []
@@ -296,10 +296,10 @@ enum Media {
         for f in files {
             let a = AVURLAsset(url: f)
             guard let v = try await a.loadTracks(withMediaType: .video).first else {
-                throw NativeError("«\(f.lastPathComponent)» non contiene video")
+                throw NativeError(String(localized: "«\(f.lastPathComponent)» non contiene video"))
             }
             let d = try await a.load(.duration)
-            guard d.seconds.isFinite, d.seconds > 0 else { throw NativeError("«\(f.lastPathComponent)» non si legge") }
+            guard d.seconds.isFinite, d.seconds > 0 else { throw NativeError(String(localized: "«\(f.lastPathComponent)» non si legge")) }
             let r = CMTimeRange(start: .zero, duration: d)
             try vComp.insertTimeRange(r, of: v, at: cursor)
             if let aud = try await a.loadTracks(withMediaType: .audio).first, let aComp {
@@ -341,18 +341,18 @@ enum Media {
 
     private static func addMusic(_ file: URL, music: URL, replace: Bool, out: URL, job: Job, progress: @escaping (Double) -> Void) async throws {
         let video = AVURLAsset(url: file)
-        guard let v = try await video.loadTracks(withMediaType: .video).first else { throw NativeError("il file non contiene video") }
+        guard let v = try await video.loadTracks(withMediaType: .video).first else { throw NativeError(String(localized: "il file non contiene video")) }
         let d = try await video.load(.duration)
-        guard d.seconds.isFinite, d.seconds > 0 else { throw NativeError("non riesco a leggere la durata") }
+        guard d.seconds.isFinite, d.seconds > 0 else { throw NativeError(String(localized: "non riesco a leggere la durata")) }
         let song = AVURLAsset(url: music)
-        guard let m = try await song.loadTracks(withMediaType: .audio).first else { throw NativeError("il file della musica non contiene audio") }
+        guard let m = try await song.loadTracks(withMediaType: .audio).first else { throw NativeError(String(localized: "il file della musica non contiene audio")) }
         let md = try await song.load(.duration)
-        guard md.seconds.isFinite, md.seconds > 0.5 else { throw NativeError("la musica è troppo corta") }
+        guard md.seconds.isFinite, md.seconds > 0.5 else { throw NativeError(String(localized: "la musica è troppo corta")) }
 
         let comp = AVMutableComposition()
         guard let vComp = comp.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid),
               let mComp = comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) else {
-            throw NativeError("non riesco a preparare il video")
+            throw NativeError(String(localized: "non riesco a preparare il video"))
         }
         let full = CMTimeRange(start: .zero, duration: d)
         try vComp.insertTimeRange(full, of: v, at: .zero)
@@ -393,7 +393,7 @@ enum Media {
     static func export(_ asset: AVAsset, videoComposition: AVVideoComposition?, audioMix: AVAudioMix?,
                        out: URL, job: Job, progress: @escaping (Double) -> Void) async throws {
         guard let s = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else {
-            throw NativeError("questo video non si può esportare")
+            throw NativeError(String(localized: "questo video non si può esportare"))
         }
         s.outputURL = out
         s.outputFileType = .mp4
@@ -422,7 +422,7 @@ enum Media {
             throw NativeError("annullato")
         default:
             try? FileManager.default.removeItem(at: out)
-            throw NativeError(s.error?.localizedDescription ?? "esportazione non riuscita")
+            throw NativeError(s.error?.localizedDescription ?? String(localized: "esportazione non riuscita"))
         }
     }
 
@@ -442,10 +442,10 @@ enum Media {
         for (url, s, e) in inputs {
             let a = AVURLAsset(url: url)
             guard let t = try await a.loadTracks(withMediaType: .audio).first else {
-                throw NativeError("«\(url.lastPathComponent)» non contiene audio")
+                throw NativeError(String(localized: "«\(url.lastPathComponent)» non contiene audio"))
             }
             let d = try await a.load(.duration).seconds
-            guard d.isFinite, d > 0 else { throw NativeError("«\(url.lastPathComponent)» non si legge") }
+            guard d.isFinite, d > 0 else { throw NativeError(String(localized: "«\(url.lastPathComponent)» non si legge")) }
             var r = range(s, e, duration: d)
             if let maxS = maxSeconds, r.duration.seconds > maxS {
                 r = CMTimeRange(start: r.start, duration: CMTime(seconds: maxS, preferredTimescale: 600))
@@ -453,7 +453,7 @@ enum Media {
             parts.append((a, t, r))
         }
         let totalFrames = parts.reduce(0.0) { $0 + $1.2.duration.seconds } * rate
-        guard totalFrames > 0 else { throw NativeError("niente audio da salvare") }
+        guard totalFrames > 0 else { throw NativeError(String(localized: "niente audio da salvare")) }
 
         // 1. Volume: misura picco e media, poi un solo guadagno (niente distorsione)
         var gain: Float = 1
@@ -505,12 +505,12 @@ enum Media {
         var fmt: CMAudioFormatDescription?
         CMAudioFormatDescriptionCreate(allocator: kCFAllocatorDefault, asbd: &asbd, layoutSize: 0, layout: nil,
                                        magicCookieSize: 0, magicCookie: nil, extensions: nil, formatDescriptionOut: &fmt)
-        guard let format = fmt else { throw NativeError("non riesco a preparare l’audio") }
+        guard let format = fmt else { throw NativeError(String(localized: "non riesco a preparare l’audio")) }
         let input = AVAssetWriterInput(mediaType: .audio, outputSettings: settings, sourceFormatHint: format)
         input.expectsMediaDataInRealTime = false
-        guard writer.canAdd(input) else { throw NativeError("non riesco a preparare l’audio") }
+        guard writer.canAdd(input) else { throw NativeError(String(localized: "non riesco a preparare l’audio")) }
         writer.add(input)
-        guard writer.startWriting() else { throw NativeError(writer.error?.localizedDescription ?? "non riesco a scrivere l’audio") }
+        guard writer.startWriting() else { throw NativeError(writer.error?.localizedDescription ?? String(localized: "non riesco a scrivere l’audio")) }
         writer.startSession(atSourceTime: .zero)
 
         let fadeInFrames = fadeIn * rate, fadeOutFrames = fadeOut * rate
@@ -541,10 +541,10 @@ enum Media {
                         while !input.isReadyForMoreMediaData {
                             if job.cancelRequested { return }
                             // 4.1.4 · Il file non si scrive più (disco pieno…): niente attesa infinita
-                            if writer.status == .failed { writeError = writer.error ?? NativeError("Non riesco a scrivere il file: c’è spazio sul disco?"); return }
+                            if writer.status == .failed { writeError = writer.error ?? NativeError(String(localized: "Non riesco a scrivere il file: c’è spazio sul disco?")); return }
                             usleep(5_000)
                         }
-                        if !input.append(sb) { writeError = writer.error ?? NativeError("Non riesco a scrivere il file: c’è spazio sul disco?"); return }
+                        if !input.append(sb) { writeError = writer.error ?? NativeError(String(localized: "Non riesco a scrivere il file: c’è spazio sul disco?")); return }
                     }
                     written += Double(frames)
                     progress(base + (1 - base) * min(1, written / totalFrames))
@@ -565,7 +565,7 @@ enum Media {
         await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in writer.finishWriting { c.resume() } }
         guard writer.status == .completed else {
             try? FileManager.default.removeItem(at: tmp)
-            throw NativeError(writer.error?.localizedDescription ?? "non riesco a scrivere l’audio")
+            throw NativeError(writer.error?.localizedDescription ?? String(localized: "non riesco a scrivere l’audio"))
         }
         try? FileManager.default.removeItem(at: out)
         try FileManager.default.moveItem(at: tmp, to: out)
@@ -588,9 +588,9 @@ enum Media {
         ]
         let output = AVAssetReaderTrackOutput(track: track, outputSettings: settings)
         output.alwaysCopiesSampleData = false
-        guard reader.canAdd(output) else { throw NativeError("non riesco a leggere l’audio") }
+        guard reader.canAdd(output) else { throw NativeError(String(localized: "non riesco a leggere l’audio")) }
         reader.add(output)
-        guard reader.startReading() else { throw NativeError(reader.error?.localizedDescription ?? "non riesco a leggere l’audio") }
+        guard reader.startReading() else { throw NativeError(reader.error?.localizedDescription ?? String(localized: "non riesco a leggere l’audio")) }
         while let sb = output.copyNextSampleBuffer() {
             if job.cancelRequested { reader.cancelReading(); throw NativeError("annullato") }
             guard let block = CMSampleBufferGetDataBuffer(sb) else { continue }
@@ -604,7 +604,7 @@ enum Media {
             if usable < data.count { data.removeLast(data.count - usable) }
             body(data)
         }
-        if reader.status == .failed { throw NativeError(reader.error?.localizedDescription ?? "lettura dell’audio non riuscita") }
+        if reader.status == .failed { throw NativeError(reader.error?.localizedDescription ?? String(localized: "lettura dell’audio non riuscita")) }
     }
 
     private static func makeSampleBuffer(_ samples: [Float], frames: Int, pts: CMTime, format: CMAudioFormatDescription) -> CMSampleBuffer? {
@@ -646,7 +646,7 @@ enum Media {
             text = a.string
         }
         text = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { throw NativeError("il file non contiene testo da leggere") }
+        guard !text.isEmpty else { throw NativeError(String(localized: "il file non contiene testo da leggere")) }
         return text
     }
 
@@ -731,7 +731,7 @@ enum VideoPipeline {
         let reader = try AVAssetReader(asset: asset)
         reader.timeRange = range
         let vTracks = try await asset.loadTracks(withMediaType: .video)
-        guard !vTracks.isEmpty else { throw NativeError("il montaggio non contiene video") }
+        guard !vTracks.isEmpty else { throw NativeError(String(localized: "il montaggio non contiene video")) }
         let vOut = AVAssetReaderVideoCompositionOutput(videoTracks: vTracks, videoSettings: bgra)
         vOut.videoComposition = videoComposition
         let aTracks = try await asset.loadTracks(withMediaType: .audio)
@@ -752,14 +752,14 @@ enum VideoPipeline {
                             progress: @escaping (Double) -> Void,
                             frame: @escaping (CIImage, Double) -> CIImage) async throws {
         vOut.alwaysCopiesSampleData = false
-        guard reader.canAdd(vOut) else { throw NativeError("non riesco a leggere il video") }
+        guard reader.canAdd(vOut) else { throw NativeError(String(localized: "non riesco a leggere il video")) }
         reader.add(vOut)
 
         try? FileManager.default.removeItem(at: out)
         let writer = try AVAssetWriter(outputURL: out, fileType: .mp4)
         writer.shouldOptimizeForNetworkUse = true
         let w = Int(size.width), h = Int(size.height)
-        guard w >= 2, h >= 2 else { throw NativeError("dimensioni del video non valide") }
+        guard w >= 2, h >= 2 else { throw NativeError(String(localized: "dimensioni del video non valide")) }
         let bitrate = videoBitrate ?? max(2_000_000, min(50_000_000, Int(Double(w * h) * max(fps, 24) * 0.13)))
         let vIn = AVAssetWriterInput(mediaType: .video, outputSettings: [
             AVVideoCodecKey: AVVideoCodecType.h264,
@@ -782,7 +782,7 @@ enum VideoPipeline {
             kCVPixelBufferWidthKey as String: w,
             kCVPixelBufferHeightKey as String: h,
         ])
-        guard writer.canAdd(vIn) else { throw NativeError("non riesco a preparare il video") }
+        guard writer.canAdd(vIn) else { throw NativeError(String(localized: "non riesco a preparare il video")) }
         writer.add(vIn)
         // L'audio si legge solo se si può anche scrivere: un'uscita letta da nessuno bloccherebbe il video
         var aIn: AVAssetWriterInput? = nil
@@ -802,10 +802,10 @@ enum VideoPipeline {
             }
         }
 
-        guard reader.startReading() else { throw NativeError(reader.error?.localizedDescription ?? "non riesco a leggere il video") }
+        guard reader.startReading() else { throw NativeError(reader.error?.localizedDescription ?? String(localized: "non riesco a leggere il video")) }
         guard writer.startWriting() else {
             reader.cancelReading()
-            throw NativeError(writer.error?.localizedDescription ?? "non riesco a scrivere il video")
+            throw NativeError(writer.error?.localizedDescription ?? String(localized: "non riesco a scrivere il video"))
         }
         writer.startSession(atSourceTime: range.start)
 
@@ -847,13 +847,13 @@ enum VideoPipeline {
                 guard let pb = CMSampleBufferGetImageBuffer(sb) else { continue }
                 let pts = CMSampleBufferGetPresentationTimeStamp(sb)
                 let img = frame(CIImage(cvPixelBuffer: pb), pts.seconds)
-                guard let pool = pp.adaptor.pixelBufferPool else { end("memoria video non disponibile"); return }
+                guard let pool = pp.adaptor.pixelBufferPool else { end(String(localized: "memoria video non disponibile")); return }
                 var outBuf: CVPixelBuffer?
                 CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &outBuf)
                 guard let ob = outBuf else { continue }
                 Media.ci.render(img, to: ob, bounds: CGRect(x: 0, y: 0, width: w, height: h), colorSpace: cs)
                 if !pp.adaptor.append(ob, withPresentationTime: pts) {
-                    end(pp.writer.error?.localizedDescription ?? "scrittura del video non riuscita"); return
+                    end(pp.writer.error?.localizedDescription ?? String(localized: "scrittura del video non riuscita")); return
                 }
                 progress(min(1, max(0, (pts.seconds - start) / total)))
             }
@@ -883,12 +883,12 @@ enum VideoPipeline {
             writer.cancelWriting()
             try? FileManager.default.removeItem(at: out)
             if job.cancelRequested { throw NativeError("annullato") }
-            throw NativeError(box.failed ?? reader.error?.localizedDescription ?? "lettura del video non riuscita")
+            throw NativeError(box.failed ?? reader.error?.localizedDescription ?? String(localized: "lettura del video non riuscita"))
         }
         await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in writer.finishWriting { c.resume() } }
         guard writer.status == .completed else {
             try? FileManager.default.removeItem(at: out)
-            throw NativeError(writer.error?.localizedDescription ?? "scrittura del video non riuscita")
+            throw NativeError(writer.error?.localizedDescription ?? String(localized: "scrittura del video non riuscita"))
         }
         progress(1)
     }
@@ -910,8 +910,8 @@ enum Speech {
     static func qualityLabel(_ v: AVSpeechSynthesisVoice) -> String {
         switch v.quality {
         case .premium: return "Premium"
-        case .enhanced: return "Migliorata"
-        default: return "Standard"
+        case .enhanced: return String(localized: "Migliorata")
+        default: return String(localized: "Standard")
         }
     }
 
@@ -982,7 +982,7 @@ final class SpeechFileWriter: NSObject, AVSpeechSynthesizerDelegate, @unchecked 
             DispatchQueue.global().asyncAfter(deadline: .now() + 30) { [weak self] in
                 guard let self else { return }
                 self.lock.lock(); let empty = self.file == nil && !self.finished; self.lock.unlock()
-                if empty { self.finish(error: "la voce non è disponibile: prova un’altra voce") }
+                if empty { self.finish(error: String(localized: "la voce non è disponibile: prova un’altra voce")) }
             }
             // E se la voce non dice mai di aver finito, dopo un tempo largo si salva quello che ha letto
             let limit = max(60, Double(total) * 0.12 + 30)
@@ -1036,7 +1036,7 @@ final class SpeechFileWriter: NSObject, AVSpeechSynthesizerDelegate, @unchecked 
         finished = true
         let hadAudio = file != nil
         file = nil                     // chiude il file
-        let problem = error ?? failure ?? (hadAudio ? nil : "la voce non ha prodotto audio")
+        let problem = error ?? failure ?? (hadAudio ? nil : String(localized: "la voce non ha prodotto audio"))
         let c = cont
         cont = nil
         lock.unlock()
@@ -1051,7 +1051,7 @@ final class SpeechFileWriter: NSObject, AVSpeechSynthesizerDelegate, @unchecked 
             progress(1)
             c?.resume()
         } catch {
-            c?.resume(throwing: NativeError("non riesco a salvare il file audio"))
+            c?.resume(throwing: NativeError(String(localized: "non riesco a salvare il file audio")))
         }
     }
 }

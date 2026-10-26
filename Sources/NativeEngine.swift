@@ -201,15 +201,15 @@ enum NativeEngine {
 
     static func convertImage(_ src: URL, to t: String, resize: String?, out: URL) throws {
         guard let source = CGImageSourceCreateWithURL(src as CFURL, nil), CGImageSourceGetCount(source) > 0 else {
-            throw NativeError("non riesco a leggere l’immagine")
+            throw NativeError(String(localized: "non riesco a leggere l’immagine"))
         }
         var meta = (CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]) ?? [:]
 
         if t == "pdf" {
-            guard let img = NSImage(contentsOf: src), let page = PDFPage(image: img) else { throw NativeError("non riesco a creare il PDF") }
+            guard let img = NSImage(contentsOf: src), let page = PDFPage(image: img) else { throw NativeError(String(localized: "non riesco a creare il PDF")) }
             let doc = PDFDocument()
             doc.insert(page, at: 0)
-            guard doc.write(to: out) else { throw NativeError("non riesco a scrivere il PDF") }
+            guard doc.write(to: out) else { throw NativeError(String(localized: "non riesco a scrivere il PDF")) }
             return
         }
 
@@ -221,7 +221,7 @@ enum NativeEngine {
         default: ut = .tiff
         }
         guard let dest = CGImageDestinationCreateWithURL(out as CFURL, ut.identifier as CFString, 1, nil) else {
-            throw NativeError("macOS non sa scrivere questo formato")
+            throw NativeError(String(localized: "macOS non sa scrivere questo formato"))
         }
         var opts: [CFString: Any] = [:]
         if t == "jpg" { opts[kCGImageDestinationLossyCompressionQuality] = 0.9 }
@@ -247,7 +247,7 @@ enum NativeEngine {
                 kCGImageSourceThumbnailMaxPixelSize: target,
             ]
             guard var img = CGImageSourceCreateThumbnailAtIndex(source, 0, thumbOpts as CFDictionary) else {
-                throw NativeError("non riesco a ridimensionare l’immagine")
+                throw NativeError(String(localized: "non riesco a ridimensionare l’immagine"))
             }
             if t == "jpg" && hasAlpha, let flat = flatten(img) { img = flat }
             if r == "web" {
@@ -267,7 +267,7 @@ enum NativeEngine {
         } else if t == "jpg" && hasAlpha {
             // Le trasparenze in JPG diventerebbero nere: sfondo bianco
             guard let img = CGImageSourceCreateImageAtIndex(source, 0, nil), let flat = flatten(img) else {
-                throw NativeError("non riesco a leggere l’immagine")
+                throw NativeError(String(localized: "non riesco a leggere l’immagine"))
             }
             CGImageDestinationAddImage(dest, flat, meta.merging(opts) { _, new in new } as CFDictionary)
         } else {
@@ -275,7 +275,7 @@ enum NativeEngine {
         }
         guard CGImageDestinationFinalize(dest) else {
             try? FileManager.default.removeItem(at: out)
-            throw NativeError("non riesco a scrivere l’immagine")
+            throw NativeError(String(localized: "non riesco a scrivere l’immagine"))
         }
     }
 
@@ -333,7 +333,7 @@ enum NativeEngine {
                          progress: @escaping (Double) -> Void) async throws {
         let asset = AVURLAsset(url: src)
         guard let s = AVAssetExportSession(asset: asset, presetName: preset) else {
-            throw NativeError("macOS non riesce a leggere questo file")
+            throw NativeError(String(localized: "macOS non riesce a leggere questo file"))
         }
         s.outputURL = out
         s.outputFileType = type
@@ -369,7 +369,7 @@ enum NativeEngine {
             throw NativeError("annullato")
         default:
             try? FileManager.default.removeItem(at: out)
-            throw NativeError(s.error?.localizedDescription ?? "conversione non riuscita")
+            throw NativeError(s.error?.localizedDescription ?? String(localized: "conversione non riuscita"))
         }
     }
 }
@@ -379,50 +379,50 @@ enum Verifier {
     static func problem(_ url: URL) async -> String? {
         let fm = FileManager.default
         var isDir: ObjCBool = false
-        guard fm.fileExists(atPath: url.path, isDirectory: &isDir) else { return "il file creato non esiste" }
+        guard fm.fileExists(atPath: url.path, isDirectory: &isDir) else { return String(localized: "il file creato non esiste") }
         if isDir.boolValue {
             let items = (try? fm.contentsOfDirectory(at: url, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles])) ?? []
-            if items.isEmpty { return "la cartella creata è vuota" }
+            if items.isEmpty { return String(localized: "la cartella creata è vuota") }
             for i in items.prefix(3) { if let p = await problem(i) { return p } }
             return nil
         }
-        if Job.size(of: url) == 0 { return "il file creato è vuoto" }
+        if Job.size(of: url) == 0 { return String(localized: "il file creato è vuoto") }
         let e = Catalog.norm(url.pathExtension)
         switch e {
         case "jpg", "png", "heic", "tiff", "gif", "bmp", "webp", "ico":
             guard let s = CGImageSourceCreateWithURL(url as CFURL, nil), CGImageSourceGetCount(s) > 0 else {
-                return "l’immagine creata non si apre"
+                return String(localized: "l’immagine creata non si apre")
             }
             if ["jpg", "png", "heic", "tiff"].contains(e), let t = CGImageSourceGetType(s) as String?,
                let have = UTType(t), let want = UTType(filenameExtension: e), !have.conforms(to: want) {
-                return "il file non è davvero un \(e.uppercased())"
+                return String(localized: "il file non è davvero un \(e.uppercased())")
             }
         case "pdf":
-            guard let d = PDFDocument(url: url) else { return "il PDF creato non si apre" }
-            if !d.isLocked && d.pageCount == 0 { return "il PDF creato non ha pagine" }
+            guard let d = PDFDocument(url: url) else { return String(localized: "il PDF creato non si apre") }
+            if !d.isLocked && d.pageCount == 0 { return String(localized: "il PDF creato non ha pagine") }
         case "m4r":
             // Suoneria iPhone: un normale MPEG-4 audio con un'altra estensione
-            guard let h = try? FileHandle(forReadingFrom: url) else { return "la suoneria creata non si apre" }
+            guard let h = try? FileHandle(forReadingFrom: url) else { return String(localized: "la suoneria creata non si apre") }
             let d = (try? h.read(upToCount: 12)) ?? Data()
             try? h.close()
-            guard d.count == 12, String(data: d.subdata(in: 4..<8), encoding: .ascii) == "ftyp" else { return "la suoneria creata è danneggiata" }
+            guard d.count == 12, String(data: d.subdata(in: 4..<8), encoding: .ascii) == "ftyp" else { return String(localized: "la suoneria creata è danneggiata") }
         case "mp4", "mov", "m4v", "m4a", "mp3", "wav", "aiff":
             let asset = AVURLAsset(url: url)
             let tracks = (try? await asset.load(.tracks)) ?? []
-            if tracks.isEmpty { return "il file creato non contiene audio né video" }
-            if let d = try? await asset.load(.duration), d.seconds.isFinite, d.seconds <= 0 { return "il file creato ha durata zero" }
+            if tracks.isEmpty { return String(localized: "il file creato non contiene audio né video") }
+            if let d = try? await asset.load(.duration), d.seconds.isFinite, d.seconds <= 0 { return String(localized: "il file creato ha durata zero") }
         case "mkv", "webm":
-            if !startsWith(url, [0x1A, 0x45, 0xDF, 0xA3]) { return "il file non è davvero un \(e.uppercased())" }
+            if !startsWith(url, [0x1A, 0x45, 0xDF, 0xA3]) { return String(localized: "il file non è davvero un \(e.uppercased())") }
         case "ogg", "opus":
-            if !startsWith(url, Array("OggS".utf8)) { return "il file non è davvero un \(e.uppercased())" }
+            if !startsWith(url, Array("OggS".utf8)) { return String(localized: "il file non è davvero un \(e.uppercased())") }
         case "flac":
-            if !startsWith(url, Array("fLaC".utf8)) { return "il file non è davvero un FLAC" }
+            if !startsWith(url, Array("fLaC".utf8)) { return String(localized: "il file non è davvero un FLAC") }
         case "docx", "xlsx", "pptx", "odt", "ods", "odp", "epub":
-            if !startsWith(url, [0x50, 0x4B]) { return "il documento creato è danneggiato" }
+            if !startsWith(url, [0x50, 0x4B]) { return String(localized: "il documento creato è danneggiato") }
         case "html", "txt", "md", "csv", "srt", "rtf":
             guard let d = try? Data(contentsOf: url), !d.isEmpty,
                   String(data: d, encoding: .utf8) != nil || String(data: d, encoding: .isoLatin1) != nil else {
-                return "il testo creato non si legge"
+                return String(localized: "il testo creato non si legge")
             }
         default:
             break

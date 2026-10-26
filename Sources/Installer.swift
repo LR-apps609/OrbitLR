@@ -24,14 +24,14 @@ final class Installer: ObservableObject, @unchecked Sendable {
     /// 3.8 · ffmpeg viaggia dentro l'app; compressione PDF, metadati e trascrizione usano macOS.
     /// Restano facoltativi solo i programmi per i formati più rari.
     let components: [ComponentInfo] = [
-        ComponentInfo(id: "ffmpeg", name: "ffmpeg (incluso)", tool: "ffmpeg", brew: "ffmpeg", purpose: "Audio e video",
-                      unlocks: "MP3, FLAC, OGG, MKV, WEBM, WebP, ICO, velocità, sottotitoli: già dentro OrbitLR"),
-        ComponentInfo(id: "soffice", name: "LibreOffice (facoltativo)", tool: "soffice", brew: "--cask libreoffice", purpose: "Documenti, fogli, presentazioni",
+        ComponentInfo(id: "ffmpeg", name: String(localized: "ffmpeg (incluso)"), tool: "ffmpeg", brew: "ffmpeg", purpose: String(localized: "Audio e video"),
+                      unlocks: String(localized: "MP3, FLAC, OGG, MKV, WEBM, WebP, ICO, velocità, sottotitoli: già dentro OrbitLR")),
+        ComponentInfo(id: "soffice", name: String(localized: "LibreOffice (facoltativo)"), tool: "soffice", brew: "--cask libreoffice", purpose: String(localized: "Documenti, fogli, presentazioni"),
                       unlocks: "Word, Excel, PowerPoint, Pages, Numbers, Keynote ↔ PDF"),
-        ComponentInfo(id: "pandoc", name: "pandoc (facoltativo)", tool: "pandoc", brew: "pandoc", purpose: "Testo e web",
+        ComponentInfo(id: "pandoc", name: String(localized: "pandoc (facoltativo)"), tool: "pandoc", brew: "pandoc", purpose: String(localized: "Testo e web"),
                       unlocks: "Markdown, HTML, EPUB"),
-        ComponentInfo(id: "magick", name: "ImageMagick (facoltativo)", tool: "magick", brew: "imagemagick", purpose: "Immagini rare",
-                      unlocks: "SVG e formati di immagine poco comuni"),
+        ComponentInfo(id: "magick", name: String(localized: "ImageMagick (facoltativo)"), tool: "magick", brew: "imagemagick", purpose: String(localized: "Immagini rare"),
+                      unlocks: String(localized: "SVG e formati di immagine poco comuni")),
     ]
 
     var brewPath: String? {
@@ -39,9 +39,9 @@ final class Installer: ObservableObject, @unchecked Sendable {
     }
     /// Programmi che OrbitLR non chiede più (ci pensa macOS), ma che il motore classico usa ancora se ci sono.
     let legacy: [ComponentInfo] = [
-        ComponentInfo(id: "gs", name: "Ghostscript", tool: "gs", brew: "ghostscript", purpose: "PDF", unlocks: "Compressione dei PDF (motore classico)"),
-        ComponentInfo(id: "exiftool", name: "ExifTool", tool: "exiftool", brew: "exiftool", purpose: "Privacy", unlocks: "Metadati (motore classico)"),
-        ComponentInfo(id: "whisper", name: "Whisper", tool: "whisper-cli", brew: "whisper-cpp", purpose: "Trascrizione", unlocks: "Trascrizione (motore classico)"),
+        ComponentInfo(id: "gs", name: "Ghostscript", tool: "gs", brew: "ghostscript", purpose: "PDF", unlocks: String(localized: "Compressione dei PDF (motore classico)")),
+        ComponentInfo(id: "exiftool", name: "ExifTool", tool: "exiftool", brew: "exiftool", purpose: String(localized: "Privacy"), unlocks: String(localized: "Metadati (motore classico)")),
+        ComponentInfo(id: "whisper", name: "Whisper", tool: "whisper-cli", brew: "whisper-cpp", purpose: String(localized: "Trascrizione"), unlocks: String(localized: "Trascrizione (motore classico)")),
     ]
     var all: [ComponentInfo] { components + legacy }
     var missing: [ComponentInfo] { components.filter { !$0.installed } }
@@ -50,7 +50,7 @@ final class Installer: ObservableObject, @unchecked Sendable {
         guard running == nil, let brew = brewPath, !list.isEmpty else { return }
         running = id
         lastResult = nil
-        lines = ["Avvio dell’installazione…"]
+        lines = [String(localized: "Avvio dell’installazione…")]
 
         let formulas = list.filter { !$0.brew.hasPrefix("--cask") }.map { $0.brew }
         let casks = list.filter { $0.brew.hasPrefix("--cask") }.map { $0.brew.replacingOccurrences(of: "--cask ", with: "") }
@@ -93,8 +93,9 @@ final class Installer: ObservableObject, @unchecked Sendable {
                 self.running = nil
                 self.process = nil
                 let still = list.filter { !$0.installed }
-                self.lastResult = still.isEmpty ? "Installazione completata ✓"
-                    : "Non installati: " + still.map { $0.name }.joined(separator: ", ") + ". Dettagli qui sotto."
+                let names = still.map { $0.name }.joined(separator: ", ")
+                self.lastResult = still.isEmpty ? String(localized: "Installazione completata ✓")
+                    : String(localized: "Non installati: \(names). Dettagli qui sotto.")
                 xattrClear()
                 self.refresh += 1
             }
@@ -102,7 +103,7 @@ final class Installer: ObservableObject, @unchecked Sendable {
         process = p
         do { try p.run() } catch {
             running = nil
-            lastResult = "Non riesco ad avviare Homebrew"
+            lastResult = String(localized: "Non riesco ad avviare Homebrew")
         }
     }
 

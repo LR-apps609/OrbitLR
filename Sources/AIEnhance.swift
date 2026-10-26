@@ -50,7 +50,7 @@ enum AIEnhance {
         var input = try Tools.orientedImage(src)
         input = input.transformed(by: CGAffineTransform(translationX: -input.extent.minX, y: -input.extent.minY))
         let ow = input.extent.width, oh = input.extent.height
-        guard ow >= 8, oh >= 8 else { throw NativeError("L’immagine è troppo piccola") }
+        guard ow >= 8, oh >= 8 else { throw NativeError(String(localized: "L’immagine è troppo piccola")) }
 
         // Dimensione finale e dimensione su cui lavora il modello (che ingrandisce sempre di 4×).
         // «Stessa dimensione» su foto grandi: si lavora a metà e poi si torna alla misura originale,
@@ -88,7 +88,7 @@ enum AIEnhance {
         if let m = sharpModel {
             imgB = try upscale4(source, width: ww, height: wh, model: m) { p in progress(both ? 0.5 + p / 2 : p) }
         }
-        guard let big = imgA ?? imgB else { throw NativeError("Il modello di IA non ha prodotto un risultato") }
+        guard let big = imgA ?? imgB else { throw NativeError(String(localized: "Il modello di IA non ha prodotto un risultato")) }
         var result = CIImage(cgImage: big)
         if let a = imgA, let b = imgB {
             let mix = CIFilter.dissolveTransition()
@@ -129,7 +129,7 @@ enum AIEnhance {
         if !ready {
             guard let pkg = Bundle.main.url(forResource: name, withExtension: "mlpackage", subdirectory: "Models")
                     ?? Bundle.main.url(forResource: name, withExtension: "mlpackage") else {
-                throw NativeError("Manca il modello di IA nell’app")
+                throw NativeError(String(localized: "Manca il modello di IA nell’app"))
             }
             let tmp = try MLModel.compileModel(at: pkg)
             try fm.createDirectory(at: compiledDir, withIntermediateDirectories: true)
@@ -153,7 +153,7 @@ enum AIEnhance {
         guard let out = CGContext(data: nil, width: ow, height: oh, bitsPerComponent: 8, bytesPerRow: 0,
                                   space: CGColorSpaceCreateDeviceRGB(),
                                   bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
-            throw NativeError("L’immagine è troppo grande per la memoria disponibile")
+            throw NativeError(String(localized: "L’immagine è troppo grande per la memoria disponibile"))
         }
         // I bordi dell'immagine si «allungano»: i riquadri sui lati hanno sempre qualcosa da guardare
         let extended = img.clampedToExtent()
@@ -162,7 +162,7 @@ enum AIEnhance {
         let cols = Int(ceil(Double(w) / Double(step))), rows = Int(ceil(Double(h) / Double(step)))
         let total = max(cols * rows, 1)
         var done = 0
-        guard let buffer = makeBuffer(tile, tile) else { throw NativeError("Memoria insufficiente") }
+        guard let buffer = makeBuffer(tile, tile) else { throw NativeError(String(localized: "Memoria insufficiente")) }
 
         for r in 0..<rows {
             for c in 0..<cols {
@@ -175,7 +175,7 @@ enum AIEnhance {
                 let inFeatures = try MLDictionaryFeatureProvider(dictionary: [inputName: MLFeatureValue(pixelBuffer: buffer)])
                 let result = try model.prediction(from: inFeatures)
                 guard let outBuffer = result.featureValue(for: outputName)?.imageBufferValue else {
-                    throw NativeError("Il modello di IA non ha restituito un’immagine")
+                    throw NativeError(String(localized: "Il modello di IA non ha restituito un’immagine"))
                 }
                 // Dal riquadro ingrandito si tiene solo il centro (senza il bordo di sovrapposizione)
                 let keepW = min(step, w - x0), keepH = min(step, h - y0)
@@ -188,7 +188,7 @@ enum AIEnhance {
                 progress(0.98 * Double(done) / Double(total))
             }
         }
-        guard let image = out.makeImage() else { throw NativeError("Non riesco a ricomporre l’immagine") }
+        guard let image = out.makeImage() else { throw NativeError(String(localized: "Non riesco a ricomporre l’immagine")) }
         return image
     }
 

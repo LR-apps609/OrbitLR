@@ -140,14 +140,14 @@ struct ParamView: View {
                 KindBadge(kind: fileKind, size: 34)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(action.title).font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.ink)
-                    Text(files.count == 1 ? files[0].lastPathComponent : "\(files.count) file")
+                    Text(files.count == 1 ? files[0].lastPathComponent : String(localized: "\(files.count) file"))
                         .font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                 }
             }
             content
             if presetable {
                 if UserDefaults.standard.string(forKey: "controlStyle") == "knob" {
-                    note("Gira la manopola trascinandola, con la rotellina o con le frecce. Un clic passa alla posizione successiva.")
+                    note(String(localized: "Gira la manopola trascinandola, con la rotellina o con le frecce. Un clic passa alla posizione successiva."))
                         .frame(maxWidth: .infinity, alignment: .center)
                         .multilineTextAlignment(.center)
                 }
@@ -183,44 +183,44 @@ struct ParamView: View {
 
     private var toolTitle: String {
         switch kind {
-        case .removebg: return "Risultato"
-        case .straighten: return "Come salvarlo"
-        case .stack: return "Risultato"
-        default: return "Quanto"
+        case .removebg: return String(localized: "Risultato")
+        case .straighten: return String(localized: "Come salvarlo")
+        case .stack: return String(localized: "Risultato")
+        default: return String(localized: "Quanto")
         }
     }
 
     private var toolNote: String {
         switch kind {
-        case .removebg: return "Funziona meglio con persone, animali e oggetti ben distinti dallo sfondo."
-        case .straighten: return "OrbitLR trova il foglio nella foto, corregge la prospettiva e lo pulisce come una scansione."
-        case .stack: return "Seleziona 3–10 foto della stessa scena (una raffica va benissimo) oppure un video breve: OrbitLR le allinea e le unisce. I dettagli vengono dagli scatti veri."
-        default: return "Contorni nitidi con la tecnologia di Apple. Non inventa dettagli che non ci sono."
+        case .removebg: return String(localized: "Funziona meglio con persone, animali e oggetti ben distinti dallo sfondo.")
+        case .straighten: return String(localized: "OrbitLR trova il foglio nella foto, corregge la prospettiva e lo pulisce come una scansione.")
+        case .stack: return String(localized: "Seleziona 3–10 foto della stessa scena (una raffica va benissimo) oppure un video breve: OrbitLR le allinea e le unisce. I dettagli vengono dagli scatti veri.")
+        default: return String(localized: "Contorni nitidi con la tecnologia di Apple. Non inventa dettagli che non ci sono.")
         }
     }
 
     private var confirmTitle: String {
         switch kind {
-        case .resize: return "Ridimensiona"
-        case .pdfcompress, .vcompress, .icompress: return "Comprimi"
-        case .cut: return "Taglia"
-        case .gifcut: return "Crea la GIF"
-        case .extract: return "Estrai"
-        case .vresize: return "Converti"
-        case .speed: return "Cambia velocità"
-        case .rotate: return "Ruota"
-        case .reorder: return "Riordina"
-        case .password: return "Proteggi"
-        case .unlock: return "Sblocca"
-        case .rename: return "Rinomina"
-        case .removebg: return "Rimuovi lo sfondo"
-        case .straighten: return "Raddrizza"
-        case .upscale: return "Ingrandisci"
-        case .aienhance: return "Migliora"
-        case .stack: return "Unisci"
-        case .social: return "Esporta"
-        case .ringtone: return "Crea la suoneria"
-        case .hidemark: return "Crea"
+        case .resize: return String(localized: "Ridimensiona")
+        case .pdfcompress, .vcompress, .icompress: return String(localized: "Comprimi")
+        case .cut: return String(localized: "Taglia")
+        case .gifcut: return String(localized: "Crea la GIF")
+        case .extract: return String(localized: "Estrai")
+        case .vresize: return String(localized: "Converti")
+        case .speed: return String(localized: "Cambia velocità")
+        case .rotate: return String(localized: "Ruota")
+        case .reorder: return String(localized: "Riordina")
+        case .password: return String(localized: "Proteggi")
+        case .unlock: return String(localized: "Sblocca")
+        case .rename: return String(localized: "Rinomina")
+        case .removebg: return String(localized: "Rimuovi lo sfondo")
+        case .straighten: return String(localized: "Raddrizza")
+        case .upscale: return String(localized: "Ingrandisci")
+        case .aienhance: return String(localized: "Migliora")
+        case .stack: return String(localized: "Unisci")
+        case .social: return String(localized: "Esporta")
+        case .ringtone: return String(localized: "Crea la suoneria")
+        case .hidemark: return String(localized: "Crea")
         }
     }
 
@@ -248,24 +248,24 @@ struct ParamView: View {
     @ViewBuilder private var content: some View {
         switch kind {
         case .resize:
-            Knob(title: "Nuova dimensione", options: [
-                KnobOption(value: "web", short: "Web", label: "Per il web (1600 px, JPG leggero)"),
-                KnobOption(value: "1280", short: "1280", label: "Lato lungo 1280 px"),
-                KnobOption(value: "1920", short: "1920", label: "Lato lungo 1920 px"),
-                KnobOption(value: "3840", short: "4K", label: "Lato lungo 3840 px (4K)"),
-                KnobOption(value: "half", short: "50%", label: "Metà (50%)"),
+            Knob(title: String(localized: "Nuova dimensione"), options: [
+                KnobOption(value: "web", short: "Web", label: String(localized: "Per il web (1600 px, JPG leggero)")),
+                KnobOption(value: "1280", short: "1280", label: String(localized: "Lato lungo 1280 px")),
+                KnobOption(value: "1920", short: "1920", label: String(localized: "Lato lungo 1920 px")),
+                KnobOption(value: "3840", short: "4K", label: String(localized: "Lato lungo 3840 px (4K)")),
+                KnobOption(value: "half", short: "50%", label: String(localized: "Metà (50%)")),
             ], selection: $resize, tint: tint)
-            note("Le foto più piccole della misura scelta non vengono ingrandite.")
+            note(String(localized: "Le foto più piccole della misura scelta non vengono ingrandite."))
         case .pdfcompress:
-            Knob(title: "Compressione", options: [
-                KnobOption(value: "light", short: "Leggera", label: "Leggera (qualità di stampa)"),
-                KnobOption(value: "medium", short: "Media", label: "Media (consigliata)"),
-                KnobOption(value: "strong", short: "Forte", label: "Forte (file più piccolo possibile)"),
+            Knob(title: String(localized: "Compressione"), options: [
+                KnobOption(value: "light", short: String(localized: "Leggera"), label: String(localized: "Leggera (qualità di stampa)")),
+                KnobOption(value: "medium", short: String(localized: "Media"), label: String(localized: "Media (consigliata)")),
+                KnobOption(value: "strong", short: String(localized: "Forte"), label: String(localized: "Forte (file più piccolo possibile)")),
             ], selection: $level, tint: tint)
         case .vcompress:
             // 3.6 · Prima la qualità: «Stessa qualità» non rovina niente; i pesi servono per i limiti delle app
-            Knob(title: "Come", options: (ParamChoices.options(for: .vcompress) ?? []) + [
-                KnobOption(value: "custom", short: "Altro", label: "Un altro peso massimo, a scelta"),
+            Knob(title: String(localized: "Come"), options: (ParamChoices.options(for: .vcompress) ?? []) + [
+                KnobOption(value: "custom", short: String(localized: "Altro"), label: String(localized: "Un altro peso massimo, a scelta")),
             ], selection: $mb, tint: tint)
             if mb == "custom" {
                 HStack {
@@ -274,15 +274,15 @@ struct ParamView: View {
                 }
             }
             if mb == "best" {
-                note("Stessa misura e stessa qualità a occhio, con il formato moderno dei video (HEVC): di solito pesa la metà. Funziona anche con film lunghi.")
+                note(String(localized: "Stessa misura e stessa qualità a occhio, con il formato moderno dei video (HEVC): di solito pesa la metà. Funziona anche con film lunghi."))
             } else {
-                note("Prima si tengono qualità e misura; la risoluzione scende solo se il peso scelto non basta.")
+                note(String(localized: "Prima si tengono qualità e misura; la risoluzione scende solo se il peso scelto non basta."))
                 estimateLine(SizeEstimate.compressText(current: files.reduce(Int64(0)) { $0 + Job.size(of: $1) },
                                                        targetMB: Int(mb == "custom" ? customMB : mb), files: files.count))
             }
         case .icompress:
-            Knob(title: "Come", options: (ParamChoices.options(for: .icompress) ?? []) + [
-                KnobOption(value: "custom", short: "Altro", label: "Un altro peso massimo, a scelta"),
+            Knob(title: String(localized: "Come"), options: (ParamChoices.options(for: .icompress) ?? []) + [
+                KnobOption(value: "custom", short: String(localized: "Altro"), label: String(localized: "Un altro peso massimo, a scelta")),
             ], selection: $mb, tint: tint)
             if mb == "custom" {
                 HStack {
@@ -290,19 +290,20 @@ struct ParamView: View {
                     Text("KB").foregroundStyle(.secondary)
                 }
             }
-            note(mb == "best" ? "A occhio resta identica, ma pesa meno. JPEG e HEIC restano nel loro formato."
-                              : "Si cerca la qualità più alta che sta nel peso; la foto si rimpicciolisce solo se serve. Esce in JPG, senza dati personali (va bene per moduli e siti).")
+            note(mb == "best" ? String(localized: "A occhio resta identica, ma pesa meno. JPEG e HEIC restano nel loro formato.")
+                              : String(localized: "Si cerca la qualità più alta che sta nel peso; la foto si rimpicciolisce solo se serve. Esce in JPG, senza dati personali (va bene per moduli e siti)."))
         case .hidemark:
             EmptyView()
         case .social:
-            Knob(title: "Formato", options: ParamChoices.options(for: .social) ?? [], selection: $choice, tint: tint)
+            Knob(title: String(localized: "Formato"), options: ParamChoices.options(for: .social) ?? [], selection: $choice, tint: tint)
                 .task(id: files) { await loadVideoSeconds() }
             Toggle("Inquadra le persone", isOn: $follow)
             if let sec = videoSeconds {
-                estimateLine(SizeEstimate.label(SizeEstimate.socialBytes(seconds: sec, aspect: choice.isEmpty ? "9x16" : choice))
-                             + " · ora " + Fmt.bytes(files.reduce(Int64(0)) { $0 + Job.size(of: $1) }))
+                let predicted: String = SizeEstimate.label(SizeEstimate.socialBytes(seconds: sec, aspect: choice.isEmpty ? "9x16" : choice))
+                let current: String = Fmt.bytes(files.reduce(Int64(0)) { $0 + Job.size(of: $1) })
+                estimateLine(String(localized: "\(predicted) · ora \(current)"))
             }
-            note("L’inquadratura segue le persone (o ciò che si muove in primo piano) con calma, senza scatti. Con scene affollate resta al centro.")
+            note(String(localized: "L’inquadratura segue le persone (o ciò che si muove in primo piano) con calma, senza scatti. Con scene affollate resta al centro."))
         case .cut, .gifcut, .ringtone:
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -316,40 +317,40 @@ struct ParamView: View {
             }
         case .extract:
             TextField("1-3, 5, 8-", text: $pages)
-            note("Esempi: 2 · 1-3 · 1,4,7-9 · 5- (dalla 5 alla fine)")
+            note(String(localized: "Esempi: 2 · 1-3 · 1,4,7-9 · 5- (dalla 5 alla fine)"))
         case .vresize:
-            Knob(title: "Risoluzione", options: [
-                KnobOption(value: "480", short: "480p", label: "480p (leggero)"),
+            Knob(title: String(localized: "Risoluzione"), options: [
+                KnobOption(value: "480", short: "480p", label: String(localized: "480p (leggero)")),
                 KnobOption(value: "720", short: "720p", label: "720p (HD)"),
                 KnobOption(value: "1080", short: "1080p", label: "1080p (Full HD)"),
-                KnobOption(value: "hevc", short: "HEVC", label: "HEVC: stessa risoluzione, file più piccolo"),
+                KnobOption(value: "hevc", short: "HEVC", label: String(localized: "HEVC: stessa risoluzione, file più piccolo")),
             ], selection: $vres, tint: tint)
-            note("Vale anche per i video verticali. I video più piccoli non vengono ingranditi.")
+            note(String(localized: "Vale anche per i video verticali. I video più piccoli non vengono ingranditi."))
         case .speed:
-            Knob(title: "Velocità", options: [
-                KnobOption(value: "0.5", short: "0,5×", label: "0,5× (metà)"),
-                KnobOption(value: "0.75", short: "0,75×", label: "0,75×"),
-                KnobOption(value: "1.25", short: "1,25×", label: "1,25×"),
-                KnobOption(value: "1.5", short: "1,5×", label: "1,5×"),
-                KnobOption(value: "2", short: "2×", label: "2× (doppia)"),
+            Knob(title: String(localized: "Velocità"), options: [
+                KnobOption(value: "0.5", short: String(localized: "0,5×"), label: String(localized: "0,5× (metà)")),
+                KnobOption(value: "0.75", short: String(localized: "0,75×"), label: String(localized: "0,75×")),
+                KnobOption(value: "1.25", short: String(localized: "1,25×"), label: String(localized: "1,25×")),
+                KnobOption(value: "1.5", short: String(localized: "1,5×"), label: String(localized: "1,5×")),
+                KnobOption(value: "2", short: "2×", label: String(localized: "2× (doppia)")),
             ], selection: $speed, tint: tint)
-            note("La voce mantiene il suo tono, anche più veloce o più lenta.")
+            note(String(localized: "La voce mantiene il suo tono, anche più veloce o più lenta."))
         case .rotate:
-            Knob(title: "Ruota tutte le pagine", options: [
-                KnobOption(value: "270", short: "↺ 90°", label: "90° a sinistra"),
+            Knob(title: String(localized: "Ruota tutte le pagine"), options: [
+                KnobOption(value: "270", short: "↺ 90°", label: String(localized: "90° a sinistra")),
                 KnobOption(value: "180", short: "180°", label: "180°"),
-                KnobOption(value: "90", short: "↻ 90°", label: "90° a destra"),
+                KnobOption(value: "90", short: "↻ 90°", label: String(localized: "90° a destra")),
             ], selection: $degrees, tint: tint)
         case .reorder:
             HStack {
                 TextField("es. 3,1,2 oppure 5-1", text: $order)
                 Button("Al contrario") { onDone("reverse") }
             }
-            note("Le pagine non indicate restano in fondo, nel loro ordine.")
+            note(String(localized: "Le pagine non indicate restano in fondo, nel loro ordine."))
         case .password:
             SecureField("Password", text: $password)
             SecureField("Ripeti la password", text: $password2)
-            note("Senza questa password il PDF non si potrà aprire: conservala bene.")
+            note(String(localized: "Senza questa password il PDF non si potrà aprire: conservala bene."))
         case .unlock:
             SecureField("Password attuale", text: $password)
         case .aienhance:
@@ -357,37 +358,37 @@ struct ParamView: View {
             if UserDefaults.standard.string(forKey: "controlStyle") == "knob" {
                 HStack(alignment: .top, spacing: 8) {
 
-                    Knob(title: "Dimensione", options: [
-                        KnobOption(value: "1", short: "1×", label: "Stessa dimensione"),
-                        KnobOption(value: "2", short: "2×", label: "Il doppio"),
-                        KnobOption(value: "4", short: "4×", label: "Quattro volte"),
+                    Knob(title: String(localized: "Dimensione"), options: [
+                        KnobOption(value: "1", short: "1×", label: String(localized: "Stessa dimensione")),
+                        KnobOption(value: "2", short: "2×", label: String(localized: "Il doppio")),
+                        KnobOption(value: "4", short: "4×", label: String(localized: "Quattro volte")),
                     ], selection: $aiSize, tint: tint, size: 86)
-                    Knob(title: "Intensità", options: [
-                        KnobOption(value: "0", short: "0", label: "Fedele: non inventa"),
-                        KnobOption(value: "25", short: "25", label: "Fedele, un po’ più incisivo"),
-                        KnobOption(value: "50", short: "50", label: "Metà e metà"),
-                        KnobOption(value: "75", short: "75", label: "Quasi tutto Più nitido"),
-                        KnobOption(value: "100", short: "100", label: "Più nitido: ricostruisce texture"),
+                    Knob(title: String(localized: "Intensità"), options: [
+                        KnobOption(value: "0", short: "0", label: String(localized: "Fedele: non inventa")),
+                        KnobOption(value: "25", short: "25", label: String(localized: "Fedele, un po’ più incisivo")),
+                        KnobOption(value: "50", short: "50", label: String(localized: "Metà e metà")),
+                        KnobOption(value: "75", short: "75", label: String(localized: "Quasi tutto Più nitido")),
+                        KnobOption(value: "100", short: "100", label: String(localized: "Più nitido: ricostruisce texture")),
                     ], selection: $aiStrength, tint: tint, size: 86)
                 }
             } else {
                 VStack(alignment: .leading, spacing: 12) {
 
-                    Knob(title: "Dimensione", options: [
-                        KnobOption(value: "1", short: "1×", label: "Stessa dimensione"),
-                        KnobOption(value: "2", short: "2×", label: "Il doppio"),
-                        KnobOption(value: "4", short: "4×", label: "Quattro volte"),
+                    Knob(title: String(localized: "Dimensione"), options: [
+                        KnobOption(value: "1", short: "1×", label: String(localized: "Stessa dimensione")),
+                        KnobOption(value: "2", short: "2×", label: String(localized: "Il doppio")),
+                        KnobOption(value: "4", short: "4×", label: String(localized: "Quattro volte")),
                     ], selection: $aiSize, tint: tint, size: 86)
-                    Knob(title: "Intensità", options: [
-                        KnobOption(value: "0", short: "0", label: "Fedele: non inventa"),
-                        KnobOption(value: "25", short: "25", label: "Fedele, un po’ più incisivo"),
-                        KnobOption(value: "50", short: "50", label: "Metà e metà"),
-                        KnobOption(value: "75", short: "75", label: "Quasi tutto Più nitido"),
-                        KnobOption(value: "100", short: "100", label: "Più nitido: ricostruisce texture"),
+                    Knob(title: String(localized: "Intensità"), options: [
+                        KnobOption(value: "0", short: "0", label: String(localized: "Fedele: non inventa")),
+                        KnobOption(value: "25", short: "25", label: String(localized: "Fedele, un po’ più incisivo")),
+                        KnobOption(value: "50", short: "50", label: String(localized: "Metà e metà")),
+                        KnobOption(value: "75", short: "75", label: String(localized: "Quasi tutto Più nitido")),
+                        KnobOption(value: "100", short: "100", label: String(localized: "Più nitido: ricostruisce texture")),
                     ], selection: $aiStrength, tint: tint, size: 86)
                 }
             }
-            note("Intensità 0 = Fedele: pulisce e rende nitido senza inventare. Più sali, più il risultato è incisivo, ma il modello ricostruisce texture che nella foto non c’erano. Tra 1 e 99 si usano tutti e due i modelli (tempo doppio).")
+            note(String(localized: "Intensità 0 = Fedele: pulisce e rende nitido senza inventare. Più sali, più il risultato è incisivo, ma il modello ricostruisce texture che nella foto non c’erano. Tra 1 e 99 si usano tutti e due i modelli (tempo doppio)."))
         case .removebg, .straighten, .upscale, .stack:
             Knob(title: toolTitle, options: ParamChoices.options(for: kind) ?? [], selection: $choice, tint: tint)
             note(toolNote)
@@ -411,7 +412,7 @@ struct ParamView: View {
             .padding(10)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: 8).fill(Theme.parchment.opacity(0.5)))
-            note("I file vengono rinominati in ordine di nome. Si può tornare indietro da Attività.")
+            note(String(localized: "I file vengono rinominati in ordine di nome. Si può tornare indietro da Attività."))
         }
     }
 
@@ -423,7 +424,7 @@ struct ParamView: View {
         var out = sorted.prefix(3).enumerated().map { i, f in
             "\(f.lastPathComponent)  →  \(base) \(String(format: "%0\(digits)d", n0 + i))" + (f.pathExtension.isEmpty ? "" : ".\(f.pathExtension)")
         }
-        if sorted.count > 3 { out.append("… e altri \(sorted.count - 3)") }
+        if sorted.count > 3 { out.append(String(localized: "… e altri \(sorted.count - 3)")) }
         return out
     }
 
@@ -442,13 +443,13 @@ struct ParamView: View {
         case .vcompress:
             if mb == "custom" {
                 let v = customMB.trimmingCharacters(in: .whitespaces).lowercased().replacingOccurrences(of: "mb", with: "")
-                guard let n = Int(v), n >= 1 else { error = "Scrivi un numero intero, ad esempio 25."; return }
+                guard let n = Int(v), n >= 1 else { error = String(localized: "Scrivi un numero intero, ad esempio 25."); return }
                 finish(String(n))
             } else { finish(mb) }
         case .icompress:
             if mb == "custom" {
                 let v = customMB.trimmingCharacters(in: .whitespaces).lowercased().replacingOccurrences(of: "kb", with: "")
-                guard let n = Int(v), n >= 5 else { error = "Scrivi un numero intero di KB, ad esempio 200."; return }
+                guard let n = Int(v), n >= 5 else { error = String(localized: "Scrivi un numero intero di KB, ad esempio 200."); return }
                 finish(String(n))
             } else { finish(mb) }
         case .hidemark:
@@ -456,17 +457,17 @@ struct ParamView: View {
         case .social:
             finish("\(choice.isEmpty ? "9x16" : choice)|\(follow ? 1 : 0)")
         case .cut, .gifcut, .ringtone:
-            guard let s = parseTime(start) else { error = "Inizio non valido. Esempi: 45 · 1:30"; return }
+            guard let s = parseTime(start) else { error = String(localized: "Inizio non valido. Esempi: 45 · 1:30"); return }
             if end.trimmingCharacters(in: .whitespaces).isEmpty {
                 finish(String(format: "%.3f|", s))
             } else {
-                guard let e = parseTime(end), e > s else { error = "La fine deve essere dopo l’inizio."; return }
+                guard let e = parseTime(end), e > s else { error = String(localized: "La fine deve essere dopo l’inizio."); return }
                 finish(String(format: "%.3f|%.3f", s, e))
             }
         case .extract:
             let v = pages.replacingOccurrences(of: " ", with: "")
             guard v.range(of: #"^[0-9]+(-[0-9]*)?(,[0-9]+(-[0-9]*)?)*$"#, options: .regularExpression) != nil else {
-                error = "Formato non valido. Esempi: 2 · 1-3 · 1,4,7-9"; return
+                error = String(localized: "Formato non valido. Esempi: 2 · 1-3 · 1,4,7-9"); return
             }
             finish(v)
         case .vresize: finish(vres)
@@ -476,15 +477,15 @@ struct ParamView: View {
             let v = order.replacingOccurrences(of: " ", with: "")
             if v == "reverse" { finish(v); return }
             guard v.range(of: #"^[0-9]+(-[0-9]+)?(,[0-9]+(-[0-9]+)?)*$"#, options: .regularExpression) != nil else {
-                error = "Formato non valido. Esempi: 3,1,2 · 5-1"; return
+                error = String(localized: "Formato non valido. Esempi: 3,1,2 · 5-1"); return
             }
             finish(v)
         case .password:
-            guard !password.isEmpty else { error = "Scrivi una password."; return }
-            guard password == password2 else { error = "Le due password non coincidono."; return }
+            guard !password.isEmpty else { error = String(localized: "Scrivi una password."); return }
+            guard password == password2 else { error = String(localized: "Le due password non coincidono."); return }
             finish(password)
         case .unlock:
-            guard !password.isEmpty else { error = "Scrivi la password del PDF."; return }
+            guard !password.isEmpty else { error = String(localized: "Scrivi la password del PDF."); return }
             finish(password)
         case .aienhance:
             finish("b\(aiStrength)-\(aiSize)")
@@ -492,8 +493,8 @@ struct ParamView: View {
             finish(choice.isEmpty ? ParamChoices.defaultValue(for: kind) : choice)
         case .rename:
             let base = baseName.trimmingCharacters(in: .whitespaces)
-            guard !base.isEmpty, !base.contains("/"), !base.contains(":") else { error = "Scrivi un nome valido (senza / o :)."; return }
-            guard let n = Int(startNumber), n >= 0 else { error = "Il numero iniziale deve essere un numero intero."; return }
+            guard !base.isEmpty, !base.contains("/"), !base.contains(":") else { error = String(localized: "Scrivi un nome valido (senza / o :)."); return }
+            guard let n = Int(startNumber), n >= 0 else { error = String(localized: "Il numero iniziale deve essere un numero intero."); return }
             finish("\(base)|\(n)|\(digits)")
         }
     }

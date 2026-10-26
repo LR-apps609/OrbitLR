@@ -81,10 +81,10 @@ struct VPTransition: Codable, Equatable, Sendable {
     var duration = 0.6
 
     static let kinds: [(id: String, name: String, symbol: String)] = [
-        ("fade", "Dissolvenza", "circle.lefthalf.filled"), ("black", "Al nero", "moon.fill"), ("white", "Al bianco", "sun.max.fill"),
-        ("slide", "Scorrimento", "arrow.left.square"), ("zoom", "Zoom", "plus.magnifyingglass"), ("blur", "Sfocatura", "drop.fill"),
+        ("fade", String(localized: "Dissolvenza"), "circle.lefthalf.filled"), ("black", String(localized: "Al nero"), "moon.fill"), ("white", String(localized: "Al bianco"), "sun.max.fill"),
+        ("slide", String(localized: "Scorrimento"), "arrow.left.square"), ("zoom", String(localized: "Zoom"), "plus.magnifyingglass"), ("blur", String(localized: "Sfocatura"), "drop.fill"),
     ]
-    static func name(_ id: String) -> String { kinds.first { $0.id == id }?.name ?? "Dissolvenza" }
+    static func name(_ id: String) -> String { kinds.first { $0.id == id }?.name ?? String(localized: "Dissolvenza") }
 }
 
 struct VPMusic: Codable, Equatable, Sendable {
@@ -172,7 +172,7 @@ struct VPMediaInfo: Sendable, Equatable {
     static func load(_ url: URL) async throws -> VPMediaInfo {
         let a = AVURLAsset(url: url)
         let d = try await a.load(.duration).seconds
-        guard d.isFinite, d > 0 else { throw NativeError("«\(url.lastPathComponent)» non si legge") }
+        guard d.isFinite, d > 0 else { throw NativeError(String(localized: "«\(url.lastPathComponent)» non si legge")) }
         let v = try await a.loadTracks(withMediaType: .video).first
         let au = try await a.loadTracks(withMediaType: .audio).first
         var info = VPMediaInfo(duration: d, videoDuration: d, naturalSize: .zero, transform: .identity, displaySize: .zero,
@@ -283,18 +283,18 @@ enum VideoProjectBuilder {
         let comp = AVMutableComposition()
         guard let vT = comp.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid),
               let aT = comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) else {
-            throw NativeError("non riesco a preparare il montaggio")
+            throw NativeError(String(localized: "non riesco a preparare il montaggio"))
         }
         // Tela: la misura della prima clip (girata), lato lungo al massimo maxSide
         guard let firstInfo = p.clips.lazy.compactMap({ infos[$0.path] }).first(where: { $0.hasVideo }) else {
-            throw NativeError("nessuna clip pronta")
+            throw NativeError(String(localized: "nessuna clip pronta"))
         }
         var base = firstInfo.displaySize
         // 2.9.8 · Prima clip ruotata di 90°: la tela segue
         if let f = p.clips.first(where: { infos[$0.path]?.hasVideo == true })?.fx, (((f.rotate % 360) + 360) % 360) % 180 == 90 {
             base = CGSize(width: base.height, height: base.width)
         }
-        guard base.width > 0, base.height > 0 else { throw NativeError("dimensioni del video non valide") }
+        guard base.width > 0, base.height > 0 else { throw NativeError(String(localized: "dimensioni del video non valide")) }
         let k = min(1, maxSide / max(base.width, base.height))
         let canvas = CGSize(width: CGFloat(Media.even(Double(base.width * k))), height: CGFloat(Media.even(Double(base.height * k))))
 
@@ -343,7 +343,7 @@ enum VideoProjectBuilder {
                                         fx: c.fx, area: area))
             cursor = cursor + lenT
         }
-        guard cursor.seconds > 0.05 else { throw NativeError("il montaggio è vuoto") }
+        guard cursor.seconds > 0.05 else { throw NativeError(String(localized: "il montaggio è vuoto")) }
         let total = cursor.seconds
 
         // 2.9.3 · Le clip sulle due tracce, con il pezzo in più che serve alle transizioni
@@ -699,7 +699,7 @@ enum VideoProjectExport {
         var infos: [String: VPMediaInfo] = [:]
         for path in Set(p.clips.map { $0.path } + (p.music.map { [$0.path] } ?? [])) {
             guard FileManager.default.fileExists(atPath: path) else {
-                throw NativeError("non trovo più «\(URL(fileURLWithPath: path).lastPathComponent)»")
+                throw NativeError(String(localized: "non trovo più «\(URL(fileURLWithPath: path).lastPathComponent)»"))
             }
             infos[path] = try await VPMediaInfo.load(URL(fileURLWithPath: path))
         }
@@ -738,7 +738,7 @@ enum VideoProjectExport {
 extension VPClip {
     /// 2.7.7 · Come VoiceOver legge la clip: «Clip 2 di 3, 0:05, senza audio».
     func spokenLabel(index: Int, of count: Int) -> String {
-        "Clip \(index + 1) di \(count), \(formatShort(length))" + (isMuted ? ", senza audio" : "")
+        String(localized: "Clip \(index + 1) di \(count), \(formatShort(length))") + (isMuted ? String(localized: ", senza audio") : "")
     }
 }
 

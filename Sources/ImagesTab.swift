@@ -93,11 +93,11 @@ final class KindTabModel: ObservableObject, @unchecked Sendable {
         let room = max(0, Self.maxFiles - files.count)
         files += fresh.prefix(room)
         if others > 0 {
-            let what = accepts == [.img] ? "un’immagine" : (accepts == [.video] ? "un video" : "un documento")
-            let whatMany = accepts == [.img] ? "immagini" : (accepts == [.video] ? "video" : "documenti")
-            notice = others == 1 ? "1 file non è \(what): aprilo da Conversione." : "\(others) file non sono \(whatMany): aprili da Conversione."
+            let what = accepts == [.img] ? String(localized: "un’immagine") : (accepts == [.video] ? String(localized: "un video") : String(localized: "un documento"))
+            let whatMany = accepts == [.img] ? String(localized: "immagini") : (accepts == [.video] ? String(localized: "video") : String(localized: "documenti"))
+            notice = others == 1 ? String(localized: "1 file non è \(what): aprilo da Conversione.") : String(localized: "\(others) file non sono \(whatMany): aprili da Conversione.")
         } else if fresh.count > room {
-            notice = "Al massimo \(Self.maxFiles) file insieme."
+            notice = String(localized: "Al massimo \(Self.maxFiles) file insieme.")
         } else {
             notice = nil
         }
@@ -175,20 +175,20 @@ struct KindTabStyle {
     let types: [UTType]
 
     static let images = KindTabStyle(
-        title: "Immagini", kind: .img, dropTitle: "Trascina qui le foto",
-        dropSubtitle: "oppure clicca per sceglierle · JPG, PNG, HEIC, RAW, PSD, AVIF e altre · fino a \(KindTabModel.maxFiles) insieme",
-        intro: "Converti, ridimensiona, togli lo sfondo e altro, su una o tante foto", noun: "foto", types: [.image])
+        title: String(localized: "Immagini"), kind: .img, dropTitle: String(localized: "Trascina qui le foto"),
+        dropSubtitle: String(localized: "oppure clicca per sceglierle · JPG, PNG, HEIC, RAW, PSD, AVIF e altre · fino a \(KindTabModel.maxFiles) insieme"),
+        intro: String(localized: "Converti, ridimensiona, togli lo sfondo e altro, su una o tante foto"), noun: "foto", types: [.image])
 
     /// 3.0 · Gli strumenti veloci della scheda Video, nella stessa disposizione di Immagini e File.
     static let video = KindTabStyle(
-        title: "Video", kind: .video, dropTitle: "Trascina qui i video",
-        dropSubtitle: "oppure clicca per sceglierli · MP4, MOV, MKV, AVI e altri · fino a \(KindTabModel.maxFiles) insieme",
-        intro: "Comprimi, taglia, fai una GIF e altro, su uno o tanti video", noun: "video", types: [.movie])
+        title: String(localized: "Video"), kind: .video, dropTitle: String(localized: "Trascina qui i video"),
+        dropSubtitle: String(localized: "oppure clicca per sceglierli · MP4, MOV, MKV, AVI e altri · fino a \(KindTabModel.maxFiles) insieme"),
+        intro: String(localized: "Comprimi, taglia, fai una GIF e altro, su uno o tanti video"), noun: "video", types: [.movie])
 
     static let files = KindTabStyle(
-        title: "File", kind: .pdf, dropTitle: "Trascina qui PDF e documenti",
-        dropSubtitle: "oppure clicca per sceglierli · PDF, Word, Excel, PowerPoint, testi · fino a \(KindTabModel.maxFiles) insieme",
-        intro: "Unisci, comprimi, converti e proteggi PDF e documenti", noun: "file",
+        title: String(localized: "File"), kind: .pdf, dropTitle: String(localized: "Trascina qui PDF e documenti"),
+        dropSubtitle: String(localized: "oppure clicca per sceglierli · PDF, Word, Excel, PowerPoint, testi · fino a \(KindTabModel.maxFiles) insieme"),
+        intro: String(localized: "Unisci, comprimi, converti e proteggi PDF e documenti"), noun: "file",
         types: [.pdf, .plainText, .rtf, .html, UTType(filenameExtension: "docx"), UTType(filenameExtension: "doc"),
                 UTType(filenameExtension: "xlsx"), UTType(filenameExtension: "pptx"), UTType(filenameExtension: "odt"),
                 UTType(filenameExtension: "md"), UTType(filenameExtension: "wps"), UTType(filenameExtension: "wpd")].compactMap { $0 })
@@ -253,7 +253,7 @@ struct KindTabView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(style.title).font(.system(size: 22, weight: .bold, design: .rounded))
                 Text(subtitle).font(.system(size: 12.5)).foregroundStyle(.secondary)
-                    .help(m.files.isEmpty ? "" : (fem ? "Clic su una foto per sceglierla, ⌘-clic per sceglierne più di una" : "Clic su un file per sceglierlo, ⌘-clic per sceglierne più di uno"))
+                    .help(m.files.isEmpty ? "" : (fem ? String(localized: "Clic su una foto per sceglierla, ⌘-clic per sceglierne più di una") : String(localized: "Clic su un file per sceglierlo, ⌘-clic per sceglierne più di uno")))
             }
             .layoutPriority(1)          // 4.1.6 · prima il titolo; la barra del downloader prende lo spazio che resta
             if style.kind == .video { VideoModeSwitch().padding(.leading, 8) }
@@ -265,8 +265,8 @@ struct KindTabView: View {
             }
             if !m.files.isEmpty {
                 if !m.selection.isEmpty {
-                    Button(fem ? "Tutte" : "Tutti") { m.selection = []; m.refreshEstimates() }
-                        .help(fem ? "Lavora su tutte le foto, non solo su quelle scelte" : "Lavora su tutti i file, non solo su quelli scelti")
+                    Button(fem ? String(localized: "Tutte") : String(localized: "Tutti")) { m.selection = []; m.refreshEstimates() }
+                        .help(fem ? String(localized: "Lavora su tutte le foto, non solo su quelle scelte") : String(localized: "Lavora su tutti i file, non solo su quelli scelti"))
                 }
                 Button("Aggiungi…") { choose() }
                 Button { m.clear() } label: { Image(systemName: "xmark").font(.system(size: 12, weight: .bold)) }
@@ -280,8 +280,10 @@ struct KindTabView: View {
     private var subtitle: String {
         if m.files.isEmpty { return style.intro }
         let size = Fmt.bytes(m.targetBytes)
-        if m.selection.isEmpty { return "\(m.files.count) \(style.noun) · \(size)" }
-        return "\(m.selection.count) di \(m.files.count) \(style.noun) " + (fem ? "scelte" : "scelti") + " · \(size)"
+        let noun = String(localized: String.LocalizationValue(style.noun))
+        if m.selection.isEmpty { return String(localized: "\(m.files.count) \(noun) · \(size)") }
+        return fem ? String(localized: "\(m.selection.count) di \(m.files.count) \(noun) scelte · \(size)")
+                   : String(localized: "\(m.selection.count) di \(m.files.count) \(noun) scelti · \(size)")
     }
 
     private var fem: Bool { style.noun == "foto" }
@@ -291,7 +293,7 @@ struct KindTabView: View {
         p.allowsMultipleSelection = true
         p.canChooseDirectories = true
         p.allowedContentTypes = style.types
-        p.message = style.kind == .img ? "Scegli le foto" : (style.kind == .video ? "Scegli i video" : "Scegli i file")
+        p.message = style.kind == .img ? String(localized: "Scegli le foto") : (style.kind == .video ? String(localized: "Scegli i video") : String(localized: "Scegli i file"))
         Sheet.choose(p) { urls in if !urls.isEmpty { m.add(urls) } }
     }
 }
@@ -355,7 +357,7 @@ private struct ImageTile: View {
             if img !== image { image = img }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(url.lastPathComponent + (selected ? ", scelta" : ""))
+        .accessibilityLabel(selected ? String(localized: "\(url.lastPathComponent), scelta") : url.lastPathComponent)
         .accessibilityAddTraits(.isButton)
     }
 }
@@ -377,7 +379,7 @@ private struct ImagesInspector: View {
                 }
                 if m.kindCount > 1 {
                     // 2.8.2 · Tipi diversi insieme: si sceglie su quali lavorare
-                    section("Tipi diversi") {
+                    section(String(localized: "Tipi diversi")) {
                         Text("Ogni tipo di file ha le sue azioni. Scegli su quali lavorare:")
                             .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                         ForEach(kinds, id: \.self) { k in
@@ -389,7 +391,7 @@ private struct ImagesInspector: View {
                         }
                     }
                 }
-                if !m.formats.isEmpty { section("Converti in") {
+                if !m.formats.isEmpty { section(String(localized: "Converti in")) {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 78), spacing: 8)], spacing: 8) {
                         ForEach(m.formats) { a in formatButton(a) }
                     }
@@ -414,11 +416,12 @@ private struct ImagesInspector: View {
     /// Su quali file si lavora, in parole.
     private var scope: String {
         let fem = noun == "foto"
-        if m.files.isEmpty { return fem ? "Aggiungi delle foto per iniziare." : (noun == "video" ? "Aggiungi dei video per iniziare." : "Aggiungi dei file per iniziare.") }
+        let shown = String(localized: String.LocalizationValue(noun))
+        if m.files.isEmpty { return fem ? String(localized: "Aggiungi delle foto per iniziare.") : (noun == "video" ? String(localized: "Aggiungi dei video per iniziare.") : String(localized: "Aggiungi dei file per iniziare.")) }
         let n = m.targets.count
-        if !m.selection.isEmpty { return n == 1 ? (fem ? "Sulla foto scelta" : "Sul \(noun) scelto") : (fem ? "Sulle \(n) foto scelte" : "Sui \(n) \(noun) scelti") }
-        if n == 1 { return fem ? "Sulla foto" : (noun == "video" ? "Sul video" : "Sul file") }
-        return fem ? "Su tutte le \(n) foto" : "Su tutti i \(n) \(noun)"
+        if !m.selection.isEmpty { return n == 1 ? (fem ? String(localized: "Sulla foto scelta") : String(localized: "Sul \(shown) scelto")) : (fem ? String(localized: "Sulle \(n) foto scelte") : String(localized: "Sui \(n) \(shown) scelti")) }
+        if n == 1 { return fem ? String(localized: "Sulla foto") : (noun == "video" ? String(localized: "Sul video") : String(localized: "Sul file")) }
+        return fem ? String(localized: "Su tutte le \(n) foto") : String(localized: "Su tutti i \(n) \(shown)")
     }
 
     private var kinds: [Kind] {
@@ -452,7 +455,10 @@ private struct ImagesInspector: View {
         .buttonStyle(Pressable())
         .help(a.title + (a.hint.isEmpty ? "" : " · " + a.hint))
         .accessibilityLabel(a.title)
-        .accessibilityValue(m.estimates[a.id].map { "peso previsto " + SizeEstimate.label($0).replacingOccurrences(of: "≈ ", with: "circa ") } ?? "")
+        .accessibilityValue(m.estimates[a.id].map { b -> String in
+            let s = SizeEstimate.label(b).replacingOccurrences(of: "≈ ", with: String(localized: "circa "))
+            return String(localized: "peso previsto \(s)")
+        } ?? "")
     }
 
     private func toolRow(_ a: Action) -> some View {
@@ -479,6 +485,6 @@ private struct ImagesInspector: View {
         }
         .buttonStyle(Pressable())
         .onHover { hovered = $0 ? a.id : (hovered == a.id ? nil : hovered) }
-        .help(a.param != nil ? "Prima scegli le opzioni, poi parte" : "Parte subito")
+        .help(a.param != nil ? String(localized: "Prima scegli le opzioni, poi parte") : String(localized: "Parte subito"))
     }
 }

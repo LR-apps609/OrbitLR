@@ -12,7 +12,7 @@ import CoreImage
 
 struct VPText: Codable, Equatable, Identifiable, Sendable {
     var id = UUID()
-    var text = "Il tuo testo"
+    var text = String(localized: "Il tuo testo")
     /// «title» Titolo, «subtitle» Sottotitolo, «caption» Didascalia, «big» Grande
     var style = "title"
     var start = 0.0
@@ -31,11 +31,11 @@ struct VPText: Codable, Equatable, Identifiable, Sendable {
     /// «under» (sottolineata). nil = colorata, come nella 3.8.
     var wordStyle: String? = nil
 
-    static let wordStyles: [(id: String, name: String)] = [("color", "Colorata"), ("box", "Evidenziata"), ("big", "Più grande"), ("under", "Sottolineata")]
+    static let wordStyles: [(id: String, name: String)] = [("color", String(localized: "Colorata")), ("box", String(localized: "Evidenziata")), ("big", String(localized: "Più grande")), ("under", String(localized: "Sottolineata"))]
 
-    static let styles: [(id: String, name: String)] = [("title", "Titolo"), ("subtitle", "Sottotitolo"), ("caption", "Didascalia"), ("big", "Grande")]
-    static let anims: [(id: String, name: String)] = [("fade", "Dissolvenza"), ("slide", "Scorrimento"), ("pop", "Pop"),
-                                                       ("type", "Macchina da scrivere"), ("word", "Parola per parola")]
+    static let styles: [(id: String, name: String)] = [("title", String(localized: "Titolo")), ("subtitle", String(localized: "Sottotitolo")), ("caption", String(localized: "Didascalia")), ("big", String(localized: "Grande"))]
+    static let anims: [(id: String, name: String)] = [("fade", String(localized: "Dissolvenza")), ("slide", String(localized: "Scorrimento")), ("pop", String(localized: "Pop")),
+                                                       ("type", String(localized: "Macchina da scrivere")), ("word", String(localized: "Parola per parola"))]
 
     /// 4.0 · La parola accesa in un certo momento (per «Parola per parola»).
     func wordIndex(at time: Double) -> Int {
@@ -65,8 +65,8 @@ struct VPText: Codable, Equatable, Identifiable, Sendable {
     static func wordCount(_ text: String) -> Int { wordRanges(text).count }
 
     static let colors: [(id: String, name: String, rgb: (Double, Double, Double))] = [
-        ("white", "Bianco", (1, 1, 1)), ("black", "Nero", (0.08, 0.08, 0.08)),
-        ("brass", "Ottone", (0.85, 0.67, 0.38)), ("sage", "Salvia", (0.62, 0.78, 0.63)),
+        ("white", String(localized: "Bianco"), (1, 1, 1)), ("black", String(localized: "Nero"), (0.08, 0.08, 0.08)),
+        ("brass", String(localized: "Ottone"), (0.85, 0.67, 0.38)), ("sage", String(localized: "Salvia"), (0.62, 0.78, 0.63)),
     ]
 
     /// Posizione di partenza adatta al modello.
@@ -284,7 +284,7 @@ struct TextOptions: View {
         t.start = min(max(0, s.clock.time), max(0, total - 1))
         t.end = min(total, t.start + 3)
         let id = t.id
-        s.change(undo, "Aggiungi un testo") { p in p.texts = (p.texts ?? []) + [t] }
+        s.change(undo, String(localized: "Aggiungi un testo")) { p in p.texts = (p.texts ?? []) + [t] }
         s.selectedText = id
         s.seek(t.start + 0.05)
         s.focusTextPending = true
@@ -305,7 +305,7 @@ struct TextOptions: View {
             } label: {
                 HStack(spacing: 6) {
                     if listening { ProgressView().controlSize(.small) } else { Image(systemName: "captions.bubble") }
-                    Text(listening ? "Ascolto le clip…" : "Sottotitoli automatici")
+                    Text(listening ? String(localized: "Ascolto le clip…") : String(localized: "Sottotitoli automatici"))
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -322,7 +322,7 @@ struct TextOptions: View {
                             s.seek(t.start + 0.05)
                         } label: {
                             HStack {
-                                Text("\(i + 1). " + (t.text.isEmpty ? "(vuoto)" : t.text)).lineLimit(1)
+                                Text("\(i + 1). " + (t.text.isEmpty ? String(localized: "(vuoto)") : t.text)).lineLimit(1)
                                 Spacer(minLength: 4)
                                 Text(formatShort(t.start)).monospacedDigit().foregroundStyle(.secondary)
                             }
@@ -344,31 +344,31 @@ struct TextOptions: View {
                 .lineLimit(1...4)
                 .textFieldStyle(.roundedBorder)
                 .focused($focused)
-                row("Modello") {
-                    Picker("", selection: Binding(get: { t.style }, set: { v in edit("Modello del testo") { $0.style = v; $0.y = VPText.defaultY(v) } })) {
+                row(String(localized: "Modello")) {
+                    Picker("", selection: Binding(get: { t.style }, set: { v in edit(String(localized: "Modello del testo")) { $0.style = v; $0.y = VPText.defaultY(v) } })) {
                         ForEach(VPText.styles, id: \.id) { Text($0.name).tag($0.id) }
                     }
                     .labelsHidden().frame(width: 150)
                 }
-                row("Animazione") {
-                    Picker("", selection: Binding(get: { t.anim }, set: { v in edit("Animazione del testo") { $0.anim = v } })) {
+                row(String(localized: "Animazione")) {
+                    Picker("", selection: Binding(get: { t.anim }, set: { v in edit(String(localized: "Animazione del testo")) { $0.anim = v } })) {
                         ForEach(VPText.anims, id: \.id) { Text($0.name).tag($0.id) }
                     }
                     .labelsHidden().frame(width: 150)
                 }
                 if t.anim == "word" {
-                    row("Parola detta") {
-                        Picker("", selection: Binding(get: { t.wordStyle ?? "color" }, set: { v in edit("Stile della parola detta") { $0.wordStyle = v } })) {
+                    row(String(localized: "Parola detta")) {
+                        Picker("", selection: Binding(get: { t.wordStyle ?? "color" }, set: { v in edit(String(localized: "Stile della parola detta")) { $0.wordStyle = v } })) {
                             ForEach(VPText.wordStyles, id: \.id) { Text($0.name).tag($0.id) }
                         }
                         .labelsHidden().frame(width: 150)
                         .help("Come si accende la parola mentre viene detta")
                     }
                 }
-                row("Colore") {
+                row(String(localized: "Colore")) {
                     HStack(spacing: 6) {
                         ForEach(VPText.colors, id: \.id) { c in
-                            Button { edit("Colore del testo") { $0.color = c.id } } label: {
+                            Button { edit(String(localized: "Colore del testo")) { $0.color = c.id } } label: {
                                 Circle().fill(Color(.sRGB, red: c.rgb.0, green: c.rgb.1, blue: c.rgb.2))
                                     .frame(width: 20, height: 20)
                                     .overlay(Circle().strokeBorder(t.color == c.id ? Theme.brass : Theme.ink.opacity(0.25), lineWidth: t.color == c.id ? 2.5 : 1))
@@ -377,13 +377,13 @@ struct TextOptions: View {
                         }
                     }
                 }
-                row("Quando") {
+                row(String(localized: "Quando")) {
                     Text("\(formatShort(t.start)) → \(formatShort(t.end))").font(.system(size: 12)).monospacedDigit()
                 }
                 HStack(spacing: 6) {
-                    Button("Inizia qui") { let now = s.clock.time; edit("Inizio del testo") { $0.start = min(now, $0.end - 0.3) } }
+                    Button("Inizia qui") { let now = s.clock.time; edit(String(localized: "Inizio del testo")) { $0.start = min(now, $0.end - 0.3) } }
                         .help("Il testo comincia nel punto dell’indicatore")
-                    Button("Finisci qui") { let now = s.clock.time; edit("Fine del testo") { $0.end = max(now, $0.start + 0.3) } }
+                    Button("Finisci qui") { let now = s.clock.time; edit(String(localized: "Fine del testo")) { $0.end = max(now, $0.start + 0.3) } }
                         .help("Il testo finisce nel punto dell’indicatore")
                     Spacer()
                     Button(role: .destructive) { remove() } label: { Image(systemName: "trash") }
@@ -404,7 +404,7 @@ struct TextOptions: View {
         .onChange(of: focused) { _, f in
             s.typing = f
             // 4.1.5 · Quello che scrivi si annulla con ⌘Z (una volta, quando esci dal campo)
-            if f { typingBefore = s.project } else if let b = typingBefore { s.commit(from: b, undo, "Scrivi il testo"); typingBefore = nil }
+            if f { typingBefore = s.project } else if let b = typingBefore { s.commit(from: b, undo, String(localized: "Scrivi il testo")); typingBefore = nil }
         }
         .onChange(of: s.focusTextPending) { _, _ in focusIfAsked() }
         .onDisappear { s.typing = false }
@@ -427,7 +427,7 @@ struct TextOptions: View {
 
     private func remove() {
         guard let id = s.selectedText else { return }
-        s.change(undo, "Rimuovi il testo") { p in
+        s.change(undo, String(localized: "Rimuovi il testo")) { p in
             p.texts?.removeAll { $0.id == id }
             if p.texts?.isEmpty == true { p.texts = nil }
         }
@@ -470,7 +470,7 @@ struct TextDragLayer: View {
                                 }
                             }
                             .onEnded { _ in
-                                if let b = before { s.commit(from: b, undo, "Sposta il testo") }
+                                if let b = before { s.commit(from: b, undo, String(localized: "Sposta il testo")) }
                                 before = nil
                             })
                         .onTapGesture(count: 2) { s.selectedText = t.id; s.focusTextPending = true }

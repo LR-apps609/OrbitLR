@@ -88,7 +88,7 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
         let ok = right.filter { Self.readable.contains(Catalog.norm($0.pathExtension)) }
         let other = right.filter { !Self.readable.contains(Catalog.norm($0.pathExtension)) }
         if !other.isEmpty {
-            notice = other.count == 1 ? "Preparo «\(other[0].lastPathComponent)»: si apre tra poco." : "Preparo \(other.count) file: si aprono tra poco."
+            notice = other.count == 1 ? String(localized: "Preparo «\(other[0].lastPathComponent)»: si apre tra poco.") : String(localized: "Preparo \(other.count) file: si aprono tra poco.")
             let target = videoTab ? "mp4" : "m4a"
             let kind: Kind = videoTab ? .video : (Catalog.kind(of: other[0]) ?? .audio)
             AutoConvert.prepare(other, to: target, kind: kind) { [weak self] ready in
@@ -99,7 +99,7 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
         }
         guard !ok.isEmpty else {
             if right.isEmpty {
-                notice = videoTab ? "Qui si aprono solo i video." : "Qui si aprono file audio (o video, per usarne l’audio)."
+                notice = videoTab ? String(localized: "Qui si aprono solo i video.") : String(localized: "Qui si aprono file audio (o video, per usarne l’audio).")
                 NSSound.beep()
             }
             return
@@ -188,7 +188,7 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
         p.allowsMultipleSelection = true
         p.canChooseDirectories = false
         p.allowedContentTypes = videoTab ? [.movie] : [.audio, .movie]
-        p.prompt = append ? "Aggiungi" : "Apri"
+        p.prompt = append ? String(localized: "Aggiungi") : String(localized: "Apri")
         Sheet.choose(p) { [weak self] urls in if !urls.isEmpty { self?.load(urls, append: append) } }
     }
 }
@@ -214,7 +214,7 @@ struct MediaDropZone: View {
                     Circle().fill(Theme.color(kind).opacity(0.16)).frame(width: 96, height: 96)
                     Image(systemName: Theme.symbol(kind)).font(.system(size: 36, weight: .semibold)).foregroundStyle(Theme.color(kind))
                 }
-                Text(targeted ? "Rilascia per aprire" : title).font(.system(size: 19, weight: .bold))
+                Text(targeted ? String(localized: "Rilascia per aprire") : title).font(.system(size: 19, weight: .bold))
                 Text(subtitle).font(.system(size: 12.5)).foregroundStyle(.secondary).multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -271,28 +271,28 @@ struct JobStrip: View {
         let d = u.deletingLastPathComponent()
         let home = Paths.home.path
         switch d.path {
-        case home + "/Desktop": return "Scrivania"
-        case home + "/Downloads": return "Download"
-        case home + "/Documents": return "Documenti"
-        case home + "/Movies": return "Filmati"
-        case home + "/Music": return "Musica"
-        case home + "/Pictures": return "Immagini"
+        case home + "/Desktop": return String(localized: "Scrivania")
+        case home + "/Downloads": return String(localized: "Download")
+        case home + "/Documents": return String(localized: "Documenti")
+        case home + "/Movies": return String(localized: "Filmati")
+        case home + "/Music": return String(localized: "Musica")
+        case home + "/Pictures": return String(localized: "Immagini")
         default: return "«" + d.lastPathComponent + "»"
         }
     }
 
     private var statusText: String {
         switch job.state {
-        case .waiting: return "In attesa"
+        case .waiting: return String(localized: "In attesa")
         case .running: return job.status
         case .done:
             // Sempre anche la cartella: il file creato si trova subito
             let folder = job.outputs.first.map { Self.folderName($0) } ?? ""
             let gain = job.gainText.isEmpty ? "" : " · " + job.gainText
-            return (job.outputs.count == 1 ? "«\(job.outputs[0].lastPathComponent)» in \(folder)"
-                : "\(job.outputs.count) file in \(folder)") + gain
-        case .failed: return job.failures.first ?? "Non riuscito"
-        case .cancelled: return "Interrotto"
+            return (job.outputs.count == 1 ? String(localized: "«\(job.outputs[0].lastPathComponent)» in \(folder)")
+                : String(localized: "\(job.outputs.count) file in \(folder)")) + gain
+        case .failed: return job.failures.first ?? String(localized: "Non riuscito")
+        case .cancelled: return String(localized: "Interrotto")
         }
     }
 }
@@ -356,26 +356,26 @@ enum AudioTool: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .ringtone: return "Suoneria iPhone"
-        case .cut: return "Taglia"
-        case .normalize: return "Volume uniforme"
-        case .voiceclean: return "Voce più pulita"
-        case .speed: return "Velocità"
-        case .silence: return "Rimuovi i silenzi"
-        case .transcribe: return "Trascrivi"
-        case .tts: return "Testo in voce"
-        case .whatsapp: return "Per WhatsApp"
-        case .merge: return "Unisci"
+        case .ringtone: return String(localized: "Suoneria iPhone")
+        case .cut: return String(localized: "Taglia")
+        case .normalize: return String(localized: "Volume uniforme")
+        case .voiceclean: return String(localized: "Voce più pulita")
+        case .speed: return String(localized: "Velocità")
+        case .silence: return String(localized: "Rimuovi i silenzi")
+        case .transcribe: return String(localized: "Trascrivi")
+        case .tts: return String(localized: "Testo in voce")
+        case .whatsapp: return String(localized: "Per WhatsApp")
+        case .merge: return String(localized: "Unisci")
         }
     }
     /// Il nome breve, sul pulsante del pannello.
     var short: String {
         switch self {
-        case .ringtone: return "Suoneria"
-        case .normalize: return "Volume"
-        case .voiceclean: return "Pulisci"
-        case .silence: return "Silenzi"
-        case .tts: return "Voce"
+        case .ringtone: return String(localized: "Suoneria")
+        case .normalize: return String(localized: "Volume")
+        case .voiceclean: return String(localized: "Pulisci")
+        case .silence: return String(localized: "Silenzi")
+        case .tts: return String(localized: "Voce")
         case .whatsapp: return "WhatsApp"
         default: return title
         }
@@ -383,16 +383,16 @@ enum AudioTool: String, CaseIterable, Identifiable {
     /// 2.8.4 · Cosa fare adesso, in una frase.
     var hint: String {
         switch self {
-        case .ringtone: return "Sposta il riquadro sul pezzo che ti piace (fino a 30 secondi): ottieni la suoneria per iPhone."
-        case .cut: return "Trascina le maniglie per tenere solo il pezzo che serve. Tasti I e O mentre ascolti."
-        case .normalize: return "Rende il volume uniforme: né troppo basso né distorto. Per vocali, lezioni e podcast."
-        case .voiceclean: return "Attenua il ronzio e il fruscio di fondo e rende il volume uniforme. La voce resta naturale."
-        case .speed: return "Più lento o più veloce, su tutto il file. La voce mantiene il suo tono."
-        case .silence: return "Toglie le pause lunghe, su tutto il file. Ottimo per lezioni e registrazioni."
-        case .transcribe: return "Le parole diventano testo e sottotitoli, sul Mac, senza internet."
-        case .tts: return "Scrivi o incolla un testo: una voce naturale lo legge in un file audio."
-        case .whatsapp: return "Un vocale leggero con la voce chiara, che parte subito anche con poca rete."
-        case .merge: return "Più file audio in uno solo, nell’ordine dell’elenco."
+        case .ringtone: return String(localized: "Sposta il riquadro sul pezzo che ti piace (fino a 30 secondi): ottieni la suoneria per iPhone.")
+        case .cut: return String(localized: "Trascina le maniglie per tenere solo il pezzo che serve. Tasti I e O mentre ascolti.")
+        case .normalize: return String(localized: "Rende il volume uniforme: né troppo basso né distorto. Per vocali, lezioni e podcast.")
+        case .voiceclean: return String(localized: "Attenua il ronzio e il fruscio di fondo e rende il volume uniforme. La voce resta naturale.")
+        case .speed: return String(localized: "Più lento o più veloce, su tutto il file. La voce mantiene il suo tono.")
+        case .silence: return String(localized: "Toglie le pause lunghe, su tutto il file. Ottimo per lezioni e registrazioni.")
+        case .transcribe: return String(localized: "Le parole diventano testo e sottotitoli, sul Mac, senza internet.")
+        case .tts: return String(localized: "Scrivi o incolla un testo: una voce naturale lo legge in un file audio.")
+        case .whatsapp: return String(localized: "Un vocale leggero con la voce chiara, che parte subito anche con poca rete.")
+        case .merge: return String(localized: "Più file audio in uno solo, nell’ordine dell’elenco.")
         }
     }
     var symbol: String {
@@ -579,15 +579,15 @@ struct AudioTabView: View {
                     }
                 }
                 .card(radius: 14)
-                Text(text.count == 1 ? "1 carattere" : "\(text.count) caratteri").font(.system(size: 12)).foregroundStyle(.secondary)
+                Text(text.count == 1 ? String(localized: "1 carattere") : String(localized: "\(text.count) caratteri")).font(.system(size: 12)).foregroundStyle(.secondary)
             }
             .frame(maxHeight: .infinity)
         } else if let trim = m.trim {
             AudioWave(trim: trim, tint: tint, selection: tool.usesSelection)
         } else {
             VStack(spacing: 10) {
-                MediaDropZone(kind: .audio, title: "Trascina qui un file audio",
-                              subtitle: "oppure clicca per sceglierlo · MP3, M4A, WAV e altri · anche un video, per usarne l’audio",
+                MediaDropZone(kind: .audio, title: String(localized: "Trascina qui un file audio"),
+                              subtitle: String(localized: "oppure clicca per sceglierlo · MP3, M4A, WAV e altri · anche un video, per usarne l’audio"),
                               targeted: targeted) { m.choose(append: false) }
                     .frame(minHeight: 200)
                 DownloaderRow(video: false) { linkText = ""; showLink = true }
@@ -625,7 +625,7 @@ struct AudioTabView: View {
             // Mentre si scrive il testo, Invio va a capo e non avvia
             .keyboardShortcut(tool == .tts ? nil : KeyboardShortcut.defaultAction)
             .disabled(!canStart)
-            .help(canStart ? "" : (tool == .tts ? "Scrivi prima un testo" : (tool == .merge ? "Servono almeno due file" : "Apri prima un file audio")))
+            .help(canStart ? "" : (tool == .tts ? String(localized: "Scrivi prima un testo") : (tool == .merge ? String(localized: "Servono almeno due file") : String(localized: "Apri prima un file audio"))))
             .padding(10)
         }
         .background(RoundedRectangle(cornerRadius: 14).fill(Theme.card))
@@ -658,7 +658,7 @@ struct AudioTabView: View {
             }
             Toggle("Dissolvenza all’inizio e alla fine", isOn: $fade).toggleStyle(.checkbox)
             Toggle("Volume uniforme", isOn: $normalize).toggleStyle(.checkbox)
-            note("Alla fine puoi mandarla all’iPhone con AirDrop o con il codice QR.")
+            note(String(localized: "Alla fine puoi mandarla all’iPhone con AirDrop o con il codice QR."))
         case .cut:
             if let trim = m.trim { SelectionText(trim: trim) }
         case .normalize, .voiceclean, .silence, .whatsapp, .transcribe:
@@ -683,16 +683,16 @@ struct AudioTabView: View {
                 Slider(value: $rate, in: Double(AVSpeechUtteranceMinimumSpeechRate + 0.25)...Double(AVSpeechUtteranceMaximumSpeechRate - 0.25))
             }
             HStack {
-                Button(preview.speaking ? "Ferma" : "Ascolta una prova") {
+                Button(preview.speaking ? String(localized: "Ferma") : String(localized: "Ascolta una prova")) {
                     if preview.speaking { preview.stop() } else { preview.speak(text, voice: voiceId.isEmpty ? nil : voiceId, rate: Float(rate)) }
                 }
                 Button("Altre voci…") { openVoiceSettings() }
                     .help("Impostazioni di Sistema → Accessibilità → Contenuti letti → Voce di sistema → Gestisci voci")
             }
-            note("Le voci «Premium» sono le più naturali. Il file va in Download.")
+            note(String(localized: "Le voci «Premium» sono le più naturali. Il file va in Download."))
         case .merge:
             if m.file == nil {
-                note("Apri il primo file, poi aggiungi gli altri.")
+                note(String(localized: "Apri il primo file, poi aggiungi gli altri."))
             } else {
                 MergeList(m: m, tint: tint)
             }
@@ -700,8 +700,8 @@ struct AudioTabView: View {
     }
 
     private var speedNote: String {
-        guard let d = m.trim?.duration, d > 0, let v = Double(speed), v > 0 else { return "Su tutto il file." }
-        return "Su tutto il file: da \(formatShort(d)) a circa \(formatShort(d / v))."
+        guard let d = m.trim?.duration, d > 0, let v = Double(speed), v > 0 else { return String(localized: "Su tutto il file.") }
+        return String(localized: "Su tutto il file: da \(formatShort(d)) a circa \(formatShort(d / v)).")
     }
 
     private var voices: [AVSpeechSynthesisVoice] {
@@ -714,16 +714,16 @@ struct AudioTabView: View {
 
     private var actionTitle: String {
         switch tool {
-        case .ringtone: return "Crea la suoneria"
-        case .cut: return "Taglia"
-        case .normalize: return "Rendi uniforme il volume"
-        case .voiceclean: return "Pulisci la voce"
-        case .speed: return "Cambia la velocità"
-        case .silence: return "Rimuovi i silenzi"
-        case .transcribe: return "Trascrivi"
-        case .tts: return "Crea il file audio"
-        case .whatsapp: return "Crea il vocale"
-        case .merge: return m.allFiles.count >= 2 ? "Unisci \(m.allFiles.count) file" : "Unisci"
+        case .ringtone: return String(localized: "Crea la suoneria")
+        case .cut: return String(localized: "Taglia")
+        case .normalize: return String(localized: "Rendi uniforme il volume")
+        case .voiceclean: return String(localized: "Pulisci la voce")
+        case .speed: return String(localized: "Cambia la velocità")
+        case .silence: return String(localized: "Rimuovi i silenzi")
+        case .transcribe: return String(localized: "Trascrivi")
+        case .tts: return String(localized: "Crea il file audio")
+        case .whatsapp: return String(localized: "Crea il vocale")
+        case .merge: return m.allFiles.count >= 2 ? String(localized: "Unisci \(m.allFiles.count) file") : String(localized: "Unisci")
         }
     }
 
@@ -784,7 +784,7 @@ private struct PlayButton: View {
     let tint: Color
     var body: some View {
         Button { trim.togglePlay() } label: {
-            Label(trim.playing ? "Pausa" : "Ascolta la selezione", systemImage: trim.playing ? "pause.fill" : "play.fill")
+            Label(trim.playing ? String(localized: "Pausa") : String(localized: "Ascolta la selezione"), systemImage: trim.playing ? "pause.fill" : "play.fill")
         }
         .keyboardShortcut(.space, modifiers: [])
         .help("Spazio")
@@ -844,17 +844,17 @@ private struct AudioWave: View {
     /// Zoom in larghezza (tempo) e in altezza (onda), più «Selezione» e «Tutto».
     private var zoomBar: some View {
         HStack(spacing: 10) {
-            Text(trim.zoom > 1 ? "Zoom \(Fmt.decimal(trim.zoom, digits: trim.zoom < 10 ? 1 : 0))×" : "Tutto il file")
+            Text(trim.zoom > 1 ? String(localized: "Zoom \(Fmt.decimal(trim.zoom, digits: trim.zoom < 10 ? 1 : 0))×") : String(localized: "Tutto il file"))
                 .font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary).monospacedDigit()
             Spacer()
-            zoomPair(icon: "arrow.left.and.right", label: "Larghezza",
+            zoomPair(icon: "arrow.left.and.right", label: String(localized: "Larghezza"),
                      minus: { trim.zoomOut() }, plus: { trim.zoomIn() },
                      canMinus: trim.zoom > 1, canPlus: trim.zoom < trim.maxZoom,
-                     help: "Allarga o restringi il tempo: al massimo si vede un quarto di secondo, per tagliare al millesimo. Anche pizzicando il trackpad o con ⌘ e la rotellina.")
-            zoomPair(icon: "arrow.up.and.down", label: "Altezza",
+                     help: String(localized: "Allarga o restringi il tempo: al massimo si vede un quarto di secondo, per tagliare al millesimo. Anche pizzicando il trackpad o con ⌘ e la rotellina."))
+            zoomPair(icon: "arrow.up.and.down", label: String(localized: "Altezza"),
                      minus: { trim.gain = max(1, trim.gain / 1.5) }, plus: { trim.gain = min(TrimModel.maxGain, trim.gain * 1.5) },
                      canMinus: trim.gain > 1.01, canPlus: trim.gain < TrimModel.maxGain - 0.01,
-                     help: "Riquadro più alto: si vedono meglio i suoni bassi e i silenzi")
+                     help: String(localized: "Riquadro più alto: si vedono meglio i suoni bassi e i silenzi"))
             if selection {
                 Button("Selezione") { trim.zoomToSelection() }.controlSize(.small)
                     .help("Ingrandisce sul pezzo scelto, per rifinire inizio e fine")

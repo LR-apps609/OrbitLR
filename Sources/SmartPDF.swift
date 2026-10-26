@@ -22,8 +22,8 @@ enum SmartPDF {
     }
 
     static func compress(_ src: URL, level: String, dir: URL) throws -> URL {
-        guard let doc = PDFDocument(url: src) else { throw NativeError("PDF danneggiato o non valido") }
-        if doc.isLocked { throw NativeError("il PDF è protetto da password: toglila prima con «Togli la password»") }
+        guard let doc = PDFDocument(url: src) else { throw NativeError(String(localized: "PDF danneggiato o non valido")) }
+        if doc.isLocked { throw NativeError(String(localized: "il PDF è protetto da password: toglila prima con «Togli la password»")) }
         let base = src.deletingPathExtension().lastPathComponent
         let out = Destination.unique(dir, base: "\(base) (compresso)", ext: "pdf")
         let before = Job.size(of: src)
@@ -46,15 +46,15 @@ enum SmartPDF {
             }
         }
         let after = Job.size(of: out)
-        guard after > 0 else { throw NativeError("non riesco a scrivere il PDF compresso") }
+        guard after > 0 else { throw NativeError(String(localized: "non riesco a scrivere il PDF compresso")) }
         // Deve restare un PDF valido, con tutte le pagine
         guard PDFDocument(url: out)?.pageCount == doc.pageCount else {
             try? FileManager.default.removeItem(at: out)
-            throw NativeError("la compressione ha rovinato il PDF: lascio l'originale")
+            throw NativeError(String(localized: "la compressione ha rovinato il PDF: lascio l'originale"))
         }
         if before > 0, after >= before * 97 / 100 {
             try? FileManager.default.removeItem(at: out)
-            throw NativeError("«\(src.lastPathComponent)» è già compresso al massimo")
+            throw NativeError(String(localized: "«\(src.lastPathComponent)» è già compresso al massimo"))
         }
         return out
     }

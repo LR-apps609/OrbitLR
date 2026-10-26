@@ -99,13 +99,14 @@ struct ResultBubbleView: View {
         guard let e = entry, let b = e.before, let a = e.after, b > 0, a < b else { return nil }
         let pct = Int((Double(b - a) / Double(b) * 100).rounded())
         guard pct >= 1 else { return nil }
-        return "−\(pct)% · risparmiati \(Fmt.bytes(b - a))"
+        let saved = Fmt.bytes(b - a)
+        return String(localized: "−\(pct)% · risparmiati \(saved)")
     }
 
     private var folderName: String {
         guard let f = job.outputs.first?.deletingLastPathComponent() else { return "" }
-        if f.path == FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.path { return "Download" }
-        if f.path == FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first?.path { return "Scrivania" }
+        if f.path == FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.path { return String(localized: "Download") }
+        if f.path == FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first?.path { return String(localized: "Scrivania") }
         return f.lastPathComponent
     }
 
@@ -123,7 +124,7 @@ struct ResultBubbleView: View {
                     Text("Annullato").font(.system(size: 13, weight: .bold))
                     Text("Il file creato è nel Cestino; l’originale è dov’era.").font(.system(size: 11.5)).foregroundStyle(.secondary)
                 case .done where !job.outputs.isEmpty:
-                    Text(job.outputs.count == 1 ? "Salvato in «\(folderName)»" : "\(job.outputs.count) file in «\(folderName)»")
+                    Text(job.outputs.count == 1 ? String(localized: "Salvato in «\(folderName)»") : String(localized: "\(job.outputs.count) file in «\(folderName)»"))
                         .font(.system(size: 13, weight: .bold))
                     Text([job.outputs.count == 1 ? job.outputs[0].lastPathComponent : nil, sizeText.isEmpty ? nil : sizeText].compactMap { $0 }.joined(separator: " · "))
                         .font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
@@ -147,7 +148,7 @@ struct ResultBubbleView: View {
                             Text("Ti piace OrbitLR?").font(.system(size: 11.5)).foregroundStyle(.secondary)
                             ForEach(Feedback.faces, id: \.id) { f in
                                 Button(f.emoji) { Feedback.show(face: f.id); close() }
-                                    .buttonStyle(.plain).font(.system(size: 16)).help(f.name)
+                                    .buttonStyle(.plain).font(.system(size: 16)).help(String(localized: String.LocalizationValue(f.name)))
                             }
                             Button("No grazie") { Feedback.markAsked(); ask = false }
                                 .buttonStyle(.link).font(.system(size: 11))
@@ -158,7 +159,7 @@ struct ResultBubbleView: View {
                     Text(job.notes.first ?? job.title).font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(2)
                 case .failed:
                     Text("Non riuscito").font(.system(size: 13, weight: .bold))
-                    Text(job.failures.first ?? "Apri OrbitLR per i dettagli").font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(2)
+                    Text(job.failures.first ?? String(localized: "Apri OrbitLR per i dettagli")).font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(2)
                 case .cancelled:
                     Text("Interrotto").font(.system(size: 13, weight: .bold))
                 default:

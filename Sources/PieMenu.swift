@@ -380,8 +380,11 @@ struct PieView: View {
         .animation(.spring(response: 0.22, dampingFraction: 0.7), value: on)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(a.title)
-        .accessibilityValue(model.estimates[a.id].map { "peso previsto " + SizeEstimate.label($0).replacingOccurrences(of: "≈ ", with: "circa ") } ?? "")
-        .accessibilityHint(i < 9 ? "\(a.hint). Tasto \(i + 1)" : a.hint)
+        .accessibilityValue(model.estimates[a.id].map { b in
+            let v = SizeEstimate.label(b).replacingOccurrences(of: "≈ ", with: String(localized: "circa "))
+            return String(localized: "peso previsto \(v)")
+        } ?? "")
+        .accessibilityHint(i < 9 ? String(localized: "\(a.hint). Tasto \(i + 1)") : a.hint)
         .accessibilityAddTraits(.isButton)
         .accessibilityAction { model.pick(i) }
     }
@@ -396,7 +399,7 @@ struct PieView: View {
                 Text(a.title).font(.system(size: 14, weight: .bold)).multilineTextAlignment(.center).lineLimit(2)
                 Text(a.hint).font(.system(size: 11)).foregroundStyle(.secondary).multilineTextAlignment(.center).lineLimit(3)
                 if let b = model.estimates[a.id] {
-                    Text(SizeEstimate.label(b) + (model.currentBytes > 0 ? " (ora " + Fmt.bytes(model.currentBytes) + ")" : ""))
+                    Text(SizeEstimate.label(b) + (model.currentBytes > 0 ? " " + String(localized: "(ora \(Fmt.bytes(model.currentBytes)))") : ""))
                         .font(.system(size: 11, weight: .semibold, design: .rounded)).monospacedDigit()
                         .foregroundStyle(estimateColor(b))
                 }
@@ -542,7 +545,7 @@ final class PieController: @unchecked Sendable {
         mergeDone = false
         if pending.isEmpty {
             let a = NSAlert()
-            a.messageText = subs.isEmpty ? "Nessun file supportato" : "Seleziona il video insieme al file .srt"
+            a.messageText = subs.isEmpty ? String(localized: "Nessun file supportato") : String(localized: "Seleziona il video insieme al file .srt")
             a.runModal()
             return
         }
@@ -592,9 +595,9 @@ final class PieController: @unchecked Sendable {
             model.loadEstimates(files: files, kind: kind)
         }
         model.lastId = UserDefaults.standard.string(forKey: "last_" + kind.rawValue)
-        if let a = model.lastAction { model.subtitle = "Invio: " + a.short }
-        else if let s = model.suggestedAction { model.subtitle = "Consigliato: " + s.short }
-        else { model.subtitle = "Scegli un formato" }
+        if let a = model.lastAction { model.subtitle = String(localized: "Invio: \(a.short)") }
+        else if let s = model.suggestedAction { model.subtitle = String(localized: "Consigliato: \(s.short)") }
+        else { model.subtitle = String(localized: "Scegli un formato") }
         model.onClose = { [weak self] in self?.close(); self?.pending = [] }
         model.onPick = { [weak self] chosen in
             guard let self else { return }

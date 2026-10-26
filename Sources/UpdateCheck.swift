@@ -69,16 +69,16 @@ enum UpdateCheck {
         UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: lastKey)
         let rel: Release?
         do { rel = try await latest() } catch {
-            if userInitiated { info("Non riesco a controllare gli aggiornamenti", "Controlla di essere connesso a internet e riprova.") }
+            if userInitiated { info(String(localized: "Non riesco a controllare gli aggiornamenti"), String(localized: "Controlla di essere connesso a internet e riprova.")) }
             return
         }
         guard let rel else {
-            if userInitiated { info("Non riesco a controllare gli aggiornamenti", "GitHub non ha risposto come previsto. Riprova più tardi.") }
+            if userInitiated { info(String(localized: "Non riesco a controllare gli aggiornamenti"), String(localized: "GitHub non ha risposto come previsto. Riprova più tardi.")) }
             return
         }
         guard News.newer(rel.version, than: current) else {
             UpdateBadge.shared.available = nil
-            if userInitiated { info("Hai già l’ultima versione", "OrbitLR \(current) è la più recente.") }
+            if userInitiated { info(String(localized: "Hai già l’ultima versione"), String(localized: "OrbitLR \(current) è la più recente.")) }
             return
         }
         // Una versione che hai scelto di saltare non si ripropone da sola (ma «Controlla aggiornamenti» sì)
@@ -89,11 +89,11 @@ enum UpdateCheck {
             return
         }
         let a = NSAlert()
-        a.messageText = "È disponibile OrbitLR \(rel.version)"
-        a.informativeText = "Hai la \(current). La scarico e la installo? Ci vogliono pochi secondi e OrbitLR si riapre da sola."
-        a.addButton(withTitle: "Scarica e installa")
-        a.addButton(withTitle: "Più tardi")
-        a.addButton(withTitle: "Salta questa versione")
+        a.messageText = String(localized: "È disponibile OrbitLR \(rel.version)")
+        a.informativeText = String(localized: "Hai la \(current). La scarico e la installo? Ci vogliono pochi secondi e OrbitLR si riapre da sola.")
+        a.addButton(withTitle: String(localized: "Scarica e installa"))
+        a.addButton(withTitle: String(localized: "Più tardi"))
+        a.addButton(withTitle: String(localized: "Salta questa versione"))
         NSApp.activate()
         switch a.runModal() {
         case .alertFirstButtonReturn: await download(rel)
@@ -123,10 +123,10 @@ enum UpdateCheck {
             try fm.moveItem(at: tmp, to: dest)
         } catch {
             let a = NSAlert()
-            a.messageText = "Il download non è riuscito"
-            a.informativeText = "Riprova, oppure scarica l’aggiornamento dalla pagina di GitHub e aprilo con un doppio clic."
-            a.addButton(withTitle: "Apri la pagina")
-            a.addButton(withTitle: "Chiudi")
+            a.messageText = String(localized: "Il download non è riuscito")
+            a.informativeText = String(localized: "Riprova, oppure scarica l’aggiornamento dalla pagina di GitHub e aprilo con un doppio clic.")
+            a.addButton(withTitle: String(localized: "Apri la pagina"))
+            a.addButton(withTitle: String(localized: "Chiudi"))
             if a.runModal() == .alertFirstButtonReturn { NSWorkspace.shared.open(rel.page) }
             return
         }
@@ -138,7 +138,7 @@ enum UpdateCheck {
         let a = NSAlert()
         a.messageText = title
         a.informativeText = text
-        a.addButton(withTitle: "OK")
+        a.addButton(withTitle: String(localized: "OK"))
         NSApp.activate()
         a.runModal()
     }
@@ -160,7 +160,7 @@ struct UpdateBadgeButton: View {
     var body: some View {
         if let rel = badge.available {
             Button { Task { @MainActor in await UpdateCheck.install(rel) } } label: {
-                Label(badge.installing ? "Scarico l’aggiornamento…" : "Nuovo aggiornamento: \(rel.version)",
+                Label(badge.installing ? String(localized: "Scarico l’aggiornamento…") : String(localized: "Nuovo aggiornamento: \(rel.version)"),
                       systemImage: badge.installing ? "arrow.down.circle" : "arrow.down.circle.fill")
                     .labelStyle(.titleAndIcon)
                     .font(.system(size: 12.5, weight: .bold))

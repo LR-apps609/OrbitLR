@@ -71,11 +71,11 @@ enum VideoProjectLibrary {
 
     static func displayName(_ p: VideoProject) -> String {
         let n = p.name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return n.isEmpty ? "Progetto senza nome" : n
+        return n.isEmpty ? String(localized: "Progetto senza nome") : n
     }
 
     /// «Progetto 1», «Progetto 2»… il primo numero libero.
-    static func uniqueName(existing: [String], base: String = "Progetto") -> String {
+    static func uniqueName(existing: [String], base: String = String(localized: "Progetto")) -> String {
         let taken = Set(existing)
         var n = 1
         while taken.contains("\(base) \(n)") { n += 1 }
@@ -92,7 +92,7 @@ enum VideoProjectLibrary {
     /// Copia del progetto con un nome nuovo («… copia»). Restituisce l'id della copia.
     static func duplicate(_ id: UUID, in folder: URL, existing: [String]) -> UUID? {
         guard var p = read(url(for: id, in: folder)) else { return nil }
-        let base = displayName(p) + " copia"
+        let base = String(localized: "\(displayName(p)) copia")
         p.name = existing.contains(base) ? uniqueName(existing: existing, base: base) : base
         let new = UUID()
         queue.sync { save(p, to: url(for: new, in: folder)) }
@@ -206,8 +206,8 @@ struct VideoProjectsView: View {
                 TitleAccent(color: Theme.color(.video))
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Video").font(.system(size: 22, weight: .bold, design: .rounded))
-                    Text(s.library.isEmpty ? "Trascina qui dei video per iniziare un montaggio."
-                                           : "Clicca un progetto per riprenderlo da dove eri rimasto.")
+                    Text(s.library.isEmpty ? String(localized: "Trascina qui dei video per iniziare un montaggio.")
+                                           : String(localized: "Clicca un progetto per riprenderlo da dove eri rimasto."))
                         .font(.system(size: 12.5)).foregroundStyle(.secondary)
                 }
                 VideoModeSwitch().padding(.leading, 8)
@@ -223,8 +223,8 @@ struct VideoProjectsView: View {
                 Label(n, systemImage: "info.circle").font(.system(size: 12.5)).foregroundStyle(.secondary)
             }
             if s.library.isEmpty {
-                MediaDropZone(kind: .video, title: "Trascina qui i video",
-                              subtitle: "si apre un progetto nuovo · MP4, MOV, M4V · più video vanno in fila",
+                MediaDropZone(kind: .video, title: String(localized: "Trascina qui i video"),
+                              subtitle: String(localized: "si apre un progetto nuovo · MP4, MOV, M4V · più video vanno in fila"),
                               targeted: targeted) { s.newProject(undo) }
                 DownloaderRow(video: true) { linkText = ""; showLink = true }
                 // 3.9 · Per TikTok, Reels e Shorts si parte già in verticale
@@ -268,22 +268,22 @@ struct VideoProjectsView: View {
 
     private func rename(_ e: VPEntry) {
         let a = NSAlert()
-        a.messageText = "Rinomina il progetto"
+        a.messageText = String(localized: "Rinomina il progetto")
         let field = NSTextField(string: e.name)
         field.frame = NSRect(x: 0, y: 0, width: 260, height: 24)
         a.accessoryView = field
-        a.addButton(withTitle: "Rinomina")
-        a.addButton(withTitle: "Annulla")
+        a.addButton(withTitle: String(localized: "Rinomina"))
+        a.addButton(withTitle: String(localized: "Annulla"))
         a.window.initialFirstResponder = field
         Sheet.confirm(a) { ok in if ok { s.renameProject(e.id, to: field.stringValue) } }
     }
 
     private func delete(_ e: VPEntry) {
         let a = NSAlert()
-        a.messageText = "Eliminare «\(e.name)»?"
-        a.informativeText = "Il progetto va nel Cestino, da dove puoi ancora recuperarlo. I tuoi video non vengono toccati."
-        a.addButton(withTitle: "Elimina")
-        a.addButton(withTitle: "Annulla")
+        a.messageText = String(localized: "Eliminare «\(e.name)»?")
+        a.informativeText = String(localized: "Il progetto va nel Cestino, da dove puoi ancora recuperarlo. I tuoi video non vengono toccati.")
+        a.addButton(withTitle: String(localized: "Elimina"))
+        a.addButton(withTitle: String(localized: "Annulla"))
         Sheet.confirm(a) { ok in if ok { withAnimation(Motion.quick) { s.deleteProject(e.id, undo: undo) } } }
     }
 }
@@ -303,8 +303,8 @@ private struct NewProjectCard: View {
                     Circle().fill(tint.opacity(0.16)).frame(width: 54, height: 54)
                     Image(systemName: vertical ? "rectangle.portrait" : "plus").font(.system(size: 22, weight: .bold)).foregroundStyle(tint)
                 }
-                Text(vertical ? "Nuovo verticale 9:16" : "Nuovo progetto").font(.system(size: 13, weight: .semibold))
-                Text(vertical ? "TikTok, Reels, Shorts" : "o trascina qui dei video").font(.system(size: 11.5)).foregroundStyle(.secondary)
+                Text(vertical ? String(localized: "Nuovo verticale 9:16") : String(localized: "Nuovo progetto")).font(.system(size: 13, weight: .semibold))
+                Text(vertical ? "TikTok, Reels, Shorts" : String(localized: "o trascina qui dei video")).font(.system(size: 11.5)).foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity).frame(height: 178)
             .background(RoundedRectangle(cornerRadius: 14).fill(hover || targeted ? Theme.cardHover : Theme.card))
@@ -389,6 +389,6 @@ private struct ProjectCard: View {
 
     private var detail: String {
         let when = entry.modified.formatted(.relative(presentation: .named))
-        return "\(entry.clipCount) clip" + (entry.hasMusic ? " · musica" : "") + " · " + when
+        return String(localized: "\(entry.clipCount) clip") + (entry.hasMusic ? String(localized: " · musica") : "") + " · " + when
     }
 }

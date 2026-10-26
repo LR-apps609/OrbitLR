@@ -14,11 +14,11 @@ final class Updater: ObservableObject, @unchecked Sendable {
 
         var text: String {
             switch self {
-            case .prepare: return "Preparo i file…"
-            case .project: return "Controllo la firma…"
-            case .compile: return "Preparo la nuova versione…"
-            case .install: return "Installo…"
-            case .done: return "Fatto! Riapro OrbitLR…"
+            case .prepare: return String(localized: "Preparo i file…")
+            case .project: return String(localized: "Controllo la firma…")
+            case .compile: return String(localized: "Preparo la nuova versione…")
+            case .install: return String(localized: "Installo…")
+            case .done: return String(localized: "Fatto! Riapro OrbitLR…")
             }
         }
     }
@@ -83,12 +83,12 @@ final class Updater: ObservableObject, @unchecked Sendable {
         let newsText = items.map { "• " + $0 }.joined(separator: "\n\n")
         if !confirmed {
             let a = NSAlert()
-            a.messageText = "Installare OrbitLR \(manifest.version)?"
-            a.informativeText = "Versione attuale: \(currentVersion). Aggiornamento firmato da OrbitLR e controllato.\n\nOrbitLR si chiuderà e si riaprirà da sola, già aggiornata. Ci vogliono pochi secondi."
+            a.messageText = String(localized: "Installare OrbitLR \(manifest.version)?")
+            a.informativeText = String(localized: "Versione attuale: \(currentVersion). Aggiornamento firmato da OrbitLR e controllato.\n\nOrbitLR si chiuderà e si riaprirà da sola, già aggiornata. Ci vogliono pochi secondi.")
             // 2.8.7 · Le novità in un riquadro che scorre: la finestra resta piccola e i pulsanti sempre visibili
             if !newsText.isEmpty { a.accessoryView = Self.scrollingText(newsText) }
-            a.addButton(withTitle: "Installa")
-            a.addButton(withTitle: "Annulla")
+            a.addButton(withTitle: String(localized: "Installa"))
+            a.addButton(withTitle: String(localized: "Annulla"))
             NSApp.activate()
             guard a.runModal() == .alertFirstButtonReturn else {
                 try? FileManager.default.removeItem(at: ready.work)       // niente file lasciati in giro
@@ -187,7 +187,7 @@ final class Updater: ObservableObject, @unchecked Sendable {
             // L'integrità del pacchetto dell'app (nessun file cambiato dopo la firma del codice)
             let signOK = sh("/usr/bin/codesign", ["--verify", "--deep", "--strict", app.path]) == 0
             guard archOK, signOK else {
-                return fail(archOK ? "L'app dentro l'aggiornamento non è integra: non la installo." : "Questo aggiornamento non è adatto a questo Mac.")
+                return fail(archOK ? String(localized: "L'app dentro l'aggiornamento non è integra: non la installo.") : String(localized: "Questo aggiornamento non è adatto a questo Mac."))
             }
             enter(.compile)
             install(app)
@@ -200,7 +200,7 @@ final class Updater: ObservableObject, @unchecked Sendable {
         // L'app nuova viene preparata accanto: quella attuale resta intatta finché non è tutto pronto
         let staged = work.appendingPathComponent("OrbitLR.app")
         try? FileManager.default.removeItem(at: staged)
-        if sh("/usr/bin/ditto", [built.path, staged.path]) != 0 { return fail("Non riesco a preparare l’installazione.") }
+        if sh("/usr/bin/ditto", [built.path, staged.path]) != 0 { return fail(String(localized: "Non riesco a preparare l’installazione.")) }
         // La copia compilata non deve risultare come una seconda OrbitLR
         _ = sh(Self.lsregister, ["-u", built.path])
         Thread.sleep(forTimeInterval: 0.5)
@@ -364,7 +364,7 @@ struct UpdateView: View {
                 .padding(.top, 22)
 
             VStack(spacing: 4) {
-                Text(updater.error == nil ? "Aggiorno OrbitLR" : "Aggiornamento non riuscito")
+                Text(updater.error == nil ? String(localized: "Aggiorno OrbitLR") : String(localized: "Aggiornamento non riuscito"))
                     .font(.system(size: 17, weight: .bold, design: .rounded))
                 if !updater.toVersion.isEmpty {
                     Text("\(updater.fromVersion)  →  \(updater.toVersion)")
@@ -417,7 +417,7 @@ struct UpdateView: View {
     private func timeText(p: Double, left: Double) -> String {
         if updater.stage == .done { return "100%" }
         let pct = "\(Int((p * 100).rounded(.down)))%"
-        if left < 1 { return pct + " · quasi finito…" }
+        if left < 1 { return String(localized: "\(pct) · quasi finito…") }
         return pct + " · " + roughDuration(left)
     }
 }

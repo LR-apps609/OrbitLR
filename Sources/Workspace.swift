@@ -95,9 +95,10 @@ final class Workspace: ObservableObject, @unchecked Sendable {
             byKind[k]!.append(f)
         }
         var msg: [String] = []
-        if skippedKinds > 0 { msg.append("al massimo \(Self.maxKinds) tipi di file diversi alla volta") }
-        if skippedFiles > 0 { msg.append("al massimo \(Self.maxPerKind) file dello stesso tipo") }
-        notice = msg.isEmpty ? nil : "Ho tenuto " + msg.joined(separator: " e ") + ": gli altri non sono stati aggiunti."
+        if skippedKinds > 0 { msg.append(String(localized: "al massimo \(Self.maxKinds) tipi di file diversi alla volta")) }
+        if skippedFiles > 0 { msg.append(String(localized: "al massimo \(Self.maxPerKind) file dello stesso tipo")) }
+        let kept = msg.joined(separator: String(localized: " e "))
+        notice = msg.isEmpty ? nil : String(localized: "Ho tenuto \(kept): gli altri non sono stati aggiunti.")
 
         groups = order.compactMap { k in
             guard let f = byKind[k], !f.isEmpty else { return nil }
@@ -154,7 +155,7 @@ final class Workspace: ObservableObject, @unchecked Sendable {
         pie.fileName = gr.files[0].lastPathComponent
         let bytes = gr.files.reduce(Int64(0)) { $0 + Job.size(of: $1) }
         let size = Fmt.bytes(bytes)
-        pie.subtitle = gr.files.count > 1 ? "e altri \(gr.files.count - 1) · \(size)" : size
+        pie.subtitle = gr.files.count > 1 ? String(localized: "e altri \(gr.files.count - 1) · \(size)") : size
         pie.icon = NSWorkspace.shared.icon(forFile: gr.files[0].path)
         pie.onClose = {}
         pie.onPick = { [weak self, weak gr] a in
@@ -269,7 +270,7 @@ struct WorkspaceView: View {
                 EmptyOrbit(open: hoverDrop || targeted)
                 VStack(spacing: 6) {
                     // 3.0 · La frase guida: due passi, niente di più
-                    Text(targeted ? "Rilascia qui" : "Trascina un file. Scegli cosa farne.").font(.system(size: 24, weight: .bold, design: .rounded))
+                    Text(targeted ? String(localized: "Rilascia qui") : String(localized: "Trascina un file. Scegli cosa farne.")).font(.system(size: 24, weight: .bold, design: .rounded))
                     Text("oppure clicca per sceglierlo · dal Finder: clic destro → OrbitLR, oppure ⌥⌘C")
                         .font(.system(size: 13)).foregroundStyle(.secondary)
                 }
@@ -355,9 +356,9 @@ struct WorkspaceView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         } else {
             HStack(spacing: 18) {
-                hint("hand.tap", "Clic su un’azione")
-                if ws.single != nil { hint("keyboard", "1–8 · Invio = ultima scelta") }
-                hint("magnifyingglass", "Scrivi per cercare")
+                hint("hand.tap", String(localized: "Clic su un’azione"))
+                if ws.single != nil { hint("keyboard", String(localized: "1–8 · Invio = ultima scelta")) }
+                hint("magnifyingglass", String(localized: "Scrivi per cercare"))
             }
             .frame(maxWidth: .infinity)
         }
@@ -372,7 +373,7 @@ struct WorkspaceView: View {
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = true
         panel.canChooseFiles = true
-        panel.prompt = "Apri"
+        panel.prompt = String(localized: "Apri")
         Sheet.choose(panel) { urls in if !urls.isEmpty { ws.load(urls, append: append) } }
     }
 }
@@ -400,7 +401,7 @@ struct SinglePie: View {
             VStack(spacing: 10) {
                 Spacer(minLength: 0)
                 PieView(model: group.pie, side: side,
-                        removeHelp: group.files.count > 1 ? "Togli questo file" : "Togli il file",
+                        removeHelp: group.files.count > 1 ? String(localized: "Togli questo file") : String(localized: "Togli il file"),
                         onRemove: { ws.remove(group.files[0], from: group) })
                     .frame(width: side, height: side)
                     .scaleEffect(0.3 + 0.7 * arrive)
@@ -469,12 +470,12 @@ struct MiniPie: View {
     var body: some View {
         VStack(spacing: 4) {
             PieView(model: group.pie, side: side,
-                    removeHelp: group.files.count > 1 ? "Togli questi \(group.files.count) file" : "Togli il file",
+                    removeHelp: group.files.count > 1 ? String(localized: "Togli questi \(group.files.count) file") : String(localized: "Togli il file"),
                     onRemove: { ws.removeGroup(group) }, delay: delay)
                 .frame(width: side, height: side)
             HStack(spacing: 6) {
                 Image(systemName: Theme.symbol(group.kind))
-                Text(group.files.count > 1 ? "\(group.kind.label) · \(group.files.count) file" : group.kind.label)
+                Text(group.files.count > 1 ? String(localized: "\(group.kind.label) · \(group.files.count) file") : group.kind.label)
             }
             .font(.system(size: 11, weight: .semibold))
             .foregroundStyle(Theme.color(group.kind))
@@ -524,7 +525,7 @@ struct JobStatusBar: View {
                     Text(job.action.title).font(.system(size: 13, weight: .semibold))
                     Spacer()
                     SavedBadge(job: job)
-                    Text(job.state == .done && !job.gainText.isEmpty ? "Fatto · " + job.gainText : job.status)
+                    Text(job.state == .done && !job.gainText.isEmpty ? String(localized: "Fatto · \(job.gainText)") : job.status)
                         .font(.system(size: 12.5, weight: job.state == .done ? .semibold : .regular))
                         .foregroundStyle(job.state == .failed ? Theme.orange : (job.state == .done ? Theme.green : .secondary)).lineLimit(1)
                         .contentTransition(.numericText())
@@ -565,7 +566,7 @@ struct JobStatusBar: View {
                 .buttonStyle(.plain)
                 .onHover { hoverClose = $0 }
                 .help(job.state == .running || job.state == .waiting
-                      ? "Nascondi: il lavoro continua e lo trovi in Attività" : "Chiudi (il risultato resta in Attività)")
+                      ? String(localized: "Nascondi: il lavoro continua e lo trovi in Attività") : String(localized: "Chiudi (il risultato resta in Attività)"))
             }
         }
         .padding(14)

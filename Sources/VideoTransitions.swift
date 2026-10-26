@@ -61,7 +61,7 @@ final class VPCompositor: NSObject, AVVideoCompositing {
         queue.async { [self] in
             guard let ins = request.videoCompositionInstruction as? VPCompositionInstruction,
                   let out = request.renderContext.newPixelBuffer() else {
-                request.finish(with: NSError(domain: "OrbitLR", code: 1, userInfo: [NSLocalizedDescriptionKey: "fotogramma non disponibile"]))
+                request.finish(with: NSError(domain: "OrbitLR", code: 1, userInfo: [NSLocalizedDescriptionKey: String(localized: "fotogramma non disponibile")]))
                 return
             }
             let t = request.compositionTime.seconds

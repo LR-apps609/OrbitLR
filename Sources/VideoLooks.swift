@@ -36,22 +36,22 @@ struct VPLookPreset: Identifiable, Equatable {
 
 enum VideoLooks {
     static let presets: [VPLookPreset] = [
-        VPLookPreset(id: "none", name: "Nessuno"),
-        VPLookPreset(id: "vivid", name: "Vivido"),
-        VPLookPreset(id: "warm", name: "Caldo"),
-        VPLookPreset(id: "cool", name: "Freddo"),
-        VPLookPreset(id: "mono", name: "Bianco e nero"),
-        VPLookPreset(id: "sepia", name: "Seppia"),
-        VPLookPreset(id: "vintage", name: "Vintage"),
-        VPLookPreset(id: "film", name: "Pellicola"),
-        VPLookPreset(id: "night", name: "Notte"),
-        VPLookPreset(id: "dream", name: "Sogno"),
-        VPLookPreset(id: "drama", name: "Drammatico"),
-        VPLookPreset(id: "pastel", name: "Pastello"),
-        VPLookPreset(id: "radio", name: "Radio"),
+        VPLookPreset(id: "none", name: String(localized: "Nessuno")),
+        VPLookPreset(id: "vivid", name: String(localized: "Vivido")),
+        VPLookPreset(id: "warm", name: String(localized: "Caldo")),
+        VPLookPreset(id: "cool", name: String(localized: "Freddo")),
+        VPLookPreset(id: "mono", name: String(localized: "Bianco e nero")),
+        VPLookPreset(id: "sepia", name: String(localized: "Seppia")),
+        VPLookPreset(id: "vintage", name: String(localized: "Vintage")),
+        VPLookPreset(id: "film", name: String(localized: "Pellicola")),
+        VPLookPreset(id: "night", name: String(localized: "Notte")),
+        VPLookPreset(id: "dream", name: String(localized: "Sogno")),
+        VPLookPreset(id: "drama", name: String(localized: "Drammatico")),
+        VPLookPreset(id: "pastel", name: String(localized: "Pastello")),
+        VPLookPreset(id: "radio", name: String(localized: "Radio")),
     ]
 
-    static func name(of id: String) -> String { presets.first { $0.id == id }?.name ?? "Nessuno" }
+    static func name(of id: String) -> String { presets.first { $0.id == id }?.name ?? String(localized: "Nessuno") }
 
     /// Applica il look a un fotogramma. Il risultato ha sempre la stessa misura dell'originale.
     static func apply(_ look: VPLook?, to image: CIImage) -> CIImage {

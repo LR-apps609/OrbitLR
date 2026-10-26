@@ -196,13 +196,13 @@ final class WatchStore: ObservableObject, @unchecked Sendable {
     static var downloads: URL { FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first ?? Paths.home.appendingPathComponent("Downloads") }
 
     static let templates: [Template] = [
-        Template(id: "heic-jpg", title: "Foto HEIC e WebP in Download → JPG",
-                 text: "Le foto dell’iPhone e quelle scaricate dal web che molti siti non aprono diventano JPG da sole. I JPG vanno in Download/Convertiti; gli originali restano dove sono (salvo che nelle Opzioni tu abbia scelto di cestinarli).",
+        Template(id: "heic-jpg", title: String(localized: "Foto HEIC e WebP in Download → JPG"),
+                 text: String(localized: "Le foto dell’iPhone e quelle scaricate dal web che molti siti non aprono diventano JPG da sole. I JPG vanno in Download/Convertiti; gli originali restano dove sono (salvo che nelle Opzioni tu abbia scelto di cestinarli)."),
                  symbol: "photo.on.rectangle.angled") {
             WatchRule(folder: downloads.path, kind: Kind.img.rawValue, actionId: "to:jpg", param: "", exts: ["heic", "webp", "avif"])
         },
-        Template(id: "video-leggeri", title: "Cartella «Da comprimere» per i video",
-                 text: "Crea Download/Da comprimere: i video che ci metti diventano più leggeri con la stessa qualità. Ideale per liberare spazio.",
+        Template(id: "video-leggeri", title: String(localized: "Cartella «Da comprimere» per i video"),
+                 text: String(localized: "Crea Download/Da comprimere: i video che ci metti diventano più leggeri con la stessa qualità. Ideale per liberare spazio."),
                  symbol: "film.stack",
                  rule: { WatchRule(folder: downloads.appendingPathComponent("Da comprimere", isDirectory: true).path,
                                    kind: Kind.video.rawValue, actionId: "vcompress", param: "best") },
@@ -241,8 +241,8 @@ struct AutomationView: View {
         ZStack {
             Theme.background.ignoresSafeArea()
             VStack(alignment: .leading, spacing: 18) {
-                PageHeader(title: "Cartelle automatiche",
-                           subtitle: "Quello che arriva in queste cartelle viene elaborato da solo.",
+                PageHeader(title: String(localized: "Cartelle automatiche"),
+                           subtitle: String(localized: "Quello che arriva in queste cartelle viene elaborato da solo."),
                            color: SidebarItem.automation.color) {
                     Button { creating = true } label: { Label("Nuova cartella automatica", systemImage: "plus") }
                         .buttonStyle(.borderedProminent)
@@ -270,8 +270,8 @@ struct AutomationView: View {
                 }
                 if store.rules.isEmpty && ready.isEmpty {
                     EmptyState(symbol: "folder.badge.gearshape", color: SidebarItem.automation.color,
-                               title: "Nessuna cartella automatica",
-                               text: "Ad esempio: tutto quello che metti in «Da comprimere» diventa più leggero, da solo. Scegli una cartella, il tipo di file e cosa farne.")
+                               title: String(localized: "Nessuna cartella automatica"),
+                               text: String(localized: "Ad esempio: tutto quello che metti in «Da comprimere» diventa più leggero, da solo. Scegli una cartella, il tipo di file e cosa farne."))
                 } else if !store.rules.isEmpty {
                     ScrollView {
                         LazyVStack(spacing: 10) {
@@ -305,25 +305,25 @@ struct WatchRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(rule.folderURL.lastPathComponent).font(.system(size: 13, weight: .semibold))
                 Text(rule.summary).font(.system(size: 12)).foregroundStyle(Theme.color(rule.fileKind))
-                Text("Risultati in: " + (rule.outputURL.path.replacingOccurrences(of: Paths.home.path, with: "~")))
+                Text(String(localized: "Risultati in: \(rule.outputURL.path.replacingOccurrences(of: Paths.home.path, with: "~"))"))
                     .font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 3) {
                 HStack(spacing: 5) {
                     Circle().fill(rule.enabled ? Theme.green : Color.secondary).frame(width: 7, height: 7)
-                    Text(rule.enabled ? "Attiva" : "In pausa").font(.system(size: 11, weight: .semibold))
+                    Text(rule.enabled ? String(localized: "Attiva") : String(localized: "In pausa")).font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(rule.enabled ? Theme.green : .secondary)
                 }
-                Text(rule.processed == 1 ? "1 file elaborato" : "\(rule.processed) file elaborati")
+                Text(rule.processed == 1 ? String(localized: "1 file elaborato") : String(localized: "\(rule.processed) file elaborati"))
                     .font(.system(size: 11.5)).foregroundStyle(.secondary)
                 if let d = rule.lastRun {
-                    Text("Ultimo: " + d.formatted(date: .abbreviated, time: .shortened)).font(.system(size: 10)).foregroundStyle(.tertiary)
+                    Text(String(localized: "Ultimo: \(d.formatted(date: .abbreviated, time: .shortened))")).font(.system(size: 10)).foregroundStyle(.tertiary)
                 }
             }
             Toggle("", isOn: Binding(get: { rule.enabled }, set: { _ in store.toggle(rule) }))
                 .toggleStyle(.switch).labelsHidden()
-                .help(rule.enabled ? "Metti in pausa" : "Riattiva")
+                .help(rule.enabled ? String(localized: "Metti in pausa") : String(localized: "Riattiva"))
             Menu {
                 Button("Apri la cartella") { NSWorkspace.shared.open(rule.folderURL) }
                 Button("Apri i risultati") { NSWorkspace.shared.open(rule.outputURL) }
@@ -347,69 +347,69 @@ enum ParamChoices {
     static func options(for k: ParamKind) -> [KnobOption<String>]? {
         switch k {
         case .resize: return [
-            KnobOption(value: "web", short: "Web", label: "Per il web (1600 px, JPG leggero)"),
-            KnobOption(value: "1280", short: "1280", label: "Lato lungo 1280 px"),
-            KnobOption(value: "1920", short: "1920", label: "Lato lungo 1920 px"),
-            KnobOption(value: "3840", short: "4K", label: "Lato lungo 3840 px (4K)"),
-            KnobOption(value: "half", short: "50%", label: "Metà (50%)")]
+            KnobOption(value: "web", short: "Web", label: String(localized: "Per il web (1600 px, JPG leggero)")),
+            KnobOption(value: "1280", short: "1280", label: String(localized: "Lato lungo 1280 px")),
+            KnobOption(value: "1920", short: "1920", label: String(localized: "Lato lungo 1920 px")),
+            KnobOption(value: "3840", short: "4K", label: String(localized: "Lato lungo 3840 px (4K)")),
+            KnobOption(value: "half", short: "50%", label: String(localized: "Metà (50%)"))]
         case .icompress: return [
-            KnobOption(value: "best", short: "Uguale", label: "Stessa qualità, meno peso"),
-            KnobOption(value: "1000", short: "1 MB", label: "Sotto 1 MB"),
-            KnobOption(value: "500", short: "500 KB", label: "Sotto 500 KB"),
-            KnobOption(value: "200", short: "200 KB", label: "Sotto 200 KB (moduli online)"),
-            KnobOption(value: "100", short: "100 KB", label: "Sotto 100 KB"),
-            KnobOption(value: "50", short: "50 KB", label: "Sotto 50 KB (documenti, visti)"),
-            KnobOption(value: "20", short: "20 KB", label: "Sotto 20 KB")]
+            KnobOption(value: "best", short: String(localized: "Uguale"), label: String(localized: "Stessa qualità, meno peso")),
+            KnobOption(value: "1000", short: "1 MB", label: String(localized: "Sotto 1 MB")),
+            KnobOption(value: "500", short: "500 KB", label: String(localized: "Sotto 500 KB")),
+            KnobOption(value: "200", short: "200 KB", label: String(localized: "Sotto 200 KB (moduli online)")),
+            KnobOption(value: "100", short: "100 KB", label: String(localized: "Sotto 100 KB")),
+            KnobOption(value: "50", short: "50 KB", label: String(localized: "Sotto 50 KB (documenti, visti)")),
+            KnobOption(value: "20", short: "20 KB", label: String(localized: "Sotto 20 KB"))]
         case .pdfcompress: return [
-            KnobOption(value: "light", short: "Leggera", label: "Leggera (qualità di stampa)"),
-            KnobOption(value: "medium", short: "Media", label: "Media (consigliata)"),
-            KnobOption(value: "strong", short: "Forte", label: "Forte (file più piccolo possibile)")]
+            KnobOption(value: "light", short: String(localized: "Leggera"), label: String(localized: "Leggera (qualità di stampa)")),
+            KnobOption(value: "medium", short: String(localized: "Media"), label: String(localized: "Media (consigliata)")),
+            KnobOption(value: "strong", short: String(localized: "Forte"), label: String(localized: "Forte (file più piccolo possibile)"))]
         case .vcompress: return [
             // 3.6 · Prima la qualità: «stessa qualità» non rovina niente; i pesi servono per i limiti delle app
-            KnobOption(value: "best", short: "Uguale", label: "Stessa qualità, meno peso"),
-            KnobOption(value: "9", short: "Discord", label: "Discord (sotto 10 MB)"),
-            KnobOption(value: "15", short: "WhatsApp", label: "WhatsApp (sotto 16 MB)"),
-            KnobOption(value: "18", short: "Email", label: "Email (allegato sotto 25 MB, anche per Gmail)"),
+            KnobOption(value: "best", short: String(localized: "Uguale"), label: String(localized: "Stessa qualità, meno peso")),
+            KnobOption(value: "9", short: "Discord", label: String(localized: "Discord (sotto 10 MB)")),
+            KnobOption(value: "15", short: "WhatsApp", label: String(localized: "WhatsApp (sotto 16 MB)")),
+            KnobOption(value: "18", short: "Email", label: String(localized: "Email (allegato sotto 25 MB, anche per Gmail)")),
             KnobOption(value: "50", short: "50", label: "50 MB"),
             KnobOption(value: "100", short: "100", label: "100 MB")]
         case .vresize: return [
-            KnobOption(value: "480", short: "480p", label: "480p (leggero)"), KnobOption(value: "720", short: "720p", label: "720p (HD)"),
+            KnobOption(value: "480", short: "480p", label: String(localized: "480p (leggero)")), KnobOption(value: "720", short: "720p", label: "720p (HD)"),
             KnobOption(value: "1080", short: "1080p", label: "1080p (Full HD)"),
-            KnobOption(value: "hevc", short: "HEVC", label: "HEVC: stessa risoluzione, file più piccolo")]
+            KnobOption(value: "hevc", short: "HEVC", label: String(localized: "HEVC: stessa risoluzione, file più piccolo"))]
         case .speed: return [
-            KnobOption(value: "0.5", short: "0,5×", label: "0,5× (metà)"), KnobOption(value: "0.75", short: "0,75×", label: "0,75×"),
-            KnobOption(value: "1.25", short: "1,25×", label: "1,25×"), KnobOption(value: "1.5", short: "1,5×", label: "1,5×"),
-            KnobOption(value: "2", short: "2×", label: "2× (doppia)")]
+            KnobOption(value: "0.5", short: String(localized: "0,5×"), label: String(localized: "0,5× (metà)")), KnobOption(value: "0.75", short: String(localized: "0,75×"), label: String(localized: "0,75×")),
+            KnobOption(value: "1.25", short: String(localized: "1,25×"), label: String(localized: "1,25×")), KnobOption(value: "1.5", short: String(localized: "1,5×"), label: String(localized: "1,5×")),
+            KnobOption(value: "2", short: "2×", label: String(localized: "2× (doppia)"))]
         case .rotate: return [
-            KnobOption(value: "270", short: "↺ 90°", label: "90° a sinistra"), KnobOption(value: "180", short: "180°", label: "180°"),
-            KnobOption(value: "90", short: "↻ 90°", label: "90° a destra")]
+            KnobOption(value: "270", short: "↺ 90°", label: String(localized: "90° a sinistra")), KnobOption(value: "180", short: "180°", label: "180°"),
+            KnobOption(value: "90", short: "↻ 90°", label: String(localized: "90° a destra"))]
         case .removebg: return [
-            KnobOption(value: "transparent", short: "Trasp.", label: "Sfondo trasparente (PNG)"),
-            KnobOption(value: "crop", short: "Ritaglio", label: "Trasparente e ritagliato sul soggetto (PNG)"),
-            KnobOption(value: "white", short: "Bianco", label: "Sfondo bianco (JPG)")]
+            KnobOption(value: "transparent", short: String(localized: "Trasp."), label: String(localized: "Sfondo trasparente (PNG)")),
+            KnobOption(value: "crop", short: String(localized: "Ritaglio"), label: String(localized: "Trasparente e ritagliato sul soggetto (PNG)")),
+            KnobOption(value: "white", short: String(localized: "Bianco"), label: String(localized: "Sfondo bianco (JPG)"))]
         case .straighten: return [
-            KnobOption(value: "color-jpg", short: "JPG", label: "A colori, JPG"),
-            KnobOption(value: "bw-jpg", short: "JPG b/n", label: "Bianco e nero, JPG"),
-            KnobOption(value: "color-pdf", short: "PDF", label: "A colori, PDF"),
-            KnobOption(value: "bw-pdf", short: "PDF b/n", label: "Bianco e nero, PDF")]
+            KnobOption(value: "color-jpg", short: "JPG", label: String(localized: "A colori, JPG")),
+            KnobOption(value: "bw-jpg", short: String(localized: "JPG b/n"), label: String(localized: "Bianco e nero, JPG")),
+            KnobOption(value: "color-pdf", short: "PDF", label: String(localized: "A colori, PDF")),
+            KnobOption(value: "bw-pdf", short: String(localized: "PDF b/n"), label: String(localized: "Bianco e nero, PDF"))]
         case .upscale: return [
-            KnobOption(value: "2", short: "2×", label: "2× (il doppio)"),
-            KnobOption(value: "4", short: "4×", label: "4× (quattro volte)")]
+            KnobOption(value: "2", short: "2×", label: String(localized: "2× (il doppio)")),
+            KnobOption(value: "4", short: "4×", label: String(localized: "4× (quattro volte)"))]
         case .social: return [
-            KnobOption(value: "9x16", short: "9:16", label: "9:16 · Reels, TikTok, Storie"),
-            KnobOption(value: "1x1", short: "1:1", label: "1:1 · Post"),
-            KnobOption(value: "4x5", short: "4:5", label: "4:5 · Feed verticale"),
+            KnobOption(value: "9x16", short: "9:16", label: String(localized: "9:16 · Reels, TikTok, Storie")),
+            KnobOption(value: "1x1", short: "1:1", label: String(localized: "1:1 · Post")),
+            KnobOption(value: "4x5", short: "4:5", label: String(localized: "4:5 · Feed verticale")),
             KnobOption(value: "16x9", short: "16:9", label: "16:9 · YouTube")]
         case .stack: return [
-            KnobOption(value: "1", short: "1×", label: "Stessa dimensione, meno rumore"),
-            KnobOption(value: "2", short: "2×", label: "2×, più dettagli")]
+            KnobOption(value: "1", short: "1×", label: String(localized: "Stessa dimensione, meno rumore")),
+            KnobOption(value: "2", short: "2×", label: String(localized: "2×, più dettagli"))]
         case .aienhance: return [
-            KnobOption(value: "b0-1", short: "Fedele", label: "Fedele · stessa dimensione"),
-            KnobOption(value: "b0-2", short: "F 2×", label: "Fedele · 2×"),
-            KnobOption(value: "b0-4", short: "F 4×", label: "Fedele · 4×"),
-            KnobOption(value: "b30-2", short: "30% 2×", label: "Fedele con un po’ di nitidezza · 2×"),
-            KnobOption(value: "b100-2", short: "N 2×", label: "Più nitido · 2×"),
-            KnobOption(value: "b100-4", short: "N 4×", label: "Più nitido · 4×")]
+            KnobOption(value: "b0-1", short: String(localized: "Fedele"), label: String(localized: "Fedele · stessa dimensione")),
+            KnobOption(value: "b0-2", short: String(localized: "F 2×"), label: String(localized: "Fedele · 2×")),
+            KnobOption(value: "b0-4", short: String(localized: "F 4×"), label: String(localized: "Fedele · 4×")),
+            KnobOption(value: "b30-2", short: "30% 2×", label: String(localized: "Fedele con un po’ di nitidezza · 2×")),
+            KnobOption(value: "b100-2", short: String(localized: "N 2×"), label: String(localized: "Più nitido · 2×")),
+            KnobOption(value: "b100-4", short: String(localized: "N 4×"), label: String(localized: "Più nitido · 4×"))]
         default: return nil
         }
     }
@@ -466,17 +466,17 @@ struct NewWatchView: View {
             }
 
             // 1. Cartella
-            step("1", "Quale cartella") {
+            step("1", String(localized: "Quale cartella")) {
                 HStack {
-                    Text(folder?.path.replacingOccurrences(of: Paths.home.path, with: "~") ?? "Nessuna cartella scelta")
+                    Text(folder?.path.replacingOccurrences(of: Paths.home.path, with: "~") ?? String(localized: "Nessuna cartella scelta"))
                         .foregroundStyle(folder == nil ? .secondary : Theme.ink).lineLimit(1).truncationMode(.middle)
                     Spacer()
-                    Button("Scegli…") { folder = chooseFolder(prompt: "Sorveglia") ?? folder }
+                    Button("Scegli…") { folder = chooseFolder(prompt: String(localized: "Sorveglia")) ?? folder }
                 }
             }
 
             // 2. Tipo di file
-            step("2", "Quali file") {
+            step("2", String(localized: "Quali file")) {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 4), alignment: .leading, spacing: 6) {
                     ForEach(kinds, id: \.self) { k in
                         Button { kind = k } label: {
@@ -496,7 +496,7 @@ struct NewWatchView: View {
             }
 
             // 3. Azione
-            step("3", "Cosa farne") {
+            step("3", String(localized: "Cosa farne")) {
                 VStack(alignment: .leading, spacing: 10) {
                     Picker("Azione", selection: $actionId) {
                         ForEach(actions) { a in
@@ -505,13 +505,13 @@ struct NewWatchView: View {
                     }
                     .labelsHidden()
                     if let pk = chosen?.param, let opts = ParamChoices.options(for: pk) {
-                        Knob(title: "Opzione", options: opts, selection: $param, tint: Theme.color(kind), size: 90)
+                        Knob(title: String(localized: "Opzione"), options: opts, selection: $param, tint: Theme.color(kind), size: 90)
                     }
                 }
             }
 
             // 4. Risultati
-            step("4", "Dove mettere i risultati") {
+            step("4", String(localized: "Dove mettere i risultati")) {
                 VStack(alignment: .leading, spacing: 6) {
                     Picker("", selection: $output) {
                         Text("In una sottocartella «Convertiti»").tag("sub")
@@ -520,10 +520,10 @@ struct NewWatchView: View {
                     .pickerStyle(.radioGroup).labelsHidden()
                     if output == "fixed" {
                         HStack {
-                            Text(outputPath.isEmpty ? "Nessuna cartella scelta" : outputPath.replacingOccurrences(of: Paths.home.path, with: "~"))
+                            Text(outputPath.isEmpty ? String(localized: "Nessuna cartella scelta") : outputPath.replacingOccurrences(of: Paths.home.path, with: "~"))
                                 .foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                             Spacer()
-                            Button("Scegli…") { outputPath = chooseFolder(prompt: "Scegli")?.path ?? outputPath }
+                            Button("Scegli…") { outputPath = chooseFolder(prompt: String(localized: "Scegli"))?.path ?? outputPath }
                         }
                     }
                     Toggle("Elabora anche i file già presenti nella cartella", isOn: $includeExisting)
@@ -554,16 +554,16 @@ struct NewWatchView: View {
     }
 
     private var warning: String? {
-        guard let f = folder else { return "Scegli la cartella da sorvegliare." }
-        if chosen == nil { return "Scegli cosa fare con i file." }
-        if output == "fixed" && outputPath.isEmpty { return "Scegli la cartella per i risultati." }
-        if output == "fixed" && outputPath == f.path { return "I risultati devono andare in un’altra cartella, non in quella sorvegliata." }
+        guard let f = folder else { return String(localized: "Scegli la cartella da sorvegliare.") }
+        if chosen == nil { return String(localized: "Scegli cosa fare con i file.") }
+        if output == "fixed" && outputPath.isEmpty { return String(localized: "Scegli la cartella per i risultati.") }
+        if output == "fixed" && outputPath == f.path { return String(localized: "I risultati devono andare in un’altra cartella, non in quella sorvegliata.") }
         // 4.1.5 · Niente giri infiniti: i risultati non vanno in una cartella sorvegliata da un'altra regola
         if output == "fixed", WatchStore.shared.rules.contains(where: { $0.enabled && $0.folder == outputPath }) {
-            return "Quella cartella è già sorvegliata da un’altra regola: i file andrebbero avanti e indietro. Scegline un’altra."
+            return String(localized: "Quella cartella è già sorvegliata da un’altra regola: i file andrebbero avanti e indietro. Scegline un’altra.")
         }
         if WatchStore.shared.rules.contains(where: { $0.folder == f.path && $0.kind == kind.rawValue }) {
-            return "Per questa cartella c’è già una regola per questo tipo di file."
+            return String(localized: "Per questa cartella c’è già una regola per questo tipo di file.")
         }
         return nil
     }

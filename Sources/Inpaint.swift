@@ -56,8 +56,8 @@ final class ModelStore: ObservableObject, @unchecked Sendable {
             let expected = Self.pinnedSHA256
             let zipURL = Self.base.appendingPathComponent(Self.name + ".mlpackage.zip")
             let (tmp, resp) = try await URLSession.shared.download(from: zipURL, delegate: ProgressDelegate { [weak self] p in self?.setProgress(p) })
-            guard (resp as? HTTPURLResponse)?.statusCode == 200 else { throw NativeError("il modello di IA non è ancora disponibile") }
-            guard Self.sha256(of: tmp) == expected else { throw NativeError("il modello scaricato è rovinato, riprova") }
+            guard (resp as? HTTPURLResponse)?.statusCode == 200 else { throw NativeError(String(localized: "il modello di IA non è ancora disponibile")) }
+            guard Self.sha256(of: tmp) == expected else { throw NativeError(String(localized: "il modello scaricato è rovinato, riprova")) }
             let work = Self.folder.appendingPathComponent("scarico-\(UUID().uuidString)", isDirectory: true)
             try fm.createDirectory(at: work, withIntermediateDirectories: true)
             defer { try? fm.removeItem(at: work); try? fm.removeItem(at: tmp) }
@@ -67,13 +67,13 @@ final class ModelStore: ObservableObject, @unchecked Sendable {
             try p.run(); p.waitUntilExit()
             guard p.terminationStatus == 0,
                   let pkg = try fm.contentsOfDirectory(at: work, includingPropertiesForKeys: nil).first(where: { $0.pathExtension == "mlpackage" }) else {
-                throw NativeError("non riesco ad aprire il modello scaricato")
+                throw NativeError(String(localized: "non riesco ad aprire il modello scaricato"))
             }
             let built = try await MLModel.compileModel(at: pkg)
             try? fm.removeItem(at: Self.compiled)
             try fm.moveItem(at: built, to: Self.compiled)
         } catch {
-            let msg = (error as? NativeError)?.localizedDescription ?? "non riesco a scaricare il modello di IA (serve internet la prima volta)"
+            let msg = (error as? NativeError)?.localizedDescription ?? String(localized: "non riesco a scaricare il modello di IA (serve internet la prima volta)")
             DispatchQueue.main.async { self.error = msg }
             throw NativeError(msg)
         }
@@ -193,11 +193,11 @@ final class Inpainter: @unchecked Sendable {
         }
         let input = try MLDictionaryFeatureProvider(dictionary: ["image": image, "mask": mask])
         guard let res = try model.prediction(from: input).featureValue(for: "output")?.multiArrayValue else {
-            throw NativeError("il modello di IA non ha risposto")
+            throw NativeError(String(localized: "il modello di IA non ha risposto"))
         }
         // L'uscita può avere passi diversi da quelli «compatti» e numeri a 16 o 32 bit: si legge con i suoi passi
         guard res.shape.count == 4, res.shape[1].intValue == 3, res.shape[2].intValue == side, res.shape[3].intValue == side else {
-            throw NativeError("il modello di IA ha risposto in un formato inatteso")
+            throw NativeError(String(localized: "il modello di IA ha risposto in un formato inatteso"))
         }
         let st = res.strides.map { $0.intValue }
         var bytes = [UInt8](repeating: 255, count: plane * 4)

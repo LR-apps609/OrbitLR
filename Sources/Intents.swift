@@ -143,7 +143,7 @@ enum IntentRunner {
             guard let k = Catalog.kind(of: u), k != .sub else { continue }
             byKind[k, default: []].append(u)
         }
-        guard !byKind.isEmpty else { throw OrbitIntentError(message: "Nessun file che OrbitLR sappia aprire.") }
+        guard !byKind.isEmpty else { throw OrbitIntentError(message: String(localized: "Nessun file che OrbitLR sappia aprire.")) }
 
         var jobs: [Job] = []
         var skipped: [String] = []
@@ -155,7 +155,8 @@ enum IntentRunner {
             }
         }
         guard !jobs.isEmpty else {
-            throw OrbitIntentError(message: "Questa azione non vale per " + skipped.joined(separator: " e ") + ".")
+            let list = skipped.joined(separator: String(localized: " e "))
+            throw OrbitIntentError(message: String(localized: "Questa azione non vale per \(list)."))
         }
 
         // Aspetta che tutti i lavori finiscano (al massimo 2 ore)
@@ -165,7 +166,7 @@ enum IntentRunner {
         }
         let outputs = jobs.flatMap { $0.outputs }
         if outputs.isEmpty {
-            let why = jobs.compactMap { $0.failures.first }.first ?? jobs.first?.status ?? "Non riuscito"
+            let why = jobs.compactMap { $0.failures.first }.first ?? jobs.first?.status ?? String(localized: "Non riuscito")
             throw OrbitIntentError(message: why)
         }
         return outputs
@@ -290,13 +291,13 @@ struct FinderSelectionIntent: AppIntent {
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let files = await MainActor.run { FinderSelection.current() }
-        guard !files.isEmpty else { throw OrbitIntentError(message: "Nel Finder non c’è nessun file selezionato.") }
+        guard !files.isEmpty else { throw OrbitIntentError(message: String(localized: "Nel Finder non c’è nessun file selezionato.")) }
         let act = action
         let outs = try await IntentRunner.run(files) { kind in
             guard let id = act.actionId(for: kind), let a = Catalog.action(id: id, kind: kind) else { return nil }
             return (a, act.defaultParam)
         }
-        let msg = outs.count == 1 ? "Fatto: «\(outs[0].lastPathComponent)»." : "Fatto: \(outs.count) file pronti."
+        let msg = outs.count == 1 ? String(localized: "Fatto: «\(outs[0].lastPathComponent)».") : String(localized: "Fatto: \(outs.count) file pronti.")
         return .result(dialog: IntentDialog(stringLiteral: msg))
     }
 }

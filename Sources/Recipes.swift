@@ -102,7 +102,7 @@ final class RecipeStore: ObservableObject, @unchecked Sendable {
     // MARK: Nel menu a torta
 
     func action(for r: Recipe) -> Action {
-        Action(id: "recipe:" + r.id.uuidString, short: r.name.count > 14 ? "Ricetta" : r.name, title: r.name,
+        Action(id: "recipe:" + r.id.uuidString, short: r.name.count > 14 ? String(localized: "Ricetta") : r.name, title: r.name,
                hint: r.summary, symbol: "arrow.triangle.turn.up.right.circle.fill")
     }
 
@@ -147,7 +147,7 @@ struct RecipesSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionLabel(text: "Ricette")
+            SectionLabel(text: String(localized: "Ricette"))
             if store.recipes.isEmpty {
                 Text("Quando lavori un file appena creato (per esempio converti in MP3, poi tagli), in Attività compare «Salva come ricetta»: la prossima volta fai tutti i passi con un clic, dal menu a torta.")
                     .font(.system(size: 12.5)).foregroundStyle(.secondary).lineLimit(4)

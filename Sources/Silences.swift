@@ -22,7 +22,7 @@ enum Silences {
         guard end > start + 0.05 else { return [] }
         let asset = AVURLAsset(url: url)
         guard let track = try await asset.loadTracks(withMediaType: .audio).first else {
-            throw NativeError("questa clip non ha audio")
+            throw NativeError(String(localized: "questa clip non ha audio"))
         }
         // La lettura è lunga e sincrona: fuori dal thread dell'interfaccia
         return try await Task.detached(priority: .utility) {
@@ -40,9 +40,9 @@ enum Silences {
             AVLinearPCMBitDepthKey: 32, AVLinearPCMIsFloatKey: true, AVLinearPCMIsNonInterleaved: false,
             AVLinearPCMIsBigEndianKey: false,
         ])
-        guard reader.canAdd(out) else { throw NativeError("non riesco a leggere l'audio") }
+        guard reader.canAdd(out) else { throw NativeError(String(localized: "non riesco a leggere l'audio")) }
         reader.add(out)
-        guard reader.startReading() else { throw NativeError("non riesco a leggere l'audio") }
+        guard reader.startReading() else { throw NativeError(String(localized: "non riesco a leggere l'audio")) }
 
         // Livello ogni 20 ms, messo al suo posto grazie al tempo di ogni pacchetto
         // (audio che parte dopo il video o con dei buchi: i buchi contano come silenzio)
@@ -72,7 +72,7 @@ enum Silences {
             }
         }
         if reader.status != .completed {
-            throw NativeError(reader.error.map { "lettura dell'audio interrotta: \($0.localizedDescription)" } ?? "lettura dell'audio interrotta")
+            throw NativeError(reader.error.map { String(localized: "lettura dell'audio interrotta: \($0.localizedDescription)") } ?? String(localized: "lettura dell'audio interrotta"))
         }
         let levels = (0..<buckets).map { counts[$0] > 0 ? 10 * log10(max(sums[$0] / Double(counts[$0]), 1e-12)) : -120 }
         return ranges(levels: levels, step: step, offset: start, end: end)
@@ -148,16 +148,16 @@ extension VideoProjectStore {
     func removeSilences(_ undo: UndoManager?) {
         guard let i = targetIndex, project.clips.indices.contains(i) else { NSSound.beep(); return }
         let c = project.clips[i]
-        notice = "Ascolto la clip e cerco le pause…"
+        notice = String(localized: "Ascolto la clip e cerco le pause…")
         Task { @MainActor in
             let parts: [ClosedRange<Double>]
             do { parts = try await Silences.voiced(in: c.url, start: c.inPoint, end: c.outPoint) }
-            catch { notice = (error as? NativeError)?.message.capitalizedFirst ?? "Non riesco ad ascoltare questa clip."; return }
+            catch { notice = (error as? NativeError)?.message.capitalizedFirst ?? String(localized: "Non riesco ad ascoltare questa clip."); return }
             // La clip potrebbe essere cambiata mentre ascoltavo
             guard let now = project.clips.firstIndex(where: { $0.id == c.id }), project.clips[now] == c else { notice = nil; return }
             let kept = parts.reduce(0) { $0 + ($1.upperBound - $1.lowerBound) }
-            guard !parts.isEmpty else { notice = "In questa clip non ho sentito voci: non tolgo niente."; return }
-            guard parts.count > 1 || kept < c.sourceLength - 0.5 else { notice = "Nessuna pausa lunga da togliere in questa clip."; return }
+            guard !parts.isEmpty else { notice = String(localized: "In questa clip non ho sentito voci: non tolgo niente."); return }
+            guard parts.count > 1 || kept < c.sourceLength - 0.5 else { notice = String(localized: "Nessuna pausa lunga da togliere in questa clip."); return }
             let pieces: [VPClip] = parts.enumerated().map { k, r in
                 var p = c
                 if k > 0 { p.id = UUID(); p.transition = nil; p.fx?.fadeIn = 0 }
@@ -167,13 +167,13 @@ extension VideoProjectStore {
                 return p
             }
             let clipStart = project.starts[now]
-            change(undo, "Togli i silenzi") {
+            change(undo, String(localized: "Togli i silenzi")) {
                 $0.clips.replaceSubrange(now...now, with: pieces)
                 // Testi e sottotitoli seguono i tagli
                 if let tx = $0.texts { $0.texts = Silences.remap(tx, clipStart: clipStart, clip: c, parts: parts) }
             }
             let saved = (c.sourceLength - kept) / max(0.01, c.speed)      // secondi del montaggio
-            notice = "Tolti \(Fmt.decimal(saved)) secondi di pause in \(parts.count) pezzi. ⌘Z per tornare indietro."
+            notice = String(localized: "Tolti \(Fmt.decimal(saved)) secondi di pause in \(parts.count) pezzi. ⌘Z per tornare indietro.")
         }
     }
 }

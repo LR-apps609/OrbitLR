@@ -83,7 +83,7 @@ enum QuickMedia {
             try await SmartVideo.resize(file, shortSide: short, out: out, job: job, progress: progress)
             return out
         default:
-            throw NativeError("azione sconosciuta")
+            throw NativeError(String(localized: "azione sconosciuta"))
         }
     }
 
@@ -109,12 +109,12 @@ enum QuickMedia {
                                  progress: @escaping (Double) -> Void) async throws {
         let asset = AVURLAsset(url: file)
         let d = try await asset.load(.duration).seconds
-        guard d.isFinite, d > 0 else { throw NativeError("non riesco a leggere la durata") }
+        guard d.isFinite, d > 0 else { throw NativeError(String(localized: "non riesco a leggere la durata")) }
         // 3.6 · Prima il taglio istantaneo e senza perdita (anche su un film di 2 ore: secondi);
         // solo se il formato non lo permette, si ricodifica
         if try await SmartVideo.trimLossless(file, range: range(start, end, duration: d), out: out, job: job, progress: progress) { return }
         guard let s = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else {
-            throw NativeError("questo video non si può tagliare")
+            throw NativeError(String(localized: "questo video non si può tagliare"))
         }
         s.outputURL = out
         s.outputFileType = out.pathExtension == "mov" ? .mov : .mp4
@@ -139,7 +139,7 @@ enum QuickMedia {
             throw NativeError("annullato")
         default:
             try? FileManager.default.removeItem(at: out)
-            throw NativeError(s.error?.localizedDescription ?? "taglio non riuscito")
+            throw NativeError(s.error?.localizedDescription ?? String(localized: "taglio non riuscito"))
         }
     }
 
@@ -149,7 +149,7 @@ enum QuickMedia {
                             progress: @escaping (Double) -> Void) async throws {
         let asset = AVURLAsset(url: file)
         let d = try await asset.load(.duration).seconds
-        guard d.isFinite, d > 0 else { throw NativeError("non riesco a leggere la durata") }
+        guard d.isFinite, d > 0 else { throw NativeError(String(localized: "non riesco a leggere la durata")) }
         let r = range(start, end ?? ((start ?? 0) + 5), duration: d)
         let fps = 12.0
         let count = max(2, min(360, Int(r.duration.seconds * fps)))
@@ -161,7 +161,7 @@ enum QuickMedia {
         gen.requestedTimeToleranceAfter = tol
         try? FileManager.default.removeItem(at: out)
         guard let dest = CGImageDestinationCreateWithURL(out as CFURL, UTType.gif.identifier as CFString, count, nil) else {
-            throw NativeError("non riesco a creare la GIF")
+            throw NativeError(String(localized: "non riesco a creare la GIF"))
         }
         let loop: [String: Any] = [kCGImagePropertyGIFDictionary as String: [kCGImagePropertyGIFLoopCount as String: 0]]
         CGImageDestinationSetProperties(dest, loop as CFDictionary)
@@ -180,7 +180,7 @@ enum QuickMedia {
         }
         guard added > 0, CGImageDestinationFinalize(dest) else {
             try? FileManager.default.removeItem(at: out)
-            throw NativeError("non riesco a creare la GIF")
+            throw NativeError(String(localized: "non riesco a creare la GIF"))
         }
         progress(1)
     }

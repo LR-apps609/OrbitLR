@@ -23,11 +23,11 @@ final class Permissions: ObservableObject, @unchecked Sendable {
     }
 
     @Published var items: [Item] = [
-        Item(id: "desktop", title: "Scrivania", why: "per convertire i file che tieni sulla Scrivania", symbol: "menubar.dock.rectangle"),
-        Item(id: "documents", title: "Documenti", why: "per aprire e salvare i tuoi progetti", symbol: "doc.fill"),
-        Item(id: "downloads", title: "Download", why: "per i file scaricati e i risultati", symbol: "arrow.down.circle.fill"),
-        Item(id: "notifications", title: "Notifiche", why: "per avvisarti quando un lavoro lungo è finito", symbol: "bell.fill"),
-        Item(id: "finder", title: "Finder", why: "per leggere i file selezionati quando premi ⌥⌘C", symbol: "face.smiling"),
+        Item(id: "desktop", title: String(localized: "Scrivania"), why: String(localized: "per convertire i file che tieni sulla Scrivania"), symbol: "menubar.dock.rectangle"),
+        Item(id: "documents", title: String(localized: "Documenti"), why: String(localized: "per aprire e salvare i tuoi progetti"), symbol: "doc.fill"),
+        Item(id: "downloads", title: String(localized: "Download"), why: String(localized: "per i file scaricati e i risultati"), symbol: "arrow.down.circle.fill"),
+        Item(id: "notifications", title: String(localized: "Notifiche"), why: String(localized: "per avvisarti quando un lavoro lungo è finito"), symbol: "bell.fill"),
+        Item(id: "finder", title: "Finder", why: String(localized: "per leggere i file selezionati quando premi ⌥⌘C"), symbol: "face.smiling"),
     ]
     @Published var running = false
     @Published var done = false

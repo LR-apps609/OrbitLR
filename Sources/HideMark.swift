@@ -76,7 +76,7 @@ enum HideMark {
         let img = try Tools.orientedImage(file)
         let done: CIImage
         if spec.style == "ai" {
-            guard let inpainter else { throw NativeError("il modello di IA non è pronto") }
+            guard let inpainter else { throw NativeError(String(localized: "il modello di IA non è pronto")) }
             let flat = img.transformed(by: CGAffineTransform(translationX: -img.extent.minX, y: -img.extent.minY))
             done = try inpainter.apply(spec, to: flat)
         } else {
@@ -92,8 +92,8 @@ enum HideMark {
                       progress: @escaping (Double) -> Void) async throws {
         let asset = AVURLAsset(url: file)
         let tracks = try await asset.loadTracks(withMediaType: .video)
-        guard !tracks.isEmpty else { throw NativeError("questo file non ha video") }
-        if spec.style == "ai" && inpainter == nil { throw NativeError("il modello di IA non è pronto") }
+        guard !tracks.isEmpty else { throw NativeError(String(localized: "questo file non ha video")) }
+        if spec.style == "ai" && inpainter == nil { throw NativeError(String(localized: "il modello di IA non è pronto")) }
         inpainter?.smoothing = 0.35          // un po' del fotogramma prima: meno tremolio
         // Il fotogramma arriva già girato nel verso giusto: le zone valgono così come le hai disegnate
         let vc = AVMutableVideoComposition(asset: asset) { request in
@@ -153,7 +153,7 @@ struct HideMarkEditor: View {
                 KindBadge(kind: frameSource != nil ? .video : Catalog.kind(of: url), size: 34)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Nascondi un logo").font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.ink)
-                    Text(frameSource != nil ? "Tutto il montaggio" : url.lastPathComponent).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                    Text(frameSource != nil ? String(localized: "Tutto il montaggio") : url.lastPathComponent).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                 }
             }
             canvas
@@ -185,15 +185,17 @@ struct HideMarkEditor: View {
                 }
             }
             Text(spec.rects.isEmpty
-                 ? "Trascina sull’immagine per coprire il logo o la scritta. Puoi disegnare più zone."
-                 : "\(spec.rects.count) \(spec.rects.count == 1 ? "zona" : "zone") · trascina ancora per aggiungerne, ✕ per toglierne una")
+                 ? String(localized: "Trascina sull’immagine per coprire il logo o la scritta. Puoi disegnare più zone.")
+                 : spec.rects.count == 1
+                    ? String(localized: "1 zona · trascina ancora per aggiungerne, ✕ per toglierne una")
+                    : String(localized: "\(spec.rects.count) zone · trascina ancora per aggiungerne, ✕ per toglierne una"))
                 .font(.system(size: 11.5)).foregroundStyle(.secondary)
             HStack {
                 Text("Usalo sui tuoi contenuti: la filigrana di foto e video altrui protegge il loro lavoro.")
                     .font(.system(size: 10.5)).foregroundStyle(.tertiary)
                 Spacer()
                 Button("Annulla") { onDone(nil) }.keyboardShortcut(.cancelAction)
-                Button(frameSource != nil ? "Applica" : isVideo ? "Crea il video" : "Crea la foto") { onDone(HideMark.encode(spec)) }
+                Button(frameSource != nil ? String(localized: "Applica") : isVideo ? String(localized: "Crea il video") : String(localized: "Crea la foto")) { onDone(HideMark.encode(spec)) }
                     .keyboardShortcut(.defaultAction)
                     .buttonStyle(.borderedProminent).tint(Theme.accent)
                     .disabled(spec.rects.isEmpty)

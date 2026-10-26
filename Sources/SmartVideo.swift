@@ -113,9 +113,9 @@ enum SmartVideo {
     // MARK: Lettura della sorgente
 
     static func source(of asset: AVURLAsset) async throws -> (Source, AVAssetTrack) {
-        guard let v = try await asset.loadTracks(withMediaType: .video).first else { throw NativeError("il file non contiene video") }
+        guard let v = try await asset.loadTracks(withMediaType: .video).first else { throw NativeError(String(localized: "il file non contiene video")) }
         let d = try await asset.load(.duration).seconds
-        guard d.isFinite, d > 0.05 else { throw NativeError("non riesco a leggere la durata") }
+        guard d.isFinite, d > 0.05 else { throw NativeError(String(localized: "non riesco a leggere la durata")) }
         let (natural, transform, fps, rate, formats) = try await v.load(.naturalSize, .preferredTransform, .nominalFrameRate, .estimatedDataRate, .formatDescriptions)
         let r = CGRect(origin: .zero, size: natural).applying(transform)
         var codec = "", hdr = false, transfer: String? = nil
@@ -195,7 +195,7 @@ enum SmartVideo {
         // e già alla misura finale. Così la misura è sempre esatta e il contenuto mai tagliato o stirato.
         let (natural, pt, timeRange) = try await track.load(.naturalSize, .preferredTransform, .timeRange)
         let box = CGRect(origin: .zero, size: natural).applying(pt)
-        guard abs(box.width) > 0, abs(box.height) > 0 else { throw NativeError("dimensioni del video non valide") }
+        guard abs(box.width) > 0, abs(box.height) > 0 else { throw NativeError(String(localized: "dimensioni del video non valide")) }
         let fit = pt.concatenating(CGAffineTransform(translationX: -box.minX, y: -box.minY))
                     .concatenating(CGAffineTransform(scaleX: CGFloat(plan.width) / abs(box.width), y: CGFloat(plan.height) / abs(box.height)))
         let layer = AVMutableVideoCompositionLayerInstruction(assetTrack: track)
@@ -224,7 +224,7 @@ enum SmartVideo {
         let vOut = AVAssetReaderVideoCompositionOutput(videoTracks: [track], videoSettings: [kCVPixelBufferPixelFormatTypeKey as String: pixel])
         vOut.videoComposition = comp
         vOut.alwaysCopiesSampleData = false
-        guard reader.canAdd(vOut) else { throw NativeError("non riesco a leggere il video") }
+        guard reader.canAdd(vOut) else { throw NativeError(String(localized: "non riesco a leggere il video")) }
         reader.add(vOut)
 
         let fileType: AVFileType = out.pathExtension.lowercased() == "mov" ? .mov : .mp4
@@ -290,10 +290,10 @@ enum SmartVideo {
             w.shouldOptimizeForNetworkUse = true
             w.metadata = metadata
             // Prima si chiede se il Mac sa scrivere così: impostazioni non accettate farebbero chiudere l'app
-            guard w.canApply(outputSettings: settings, forMediaType: .video) else { throw NativeError("questo Mac non sa scrivere questo formato video") }
+            guard w.canApply(outputSettings: settings, forMediaType: .video) else { throw NativeError(String(localized: "questo Mac non sa scrivere questo formato video")) }
             let v = AVAssetWriterInput(mediaType: .video, outputSettings: settings)
             v.expectsMediaDataInRealTime = false
-            guard w.canAdd(v) else { throw NativeError("questo Mac non sa scrivere questo formato video") }
+            guard w.canAdd(v) else { throw NativeError(String(localized: "questo Mac non sa scrivere questo formato video")) }
             w.add(v)
             var a: AVAssetWriterInput? = nil
             if aOut != nil, audioSettings == nil || w.canApply(outputSettings: audioSettings, forMediaType: .audio) {
@@ -308,13 +308,13 @@ enum SmartVideo {
         let meta = (try? await asset.load(.metadata)) ?? []
         var (writer, vIn, aIn) = try makeWriter(metadata: meta)
         if !writer.startWriting() {
-            guard !meta.isEmpty else { throw NativeError(writer.error?.localizedDescription ?? "non riesco a scrivere il video") }
+            guard !meta.isEmpty else { throw NativeError(writer.error?.localizedDescription ?? String(localized: "non riesco a scrivere il video")) }
             (writer, vIn, aIn) = try makeWriter(metadata: [])
-            guard writer.startWriting() else { throw NativeError(writer.error?.localizedDescription ?? "non riesco a scrivere il video") }
+            guard writer.startWriting() else { throw NativeError(writer.error?.localizedDescription ?? String(localized: "non riesco a scrivere il video")) }
         }
         guard reader.startReading() else {
             writer.cancelWriting(); try? FileManager.default.removeItem(at: out)
-            throw NativeError(reader.error?.localizedDescription ?? "non riesco a leggere il video")
+            throw NativeError(reader.error?.localizedDescription ?? String(localized: "non riesco a leggere il video"))
         }
         writer.startSession(atSourceTime: .zero)
 
@@ -397,14 +397,14 @@ enum SmartVideo {
             throw NativeError("annullato")
         }
         if state.failed || reader.status == .failed || writer.status == .failed {
-            let why = writer.error?.localizedDescription ?? reader.error?.localizedDescription ?? "codifica non riuscita"
+            let why = writer.error?.localizedDescription ?? reader.error?.localizedDescription ?? String(localized: "codifica non riuscita")
             writer.cancelWriting(); try? FileManager.default.removeItem(at: out)
             throw NativeError(why)
         }
         await writer.finishWriting()
         guard writer.status == .completed else {
             try? FileManager.default.removeItem(at: out)
-            throw NativeError(writer.error?.localizedDescription ?? "non riesco a completare il video")
+            throw NativeError(writer.error?.localizedDescription ?? String(localized: "non riesco a completare il video"))
         }
         progress(1)
     }
@@ -417,7 +417,8 @@ enum SmartVideo {
         let (src, track) = try await source(of: asset)
         let size = Job.size(of: file)
         if let t = targetBytes, size <= t {
-            throw NativeError("«\(file.lastPathComponent)» pesa già meno di \(mb(t)): non serve comprimerlo")
+            let name = file.lastPathComponent, limit = mb(t)
+            throw NativeError(String(localized: "«\(name)» pesa già meno di \(limit): non serve comprimerlo"))
         }
         // Peso scelto: compatibile ovunque (H.264). Stessa qualità: HEVC, che a parità di qualità pesa molto meno
         let codec: Codec = targetBytes == nil ? .hevc : .h264
@@ -435,7 +436,8 @@ enum SmartVideo {
     /// «25 MB», «9 MB»: il peso come lo hai scelto.
     static func mb(_ bytes: Int64) -> String {
         let v = Double(bytes) / 1_048_576
-        return (v == v.rounded() ? "\(Int(v))" : Fmt.decimal(v)) + " MB"
+        let n = v == v.rounded() ? "\(Int(v))" : Fmt.decimal(v)
+        return String(localized: "\(n) MB")
     }
 
     private static func compress(asset: AVURLAsset, track: AVAssetTrack, src: Source, size: Int64, targetBytes: Int64?, codec: Codec,
@@ -475,7 +477,8 @@ enum SmartVideo {
                 }
                 if last > t {
                     try? FileManager.default.removeItem(at: out)
-                    throw NativeError("non riesco a farlo stare in \(mb(t)): scegli un peso un po' maggiore")
+                    let limit = mb(t)
+                    throw NativeError(String(localized: "non riesco a farlo stare in \(limit): scegli un peso un po' maggiore"))
                 }
             } else if targetBytes == nil, got >= size {
                 try? FileManager.default.removeItem(at: out)
@@ -491,7 +494,8 @@ enum SmartVideo {
         let (src, track) = try await source(of: asset)
         let srcShort = min(src.width, src.height)
         guard short < srcShort - 1 else {
-            throw NativeError("«\(file.lastPathComponent)» è già di \(Int(srcShort))p o meno: non serve rimpicciolirlo")
+            let name = file.lastPathComponent, side = Int(srcShort)
+            throw NativeError(String(localized: "«\(name)» è già di \(side)p o meno: non serve rimpicciolirlo"))
         }
         let k = min(1, short / srcShort)
         let w = even(src.width * k), h = even(src.height * k)

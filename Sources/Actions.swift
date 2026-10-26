@@ -5,30 +5,30 @@ enum Kind: String, CaseIterable, Codable {
 
     var name: String {
         switch self {
-        case .doc: return "documenti"
-        case .sheet: return "fogli di calcolo"
-        case .slide: return "presentazioni"
-        case .text: return "file di testo"
-        case .img: return "immagini"
-        case .audio: return "file audio"
-        case .video: return "video"
+        case .doc: return String(localized: "documenti")
+        case .sheet: return String(localized: "fogli di calcolo")
+        case .slide: return String(localized: "presentazioni")
+        case .text: return String(localized: "file di testo")
+        case .img: return String(localized: "immagini")
+        case .audio: return String(localized: "file audio")
+        case .video: return String(localized: "video")
         case .pdf: return "PDF"
-        case .sub: return "sottotitoli"
+        case .sub: return String(localized: "sottotitoli")
         }
     }
 
     /// Etichetta breve con la maiuscola, per i riquadri colorati.
     var label: String {
         switch self {
-        case .doc: return "Documenti"
-        case .sheet: return "Fogli"
-        case .slide: return "Presentazioni"
-        case .text: return "Testo e web"
-        case .img: return "Immagini"
-        case .audio: return "Audio"
-        case .video: return "Video"
+        case .doc: return String(localized: "Documenti")
+        case .sheet: return String(localized: "Fogli")
+        case .slide: return String(localized: "Presentazioni")
+        case .text: return String(localized: "Testo e web")
+        case .img: return String(localized: "Immagini")
+        case .audio: return String(localized: "Audio")
+        case .video: return String(localized: "Video")
         case .pdf: return "PDF"
-        case .sub: return "Sottotitoli"
+        case .sub: return String(localized: "Sottotitoli")
         }
     }
 }
@@ -44,7 +44,7 @@ struct Action: Identifiable, Hashable {
     let symbol: String      // simbolo di sistema (SF Symbols)
     var param: ParamKind? = nil
 
-    static let more = Action(id: "__more", short: "Altro", title: "Altri formati", hint: "Apre un secondo anello", symbol: "ellipsis")
+    static let more = Action(id: "__more", short: String(localized: "Altro"), title: String(localized: "Altri formati"), hint: String(localized: "Apre un secondo anello"), symbol: "ellipsis")
 }
 
 enum Catalog {
@@ -85,17 +85,17 @@ enum Catalog {
     // MARK: - Conversioni di formato
 
     private static let convHint: [String: String] = [
-        "pdf": "Da leggere e stampare ovunque", "docx": "DOCX · si modifica in Word e Pages", "odt": "Per LibreOffice",
-        "rtf": "Testo con formattazione semplice", "txt": "Solo testo, senza formattazione", "html": "Pagina web",
-        "md": "MD · testo con titoli e liste", "epub": "Libro elettronico",
-        "xlsx": "XLSX · per Excel e Numbers", "ods": "Per LibreOffice Calc", "csv": "Tabella semplice, per ogni programma",
-        "pptx": "PPTX · per PowerPoint e Keynote", "odp": "Per LibreOffice Impress",
-        "jpg": "Leggero, per condividere", "png": "Senza perdita di qualità", "heic": "Il formato di iPhone, molto leggero",
-        "webp": "Leggero, per il web", "tiff": "Alta qualità, per la stampa", "ico": "Icona per programmi e siti",
-        "mp3": "Audio compatibile ovunque", "m4a": "Audio di qualità, per Apple", "wav": "Audio senza compressione",
-        "flac": "Audio perfetto, più leggero del WAV", "ogg": "Audio leggero, per il web",
-        "mp4": "Video compatibile ovunque", "mov": "Video per QuickTime e iMovie", "mkv": "Video con più audio e sottotitoli",
-        "webm": "Video per il web", "gif": "Animazione senza audio",
+        "pdf": String(localized: "Da leggere e stampare ovunque"), "docx": String(localized: "DOCX · si modifica in Word e Pages"), "odt": String(localized: "Per LibreOffice"),
+        "rtf": String(localized: "Testo con formattazione semplice"), "txt": String(localized: "Solo testo, senza formattazione"), "html": String(localized: "Pagina web"),
+        "md": String(localized: "MD · testo con titoli e liste"), "epub": String(localized: "Libro elettronico"),
+        "xlsx": String(localized: "XLSX · per Excel e Numbers"), "ods": String(localized: "Per LibreOffice Calc"), "csv": String(localized: "Tabella semplice, per ogni programma"),
+        "pptx": String(localized: "PPTX · per PowerPoint e Keynote"), "odp": String(localized: "Per LibreOffice Impress"),
+        "jpg": String(localized: "Leggero, per condividere"), "png": String(localized: "Senza perdita di qualità"), "heic": String(localized: "Il formato di iPhone, molto leggero"),
+        "webp": String(localized: "Leggero, per il web"), "tiff": String(localized: "Alta qualità, per la stampa"), "ico": String(localized: "Icona per programmi e siti"),
+        "mp3": String(localized: "Audio compatibile ovunque"), "m4a": String(localized: "Audio di qualità, per Apple"), "wav": String(localized: "Audio senza compressione"),
+        "flac": String(localized: "Audio perfetto, più leggero del WAV"), "ogg": String(localized: "Audio leggero, per il web"),
+        "mp4": String(localized: "Video compatibile ovunque"), "mov": String(localized: "Video per QuickTime e iMovie"), "mkv": String(localized: "Video con più audio e sottotitoli"),
+        "webm": String(localized: "Video per il web"), "gif": String(localized: "Animazione senza audio"),
     ]
 
     private static let convSymbol: [String: String] = [
@@ -108,14 +108,15 @@ enum Catalog {
     ]
 
     static func conv(_ t: String, kind: Kind) -> Action {
-        var title = "Converti in " + t.uppercased()
+        let up = t.uppercased()
+        var title = String(localized: "Converti in \(up)")
         var hint = convHint[t] ?? ""
-        if kind == .pdf && (t == "png" || t == "jpg") { hint = "Un’immagine per ogni pagina" }
-        if kind == .video && (t == "mp3" || t == "m4a") { title = "Estrai l’audio in " + t.uppercased(); hint = "Solo l’audio del video" }
-        if kind == .video && t == "gif" { title = "GIF animata (tutto il video)" }
+        if kind == .pdf && (t == "png" || t == "jpg") { hint = String(localized: "Un’immagine per ogni pagina") }
+        if kind == .video && (t == "mp3" || t == "m4a") { title = String(localized: "Estrai l’audio in \(up)"); hint = String(localized: "Solo l’audio del video") }
+        if kind == .video && t == "gif" { title = String(localized: "GIF animata (tutto il video)") }
         // 3.0 · Word, Excel e PowerPoint con il loro nome; il formato resta scritto sotto
         let names = ["docx": "Word", "xlsx": "Excel", "pptx": "PowerPoint"]
-        if let n = names[t] { title = "Converti in " + n }
+        if let n = names[t] { title = String(localized: "Converti in \(n)") }
         let short = t == "md" ? "Markdown" : (names[t] ?? t.uppercased())
         return Action(id: "to:" + t, short: short, title: title, hint: hint, symbol: convSymbol[t] ?? "arrow.right.circle")
     }
@@ -123,50 +124,50 @@ enum Catalog {
     // MARK: - Strumenti
 
     static let tools: [String: Action] = [
-        "resize": Action(id: "resize", short: "Dimensione", title: "Ridimensiona", hint: "Foto più piccole e leggere", symbol: "arrow.up.left.and.arrow.down.right", param: .resize),
-        "icompress": Action(id: "icompress", short: "Comprimi", title: "Comprimi", hint: "Più leggera senza perdere qualità, o sotto un peso preciso (moduli, documenti)", symbol: "arrow.down.right.and.arrow.up.left", param: .icompress),
-        "strip": Action(id: "strip", short: "Metadati", title: "Rimuovi i metadati", hint: "Toglie posizione, modello del telefono e data dello scatto", symbol: "eye.slash"),
-        "ocr": Action(id: "ocr", short: "Testo", title: "Copia il testo", hint: "Il testo scritto nella foto, pronto da incollare", symbol: "text.viewfinder"),
-        "pdftext": Action(id: "pdftext", short: "Testo", title: "Copia il testo", hint: "Tutto il testo del PDF, anche dalle scansioni", symbol: "doc.text.magnifyingglass"),
-        "split": Action(id: "split", short: "Dividi", title: "Dividi in pagine", hint: "Un PDF per ogni pagina", symbol: "rectangle.split.3x1"),
-        "extract": Action(id: "extract", short: "Pagine", title: "Estrai alcune pagine", hint: "Scegli quali, es. 1–3, 5", symbol: "doc.on.doc", param: .extract),
-        "pdfcompress": Action(id: "pdfcompress", short: "Comprimi", title: "Comprimi", hint: "Riduci il peso, per mandarlo via email", symbol: "arrow.down.right.and.arrow.up.left", param: .pdfcompress),
-        "vcompress": Action(id: "vcompress", short: "Comprimi", title: "Comprimi", hint: "Più leggero senza perdere qualità, o per Discord, WhatsApp ed email", symbol: "arrow.down.right.and.arrow.up.left", param: .vcompress),
-        "cut": Action(id: "cut", short: "Taglia", title: "Taglia", hint: "Tieni solo un pezzo", symbol: "scissors", param: .cut),
-        "gifcut": Action(id: "gifcut", short: "GIF", title: "GIF da un pezzo", hint: "Un’animazione da un tratto del video", symbol: "photo.stack", param: .gifcut),
-        "normalize": Action(id: "normalize", short: "Volume", title: "Volume uniforme", hint: "Né troppo basso né distorto", symbol: "speaker.wave.2"),
-        "voiceclean": Action(id: "voiceclean", short: "Pulisci voce", title: "Voce più pulita", hint: "Meno ronzio e fruscio di fondo", symbol: "waveform.and.mic"),
-        "transcribe": Action(id: "transcribe", short: "Trascrivi", title: "Trascrivi", hint: "Le parole in testo e sottotitoli, senza internet", symbol: "captions.bubble"),
-        "subextract": Action(id: "subextract", short: "Sottotitoli", title: "Estrai i sottotitoli", hint: "Un file SRT per ogni lingua", symbol: "text.bubble"),
-        "subembed": Action(id: "subembed", short: "+ Sottotitoli", title: "Aggiungi i sottotitoli", hint: "Dal file SRT con lo stesso nome del video", symbol: "plus.bubble"),
-        "merge": Action(id: "merge", short: "Unisci", title: "Unisci in un PDF", hint: "Tutti i PDF e le immagini selezionati", symbol: "square.stack.3d.up"),
-        "rotate": Action(id: "rotate", short: "Ruota", title: "Ruota le pagine", hint: "Di 90° o 180°", symbol: "rotate.right", param: .rotate),
-        "reorder": Action(id: "reorder", short: "Ordina", title: "Riordina le pagine", hint: "Nuovo ordine o pagine al contrario", symbol: "arrow.up.arrow.down", param: .reorder),
-        "protect": Action(id: "protect", short: "Proteggi", title: "Proteggi con password", hint: "Serve la password per aprirlo", symbol: "lock.fill", param: .password),
-        "unprotect": Action(id: "unprotect", short: "Sblocca", title: "Rimuovi la password", hint: "Una copia che si apre senza password", symbol: "lock.open.fill", param: .unlock),
-        "vresize": Action(id: "vresize", short: "Risoluz.", title: "Cambia la grandezza", hint: "Full HD, HD o più piccolo, per pesare meno", symbol: "aspectratio", param: .vresize),
-        "speed": Action(id: "speed", short: "Velocità", title: "Cambia la velocità", hint: "Da metà al doppio", symbol: "speedometer", param: .speed),
-        "silence": Action(id: "silence", short: "Silenzi", title: "Rimuovi i silenzi", hint: "Toglie le pause lunghe", symbol: "waveform.badge.minus"),
-        "rename": Action(id: "rename", short: "Rinomina", title: "Rinomina tutti", hint: "Per esempio Vacanze 001, Vacanze 002…", symbol: "character.cursor.ibeam", param: .rename),
+        "resize": Action(id: "resize", short: String(localized: "Dimensione"), title: String(localized: "Ridimensiona"), hint: String(localized: "Foto più piccole e leggere"), symbol: "arrow.up.left.and.arrow.down.right", param: .resize),
+        "icompress": Action(id: "icompress", short: String(localized: "Comprimi"), title: String(localized: "Comprimi"), hint: String(localized: "Più leggera senza perdere qualità, o sotto un peso preciso (moduli, documenti)"), symbol: "arrow.down.right.and.arrow.up.left", param: .icompress),
+        "strip": Action(id: "strip", short: String(localized: "Metadati"), title: String(localized: "Rimuovi i metadati"), hint: String(localized: "Toglie posizione, modello del telefono e data dello scatto"), symbol: "eye.slash"),
+        "ocr": Action(id: "ocr", short: String(localized: "Testo"), title: String(localized: "Copia il testo"), hint: String(localized: "Il testo scritto nella foto, pronto da incollare"), symbol: "text.viewfinder"),
+        "pdftext": Action(id: "pdftext", short: String(localized: "Testo"), title: String(localized: "Copia il testo"), hint: String(localized: "Tutto il testo del PDF, anche dalle scansioni"), symbol: "doc.text.magnifyingglass"),
+        "split": Action(id: "split", short: String(localized: "Dividi"), title: String(localized: "Dividi in pagine"), hint: String(localized: "Un PDF per ogni pagina"), symbol: "rectangle.split.3x1"),
+        "extract": Action(id: "extract", short: String(localized: "Pagine"), title: String(localized: "Estrai alcune pagine"), hint: String(localized: "Scegli quali, es. 1–3, 5"), symbol: "doc.on.doc", param: .extract),
+        "pdfcompress": Action(id: "pdfcompress", short: String(localized: "Comprimi"), title: String(localized: "Comprimi"), hint: String(localized: "Riduci il peso, per mandarlo via email"), symbol: "arrow.down.right.and.arrow.up.left", param: .pdfcompress),
+        "vcompress": Action(id: "vcompress", short: String(localized: "Comprimi"), title: String(localized: "Comprimi"), hint: String(localized: "Più leggero senza perdere qualità, o per Discord, WhatsApp ed email"), symbol: "arrow.down.right.and.arrow.up.left", param: .vcompress),
+        "cut": Action(id: "cut", short: String(localized: "Taglia"), title: String(localized: "Taglia"), hint: String(localized: "Tieni solo un pezzo"), symbol: "scissors", param: .cut),
+        "gifcut": Action(id: "gifcut", short: "GIF", title: String(localized: "GIF da un pezzo"), hint: String(localized: "Un’animazione da un tratto del video"), symbol: "photo.stack", param: .gifcut),
+        "normalize": Action(id: "normalize", short: String(localized: "Volume"), title: String(localized: "Volume uniforme"), hint: String(localized: "Né troppo basso né distorto"), symbol: "speaker.wave.2"),
+        "voiceclean": Action(id: "voiceclean", short: String(localized: "Pulisci voce"), title: String(localized: "Voce più pulita"), hint: String(localized: "Meno ronzio e fruscio di fondo"), symbol: "waveform.and.mic"),
+        "transcribe": Action(id: "transcribe", short: String(localized: "Trascrivi"), title: String(localized: "Trascrivi"), hint: String(localized: "Le parole in testo e sottotitoli, senza internet"), symbol: "captions.bubble"),
+        "subextract": Action(id: "subextract", short: String(localized: "Sottotitoli"), title: String(localized: "Estrai i sottotitoli"), hint: String(localized: "Un file SRT per ogni lingua"), symbol: "text.bubble"),
+        "subembed": Action(id: "subembed", short: String(localized: "+ Sottotitoli"), title: String(localized: "Aggiungi i sottotitoli"), hint: String(localized: "Dal file SRT con lo stesso nome del video"), symbol: "plus.bubble"),
+        "merge": Action(id: "merge", short: String(localized: "Unisci"), title: String(localized: "Unisci in un PDF"), hint: String(localized: "Tutti i PDF e le immagini selezionati"), symbol: "square.stack.3d.up"),
+        "rotate": Action(id: "rotate", short: String(localized: "Ruota"), title: String(localized: "Ruota le pagine"), hint: String(localized: "Di 90° o 180°"), symbol: "rotate.right", param: .rotate),
+        "reorder": Action(id: "reorder", short: String(localized: "Ordina"), title: String(localized: "Riordina le pagine"), hint: String(localized: "Nuovo ordine o pagine al contrario"), symbol: "arrow.up.arrow.down", param: .reorder),
+        "protect": Action(id: "protect", short: String(localized: "Proteggi"), title: String(localized: "Proteggi con password"), hint: String(localized: "Serve la password per aprirlo"), symbol: "lock.fill", param: .password),
+        "unprotect": Action(id: "unprotect", short: String(localized: "Sblocca"), title: String(localized: "Rimuovi la password"), hint: String(localized: "Una copia che si apre senza password"), symbol: "lock.open.fill", param: .unlock),
+        "vresize": Action(id: "vresize", short: String(localized: "Risoluz."), title: String(localized: "Cambia la grandezza"), hint: String(localized: "Full HD, HD o più piccolo, per pesare meno"), symbol: "aspectratio", param: .vresize),
+        "speed": Action(id: "speed", short: String(localized: "Velocità"), title: String(localized: "Cambia la velocità"), hint: String(localized: "Da metà al doppio"), symbol: "speedometer", param: .speed),
+        "silence": Action(id: "silence", short: String(localized: "Silenzi"), title: String(localized: "Rimuovi i silenzi"), hint: String(localized: "Toglie le pause lunghe"), symbol: "waveform.badge.minus"),
+        "rename": Action(id: "rename", short: String(localized: "Rinomina"), title: String(localized: "Rinomina tutti"), hint: String(localized: "Per esempio Vacanze 001, Vacanze 002…"), symbol: "character.cursor.ibeam", param: .rename),
         // 2.5 · PDF e immagini
-        "searchable": Action(id: "searchable", short: "Ricercabile", title: "Rendi ricercabile", hint: "Un PDF in cui cercare e copiare il testo, anche dalle scansioni", symbol: "doc.text.magnifyingglass"),
-        "pdfedit": Action(id: "pdfedit", short: "Firma", title: "Compila e firma", hint: "Moduli, firma, data e testo", symbol: "signature"),
-        "redact": Action(id: "redact", short: "Oscura", title: "Oscura", hint: "Nasconde per davvero nomi, numeri e testo", symbol: "rectangle.inset.filled"),
-        "hidemark": Action(id: "hidemark", short: "Nascondi", title: "Nascondi un logo", hint: "Sfoca o copri un logo, una data o una filigrana", symbol: "eye.slash.circle", param: .hidemark),
-        "removebg": Action(id: "removebg", short: "Sfondo", title: "Rimuovi lo sfondo", hint: "Resta solo il soggetto, su sfondo trasparente", symbol: "person.and.background.dotted", param: .removebg),
-        "straighten": Action(id: "straighten", short: "Raddrizza", title: "Raddrizza il foglio", hint: "Da una foto storta a una scansione pulita", symbol: "doc.viewfinder", param: .straighten),
-        "upscale": Action(id: "upscale", short: "Ingrandisci", title: "Ingrandisci", hint: "Due o quattro volte più grande, con i contorni nitidi", symbol: "plus.magnifyingglass", param: .upscale),
-        "stack": Action(id: "stack", short: "Unisci scatti", title: "Unisci più scatti", hint: "Più foto della stessa scena diventano una sola, più nitida", symbol: "square.stack.3d.down.right", param: .stack),
+        "searchable": Action(id: "searchable", short: String(localized: "Ricercabile"), title: String(localized: "Rendi ricercabile"), hint: String(localized: "Un PDF in cui cercare e copiare il testo, anche dalle scansioni"), symbol: "doc.text.magnifyingglass"),
+        "pdfedit": Action(id: "pdfedit", short: String(localized: "Firma"), title: String(localized: "Compila e firma"), hint: String(localized: "Moduli, firma, data e testo"), symbol: "signature"),
+        "redact": Action(id: "redact", short: String(localized: "Oscura"), title: String(localized: "Oscura"), hint: String(localized: "Nasconde per davvero nomi, numeri e testo"), symbol: "rectangle.inset.filled"),
+        "hidemark": Action(id: "hidemark", short: String(localized: "Nascondi"), title: String(localized: "Nascondi un logo"), hint: String(localized: "Sfoca o copri un logo, una data o una filigrana"), symbol: "eye.slash.circle", param: .hidemark),
+        "removebg": Action(id: "removebg", short: String(localized: "Sfondo"), title: String(localized: "Rimuovi lo sfondo"), hint: String(localized: "Resta solo il soggetto, su sfondo trasparente"), symbol: "person.and.background.dotted", param: .removebg),
+        "straighten": Action(id: "straighten", short: String(localized: "Raddrizza"), title: String(localized: "Raddrizza il foglio"), hint: String(localized: "Da una foto storta a una scansione pulita"), symbol: "doc.viewfinder", param: .straighten),
+        "upscale": Action(id: "upscale", short: String(localized: "Ingrandisci"), title: String(localized: "Ingrandisci"), hint: String(localized: "Due o quattro volte più grande, con i contorni nitidi"), symbol: "plus.magnifyingglass", param: .upscale),
+        "stack": Action(id: "stack", short: String(localized: "Unisci scatti"), title: String(localized: "Unisci più scatti"), hint: String(localized: "Più foto della stessa scena diventano una sola, più nitida"), symbol: "square.stack.3d.down.right", param: .stack),
         // 2.6 · video e audio
-        "social": Action(id: "social", short: "Social", title: "Formato social", hint: "Verticale, quadrato o 4:5 per Reels, TikTok e post", symbol: "rectangle.portrait.on.rectangle.portrait", param: .social),
-        "vmerge": Action(id: "vmerge", short: "Unisci", title: "Unisci i video", hint: "Uno dopo l’altro, in un solo video", symbol: "film.stack"),
-        "music": Action(id: "music", short: "Musica", title: "Aggiungi musica", hint: "Sotto l’audio o al suo posto", symbol: "music.note"),
-        "ringtone": Action(id: "ringtone", short: "Suoneria", title: "Suoneria iPhone", hint: "Fino a 30 secondi, pronta per iPhone", symbol: "bell.and.waves.left.and.right", param: .ringtone),
-        "whatsapp": Action(id: "whatsapp", short: "WhatsApp", title: "Vocale leggero", hint: "Per WhatsApp e messaggi, voce chiara", symbol: "message"),
-        "amerge": Action(id: "amerge", short: "Unisci", title: "Unisci gli audio", hint: "Uno dopo l’altro, in un solo file", symbol: "square.stack.3d.up"),
-        "vproject": Action(id: "vproject", short: "Montaggio", title: "Esporta il montaggio", hint: "Il progetto della scheda Video", symbol: "film.stack"),
-        "tts": Action(id: "tts", short: "Leggi", title: "Testo in voce", hint: "Un file audio letto da una voce naturale", symbol: "text.bubble"),
-        "aienhance": Action(id: "aienhance", short: "Migliora", title: "Migliora con l’IA", hint: "Più nitida e pulita, senza inventare dettagli", symbol: "sparkles", param: .aienhance),
+        "social": Action(id: "social", short: String(localized: "Social"), title: String(localized: "Formato social"), hint: String(localized: "Verticale, quadrato o 4:5 per Reels, TikTok e post"), symbol: "rectangle.portrait.on.rectangle.portrait", param: .social),
+        "vmerge": Action(id: "vmerge", short: String(localized: "Unisci"), title: String(localized: "Unisci i video"), hint: String(localized: "Uno dopo l’altro, in un solo video"), symbol: "film.stack"),
+        "music": Action(id: "music", short: String(localized: "Musica"), title: String(localized: "Aggiungi musica"), hint: String(localized: "Sotto l’audio o al suo posto"), symbol: "music.note"),
+        "ringtone": Action(id: "ringtone", short: String(localized: "Suoneria"), title: String(localized: "Suoneria iPhone"), hint: String(localized: "Fino a 30 secondi, pronta per iPhone"), symbol: "bell.and.waves.left.and.right", param: .ringtone),
+        "whatsapp": Action(id: "whatsapp", short: "WhatsApp", title: String(localized: "Vocale leggero"), hint: String(localized: "Per WhatsApp e messaggi, voce chiara"), symbol: "message"),
+        "amerge": Action(id: "amerge", short: String(localized: "Unisci"), title: String(localized: "Unisci gli audio"), hint: String(localized: "Uno dopo l’altro, in un solo file"), symbol: "square.stack.3d.up"),
+        "vproject": Action(id: "vproject", short: String(localized: "Montaggio"), title: String(localized: "Esporta il montaggio"), hint: String(localized: "Il progetto della scheda Video"), symbol: "film.stack"),
+        "tts": Action(id: "tts", short: String(localized: "Leggi"), title: String(localized: "Testo in voce"), hint: String(localized: "Un file audio letto da una voce naturale"), symbol: "text.bubble"),
+        "aienhance": Action(id: "aienhance", short: String(localized: "Migliora"), title: String(localized: "Migliora con l’IA"), hint: String(localized: "Più nitida e pulita, senza inventare dettagli"), symbol: "sparkles", param: .aienhance),
     ]
 
     /// Un’azione dal suo identificativo (per i preset).
@@ -196,35 +197,35 @@ enum Catalog {
 
     static func toolGroupOrder(kind: Kind) -> [String] {
         switch kind {
-        case .img: return [mineGroup, "Modifica", "Migliora", "Altro"]
-        case .video: return [mineGroup, "Peso e grandezza", "Taglia e unisci", "Audio e sottotitoli", "Altro"]   // 3.9 · prima la più usata
-        default: return [mineGroup, "Organizza", "Proteggi", "Altro"]
+        case .img: return [mineGroup, String(localized: "Modifica"), String(localized: "Migliora"), String(localized: "Altro")]
+        case .video: return [mineGroup, String(localized: "Peso e grandezza"), String(localized: "Taglia e unisci"), String(localized: "Audio e sottotitoli"), String(localized: "Altro")]   // 3.9 · prima la più usata
+        default: return [mineGroup, String(localized: "Organizza"), String(localized: "Proteggi"), String(localized: "Altro")]
         }
     }
 
-    static let mineGroup = "Le mie azioni"
+    static let mineGroup = String(localized: "Le mie azioni")
 
     static func toolGroup(_ id: String, kind: Kind) -> String {
         if id.hasPrefix("preset:") || id.hasPrefix("recipe:") { return mineGroup }     // 3.2 · in cima, le proprie
         switch kind {
         case .img:
             switch id {
-            case "icompress", "resize", "removebg", "hidemark", "straighten": return "Modifica"
-            case "aienhance", "upscale", "stack": return "Migliora"
-            default: return "Altro"
+            case "icompress", "resize", "removebg", "hidemark", "straighten": return String(localized: "Modifica")
+            case "aienhance", "upscale", "stack": return String(localized: "Migliora")
+            default: return String(localized: "Altro")
             }
         case .video:
             switch id {
-            case "cut", "gifcut", "vmerge", "speed": return "Taglia e unisci"
-            case "vcompress", "vresize", "social": return "Peso e grandezza"
-            case "normalize", "voiceclean", "transcribe", "subextract", "subembed": return "Audio e sottotitoli"
-            default: return "Altro"
+            case "cut", "gifcut", "vmerge", "speed": return String(localized: "Taglia e unisci")
+            case "vcompress", "vresize", "social": return String(localized: "Peso e grandezza")
+            case "normalize", "voiceclean", "transcribe", "subextract", "subembed": return String(localized: "Audio e sottotitoli")
+            default: return String(localized: "Altro")
             }
         default:
             switch id {
-            case "pdfcompress", "pdfedit", "split", "extract", "merge", "rotate", "reorder": return "Organizza"
-            case "redact", "protect", "unprotect": return "Proteggi"
-            default: return "Altro"
+            case "pdfcompress", "pdfedit", "split", "extract", "merge", "rotate", "reorder": return String(localized: "Organizza")
+            case "redact", "protect", "unprotect": return String(localized: "Proteggi")
+            default: return String(localized: "Altro")
             }
         }
     }
@@ -239,15 +240,15 @@ enum Catalog {
     /// Lo spicchio che porta il file nella sua scheda, dove ci sono tutte le modifiche.
     static func openAction(for kind: Kind) -> Action? {
         switch kind {
-        case .img: return Action(id: "__open:images", short: "Modifica", title: "Modifica in Immagini",
-                                 hint: "Ridimensiona, togli lo sfondo, migliora e altro", symbol: "slider.horizontal.3")
+        case .img: return Action(id: "__open:images", short: String(localized: "Modifica"), title: String(localized: "Modifica in Immagini"),
+                                 hint: String(localized: "Ridimensiona, togli lo sfondo, migliora e altro"), symbol: "slider.horizontal.3")
         case .pdf, .doc, .sheet, .slide, .text:
-            return Action(id: "__open:files", short: "Modifica", title: "Modifica in File",
-                          hint: "Comprimi, dividi, firma, proteggi e altro", symbol: "slider.horizontal.3")
-        case .audio: return Action(id: "__open:audio", short: "Modifica", title: "Modifica in Audio",
-                                   hint: "Taglia, suoneria, volume, velocità e altro", symbol: "slider.horizontal.3")
-        case .video: return Action(id: "__open:videotools", short: "Modifica", title: "Modifica in Video",
-                                   hint: "Comprimi, taglia, GIF, formato social e altro", symbol: "slider.horizontal.3")
+            return Action(id: "__open:files", short: String(localized: "Modifica"), title: String(localized: "Modifica in File"),
+                          hint: String(localized: "Comprimi, dividi, firma, proteggi e altro"), symbol: "slider.horizontal.3")
+        case .audio: return Action(id: "__open:audio", short: String(localized: "Modifica"), title: String(localized: "Modifica in Audio"),
+                                   hint: String(localized: "Taglia, suoneria, volume, velocità e altro"), symbol: "slider.horizontal.3")
+        case .video: return Action(id: "__open:videotools", short: String(localized: "Modifica"), title: String(localized: "Modifica in Video"),
+                                   hint: String(localized: "Comprimi, taglia, GIF, formato social e altro"), symbol: "slider.horizontal.3")
         case .sub: return nil
         }
     }

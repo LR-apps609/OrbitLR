@@ -44,11 +44,11 @@ enum EditorTool: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .select: return "Compila"
-        case .signature: return "Firma"
-        case .date: return "Data"
-        case .text: return "Testo"
-        case .redact: return "Oscura"
+        case .select: return String(localized: "Compila")
+        case .signature: return String(localized: "Firma")
+        case .date: return String(localized: "Data")
+        case .text: return String(localized: "Testo")
+        case .redact: return String(localized: "Oscura")
         }
     }
     var symbol: String {
@@ -62,11 +62,11 @@ enum EditorTool: String, CaseIterable, Identifiable {
     }
     var hint: String {
         switch self {
-        case .select: return "Scrivi nei campi del modulo. Trascina firme e testi per spostarli; ⌫ per eliminarli."
-        case .signature: return "Clicca sulla pagina dove vuoi la firma."
-        case .date: return "Clicca dove vuoi la data di oggi."
-        case .text: return "Scrivi il testo qui sopra, poi clicca sulla pagina."
-        case .redact: return "Trascina un rettangolo sopra ciò che vuoi nascondere."
+        case .select: return String(localized: "Scrivi nei campi del modulo. Trascina firme e testi per spostarli; ⌫ per eliminarli.")
+        case .signature: return String(localized: "Clicca sulla pagina dove vuoi la firma.")
+        case .date: return String(localized: "Clicca dove vuoi la data di oggi.")
+        case .text: return String(localized: "Scrivi il testo qui sopra, poi clicca sulla pagina.")
+        case .redact: return String(localized: "Trascina un rettangolo sopra ciò che vuoi nascondere.")
         }
     }
 }
@@ -76,7 +76,7 @@ final class PDFEditorModel: ObservableObject, @unchecked Sendable {
     let document: PDFDocument
     @Published var tool: EditorTool
     @Published var selected: PDFAnnotation? = nil
-    @Published var freeText = "Letto e approvato"
+    @Published var freeText = String(localized: "Letto e approvato")
     @Published var findText = ""
     @Published var message: String? = nil
     @Published var flattenForms = false
@@ -127,7 +127,7 @@ final class PDFEditorModel: ObservableObject, @unchecked Sendable {
 
     func placeText(_ text: String, on page: PDFPage, at p: CGPoint) {
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !t.isEmpty else { message = "Scrivi prima il testo."; return }
+        guard !t.isEmpty else { message = String(localized: "Scrivi prima il testo."); return }
         let font = NSFont(name: "Helvetica", size: 12) ?? .systemFont(ofSize: 12)
         let size = (t as NSString).size(withAttributes: [.font: font])
         let a = PDFAnnotation(bounds: CGRect(x: p.x, y: p.y - size.height / 2, width: size.width + 8, height: size.height + 4),
@@ -176,7 +176,7 @@ final class PDFEditorModel: ObservableObject, @unchecked Sendable {
                 n += 1
             }
         }
-        message = n == 0 ? "«\(t)» non compare nel documento." : "Oscurati \(n) punti con «\(t)»."
+        message = n == 0 ? String(localized: "«\(t)» non compare nel documento.") : String(localized: "Oscurati \(n) punti con «\(t)».")
     }
 
     enum Pattern: String, CaseIterable, Identifiable {
@@ -205,7 +205,8 @@ final class PDFEditorModel: ObservableObject, @unchecked Sendable {
                 n += 1
             }
         }
-        message = n == 0 ? "Nessun \(p.rawValue.lowercased()) trovato." : "Oscurati \(n) \(p.rawValue.lowercased())."
+        let name = String(localized: String.LocalizationValue(p.rawValue)).lowercased()
+        message = n == 0 ? String(localized: "Nessun \(name) trovato.") : String(localized: "Oscurati \(n) \(name).")
     }
 
     // MARK: Salvataggio
@@ -246,8 +247,8 @@ final class PDFEditorModel: ObservableObject, @unchecked Sendable {
 
     private func finishSave(_ out: URL?) {
         saving = false
-        guard let out else { message = "Non sono riuscito a salvare il PDF."; return }
-        QueueStore.shared.record(title: source.lastPathComponent, action: outputSuffix == "oscurato" ? "Oscura" : "Compila e firma",
+        guard let out else { message = String(localized: "Non sono riuscito a salvare il PDF."); return }
+        QueueStore.shared.record(title: source.lastPathComponent, action: outputSuffix == "oscurato" ? String(localized: "Oscura") : String(localized: "Compila e firma"),
                                  outputs: [out], kind: .pdf, before: Job.size(of: source))
         NSWorkspace.shared.activateFileViewerSelecting([out])
         close()
@@ -395,21 +396,22 @@ final class PDFEditorController: @unchecked Sendable {
     func open(_ url: URL, tool: EditorTool) {
         guard let doc = PDFDocument(url: url) else {
             let a = NSAlert()
-            a.messageText = "Non riesco ad aprire questo PDF."
+            a.messageText = String(localized: "Non riesco ad aprire questo PDF.")
             a.runModal()
             return
         }
         if doc.isLocked {
             let a = NSAlert()
-            a.messageText = "Il PDF è protetto da password."
-            a.informativeText = "Toglila prima con «Rimuovi la password», poi riprova."
+            a.messageText = String(localized: "Il PDF è protetto da password.")
+            a.informativeText = String(localized: "Toglila prima con «Rimuovi la password», poi riprova.")
             a.runModal()
             return
         }
         let model = PDFEditorModel(source: url, document: doc, tool: tool)
         let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1040, height: 780),
                          styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: false)
-        w.title = (tool == .redact ? "Oscura · " : "Compila e firma · ") + url.lastPathComponent
+        let fileName = url.lastPathComponent
+        w.title = tool == .redact ? String(localized: "Oscura · \(fileName)") : String(localized: "Compila e firma · \(fileName)")
         w.contentView = NSHostingView(rootView: PDFEditorView(model: model))
         w.contentMinSize = NSSize(width: 760, height: 520)
         w.isReleasedWhenClosed = false
@@ -468,7 +470,7 @@ struct PDFEditorView: View {
                 }
                 if model.tool == .signature || model.selected is ImageStampAnnotation {
                     Button { model.showSignaturePad = true } label: {
-                        Label(SignatureStore.load() == nil ? "Disegna la firma" : "Cambia firma", systemImage: "pencil.and.scribble")
+                        Label(SignatureStore.load() == nil ? String(localized: "Disegna la firma") : String(localized: "Cambia firma"), systemImage: "pencil.and.scribble")
                     }
                 }
                 Spacer()
@@ -487,7 +489,7 @@ struct PDFEditorView: View {
                     .disabled(model.findText.trimmingCharacters(in: .whitespaces).isEmpty)
                 Menu("Oscura in automatico") {
                     ForEach(PDFEditorModel.Pattern.allCases) { p in
-                        Button(p.rawValue) { model.redactPattern(p) }
+                        Button(String(localized: String.LocalizationValue(p.rawValue))) { model.redactPattern(p) }
                     }
                 }
                 .fixedSize()

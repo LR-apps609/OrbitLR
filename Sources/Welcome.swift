@@ -21,10 +21,10 @@ final class WelcomeController: ObservableObject, @unchecked Sendable {
     }
 
     let steps = [
-        Step(id: 0, title: "Preparo il motore di conversione", symbol: "gearshape.2.fill"),
-        Step(id: 1, title: "Carico i suoni", symbol: "speaker.wave.2.fill"),
-        Step(id: 2, title: "Controllo i componenti", symbol: "shippingbox.fill"),
-        Step(id: 3, title: "Imposto le scorciatoie", symbol: "command"),
+        Step(id: 0, title: String(localized: "Preparo il motore di conversione"), symbol: "gearshape.2.fill"),
+        Step(id: 1, title: String(localized: "Carico i suoni"), symbol: "speaker.wave.2.fill"),
+        Step(id: 2, title: String(localized: "Controllo i componenti"), symbol: "shippingbox.fill"),
+        Step(id: 3, title: String(localized: "Imposto le scorciatoie"), symbol: "command"),
     ]
 
     @Published var phase: Phase = .loading
@@ -280,36 +280,36 @@ struct Tip: Equatable {
     let text: String
 
     static let all: [Tip] = [
-        Tip(symbol: "film.fill", title: "Scheda Video",
-            text: "Nella barra a sinistra apri Video: tagli, formato per Reels e TikTok che segue il soggetto, musica, unione di più video."),
-        Tip(symbol: "bell.and.waves.left.and.right", title: "Suonerie per iPhone",
-            text: "Nella scheda Audio scegli «Suoneria iPhone», sposta il riquadro sul pezzo che ti piace e crea il file .m4r."),
-        Tip(symbol: "text.bubble", title: "Testo in voce",
-            text: "Nella scheda Audio scrivi un testo e OrbitLR lo legge in un file audio. Le voci «Premium» di macOS sono le più naturali."),
-        Tip(symbol: "space", title: "Anteprima con Spazio",
-            text: "Con un file aperto nel menu, premi Spazio per vederlo grande, come nel Finder."),
-        Tip(symbol: "star.circle.fill", title: "Le mie azioni",
-            text: "Spunta «Salva tra le mie azioni» quando scegli le opzioni, poi assegnale ⌃⌥1…9 nella pagina «Le mie azioni»: selezioni i file nel Finder e parte da sola."),
-        Tip(symbol: "square.split.2x1", title: "Confronta prima e dopo",
-            text: "Dopo una compressione, in Attività premi Confronta e trascina la linea per vedere la differenza, anche ingrandita."),
-        Tip(symbol: "keyboard", title: "Tasti 1–8",
-            text: "Nel menu a torta ogni spicchio ha il suo numero. Invio ripete l’ultima scelta per quel tipo di file."),
-        Tip(symbol: "arrow.up.and.down.and.arrow.left.and.right", title: "Trascina il risultato",
-            text: "L’icona colorata del file creato si trascina dove vuoi: in Mail, in WhatsApp, in una cartella."),
-        Tip(symbol: "square.grid.2x2", title: "Tipi di file diversi",
-            text: "Apri insieme foto, PDF e audio: compare un piccolo menu per ogni tipo, fino a 6."),
-        Tip(symbol: "dial.medium", title: "Manopole",
-            text: "Le manopole si girano trascinando, con la rotellina o con le frecce. Un clic passa alla posizione successiva."),
-        Tip(symbol: "moon.stars.fill", title: "Radio di notte",
-            text: "In Opzioni → Aspetto scegli la modalità scura e il tema: salvia, celeste o terracotta."),
-        Tip(symbol: "command", title: "Tutti i tasti rapidi",
-            text: "Il pulsante ⌘ in alto nella finestra mostra sempre l’elenco completo dei tasti rapidi."),
-        Tip(symbol: "arrow.uturn.backward.circle.fill", title: "Si può sempre annullare",
-            text: "In Attività, ⋯ → «Elimina i file creati…» li sposta nel Cestino e rimette a posto le rinomine. Nel montaggio c’è ⌘Z."),
-        Tip(symbol: "folder.fill", title: "Anche le cartelle",
-            text: "Trascina una cartella intera: OrbitLR prende tutti i file che contiene, divisi per tipo."),
-        Tip(symbol: "eye.slash", title: "Privacy delle foto",
-            text: "«Rimuovi i metadati» toglie posizione, modello del telefono e data prima di condividere una foto."),
+        Tip(symbol: "film.fill", title: String(localized: "Scheda Video"),
+            text: String(localized: "Nella barra a sinistra apri Video: tagli, formato per Reels e TikTok che segue il soggetto, musica, unione di più video.")),
+        Tip(symbol: "bell.and.waves.left.and.right", title: String(localized: "Suonerie per iPhone"),
+            text: String(localized: "Nella scheda Audio scegli «Suoneria iPhone», sposta il riquadro sul pezzo che ti piace e crea il file .m4r.")),
+        Tip(symbol: "text.bubble", title: String(localized: "Testo in voce"),
+            text: String(localized: "Nella scheda Audio scrivi un testo e OrbitLR lo legge in un file audio. Le voci «Premium» di macOS sono le più naturali.")),
+        Tip(symbol: "space", title: String(localized: "Anteprima con Spazio"),
+            text: String(localized: "Con un file aperto nel menu, premi Spazio per vederlo grande, come nel Finder.")),
+        Tip(symbol: "star.circle.fill", title: String(localized: "Le mie azioni"),
+            text: String(localized: "Spunta «Salva tra le mie azioni» quando scegli le opzioni, poi assegnale ⌃⌥1…9 nella pagina «Le mie azioni»: selezioni i file nel Finder e parte da sola.")),
+        Tip(symbol: "square.split.2x1", title: String(localized: "Confronta prima e dopo"),
+            text: String(localized: "Dopo una compressione, in Attività premi Confronta e trascina la linea per vedere la differenza, anche ingrandita.")),
+        Tip(symbol: "keyboard", title: String(localized: "Tasti 1–8"),
+            text: String(localized: "Nel menu a torta ogni spicchio ha il suo numero. Invio ripete l’ultima scelta per quel tipo di file.")),
+        Tip(symbol: "arrow.up.and.down.and.arrow.left.and.right", title: String(localized: "Trascina il risultato"),
+            text: String(localized: "L’icona colorata del file creato si trascina dove vuoi: in Mail, in WhatsApp, in una cartella.")),
+        Tip(symbol: "square.grid.2x2", title: String(localized: "Tipi di file diversi"),
+            text: String(localized: "Apri insieme foto, PDF e audio: compare un piccolo menu per ogni tipo, fino a 6.")),
+        Tip(symbol: "dial.medium", title: String(localized: "Manopole"),
+            text: String(localized: "Le manopole si girano trascinando, con la rotellina o con le frecce. Un clic passa alla posizione successiva.")),
+        Tip(symbol: "moon.stars.fill", title: String(localized: "Radio di notte"),
+            text: String(localized: "In Opzioni → Aspetto scegli la modalità scura e il tema: salvia, celeste o terracotta.")),
+        Tip(symbol: "command", title: String(localized: "Tutti i tasti rapidi"),
+            text: String(localized: "Il pulsante ⌘ in alto nella finestra mostra sempre l’elenco completo dei tasti rapidi.")),
+        Tip(symbol: "arrow.uturn.backward.circle.fill", title: String(localized: "Si può sempre annullare"),
+            text: String(localized: "In Attività, ⋯ → «Elimina i file creati…» li sposta nel Cestino e rimette a posto le rinomine. Nel montaggio c’è ⌘Z.")),
+        Tip(symbol: "folder.fill", title: String(localized: "Anche le cartelle"),
+            text: String(localized: "Trascina una cartella intera: OrbitLR prende tutti i file che contiene, divisi per tipo.")),
+        Tip(symbol: "eye.slash", title: String(localized: "Privacy delle foto"),
+            text: String(localized: "«Rimuovi i metadati» toglie posizione, modello del telefono e data prima di condividere una foto.")),
     ]
 
     /// Un suggerimento diverso a ogni avvio, a giro.
@@ -375,8 +375,8 @@ struct WelcomeView: View {
             Spacer(minLength: 0)
             BrandAnimation(size: CGSize(width: 320, height: 180))
             VStack(spacing: 4) {
-                Text(ctl.firstLaunch ? "Benvenuto in OrbitLR" : "OrbitLR").font(.system(size: 22, weight: .bold, design: .rounded))
-                Text(ctl.firstLaunch ? "Converti e modifica i tuoi file, in un clic" : "Versione \(version)")
+                Text(ctl.firstLaunch ? String(localized: "Benvenuto in OrbitLR") : "OrbitLR").font(.system(size: 22, weight: .bold, design: .rounded))
+                Text(ctl.firstLaunch ? String(localized: "Converti e modifica i tuoi file, in un clic") : String(localized: "Versione \(version)"))
                     .font(.system(size: 12.5, weight: .semibold, design: .rounded)).foregroundStyle(Theme.brass)
             }
             Spacer(minLength: 0)
@@ -478,17 +478,17 @@ struct WelcomeView: View {
     /// 3.0 · Tre passi: prova il menu a torta su un file di prova, poi dal Finder, poi le schede.
     private var pages: [PageInfo] {
         [
-            PageInfo(symbol: "chart.pie.fill", color: Theme.accent, title: "Prova: scegli un formato",
-                     text: "Ecco una foto di prova. Clicca un formato, come faresti con un tuo file.", tips: []),
-            PageInfo(symbol: "cursorarrow.click.2", color: Theme.color(.img), title: "Anche dal Finder",
-                     text: "Seleziona i file nel Finder e premi ⌥⌘C, oppure clic destro → OrbitLR: lo stesso menu si apre lì dove sei.",
-                     tips: ["Funziona anche con le cartelle", "Tasti 1–8 per scegliere, Invio ripete l’ultima scelta",
-                            "Spazio mostra l’anteprima del file"]),
-            PageInfo(symbol: "square.grid.2x2.fill", color: Theme.color(.video), title: "Per modificare, le schede",
-                     text: "Conversione cambia il formato. Immagini, File, Video e Audio fanno tutto il resto: ritagli, suonerie, montaggi.",
-                     tips: ["Lo spicchio «Modifica» porta il file nella sua scheda",
-                            "Nel Cassetto ritrovi i file creati: trascinali su un’altra scheda",
-                            "Attività mostra i lavori in corso e quelli fatti"]),
+            PageInfo(symbol: "chart.pie.fill", color: Theme.accent, title: String(localized: "Prova: scegli un formato"),
+                     text: String(localized: "Ecco una foto di prova. Clicca un formato, come faresti con un tuo file."), tips: []),
+            PageInfo(symbol: "cursorarrow.click.2", color: Theme.color(.img), title: String(localized: "Anche dal Finder"),
+                     text: String(localized: "Seleziona i file nel Finder e premi ⌥⌘C, oppure clic destro → OrbitLR: lo stesso menu si apre lì dove sei."),
+                     tips: [String(localized: "Funziona anche con le cartelle"), String(localized: "Tasti 1–8 per scegliere, Invio ripete l’ultima scelta"),
+                            String(localized: "Spazio mostra l’anteprima del file")]),
+            PageInfo(symbol: "square.grid.2x2.fill", color: Theme.color(.video), title: String(localized: "Per modificare, le schede"),
+                     text: String(localized: "Conversione cambia il formato. Immagini, File, Video e Audio fanno tutto il resto: ritagli, suonerie, montaggi."),
+                     tips: [String(localized: "Lo spicchio «Modifica» porta il file nella sua scheda"),
+                            String(localized: "Nel Cassetto ritrovi i file creati: trascinali su un’altra scheda"),
+                            String(localized: "Attività mostra i lavori in corso e quelli fatti")]),
         ]
     }
 
@@ -531,7 +531,7 @@ struct WelcomeView: View {
                 Spacer()
                 if n > 0 { Button("Indietro") { ctl.back() } }
                 else { Button("Salta") { ctl.finish() } }
-                Button(n == pages.count - 1 ? "Inizia" : "Avanti") { ctl.next() }
+                Button(n == pages.count - 1 ? String(localized: "Inizia") : String(localized: "Avanti")) { ctl.next() }
                     .keyboardShortcut(.defaultAction)
                     .buttonStyle(.borderedProminent).tint(Theme.accent)
             }
@@ -574,8 +574,8 @@ private struct WelcomeTryPie: View {
         m.setup(actions: Catalog.pieActions(for: .img, exts: ["heic"], mergeable: 1, count: 1).filter { !$0.id.hasPrefix("__") })
         m.tint = Theme.color(.img)
         m.suggestedId = "to:jpg"
-        m.fileName = "Prova.heic"
-        m.subtitle = "2,4 MB"
+        m.fileName = String(localized: "Prova.heic")
+        m.subtitle = String(localized: "2,4 MB")
         m.icon = WelcomeTryPie.sampleImage()
         return m
     }
@@ -613,8 +613,8 @@ struct PermissionsView: View {
             .padding(.top, 16)
             Text("Prima di iniziare").font(.system(size: 20, weight: .bold, design: .rounded))
             Text(firstLaunch
-                 ? "macOS ti chiederà alcuni permessi. Meglio adesso, tutti insieme, che a metà lavoro."
-                 : "Dopo un aggiornamento macOS chiede di nuovo i permessi. Meglio adesso, tutti insieme, che a metà lavoro.")
+                 ? String(localized: "macOS ti chiederà alcuni permessi. Meglio adesso, tutti insieme, che a metà lavoro.")
+                 : String(localized: "Dopo un aggiornamento macOS chiede di nuovo i permessi. Meglio adesso, tutti insieme, che a metà lavoro."))
                 .font(.system(size: 12.5)).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: 400)
@@ -644,7 +644,7 @@ struct PermissionsView: View {
             HStack {
                 if !p.done && !p.running { Button("Più tardi") { onDone() } }
                 Spacer()
-                Button(p.done ? "Continua" : "Concedi i permessi") {
+                Button(p.done ? String(localized: "Continua") : String(localized: "Concedi i permessi")) {
                     if p.done { onDone() } else { p.askAll { } }
                 }
                 .keyboardShortcut(.defaultAction)

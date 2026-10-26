@@ -46,7 +46,7 @@ final class CompareController: @unchecked Sendable {
         let host = NSHostingView(rootView: CompareView(pairs: pairs))
         let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 940, height: 720),
                          styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: false)
-        w.title = "Confronta · " + title
+        w.title = String(localized: "Confronta · \(title)")
         w.contentView = host
         w.contentMinSize = NSSize(width: 560, height: 460)
         w.isReleasedWhenClosed = false
@@ -99,15 +99,15 @@ struct CompareView: View {
         let b = Job.size(of: pair.before), a = Job.size(of: pair.after)
         let pct = b > 0 ? Int((Double(a - b) / Double(b) * 100).rounded()) : 0
         return HStack(spacing: 16) {
-            side("Prima", pair.before, bytes: b, info: beforeInfo, color: .secondary)
+            side(String(localized: "Prima"), pair.before, bytes: b, info: beforeInfo, color: .secondary)
             Image(systemName: "arrow.right").foregroundStyle(.secondary)
-            side("Dopo", pair.after, bytes: a, info: afterInfo, color: Theme.ink)
+            side(String(localized: "Dopo"), pair.after, bytes: a, info: afterInfo, color: Theme.ink)
             Spacer()
             if b > 0 {
                 Text(pct <= 0 ? "−\(abs(pct))%" : "+\(pct)%")
                     .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundStyle(pct < 0 ? Theme.green : Theme.brass)
-                    .help(pct < 0 ? "Spazio risparmiato" : "Il risultato pesa più dell’originale")
+                    .help(pct < 0 ? String(localized: "Spazio risparmiato") : String(localized: "Il risultato pesa più dell’originale"))
             }
         }
     }
@@ -146,8 +146,8 @@ struct CompareView: View {
                         .shadow(color: Theme.shadow.opacity(0.3), radius: 4, y: 2)
                         .position(x: w * split, y: h / 2)
 
-                    tag("Prima").position(x: 46, y: 22)
-                    tag("Dopo").position(x: w - 42, y: 22)
+                    tag(String(localized: "Prima")).position(x: 46, y: 22)
+                    tag(String(localized: "Dopo")).position(x: w - 42, y: 22)
                 } else {
                     ProgressView().controlSize(.large)
                 }
@@ -195,13 +195,13 @@ struct CompareView: View {
     private var footer: some View {
         HStack(spacing: 14) {
             if pairs.count > 1 {
-                stepper("File \(pairIndex + 1) di \(pairs.count)", index: $pairIndex, count: pairs.count)
+                stepper(String(localized: "File \(pairIndex + 1) di \(pairs.count)"), index: $pairIndex, count: pairs.count)
             }
             if pair.isPDF && pageCount > 1 {
-                stepper("Pagina \(page + 1) di \(pageCount)", index: $page, count: pageCount)
+                stepper(String(localized: "Pagina \(page + 1) di \(pageCount)"), index: $page, count: pageCount)
             }
             Spacer()
-            Text(zoom > 1 ? "Due dita sul trackpad (o la rotellina) per spostarti" : "Trascina la linea per confrontare")
+            Text(zoom > 1 ? String(localized: "Due dita sul trackpad (o la rotellina) per spostarti") : String(localized: "Trascina la linea per confrontare"))
                 .font(.system(size: 11)).foregroundStyle(.secondary)
             Picker("Ingrandimento", selection: $zoom) {
                 Text("Adatta").tag(CGFloat(1))
@@ -254,7 +254,7 @@ struct CompareView: View {
     private static func image(_ url: URL) -> (NSImage?, String, Int) {
         guard let img = NSImage(contentsOf: url) else { return (nil, "", 1) }
         let rep = img.representations.first
-        let px = rep.map { "\($0.pixelsWide) × \($0.pixelsHigh) px" } ?? ""
+        let px = rep.map { String(localized: "\($0.pixelsWide) × \($0.pixelsHigh) px") } ?? ""
         if let rep, rep.pixelsWide > 0 {
             // Stessa scala per tutte e due: conta la forma, non la risoluzione
             img.size = NSSize(width: rep.pixelsWide, height: rep.pixelsHigh)
@@ -270,7 +270,7 @@ struct CompareView: View {
         let box = pg.bounds(for: .mediaBox)
         let scale = 2400 / max(box.width, box.height, 1)
         let img = pg.thumbnail(of: NSSize(width: box.width * scale, height: box.height * scale), for: .mediaBox)
-        return (img, n == 1 ? "1 pagina" : "\(n) pagine", n)
+        return (img, n == 1 ? String(localized: "1 pagina") : String(localized: "\(n) pagine"), n)
     }
 }
 

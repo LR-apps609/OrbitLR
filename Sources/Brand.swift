@@ -160,10 +160,10 @@ struct BrandAnimation: View {
 /// «circa 1 min 20 s», «circa 40 s», «pochi secondi»
 func roughDuration(_ seconds: Double) -> String {
     let s = Int(seconds.rounded())
-    if s <= 8 { return "pochi secondi" }
-    if s < 60 { return "circa \(Int((Double(s) / 5).rounded()) * 5) s" }
+    if s <= 8 { return String(localized: "pochi secondi") }
+    if s < 60 { return String(localized: "circa \(Int((Double(s) / 5).rounded()) * 5) s") }
     let m = s / 60, r = Int((Double(s % 60) / 10).rounded()) * 10
-    if r == 0 { return "circa \(m) min" }
-    if r == 60 { return "circa \(m + 1) min" }
-    return "circa \(m) min \(r) s"
+    if r == 0 { return String(localized: "circa \(m) min") }
+    if r == 60 { return String(localized: "circa \(m + 1) min") }
+    return String(localized: "circa \(m) min \(r) s")
 }

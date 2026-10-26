@@ -83,8 +83,8 @@ final class PhoneShare: ObservableObject, @unchecked Sendable {
         stop()
         error = nil
         downloaded = false
-        guard let copy = try? SendToPhone.shareCopy(of: original) else { error = "Non riesco a preparare il file"; return }
-        guard let ip = SendToPhone.localAddress() else { error = "Il Mac non è collegato a una rete Wi-Fi"; return }
+        guard let copy = try? SendToPhone.shareCopy(of: original) else { error = String(localized: "Non riesco a preparare il file"); return }
+        guard let ip = SendToPhone.localAddress() else { error = String(localized: "Il Mac non è collegato a una rete Wi-Fi"); return }
         file = copy
         do {
             // 3.5.2 · In ascolto solo sull'indirizzo della rete di casa, non su tutte le reti del Mac
@@ -99,7 +99,7 @@ final class PhoneShare: ObservableObject, @unchecked Sendable {
                     let port = l.port?.rawValue ?? 0
                     DispatchQueue.main.async { self.url = "http://\(ip):\(port)/\(self.token)/" }
                 case .failed:
-                    DispatchQueue.main.async { self.error = "Non riesco ad aprire la condivisione"; self.url = nil }
+                    DispatchQueue.main.async { self.error = String(localized: "Non riesco ad aprire la condivisione"); self.url = nil }
                 default: break
                 }
             }
@@ -109,7 +109,7 @@ final class PhoneShare: ObservableObject, @unchecked Sendable {
             stopTimer = w
             DispatchQueue.main.asyncAfter(deadline: .now() + Self.lifetime, execute: w)
         } catch {
-            self.error = "Non riesco ad aprire la condivisione"
+            self.error = String(localized: "Non riesco ad aprire la condivisione")
         }
     }
 
@@ -137,13 +137,13 @@ final class PhoneShare: ObservableObject, @unchecked Sendable {
 
     private func respond(to path: String, on c: NWConnection) {
         guard let file, path == "/\(token)" || path.hasPrefix("/\(token)/") else {
-            send(c, status: "404 Not Found", type: "text/plain; charset=utf-8", body: Data("Non trovato".utf8))
+            send(c, status: "404 Not Found", type: "text/plain; charset=utf-8", body: Data(String(localized: "Non trovato").utf8))
             return
         }
         let name = file.lastPathComponent
         if path.hasSuffix("/file.m4a") {
             guard let body = try? Data(contentsOf: file) else {
-                send(c, status: "404 Not Found", type: "text/plain; charset=utf-8", body: Data("Non trovato".utf8)); return
+                send(c, status: "404 Not Found", type: "text/plain; charset=utf-8", body: Data(String(localized: "Non trovato").utf8)); return
             }
             let ascii = name.unicodeScalars.map { $0.isASCII && $0 != "\"" ? String($0) : "_" }.joined()
             let encoded = name.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? "suoneria.m4a"
@@ -171,7 +171,7 @@ final class PhoneShare: ObservableObject, @unchecked Sendable {
     /// La pagina che si apre sull'iPhone: un pulsante e i due passaggi.
     static func page(name: String, link: String) -> String {
         let safe = name.replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "<", with: "&lt;")
-        return """
+        return String(localized: """
         <!doctype html><html lang="it"><head><meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Suoneria da OrbitLR</title>
@@ -190,7 +190,7 @@ final class PhoneShare: ObservableObject, @unchecked Sendable {
         <li>La trovi in <b>Impostazioni → Suoni</b>.</li></ol>
         <div class="f">Serve iOS 26 o più recente. Con iOS precedenti: collega l'iPhone al Mac e trascina il file .m4r nel Finder.</div>
         </body></html>
-        """
+        """)
     }
 }
 

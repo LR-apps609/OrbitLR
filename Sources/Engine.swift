@@ -16,7 +16,7 @@ final class Job: ObservableObject, Identifiable, @unchecked Sendable {
 
     @Published var state: State = .waiting
     @Published var progress: Double = -1          // -1 = in corso senza percentuale
-    @Published var status = "In attesa"
+    @Published var status = String(localized: "In attesa")
     @Published var outputs: [URL] = []
     /// Ogni errore entra già tradotto in una frase chiara con la soluzione (FriendlyError).
     @Published var failures: [String] = [] {
@@ -27,7 +27,7 @@ final class Job: ObservableObject, Identifiable, @unchecked Sendable {
             var changed = false
             var f = failures
             for i in start..<f.count {
-                let t = FriendlyError.text(f[i])
+                let t = EngineText.localized(FriendlyError.text(f[i]))      // 4.2 · anche i messaggi del motore in inglese
                 if t != f[i] { f[i] = t; changed = true }
             }
             if changed { failures = f }
@@ -90,7 +90,7 @@ final class Job: ObservableObject, Identifiable, @unchecked Sendable {
 
     var title: String {
         let f = mainFiles
-        return f.count == 1 ? f[0].lastPathComponent : "\(f.count) file"
+        return f.count == 1 ? f[0].lastPathComponent : String(localized: "\(f.count) file")
     }
 
     /// 3.1 · Il guadagno in parole: «da 48 MB a 9 MB · −81%». Vuoto se non c'è niente di utile da dire.
@@ -103,8 +103,8 @@ final class Job: ObservableObject, Identifiable, @unchecked Sendable {
         guard done, before > 0, after > 0 else { return "" }
         let a = Fmt.bytes(before), b = Fmt.bytes(after)
         let pct = Int((Double(before - after) / Double(before) * 100).rounded())
-        if pct >= 5 { return "da \(a) a \(b) · −\(pct)%" }
-        if pct <= -5 { return "da \(a) a \(b)" }
+        if pct >= 5 { return String(localized: "da \(a) a \(b) · −\(pct)%") }
+        if pct <= -5 { return String(localized: "da \(a) a \(b)") }
         return b
     }
 
@@ -243,7 +243,7 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         job.cancelRequested = true
         job.exportSession?.cancelExport()
         if let p = job.process, p.isRunning { p.terminate() }   // lo script si ferma in modo pulito
-        else if job.state == .waiting { job.state = .cancelled; job.status = "Interrotto"; objectWillChange.send() }
+        else if job.state == .waiting { job.state = .cancelled; job.status = String(localized: "Interrotto"); objectWillChange.send() }
     }
 
     func retry(_ job: Job) {
@@ -285,7 +285,7 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
 
     private func run(_ job: Job) {
         job.state = .running
-        job.status = "Avvio…"
+        job.status = String(localized: "Avvio…")
         job.startedAt = Date()
         job.expectedSeconds = Estimator.expected(for: job)
         job.estimate = 0
@@ -344,7 +344,7 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         do {
             try p.run()
         } catch {
-            job.failures.append("Non riesco ad avviare il motore di conversione")
+            job.failures.append(String(localized: "Non riesco ad avviare il motore di conversione"))
             finish(job, code: -1)
         }
     }
@@ -352,11 +352,11 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
     /// Conversioni fatte da macOS: immagini, MP4/MOV, M4A. Nessun programma esterno.
     private func runNative(_ job: Job) {
         job.native = true
-        job.status = "Con i motori di macOS…"
+        job.status = String(localized: "Con i motori di macOS…")
         let files = job.mainFiles
         if Media.multi.contains(job.action.id) {
             // «Unisci i video» / «Unisci gli audio»: tutti i file insieme, un solo risultato
-            job.status = "Unisco i file…"
+            job.status = String(localized: "Unisco i file…")
             Task.detached(priority: .userInitiated) {
                 do {
                     let dir = job.destOverride ?? Destination.dir(for: files[0])
@@ -375,7 +375,7 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         }
         if job.action.id == "stack" {
             // «Unisci più scatti»: tutti i file insieme danno un solo risultato
-            job.status = "Allineo e unisco gli scatti…"
+            job.status = String(localized: "Allineo e unisco gli scatti…")
             Task {
                 do {
                     let dir = job.destOverride ?? Destination.dir(for: files[0])
@@ -395,7 +395,7 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         Task {
             for (i, f) in files.enumerated() {
                 if job.cancelRequested { break }
-                await MainActor.run { job.status = files.count > 1 ? "\(i + 1)/\(files.count) · \(f.lastPathComponent)" : "Con i motori di macOS…" }
+                await MainActor.run { job.status = files.count > 1 ? "\(i + 1)/\(files.count) · \(f.lastPathComponent)" : String(localized: "Con i motori di macOS…") }
                 do {
                     let out = try await NativeEngine.run(job: job, file: f) { p in
                         DispatchQueue.main.async { job.progress = (Double(i) + min(1, max(0, p))) / Double(max(files.count, 1)) }
@@ -413,7 +413,7 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
     /// Prima di dire «fatto», controlla che i file creati siano validi. Quelli rotti vanno nel Cestino.
     private func verifyThenFinish(_ job: Job, code: Int32) {
         guard !job.outputs.isEmpty, job.renames == nil else { finish(job, code: code); return }
-        job.status = "Controllo il risultato…"
+        job.status = String(localized: "Controllo il risultato…")
         let outs = job.outputs
         Task {
             var bad: [(URL, String)] = []
@@ -488,7 +488,7 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
             let v = Double(field(1)) ?? -1
             job.progress = v < 0 ? -1 : min(1, v)
             let text = field(2)
-            if !text.isEmpty { job.status = text }
+            if !text.isEmpty { job.status = EngineText.localized(text) }
         case "OUT":
             // 3.5.2 · Solo percorsi veri e completi di file che esistono (mai righe inventate da un nome di file)
             let path = field(1)
@@ -498,13 +498,14 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         case "OK":
             if !field(2).isEmpty { job.info = field(2) }
         case "NOTE":
-            job.notes.append(field(2))
+            job.notes.append(EngineText.localized(field(2)))
         case "FAIL":
             let name = field(1) == "-" ? "" : URL(fileURLWithPath: field(1)).lastPathComponent + ": "
             job.failures.append(name + field(2))
         case "MISSING":
             job.missing.append(field(1))
-            job.failures.append("Manca " + (field(2).components(separatedBy: ":").first ?? field(1)) + " — vedi Componenti")
+            let tool = field(2).components(separatedBy: ":").first ?? field(1)
+            job.failures.append(String(localized: "Manca \(tool) — vedi Componenti"))
         default:
             break
         }
@@ -516,16 +517,16 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         job.process = nil
         if job.cancelRequested {
             job.state = .cancelled
-            job.status = job.outputs.isEmpty ? "Interrotto" : "Interrotto (alcuni file sono pronti)"
+            job.status = job.outputs.isEmpty ? String(localized: "Interrotto") : String(localized: "Interrotto (alcuni file sono pronti)")
         } else if !job.outputs.isEmpty {
             job.state = .done
-            job.status = job.failures.isEmpty ? (job.native ? "Completato con macOS · verificato" : "Completato · verificato") : "Completato in parte"
+            job.status = job.failures.isEmpty ? (job.native ? String(localized: "Completato con macOS · verificato") : String(localized: "Completato · verificato")) : String(localized: "Completato in parte")
         } else if !job.notes.isEmpty && job.failures.isEmpty {
             job.state = .done
-            job.status = job.notes.first ?? "Niente da fare"
+            job.status = job.notes.first ?? String(localized: "Niente da fare")
         } else {
             job.state = .failed
-            job.status = "Non riuscito" + (job.failures.first.map { " · " + $0 } ?? "")
+            job.status = job.failures.first.map { String(localized: "Non riuscito · \($0)") } ?? String(localized: "Non riuscito")
         }
         job.progress = job.state == .done ? 1 : job.progress
         if job.state == .done, job.failures.isEmpty { Estimator.learn(from: job) }
@@ -599,7 +600,7 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
                 if let v { self?.enqueue(files: [f], action: a, param: v) }
             }
         case .icloud:
-            job.status = "Scarico da iCloud…"
+            job.status = String(localized: "Scarico da iCloud…")
             for f in job.mainFiles { try? FileManager.default.startDownloadingUbiquitousItem(at: f) }
             waitForDownload(job, attempts: 0)
         case .classic:
@@ -629,17 +630,17 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         guard job.state != .cancelled, !job.quietNotify else { return }
         let c = UNMutableNotificationContent()
         if job.state == .done {
-            c.title = job.outputs.count == 1 ? "Creato «\(job.outputs[0].lastPathComponent)»" : (job.outputs.isEmpty ? job.title : "\(job.outputs.count) file pronti")
+            c.title = job.outputs.count == 1 ? String(localized: "Creato «\(job.outputs[0].lastPathComponent)»") : (job.outputs.isEmpty ? job.title : String(localized: "\(job.outputs.count) file pronti"))
             var body = job.action.title
             if !job.info.isEmpty { body += " · " + job.info }
-            if !job.failures.isEmpty { body += " · \(job.failures.count) non riusciti" }
+            if !job.failures.isEmpty { body += " · " + String(localized: "\(job.failures.count) non riusciti") }
             if job.outputs.isEmpty, let n = job.notes.first { body = n }
             c.body = body
             if let first = job.outputs.first { c.userInfo = ["path": first.path] }
             c.categoryIdentifier = "DONE"
         } else {
-            c.title = "Non riuscito: \(job.title)"
-            c.body = job.failures.first ?? "Apri OrbitLR per i dettagli"
+            c.title = String(localized: "Non riuscito: \(job.title)")
+            c.body = job.failures.first ?? String(localized: "Apri OrbitLR per i dettagli")
         }
         let req = UNNotificationRequest(identifier: job.id.uuidString, content: c, trigger: nil)
         UNUserNotificationCenter.current().add(req)
@@ -715,14 +716,14 @@ enum Fix: Equatable {
 
     var label: String {
         switch self {
-        case .install: return "Installa"
+        case .install: return String(localized: "Installa")
         case .retryParam(let l, _): return l
-        case .unlock: return "Inserisci la password"
-        case .icloud: return "Scarica e riprova"
-        case .classic: return "Riprova con l’altro motore"
-        case .retry: return "Riprova"
-        case .storage: return "Libera spazio"
-        case .otherFolder: return "Scegli un’altra cartella"
+        case .unlock: return String(localized: "Inserisci la password")
+        case .icloud: return String(localized: "Scarica e riprova")
+        case .classic: return String(localized: "Riprova con l’altro motore")
+        case .retry: return String(localized: "Riprova")
+        case .storage: return String(localized: "Libera spazio")
+        case .otherFolder: return String(localized: "Scegli un’altra cartella")
         }
     }
 
@@ -747,11 +748,14 @@ enum Fix: Equatable {
                        "gs": "gs", "whisper": "whisper", "magick": "magick", "exiftool": "exiftool"]
         let ids = Array(Set(job.missing.compactMap { toolMap[$0] }))
         if !ids.isEmpty { return .install(ids) }
-        if job.action.id == "vcompress", text.contains("troppo lungo") || text.contains("farlo stare"), let mb = Int(job.param) {
-            return .retryParam("Prova con \(mb * 2) MB", String(mb * 2))
+        // 4.2 · I testi si confrontano in italiano e nella lingua dell'app
+        func says(_ it: String, _ shown: String) -> Bool { text.contains(it) || text.contains(shown.lowercased()) }
+        if job.action.id == "vcompress", says("troppo lungo", "too long") || says("farlo stare", "get it under"), let mb = Int(job.param) {
+            return .retryParam(String(localized: "Prova con \(mb * 2) MB"), String(mb * 2))
         }
-        if text.contains("spazio su disco esaurito") { return .storage }
-        if text.contains("non può scrivere in quella cartella") { return .otherFolder }
+        if says("spazio su disco esaurito", String(localized: "Spazio su disco esaurito: libera un po’ di spazio e riprova.")) { return .storage }
+        if says("non può scrivere in quella cartella",
+                String(localized: "OrbitLR non può scrivere in quella cartella: spostala altrove o scegli un’altra cartella nelle Opzioni.")) { return .otherFolder }
         if text.contains("password") && job.kind == .pdf && job.action.id != "unprotect" { return .unlock }
         if text.contains("icloud") { return .icloud }
         // Gli strumenti che esistono solo con i motori di macOS non hanno un «altro motore»

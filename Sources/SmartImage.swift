@@ -20,22 +20,22 @@ enum SmartImage {
     /// Comprime `src` e scrive in `dir`. `targetBytes` nil = stessa qualità, meno peso.
     static func compress(_ src: URL, targetBytes: Int?, dir: URL) throws -> URL {
         guard let source = CGImageSourceCreateWithURL(src as CFURL, nil), CGImageSourceGetCount(source) > 0 else {
-            throw NativeError("non riesco a leggere l’immagine")
+            throw NativeError(String(localized: "non riesco a leggere l’immagine"))
         }
         let props = (CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]) ?? [:]
         let w = props[kCGImagePropertyPixelWidth] as? Int ?? 0, h = props[kCGImagePropertyPixelHeight] as? Int ?? 0
         let long = max(w, h)
-        guard long > 0 else { throw NativeError("dimensioni dell’immagine non valide") }
+        guard long > 0 else { throw NativeError(String(localized: "dimensioni dell’immagine non valide")) }
         let base = src.deletingPathExtension().lastPathComponent
         let e = Catalog.norm(src.pathExtension)
         let original = Job.size(of: src)
 
         if let target = targetBytes {
             if original > 0, original <= Int64(target), e == "jpg" {
-                throw NativeError("«\(src.lastPathComponent)» pesa già meno di \(kb(target)): non serve comprimerla")
+                throw NativeError(String(localized: "«\(src.lastPathComponent)» pesa già meno di \(kb(target)): non serve comprimerla"))
             }
             guard let r = try fit(source, longSide: long, target: target) else {
-                throw NativeError("non riesco a farla stare in \(kb(target)) senza rovinarla: scegli un peso un po’ maggiore")
+                throw NativeError(String(localized: "non riesco a farla stare in \(kb(target)) senza rovinarla: scegli un peso un po’ maggiore"))
             }
             let out = Destination.unique(dir, base: "\(base) (\(kb(target)))", ext: "jpg")
             try r.data.write(to: out)
@@ -44,17 +44,17 @@ enum SmartImage {
 
         // Un'immagine con parti trasparenti (logo, icona) diventando JPEG le perderebbe: meglio dirlo
         if (props[kCGImagePropertyHasAlpha] as? Bool) == true, e == "png" || e == "tiff" || e == "webp" {
-            throw NativeError("«\(src.lastPathComponent)» ha parti trasparenti: per non perderle resta com'è. Per alleggerirla usa «Ridimensiona» o un peso preciso")
+            throw NativeError(String(localized: "«\(src.lastPathComponent)» ha parti trasparenti: per non perderle resta com'è. Per alleggerirla usa «Ridimensiona» o un peso preciso"))
         }
         // Stessa qualità: JPEG resta JPEG, HEIC resta HEIC; il resto diventa JPEG di alta qualità
         let format: UTType = e == "heic" ? .heic : .jpeg
         let q = e == "heic" ? 0.72 : 0.82
         guard let img = image(source, longSide: long),
               let data = encode(img, as: format, quality: q, metadata: cleanMetadata(props, keepPersonal: true)) else {
-            throw NativeError("non riesco a comprimere l’immagine")
+            throw NativeError(String(localized: "non riesco a comprimere l’immagine"))
         }
         if original > 0, Int64(data.count) >= original * 9 / 10 {
-            throw NativeError("«\(src.lastPathComponent)» è già compressa al meglio: ricomprimerla la peggiorerebbe senza farla pesare meno")
+            throw NativeError(String(localized: "«\(src.lastPathComponent)» è già compressa al meglio: ricomprimerla la peggiorerebbe senza farla pesare meno"))
         }
         let out = Destination.unique(dir, base: "\(base) (più leggera)", ext: format == .heic ? "heic" : "jpg")
         try data.write(to: out)
@@ -134,13 +134,13 @@ enum SmartImage {
     /// L'immagine non viene ricompressa (JPEG e HEIC restano identici punto per punto); l'orientamento resta.
     static func strip(_ src: URL, dir: URL) throws -> URL {
         guard let source = CGImageSourceCreateWithURL(src as CFURL, nil), let type = CGImageSourceGetType(source) else {
-            throw NativeError("non riesco a leggere l’immagine")
+            throw NativeError(String(localized: "non riesco a leggere l’immagine"))
         }
         let props = (CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]) ?? [:]
         let base = src.deletingPathExtension().lastPathComponent
         let out = Destination.unique(dir, base: "\(base) (senza metadati)", ext: src.pathExtension.isEmpty ? "jpg" : src.pathExtension)
         guard let dest = CGImageDestinationCreateWithURL(out as CFURL, type, 1, nil) else {
-            throw NativeError("macOS non sa scrivere questo formato")
+            throw NativeError(String(localized: "macOS non sa scrivere questo formato"))
         }
         // Solo l'orientamento sopravvive: tutto il resto (EXIF, GPS, IPTC, XMP) se ne va
         let meta = CGImageMetadataCreateMutable()
@@ -158,11 +158,11 @@ enum SmartImage {
             // Formati che non si copiano senza ricomprimere: si riscrive l'immagine, senza dati
             try? FileManager.default.removeItem(at: out)
             guard let d2 = CGImageDestinationCreateWithURL(out as CFURL, type, 1, nil),
-                  let img = CGImageSourceCreateImageAtIndex(source, 0, nil) else { throw NativeError("non riesco a togliere i metadati") }
+                  let img = CGImageSourceCreateImageAtIndex(source, 0, nil) else { throw NativeError(String(localized: "non riesco a togliere i metadati")) }
             var p: [CFString: Any] = [kCGImageDestinationLossyCompressionQuality: 0.95]
             if let o = props[kCGImagePropertyOrientation] { p[kCGImagePropertyOrientation] = o }
             CGImageDestinationAddImage(d2, img, p as CFDictionary)
-            guard CGImageDestinationFinalize(d2) else { throw NativeError("non riesco a togliere i metadati") }
+            guard CGImageDestinationFinalize(d2) else { throw NativeError(String(localized: "non riesco a togliere i metadati")) }
         }
         return out
     }
@@ -171,14 +171,14 @@ enum SmartImage {
 
     /// macOS raddrizza la foto; poi la scrive lui se sa farlo, altrimenti l'ffmpeg incluso in OrbitLR.
     static func convertRare(_ src: URL, to ext: String, dir: URL) throws -> URL {
-        guard let source = CGImageSourceCreateWithURL(src as CFURL, nil) else { throw NativeError("non riesco a leggere l’immagine") }
+        guard let source = CGImageSourceCreateWithURL(src as CFURL, nil) else { throw NativeError(String(localized: "non riesco a leggere l’immagine")) }
         let props = (CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]) ?? [:]
         let long = max(props[kCGImagePropertyPixelWidth] as? Int ?? 0, props[kCGImagePropertyPixelHeight] as? Int ?? 0)
         let side = ext == "ico" ? min(256, max(16, long)) : max(16, long)
         let opts: [CFString: Any] = [kCGImageSourceCreateThumbnailFromImageAlways: true,
                                      kCGImageSourceCreateThumbnailWithTransform: true,
                                      kCGImageSourceThumbnailMaxPixelSize: side]
-        guard let img = CGImageSourceCreateThumbnailAtIndex(source, 0, opts as CFDictionary) else { throw NativeError("non riesco a leggere l’immagine") }
+        guard let img = CGImageSourceCreateThumbnailAtIndex(source, 0, opts as CFDictionary) else { throw NativeError(String(localized: "non riesco a leggere l’immagine")) }
         let out = Destination.unique(dir, base: src.deletingPathExtension().lastPathComponent, ext: ext)
         let type = ext == "ico" ? "com.microsoft.ico" : "org.webmproject.webp"
         let writable = (CGImageDestinationCopyTypeIdentifiers() as? [String]) ?? []
@@ -187,12 +187,12 @@ enum SmartImage {
             if CGImageDestinationFinalize(d), Job.size(of: out) > 0 { return out }
             try? FileManager.default.removeItem(at: out)
         }
-        guard let ff = Paths.tool("ffmpeg") else { throw NativeError("per questo formato serve ffmpeg") }
+        guard let ff = Paths.tool("ffmpeg") else { throw NativeError(String(localized: "per questo formato serve ffmpeg")) }
         let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("orbitlr-\(UUID().uuidString).png")
         defer { try? FileManager.default.removeItem(at: tmp) }
-        guard let d = CGImageDestinationCreateWithURL(tmp as CFURL, "public.png" as CFString, 1, nil) else { throw NativeError("non riesco a preparare l’immagine") }
+        guard let d = CGImageDestinationCreateWithURL(tmp as CFURL, "public.png" as CFString, 1, nil) else { throw NativeError(String(localized: "non riesco a preparare l’immagine")) }
         CGImageDestinationAddImage(d, img, nil)
-        guard CGImageDestinationFinalize(d) else { throw NativeError("non riesco a preparare l’immagine") }
+        guard CGImageDestinationFinalize(d) else { throw NativeError(String(localized: "non riesco a preparare l’immagine")) }
         let p = Process()
         p.executableURL = URL(fileURLWithPath: ff)
         var args = ["-nostdin", "-hide_banner", "-loglevel", "error", "-y", "-i", tmp.path]
@@ -204,7 +204,7 @@ enum SmartImage {
         try p.run(); p.waitUntilExit()
         guard p.terminationStatus == 0, Job.size(of: out) > 0 else {
             try? FileManager.default.removeItem(at: out)
-            throw NativeError("non riesco a creare il file \(ext.uppercased())")
+            throw NativeError(String(localized: "non riesco a creare il file \(ext.uppercased())"))
         }
         return out
     }

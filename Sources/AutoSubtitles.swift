@@ -152,7 +152,7 @@ enum AutoSubtitles {
     @MainActor
     static func run(_ s: VideoProjectStore, undo: UndoManager?) async -> String {
         guard await authorize() else {
-            return "Per i sottotitoli serve il permesso «Riconoscimento vocale»: Impostazioni di Sistema → Privacy e sicurezza."
+            return String(localized: "Per i sottotitoli serve il permesso «Riconoscimento vocale»: Impostazioni di Sistema → Privacy e sicurezza.")
         }
         let clips = s.project.clips, starts = s.project.starts
         var all: [Line] = []
@@ -170,14 +170,14 @@ enum AutoSubtitles {
         }
         if all.isEmpty && offline {
             // 3.5.2 · L'audio non lascia mai il Mac: se la lingua non è pronta, si spiega come averla
-            return "Il Mac non ha ancora la lingua per riconoscere la voce senza internet. Impostazioni di Sistema → Tastiera → Dettatura: attivala con la lingua giusta, attendi lo scaricamento e riprova."
+            return String(localized: "Il Mac non ha ancora la lingua per riconoscere la voce senza internet. Impostazioni di Sistema → Tastiera → Dettatura: attivala con la lingua giusta, attendi lo scaricamento e riprova.")
         }
-        guard !all.isEmpty else { return "Non ho sentito parole nelle clip (o l’audio è spento)." }
+        guard !all.isEmpty else { return String(localized: "Non ho sentito parole nelle clip (o l’audio è spento).") }
         let new = texts(all)
-        s.change(undo, "Sottotitoli automatici") { p in
+        s.change(undo, String(localized: "Sottotitoli automatici")) { p in
             // Al posto dei sottotitoli automatici di prima, se c'erano
             p.texts = (p.texts ?? []).filter { $0.style != "subtitle" || $0.y < 0.8 } + new
         }
-        return new.count == 1 ? "1 sottotitolo aggiunto: controllalo nella riga «Testi»." : "\(new.count) sottotitoli aggiunti: controllali nella riga «Testi»."
+        return new.count == 1 ? String(localized: "1 sottotitolo aggiunto: controllalo nella riga «Testi».") : String(localized: "\(new.count) sottotitoli aggiunti: controllali nella riga «Testi».")
     }
 }

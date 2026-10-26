@@ -130,7 +130,7 @@ extension MediaTabModel {
     func openProject(_ p: AudioProject) {
         var p = p
         guard AudioProjectLibrary.relink(&p) else {
-            notice = "Non trovo più il file di «\(p.name)»: è stato cancellato o è su un disco scollegato."
+            notice = String(localized: "Non trovo più il file di «\(p.name)»: è stato cancellato o è su un disco scollegato.")
             NSSound.beep()
             return
         }
@@ -182,7 +182,7 @@ struct AudioProjectsRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                SectionLabel(text: "Progetti")
+                SectionLabel(text: String(localized: "Progetti"))
                 Text("si salvano da soli · clic per riprendere").font(.system(size: 11.5)).foregroundStyle(.secondary)
             }
             ScrollView(.horizontal, showsIndicators: false) {
@@ -239,30 +239,30 @@ struct AudioProjectsRow: View {
     }
 
     private func detail(_ p: AudioProject) -> String {
-        let tool = AudioTool(rawValue: p.tool)?.title ?? "Audio"
+        let tool = AudioTool(rawValue: p.tool)?.title ?? String(localized: "Audio")
         let sel = p.length > 0.1 ? " · " + formatShort(p.length) : ""
-        let files = p.paths.count > 1 ? " · \(p.paths.count) file" : ""
+        let files = p.paths.count > 1 ? " · " + String(localized: "\(p.paths.count) file") : ""
         return tool + sel + files + " · " + p.modified.formatted(.relative(presentation: .named))
     }
 
     private func rename(_ p: AudioProject) {
         let a = NSAlert()
-        a.messageText = "Rinomina il progetto"
+        a.messageText = String(localized: "Rinomina il progetto")
         let field = NSTextField(string: p.name)
         field.frame = NSRect(x: 0, y: 0, width: 260, height: 24)
         a.accessoryView = field
-        a.addButton(withTitle: "Rinomina")
-        a.addButton(withTitle: "Annulla")
+        a.addButton(withTitle: String(localized: "Rinomina"))
+        a.addButton(withTitle: String(localized: "Annulla"))
         a.window.initialFirstResponder = field
         Sheet.confirm(a) { ok in if ok { m.renameProject(p.id, to: field.stringValue) } }
     }
 
     private func delete(_ p: AudioProject) {
         let a = NSAlert()
-        a.messageText = "Eliminare «\(p.name)»?"
-        a.informativeText = "Il progetto va nel Cestino. Il file audio non viene toccato."
-        a.addButton(withTitle: "Elimina")
-        a.addButton(withTitle: "Annulla")
+        a.messageText = String(localized: "Eliminare «\(p.name)»?")
+        a.informativeText = String(localized: "Il progetto va nel Cestino. Il file audio non viene toccato.")
+        a.addButton(withTitle: String(localized: "Elimina"))
+        a.addButton(withTitle: String(localized: "Annulla"))
         Sheet.confirm(a) { ok in if ok { m.deleteProject(p.id) } }
     }
 }

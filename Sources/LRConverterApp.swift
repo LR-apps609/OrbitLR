@@ -70,7 +70,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         center.delegate = self
         // 2.9.2 · Al primo avvio il permesso si chiede nella schermata «Prima di iniziare», insieme agli altri
         if !WelcomeController.isFirstLaunch { center.requestAuthorization(options: [.alert, .sound]) { _, _ in } }
-        let show = UNNotificationAction(identifier: "SHOW", title: "Mostra", options: [.foreground])
+        let show = UNNotificationAction(identifier: "SHOW", title: String(localized: "Mostra"), options: [.foreground])
         center.setNotificationCategories([UNNotificationCategory(identifier: "DONE", actions: [show], intentIdentifiers: [])])
 
         // Aperta all'accesso al Mac: niente schedina di avvio
@@ -225,10 +225,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         let running = QueueStore.shared.runningJobs.count + QueueStore.shared.jobs.filter { $0.state == .waiting }.count
         guard running > 0, !Updater.shared.busy else { return .terminateNow }
         let a = NSAlert()
-        a.messageText = running == 1 ? "C’è un lavoro in corso" : "Ci sono \(running) lavori in corso"
-        a.informativeText = "Se esci adesso si interrompono. I file già pronti restano."
-        a.addButton(withTitle: "Continua a lavorare")
-        a.addButton(withTitle: "Interrompi ed esci")
+        a.messageText = running == 1 ? String(localized: "C’è un lavoro in corso") : String(localized: "Ci sono \(running) lavori in corso")
+        a.informativeText = String(localized: "Se esci adesso si interrompono. I file già pronti restano.")
+        a.addButton(withTitle: String(localized: "Continua a lavorare"))
+        a.addButton(withTitle: String(localized: "Interrompi ed esci"))
         NSApp.activate()
         if a.runModal() == .alertFirstButtonReturn { return .terminateCancel }
         for j in QueueStore.shared.jobs where j.state == .running || j.state == .waiting { QueueStore.shared.cancel(j) }
@@ -242,10 +242,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         UserDefaults.standard.set(true, forKey: key)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             let a = NSAlert()
-            a.messageText = "OrbitLR resta pronta"
-            a.informativeText = "La trovi nella barra in alto: ⌥⌘C sui file nel Finder, o trascinali sull’icona. Per chiuderla del tutto: ⌘Q."
-            a.addButton(withTitle: "Va bene")
-            a.addButton(withTitle: "Esci del tutto")
+            a.messageText = String(localized: "OrbitLR resta pronta")
+            a.informativeText = String(localized: "La trovi nella barra in alto: ⌥⌘C sui file nel Finder, o trascinali sull’icona. Per chiuderla del tutto: ⌘Q.")
+            a.addButton(withTitle: String(localized: "Va bene"))
+            a.addButton(withTitle: String(localized: "Esci del tutto"))
             NSApp.activate()
             if a.runModal() == .alertSecondButtonReturn { NSApp.terminate(nil) }
         }

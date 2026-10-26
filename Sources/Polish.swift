@@ -294,7 +294,7 @@ struct TunerBar: View {
         .animation(.easeOut(duration: 0.35), value: v)
         .accessibilityElement()
         .accessibilityLabel("Avanzamento")
-        .accessibilityValue(done ? "completato" : "\(Int(v * 100)) per cento")
+        .accessibilityValue(done ? String(localized: "completato") : String(localized: "\(Int(v * 100)) per cento"))
     }
 }
 

@@ -58,7 +58,7 @@ final class FeedbackWindow {
             w.contentViewController = NSHostingController(rootView: view)
         } else {
             let w = NSWindow(contentViewController: NSHostingController(rootView: view))
-            w.title = "Suggerisci un’idea"
+            w.title = String(localized: "Suggerisci un’idea")
             w.styleMask = [.titled, .closable]
             w.isReleasedWhenClosed = false
             w.center()
@@ -82,14 +82,14 @@ struct FeedbackView: View {
                     Button { face = f.id } label: {
                         VStack(spacing: 4) {
                             Text(f.emoji).font(.system(size: 30))
-                            Text(f.name).font(.system(size: 11.5, weight: .semibold))
+                            Text(String(localized: String.LocalizationValue(f.name))).font(.system(size: 11.5, weight: .semibold))
                         }
                         .frame(width: 96, height: 72)
                         .background(RoundedRectangle(cornerRadius: 12).fill(face == f.id ? Theme.accent.opacity(0.18) : Theme.ink.opacity(0.05)))
                         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(face == f.id ? Theme.accent : .clear, lineWidth: 2))
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(f.name)
+                    .accessibilityLabel(String(localized: String.LocalizationValue(f.name)))
                 }
             }
             Text("Un’idea, una cosa che manca, una che non ti piace:").font(.system(size: 12.5)).foregroundStyle(.secondary)

@@ -33,17 +33,17 @@ enum UpdatePackage {
         var message: String {
             switch self {
             case .notSigned:
-                return "Questo aggiornamento non è firmato da OrbitLR. Per sicurezza non lo installo: scaricalo solo dalla pagina ufficiale."
+                return String(localized: "Questo aggiornamento non è firmato da OrbitLR. Per sicurezza non lo installo: scaricalo solo dalla pagina ufficiale.")
             case .badSignature:
-                return "La firma di questo aggiornamento non è quella di OrbitLR. Per sicurezza non lo installo."
+                return String(localized: "La firma di questo aggiornamento non è quella di OrbitLR. Per sicurezza non lo installo.")
             case .badManifest:
-                return "Questo file non è un aggiornamento di OrbitLR valido."
+                return String(localized: "Questo file non è un aggiornamento di OrbitLR valido.")
             case .tampered:
-                return "Questo aggiornamento è stato modificato dopo la firma. Per sicurezza non lo installo."
+                return String(localized: "Questo aggiornamento è stato modificato dopo la firma. Per sicurezza non lo installo.")
             case .notNewer(let v):
-                return "Questo aggiornamento (\(v)) non è più nuovo della versione che hai: non serve installarlo."
+                return String(localized: "Questo aggiornamento (\(v)) non è più nuovo della versione che hai: non serve installarlo.")
             case .wrongApp:
-                return "L'app dentro l'aggiornamento non corrisponde a quella firmata. Per sicurezza non la installo."
+                return String(localized: "L'app dentro l'aggiornamento non corrisponde a quella firmata. Per sicurezza non la installo.")
             }
         }
     }

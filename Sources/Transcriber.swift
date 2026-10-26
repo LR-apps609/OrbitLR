@@ -19,10 +19,10 @@ enum Transcriber {
     static func run(_ file: URL, dir: URL, job: Job?, progress: @escaping (Double) -> Void,
                     extra: @escaping (URL) -> Void) async throws -> URL {
         guard await AutoSubtitles.authorize() else {
-            throw NativeError("serve il permesso «Riconoscimento vocale»: Impostazioni di Sistema → Privacy e sicurezza")
+            throw NativeError(String(localized: "serve il permesso «Riconoscimento vocale»: Impostazioni di Sistema → Privacy e sicurezza"))
         }
         let words = try await recognize(file, locale: AutoSubtitles.preferredLocale(), job: job, progress: progress)
-        guard !words.isEmpty else { throw NativeError("non ho sentito parole in «\(file.lastPathComponent)»") }
+        guard !words.isEmpty else { throw NativeError(String(localized: "non ho sentito parole in «\(file.lastPathComponent)»")) }
         let base = file.deletingPathExtension().lastPathComponent
         let txt = Destination.unique(dir, base: "\(base) (trascrizione)", ext: "txt")
         try paragraphs(words).write(to: txt, atomically: true, encoding: .utf8)
@@ -38,15 +38,15 @@ enum Transcriber {
 
     static func recognize(_ file: URL, locale: Locale, job: Job?, progress: @escaping (Double) -> Void) async throws -> [AutoSubtitles.Word] {
         guard let rec = SFSpeechRecognizer(locale: locale), rec.isAvailable else {
-            throw NativeError("il riconoscimento vocale non è disponibile per questa lingua")
+            throw NativeError(String(localized: "il riconoscimento vocale non è disponibile per questa lingua"))
         }
         // Solo sul Mac: l'audio non va mai su internet
         guard rec.supportsOnDeviceRecognition else {
-            throw NativeError("il Mac non ha ancora la lingua per riconoscere la voce senza internet. Impostazioni di Sistema → Tastiera → Dettatura: attivala con la lingua giusta, attendi lo scaricamento e riprova")
+            throw NativeError(String(localized: "il Mac non ha ancora la lingua per riconoscere la voce senza internet. Impostazioni di Sistema → Tastiera → Dettatura: attivala con la lingua giusta, attendi lo scaricamento e riprova"))
         }
         let asset = AVURLAsset(url: file)
         let audioTracks = try await asset.loadTracks(withMediaType: .audio)
-        guard !audioTracks.isEmpty else { throw NativeError("il file non contiene audio") }
+        guard !audioTracks.isEmpty else { throw NativeError(String(localized: "il file non contiene audio")) }
         let duration = max(1, try await asset.load(.duration).seconds)
 
         // macOS legge il file da sé (niente audio tenuto in memoria, anche per ore di registrazione)
@@ -83,7 +83,7 @@ enum Transcriber {
         while !collector.state.done {
             if job?.cancelRequested == true { task.cancel(); throw NativeError("annullato") }
             let elapsed = Date().timeIntervalSince(start)
-            if elapsed > limit { task.cancel(); throw NativeError("il riconoscimento non ha risposto in tempo") }
+            if elapsed > limit { task.cancel(); throw NativeError(String(localized: "il riconoscimento non ha risposto in tempo")) }
             progress(min(0.9, elapsed / max(5, duration / 8)))         // stima: circa 8 volte più veloce del tempo reale
             try? await Task.sleep(nanoseconds: 400_000_000)
         }

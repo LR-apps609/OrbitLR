@@ -101,7 +101,7 @@ final class MenuBarIcon: ObservableObject, @unchecked Sendable {
             return true
         }
         img.isTemplate = true
-        img.accessibilityDescription = busy ? "OrbitLR al lavoro" : "OrbitLR"
+        img.accessibilityDescription = busy ? String(localized: "OrbitLR al lavoro") : "OrbitLR"
         return img
     }
 }

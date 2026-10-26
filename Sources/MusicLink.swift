@@ -55,18 +55,18 @@ enum MusicLink {
         if installed && !needsRefresh { return }
         let hadOne = installed
         do {
-            progress(hadOne ? "Aggiorno il motore per i link…" : "Scarico il motore per i link (circa 35 MB, solo la prima volta)…")
+            progress(hadOne ? String(localized: "Aggiorno il motore per i link…") : String(localized: "Scarico il motore per i link (circa 35 MB, solo la prima volta)…"))
             let (sumsData, _) = try await URLSession.shared.data(from: URL(string: base + "SHA2-256SUMS")!)
             guard let sums = String(data: sumsData, encoding: .utf8), let want = expectedHash(in: sums, for: asset) else {
-                throw Failure(message: "non riesco a controllare il motore per i link")
+                throw Failure(message: String(localized: "non riesco a controllare il motore per i link"))
             }
             let (tmp, resp) = try await URLSession.shared.download(from: URL(string: base + asset)!)
-            guard (resp as? HTTPURLResponse)?.statusCode == 200 else { throw Failure(message: "non riesco a scaricare il motore per i link") }
+            guard (resp as? HTTPURLResponse)?.statusCode == 200 else { throw Failure(message: String(localized: "non riesco a scaricare il motore per i link")) }
             let data = try Data(contentsOf: tmp, options: .mappedIfSafe)
             let got = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
             guard got == want else {
                 try? FileManager.default.removeItem(at: tmp)
-                throw Failure(message: "il motore scaricato non è quello ufficiale (impronta diversa): non lo uso")
+                throw Failure(message: String(localized: "il motore scaricato non è quello ufficiale (impronta diversa): non lo uso"))
             }
             try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
             let staged = dir.appendingPathComponent("yt-dlp.nuovo")
@@ -80,7 +80,7 @@ enum MusicLink {
             }
         } catch {
             if hadOne { return }            // il rinnovo può aspettare: si usa quello che c'è
-            throw (error as? Failure) ?? Failure(message: "serve internet per scaricare il motore la prima volta")
+            throw (error as? Failure) ?? Failure(message: String(localized: "serve internet per scaricare il motore la prima volta"))
         }
     }
 
@@ -94,17 +94,17 @@ enum MusicLink {
     static func friendly(_ stderr: String) -> String {
         let s = stderr.lowercased()
         // Netflix, Disney+, Prime Video, Spotify…: contenuti cifrati, non si scaricano (e non si aggira la protezione)
-        if s.contains("drm") { return "Questo sito protegge i suoi contenuti (DRM): non si possono scaricare." }
-        if s.contains("unsupported url") { return "Da questo link non so prendere l’audio. Prova con il link diretto della canzone." }
+        if s.contains("drm") { return String(localized: "Questo sito protegge i suoi contenuti (DRM): non si possono scaricare.") }
+        if s.contains("unsupported url") { return String(localized: "Da questo link non so prendere l’audio. Prova con il link diretto della canzone.") }
         if s.contains("private") || s.contains("sign in") || s.contains("login") || s.contains("members") {
-            return "Il contenuto è privato o richiede l’accesso: non si può scaricare."
+            return String(localized: "Il contenuto è privato o richiede l’accesso: non si può scaricare.")
         }
-        if s.contains("not available") || s.contains("unavailable") || s.contains("removed") { return "Il contenuto non è più disponibile." }
-        if s.contains("403") || s.contains("429") { return "Il sito ha rifiutato la richiesta. Riprova tra un po’: intanto aggiorno il motore." }
+        if s.contains("not available") || s.contains("unavailable") || s.contains("removed") { return String(localized: "Il contenuto non è più disponibile.") }
+        if s.contains("403") || s.contains("429") { return String(localized: "Il sito ha rifiutato la richiesta. Riprova tra un po’: intanto aggiorno il motore.") }
         if s.contains("unable to download") || s.contains("network") || s.contains("timed out") || s.contains("resolve") {
-            return "Non riesco a collegarmi: controlla internet e riprova."
+            return String(localized: "Non riesco a collegarmi: controlla internet e riprova.")
         }
-        return "Non sono riuscito a scaricare l’audio da questo link."
+        return String(localized: "Non sono riuscito a scaricare l’audio da questo link.")
     }
 
     /// 4.1.3 · Come scaricare: solo l'audio (M4A), il video in MP4 fino a 1080p (si apre ovunque),
@@ -166,7 +166,7 @@ enum MusicLink {
             if Date().timeIntervalSince(start) > 900 {
                 p.terminate()
                 p.waitUntilExit()
-                throw Failure(message: "Ci mette troppo: riprova più tardi.")
+                throw Failure(message: String(localized: "Ci mette troppo: riprova più tardi."))
             }
         }
         // 4.1.4 · Quello che è rimasto nei tubi dopo la fine (l'ultima riga è proprio il file scaricato)
@@ -185,7 +185,7 @@ enum MusicLink {
         let printed = collected.lines.reversed().first { $0.hasPrefix(work.path) && FileManager.default.fileExists(atPath: $0) }
             .map { URL(fileURLWithPath: $0) }
         let made = printed ?? (try? FileManager.default.contentsOfDirectory(at: work, includingPropertiesForKeys: nil))?.first
-        guard let made, FileManager.default.fileExists(atPath: made.path) else { throw Failure(message: "Non ho trovato l’audio scaricato.") }
+        guard let made, FileManager.default.fileExists(atPath: made.path) else { throw Failure(message: String(localized: "Non ho trovato l’audio scaricato.")) }
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         var name = made.lastPathComponent
         // Un video in un formato che il Mac non apre da solo (VP9, AV1 su Mac vecchi): con l'estensione .mkv
@@ -271,10 +271,10 @@ struct LinkSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(video ? "Video Downloader" : "Audio Downloader").font(.system(size: 17, weight: .bold, design: .rounded))
+                Text(video ? String(localized: "Video Downloader") : String(localized: "Audio Downloader")).font(.system(size: 17, weight: .bold, design: .rounded))
                 Text("Funziona con migliaia di siti · incolla il link").font(.system(size: 12)).foregroundStyle(.secondary)
             }
-            TextField(video ? "Incolla qui il link del video" : "Incolla qui il link della canzone", text: $text)
+            TextField(video ? String(localized: "Incolla qui il link del video") : String(localized: "Incolla qui il link della canzone"), text: $text)
                 .textFieldStyle(.roundedBorder)
                 .disabled(job.running)
                 .onSubmit { if link != nil { start() } }
@@ -297,12 +297,12 @@ struct LinkSheet: View {
                 Label(e, systemImage: "exclamationmark.triangle").font(.system(size: 12)).foregroundStyle(.orange)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Text(video ? "Solo contenuti che hai il diritto di scaricare: tuoi, liberi o con il permesso di chi li ha creati. Il video arriva in Download e si apre qui, pronto da tagliare, comprimere o montare."
-                       : "Solo contenuti che hai il diritto di scaricare: tuoi, liberi o con il permesso di chi li ha creati. L’audio arriva in Download e si apre qui, pronto per suoneria, taglio e conversione.")
+            Text(video ? String(localized: "Solo contenuti che hai il diritto di scaricare: tuoi, liberi o con il permesso di chi li ha creati. Il video arriva in Download e si apre qui, pronto da tagliare, comprimere o montare.")
+                       : String(localized: "Solo contenuti che hai il diritto di scaricare: tuoi, liberi o con il permesso di chi li ha creati. L’audio arriva in Download e si apre qui, pronto per suoneria, taglio e conversione."))
                 .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             HStack {
                 Spacer()
-                Button(job.running ? "Interrompi" : "Annulla") { if job.running { job.cancel() } else { close() } }
+                Button(job.running ? String(localized: "Interrompi") : String(localized: "Annulla")) { if job.running { job.cancel() } else { close() } }
                 Button("Scarica") { start() }
                     .buttonStyle(.borderedProminent).tint(Theme.accent)
                     .disabled(link == nil || job.running)
@@ -328,14 +328,14 @@ struct LinkSheet: View {
         job.running = true
         job.cancelled = false
         job.progress = 0
-        job.status = "Preparo…"
+        job.status = String(localized: "Preparo…")
         let job = self.job
         Task {
             do {
                 try await MusicLink.ensureEngine { s in Task { @MainActor in job.status = s } }
                 if job.cancelled { throw CancellationError() }
                 let mode: MusicLink.Mode = video ? (best ? .videoBest : .video) : .audio
-                await MainActor.run { job.status = video ? "Scarico il video…" : "Scarico l’audio…"; job.progress = 0 }
+                await MainActor.run { job.status = video ? String(localized: "Scarico il video…") : String(localized: "Scarico l’audio…"); job.progress = 0 }
                 let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first ?? Paths.home
                 let file = try await MusicLink.download(link, to: downloads, job: job, mode: mode)
                 await MainActor.run {
@@ -365,7 +365,7 @@ struct DownloaderRow: View {
             HStack(spacing: 8) {
                 Image(systemName: "arrow.down.circle.fill").foregroundStyle(Theme.color(video ? .video : .audio))
                 Text("oppure incolla un link →").foregroundStyle(.secondary)
-                Text(video ? "Video Downloader" : "Audio Downloader").fontWeight(.semibold)
+                Text(video ? String(localized: "Video Downloader") : String(localized: "Audio Downloader")).fontWeight(.semibold)
                 Text("· funziona con migliaia di siti").foregroundStyle(.secondary)
             }
             .font(.system(size: 12.5))
@@ -394,7 +394,7 @@ struct DownloaderBar: View {
             bar(full: false)
             // Finestra molto stretta: solo il pulsante, che apre la finestrella per il link
             Button { go("") } label: {
-                Label(video ? "Video Downloader" : "Audio Downloader", systemImage: "arrow.down.circle.fill")
+                Label(video ? String(localized: "Video Downloader") : String(localized: "Audio Downloader"), systemImage: "arrow.down.circle.fill")
                     .font(.system(size: 12.5, weight: .bold)).foregroundStyle(.white)
                     .padding(.horizontal, 10).padding(.vertical, 5)
                     .background(Capsule().fill(tint))
@@ -409,7 +409,7 @@ struct DownloaderBar: View {
             }
             .buttonStyle(.plain)
             .fixedSize()
-            .help(video ? "Video Downloader · incolla un link" : "Audio Downloader · incolla un link")
+            .help(video ? String(localized: "Video Downloader · incolla un link") : String(localized: "Audio Downloader · incolla un link"))
         }
     }
 
@@ -417,7 +417,7 @@ struct DownloaderBar: View {
         HStack(spacing: 0) {
             Group {
                 if full {
-                    Label(video ? "Video Downloader" : "Audio Downloader", systemImage: "arrow.down.circle.fill")
+                    Label(video ? String(localized: "Video Downloader") : String(localized: "Audio Downloader"), systemImage: "arrow.down.circle.fill")
                 } else {
                     Image(systemName: "arrow.down.circle.fill")
                 }
@@ -427,7 +427,7 @@ struct DownloaderBar: View {
                 .padding(.horizontal, 12).padding(.vertical, 7)
                 .background(tint)
                 .fixedSize()
-                .help(video ? "Video Downloader" : "Audio Downloader")
+                .help(video ? String(localized: "Video Downloader") : String(localized: "Audio Downloader"))
             TextField("Incolla un link · funziona con migliaia di siti", text: $text)
                 .textFieldStyle(.plain)
                 .font(.system(size: 13))

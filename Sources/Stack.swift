@@ -32,7 +32,7 @@ enum Stacker {
                 frames.append(try Tools.orientedImage(f))
             }
         }
-        guard frames.count >= 2 else { throw NativeError("Servono almeno 2 foto della stessa scena") }
+        guard frames.count >= 2 else { throw NativeError(String(localized: "Servono almeno 2 foto della stessa scena")) }
         frames = frames.map { $0.transformed(by: CGAffineTransform(translationX: -$0.extent.minX, y: -$0.extent.minY)) }
         progress(0.1)
 
@@ -45,7 +45,7 @@ enum Stacker {
             if let a = align(f, to: ref) { aligned.append(a) }
             progress(0.1 + 0.5 * Double(i + 1) / Double(frames.count))
         }
-        guard aligned.count >= 2 else { throw NativeError("Le foto sono troppo diverse per essere allineate") }
+        guard aligned.count >= 2 else { throw NativeError(String(localized: "Le foto sono troppo diverse per essere allineate")) }
 
         // 3. Ingrandimento (se richiesto) e media: il rumore si annulla, i dettagli veri si sommano
         func up(_ img: CIImage) -> CIImage {
@@ -79,7 +79,7 @@ enum Stacker {
         let ext = ["jpg", "png", "heic", "tiff"].contains(e) ? e : "jpg"
         let label = "\(aligned.count) scatti" + (scale > 1 ? " 2×" : "")
         let out = Destination.unique(dir, base: "\(base) (\(label))", ext: ext)
-        guard let cg = ci.createCGImage(result, from: outRect) else { throw NativeError("Non riesco a creare l’immagine") }
+        guard let cg = ci.createCGImage(result, from: outRect) else { throw NativeError(String(localized: "Non riesco a creare l’immagine")) }
         try Tools.write(cg, to: out, quality: 0.93)
         progress(1)
         return out
@@ -172,7 +172,7 @@ enum Stacker {
     private static func videoFrames(_ url: URL, count: Int) async throws -> [CIImage] {
         let asset = AVURLAsset(url: url)
         let duration = try await asset.load(.duration).seconds
-        guard duration.isFinite, duration > 0 else { throw NativeError("Non riesco a leggere il video") }
+        guard duration.isFinite, duration > 0 else { throw NativeError(String(localized: "Non riesco a leggere il video")) }
         let span = min(2.0, duration * 0.8)
         let start = max(0, duration / 2 - span / 2)
         let gen = AVAssetImageGenerator(asset: asset)
