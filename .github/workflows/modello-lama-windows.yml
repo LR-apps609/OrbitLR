@@ -37,8 +37,12 @@ jobs:
       - name: Prova con tract
         working-directory: Windows
         run: |
-          cargo run --release --example prova_lama -p orbit_engine -- ../lama-512.onnx 2>&1 | tee ../prova.txt
-          grep -q "^OK" ../prova.txt
+          set +e
+          cargo run --release --example prova_lama -p orbit_engine -- ../lama-512.onnx > ../prova.txt 2>&1
+          code=$?
+          set -e
+          grep -vE "^\s+(Compiling|Downloaded|Downloading)" ../prova.txt | tail -n 25 | while IFS= read -r l; do echo "::warning::$l"; done
+          [ $code -eq 0 ] && grep -q "^OK" ../prova.txt
           while read -r l; do echo "::notice::$l"; done < <(grep -E "ingresso|caricato|eseguito|valori|rosso|uscita" ../prova.txt)
       - name: Tra i file scaricabili
         env:
