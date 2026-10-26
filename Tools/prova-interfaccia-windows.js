@@ -19,7 +19,7 @@ const srv = http.createServer((q, r) => {
     const errs = [];
     pg.on("pageerror", (e) => errs.push(String(e)));
     pg.on("console", (m) => m.type() === "error" && errs.push("console: " + m.text()));
-    await pg.addInitScript((l) => localStorage.setItem("orbitlr.appLang", JSON.stringify(l)), lang);
+    await pg.addInitScript((l) => { localStorage.setItem("orbitlr.appLang", JSON.stringify(l)); localStorage.setItem("orbitlr.audio.projects", JSON.stringify([{ path: "C:\\Musica\\Canzone.mp3", name: "Canzone.mp3", tool: "ringtone", start: 12.5, end: 42.5, others: [], at: 1 }])); }, lang);
     await pg.goto("http://localhost:8765/");
     await pg.waitForTimeout(1500);
     const tabs = await pg.$$eval("aside button", (bs) => bs.map((b) => b.textContent.trim()).filter(Boolean));

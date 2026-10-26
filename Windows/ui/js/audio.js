@@ -57,10 +57,35 @@ export function audioPage(app) {
     render();
   }
 
+  // ── Progetti audio, come sul Mac: file, strumento e selezione si ricordano da soli e si riprendono con un clic
+  const recent = () => store.get("audio.projects", []);
+  let saveTimer = null;
+  function remember() {
+    if (!file || !trim) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      if (!file || !trim) return;
+      const item = { path: file.path, name: file.name, tool, start: +trim.start.toFixed(3), end: +trim.end.toFixed(3), others: others.map((o) => o.path), at: Date.now() };
+      store.set("audio.projects", [item, ...recent().filter((p) => p.path !== item.path)].slice(0, 12));
+    }, 400);
+  }
+  async function resume(p) {
+    const ok = await invoke("files_exist", { paths: [p.path, ...(p.others || [])] }).catch(() => []);
+    if (!ok[0]) {
+      store.set("audio.projects", recent().filter((x) => x.path !== p.path));
+      render();
+      return toast(t("Il file non c'è più: forse è stato spostato o cancellato."));
+    }
+    tool = p.tool || tool;
+    await add([p.path, ...(p.others || []).filter((_, i) => ok[i + 1])]);
+    if (trim && p.end > p.start) trim.setRange(p.start, p.end);
+  }
+
   function setFile(f) {
     trim?.destroy();
     file = f;
-    trim = createTrim({ path: f.path, duration: Math.max(0.1, f.info.duration), media: "audio", maxLen: tool === "ringtone" ? opts.ringLen : 0 });
+    trim = createTrim({ path: f.path, duration: Math.max(0.1, f.info.duration), media: "audio", maxLen: tool === "ringtone" ? opts.ringLen : 0, onChange: () => remember() });
+    remember();
     const t = trim;
     invoke("waveform", { path: f.path, points: 900 }).then((p) => { if (trim === t && file === f) trim.setPeaks(p); }).catch(() => {});
   }
@@ -166,8 +191,14 @@ export function audioPage(app) {
       setTimeout(() => ta.focus(), 50);
     } else leftSide = file
       ? h("div.wave-card", trim.el)
-      : h("div.empty", h("div.box", { role: "button", tabindex: "0", onclick: pick }, ico("audio-lines", 44), h("h3", t("Trascina qui un file audio")), h("div", t("oppure clicca per sceglierlo")), h("div", { style: { fontSize: "12.5px" } }, t("MP3, M4A, WAV, FLAC, OGG e anche l'audio dei video"))));
-    const grid = h("div.tool-grid", TOOLS.map((x) => h("button.tg" + (x.id === tool ? ".on" : ""), { onclick: () => { tool = x.id; render(); }, "aria-pressed": x.id === tool ? "true" : "false" }, ico(x.icon, 20), x.short)));
+      : h("div.empty",
+        h("div.box", { role: "button", tabindex: "0", onclick: pick }, ico("audio-lines", 44), h("h3", t("Trascina qui un file audio")), h("div", t("oppure clicca per sceglierlo")), h("div", { style: { fontSize: "12.5px" } }, t("MP3, M4A, WAV, FLAC, OGG e anche l'audio dei video"))),
+        recent().length ? h("div.recent",
+          h("div.group", t("Riprendi")),
+          ...recent().slice(0, 6).map((p) => h("button.recent-row", { onclick: () => resume(p), title: p.path },
+            ico("audio-lines", 15), h("span.n", p.name.replace(/\.[^.]+$/, "")),
+            h("span.s", `${TOOLS.find((x) => x.id === p.tool)?.short || ""} · ${fmtTime(p.start)}–${fmtTime(p.end)}`)))) : null);
+    const grid = h("div.tool-grid", TOOLS.map((x) => h("button.tg" + (x.id === tool ? ".on" : ""), { onclick: () => { tool = x.id; remember(); render(); }, "aria-pressed": x.id === tool ? "true" : "false" }, ico(x.icon, 20), x.short)));
     const side = h("div.side-card",
       h("div.scroll", grid, ...options()),
       h("div.act", h("button.btn.primary.big", { onclick: start, disabled: (!file && !tl.noFile) || (tool === "merge" && !others.length) || null }, tl.go)));

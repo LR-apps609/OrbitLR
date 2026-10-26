@@ -177,6 +177,13 @@ export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange 
     get start() { return start; },
     get end() { return end; },
     setPeaks(p) { peaks = p; drawWave(); },
+    /** Riprende una selezione salvata (progetti audio). */
+    setRange(a, b) {
+      start = Math.max(0, Math.min(duration, a));
+      end = Math.max(start + 0.1, Math.min(duration, b));
+      if (maxLen && end - start > maxLen) end = Math.min(duration, start + maxLen);
+      draw();
+    },
     setMaxLen(m) { maxLen = m; if (maxLen && end - start > maxLen) end = Math.min(duration, start + maxLen); draw(); },
     playSelection,
     destroy() {
