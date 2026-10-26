@@ -521,3 +521,5 @@ textarea.tts:focus { border-color: var(--brass); }
 .pe-frow { display: grid; gap: 3px; font-size: 12.5px; color: var(--quiet); }
 .pe-field { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--card); color: var(--ink); font: inherit; }
 .pe-pad { width: 100%; height: auto; aspect-ratio: 600 / 220; background: #fff; border-radius: 10px; border: 1px solid var(--line-2); touch-action: none; cursor: crosshair; }
+.modal.phone .qr { justify-self: center; width: 240px; height: 240px; background: #fff; padding: 8px; border-radius: 12px; }
+.modal.phone .qr svg { width: 100%; height: 100%; display: block; }

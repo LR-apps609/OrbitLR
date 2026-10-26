@@ -7,7 +7,7 @@ import { invoke, openPath, reveal } from "./api.js";
 import { openCompare } from "./compare.js";
 import { askFeedbackOnce } from "./feedback.js";
 import { fmtBytes, gainText, h, ico, toast } from "./util.js";
-import { t, tr, tc } from "./i18n.js";
+import { t, tr, tc, isEn } from "./i18n.js";
 
 const IMG = ["jpg", "jpeg", "png", "webp", "avif", "bmp", "gif", "tif", "tiff", "jfif"];
 const isImg = (p) => IMG.includes(String(p || "").split(".").pop().toLowerCase());
@@ -73,6 +73,7 @@ export function resultBar(origin) {
           errs.length ? h("span", { style: { color: "var(--err)", display: "block" } }, t`${errs.length} non riusciti: ${tr(errs[0].error)}`) : null),
         h("button.btn", { onclick: () => reveal(first.path) }, ico("folder-open", 16), t("Mostra nella cartella")),
         outs.length === 1 ? h("button.btn", { onclick: () => openPath(first.path) }, ico("external-link", 16), t("Apri")) : null,
+        outs.length === 1 ? h("button.btn", { title: t("Inquadra il codice con il telefono, sulla stessa rete Wi-Fi"), onclick: () => sendToPhone(first) }, ico("smartphone", 16), t("Al telefono")) : null,
         canCompare ? h("button.btn", { title: t("Originale e risultato, con la linea da trascinare"), onclick: () => openCompare({ path: src.sourcePath, size: src.sourceSize }, first) }, ico("columns-2", 16), t("Confronta")) : null,
         ["link", "rename"].includes(job.action) ? null : h("button.btn.ghost", { title: t("Manda nel Cestino i file appena creati"), onclick: () => undo(job, outs) }, ico("rotate-ccw", 16), tc("undo", "Annulla")),
         closeBtn()));
@@ -114,6 +115,28 @@ export function resultBar(origin) {
   });
 
   return { el, clear: () => render(null), get job() { return current; } };
+}
+
+async function sendToPhone(file) {
+  let r;
+  try {
+    r = await invoke("phone_share", { path: file.path, en: isEn });
+  } catch (e) {
+    return toast(tr(String(e)));
+  }
+  const qr = h("div.qr");
+  qr.innerHTML = r.svg; // SVG creato dal motore di OrbitLR
+  const bg = h("div.modal-bg");
+  const close = () => { invoke("phone_stop").catch(() => {}); bg.remove(); };
+  bg.append(h("div.modal.phone", { role: "dialog", "aria-modal": "true" },
+    h("h3", t("Manda al telefono")),
+    h("p", t`Inquadra il codice con la fotocamera del telefono e tocca «Scarica». Il telefono deve essere sulla stessa rete Wi-Fi del computer.`),
+    qr,
+    h("p.fb-note", { style: { userSelect: "text" } }, r.url),
+    h("p.fb-note", t("Il collegamento vale 15 minuti e funziona solo in casa: niente passa da internet. Se Windows chiede il permesso per la rete, scegli «Reti private».")),
+    h("div.row", h("button.btn.primary", { onclick: close }, t("Fatto")))));
+  bg.addEventListener("click", (e) => e.target === bg && close());
+  document.body.append(bg);
 }
 
 function capital(s) {

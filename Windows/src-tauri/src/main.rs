@@ -494,6 +494,38 @@ async fn silences(state: State<'_, Shared>, path: String) -> Result<Vec<(f64, f6
     .map_err(|e| e.to_string())?
 }
 
+static PHONE: Mutex<Option<orbit_engine::phone::Share>> = Mutex::new(None);
+
+#[derive(Serialize)]
+struct PhoneShare {
+    url: String,
+    svg: String,
+}
+
+/// «Manda al telefono»: un codice QR per scaricare il file sul telefono (stessa rete Wi-Fi, 15 minuti).
+#[tauri::command]
+fn phone_share(state: State<'_, Shared>, path: String, en: bool) -> Result<PhoneShare, String> {
+    if !state.made.lock().unwrap().contains(&path) {
+        return Err("si possono mandare al telefono solo i file appena creati da OrbitLR".into());
+    }
+    let f = checked_file(&path)?;
+    let mut cur = PHONE.lock().unwrap();
+    if let Some(old) = cur.take() {
+        old.stop();
+    }
+    let s = orbit_engine::phone::share(&f, en).map_err(|e| e.0)?;
+    let out = PhoneShare { url: s.url.clone(), svg: s.svg.clone() };
+    *cur = Some(s);
+    Ok(out)
+}
+
+#[tauri::command]
+fn phone_stop() {
+    if let Some(s) = PHONE.lock().unwrap().take() {
+        s.stop();
+    }
+}
+
 /// Editor PDF: pagine (misure in punti) e campi del modulo.
 #[tauri::command]
 async fn pdf_info(path: String) -> Result<orbit_engine::pdfedit::PdfInfo, String> {
@@ -976,7 +1008,7 @@ fn main() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install, update_check, update_install, undo_result, allow_made, set_lang, pdf_info, pdf_page, silences])
+        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install, update_check, update_install, undo_result, allow_made, set_lang, pdf_info, pdf_page, silences, phone_share, phone_stop])
         .run(tauri::generate_context!())
         .expect("OrbitLR non è riuscita ad avviarsi");
 }
