@@ -195,14 +195,18 @@ jobs:
       - name: Anteprima scaricabile
         env:
           GH_TOKEN: ${{ github.token }}
+          ORBITLR_SIGNING_KEY: ${{ secrets.ORBITLR_SIGNING_KEY }}
         run: |
           set -euo pipefail
           V=$(python3 -c "import json;print(json.load(open('Windows/src-tauri/tauri.conf.json'))['version'])")
           TAG="windows-anteprima"
           cp OrbitLR-Setup.exe "OrbitLR-Windows-$V-Setup.exe"
           sha256sum "OrbitLR-Windows-$V-Setup.exe" > "OrbitLR-Windows-$V-Setup.sha256"
+          # Aggiornamenti automatici: manifesto firmato (Ed25519, la stessa chiave del Mac). La chiave non si stampa mai.
+          pip install --quiet cryptography
+          python3 Tools/manifesto-windows.py "OrbitLR-Windows-$V-Setup.exe" "$V" "${GITHUB_RUN_NUMBER}" NEWS-windows.txt manifest-windows.json manifest-windows.sig
           NOTES="OrbitLR per Windows $V (anteprima, build ${GITHUB_RUN_NUMBER}). Scarica OrbitLR-Windows-$V-Setup.exe e aprilo. Windows può dire «Windows ha protetto il PC»: Ulteriori informazioni → Esegui comunque (l'app non ha ancora la firma a pagamento di Microsoft)."
-          FILES="OrbitLR-Windows-$V-Setup.exe OrbitLR-Windows-$V-Setup.sha256"
+          FILES="OrbitLR-Windows-$V-Setup.exe OrbitLR-Windows-$V-Setup.sha256 manifest-windows.json manifest-windows.sig"
           [ -f foto-windows.png ] && FILES="$FILES foto-windows.png"
           if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             # Prima i file nuovi (la pagina non resta mai vuota), poi via quelli di versioni vecchie

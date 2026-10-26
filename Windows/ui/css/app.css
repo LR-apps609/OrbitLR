@@ -445,3 +445,10 @@ textarea.tts:focus { border-color: var(--brass); }
 .dl-go.ok { background: var(--dl); color: #fff; }
 .dl-go:focus-visible, .dl-in:focus-visible { outline: 2px solid var(--dl); outline-offset: -2px; }
 @media (max-width: 1180px) { .dl-name { display: none; } .dl-in { width: 200px; } }
+
+/* Aggiornamento disponibile: in alto a destra, come sul Mac */
+.update-corner { position: fixed; top: 10px; right: 14px; z-index: 50; display: flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; border: 0; cursor: pointer; font: inherit; font-size: 12.5px; font-weight: 800; color: #fff; background: var(--brass, #9A7426); box-shadow: 0 2px 10px rgba(0,0,0,.18); }
+.update-corner:disabled { cursor: default; opacity: .9; }
+.update-corner:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.has-update .head { padding-top: 50px; }
+.modal p { white-space: pre-line; }

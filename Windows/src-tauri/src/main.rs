@@ -477,6 +477,71 @@ async fn office_install() -> Result<bool, String> {
     .map_err(|e| e.to_string())?
 }
 
+#[derive(Serialize)]
+struct UpdateInfo {
+    version: String,
+    build: u64,
+    notes: String,
+    size: u64,
+}
+
+/// C'è un aggiornamento firmato più nuovo di questa versione?
+#[tauri::command]
+async fn update_check(version: String, build: u64) -> Result<Option<UpdateInfo>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let m = orbit_engine::update::check().map_err(|e| e.0)?;
+        Ok(m.filter(|m| orbit_engine::update::is_newer(m, &version, build)).map(|m| UpdateInfo { version: m.version, build: m.build, notes: m.notes, size: m.size }))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// Scarica l'aggiornamento (controllato), chiude OrbitLR, lo installa in silenzio e la riapre.
+#[tauri::command]
+async fn update_install(app: tauri::AppHandle, state: State<'_, Shared>, version: String, build: u64) -> Result<(), String> {
+    let st = state.inner().clone();
+    let app2 = app.clone();
+    let setup = tauri::async_runtime::spawn_blocking(move || -> Result<PathBuf, String> {
+        let m = orbit_engine::update::check().map_err(|e| e.0)?.ok_or("nessun aggiornamento disponibile")?;
+        if !orbit_engine::update::is_newer(&m, &version, build) {
+            return Err("hai già la versione più nuova".into());
+        }
+        let dir = st.data_dir.join("aggiornamento");
+        let mut last = std::time::Instant::now();
+        orbit_engine::update::download(&m, &dir, &Cancel::new(), &mut |p| {
+            if last.elapsed().as_millis() >= 200 || p >= 1.0 {
+                last = std::time::Instant::now();
+                let _ = app2.emit("update-progress", p);
+            }
+        })
+        .map_err(|e| e.0)
+    })
+    .await
+    .map_err(|e| e.to_string())??;
+    let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        // L'installatore aspetta che OrbitLR sia chiusa, installa in silenzio (/S), poi OrbitLR si riapre
+        let script = format!("ping -n 3 127.0.0.1 >nul & \"{}\" /S & start \"\" \"{}\"", setup.display(), exe.display());
+        std::process::Command::new("cmd")
+            .args(["/C", &script])
+            .creation_flags(0x0800_0000 | 0x0000_0008) // CREATE_NO_WINDOW | DETACHED_PROCESS
+            .spawn()
+            .map_err(|e| format!("non riesco ad avviare l'aggiornamento: {e}"))?;
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = (&setup, &exe);
+        return Err("gli aggiornamenti si installano solo su Windows".into());
+    }
+    #[allow(unreachable_code)]
+    {
+        app.exit(0);
+        Ok(())
+    }
+}
+
 /// «Interrompi e chiudi»: ferma tutto, cancella i file a metà, poi chiude.
 #[tauri::command]
 fn quit_now(app: tauri::AppHandle, state: State<'_, Shared>) {
@@ -735,7 +800,7 @@ fn main() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install])
+        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install, update_check, update_install])
         .run(tauri::generate_context!())
         .expect("OrbitLR non è riuscita ad avviarsi");
 }
