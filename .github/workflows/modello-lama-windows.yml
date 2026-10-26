@@ -34,6 +34,19 @@ jobs:
           sha256sum lama-512.onnx | tee lama-512.onnx.sha256
           echo "::notice::LaMa ONNX $(stat -c %s lama-512.onnx) byte, impronta $(cut -d' ' -f1 lama-512.onnx.sha256)"
           curl -fsL https://huggingface.co/Carve/LaMa-ONNX/raw/main/README.md | head -n 40 || true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Misura fissa 512 (i calcoli sulle misure diventano costanti, come vuole tract)
+        run: |
+          set -euo pipefail
+          pip install "onnx==1.16.2" "onnxsim==0.4.36" "numpy<2"
+          mv lama-512.onnx lama-orig.onnx
+          onnxsim lama-orig.onnx lama-512.onnx --overwrite-input-shape image:1,3,512,512 mask:1,1,512,512 2>&1 | tail -n 30
+          ls -la lama-512.onnx
+          sha256sum lama-512.onnx | tee lama-512.onnx.sha256
+          echo "::notice::LaMa semplificato $(stat -c %s lama-512.onnx) byte, impronta $(cut -d' ' -f1 lama-512.onnx.sha256)"
+          python -c "import onnx; m=onnx.load('lama-512.onnx'); from collections import Counter; c=Counter(n.op_type for n in m.graph.node); print(sorted(c.items(), key=lambda x:-x[1]))" | while IFS= read -r l; do echo "::notice::$l"; done
       - name: Prova con tract
         working-directory: Windows
         run: |
@@ -42,7 +55,7 @@ jobs:
           code=$?
           set -e
           grep -vE "^\s+(Compiling|Downloaded|Downloading)" ../prova.txt | tail -n 25 | while IFS= read -r l; do echo "::warning::$l"; done
-          [ $code -eq 0 ] && grep -q "^OK" ../prova.txt
+          if [ $code -ne 0 ] || ! grep -q "^OK" ../prova.txt; then echo "::error::la prova con tract non è riuscita"; exit 1; fi
           while read -r l; do echo "::notice::$l"; done < <(grep -E "ingresso|caricato|eseguito|valori|rosso|uscita" ../prova.txt)
       - name: Tra i file scaricabili
         env:
