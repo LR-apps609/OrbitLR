@@ -30,7 +30,7 @@ pub fn ready(data_dir: &Path) -> bool {
     download::ready(&model_path(data_dir), &LAMA_MODEL)
 }
 
-type Model = Arc<TypedRunnableModel<TypedModel>>;
+type Model = Arc<TypedRunnableModel>;
 static LAMA: Mutex<Option<Model>> = Mutex::new(None);
 
 fn model(path: &Path) -> Result<Model> {
@@ -45,7 +45,6 @@ fn model(path: &Path) -> Result<Model> {
         .and_then(|m| m.into_optimized())
         .and_then(|m| m.into_runnable())
         .map_err(|e| EngineError::new(format!("il modello per i loghi non si apre ({e}): cancellalo dalle Opzioni e riprova")))?;
-    let m = Arc::new(m);
     *g = Some(m.clone());
     Ok(m)
 }
@@ -57,7 +56,7 @@ fn lama_infer(m: &Model, img: &RgbImage, mask: &GrayImage) -> Result<RgbImage> {
     let it: Tensor = tract_ndarray::Array4::from_shape_fn((1, 3, S, S), |(_, c, y, x)| img.get_pixel(x as u32, y as u32)[c] as f32 / 255.0).into();
     let mt: Tensor = tract_ndarray::Array4::from_shape_fn((1, 1, S, S), |(_, _, y, x)| if mask.get_pixel(x as u32, y as u32)[0] > 127 { 1.0f32 } else { 0.0 }).into();
     let out = m.run(tvec!(it.into(), mt.into())).map_err(|e| EngineError::new(format!("l'IA per i loghi si è fermata: {e}")))?;
-    let o = out[0].to_array_view::<f32>().map_err(|e| EngineError::new(e.to_string()))?;
+    let o = out[0].to_plain_array_view::<f32>().map_err(|e| EngineError::new(e.to_string()))?;
     // Alcune versioni danno 0…1, altre 0…255
     let ma = o.iter().fold(0.0f32, |a, v| a.max(*v));
     let k = if ma > 2.0 { 1.0 } else { 255.0 };
@@ -96,8 +95,27 @@ pub fn fill_zones(img: &mut RgbaImage, zones: &[(u32, u32, u32, u32)], infer: &m
         let out = infer(&small, &mask)?;
         let back = image::imageops::resize(&out, side, side, image::imageops::FilterType::Lanczos3);
         // Si rimette solo la zona (con un bordo sfumato di qualche pixel): il resto della foto resta originale
-        let feather = 4.0f32;
+        let feather = 6.0f32;
         let (zx0, zy0, zx1, zy1) = ((z.0 - x0) as f32, (z.1 - y0) as f32, (z.0 - x0 + z.2) as f32, (z.1 - y0 + z.3) as f32);
+        // Il colore ricostruito può essere un filo diverso: si confronta una cornice appena fuori dalla zona
+        // (originale contro ricostruito) e si corregge la differenza media, così non si vede il rettangolo
+        let ring = 10.0f32;
+        let (mut sum, mut n) = ([0f64; 3], 0f64);
+        for yy in 0..side {
+            for xx in 0..side {
+                let (fx, fy) = (xx as f32 + 0.5, yy as f32 + 0.5);
+                let d = (zx0 - fx).max(fx - zx1).max(zy0 - fy).max(fy - zy1);
+                if d > feather && d <= feather + ring {
+                    let o = crop.get_pixel(xx, yy).0;
+                    let r = back.get_pixel(xx, yy).0;
+                    for c in 0..3 {
+                        sum[c] += o[c] as f64 - r[c] as f64;
+                    }
+                    n += 1.0;
+                }
+            }
+        }
+        let shift = if n > 0.0 { sum.map(|v| (v / n).clamp(-40.0, 40.0) as f32) } else { [0.0; 3] };
         for yy in 0..side {
             for xx in 0..side {
                 let (fx, fy) = (xx as f32 + 0.5, yy as f32 + 0.5);
@@ -110,7 +128,8 @@ pub fn fill_zones(img: &mut RgbaImage, zones: &[(u32, u32, u32, u32)], infer: &m
                 let p = img.get_pixel_mut(x0 + xx, y0 + yy);
                 let q = back.get_pixel(xx, yy).0;
                 for c in 0..3 {
-                    p.0[c] = (p.0[c] as f32 * (1.0 - a) + q[c] as f32 * a).round() as u8;
+                    let q2 = (q[c] as f32 + shift[c]).clamp(0.0, 255.0);
+                    p.0[c] = (p.0[c] as f32 * (1.0 - a) + q2 * a).round() as u8;
                 }
             }
         }
@@ -130,9 +149,14 @@ pub fn fill_with_lama(data_dir: &Path, img: &mut RgbaImage, zones: &[(u32, u32, 
         download::fetch(&LAMA_MODEL, &path, cancel, &mut |p| progress(p * 0.6))?;
         base = 0.6;
     }
-    let m = model(&path)?;
+    fill_with_model(&path, img, zones, cancel, &mut |p| progress(base + p * (1.0 - base)))
+}
+
+/// Con un modello già sul disco (anche per le prove).
+pub fn fill_with_model(path: &Path, img: &mut RgbaImage, zones: &[(u32, u32, u32, u32)], cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<()> {
+    let m = model(path)?;
     let mut infer = |a: &RgbImage, b: &GrayImage| lama_infer(&m, a, b);
-    fill_zones(img, zones, &mut infer, cancel, &mut |p| progress(base + p * (1.0 - base)))
+    fill_zones(img, zones, &mut infer, cancel, progress)
 }
 
 #[cfg(test)]

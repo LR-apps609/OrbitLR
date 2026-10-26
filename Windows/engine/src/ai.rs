@@ -60,7 +60,7 @@ pub fn pending_download(action: &str, data_dir: &Path) -> Option<(&'static str, 
 
 // ───────────────────────── Rimuovi lo sfondo
 
-type Model = Arc<TypedRunnableModel<TypedModel>>;
+type Model = Arc<TypedRunnableModel>;
 static BG: Mutex<Option<Model>> = Mutex::new(None);
 
 fn bg_model(path: &Path) -> Result<Model> {
@@ -74,7 +74,6 @@ fn bg_model(path: &Path) -> Result<Model> {
         .and_then(|m| m.into_optimized())
         .and_then(|m| m.into_runnable())
         .map_err(|e| EngineError::new(format!("il modello per lo sfondo non si apre ({e}): cancellalo dalle Opzioni e riprova")))?;
-    let m = Arc::new(m);
     *g = Some(m.clone());
     Ok(m)
 }
@@ -88,7 +87,7 @@ pub fn subject_mask(model_path: &Path, img: &RgbImage) -> Result<GrayImage> {
     let mx = small.pixels().flat_map(|p| p.0).max().unwrap_or(255).max(1) as f32;
     let input: Tensor = tract_ndarray::Array4::from_shape_fn((1, 3, SIDE, SIDE), |(_, c, y, x)| small.get_pixel(x as u32, y as u32)[c] as f32 / mx - 0.5).into();
     let out = model.run(tvec!(input.into())).map_err(|e| EngineError::new(format!("l'IA per lo sfondo si è fermata: {e}")))?;
-    let o = out[0].to_array_view::<f32>().map_err(|e| EngineError::new(e.to_string()))?;
+    let o = out[0].to_plain_array_view::<f32>().map_err(|e| EngineError::new(e.to_string()))?;
     let (mut mi, mut ma) = (f32::MAX, f32::MIN);
     for v in o.iter() {
         mi = mi.min(*v);
