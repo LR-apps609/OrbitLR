@@ -166,7 +166,7 @@ jobs:
           $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
           $bmp.Save("$PWD\foto-windows.png")
           Get-Process orbitlr -ErrorAction SilentlyContinue | Stop-Process
-          $made = Get-ChildItem "$env:RUNNER_TEMP" -Filter "Gita al lago (compresso)*.mp4"
+          $made = Get-ChildItem "$env:RUNNER_TEMP" -Filter "Gita al lago (compress*)*.mp4"
           $jpg = Get-ChildItem $arrivi -Filter "*.jpg"
           if ($jpg) { Write-Output "::notice::Cartella automatica riuscita: $($jpg[0].Name) creato da solo" } else { Write-Output "::warning::La cartella automatica non ha creato il JPG" }
           if ($made) { Write-Output "::notice::Lavoro vero dentro l'app riuscito: $($made[0].Name) $([math]::Round($made[0].Length/1MB,1)) MB" } else { Write-Output "::warning::Il lavoro di prova dentro l'app non ha creato il file" }
