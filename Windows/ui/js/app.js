@@ -11,9 +11,9 @@ import { activityPage, helpPage, report, settingsPage } from "./pages.js";
 import { autoPage } from "./auto.js";
 import { showFeedback } from "./feedback.js";
 import { extOf, fmtBytes, h, ico, modal, store, toast } from "./util.js";
-import { t, tr, LANG } from "./i18n.js";
+import { t, tr, LANG, isEn } from "./i18n.js";
 
-const VERSION = "0.4.0";
+const VERSION = "0.5.0";
 // Numero della compilazione (lo scrive GitHub quando crea l'installazione)
 const BUILD = 0;
 
@@ -162,11 +162,12 @@ async function askUpdate() {
   if (!pendingUpdate) return;
   const u = pendingUpdate;
   const busy = running().length;
-  const text = [u.notes, t`Si scarica (${fmtBytes(u.size)}), OrbitLR si chiude, si aggiorna da sola e si riapre.`, busy ? t`Attenzione: ${busy === 1 ? t("c'è un lavoro in corso") : t`ci sono ${busy} lavori in corso`}, verrà interrotto.` : ""].filter(Boolean).join("\n\n");
+  const notes = (isEn && u.notes_en) || u.notes;
+  const text = [notes, t`Si scarica (${fmtBytes(u.size)}), OrbitLR si chiude, si aggiorna da sola e si riapre.`, busy ? t`Attenzione: ${busy === 1 ? t("c'è un lavoro in corso") : t`ci sono ${busy} lavori in corso`}, verrà interrotto.` : ""].filter(Boolean).join("\n\n");
   const ok = await modal(`OrbitLR ${u.version}`, text, [{ label: t("Più tardi"), value: false }, { label: t("Aggiorna adesso"), value: true, primary: true }]);
   if (!ok) return;
   // Le novità si mostrano alla prossima apertura, dalla versione nuova
-  store.set("newsPending", { version: u.version, notes: u.notes || "" });
+  store.set("newsPending", { version: u.version, notes: notes || "" });
   updateCorner.disabled = true;
   updateLink.disabled = true;
   const show = (p) => { updateCorner.textContent = t`Scarico l’aggiornamento… ${Math.round(p * 100)}%`; };

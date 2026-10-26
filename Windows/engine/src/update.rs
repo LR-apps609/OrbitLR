@@ -29,6 +29,9 @@ pub struct Manifest {
     pub size: u64,
     #[serde(default)]
     pub notes: String,
+    /// Le stesse novità in inglese (dalla 0.5.0)
+    #[serde(default)]
+    pub notes_en: String,
 }
 
 fn keys() -> Vec<VerifyingKey> {
@@ -167,7 +170,7 @@ mod tests {
     use ed25519_dalek::{Signer, SigningKey};
 
     fn man(v: &str, b: u64) -> Manifest {
-        Manifest { version: v.into(), build: b, file: "OrbitLR-Windows-0.2.0-Setup.exe".into(), sha256: "a".repeat(64), size: 1000, notes: String::new() }
+        Manifest { version: v.into(), build: b, file: "OrbitLR-Windows-0.2.0-Setup.exe".into(), sha256: "a".repeat(64), size: 1000, notes: String::new(), notes_en: String::new() }
     }
 
     #[test]

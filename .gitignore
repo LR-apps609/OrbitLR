@@ -17,3 +17,4 @@ Windows/it-*.png
 Windows/en-*.png
 Windows/en-text.txt
 Windows/shots/
+__pycache__/

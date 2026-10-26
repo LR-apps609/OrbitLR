@@ -1,3 +1,17 @@
+Novità per Windows 0.5.0 «Scorciatoie»:
+• Ctrl+Alt+C sui file selezionati in Esplora file: si aprono subito in OrbitLR; e l'icona vicino all'orologio
+• Ricette: più passi di fila (per esempio comprimi e poi converti) si salvano dalla barra del risultato e si rifanno con un clic
+• «Al telefono»: il file creato si scarica sul telefono inquadrando un codice QR, sulla stessa rete Wi-Fi
+• Foto: «Raddrizza un documento» (la foto storta di un foglio diventa una pagina dritta, JPG o PDF) e «Unisci più scatti» (meno rumore al buio)
+• Audio: i progetti si ricordano e si riprendono da dove eri rimasto
+
+What’s new in Windows 0.5.0 “Shortcuts”:
+• Ctrl+Alt+C on the files selected in File Explorer opens them right away in OrbitLR; plus an icon next to the clock
+• Recipes: several steps in a row (for example compress, then convert) are saved from the result bar and repeated with one click
+• “To Phone”: download the file you made on your phone by scanning a QR code, on the same Wi-Fi network
+• Photos: “Straighten a Document” (a crooked photo of a sheet becomes a straight page, JPG or PDF) and “Merge Several Shots” (less noise in the dark)
+• Audio: projects are remembered and pick up where you left off
+
 Novità per Windows 0.4.0 «Editor PDF»:
 • File → «Compila, firma e oscura»: scrivi sul PDF, disegna e metti la firma, compila i campi dei moduli, oscura i dati (oscuramento vero: il testo sotto sparisce)
 • Montaggio: «Togli i silenzi» nella clip, per i video in cui parli

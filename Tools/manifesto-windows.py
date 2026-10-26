@@ -32,10 +32,13 @@ def main():
     if pub not in TRUSTED:
         die("la chiave non corrisponde a quelle di cui l'app si fida")
     data = open(exe, "rb").read()
-    notes = ""
+    notes = notes_en = ""
     if os.path.exists(news):
-        block = open(news, encoding="utf-8").read().strip().split("\n\n")[0]
-        notes = block[:1500]
+        blocks = [b.strip() for b in open(news, encoding="utf-8").read().strip().split("\n\n")]
+        notes = blocks[0][:1500]
+        # Il primo paragrafo in inglese («What’s new…»), se c'è subito dopo
+        if len(blocks) > 1 and blocks[1].startswith("What"):
+            notes_en = blocks[1][:1500]
     manifest = {
         "version": version,
         "build": int(build),
@@ -43,6 +46,7 @@ def main():
         "sha256": hashlib.sha256(data).hexdigest(),
         "size": len(data),
         "notes": notes,
+        "notes_en": notes_en,
     }
     body = json.dumps(manifest, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     open(out_json, "wb").write(body)

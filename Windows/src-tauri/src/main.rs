@@ -593,6 +593,7 @@ struct UpdateInfo {
     version: String,
     build: u64,
     notes: String,
+    notes_en: String,
     size: u64,
 }
 
@@ -601,7 +602,7 @@ struct UpdateInfo {
 async fn update_check(version: String, build: u64) -> Result<Option<UpdateInfo>, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let m = orbit_engine::update::check().map_err(|e| e.0)?;
-        Ok(m.filter(|m| orbit_engine::update::is_newer(m, &version, build)).map(|m| UpdateInfo { version: m.version, build: m.build, notes: m.notes, size: m.size }))
+        Ok(m.filter(|m| orbit_engine::update::is_newer(m, &version, build)).map(|m| UpdateInfo { version: m.version, build: m.build, notes: m.notes, notes_en: m.notes_en, size: m.size }))
     })
     .await
     .map_err(|e| e.to_string())?
