@@ -781,6 +781,55 @@ fn places(app: tauri::AppHandle) -> Places {
     }
 }
 
+/// Porta in primo piano la finestra di OrbitLR.
+fn show_main(app: &tauri::AppHandle) {
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.unminimize();
+        let _ = w.show();
+        let _ = w.set_focus();
+    }
+}
+
+/// Windows è in italiano? (per le poche parole del menu vicino all'orologio, prima che parta la finestra)
+fn windows_italian() -> bool {
+    #[cfg(windows)]
+    {
+        let id = unsafe { windows_sys::Win32::Globalization::GetUserDefaultUILanguage() };
+        (id & 0x3ff) == 0x10
+    }
+    #[cfg(not(windows))]
+    {
+        std::env::var("LANG").map(|l| l.starts_with("it")).unwrap_or(true)
+    }
+}
+
+/// I file selezionati nella finestra di Esplora file in primo piano (Ctrl+Alt+C), come ⌥⌘C nel Finder.
+fn explorer_selection() -> Vec<String> {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        let hwnd = unsafe { windows_sys::Win32::UI::WindowsAndMessaging::GetForegroundWindow() } as isize;
+        if hwnd == 0 {
+            return vec![];
+        }
+        let script = format!(
+            "[Console]::OutputEncoding=[Text.Encoding]::UTF8; $h={hwnd}; foreach($w in (New-Object -ComObject Shell.Application).Windows()){{ try {{ if($w.HWND -eq $h){{ foreach($i in $w.Document.SelectedItems()){{ $i.Path }} }} }} catch {{}} }}"
+        );
+        let out = std::process::Command::new("powershell")
+            .args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", &script])
+            .creation_flags(0x0800_0000)
+            .output();
+        match out {
+            Ok(o) => String::from_utf8_lossy(&o.stdout).lines().map(|l| l.trim().to_string()).filter(|l| !l.is_empty() && Path::new(l).exists()).take(500).collect(),
+            Err(_) => vec![],
+        }
+    }
+    #[cfg(not(windows))]
+    {
+        vec![]
+    }
+}
+
 fn main() {
     tauri::Builder::default()
         // Una sola OrbitLR: i file aperti dal clic destro arrivano nella finestra che c'è già
@@ -848,6 +897,54 @@ fn main() {
                 made: Mutex::new(std::collections::HashSet::new()),
             });
             app.manage(shared.clone());
+            // Icona vicino all'orologio: un clic apre OrbitLR
+            {
+                use tauri::menu::{Menu, MenuItem};
+                use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+                let it = windows_italian();
+                let open = MenuItem::with_id(app, "apri", if it { "Apri OrbitLR" } else { "Open OrbitLR" }, true, None::<&str>)?;
+                let quit = MenuItem::with_id(app, "esci", if it { "Esci" } else { "Quit" }, true, None::<&str>)?;
+                let menu = Menu::with_items(app, &[&open, &quit])?;
+                let mut tray = TrayIconBuilder::with_id("orbitlr").tooltip("OrbitLR").menu(&menu).show_menu_on_left_click(false)
+                    .on_menu_event(|app, ev| match ev.id().as_ref() {
+                        "apri" => show_main(app),
+                        "esci" => app.exit(0),
+                        _ => {}
+                    })
+                    .on_tray_icon_event(|tray, ev| {
+                        if let TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } = ev {
+                            show_main(tray.app_handle());
+                        }
+                    });
+                if let Some(icon) = app.default_window_icon() {
+                    tray = tray.icon(icon.clone());
+                }
+                tray.build(app)?;
+            }
+            // Ctrl+Alt+C: i file selezionati in Esplora file arrivano nella torta (come ⌥⌘C sul Mac)
+            {
+                use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
+                let combo = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyC);
+                app.handle().plugin(
+                    tauri_plugin_global_shortcut::Builder::new()
+                        .with_handler(move |app, sc, ev| {
+                            if ev.state() != ShortcutState::Pressed || sc != &combo {
+                                return;
+                            }
+                            let app = app.clone();
+                            std::thread::spawn(move || {
+                                let files = explorer_selection();
+                                show_main(&app);
+                                if !files.is_empty() {
+                                    let _ = app.emit("open-files", files);
+                                }
+                            });
+                        })
+                        .build(),
+                )?;
+                // Se un'altra app usa già la combinazione, OrbitLR funziona lo stesso
+                let _ = app.global_shortcut().register(combo);
+            }
             // Cartelle automatiche: un controllo ogni 3 secondi, un file alla volta
             let handle = app.handle().clone();
             std::thread::Builder::new().name("cartelle".into()).spawn(move || {

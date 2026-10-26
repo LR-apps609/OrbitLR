@@ -10,7 +10,8 @@ import { createTrim } from "./trim.js";
 import { createZones } from "./zones.js";
 import { downloaderBar } from "./downloader.js";
 import { openPdfEditor } from "./pdfeditor.js";
-import { addPreset, askName, presets, suggestName } from "./presets.js";
+import { addPreset, askName, presets, runSteps, suggestName } from "./presets.js";
+import { subscribe } from "./jobs.js";
 import { fmtBytes, fmtTime, h, ico, store, toast } from "./util.js";
 import { t, tr, tc } from "./i18n.js";
 
@@ -156,8 +157,9 @@ export function mediaPage(kind, app, opts = {}) {
     if (mine.length) {
       right.append(h("div.group", t("Le mie azioni")));
       for (const p of mine) {
-        right.append(h("button.tool.mine", { disabled: !files.length || null, onclick: () => go(p.action, p.param), title: suggestName(p.action, p.param) },
-          h("span.ic", "★"), h("span.txt", h("b", p.name), h("span", suggestName(p.action, p.param)))));
+        const what = p.steps ? p.steps.map((s) => suggestName(s.action, s.param)).join(" → ") : suggestName(p.action, p.param);
+        right.append(h("button.tool.mine", { disabled: !files.length || null, onclick: () => (p.steps ? runSteps(p.steps, targets(), kind, run, subscribe) : go(p.action, p.param)), title: what },
+          h("span.ic", "★"), h("span.txt", h("b", p.name), h("span", what))));
       }
     }
     if (CONVERT[kind].length) {

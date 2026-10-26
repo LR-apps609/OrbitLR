@@ -1,6 +1,6 @@
 // Attività, Opzioni, Aiuto e «Segnala un problema».
 
-import { askName, presets, removePreset, renamePreset, suggestName } from "./presets.js";
+import { askName, describe, presets, removePreset, renamePreset, suggestName } from "./presets.js";
 import { invoke, openPath, openUrl, pickFolder, reveal } from "./api.js";
 import { actionName } from "./catalog.js";
 import { clearHistory, getHistory, removeFromHistory, running, subscribe, cancel } from "./jobs.js";
@@ -96,7 +96,7 @@ export function settingsPage(app) {
             h("button.opt" + (v === store.get("appLang", "auto") ? ".on" : ""), { onclick: () => { if (v === store.get("appLang", "auto")) return; store.set("appLang", v); location.reload(); } }, l)))),
         h("div.set", h("h3", t("Le mie azioni")),
           presets().length ? h("p", t("Le trovi in cima agli strumenti della scheda e come spicchi con la stella nella torta.")) : h("p", t("Nessuna ancora: apri uno strumento con delle scelte (per esempio «Comprimi»), scegli e premi «★ Salva come mia azione».")),
-          ...presets().map((p) => h("div.preset-row", h("span.n", "★ " + p.name), h("span.s", suggestName(p.action, p.param)),
+          ...presets().map((p) => h("div.preset-row", h("span.n", "★ " + p.name), h("span.s", describe(p)),
             h("button.btn.ghost", { onclick: async () => { const n = await askName(t("Rinomina"), p.name); if (n) { renamePreset(p.id, n); render(); } } }, t("Rinomina")),
             h("button.btn.ghost", { onclick: () => { removePreset(p.id); render(); } }, t("Togli"))))),
         h("div.set", h("h3", t("Aspetto")),
@@ -134,6 +134,7 @@ const FAQ = [
   ["File", t("Come converto Word, Excel o PowerPoint in PDF?"), t("Trascina il documento in Conversione e scegli PDF (o DOCX, XLSX, CSV…). La prima volta OrbitLR ti propone di installare LibreOffice, gratuito: lo usa in silenzio, senza aprire finestre. Macro e collegamenti esterni dei documenti restano spenti.")],
   ["File", t("Come unisco più PDF?"), t("File → trascina i PDF → «Unisci». L'ordine è quello dell'elenco.")],
   ["Generale", t("Windows dice «Windows ha protetto il PC»"), t("Succede con le app nuove senza la firma a pagamento di Microsoft. Clicca «Ulteriori informazioni» e poi «Esegui comunque». Si fa una volta sola.")],
+  ["Conversione", t("Si può usare direttamente da Esplora file?"), t("Sì, in due modi: tasto destro su un file → «Apri con OrbitLR», oppure seleziona i file in Esplora file e premi Ctrl+Alt+C: OrbitLR si apre con la torta pronta. L'icona vicino all'orologio riapre OrbitLR con un clic.")],
   ["Conversione", t("Come annullo una conversione?"), t("Nella barra del risultato, in basso, premi «Annulla»: il file appena creato va nel Cestino e l'originale resta dov'era.")],
   ["Conversione", t("Posso convertire tanti file insieme?"), t("Sì: trascina più file o una cartella intera. Con tipi diversi compare una torta per tipo; ogni file nuovo va accanto al suo originale.")],
   ["Conversione", t("Posso scegliere senza mouse?"), t("Sì: ogni spicchio ha un numero, premi il tasto. Invio ripete l'ultima scelta per quel tipo di file, Esc toglie i file.")],

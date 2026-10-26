@@ -7,7 +7,8 @@ import { askOffice } from "./office.js";
 import { run } from "./jobs.js";
 import { resultBar } from "./resultbar.js";
 import { fmtBytes, h, ico, store, toast } from "./util.js";
-import { presets } from "./presets.js";
+import { presets, runSteps } from "./presets.js";
+import { subscribe } from "./jobs.js";
 import { t, tr } from "./i18n.js";
 
 export function convertPage(app) {
@@ -83,7 +84,7 @@ export function convertPage(app) {
     const shown = more ? formats.slice(room) : formats.slice(0, formats.length > room + 1 ? room : room + 1);
     const slices = shown.map((f) => ({ id: f, label: f.toUpperCase(), icon: fmtIcon(f), go: () => choose(kind, list, f) }));
     if (!more) {
-      for (const p of mine) slices.push({ id: p.id, label: p.name, icon: "sparkles", mine: true, go: () => run(p.action, list, p.param, "convert") });
+      for (const p of mine) slices.push({ id: p.id, label: p.name, icon: "sparkles", mine: true, go: () => (p.steps ? runSteps(p.steps, list, "convert", run, subscribe) : run(p.action, list, p.param, "convert")) });
     }
     if (more) {
       slices.push({ id: "back", label: t("Indietro"), icon: "rotate-ccw", edit: true, go: () => { moreFor = null; render(); } });

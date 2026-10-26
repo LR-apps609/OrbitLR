@@ -1,6 +1,8 @@
 // La barra in basso: avanzamento con la scala della radio, poi il risultato con quanto si è guadagnato.
 
-import { cancel, subscribe } from "./jobs.js";
+import { cancel, getHistory, subscribe } from "./jobs.js";
+import { addRecipe, askName, chainOf } from "./presets.js";
+import { actionName, kindOfExt } from "./catalog.js";
 import { invoke, openPath, reveal } from "./api.js";
 import { openCompare } from "./compare.js";
 import { askFeedbackOnce } from "./feedback.js";
@@ -75,6 +77,20 @@ export function resultBar(origin) {
         ["link", "rename"].includes(job.action) ? null : h("button.btn.ghost", { title: t("Manda nel Cestino i file appena creati"), onclick: () => undo(job, outs) }, ico("rotate-ccw", 16), tc("undo", "Annulla")),
         closeBtn()));
     if (job.state === "done") askFeedbackOnce(el.firstChild);
+    // Più passi di fila sullo stesso file: si possono salvare come ricetta
+    const chain = job.state === "done" ? chainOf(job, getHistory()) : null;
+    if (chain && el.firstChild) {
+      const names = chain.steps.map((s) => actionName(s.action)).join(" → ");
+      el.firstChild.append(h("div.fb-ask", h("span", t`Hai fatto ${chain.steps.length} passi: ${names}`),
+        h("button.btn.ghost", { onclick: async (e) => {
+          const name = await askName(t("Salva come ricetta"), names, t("La prossima volta i passi partono uno dopo l'altro da soli, da «Le mie azioni»."));
+          if (!name) return;
+          const k = kindOfExt(chain.first.split(".").pop());
+          addRecipe(k === "image" ? "image" : k === "video" ? "video" : k === "pdf" ? "pdf" : k, chain.steps, name);
+          e.target.closest(".fb-ask")?.remove();
+          toast(t`Ricetta «${name}» salvata in Le mie azioni.`);
+        } }, "★ ", t("Salva come ricetta"))));
+    }
   }
 
   async function undo(job, outs) {

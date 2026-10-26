@@ -106,7 +106,7 @@ export function autoPage() {
   }
 
   function mineSection() {
-    const usable = presets().filter((p) => AUTO_OK[p.kind]?.(p.action) && (p.param == null || typeof p.param !== "object"));
+    const usable = presets().filter((p) => p.action && AUTO_OK[p.kind]?.(p.action) && (p.param == null || typeof p.param !== "object"));
     const rows = usable.map((p) => h("div.preset-row", h("span.n", "★ " + p.name), h("span.s", suggestName(p.action, p.param)),
       h("button.btn", {
         onclick: async () => {
