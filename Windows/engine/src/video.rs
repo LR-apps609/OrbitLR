@@ -257,7 +257,7 @@ pub fn compress(
         None => plan_best(info, codec)?,
     };
     ensure_space(dir, plan.bytes(info.duration))?;
-    let of = names::OutFile::new(dir, &format!("{} (compresso)", names::stem(src)), "mp4")?;
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), crate::names::tag("compresso")), "mp4")?;
     let tmp = of.tmp.clone();
     let attempts = if target.is_some() { 4 } else { 1 };
     let mut factor = 1.0;
@@ -331,7 +331,7 @@ pub fn cut(
         e @ ("mp4" | "mov" | "m4v" | "mkv" | "webm" | "avi" | "ts" | "mts" | "m2ts") => e.to_string(),
         _ => "mp4".into(),
     };
-    let name = format!("{} (tagliato)", names::stem(src));
+    let name = format!("{} ({})", names::stem(src), crate::names::tag("tagliato"));
     let of = names::OutFile::new(dir, &name, &ext)?;
     let d = end - start;
     if !precise {
@@ -472,7 +472,7 @@ pub fn social(tools: &Tools, src: &Path, info: &FileInfo, aspect: &str, dir: &Pa
 pub fn mute(tools: &Tools, src: &Path, info: &FileInfo, dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<PathBuf> {
     let ext = names::ext(src);
     let ext = if ["mp4", "mov", "m4v", "mkv", "webm"].contains(&ext.as_str()) { ext } else { "mp4".into() };
-    let of = names::OutFile::new(dir, &format!("{} (senza audio)", names::stem(src)), &ext)?;
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), crate::names::tag("senza audio")), &ext)?;
     run::ffmpeg(tools, &args!["-i", src, "-map", "0:v", "-c", "copy", "-an", "-map_metadata", "0", of.tmp.clone()], info.duration, cancel, progress)?;
     of.commit()
 }
@@ -481,7 +481,7 @@ pub fn mute(tools: &Tools, src: &Path, info: &FileInfo, dir: &Path, cancel: &Can
 pub fn rotate(tools: &Tools, src: &Path, info: &FileInfo, degrees: i32, dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<PathBuf> {
     let ext = names::ext(src);
     let ext = if ["mp4", "mov", "m4v"].contains(&ext.as_str()) { ext } else { "mp4".into() };
-    let of = names::OutFile::new(dir, &format!("{} (ruotato)", names::stem(src)), &ext)?;
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), crate::names::tag("ruotato")), &ext)?;
     // La rotazione nuova (oraria) è quella di adesso più quella chiesta;
     // display_rotation la vuole in senso antiorario e sostituisce quella che c'è
     let clockwise = (info.rotation + degrees).rem_euclid(360);
@@ -493,7 +493,7 @@ pub fn rotate(tools: &Tools, src: &Path, info: &FileInfo, degrees: i32, dir: &Pa
         Err(_) => {
             // Vecchi contenitori: si ricodifica
             drop(of);
-            let of = names::OutFile::new(dir, &format!("{} (ruotato)", names::stem(src)), "mp4")?;
+            let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), crate::names::tag("ruotato")), "mp4")?;
             let t = match degrees.rem_euclid(360) {
                 90 => "transpose=1",
                 180 => "transpose=1,transpose=1",
@@ -621,7 +621,7 @@ pub fn merge(tools: &Tools, files: &[(PathBuf, FileInfo)], dir: &Path, cancel: &
         joined.push_str(&format!("[v{i}][a{i}]"));
     }
     graph.push_str(&format!("{joined}concat=n={}:v=1:a=1[v][a]", files.len()));
-    let of = names::OutFile::new(dir, &format!("{} (uniti)", names::stem(&files[0].0)), "mp4")?;
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(&files[0].0), crate::names::tag("uniti")), "mp4")?;
     ensure_space(dir, (w as f64 * h as f64 * fps * CLEAN_BPP_H264 * total / 8.0) as u64)?;
     reencode(tools, a, args!["-filter_complex", graph, "-map", "[v]", "-map", "[a]"], w as f64 * h as f64 * fps, true, total, &of.tmp, cancel, progress)?;
     of.commit()

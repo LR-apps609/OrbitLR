@@ -443,7 +443,7 @@ pub fn export(tools: &Tools, p: &Project, dir: &Path, cancel: &Cancel, progress:
     let fps = if p.fps > 0.0 { p.fps.clamp(10.0, 60.0) } else { 30.0 };
     let bitrate = (w as f64 * h as f64 * fps * 0.11).max(1_500_000.0) as u64;
     video::ensure_space(dir, (bitrate as f64 * total / 8.0) as u64)?;
-    let name = if p.name.trim().is_empty() { "Montaggio".to_string() } else { p.name.trim().to_string() };
+    let name = if p.name.trim().is_empty() { crate::names::tag("Montaggio") } else { p.name.trim().to_string() };
     let of = names::OutFile::new(dir, &name, "mp4")?;
     let mut last = EngineError::new("nessun codificatore video disponibile");
     for enc in video::candidates(tools, Codec::H264) {

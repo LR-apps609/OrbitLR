@@ -104,7 +104,7 @@ pub fn extract(src: &Path, pages: &str, dir: &Path) -> Result<PathBuf> {
     doc.delete_pages(&drop);
     doc.prune_objects();
     doc.compress();
-    let of = names::OutFile::new(dir, &format!("{} (pagine {})", names::stem(src), pages.trim()), "pdf")?;
+    let of = names::OutFile::new(dir, &format!("{} ({} {})", names::stem(src), crate::names::tag("pagine"), pages.trim()), "pdf")?;
     doc.save(&of.tmp).map_err(|e| EngineError::new(format!("non riesco a scrivere il PDF: {e}")))?;
     of.commit()
 }
@@ -125,7 +125,7 @@ pub fn split(src: &Path, dir: &Path) -> Result<Vec<PathBuf>> {
         doc.delete_pages(&drop);
         doc.prune_objects();
         doc.compress();
-        let of = names::OutFile::new(dir, &format!("{} - pagina {n}", names::stem(src)), "pdf")?;
+        let of = names::OutFile::new(dir, &format!("{} - {} {n}", names::stem(src), crate::names::tag("pagina")), "pdf")?;
         doc.save(&of.tmp).map_err(|e| EngineError::new(format!("non riesco a scrivere il PDF: {e}")))?;
         outs.push(of.commit()?);
     }
@@ -203,7 +203,7 @@ pub fn merge(files: &[PathBuf], dir: &Path) -> Result<PathBuf> {
     out.prune_objects();
     out.renumber_objects();
     out.compress();
-    let of = names::OutFile::new(dir, &format!("{} (uniti)", names::stem(&files[0])), "pdf")?;
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(&files[0]), crate::names::tag("uniti")), "pdf")?;
     out.save(&of.tmp).map_err(|e| EngineError::new(format!("non riesco a scrivere il PDF: {e}")))?;
     of.commit()
 }
@@ -284,7 +284,7 @@ pub fn compress(src: &Path, level: &str, dir: &Path, cancel: &crate::run::Cancel
     }
     doc.prune_objects();
     doc.compress();
-    let of = names::OutFile::new(dir, &format!("{} (compresso)", names::stem(src)), "pdf")?;
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), crate::names::tag("compresso")), "pdf")?;
     doc.save(&of.tmp).map_err(|e| EngineError::new(format!("non riesco a scrivere il PDF: {e}")))?;
     // Deve restare un PDF valido, con tutte le pagine
     if load(&of.tmp).map(|d| d.get_pages().len()).unwrap_or(0) != pages {

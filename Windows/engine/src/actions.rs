@@ -153,6 +153,8 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
                 Kind::Video if audio::writable(to) => vec![audio::convert(tools(ctx)?, src, &info, to, &dir, cancel, progress)?],
                 Kind::Video => vec![video::convert(tools(ctx)?, src, &info, to, &dir, cancel, progress)?],
                 Kind::Audio if audio::writable(to) => vec![audio::convert(tools(ctx)?, src, &info, to, &dir, cancel, progress)?],
+                // PDF in immagini: una per pagina
+                Kind::Pdf if ["png", "jpg", "jpeg"].contains(&to) => crate::pdfrender::to_images(src, to, &dir, cancel, progress)?,
                 _ => return Err(EngineError::new(format!("non so convertire questo file in {}", to.to_uppercase()))),
             }
         }
@@ -250,6 +252,7 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
             if kind == Kind::Image { vec![crate::hide::photo(t, src, &hp, &dir)?] } else { vec![crate::hide::movie(tools(ctx)?, src, &info, &hp, &dir, cancel, progress)?] }
         }
         // ── PDF
+        "pdftext" => vec![crate::pdfrender::text_file(src, &dir, cancel, progress)?],
         "protect" => vec![pdf::protect(src, &s("password"), &dir)?],
         "unprotect" => vec![pdf::unprotect(src, &s("password"), &dir)?],
         "reorder" => vec![pdf::reorder(src, &p_str, &dir)?],

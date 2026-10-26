@@ -20,7 +20,7 @@ export const CONVERT = {
   image: ["jpg", "png", "webp", "pdf", "avif", "ico", "bmp", "tiff", "gif"],
   video: ["mp4", "mp3", "mov", "mkv", "webm", "gif", "m4a", "wav", "avi"],
   audio: ["mp3", "m4a", "wav", "flac", "ogg", "opus"],
-  pdf: [],
+  pdf: ["png", "jpg"],
   doc: [],
   other: [],
 };
@@ -71,6 +71,7 @@ export const TOOLS = {
   pdfmerge: { title: t("Unisci"), hint: t("Più PDF in uno, nell'ordine dell'elenco"), icon: "combine", min: 2 },
   split: { title: t("Dividi in pagine"), hint: t("Un PDF per ogni pagina"), icon: "split" },
   extract: { title: t("Estrai alcune pagine"), hint: t("Scegli quali, per esempio 1-3, 5"), icon: "file-output", params: "pages" },
+  pdftext: { title: t("Estrai il testo"), hint: t("In un file di testo; dai PDF scansionati lo legge dalle pagine"), icon: "file-text", isNew: true },
   protect: { title: t("Proteggi con password"), hint: t("Serve la password per aprirlo (AES-256)"), icon: "lock", params: "password", isNew: true },
   unprotect: { title: t("Togli la password"), hint: t("Se la conosci: una copia che si apre senza"), icon: "lock-open", params: "password", isNew: true },
   prot: { title: t("Ruota le pagine"), hint: t("Tutte le pagine di 90° o capovolte"), icon: "rotate-cw", params: "rotate", id: "rotate", isNew: true },
@@ -90,7 +91,7 @@ export const GROUPS = {
     [t("Audio e sottotitoli"), ["transcribe", "voiceclean", "normalize", "mute"]],
     [t("Altro"), ["hidemark", "vrotate", "rename"]],
   ],
-  pdf: [[t("Peso"), ["pdfcompress"]], [t("Organizza"), ["pdfmerge", "split", "extract", "reorder", "prot"]], [t("Proteggi"), ["protect", "unprotect"]], [t("Altro"), ["rename"]]],
+  pdf: [[t("Peso"), ["pdfcompress"]], [t("Organizza"), ["pdfmerge", "split", "extract", "reorder", "prot"]], [t("Testo"), ["pdftext"]], [t("Proteggi"), ["protect", "unprotect"]], [t("Altro"), ["rename"]]],
 };
 
 /** Le scelte dei parametri, come le manopole dell'app per Mac. */
@@ -222,7 +223,7 @@ export function kindOfExt(ext) {
 export const ACTION_NAMES = {
   vcompress: t("Comprimi"), icompress: t("Comprimi"), vresize: t("Cambia la grandezza"), social: t("Formato social"), cut: t("Taglia"), gifcut: t("GIF da un pezzo"),
   speed: t("Cambia la velocità"), vmerge: t("Unisci i video"), amerge: t("Unisci"), normalize: t("Volume uniforme"), voiceclean: t("Voce più pulita"), mute: t("Togli l'audio"),
-  rotate: t("Ruota"), hidemark: t("Nascondi un logo"), ocr: t("Estrai il testo"), resize: t("Ridimensiona"), strip: t("Rimuovi i metadati"), merge: t("Unisci in un PDF"), pdfmerge: t("Unisci i PDF"), split: t("Dividi in pagine"),
+  rotate: t("Ruota"), hidemark: t("Nascondi un logo"), ocr: t("Estrai il testo"), pdftext: t("Estrai il testo"), resize: t("Ridimensiona"), strip: t("Rimuovi i metadati"), merge: t("Unisci in un PDF"), pdfmerge: t("Unisci i PDF"), split: t("Dividi in pagine"),
   extract: t("Estrai pagine"), pdfcompress: t("Comprimi il PDF"), vproject: t("Esporta il montaggio"), ringtone: t("Suoneria"), silence: t("Togli i silenzi"), whatsapp: t("Vocale per WhatsApp"), tts: t("Testo in voce"), transcribe: t("Trascrivi"),
   removebg: t("Rimuovi lo sfondo"), aienhance: t("Migliora con l'IA"), upscale: t("Ingrandisci"), link: t("Scarica da un link"), protect: t("Proteggi con password"), unprotect: t("Togli la password"), reorder: t("Riordina le pagine"), rename: t("Rinomina tutti"),
 };

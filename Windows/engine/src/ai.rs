@@ -129,7 +129,7 @@ pub fn remove_background(tools: Option<&Tools>, data_dir: &Path, src: &Path, mod
                 let a = mask.get_pixel(x, y)[0] as u32;
                 image::Rgb([0, 1, 2].map(|c| ((p[c] as u32 * a + 255 * (255 - a)) / 255) as u8))
             });
-            let of = names::OutFile::new(dir, &format!("{stem} (sfondo bianco)"), "jpg")?;
+            let of = names::OutFile::new(dir, &format!("{stem} ({})", crate::names::tag("sfondo bianco")), "jpg")?;
             images::save(tools, &Photo { img: DynamicImage::ImageRgb8(img), exif: None, icc: photo.icc }, "jpg", 92, &of.tmp)?;
             of.commit()?
         }
@@ -153,7 +153,7 @@ pub fn remove_background(tools: Option<&Tools>, data_dir: &Path, src: &Path, mod
                 let (x1, y1) = ((x1 + m).min(w - 1), (y1 + m).min(h - 1));
                 img = DynamicImage::ImageRgba8(img).crop_imm(x0, y0, x1 - x0 + 1, y1 - y0 + 1).to_rgba8();
             }
-            let of = names::OutFile::new(dir, &format!("{stem} (senza sfondo)"), "png")?;
+            let of = names::OutFile::new(dir, &format!("{stem} ({})", crate::names::tag("senza sfondo")), "png")?;
             images::save(tools, &Photo { img: DynamicImage::ImageRgba8(img), exif: None, icc: photo.icc }, "png", 92, &of.tmp)?;
             of.commit()?
         }
@@ -370,7 +370,7 @@ pub fn enhance(tools: Option<&Tools>, data_dir: &Path, src: &Path, factor: u32, 
     progress(0.95);
     let e = names::ext(src);
     let ext = if has_alpha { "png".to_string() } else if ["jpg", "jpeg", "png", "webp", "tiff", "bmp"].contains(&e.as_str()) { if e == "jpeg" { "jpg".into() } else { e } } else { "jpg".into() };
-    let label = if factor == 1 { "migliorata".to_string() } else { format!("{factor}×") };
+    let label = if factor == 1 { crate::names::tag("migliorata") } else { format!("{factor}×") };
     let of = names::OutFile::new(dir, &format!("{} ({label})", names::stem(src)), &ext)?;
     images::save(tools, &Photo { img: res, exif: photo.exif, icc: photo.icc }, &ext, 93, &of.tmp)?;
     let p = of.commit()?;

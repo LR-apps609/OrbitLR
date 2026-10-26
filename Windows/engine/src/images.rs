@@ -200,7 +200,7 @@ pub fn compress(tools: Option<&Tools>, src: &Path, target: Option<u64>, dir: &Pa
     if has_alpha(&p.img) {
         return Err(EngineError::new("l'immagine ha parti trasparenti: comprimendola in JPG diventerebbero bianche. Usa «Converti in WebP», che le tiene"));
     }
-    let of = names::OutFile::new(dir, &format!("{} (compresso)", names::stem(src)), "jpg")?;
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), crate::names::tag("compresso")), "jpg")?;
     let bytes = match target {
         None => {
             // 82: sopra non si vede differenza, sotto iniziano i difetti sui bordi
@@ -289,7 +289,7 @@ pub fn rotate(tools: Option<&Tools>, src: &Path, degrees: i32, dir: &Path) -> Re
     };
     let e = names::ext(src);
     let ext = if ["jpg", "png", "webp", "bmp", "tiff", "gif"].contains(&e.as_str()) { e } else { "jpg".into() };
-    let of = names::OutFile::new(dir, &format!("{} (ruotata)", names::stem(src)), &ext)?;
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), crate::names::tag("ruotata")), &ext)?;
     save(tools, &Photo { img, exif: p.exif, icc: p.icc }, &ext, 95, &of.tmp)?;
     of.commit()
 }
@@ -305,7 +305,7 @@ pub fn strip(src: &Path, dir: &Path) -> Result<PathBuf> {
         _ => return Err(EngineError::new("per questo formato converti prima la foto in JPG: la conversione si può fare senza metadati")),
     };
     let ext = if e == "jpeg" || e == "jfif" { "jpg".to_string() } else { e };
-    let of = names::OutFile::new(dir, &format!("{} (senza metadati)", names::stem(src)), &ext)?;
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), crate::names::tag("senza metadati")), &ext)?;
     std::fs::write(&of.tmp, clean)?;
     of.commit()
 }

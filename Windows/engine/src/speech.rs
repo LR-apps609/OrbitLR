@@ -60,7 +60,7 @@ pub fn speak(tools: &Tools, text: &str, voice: Option<&str>, rate: i32, dir: &Pa
     }
     std::fs::create_dir_all(dir)?;
     let first: String = text.split_whitespace().take(6).collect::<Vec<_>>().join(" ");
-    let of = names::OutFile::new(dir, &format!("{} (voce)", if first.is_empty() { "Testo".into() } else { first }), "mp3")?;
+    let of = names::OutFile::new(dir, &format!("{} ({})", if first.is_empty() { crate::names::tag("Testo") } else { first }, crate::names::tag("voce")), "mp3")?;
     let txt = names::temp_beside(&of.path, "txt");
     let wav = names::temp_beside(&of.path, "wav");
     let cleanup = |a: &Path, b: &Path| {

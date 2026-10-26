@@ -26,9 +26,14 @@ pub fn read_text(tools: Option<&Tools>, src: &Path) -> Result<String> {
 
 pub fn to_file(tools: Option<&Tools>, src: &Path, dir: &Path) -> Result<PathBuf> {
     let text = read_text(tools, src)?;
-    let of = names::OutFile::new(dir, &format!("{} (testo)", names::stem(src)), "txt")?;
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), crate::names::tag("testo")), "txt")?;
     std::fs::write(&of.tmp, text)?;
     of.commit()
+}
+
+/// Il testo di un PNG già pronto (le pagine dei PDF scansionati).
+pub fn recognize_png(png: &Path) -> Result<String> {
+    recognize(png)
 }
 
 #[cfg(windows)]

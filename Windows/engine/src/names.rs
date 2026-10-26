@@ -267,6 +267,9 @@ pub fn tag(it: &str) -> String {
         "senza metadati" => "no metadata", "senza sfondo" => "no background", "migliorata" => "enhanced",
         "trascrizione" => "transcript", "suoneria" => "ringtone", "voce" => "voice", "pagine" => "pages", "uniti" => "merged",
         "Compressi" => "Compressed", "Convertiti" => "Converted",
+        "tagliato" => "trimmed", "senza pause" => "no pauses", "vocale" => "voice note", "logo nascosto" => "logo hidden",
+        "ruotata" => "rotated", "testo" => "text", "senza audio" => "no audio", "sfondo bianco" => "white background",
+        "voce pulita" => "clean voice", "volume uniforme" => "even volume", "pagina" => "page", "Testo" => "Text", "Montaggio" => "Edit",
         other => other,
     };
     en.to_string()

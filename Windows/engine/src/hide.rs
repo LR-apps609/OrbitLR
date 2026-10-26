@@ -72,7 +72,7 @@ pub fn photo(tools: Option<&Tools>, src: &Path, p: &Params, dir: &Path) -> Resul
     ph.img = image::DynamicImage::ImageRgba8(img);
     let e = names::ext(src);
     let ext = if ["jpg", "jpeg", "png", "webp", "bmp", "tiff"].contains(&e.as_str()) { if e == "jpeg" { "jpg".to_string() } else { e } } else { "jpg".into() };
-    let of = names::OutFile::new(dir, &format!("{} (logo nascosto)", names::stem(src)), &ext)?;
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), crate::names::tag("logo nascosto")), &ext)?;
     // Senza EXIF: dentro c'è spesso una miniatura della foto originale, con il logo ancora visibile
     images::save(tools, &Photo { img: ph.img, exif: None, icc: ph.icc }, &ext, 93, &of.tmp)?;
     of.commit()
@@ -114,7 +114,7 @@ pub fn movie(tools: &Tools, src: &Path, info: &FileInfo, p: &Params, dir: &Path,
     let fps = if info.fps > 0.0 { info.fps } else { 30.0 };
     let px = info.width as f64 * info.height as f64 * fps;
     let bitrate = if info.video_bitrate > 0 { (info.video_bitrate as f64 * 1.1).max(px * 0.08) } else { px * 0.11 } as u64;
-    let of = names::OutFile::new(dir, &format!("{} (logo nascosto)", names::stem(src)), "mp4")?;
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), crate::names::tag("logo nascosto")), "mp4")?;
     let mut last = EngineError::new("nessun codificatore video disponibile");
     for enc in video::candidates(tools, video::Codec::H264) {
         let mut a = args!["-i", src, "-filter_complex", &graph, "-map", "[v]", "-map", "0:a:0?", "-map_metadata", "0"];

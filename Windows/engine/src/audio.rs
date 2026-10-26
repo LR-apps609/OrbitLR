@@ -79,7 +79,7 @@ pub fn cut(tools: &Tools, src: &Path, info: &FileInfo, start: f64, end: f64, dir
         return Err(EngineError::new("scegli un pezzo di almeno un decimo di secondo"));
     }
     let ext = same_or_m4a(src);
-    let of = names::OutFile::new(dir, &format!("{} (tagliato)", names::stem(src)), &ext)?;
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), crate::names::tag("tagliato")), &ext)?;
     let d = end - start;
     let mut a = args!["-ss", format!("{start:.3}"), "-i", src, "-t", format!("{d:.3}"), "-map", "0:a:0", "-vn", "-map_metadata", "0"];
     let copy = (ext == "mp3" && info.audio_codec == "mp3") || ext == "wav" || (ext == "flac" && info.audio_codec == "flac");
@@ -105,7 +105,7 @@ pub fn ringtone(
         return Err(EngineError::new("scegli almeno un secondo"));
     }
     let ext = if format == "mp3" { "mp3" } else { "m4r" };
-    let of = names::OutFile::new(dir, &format!("{} (suoneria)", names::stem(src)), ext)?;
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), crate::names::tag("suoneria")), ext)?;
     let mut af: Vec<String> = Vec::new();
     if fade {
         af.push("afade=t=in:st=0:d=0.6".into());
@@ -132,7 +132,7 @@ pub fn level(tools: &Tools, src: &Path, info: &FileInfo, clean: bool, dir: &Path
         return Err(EngineError::new("il file non contiene audio"));
     }
     let chain = if clean { VOICE_CLEAN } else { LOUDNORM };
-    let tag = if clean { "voce pulita" } else { "volume uniforme" };
+    let tag = crate::names::tag(if clean { "voce pulita" } else { "volume uniforme" });
     let sr = if info.sample_rate > 0 { info.sample_rate.min(48_000) } else { 48_000 };
     if info.has_video {
         let e = names::ext(src);
@@ -162,7 +162,7 @@ pub fn remove_silence(tools: &Tools, src: &Path, info: &FileInfo, dir: &Path, ca
         return Err(EngineError::new("il file non contiene audio"));
     }
     let ext = same_or_m4a(src);
-    let of = names::OutFile::new(dir, &format!("{} (senza pause)", names::stem(src)), &ext)?;
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), crate::names::tag("senza pause")), &ext)?;
     let f = "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.1:stop_periods=-1:stop_duration=0.7:stop_threshold=-45dB:stop_silence=0.25:detection=rms";
     let mut a = args!["-i", src, "-map", "0:a:0", "-vn", "-map_metadata", "0", "-af", f];
     a.extend(codec_args(&ext));
@@ -212,7 +212,7 @@ pub fn voice_note(tools: &Tools, src: &Path, info: &FileInfo, dir: &Path, cancel
     if !info.has_audio {
         return Err(EngineError::new("il file non contiene audio"));
     }
-    let of = names::OutFile::new(dir, &format!("{} (vocale)", names::stem(src)), "ogg")?;
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), crate::names::tag("vocale")), "ogg")?;
     let a = args!["-i", src, "-map", "0:a:0", "-vn", "-map_metadata", "-1", "-af", VOICE_CLEAN, "-ac", "1", "-ar", "48000", "-c:a", "libopus", "-b:a", "32k", "-application", "voip", of.tmp.clone()];
     run::ffmpeg(tools, &a, info.duration, cancel, progress)?;
     of.commit()
@@ -227,7 +227,7 @@ pub fn merge(tools: &Tools, files: &[(PathBuf, FileInfo)], dir: &Path, cancel: &
         return Err(EngineError::new(format!("«{}» non contiene audio", p.file_name().unwrap_or_default().to_string_lossy())));
     }
     let ext = same_or_m4a(&files[0].0);
-    let of = names::OutFile::new(dir, &format!("{} (uniti)", names::stem(&files[0].0)), &ext)?;
+    let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(&files[0].0), crate::names::tag("uniti")), &ext)?;
     let mut a: Vec<OsString> = Vec::new();
     for (p, _) in files {
         a.extend(args!["-i", p]);

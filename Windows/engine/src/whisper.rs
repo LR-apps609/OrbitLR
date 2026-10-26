@@ -251,7 +251,7 @@ pub fn transcribe(tools: &Tools, exe: &Path, model: &Path, src: &Path, info: &Fi
 #[allow(clippy::too_many_arguments)]
 pub fn transcribe_files(tools: &Tools, exe: &Path, model: &Path, src: &Path, info: &FileInfo, lang: &str, dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<Vec<PathBuf>> {
     let segs = transcribe(tools, exe, model, src, info, lang, cancel, progress)?;
-    let txt = names::OutFile::new(dir, &format!("{} (trascrizione)", names::stem(src)), "txt")?;
+    let txt = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), crate::names::tag("trascrizione")), "txt")?;
     std::fs::write(&txt.tmp, to_text(&segs))?;
     let srt = names::OutFile::new(dir, &names::stem(src), "srt")?;
     std::fs::write(&srt.tmp, to_srt(&segs))?;

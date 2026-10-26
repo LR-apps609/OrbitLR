@@ -1,4 +1,4 @@
-Novità per Windows 0.3.0 «English»:
-• OrbitLR parla inglese: segue la lingua di Windows, oppure la scegli in Opzioni → «Lingua · Language» · OrbitLR now speaks English: it follows Windows, or choose it in Settings → “Lingua · Language”
-• Cartelle automatiche anche con «Le mie azioni»
-• Dopo un aggiornamento, le novità si vedono alla prima apertura
+Novità per Windows 0.3.1:
+• PDF in immagini (PNG o JPG, una per pagina) e «Estrai il testo» dai PDF, anche scansionati
+• In inglese anche i nomi dei file creati: «photo (compressed).jpg», «song (trimmed).mp3»
+• Aiuto più completo: 36 domande e risposte
