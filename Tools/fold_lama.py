@@ -110,6 +110,51 @@ for n in g.node:
     new_nodes.append(helper.make_node("Transpose", [pfx + "_rs"], [n.output[0]], perm=[mid.index(c) for c in out]))
 del g.node[:]
 g.node.extend(new_nodes)
+
+# MatMul a più dimensioni con una matrice costante 2D → MatMul 2D (tract compila male alcuni MatMul con «batch»)
+consts = {t.name: numpy_helper.to_array(t) for t in g.initializer}
+mms = [n for n in g.node if n.op_type == "MatMul"]
+m4 = onnx.ModelProto(); m4.CopyFrom(m)
+for x in sorted({x for n in mms for x in n.input if x not in consts}):
+    m4.graph.output.append(helper.ValueInfoProto(name=x))
+s4 = ort.InferenceSession(m4.SerializeToString(), so, providers=["CPUExecutionProvider"])
+shp4 = {o.name: v.shape for o, v in zip(s4.get_outputs(), s4.run(None, feeds))}
+shape_of = lambda x: consts[x].shape if x in consts else shp4[x]
+pat = collections.Counter((len(shape_of(n.input[0])), len(shape_of(n.input[1])), n.input[0] in consts, n.input[1] in consts) for n in mms)
+print("MatMul (rango A, rango B, A costante, B costante):", dict(pat))
+out_nodes = []
+for n in g.node:
+    if n.op_type != "MatMul":
+        out_nodes.append(n); continue
+    A, B = n.input
+    sa, sb = shape_of(A), shape_of(B)
+    pfx = n.output[0] + "_orbit2"
+    if len(sb) == 2 and len(sa) > 2:
+        # [..., M, K] · [K, N] → reshape [prod, K] · [K, N] → [..., M, N]
+        out_nodes.append(helper.make_node("Reshape", [A, const([-1, sa[-1]])], [pfx + "_a"]))
+        out_nodes.append(helper.make_node("MatMul", [pfx + "_a", B], [pfx + "_m"]))
+        out_nodes.append(helper.make_node("Reshape", [pfx + "_m", const(list(sa[:-1]) + [sb[-1]])], [n.output[0]]))
+    elif len(sa) == 2 and len(sb) > 2:
+        # [M, K] · [..., K, N] = ([..., N, K] · [K, M])ᵀ
+        r = len(sb)
+        perm = list(range(r - 2)) + [r - 1, r - 2]
+        out_nodes.append(helper.make_node("Transpose", [B], [pfx + "_bt"], perm=perm))
+        out_nodes.append(helper.make_node("Reshape", [pfx + "_bt", const([-1, sb[-2]])], [pfx + "_b"]))
+        out_nodes.append(helper.make_node("Transpose", [A], [pfx + "_at"], perm=[1, 0]))
+        out_nodes.append(helper.make_node("MatMul", [pfx + "_b", pfx + "_at"], [pfx + "_m"]))
+        out_nodes.append(helper.make_node("Reshape", [pfx + "_m", const(list(sb[:-2]) + [sb[-1], sa[0]])], [pfx + "_r"]))
+        out_nodes.append(helper.make_node("Transpose", [pfx + "_r"], [n.output[0]], perm=perm))
+    elif len(sa) > 2 and len(sb) > 2 and tuple(sa[:-2]) == tuple(sb[:-2]):
+        # batch uguali: [B, M, K] · [B, K, N]
+        bat = int(np.prod(sa[:-2]))
+        out_nodes.append(helper.make_node("Reshape", [A, const([bat, sa[-2], sa[-1]])], [pfx + "_a"]))
+        out_nodes.append(helper.make_node("Reshape", [B, const([bat, sb[-2], sb[-1]])], [pfx + "_b"]))
+        out_nodes.append(helper.make_node("MatMul", [pfx + "_a", pfx + "_b"], [pfx + "_m"]))
+        out_nodes.append(helper.make_node("Reshape", [pfx + "_m", const(list(sa[:-1]) + [sb[-1]])], [n.output[0]]))
+    else:
+        out_nodes.append(n)
+del g.node[:]
+g.node.extend(out_nodes)
 onnx.save(m, dst)
 
 # Prova: stesso risultato del modello originale
@@ -117,4 +162,4 @@ a = ort.InferenceSession(src, providers=["CPUExecutionProvider"]).run(None, feed
 b = ort.InferenceSession(dst, providers=["CPUExecutionProvider"]).run(None, feeds)[0]
 print("differenza massima con l'originale:", float(np.abs(a - b).max()), "valori", float(b.min()), float(b.max()))
 print(sorted(collections.Counter(n.op_type for n in g.node).items(), key=lambda x: -x[1]))
-assert np.abs(a - b).max() < 1e-3
+assert np.abs(a - b).max() <= 1e-4 * max(1.0, float(np.abs(a).max())), "il modello cambiato non dà lo stesso risultato"
