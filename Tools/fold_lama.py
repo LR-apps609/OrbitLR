@@ -101,9 +101,9 @@ for n in g.node:
     tb = [b.index(c) for c in bat + con + rig]
     P = lambda cs: int(np.prod([dim[c] for c in cs])) if cs else 1
     new_nodes.append(helper.make_node("Transpose", [A], [pfx + "_ta"], perm=ta))
-    new_nodes.append(helper.make_node("Reshape", [pfx + "_ta", const([P(bat), P(lef), P(con)])], [pfx + "_ra"]))
+    new_nodes.append(helper.make_node("Reshape", [pfx + "_ta", const(([P(bat)] if bat else []) + [P(lef), P(con)])], [pfx + "_ra"]))
     new_nodes.append(helper.make_node("Transpose", [B], [pfx + "_tb"], perm=tb))
-    new_nodes.append(helper.make_node("Reshape", [pfx + "_tb", const([P(bat), P(con), P(rig)])], [pfx + "_rb"]))
+    new_nodes.append(helper.make_node("Reshape", [pfx + "_tb", const(([P(bat)] if bat else []) + [P(con), P(rig)])], [pfx + "_rb"]))
     new_nodes.append(helper.make_node("MatMul", [pfx + "_ra", pfx + "_rb"], [pfx + "_mm"]))
     mid = bat + lef + rig
     new_nodes.append(helper.make_node("Reshape", [pfx + "_mm", const([dim[c] for c in mid])], [pfx + "_rs"]))
@@ -144,6 +144,12 @@ for n in g.node:
         out_nodes.append(helper.make_node("MatMul", [pfx + "_b", pfx + "_at"], [pfx + "_m"]))
         out_nodes.append(helper.make_node("Reshape", [pfx + "_m", const(list(sb[:-2]) + [sb[-1], sa[0]])], [pfx + "_r"]))
         out_nodes.append(helper.make_node("Transpose", [pfx + "_r"], [n.output[0]], perm=perm))
+    elif len(sa) > 2 and len(sb) > 2 and tuple(sa[:-2]) == tuple(sb[:-2]) and int(np.prod(sa[:-2])) == 1:
+        # batch di 1: [M, K] · [K, N]
+        out_nodes.append(helper.make_node("Reshape", [A, const([sa[-2], sa[-1]])], [pfx + "_a"]))
+        out_nodes.append(helper.make_node("Reshape", [B, const([sb[-2], sb[-1]])], [pfx + "_b"]))
+        out_nodes.append(helper.make_node("MatMul", [pfx + "_a", pfx + "_b"], [pfx + "_m"]))
+        out_nodes.append(helper.make_node("Reshape", [pfx + "_m", const(list(sa[:-1]) + [sb[-1]])], [n.output[0]]))
     elif len(sa) > 2 and len(sb) > 2 and tuple(sa[:-2]) == tuple(sb[:-2]):
         # batch uguali: [B, M, K] · [B, K, N]
         bat = int(np.prod(sa[:-2]))
