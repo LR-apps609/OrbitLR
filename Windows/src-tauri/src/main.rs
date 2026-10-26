@@ -477,6 +477,30 @@ async fn office_install() -> Result<bool, String> {
     .map_err(|e| e.to_string())?
 }
 
+/// «Annulla» nella barra del risultato: i file appena creati vanno nel Cestino (solo file creati da OrbitLR).
+#[tauri::command]
+fn undo_result(state: State<'_, Shared>, paths: Vec<String>) -> Result<usize, String> {
+    let mut made = state.made.lock().unwrap();
+    let ok: Vec<String> = paths.into_iter().filter(|p| made.contains(p) && Path::new(p).is_file()).collect();
+    if ok.is_empty() {
+        return Err("questi file non sono stati creati adesso da OrbitLR".into());
+    }
+    trash::delete_all(&ok).map_err(|e| format!("non riesco a spostarli nel Cestino: {e}"))?;
+    for p in &ok {
+        made.remove(p);
+    }
+    Ok(ok.len())
+}
+
+/// «Confronta»: l'anteprima può leggere un file creato da OrbitLR.
+#[tauri::command]
+fn allow_made(app: tauri::AppHandle, state: State<'_, Shared>, path: String) -> bool {
+    if !state.made.lock().unwrap().contains(&path) || !Path::new(&path).is_file() {
+        return false;
+    }
+    app.asset_protocol_scope().allow_file(&path).is_ok()
+}
+
 #[derive(Serialize)]
 struct UpdateInfo {
     version: String,
@@ -800,7 +824,7 @@ fn main() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install, update_check, update_install])
+        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install, update_check, update_install, undo_result, allow_made])
         .run(tauri::generate_context!())
         .expect("OrbitLR non è riuscita ad avviarsi");
 }

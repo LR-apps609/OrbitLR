@@ -9,12 +9,14 @@ import { mediaPage } from "./media.js";
 import { videoTab } from "./video.js";
 import { activityPage, helpPage, report, settingsPage } from "./pages.js";
 import { autoPage } from "./auto.js";
+import { showFeedback } from "./feedback.js";
 import { extOf, fmtBytes, h, ico, modal, store, toast } from "./util.js";
 
 const VERSION = "0.2.0";
 // Numero della compilazione (lo scrive GitHub quando crea l'installazione)
 const BUILD = 0;
 
+window.__orbitVersion = VERSION;
 const app = {
   version: VERSION,
   engine: null,
@@ -84,7 +86,8 @@ function sidebar() {
   const foot = h("div.foot",
     (navButtons.settings = h("button", { onclick: () => show("settings") }, ico("settings", 17), "Opzioni")),
     (navButtons.help = h("button", { onclick: () => show("help") }, ico("circle-help", 17), "Aiuto")),
-    h("button", { onclick: () => report(app) }, ico("bug", 17), "Segnala"));
+    h("button", { onclick: () => report(app) }, ico("bug", 17), "Segnala"),
+    h("button", { title: "Un’idea, una cosa che manca: mi arriva per email", onclick: () => showFeedback(VERSION) }, ico("lightbulb", 17), "Idea"));
   return h("aside.side",
     h("div.brand", h("img", { src: "img/icona.png", alt: "" }), h("div", h("b", "OrbitLR"), h("small", "per Windows"))),
     nav,

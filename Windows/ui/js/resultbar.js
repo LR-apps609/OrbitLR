@@ -1,8 +1,13 @@
 // La barra in basso: avanzamento con la scala della radio, poi il risultato con quanto si è guadagnato.
 
 import { cancel, subscribe } from "./jobs.js";
-import { openPath, reveal } from "./api.js";
-import { fmtBytes, gainText, h, ico } from "./util.js";
+import { invoke, openPath, reveal } from "./api.js";
+import { openCompare } from "./compare.js";
+import { askFeedbackOnce } from "./feedback.js";
+import { fmtBytes, gainText, h, ico, toast } from "./util.js";
+
+const IMG = ["jpg", "jpeg", "png", "webp", "avif", "bmp", "gif", "tif", "tiff", "jfif"];
+const isImg = (p) => IMG.includes(String(p || "").split(".").pop().toLowerCase());
 
 export function resultBar(origin) {
   const el = h("div");
@@ -39,7 +44,14 @@ export function resultBar(origin) {
         h("div.tx", h("b", "Non riuscito"), h("span", capital(e))), closeBtn()));
       return;
     }
+    if (job.undone) {
+      el.append(h("div.resultbar", h("div.ic.ok", ico("rotate-ccw", 20)), h("div.tx", h("b", "Annullato"), h("span", "Il file creato è nel Cestino; l’originale è dov’era.")), closeBtn()));
+      hideTimer = setTimeout(() => render(null), 4000);
+      return;
+    }
     const first = outs[0];
+    const src = job.results[0];
+    const canCompare = outs.length === 1 && job.results.length === 1 && src?.sourcePath && isImg(src.sourcePath) && isImg(first.path);
     let detail;
     if (job.action === "vproject" || job.action === "tts") {
       detail = h("span", `${job.action === "vproject" ? "Montaggio pronto" : "File audio pronto"} · ${fmtBytes(first.size)}`);
@@ -58,7 +70,20 @@ export function resultBar(origin) {
           errs.length ? h("span", { style: { color: "var(--err)", display: "block" } }, `${errs.length} non riusciti: ${errs[0].error}`) : null),
         h("button.btn", { onclick: () => reveal(first.path) }, ico("folder-open", 16), "Mostra nella cartella"),
         outs.length === 1 ? h("button.btn", { onclick: () => openPath(first.path) }, ico("external-link", 16), "Apri") : null,
+        canCompare ? h("button.btn", { title: "Originale e risultato, con la linea da trascinare", onclick: () => openCompare({ path: src.sourcePath, size: src.sourceSize }, first) }, ico("columns-2", 16), "Confronta") : null,
+        job.action === "link" ? null : h("button.btn.ghost", { title: "Manda nel Cestino i file appena creati", onclick: () => undo(job, outs) }, ico("rotate-ccw", 16), "Annulla"),
         closeBtn()));
+    if (job.state === "done") askFeedbackOnce(el.firstChild);
+  }
+
+  async function undo(job, outs) {
+    try {
+      await invoke("undo_result", { paths: outs.map((o) => o.path) });
+      job.undone = true;
+      render(job);
+    } catch (e) {
+      toast(String(e));
+    }
   }
 
   function closeBtn() {
