@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="style.css">
 
-<meta property="og:title" content="OrbitLR · Un file. Uno spicchio. Fatto.">
+<meta property="og:title" content="OrbitLR · Il tuo file. Uno spicchio. Fatto.">
 <meta property="og:description" content="Converti, comprimi e sistema foto, video, audio e PDF sul tuo computer. Per Mac e Windows.">
 <meta property="og:image" content="https://lr-apps609.github.io/OrbitLR/img/orbitlr.png">
 <meta property="og:type" content="website">
@@ -18,59 +18,77 @@
 <link rel="apple-touch-icon" href="img/orbitlr.png">
 </head>
 <body>
-<div class="top gutter">
+<header class="top gutter">
   <div class="inner">
-    <a class="logo" href="#prova" aria-label="OrbitLR">
+    <a class="logo" href="#converter" id="logoLink" aria-label="OrbitLR">
       <img src="img/orbitlr.png" alt="" width="40" height="40">
       <b>Orbit<span>LR</span></b>
     </a>
-    <nav class="nav" aria-label="Sezioni">
-      <a class="lnk" href="#peso" data-en="Weight">Il peso</a>
-      <a class="lnk" href="#torta" data-en="The app">L’app</a>
-      <div class="lang" role="group" aria-label="Lingua · Language">
-        <button type="button" id="lang-it" aria-pressed="true">IT</button>
-        <button type="button" id="lang-en" aria-pressed="false">EN</button>
-      </div>
-      <a class="btn gold" href="#scarica" data-en="Get the app">Prendi l’app</a>
-    </nav>
+    <div class="tabs" role="tablist" aria-label="Sezioni">
+      <span class="tab-ind" id="tabInd" aria-hidden="true"></span>
+      <button type="button" role="tab" id="tab-converter" aria-controls="view-converter" aria-selected="true">Converter</button>
+      <button type="button" role="tab" id="tab-app" aria-controls="view-app" aria-selected="false" data-en="App">Applicazione</button>
+    </div>
+    <div class="lang" role="group" aria-label="Lingua · Language">
+      <button type="button" id="lang-it" aria-pressed="true">IT</button>
+      <button type="button" id="lang-en" aria-pressed="false">EN</button>
+    </div>
+    <a class="btn gold getapp" href="#scarica" id="getApp" data-en="Get the app">Ottieni l’app</a>
   </div>
-</div>
+</header>
 
-<main>
+<!-- ======================= CONVERTER ======================= -->
+<main class="view" id="view-converter" role="tabpanel" aria-labelledby="tab-converter">
 <section class="hero gutter" id="prova">
   <div class="bgfx" data-fx="hero" aria-hidden="true"></div>
   <div class="glow" id="glow" aria-hidden="true"></div>
   <div class="inner">
     <div class="h-title">
-      <p class="eyebrow" data-en="OrbitLR · file converter for Mac and Windows">OrbitLR · convertitore per Mac e Windows</p>
-      <h1 class="big" data-en="<span>One file.</span> <span>One slice.</span> <span class=&quot;done&quot;>Done.</span>"><span>Un file.</span> <span>Uno spicchio.</span> <span class="done">Fatto.</span></h1>
+      <p class="eyebrow" data-en="Converter · works in your browser">Converter · funziona nel tuo browser</p>
+      <h1 class="big" data-en="<span>Your file.</span> <span>One slice.</span> <span class=&quot;done&quot;>Done.</span>"><span>Il tuo file.</span> <span>Uno spicchio.</span> <span class="done">Fatto.</span></h1>
     </div>
 
     <div class="stage">
       <div class="tilt" id="tilt">
         <div class="dial" id="dial" data-drop="Lascia andare" data-drop-en="Let go">
           <svg class="pie" id="pie" viewBox="-250 -250 500 500" role="group" aria-label="Menu a torta"></svg>
+          <button class="dropzone" type="button" id="dropzone">
+            <span class="dz-ring" aria-hidden="true"></span>
+            <svg class="dz-icon" width="84" height="84" viewBox="0 0 64 64" aria-hidden="true">
+              <path class="dz-tray" d="M12 40v8a6 6 0 0 0 6 6h28a6 6 0 0 0 6-6v-8" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+              <g class="dz-arrow"><path d="M32 8v30m0 0l-10-10m10 10l10-10" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+            </svg>
+            <b data-en="Drop your file here">Trascina qui il tuo file</b>
+            <span class="dz-or" data-en="or click to choose it">o clicca per sceglierlo</span>
+            <span class="dz-kinds"><span data-en="Photos · PDF · audio · video">Foto · PDF · audio · video</span> · <span id="pasteKey">Ctrl+V</span> <span data-en="to paste">per incollare</span></span>
+          </button>
+          <div class="preview" id="preview" aria-hidden="true"><img id="pvImg" alt=""><span class="pv-badge" id="pvBadge"></span></div>
         </div>
       </div>
       <div class="readout">
         <div class="caption" id="caption" aria-live="polite"></div>
         <div class="out" id="out" aria-live="polite"></div>
+        <div class="file-actions" id="fileActions" hidden>
+          <button type="button" class="link-btn" id="changeBtn" data-en="Choose another file">Scegli un altro file</button>
+          <button type="button" class="link-btn" id="resetBtn" data-en="Start over">Ricomincia</button>
+        </div>
       </div>
     </div>
 
     <div class="h-copy">
-      <p class="lede" data-en="This pie <b>really works</b>: throw a file in, pick a slice or pull it out, download the result. All in your browser, nothing gets uploaded.">Questa torta <b>funziona davvero</b>: lancia dentro un file, tocca uno spicchio o tiralo fuori, scarica il risultato. Tutto nel browser, niente viene caricato.</p>
+      <p class="lede" data-en="Drop a file on the pie: <b>it really works</b>. Pick a slice, or pull it out, and download the result. Nothing leaves your computer.">Lascia cadere un file sulla torta: <b>funziona davvero</b>. Scegli uno spicchio, o tiralo fuori, e scarica il risultato. Niente esce dal tuo computer.</p>
+      <button class="btn gold big upload" type="button" id="pickBtn">
+        <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="up-txt"><span data-en="Upload your photo, PDF or audio">Carica la tua foto, PDF o audio</span><small data-en="or drag it here">oppure trascinalo qui</small></span>
+      </button>
       <div class="deck-wrap">
-        <p class="deck-lbl" data-en="Throw one into the pie ↗">Lanciane uno nella torta ↗</p>
+        <p class="deck-lbl" data-en="No file at hand? Throw in a sample ↗">Nessun file sotto mano? Lancia un esempio ↗</p>
         <div class="deck" id="deck">
           <button class="fcard" type="button" data-sample="photo" style="--c:var(--s4)"><i>PNG</i><span><b data-en="Seaside">Mare</b><small data-en="photo">foto</small></span></button>
           <button class="fcard" type="button" data-sample="photos" style="--c:var(--s7)"><i>3×</i><span><b data-en="Trip">Gita</b><small data-en="3 photos">3 foto</small></span></button>
+          <button class="fcard" type="button" data-sample="pdf" style="--c:var(--s1)"><i>PDF</i><span><b data-en="Brochure">Opuscolo</b><small data-en="2 pages">2 pagine</small></span></button>
           <button class="fcard" type="button" data-sample="audio" style="--c:var(--s2)"><i>WAV</i><span><b data-en="Tune">Melodia</b><small>audio</small></span></button>
           <button class="fcard" type="button" data-sample="video" style="--c:var(--s3)"><i>MP4</i><span><b data-en="Mountain">Montagna</b><small>video</small></span></button>
-          <button class="fcard" type="button" data-sample="pdf" style="--c:var(--s1)"><i>PDF</i><span><b data-en="Contract">Contratto</b><small>PDF</small></span></button>
-          <button class="fcard own" type="button" id="pickBtn"><i>
-            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></i>
-            <span><b data-en="Yours">Il tuo</b><small data-en="choose">scegli</small></span></button>
         </div>
       </div>
     </div>
@@ -78,29 +96,34 @@
   <input type="file" id="file" multiple hidden>
 </section>
 
-<section id="peso" class="weigh gutter">
-  <div class="bgfx" data-fx="weigh" aria-hidden="true"></div>
-  <div class="inner">
-    <div class="sec-head">
-      <p class="eyebrow" data-en="Weight, at a glance">Il peso, a vista</p>
-      <h2 data-en="Drag. Look. <em>Weigh less.</em>">Trascina. Guarda. <em>Pesa meno.</em></h2>
+<section class="band gutter" id="sfida">
+  <div class="bgfx" data-fx="band" aria-hidden="true"></div>
+  <div class="inner band-grid">
+    <div class="quiz" id="quiz" aria-live="polite"></div>
+    <div class="invite-card" id="inviteCard">
+      <p class="eyebrow" data-en="Liked it?">Ti è piaciuta?</p>
+      <h2 data-en="Here you tried one slice. <em>The app is the whole pie.</em>">Qui hai provato uno spicchio. <em>L’app è la torta intera.</em></h2>
+      <p data-en="Video, PDF, AI, a hundred files at once, right from the Finder or File Explorer. Free, no account.">Video, PDF, intelligenza artificiale, cento file insieme, direttamente dal Finder o da Esplora file. Gratis, senza account.</p>
+      <div class="stores" data-stores></div>
+      <a class="more-link" href="#applicazione" data-goto="app" data-en="Discover everything the app does →">Scopri tutto quello che fa l’app →</a>
     </div>
-    <div class="weigh-grid">
-      <div class="compare-col">
-        <div class="compare" id="compare">
-          <img id="cmpBefore" alt="" draggable="false">
-          <div class="after" id="cmpAfterWrap"><img id="cmpAfter" alt="" draggable="false"></div>
-          <div class="handle" id="cmpHandle" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-label="Prima e dopo"><span></span></div>
-          <span class="tag l" id="cmpL"></span><span class="tag r" id="cmpR"></span>
-        </div>
-        <div class="qrow">
-          <label for="q" data-en="JPG quality">Qualità JPG</label>
-          <input type="range" id="q" min="5" max="95" step="5" value="35">
-          <output id="qOut">35</output>
-        </div>
-      </div>
-      <div class="quiz" id="quiz" aria-live="polite"></div>
+  </div>
+</section>
+</main>
+
+<!-- ======================= APPLICAZIONE ======================= -->
+<main class="view" id="view-app" role="tabpanel" aria-labelledby="tab-app" hidden>
+<section class="apphero gutter" id="apphero">
+  <div class="bgfx" data-fx="apphero" aria-hidden="true"></div>
+  <div class="inner ah-grid">
+    <div class="ah-text">
+      <p class="eyebrow" data-en="OrbitLR for Mac and Windows">OrbitLR per Mac e Windows</p>
+      <h1 class="big" data-en="<span>Every file,</span> <span class=&quot;done&quot;>your way.</span>"><span>Ogni file,</span> <span class="done">come lo vuoi tu.</span></h1>
+      <p class="lede" data-en="Convert, compress and fix photos, videos, audio and PDFs with one pie. On your computer, nothing uploaded, no account.">Converte, comprime e sistema foto, video, audio e PDF con una torta sola. Sul tuo computer, senza caricare niente, senza account.</p>
+      <div class="stores" data-stores></div>
+      <p class="vers"><span data-en="Mac 4.2.1 «English Names»">Mac 4.2.1 «Nomi in inglese»</span> · <span data-en="Windows preview 0.6.0 «Framing»">Windows anteprima 0.6.0 «Inquadra»</span></p>
     </div>
+    <div class="ah-logo" id="ahLogo"><img src="img/orbitlr.png" alt="Logo di OrbitLR" width="300" height="300"></div>
   </div>
 </section>
 
@@ -109,22 +132,47 @@
     <div class="bgfx" data-fx="man" aria-hidden="true"></div>
     <div class="m-inner">
       <div class="m-text">
-        <p class="eyebrow" data-en="Here you tasted it">Qui l’hai assaggiata</p>
+        <p class="eyebrow" data-en="Scroll">Scorri</p>
         <div class="m-lines" id="mLines">
-          <p class="m-line"><span class="o" data-en="That was">Quello era</span><span class="f" data-en="That was">Quello era</span></p>
-          <p class="m-line"><span class="o" data-en="one slice.">uno spicchio.</span><span class="f" data-en="one slice.">uno spicchio.</span></p>
-          <p class="m-line gold"><span class="o" data-en="The app is">L’app è</span><span class="f" data-en="The app is">L’app è</span></p>
-          <p class="m-line gold"><span class="o" data-en="the whole pie.">la torta intera.</span><span class="f" data-en="the whole pie.">la torta intera.</span></p>
+          <p class="m-line"><span class="o" data-en="One pie.">Una torta.</span><span class="f" data-en="One pie.">Una torta.</span></p>
+          <p class="m-line"><span class="o" data-en="Every file.">Ogni file.</span><span class="f" data-en="Every file.">Ogni file.</span></p>
+          <p class="m-line gold"><span class="o" data-en="All on your">Tutto sul tuo</span><span class="f" data-en="All on your">Tutto sul tuo</span></p>
+          <p class="m-line gold"><span class="o" data-en="computer.">computer.</span><span class="f" data-en="computer.">computer.</span></p>
         </div>
         <div class="m-cta">
-          <a class="btn gold big" href="#scarica" data-en="Discover the app">Scopri l’app</a>
-          <span class="m-note" data-en="Photos, video, audio, PDF. On your computer, even offline.">Foto, video, audio, PDF. Sul tuo computer, anche senza internet.</span>
+          <a class="btn gold big" href="#scarica" data-goto-dl data-en="Get the app">Ottieni l’app</a>
+          <span class="m-note" data-en="Touch a slice to see what it does.">Tocca uno spicchio per vedere cosa fa.</span>
         </div>
       </div>
       <div class="m-pie">
         <div class="m-rot" id="mRot"><svg id="bigpie" viewBox="-250 -250 500 500" aria-hidden="true"></svg></div>
-        <div class="m-center" aria-live="off"><small id="mGroup"></small><b id="mTool"></b></div>
+        <div class="m-center"><small id="mGroup"></small><b id="mTool"></b></div>
       </div>
+    </div>
+  </div>
+</section>
+
+<section id="cosa" class="band cats gutter">
+  <div class="bgfx" data-fx="band" aria-hidden="true"></div>
+  <div class="inner">
+    <div class="sec-head">
+      <p class="eyebrow" data-en="What it does">Cosa fa</p>
+      <h2 data-en="Four worlds. <em>One pie.</em>">Quattro mondi. <em>Una torta.</em></h2>
+    </div>
+    <div class="cat-grid">
+      <div class="cat-tabs" role="tablist" aria-label="Tipo di file" id="catTabs"></div>
+      <div class="cat-pie"><svg id="catpie" viewBox="-250 -250 500 500" role="group" aria-label="Strumenti"></svg><div class="cat-center" id="catCenter"></div></div>
+      <div class="cat-info" id="catInfo" aria-live="polite"></div>
+    </div>
+    <div class="privacy">
+      <div class="pv-tile"><svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3" fill="none" stroke="currentColor" stroke-width="2"/><rect x="4" y="11" width="16" height="10" rx="3" fill="currentColor"/></svg>
+        <b data-en="Nothing uploaded">Niente caricato</b><span data-en="Photos, videos and documents never leave your computer. Subtitles too: the audio is never sent to anyone.">Foto, video e documenti non lasciano mai il computer. Anche i sottotitoli: l’audio non va a nessuno.</span></div>
+      <div class="pv-tile"><svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H9l-4 3v-3a2 2 0 0 1-1-2V7a2 2 0 0 1 0-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M19 9h1a1 1 0 0 1 1 1v8l-3-2h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        <b data-en="Italian and English">Italiano e inglese</b><span data-en="It follows your computer’s language, or you choose it in the settings. No account needed.">Segue la lingua del computer, o la scegli nelle opzioni. Nessun account.</span></div>
+      <div class="pv-tile"><svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 6l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <b data-en="No hidden metadata">Senza metadati nascosti</b><span data-en="GPS location, camera and dates removed from photos and videos, without losing quality.">Posizione GPS, fotocamera e date tolte da foto e video, senza perdere qualità.</span></div>
+      <div class="pv-tile"><svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 12l2.5 2.5 4.5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <b data-en="Signed updates">Aggiornamenti firmati</b><span data-en="On Mac it updates itself and installs only updates signed by OrbitLR.">Sul Mac si aggiorna da sola e installa solo aggiornamenti firmati da OrbitLR.</span></div>
     </div>
   </div>
 </section>
@@ -139,28 +187,48 @@
       <p data-en="Free on GitHub. Italian and English, no account, nothing uploaded.">Gratis su GitHub. In italiano e in inglese, senza account, niente caricato.</p>
     </div>
     <div class="dls">
-      <a class="dlc" href="https://github.com/LR-apps609/OrbitLR/releases" target="_blank" rel="noopener">
+      <article class="dlc">
         <span class="shine" aria-hidden="true"></span>
-        <span class="plat">
-          <svg width="40" height="40" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 20h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          <span class="pname">Mac</span>
-        </span>
-        <span class="ver" data-en="4.2.1 «English Names»">4.2.1 «Nomi in inglese»</span>
-        <span class="facts" data-en="Apple Silicon and Intel · updates itself, signed · ⌥⌘C in the Finder">Apple Silicon e Intel · si aggiorna da sola, firmata · ⌥⌘C nel Finder</span>
-        <span class="go"><span data-en="Download for Mac">Scarica per Mac</span> <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m0 0l-5-5m5 5l-5 5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      </a>
-      <a class="dlc" href="https://github.com/LR-apps609/OrbitLR/releases/tag/windows-anteprima" target="_blank" rel="noopener">
+        <div class="plat"><svg class="dev" width="44" height="44" viewBox="0 0 48 48" aria-hidden="true"><rect x="9" y="10" width="30" height="20" rx="2.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M4 35h40l-3 4H7z" fill="currentColor"/></svg><span class="pname">Mac</span></div>
+        <p class="ver" data-en="Version 4.2.1 «English Names»">Versione 4.2.1 «Nomi in inglese»</p>
+        <dl class="req">
+          <div><dt data-en="Runs on">Funziona su</dt><dd data-en="Apple Silicon and Intel Macs">Mac con Apple Silicon e Intel</dd></div>
+          <div><dt data-en="Updates">Aggiornamenti</dt><dd data-en="By themselves, signed">Da soli, firmati</dd></div>
+          <div><dt data-en="Opens with">Si apre con</dt><dd data-en="⌥⌘C in the Finder, the shelf, the menu bar">⌥⌘C nel Finder, il ripiano, la barra dei menu</dd></div>
+        </dl>
+        <details class="news"><summary data-en="What’s new">Novità</summary>
+          <ul>
+            <li data-en="4.2.1 · The files you create get English names too">4.2.1 · Con l’app in inglese anche i file creati hanno il nome in inglese</li>
+            <li data-en="4.2 · OrbitLR speaks English, following your Mac’s language">4.2 · OrbitLR parla inglese, seguendo la lingua del Mac</li>
+            <li data-en="4.1.6 · «Audio Downloader» and «Video Downloader» bars">4.1.6 · Le barre «Audio Downloader» e «Video Downloader»</li>
+          </ul></details>
+        <a class="go" href="https://github.com/LR-apps609/OrbitLR/releases" target="_blank" rel="noopener"><span data-en="Download for Mac">Scarica per Mac</span> <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m0 0l-5-5m5 5l-5 5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      </article>
+      <article class="dlc">
         <span class="shine" aria-hidden="true"></span>
-        <span class="plat">
-          <svg width="40" height="40" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.5l7.5-1v7H3zM12 4.3L21 3v8.5h-9zM3 12.5h7.5v7L3 18.5zM12 12.5h9V21l-9-1.3z" fill="currentColor"/></svg>
-          <span class="pname">Windows</span>
-        </span>
-        <span class="ver" data-en="Preview 0.5.0 «Shortcuts»">Anteprima 0.5.0 «Scorciatoie»</span>
-        <span class="facts" data-en="Windows 10 and 11, 64-bit · Ctrl+Alt+C in File Explorer · «To Phone» with a QR code">Windows 10 e 11, 64 bit · Ctrl+Alt+C in Esplora file · «Al telefono» con un QR</span>
-        <span class="go"><span data-en="Download for Windows">Scarica per Windows</span> <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m0 0l-5-5m5 5l-5 5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      </a>
+        <div class="plat"><svg class="dev" width="44" height="44" viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="7" width="38" height="25" rx="2.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M19 32l-2 7h14l-2-7M13 41h22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="pname">Windows</span></div>
+        <p class="ver" data-en="Preview 0.6.0 «Framing»">Anteprima 0.6.0 «Inquadra»</p>
+        <dl class="req">
+          <div><dt data-en="Runs on">Funziona su</dt><dd data-en="Windows 10 and 11, 64-bit">Windows 10 e 11, 64 bit</dd></div>
+          <div><dt data-en="Opens with">Si apre con</dt><dd data-en="Ctrl+Alt+C in File Explorer, the icon by the clock">Ctrl+Alt+C in Esplora file, l’icona vicino all’orologio</dd></div>
+          <div><dt data-en="First launch">Primo avvio</dt><dd data-en="«Windows protected your PC» → «More info» → «Run anyway», until Microsoft signing">«Windows ha protetto il PC» → «Ulteriori informazioni» → «Esegui comunque», finché manca la firma Microsoft</dd></div>
+        </dl>
+        <details class="news"><summary data-en="What’s new">Novità</summary>
+          <ul>
+            <li data-en="«Frame the people»: vertical videos that follow the faces">«Inquadra le persone»: video verticali che seguono i volti</li>
+            <li data-en="«Remove with AI»: the logo disappears, the background is rebuilt">«Togli con l'IA»: il logo sparisce, lo sfondo viene ricostruito</li>
+            <li data-en="Ctrl+Alt+C on selected files opens them in OrbitLR">Ctrl+Alt+C sui file selezionati li apre in OrbitLR</li>
+            <li data-en="Recipes: several steps redone with one click">Ricette: più passi di fila, rifatti con un clic</li>
+            <li data-en="«To Phone»: get the file on your phone with a QR code">«Al telefono»: il file arriva sul telefono con un codice QR</li>
+            <li data-en="«Straighten a Document» and «Merge Several Shots»">«Raddrizza un documento» e «Unisci più scatti»</li>
+          </ul></details>
+        <a class="go" href="https://github.com/LR-apps609/OrbitLR/releases/tag/windows-anteprima" target="_blank" rel="noopener"><span data-en="Download for Windows">Scarica per Windows</span> <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m0 0l-5-5m5 5l-5 5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      </article>
     </div>
-    <p class="smart" data-en="<b>Windows, first launch:</b> until the app has Microsoft’s signature you’ll see «Windows protected your PC». Click «More info», then «Run anyway»."><b>Windows, primo avvio:</b> finché l’app non ha la firma di Microsoft vedrai «Windows ha protetto il PC». Clicca «Ulteriori informazioni» e poi «Esegui comunque».</p>
+    <div class="mobile-soon">
+      <span class="eyebrow" data-en="Phone and tablet">Telefono e tablet</span>
+      <div class="stores only-soon" data-stores="soon"></div>
+    </div>
   </div>
 </section>
 </main>
@@ -178,8 +246,7 @@
   <div class="inner">
     <img src="img/orbitlr.png" alt="">
     <p data-en="The whole pie is in the app. <span>Video, PDF, AI, many files at once.</span>">La torta intera è nell’app. <span>Video, PDF, IA, tanti file insieme.</span></p>
-    <a class="btn gold" href="https://github.com/LR-apps609/OrbitLR/releases" target="_blank" rel="noopener">Mac</a>
-    <a class="btn ghost" href="https://github.com/LR-apps609/OrbitLR/releases/tag/windows-anteprima" target="_blank" rel="noopener">Windows</a>
+    <a class="btn gold" href="#scarica" data-goto-dl data-en="Get the app">Ottieni l’app</a>
     <button class="x" type="button" id="barX" aria-label="Chiudi">×</button>
   </div>
 </div>
