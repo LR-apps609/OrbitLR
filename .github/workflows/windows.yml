@@ -5,7 +5,7 @@ name: OrbitLR per Windows
 
 on:
   push:
-    branches: [windows]
+    branches: [windows, windows-prova]
   workflow_dispatch:
 
 permissions:
