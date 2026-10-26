@@ -6,6 +6,24 @@ import sys, collections
 import numpy as np, onnx, onnxruntime as ort
 from onnx import helper, numpy_helper
 
+
+def run_outputs(model, names, feeds, values=True, chunk=40):
+    """Calcola alcuni tensori intermedi a gruppi (poca memoria). values=False: solo le misure."""
+    out = {}
+    names = list(names)
+    for i in range(0, len(names), chunk):
+        part = names[i:i + chunk]
+        mm = onnx.ModelProto(); mm.CopyFrom(model)
+        del mm.graph.output[:]
+        for x in part:
+            mm.graph.output.append(helper.ValueInfoProto(name=x))
+        so_ = ort.SessionOptions(); so_.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL
+        sess_ = ort.InferenceSession(mm.SerializeToString(), so_, providers=["CPUExecutionProvider"])
+        for o, v in zip(sess_.get_outputs(), sess_.run(None, feeds)):
+            out[o.name] = np.asarray(v) if values else v.shape
+        del sess_, mm
+    return out
+
 src, dst = sys.argv[1], sys.argv[2]
 m = onnx.load(src)
 g = m.graph
@@ -35,15 +53,10 @@ for n in g.node:
                 need.append(x)
 print("tensori da calcolare:", len(need))
 
-# Calcolo con onnxruntime: si espongono come uscite
-m2 = onnx.ModelProto(); m2.CopyFrom(m)
-for x in need:
-    m2.graph.output.append(helper.ValueInfoProto(name=x))
+# Calcolo con onnxruntime, a gruppi
 so = ort.SessionOptions(); so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL
-sess = ort.InferenceSession(m2.SerializeToString(), so, providers=["CPUExecutionProvider"])
 feeds = {"image": np.random.rand(1, 3, S, S).astype(np.float32), "mask": np.zeros((1, 1, S, S), np.float32)}
-names = [o.name for o in sess.get_outputs()]
-vals = dict(zip(names, sess.run(None, feeds)))
+vals = run_outputs(m, need, feeds)
 
 # Nuovo grafo: i nodi che dipendono dalla foto, con le costanti al posto dei calcoli sulle misure
 for x in need:
@@ -62,12 +75,7 @@ del g.value_info[:]
 
 # Einsum → Transpose + Reshape + MatMul (tract non compila alcuni Einsum). Le misure si leggono da un'esecuzione.
 eins = [n for n in g.node if n.op_type == "Einsum"]
-m3 = onnx.ModelProto(); m3.CopyFrom(m)
-probe = sorted({x for n in eins for x in n.input})
-for x in probe:
-    m3.graph.output.append(helper.ValueInfoProto(name=x))
-s3 = ort.InferenceSession(m3.SerializeToString(), so, providers=["CPUExecutionProvider"])
-shp = {o.name: v.shape for o, v in zip(s3.get_outputs(), s3.run(None, feeds))}
+shp = run_outputs(m, sorted({x for n in eins for x in n.input}), feeds, values=False)
 eqs = collections.Counter(helper.get_node_attr_value(n, "equation").decode() if isinstance(helper.get_node_attr_value(n, "equation"), bytes) else helper.get_node_attr_value(n, "equation") for n in eins)
 print("Einsum:", dict(eqs))
 cnt = [0]
@@ -114,11 +122,7 @@ g.node.extend(new_nodes)
 # MatMul a più dimensioni con una matrice costante 2D → MatMul 2D (tract compila male alcuni MatMul con «batch»)
 consts = {t.name: numpy_helper.to_array(t) for t in g.initializer}
 mms = [n for n in g.node if n.op_type == "MatMul"]
-m4 = onnx.ModelProto(); m4.CopyFrom(m)
-for x in sorted({x for n in mms for x in n.input if x not in consts}):
-    m4.graph.output.append(helper.ValueInfoProto(name=x))
-s4 = ort.InferenceSession(m4.SerializeToString(), so, providers=["CPUExecutionProvider"])
-shp4 = {o.name: v.shape for o, v in zip(s4.get_outputs(), s4.run(None, feeds))}
+shp4 = run_outputs(m, sorted({x for n in mms for x in n.input if x not in consts}), feeds, values=False)
 shape_of = lambda x: consts[x].shape if x in consts else shp4[x]
 pat = collections.Counter((len(shape_of(n.input[0])), len(shape_of(n.input[1])), n.input[0] in consts, n.input[1] in consts) for n in mms)
 print("MatMul (rango A, rango B, A costante, B costante):", dict(pat))
