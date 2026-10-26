@@ -1,0 +1,46 @@
+# OrbitLR per Windows · «Nascondi un logo» con l'IA: il modello LaMa (Apache-2.0) in formato ONNX.
+# Lo scarica, controlla che giri con tract (il motore dell'app) sul processore di un PC Windows,
+# e lo mette tra i file scaricabili (release «modelli-1») con la sua impronta, che l'app controlla.
+# Si rifà spingendo una modifica di questo file sul ramo «modello-lama-win».
+name: Modello LaMa per Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [modello-lama-win]
+    paths: [.github/workflows/modello-lama-windows.yml, Windows/engine/examples/prova_lama.rs]
+
+permissions:
+  contents: read
+
+jobs:
+  lama:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Scarica il modello
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 -o lama-512.onnx https://huggingface.co/Carve/LaMa-ONNX/resolve/main/lama_fp32.onnx
+          ls -la lama-512.onnx
+          sha256sum lama-512.onnx | tee lama-512.onnx.sha256
+          echo "::notice::LaMa ONNX $(stat -c %s lama-512.onnx) byte, impronta $(cut -d' ' -f1 lama-512.onnx.sha256)"
+          curl -fsL https://huggingface.co/Carve/LaMa-ONNX/raw/main/README.md | head -n 40 || true
+      - name: Prova con tract
+        working-directory: Windows
+        run: |
+          cargo run --release --example prova_lama -p orbit_engine -- ../lama-512.onnx 2>&1 | tee ../prova.txt
+          grep -q "^OK" ../prova.txt
+          while read -r l; do echo "::notice::$l"; done < <(grep -E "ingresso|caricato|eseguito|valori|rosso|uscita" ../prova.txt)
+      - name: Tra i file scaricabili
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload modelli-1 lama-512.onnx lama-512.onnx.sha256 --clobber -R "$GITHUB_REPOSITORY"
