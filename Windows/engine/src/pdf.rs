@@ -57,7 +57,7 @@ pub fn images_to_pdf(pages: &[(Vec<u8>, u32, u32)], out: &Path) -> Result<()> {
     Ok(())
 }
 
-fn load(p: &Path) -> Result<lopdf::Document> {
+pub(crate) fn load(p: &Path) -> Result<lopdf::Document> {
     let doc = lopdf::Document::load(p).map_err(|_| EngineError::new(format!("«{}» non è un PDF valido", p.file_name().unwrap_or_default().to_string_lossy())))?;
     if doc.is_encrypted() {
         return Err(EngineError::new(format!("«{}» è protetto da password", p.file_name().unwrap_or_default().to_string_lossy())));
@@ -363,7 +363,7 @@ pub fn unprotect(src: &Path, password: &str, dir: &Path) -> Result<PathBuf> {
 }
 
 /// Porta dentro ogni pagina le misure, le risorse e la rotazione che ereditava dai genitori.
-fn flatten_inherited(doc: &mut lopdf::Document, pid: lopdf::ObjectId) {
+pub(crate) fn flatten_inherited(doc: &mut lopdf::Document, pid: lopdf::ObjectId) {
     use lopdf::Object;
     let mut inherited: Vec<(Vec<u8>, Object)> = Vec::new();
     let mut parent = doc.get_dictionary(pid).ok().and_then(|d| d.get(b"Parent").ok()).and_then(|o| o.as_reference().ok());

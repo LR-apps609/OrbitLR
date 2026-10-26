@@ -253,6 +253,10 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
         }
         // ── PDF
         "pdftext" => vec![crate::pdfrender::text_file(src, &dir, cancel, progress)?],
+        "pdfedit" => {
+            let e: crate::pdfedit::Edits = serde_json::from_value(param.clone()).map_err(|_| EngineError::new("modifiche del PDF non valide"))?;
+            vec![crate::pdfedit::apply(src, &e, &dir, cancel, progress)?]
+        }
         "protect" => vec![pdf::protect(src, &s("password"), &dir)?],
         "unprotect" => vec![pdf::unprotect(src, &s("password"), &dir)?],
         "reorder" => vec![pdf::reorder(src, &p_str, &dir)?],

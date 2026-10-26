@@ -480,6 +480,38 @@ async fn office_install() -> Result<bool, String> {
     .map_err(|e| e.to_string())?
 }
 
+/// Editor PDF: pagine (misure in punti) e campi del modulo.
+#[tauri::command]
+async fn pdf_info(path: String) -> Result<orbit_engine::pdfedit::PdfInfo, String> {
+    let f = checked_file(&path)?;
+    tauri::async_runtime::spawn_blocking(move || orbit_engine::pdfedit::info(&f).map_err(|e| e.0)).await.map_err(|e| e.to_string())?
+}
+
+/// Editor PDF: una pagina disegnata, come immagine che la finestra può mostrare.
+#[tauri::command]
+async fn pdf_page(app: tauri::AppHandle, state: State<'_, Shared>, path: String, page: u32) -> Result<String, String> {
+    let f = checked_file(&path)?;
+    if page == 0 || page > 5000 {
+        return Err("pagina non valida".into());
+    }
+    let dir = state.data_dir.join("anteprime-pdf");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let stamp = std::fs::metadata(&f).and_then(|m| m.modified()).ok().and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok()).map(|d| d.as_secs()).unwrap_or(0);
+    let key = {
+        use std::hash::{Hash, Hasher};
+        let mut h = std::collections::hash_map::DefaultHasher::new();
+        (f.to_string_lossy().to_string(), stamp, page).hash(&mut h);
+        h.finish()
+    };
+    let out = dir.join(format!("p{key:016x}.png"));
+    if !out.is_file() {
+        let out2 = out.clone();
+        tauri::async_runtime::spawn_blocking(move || orbit_engine::pdfrender::page_png(&f, page, &out2, &Cancel::new()).map_err(|e| e.0)).await.map_err(|e| e.to_string())??;
+    }
+    let _ = app.asset_protocol_scope().allow_file(&out);
+    Ok(out.to_string_lossy().to_string())
+}
+
 /// La lingua dell'interfaccia: il motore la usa per i nomi dei file creati.
 #[tauri::command]
 fn set_lang(lang: String) {
@@ -833,7 +865,7 @@ fn main() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install, update_check, update_install, undo_result, allow_made, set_lang])
+        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install, update_check, update_install, undo_result, allow_made, set_lang, pdf_info, pdf_page])
         .run(tauri::generate_context!())
         .expect("OrbitLR non è riuscita ad avviarsi");
 }

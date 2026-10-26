@@ -21,6 +21,7 @@ pub mod names;
 pub mod office;
 pub mod ocr;
 pub mod pdf;
+pub mod pdfedit;
 pub mod pdfrender;
 pub mod probe;
 pub mod run;

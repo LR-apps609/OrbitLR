@@ -23,7 +23,7 @@ fn tmp_name(tag: &str) -> String {
 
 /// Ogni pagina in un PNG temporaneo; `each(indice, totale, png)` decide cosa farne. Restituisce le pagine.
 #[cfg(windows)]
-fn render_pages(src: &Path, cancel: &Cancel, each: &mut dyn FnMut(u32, u32, &Path) -> Result<()>) -> Result<u32> {
+fn render_pages(src: &Path, cancel: &Cancel, only: Option<u32>, each: &mut dyn FnMut(u32, u32, &Path) -> Result<()>) -> Result<u32> {
     use windows::core::HSTRING;
     use windows::Data::Pdf::{PdfDocument, PdfPageRenderOptions};
     use windows::Storage::{CreationCollisionOption, FileAccessMode, StorageFile, StorageFolder};
@@ -43,6 +43,9 @@ fn render_pages(src: &Path, cancel: &Cancel, each: &mut dyn FnMut(u32, u32, &Pat
     let tmpdir = std::env::temp_dir();
     let folder = StorageFolder::GetFolderFromPathAsync(&HSTRING::from(tmpdir.as_os_str())).map_err(fail)?.join().map_err(fail)?;
     for i in 0..total {
+        if only.is_some_and(|o| o != i) {
+            continue;
+        }
         cancel.check()?;
         let page = doc.GetPage(i).map_err(fail)?;
         let size = page.Size().map_err(fail)?;
@@ -70,7 +73,7 @@ fn render_pages(src: &Path, cancel: &Cancel, each: &mut dyn FnMut(u32, u32, &Pat
 }
 
 #[cfg(not(windows))]
-fn render_pages(_src: &Path, _cancel: &Cancel, _each: &mut dyn FnMut(u32, u32, &Path) -> Result<()>) -> Result<u32> {
+fn render_pages(_src: &Path, _cancel: &Cancel, _only: Option<u32>, _each: &mut dyn FnMut(u32, u32, &Path) -> Result<()>) -> Result<u32> {
     Err(EngineError::new("le pagine dei PDF si disegnano con Windows: qui non è disponibile"))
 }
 
@@ -99,7 +102,7 @@ pub fn to_images(src: &Path, to: &str, dir: &Path, cancel: &Cancel, progress: &m
         progress((i + 1) as f64 / total as f64);
         Ok(())
     };
-    render_pages(src, cancel, &mut made)?;
+    render_pages(src, cancel, None, &mut made)?;
     Ok(outs)
 }
 
@@ -144,7 +147,7 @@ pub fn text_file(src: &Path, dir: &Path, cancel: &Cancel, progress: &mut dyn FnM
             progress((i + 1) as f64 / total as f64);
             Ok(())
         };
-        render_pages(src, cancel, &mut each)?;
+        render_pages(src, cancel, None, &mut each)?;
         if read.chars().filter(|c| c.is_alphanumeric()).count() < 3 {
             return Err(EngineError::new("non ho trovato testo in questo PDF"));
         }
@@ -179,4 +182,27 @@ mod tests {
         let img = image::DynamicImage::ImageRgba8(image::RgbaImage::from_pixel(1, 1, image::Rgba([0, 0, 0, 0])));
         assert_eq!(flatten_white(&img).get_pixel(0, 0).0, [255, 255, 255]);
     }
+}
+
+/// Per l'editor PDF: ogni pagina disegnata, in ordine.
+pub fn each_page_png(src: &Path, cancel: &Cancel, each: &mut dyn FnMut(u32, u32, &Path) -> Result<()>) -> Result<u32> {
+    render_pages(src, cancel, None, each)
+}
+
+pub fn flatten_white_pub(img: &image::DynamicImage) -> image::RgbImage {
+    flatten_white(img)
+}
+
+/// Una pagina sola (contata da 1) in PNG, larga `width` pixel: l'anteprima dell'editor PDF.
+pub fn page_png(src: &Path, page: u32, out: &Path, cancel: &Cancel) -> Result<()> {
+    let mut done = false;
+    let mut each = |i: u32, _t: u32, png: &Path| -> Result<()> {
+        if i + 1 == page {
+            std::fs::copy(png, out)?;
+            done = true;
+        }
+        Ok(())
+    };
+    render_pages(src, cancel, Some(page.saturating_sub(1)), &mut each)?;
+    if done { Ok(()) } else { Err(EngineError::new("questa pagina non c'è")) }
 }
