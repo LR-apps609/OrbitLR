@@ -50,13 +50,23 @@ fn pixels(z: &Zone, w: u32, h: u32) -> Option<(u32, u32, u32, u32)> {
 }
 
 pub fn photo(tools: Option<&Tools>, src: &Path, p: &Params, dir: &Path) -> Result<PathBuf> {
+    photo_ai(tools, None, src, p, dir, &Cancel::new(), &mut |_| {})
+}
+
+/// Con `mode` «ai» le zone si ricostruiscono con l'IA (serve la cartella dei dati per il modello).
+pub fn photo_ai(tools: Option<&Tools>, data_dir: Option<&Path>, src: &Path, p: &Params, dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<PathBuf> {
     if p.zones.is_empty() {
         return Err(EngineError::new("disegna almeno una zona sul logo"));
     }
     let mut ph = images::open(tools, src)?;
     let (w, h) = (ph.img.width(), ph.img.height());
     let mut img = ph.img.to_rgba8();
-    for z in &p.zones {
+    if p.mode == "ai" {
+        let data = data_dir.map(Path::to_path_buf).unwrap_or_else(|| std::env::temp_dir().join("OrbitLR"));
+        let zones: Vec<_> = p.zones.iter().filter_map(|z| pixels(z, w, h)).collect();
+        crate::inpaint::fill_with_lama(&data, &mut img, &zones, cancel, progress)?;
+    }
+    for z in p.zones.iter().filter(|_| p.mode != "ai") {
         let Some((x, y, zw, zh)) = pixels(z, w, h) else { continue };
         let region = image::imageops::crop_imm(&img, x, y, zw, zh).to_image();
         let out = if p.mode == "pixel" {

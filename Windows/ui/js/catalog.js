@@ -40,6 +40,9 @@ export function docTargets(ext) {
 
 export const fmtIcon = (f) => FMT_ICON[f] || "file";
 
+/** «Nascondi un logo» → «Togli con l'IA»: acceso quando il modello LaMa per Windows è pubblicato e provato. */
+export const AI_LOGO = false;
+
 /** Le azioni (non conversioni). `min`: quanti file servono almeno. `params`: come si sceglie. */
 export const TOOLS = {
   // Foto
@@ -147,6 +150,12 @@ export const KNOBS = {
       { value: "16x9", label: "16:9", small: "YouTube" },
     ],
     hint: t("Il video resta intero: i bordi si riempiono con lo stesso video sfocato."),
+    flag: {
+      label: t("Inquadra le persone"),
+      short: t("persone"),
+      hint: t("Il video riempie lo schermo e l'inquadratura segue chi c'è (i volti, con il rilevamento di Windows). Senza persone resta al centro."),
+      default: true,
+    },
     default: "9x16",
   },
   speed: {

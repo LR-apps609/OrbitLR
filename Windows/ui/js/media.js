@@ -2,7 +2,7 @@
 // Un clic su uno strumento senza scelte lo fa partire subito; con le scelte apre il riquadro sotto.
 
 import { invoke, pickFiles, setDemoPick } from "./api.js";
-import { CONVERT, GROUPS, KINDS, TOOLS, fmtIcon } from "./catalog.js";
+import { AI_LOGO, CONVERT, GROUPS, KINDS, TOOLS, fmtIcon } from "./catalog.js";
 import { run } from "./jobs.js";
 import { imageEstimate, knobPanel, videoEstimate } from "./params.js";
 import { resultBar } from "./resultbar.js";
@@ -279,11 +279,20 @@ export function mediaPage(kind, app, opts = {}) {
     openTool = id;
     let mode = "blur", strength = 0.7;
     const modes = h("div.opts");
-    const drawModes = () => modes.replaceChildren(...[["blur", t("Sfocatura")], ["pixel", t("A quadretti")]].map(([v, l]) => h("button.opt" + (v === mode ? ".on" : ""), { onclick: () => { mode = v; drawModes(); } }, l)));
-    drawModes();
+    // Sulle foto anche «Togli con l'IA»: ricostruisce quello che c'era dietro (la prima volta scarica il modello)
+    const choices = [["blur", t("Sfocatura")], ["pixel", t("A quadretti")], ...(kind === "image" && AI_LOGO ? [["ai", t("Togli con l'IA")]] : [])];
+    const forceLabel = h("div", { style: { fontSize: "12.5px", color: "var(--quiet)" } }, t("Forza"));
+    const aiHint = h("p.hint", { style: { display: "none" } }, t("Ricostruisce lo sfondo dietro il logo, sul computer. La prima volta scarica il modello (208 MB)."));
+    const drawModes = () => {
+      modes.replaceChildren(...choices.map(([v, l]) => h("button.opt" + (v === mode ? ".on" : ""), { onclick: () => { mode = v; drawModes(); } }, l)));
+      const ai = mode === "ai";
+      forceLabel.style.display = force.style.display = ai ? "none" : "";
+      aiHint.style.display = ai ? "" : "none";
+    };
     const force = h("input", { type: "range", min: 0.2, max: 1, step: 0.05, value: strength, style: { width: "100%", accentColor: "var(--sage-deep)" }, oninput: (e) => (strength = Number(e.target.value)) });
-    const panel = h("div.params", h("p.hint", t("Disegna le zone sull'immagine a sinistra.")), modes,
-      h("div", { style: { fontSize: "12.5px", color: "var(--quiet)" } }, t("Forza")), force,
+    drawModes();
+    const panel = h("div.params", h("p.hint", t("Disegna le zone sull'immagine a sinistra.")), modes, aiHint,
+      forceLabel, force,
       h("button.btn.primary.big", { onclick: () => {
         const zones = trim.zones;
         if (!zones.length) return toast(t("Disegna almeno una zona sul logo."));

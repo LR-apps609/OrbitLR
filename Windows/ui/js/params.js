@@ -11,7 +11,16 @@ import { t, dec } from "./i18n.js";
 export function knobPanel(kind, onGo, extra = {}) {
   const k = KNOBS[kind];
   let value = store.get("knob." + kind, k.default);
+  // Con un interruttore (k.flag) il valore è «scelta|1» o «scelta|0»
+  let flag = k.flag ? store.get("knob." + kind + ".flag", k.flag.default) : false;
+  if (k.flag && typeof value === "string" && value.includes("|")) value = value.split("|")[0];
   if (!k.options.some((o) => o.value === value) && !k.custom) value = k.default;
+  const full = () => (k.flag ? `${value}|${flag ? 1 : 0}` : value);
+  const hintEl = k.hint ? h("p.hint") : null;
+  const flagBox = k.flag ? h("label.check", { style: { display: "flex", gap: "8px", alignItems: "center", fontSize: "13.5px" } },
+    h("input", { type: "checkbox", checked: flag, onchange: (e) => { flag = e.target.checked; drawHint(); } }), k.flag.label) : null;
+  const drawHint = () => { if (hintEl) hintEl.textContent = k.flag && flag ? k.flag.hint : k.hint; };
+  drawHint();
   const est = h("div.est");
   const input = k.custom ? h("input", { type: "text", inputmode: "decimal", placeholder: k.custom.placeholder, "aria-label": k.custom.label }) : null;
   if (input && !k.options.some((o) => o.value === value)) input.value = dec(String(value).replace(".", ","));
@@ -35,14 +44,16 @@ export function knobPanel(kind, onGo, extra = {}) {
   const go = h("button.btn.primary.big", {
     onclick: () => {
       store.set("knob." + kind, value);
-      onGo(value);
+      if (k.flag) store.set("knob." + kind + ".flag", flag);
+      onGo(full());
     },
   }, extra.goLabel || t("Avvia"));
   // «Salva come mia azione»: la scelta di adesso, con un nome, in cima agli strumenti e nella torta
-  const star = extra.onSave ? h("button.btn.ghost.save-preset", { type: "button", title: t("La ritrovi in cima agli strumenti e nella torta"), onclick: () => extra.onSave(value) }, t("★ Salva come mia azione")) : null;
+  const star = extra.onSave ? h("button.btn.ghost.save-preset", { type: "button", title: t("La ritrovi in cima agli strumenti e nella torta"), onclick: () => extra.onSave(full()) }, t("★ Salva come mia azione")) : null;
   return h("div.params",
-    k.hint ? h("p.hint", k.hint) : null,
+    hintEl,
     opts,
+    flagBox,
     input ? h("div.field", input, h("span", { style: { color: "var(--quiet)", fontSize: "12.5px" } }, k.custom.unit)) : null,
     est,
     go,

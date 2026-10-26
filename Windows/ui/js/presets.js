@@ -26,9 +26,13 @@ function save(list) {
 export function suggestName(action, value) {
   if (!action) return "";
   const knob = Object.entries(TOOLS).find(([id, t]) => (t.id || id) === action)?.[1]?.params;
+  // «9x16|1»: la scelta e l'interruttore (per esempio «Inquadra le persone»)
+  const [base, flag] = typeof value === "string" && KNOBS[knob]?.flag ? value.split("|") : [value, null];
+  value = base;
   const opt = KNOBS[knob]?.options.find((o) => o.value === value);
   const label = opt ? opt.label : value != null && value !== "" ? String(value) : "";
-  return label ? `${actionName(action)} · ${label}` : actionName(action);
+  const extra = flag === "1" ? ` · ${KNOBS[knob].flag.short}` : "";
+  return label ? `${actionName(action)} · ${label}${extra}` : actionName(action);
 }
 
 export function addPreset(kind, action, param, name) {

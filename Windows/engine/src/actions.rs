@@ -273,7 +273,7 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
         // ── Nascondi un logo (foto e video)
         "hidemark" => {
             let hp: crate::hide::Params = serde_json::from_value(param.clone()).map_err(|_| EngineError::new("disegna almeno una zona sul logo"))?;
-            if kind == Kind::Image { vec![crate::hide::photo(t, src, &hp, &dir)?] } else { vec![crate::hide::movie(tools(ctx)?, src, &info, &hp, &dir, cancel, progress)?] }
+            if kind == Kind::Image { vec![crate::hide::photo_ai(t, ctx.data_dir.as_deref(), src, &hp, &dir, cancel, progress)?] } else { vec![crate::hide::movie(tools(ctx)?, src, &info, &hp, &dir, cancel, progress)?] }
         }
         // ── PDF
         "pdftext" => vec![crate::pdfrender::text_file(src, &dir, cancel, progress)?],
