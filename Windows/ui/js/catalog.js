@@ -41,7 +41,7 @@ export function docTargets(ext) {
 export const fmtIcon = (f) => FMT_ICON[f] || "file";
 
 /** «Nascondi un logo» → «Togli con l'IA»: acceso quando il modello LaMa per Windows è pubblicato e provato. */
-export const AI_LOGO = false;
+export const AI_LOGO = true;
 
 /** Le azioni (non conversioni). `min`: quanti file servono almeno. `params`: come si sceglie. */
 export const TOOLS = {
@@ -49,7 +49,7 @@ export const TOOLS = {
   icompress: { title: t("Comprimi"), hint: t("Stessa qualità con meno peso, o sotto un peso preciso (moduli, documenti, visti)"), icon: "minimize-2", params: "icompress" },
   resize: { title: t("Ridimensiona"), hint: t("Più piccola, in percentuale o in pixel"), icon: "move-diagonal-2", params: "resize" },
   rotate: { title: t("Ruota"), hint: t("Di 90° a destra o a sinistra, o capovolgi"), icon: "rotate-cw", params: "rotate" },
-  hidemark: { title: t("Nascondi un logo"), hint: t("Sfoca o copri a quadretti una scritta o un logo"), icon: "eye-off", params: "zones", isNew: true },
+  hidemark: { title: t("Nascondi un logo"), hint: t("Sfocalo, coprilo a quadretti o, sulle foto, toglilo con l'IA"), icon: "eye-off", params: "zones", isNew: true },
   strip: { title: t("Rimuovi i metadati"), hint: t("Posizione GPS, fotocamera e date: via, senza perdere qualità"), icon: "eye-off" },
   ocr: { title: t("Estrai il testo"), hint: t("Dalle foto e dagli screenshot, in un file di testo (con il riconoscimento di Windows)"), icon: "file-text", isNew: true },
   merge: { title: t("Unisci in un PDF"), hint: t("Una foto per pagina, nell'ordine dell'elenco"), icon: "file-stack", min: 2 },

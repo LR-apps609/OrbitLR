@@ -282,7 +282,7 @@ export function mediaPage(kind, app, opts = {}) {
     // Sulle foto anche «Togli con l'IA»: ricostruisce quello che c'era dietro (la prima volta scarica il modello)
     const choices = [["blur", t("Sfocatura")], ["pixel", t("A quadretti")], ...(kind === "image" && AI_LOGO ? [["ai", t("Togli con l'IA")]] : [])];
     const forceLabel = h("div", { style: { fontSize: "12.5px", color: "var(--quiet)" } }, t("Forza"));
-    const aiHint = h("p.hint", { style: { display: "none" } }, t("Ricostruisce lo sfondo dietro il logo, sul computer. La prima volta scarica il modello (208 MB)."));
+    const aiHint = h("p.hint", { style: { display: "none" } }, t("Ricostruisce lo sfondo dietro il logo, sul computer. La prima volta scarica il modello (211 MB)."));
     const drawModes = () => {
       modes.replaceChildren(...choices.map(([v, l]) => h("button.opt" + (v === mode ? ".on" : ""), { onclick: () => { mode = v; drawModes(); } }, l)));
       const ai = mode === "ai";

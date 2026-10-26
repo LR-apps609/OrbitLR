@@ -16,8 +16,8 @@ pub const LAMA_MODEL: Item = Item {
     bytes: LAMA_BYTES,
     what: "il modello per togliere i loghi",
 };
-const LAMA_SHA256: &str = "";
-const LAMA_BYTES: u64 = 0;
+const LAMA_SHA256: &str = "a39706cebe71e29d5d20add5ea7ada9fb63f7368fd4b7f691fa67667bad69f02";
+const LAMA_BYTES: u64 = 211_088_510;
 
 const S: usize = 512;
 

@@ -1,3 +1,13 @@
+Novità per Windows 0.6.0 «Inquadra»:
+• Video → «Formato social» con «Inquadra le persone»: il video riempie lo schermo verticale e l'inquadratura segue i volti (con il rilevamento di Windows, sul computer)
+• Foto → «Nascondi un logo» → «Togli con l'IA»: il logo sparisce e lo sfondo dietro viene ricostruito, sul computer (la prima volta scarica il modello, 211 MB)
+• Motore dell'IA aggiornato: anche «Rimuovi lo sfondo» usa la versione nuova
+
+What’s new in Windows 0.6.0 “Framing”:
+• Video → “Social Format” with “Frame the people”: the video fills the vertical screen and the framing follows the faces (with Windows detection, on your computer)
+• Photos → “Hide a Logo” → “Remove with AI”: the logo disappears and the background behind it is rebuilt, on your computer (the first time it downloads the model, 211 MB)
+• Updated AI engine: “Remove Background” uses the new version too
+
 Novità per Windows 0.5.0 «Scorciatoie»:
 • Ctrl+Alt+C sui file selezionati in Esplora file: si aprono subito in OrbitLR; e l'icona vicino all'orologio
 • Ricette: più passi di fila (per esempio comprimi e poi converti) si salvano dalla barra del risultato e si rifanno con un clic
