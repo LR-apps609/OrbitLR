@@ -8,7 +8,7 @@ use crate::probe::FileInfo;
 use crate::run::{self, Cancel};
 use crate::tools::{quiet, Tools};
 use serde::{Deserialize, Serialize};
-use std::io::{BufRead, BufReader, Read, Write};
+use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 
@@ -46,76 +46,10 @@ pub fn model_ready(data_dir: &Path) -> bool {
     }
 }
 
-fn hex(bytes: &[u8]) -> String {
-    bytes.iter().map(|b| format!("{b:02x}")).collect()
-}
-
 /// Scarica il modello (una volta sola), controllando l'impronta. `progress` tra 0 e 1.
-static DOWNLOAD: std::sync::Mutex<()> = std::sync::Mutex::new(());
-
 pub fn download_model(data_dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<PathBuf> {
-    use sha2::{Digest, Sha256};
-    // Una trascrizione e i sottotitoli automatici insieme: si scarica una volta sola
-    let _one = DOWNLOAD.lock().unwrap_or_else(|e| e.into_inner());
-    let dest = model_path(data_dir);
-    if model_ready(data_dir) {
-        return Ok(dest);
-    }
-    std::fs::create_dir_all(dest.parent().unwrap())?;
-    let part = dest.with_extension("parziale");
-    struct Rm<'a>(&'a Path, bool);
-    impl Drop for Rm<'_> {
-        fn drop(&mut self) {
-            if !self.1 {
-                let _ = std::fs::remove_file(self.0);
-            }
-        }
-    }
-    let mut guard = Rm(&part, false);
-    let secs = |n| Some(std::time::Duration::from_secs(n));
-    // Mai bloccati per sempre: 20 s per collegarsi, 60 s di silenzio al massimo durante lo scaricamento
-    let agent: ureq::Agent = ureq::Agent::config_builder()
-        .proxy(ureq::Proxy::try_from_env())
-        .timeout_connect(secs(20))
-        .timeout_recv_response(secs(30))
-        .timeout_per_read(secs(60))
-        .build()
-        .into();
-    let mut resp = agent
-        .get(MODEL_URL)
-        .call()
-        .map_err(|e| EngineError::new(format!("non riesco a scaricare il modello della voce (serve internet solo questa volta): {e}")))?;
-    let total = resp.headers().get("content-length").and_then(|v| v.to_str().ok()).and_then(|v| v.parse::<u64>().ok()).unwrap_or(MODEL_BYTES);
-    let mut reader = resp.body_mut().as_reader();
-    let mut file = std::fs::File::create(&part)?;
-    let mut hasher = Sha256::new();
-    let mut buf = vec![0u8; 256 * 1024];
-    let mut got: u64 = 0;
-    loop {
-        if cancel.is_cancelled() {
-            return Err(EngineError::cancelled());
-        }
-        let n = reader.read(&mut buf).map_err(|e| EngineError::new(format!("scaricamento interrotto: {e}")))?;
-        if n == 0 {
-            break;
-        }
-        file.write_all(&buf[..n])?;
-        hasher.update(&buf[..n]);
-        got += n as u64;
-        if total > 0 {
-            progress((got as f64 / total as f64).min(0.999));
-        }
-    }
-    file.flush()?;
-    drop(file);
-    let sha = hex(&hasher.finalize());
-    if got < 50_000_000 || (!MODEL_SHA256.is_empty() && sha != MODEL_SHA256) || (MODEL_BYTES > 0 && got != MODEL_BYTES) {
-        return Err(EngineError::new("il modello scaricato non è quello giusto (impronta diversa): riprova più tardi"));
-    }
-    std::fs::rename(&part, &dest)?;
-    guard.1 = true;
-    progress(1.0);
-    Ok(dest)
+    let item = crate::download::Item { url: MODEL_URL, sha256: MODEL_SHA256, bytes: MODEL_BYTES, what: "il modello della voce" };
+    crate::download::fetch(&item, &model_path(data_dir), cancel, progress)
 }
 
 /// Dal JSON di whisper.cpp con una parola per segmento (-ml 1 -sow): le parole con i tempi,

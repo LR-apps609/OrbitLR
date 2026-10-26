@@ -8,6 +8,7 @@ import { imageEstimate, knobPanel, videoEstimate } from "./params.js";
 import { resultBar } from "./resultbar.js";
 import { createTrim } from "./trim.js";
 import { createZones } from "./zones.js";
+import { downloaderBar } from "./downloader.js";
 import { fmtBytes, fmtTime, h, ico, store, toast } from "./util.js";
 
 const COPY = {
@@ -24,6 +25,8 @@ export function mediaPage(kind, app, opts = {}) {
   let trim = null;
 
   const bar = resultBar(kind);
+  // Video: il video scaricato da un link arriva nell'elenco, pronto da tagliare, comprimere o montare
+  const dl = kind === "video" ? downloaderBar({ video: true, onFile: (p) => add([p]) }) : null;
   const head = h("div.head");
   const grid = h("div.grid");
   const left = h("div.files");
@@ -93,6 +96,7 @@ export function mediaPage(kind, app, opts = {}) {
     head.replaceChildren(...[
       h("div", h("h1", c.title), h("div.sub", files.length ? `${files.length} ${files.length === 1 ? c.one : c.many} · ${fmtBytes(total)}${selected.size ? ` · ${selected.size} scelti` : ""}` : "Niente ancora")),
       h("div.grow"),
+      dl,
       opts.onEditor ? h("div.seg", { role: "tablist" },
         h("button.on", { role: "tab", "aria-selected": "true" }, "Strumenti veloci"),
         h("button", { role: "tab", title: "Montaggio completo (Ctrl+Maiusc+E)", onclick: () => opts.onEditor(targets().map((f) => f.path)) }, ico("film", 14), " Editor")) : null,

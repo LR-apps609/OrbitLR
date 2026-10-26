@@ -4,6 +4,7 @@ import { invoke, pickFiles, setDemoPick } from "./api.js";
 import { run } from "./jobs.js";
 import { resultBar } from "./resultbar.js";
 import { createTrim } from "./trim.js";
+import { downloaderBar } from "./downloader.js";
 import { fmtBytes, fmtTime, h, ico, store, toast } from "./util.js";
 
 const TOOLS = [
@@ -32,6 +33,8 @@ export function audioPage(app) {
   let voices = null;
   const bar = resultBar("audio");
   const el = h("div.page");
+  // Il file scaricato arriva qui, pronto da tagliare o da trasformare in suoneria
+  const dl = downloaderBar({ video: false, onFile: (p) => { if (tool === "tts") tool = "ringtone"; add([p]); } });
 
   async function add(paths) {
     const probed = await invoke("probe_files", { paths });
@@ -144,6 +147,7 @@ export function audioPage(app) {
       h("div", h("h1", tool === "tts" ? "Testo in voce" : file ? file.name.replace(/\.[^.]+$/, "") : "Audio"),
         h("div.sub", file ? `${file.info.ext.toUpperCase()} · ${fmtTime(file.info.duration)} · ${fmtBytes(file.size)}` : "Suonerie, tagli, volume, voce pulita e altro")),
       h("div.grow"),
+      dl,
       file ? h("button.btn", { onclick: pick }, "Apri un altro…") : null,
       file ? h("button.btn.icon", { "aria-label": "Chiudi il file", onclick: () => { trim?.destroy(); trim = null; file = null; others = []; render(); } }, ico("x", 16)) : null);
     let leftSide;

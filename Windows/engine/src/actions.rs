@@ -14,6 +14,8 @@ pub struct Ctx {
     pub tools: Option<Tools>,
     /// Dove mettere i risultati; `None` = accanto all'originale
     pub out_dir: Option<PathBuf>,
+    /// Dove stanno i modelli scaricati (IA, voce); `None` = cartella temporanea
+    pub data_dir: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -209,6 +211,26 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
             }
         }
         "ocr" => vec![crate::ocr::to_file(t, src, &dir)?],
+        // ── Con l'IA, sul computer (i modelli si scaricano la prima volta)
+        "removebg" | "aienhance" | "upscale" => {
+            if kind != Kind::Image {
+                return Err(EngineError::new("funziona sulle foto"));
+            }
+            let data = ctx.data_dir.clone().unwrap_or_else(|| std::env::temp_dir().join("OrbitLR"));
+            match id {
+                "removebg" => vec![crate::ai::remove_background(t, &data, src, if p_str.is_empty() { "transparent" } else { &p_str }, &dir, cancel, progress)?],
+                "upscale" => {
+                    let f = num(param).or_else(|| field(param, "factor")).unwrap_or(2.0) as u32;
+                    vec![crate::ai::enhance(t, &data, src, if f >= 4 { 4 } else { 2 }, 100, false, &dir, cancel, progress)?]
+                }
+                _ => {
+                    // «70» naturale · «100» massima · «anime» disegni e anime
+                    let anime = p_str == "anime";
+                    let strength = if anime { 100 } else { num(param).unwrap_or(70.0).clamp(10.0, 100.0) as u32 };
+                    vec![crate::ai::enhance(t, &data, src, 1, strength, anime, &dir, cancel, progress)?]
+                }
+            }
+        }
         // ── Nascondi un logo (foto e video)
         "hidemark" => {
             let hp: crate::hide::Params = serde_json::from_value(param.clone()).map_err(|_| EngineError::new("disegna almeno una zona sul logo"))?;

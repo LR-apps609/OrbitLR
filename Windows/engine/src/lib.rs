@@ -6,12 +6,15 @@
 //! e restituisce i file creati. L'app lo chiama in un thread a parte.
 
 pub mod actions;
+pub mod ai;
 pub mod audio;
+pub mod download;
 pub mod editor;
 pub mod error;
 pub mod heif;
 pub mod hide;
 pub mod images;
+pub mod linkdl;
 pub mod look;
 pub mod meta;
 pub mod names;

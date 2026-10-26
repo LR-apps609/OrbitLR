@@ -48,6 +48,9 @@ export const TOOLS = {
   strip: { title: "Rimuovi i metadati", hint: "Posizione GPS, fotocamera e date: via, senza perdere qualità", icon: "eye-off" },
   ocr: { title: "Estrai il testo", hint: "Dalle foto e dagli screenshot, in un file di testo (con il riconoscimento di Windows)", icon: "file-text", isNew: true },
   merge: { title: "Unisci in un PDF", hint: "Una foto per pagina, nell'ordine dell'elenco", icon: "file-stack", min: 2 },
+  removebg: { title: "Rimuovi lo sfondo", hint: "Resta solo il soggetto, su sfondo trasparente (la prima volta scarica il modello, 179 MB)", icon: "scissors", params: "removebg", isNew: true },
+  aienhance: { title: "Migliora con l'IA", hint: "Più nitida e pulita, senza inventare dettagli (la prima volta scarica il motore, 45 MB)", icon: "sparkles", params: "aienhance", isNew: true },
+  upscale: { title: "Ingrandisci", hint: "Due o quattro volte più grande, con i contorni nitidi", icon: "zoom-in", params: "upscale", isNew: true },
   // Video
   vcompress: { title: "Comprimi", hint: "Più leggero senza perdere qualità, o per Discord, WhatsApp ed email", icon: "minimize-2", params: "vcompress" },
   vresize: { title: "Cambia la grandezza", hint: "Full HD, HD o più piccolo, per pesare meno", icon: "monitor-smartphone", params: "vresize" },
@@ -70,7 +73,8 @@ export const TOOLS = {
 
 export const GROUPS = {
   image: [
-    ["Modifica", ["icompress", "resize", "rotate", "hidemark", "strip"]],
+    ["Modifica", ["icompress", "resize", "removebg", "rotate", "hidemark", "strip"]],
+    ["Migliora", ["aienhance", "upscale"]],
     ["Testo e più foto", ["ocr", "merge"]],
   ],
   video: [
@@ -163,6 +167,31 @@ export const KNOBS = {
     ],
     default: "medium",
   },
+  removebg: {
+    options: [
+      { value: "transparent", label: "Trasparente", small: "PNG" },
+      { value: "white", label: "Su bianco", small: "JPG" },
+      { value: "crop", label: "Ritagliato", small: "attorno al soggetto" },
+    ],
+    hint: "Tutto sul computer: la foto non va su internet.",
+    default: "transparent",
+  },
+  aienhance: {
+    options: [
+      { value: "70", label: "Naturale", small: "consigliato" },
+      { value: "100", label: "Più nitida" },
+      { value: "anime", label: "Disegni e anime" },
+    ],
+    hint: "Usa la scheda video del PC. Stessa misura, meno rumore e più dettaglio.",
+    default: "70",
+  },
+  upscale: {
+    options: [
+      { value: "2", label: "2×", small: "il doppio" },
+      { value: "4", label: "4×", small: "quattro volte" },
+    ],
+    default: "2",
+  },
   rotate: {
     options: [
       { value: "90", label: "A destra", small: "90°" },
@@ -188,6 +217,7 @@ export const ACTION_NAMES = {
   speed: "Cambia la velocità", vmerge: "Unisci i video", amerge: "Unisci", normalize: "Volume uniforme", voiceclean: "Voce più pulita", mute: "Togli l'audio",
   rotate: "Ruota", hidemark: "Nascondi un logo", ocr: "Estrai il testo", resize: "Ridimensiona", strip: "Rimuovi i metadati", merge: "Unisci in un PDF", pdfmerge: "Unisci i PDF", split: "Dividi in pagine",
   extract: "Estrai pagine", pdfcompress: "Comprimi il PDF", vproject: "Esporta il montaggio", ringtone: "Suoneria", silence: "Togli i silenzi", whatsapp: "Vocale per WhatsApp", tts: "Testo in voce", transcribe: "Trascrivi",
+  removebg: "Rimuovi lo sfondo", aienhance: "Migliora con l'IA", upscale: "Ingrandisci", link: "Scarica da un link",
 };
 
 export function actionName(id) {

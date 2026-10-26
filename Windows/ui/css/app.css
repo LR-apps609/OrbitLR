@@ -433,3 +433,15 @@ textarea.tts:focus { border-color: var(--brass); }
   .resultbar { margin: 0 18px 14px; }
   .ed-tools button { font-size: 10px; }
 }
+
+/* Audio e Video Downloader (come sul Mac): in alto a destra, ben visibile, con il campo per il link */
+.dl { display: flex; align-items: stretch; border-radius: 10px; overflow: hidden; background: var(--card); border: 1.5px solid color-mix(in srgb, var(--dl) 60%, transparent); box-shadow: 0 1px 8px color-mix(in srgb, var(--dl) 25%, transparent); min-width: 0; }
+.dl.audio { --dl: #C38A2E; }
+.dl.video { --dl: #7E5FA8; }
+.dl:focus-within { border-color: var(--dl); }
+.dl-label { display: flex; align-items: center; gap: 6px; padding: 7px 12px; background: var(--dl); color: #fff; font-weight: 800; font-size: 13px; white-space: nowrap; }
+.dl-in { border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; font-size: 13px; padding: 7px 10px; width: 290px; min-width: 120px; }
+.dl-go { border: 0; padding: 7px 12px; font-weight: 800; font-size: 12.5px; cursor: pointer; background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--quiet); }
+.dl-go.ok { background: var(--dl); color: #fff; }
+.dl-go:focus-visible, .dl-in:focus-visible { outline: 2px solid var(--dl); outline-offset: -2px; }
+@media (max-width: 1180px) { .dl-name { display: none; } .dl-in { width: 200px; } }

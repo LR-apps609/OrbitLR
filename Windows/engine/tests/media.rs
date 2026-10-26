@@ -84,7 +84,7 @@ fn fixture_photo(name: &str, w: u32, h: u32) -> PathBuf {
 }
 
 fn ctx() -> Ctx {
-    Ctx { tools: Some(tools()), out_dir: Some(work().join("out")) }
+    Ctx { tools: Some(tools()), out_dir: Some(work().join("out")), data_dir: Some(work().join("dati")) }
 }
 
 fn act(id: &str, files: &[&Path], param: Value) -> Result<Vec<PathBuf>, String> {

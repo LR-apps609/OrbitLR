@@ -197,7 +197,7 @@ struct JobEvent {
 /// Avvia un lavoro: per ogni file (o una volta sola per «unisci»). Torna subito; l'avanzamento arriva come eventi «job».
 #[tauri::command]
 fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action: String, files: Vec<String>, param: Value, out_dir: Option<String>) -> Result<(), String> {
-    if files.is_empty() && action != "tts" {
+    if files.is_empty() && action != "tts" && action != "link" {
         return Err("nessun file".into());
     }
     let files: Vec<PathBuf> = files.iter().map(|f| checked_file(f)).collect::<Result<_, _>>()?;
@@ -221,7 +221,7 @@ fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action
     std::thread::Builder::new()
         .name(format!("lavoro-{id}"))
         .spawn(move || {
-            let ctx = Ctx { tools: st.tools.clone(), out_dir };
+            let ctx = Ctx { tools: st.tools.clone(), out_dir, data_dir: Some(st.data_dir.clone()) };
             let emit = |e: JobEvent| {
                 let _ = app.emit("job", e);
             };
@@ -237,6 +237,42 @@ fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action
                     }),
                     None => Err(orbit_engine::EngineError::new("manca il motore audio")),
                 };
+                let state = match r {
+                    Ok(p) => {
+                        st.made.lock().unwrap().insert(p.to_string_lossy().to_string());
+                        emit(JobEvent { id: id.clone(), kind: "file".into(), progress: 1.0, index: 0, outputs: vec![actions::Output::of(&p)], error: None, state: "running".into() });
+                        "done"
+                    }
+                    Err(e) if e.is_cancelled() => "cancelled",
+                    Err(e) => {
+                        emit(JobEvent { id: id.clone(), kind: "file".into(), progress: 1.0, index: 0, outputs: vec![], error: Some(e.0), state: "running".into() });
+                        "failed"
+                    }
+                };
+                st.jobs.lock().unwrap().remove(&id);
+                emit(JobEvent { id, kind: "done".into(), progress: 1.0, index: 1, outputs: vec![], error: None, state: state.into() });
+                return;
+            }
+            // Audio/Video Downloader: dal link, in Download (o nella cartella scelta)
+            if action == "link" {
+                let dir = ctx.out_dir.clone().or_else(|| app.path().download_dir().ok()).unwrap_or_else(std::env::temp_dir);
+                let link = param["link"].as_str().unwrap_or("").to_string();
+                let mode = orbit_engine::linkdl::Mode::parse(param["mode"].as_str().unwrap_or("audio"));
+                let prog = |p: f64| emit(JobEvent { id: id.clone(), kind: "progress".into(), progress: p, index: 0, outputs: vec![], error: None, state: "running".into() });
+                let first = !orbit_engine::linkdl::exe_path(&st.data_dir).is_file();
+                let off = if first { 0.15 } else { 0.0 };
+                let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    let exe = orbit_engine::linkdl::ensure(&st.data_dir, false, &cancel, &mut |p| prog(p * off))?;
+                    match orbit_engine::linkdl::download(&exe, ctx.tools.as_ref(), &link, mode, &dir, &cancel, &mut |p| prog(off + p * (1.0 - off))) {
+                        // Il sito ha cambiato qualcosa: si aggiorna il motore e si riprova una volta
+                        Err(e) if !e.is_cancelled() && e.0.contains("rifiutato") => {
+                            let exe = orbit_engine::linkdl::ensure(&st.data_dir, true, &cancel, &mut |_| {})?;
+                            orbit_engine::linkdl::download(&exe, ctx.tools.as_ref(), &link, mode, &dir, &cancel, &mut |p| prog(off + p * (1.0 - off)))
+                        }
+                        r => r,
+                    }
+                }))
+                .unwrap_or_else(|_| Err(orbit_engine::EngineError::new("errore imprevisto: segnalalo con «Segnala», per favore")));
                 let state = match r {
                     Ok(p) => {
                         st.made.lock().unwrap().insert(p.to_string_lossy().to_string());
@@ -386,7 +422,7 @@ fn run_auto(app: &tauri::AppHandle, st: &Shared, w: &mut orbit_engine::watch::Wa
     let emit = |e: JobEvent| {
         let _ = app.emit("job", e);
     };
-    let ctx = Ctx { tools: st.tools.clone(), out_dir };
+    let ctx = Ctx { tools: st.tools.clone(), out_dir, data_dir: Some(st.data_dir.clone()) };
     let mut last = std::time::Instant::now();
     let mut progress = |p: f64| {
         if last.elapsed().as_millis() >= 250 || p >= 1.0 {
