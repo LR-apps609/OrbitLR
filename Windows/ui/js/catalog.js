@@ -72,6 +72,7 @@ export const TOOLS = {
   protect: { title: "Proteggi con password", hint: "Serve la password per aprirlo (AES-256)", icon: "lock", params: "password", isNew: true },
   unprotect: { title: "Togli la password", hint: "Se la conosci: una copia che si apre senza", icon: "lock-open", params: "password", isNew: true },
   prot: { title: "Ruota le pagine", hint: "Tutte le pagine di 90° o capovolte", icon: "rotate-cw", params: "rotate", id: "rotate", isNew: true },
+  rename: { title: "Rinomina tutti", hint: "Per esempio Vacanze 001, Vacanze 002…", icon: "text-cursor-input", params: "rename", min: 1, isNew: true },
   reorder: { title: "Riordina le pagine", hint: "Scrivi il nuovo ordine, per esempio 3, 1, 2", icon: "list-ordered", params: "order", isNew: true },
 };
 
@@ -79,15 +80,15 @@ export const GROUPS = {
   image: [
     ["Modifica", ["icompress", "resize", "removebg", "rotate", "hidemark", "strip"]],
     ["Migliora", ["aienhance", "upscale"]],
-    ["Testo e più foto", ["ocr", "merge"]],
+    ["Testo e più foto", ["ocr", "merge", "rename"]],
   ],
   video: [
     ["Peso e grandezza", ["vcompress", "vresize", "social"]],
     ["Taglia e unisci", ["cut", "gifcut", "vmerge", "speed"]],
     ["Audio e sottotitoli", ["transcribe", "voiceclean", "normalize", "mute"]],
-    ["Altro", ["hidemark", "vrotate"]],
+    ["Altro", ["hidemark", "vrotate", "rename"]],
   ],
-  pdf: [["Peso", ["pdfcompress"]], ["Organizza", ["pdfmerge", "split", "extract", "reorder", "prot"]], ["Proteggi", ["protect", "unprotect"]]],
+  pdf: [["Peso", ["pdfcompress"]], ["Organizza", ["pdfmerge", "split", "extract", "reorder", "prot"]], ["Proteggi", ["protect", "unprotect"]], ["Altro", ["rename"]]],
 };
 
 /** Le scelte dei parametri, come le manopole dell'app per Mac. */
@@ -221,7 +222,7 @@ export const ACTION_NAMES = {
   speed: "Cambia la velocità", vmerge: "Unisci i video", amerge: "Unisci", normalize: "Volume uniforme", voiceclean: "Voce più pulita", mute: "Togli l'audio",
   rotate: "Ruota", hidemark: "Nascondi un logo", ocr: "Estrai il testo", resize: "Ridimensiona", strip: "Rimuovi i metadati", merge: "Unisci in un PDF", pdfmerge: "Unisci i PDF", split: "Dividi in pagine",
   extract: "Estrai pagine", pdfcompress: "Comprimi il PDF", vproject: "Esporta il montaggio", ringtone: "Suoneria", silence: "Togli i silenzi", whatsapp: "Vocale per WhatsApp", tts: "Testo in voce", transcribe: "Trascrivi",
-  removebg: "Rimuovi lo sfondo", aienhance: "Migliora con l'IA", upscale: "Ingrandisci", link: "Scarica da un link", protect: "Proteggi con password", unprotect: "Togli la password", reorder: "Riordina le pagine",
+  removebg: "Rimuovi lo sfondo", aienhance: "Migliora con l'IA", upscale: "Ingrandisci", link: "Scarica da un link", protect: "Proteggi con password", unprotect: "Togli la password", reorder: "Riordina le pagine", rename: "Rinomina tutti",
 };
 
 export function actionName(id) {

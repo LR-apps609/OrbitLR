@@ -71,7 +71,7 @@ export function resultBar(origin) {
         h("button.btn", { onclick: () => reveal(first.path) }, ico("folder-open", 16), "Mostra nella cartella"),
         outs.length === 1 ? h("button.btn", { onclick: () => openPath(first.path) }, ico("external-link", 16), "Apri") : null,
         canCompare ? h("button.btn", { title: "Originale e risultato, con la linea da trascinare", onclick: () => openCompare({ path: src.sourcePath, size: src.sourceSize }, first) }, ico("columns-2", 16), "Confronta") : null,
-        job.action === "link" ? null : h("button.btn.ghost", { title: "Manda nel Cestino i file appena creati", onclick: () => undo(job, outs) }, ico("rotate-ccw", 16), "Annulla"),
+        ["link", "rename"].includes(job.action) ? null : h("button.btn.ghost", { title: "Manda nel Cestino i file appena creati", onclick: () => undo(job, outs) }, ico("rotate-ccw", 16), "Annulla"),
         closeBtn()));
     if (job.state === "done") askFeedbackOnce(el.firstChild);
   }

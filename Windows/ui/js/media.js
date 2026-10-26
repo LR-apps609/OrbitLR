@@ -180,6 +180,17 @@ export function mediaPage(kind, app, opts = {}) {
 
   function paramsFor(id, actionId, tool) {
     const t = targets();
+    if (tool.params === "rename") {
+      const base = h("input", { type: "text", placeholder: "es. Vacanze", "aria-label": "Nome" });
+      const start = h("input", { type: "text", inputmode: "numeric", value: "1", "aria-label": "Primo numero", style: { width: "70px" } });
+      const sample = h("p.hint");
+      const upd = () => { const n = Math.max(0, parseInt(start.value, 10) || 1); const b = base.value.trim() || "File"; sample.textContent = `${b} ${String(n).padStart(3, "0")}, ${b} ${String(n + 1).padStart(3, "0")}… (${t.length} file, in ordine di nome)`; };
+      base.addEventListener("input", upd);
+      start.addEventListener("input", upd);
+      upd();
+      return h("div.params", h("p.hint", "I file cambiano nome dove sono: non si creano copie."), h("div.field", base), h("div.field", h("span", "Dal numero "), start), sample,
+        h("button.btn.primary.big", { onclick: () => { if (/[\\/:*?"<>|]/.test(base.value)) return toast("Il nome non può contenere \\ / : * ? \" < > |"); go(actionId, `${base.value.trim() || "File"}|${Math.max(0, parseInt(start.value, 10) || 1)}|3`); } }, "Rinomina"));
+    }
     if (tool.params === "order") {
       const input = h("input", { type: "text", placeholder: "es. 3, 1, 2" });
       return h("div.params", h("p.hint", "Scrivi le pagine nel nuovo ordine: quelle che non scrivi restano dopo, nell'ordine di prima."), h("div.field", input),

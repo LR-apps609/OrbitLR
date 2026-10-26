@@ -37,7 +37,7 @@ impl Output {
 
 /// Le azioni che lavorano su tutti i file insieme (una sola volta).
 pub fn is_multi(id: &str) -> bool {
-    matches!(id, "vmerge" | "amerge" | "merge" | "pdfmerge" | "vproject")
+    matches!(id, "vmerge" | "amerge" | "merge" | "pdfmerge" | "vproject" | "rename")
 }
 
 /// «2,8 MB», «850 KB»: numeri all'italiana.
@@ -100,6 +100,16 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
         let project: crate::editor::Project = serde_json::from_value(param.clone()).map_err(|e| EngineError::new(format!("progetto non valido: {e}")))?;
         let out = crate::editor::export(tools(ctx)?, &project, &dir, cancel, progress)?;
         return Ok(vec![Output::of(&out)]);
+    }
+
+    // «Rinomina tutti»: «Vacanze 001», «Vacanze 002»… al posto degli originali (nessun file nuovo)
+    if id == "rename" {
+        let p = param.as_str().unwrap_or("");
+        let mut parts = p.split('|');
+        let base = parts.next().map(str::trim).filter(|s| !s.is_empty()).unwrap_or("File").to_string();
+        let first = parts.next().and_then(|s| s.trim().parse::<u64>().ok()).unwrap_or(1);
+        let digits = parts.next().and_then(|s| s.trim().parse::<usize>().ok()).unwrap_or(3).clamp(1, 6);
+        return Ok(rename_series(files, &base, first, digits)?.iter().map(|p| Output::of(p)).collect());
     }
 
     // Azioni su più file insieme
@@ -251,6 +261,66 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
     Ok(outs.iter().map(|p| Output::of(p)).collect())
 }
 
+/// Rinomina i file nell'ordine del nome (come Esplora file), con un numero a cifre fisse.
+pub fn rename_series(files: &[PathBuf], base: &str, first: u64, digits: usize) -> Result<Vec<PathBuf>> {
+    let base = crate::names::safe_name(base);
+    if base.is_empty() {
+        return Err(EngineError::new("scrivi un nome valido"));
+    }
+    let mut sorted: Vec<PathBuf> = files.to_vec();
+    sorted.sort_by_key(|p| natural_key(&p.file_name().unwrap_or_default().to_string_lossy()));
+    let mut out = Vec::new();
+    for (i, f) in sorted.iter().enumerate() {
+        let number = format!("{:0width$}", first + i as u64, width = digits);
+        let ext = crate::names::ext(f);
+        let dot = if ext.is_empty() { String::new() } else { format!(".{ext}") };
+        let dir = f.parent().unwrap_or(Path::new("."));
+        let mut target = dir.join(format!("{base} {number}{dot}"));
+        let mut k = 1;
+        while target.exists() && !same_file(&target, f) {
+            target = dir.join(format!("{base} {number} ({k}){dot}"));
+            k += 1;
+        }
+        if !same_file(&target, f) {
+            std::fs::rename(f, &target).map_err(|e| EngineError::new(format!("non riesco a rinominare «{}»: {e}", f.file_name().unwrap_or_default().to_string_lossy())))?;
+        }
+        out.push(target);
+    }
+    Ok(out)
+}
+
+fn same_file(a: &Path, b: &Path) -> bool {
+    a.to_string_lossy().to_lowercase() == b.to_string_lossy().to_lowercase()
+}
+
+/// «foto 2» prima di «foto 10».
+fn natural_key(s: &str) -> Vec<(u8, u64, String)> {
+    let mut out = Vec::new();
+    let mut num = String::new();
+    let mut txt = String::new();
+    for c in s.to_lowercase().chars() {
+        if c.is_ascii_digit() {
+            if !txt.is_empty() {
+                out.push((0, 0, std::mem::take(&mut txt)));
+            }
+            num.push(c);
+        } else {
+            if !num.is_empty() {
+                out.push((1, num.parse().unwrap_or(u64::MAX), String::new()));
+                num.clear();
+            }
+            txt.push(c);
+        }
+    }
+    if !num.is_empty() {
+        out.push((1, num.parse().unwrap_or(u64::MAX), String::new()));
+    }
+    if !txt.is_empty() {
+        out.push((0, 0, txt));
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -261,5 +331,20 @@ mod tests {
         assert_eq!(fmt_bytes(2_840_000), "2,8 MB");
         assert_eq!(fmt_bytes(850_400), "850 KB");
         assert_eq!(fmt_bytes(5_200_000_000), "5,2 GB");
+    }
+
+    #[test]
+    fn rinomina_in_serie() {
+        let d = std::env::temp_dir().join(format!("orbit-ren-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&d);
+        std::fs::create_dir_all(&d).unwrap();
+        let a = d.join("foto 10.jpg");
+        let b = d.join("foto 2.jpg");
+        std::fs::write(&a, b"a").unwrap();
+        std::fs::write(&b, b"b").unwrap();
+        let out = rename_series(&[a, b], "Vacanze", 1, 3).unwrap();
+        assert_eq!(out[0].file_name().unwrap(), "Vacanze 001.jpg");
+        assert_eq!(std::fs::read(&out[0]).unwrap(), b"b"); // «foto 2» viene prima di «foto 10»
+        assert_eq!(out[1].file_name().unwrap(), "Vacanze 002.jpg");
     }
 }

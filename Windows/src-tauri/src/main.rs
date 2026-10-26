@@ -363,7 +363,10 @@ fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action
                 match r {
                     Ok(outs) => {
                         ok += 1;
-                        st.made.lock().unwrap().extend(outs.iter().map(|o| o.path.clone()));
+                        // «Rinomina tutti» non crea file: sono gli originali (mai nel Cestino con «Annulla»)
+                        if action != "rename" {
+                            st.made.lock().unwrap().extend(outs.iter().map(|o| o.path.clone()));
+                        }
                         emit(JobEvent { id: id.clone(), kind: "file".into(), progress: (i + 1) as f64 / n as f64, index: i, outputs: outs, error: None, state: "running".into() });
                     }
                     Err(e) if e.is_cancelled() => break,
