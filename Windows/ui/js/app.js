@@ -164,6 +164,8 @@ async function askUpdate() {
   const text = [u.notes, `Si scarica (${fmtBytes(u.size)}), OrbitLR si chiude, si aggiorna da sola e si riapre.`, busy ? `Attenzione: ${busy === 1 ? "c'è un lavoro in corso" : `ci sono ${busy} lavori in corso`}, verrà interrotto.` : ""].filter(Boolean).join("\n\n");
   const ok = await modal(`OrbitLR ${u.version}`, text, [{ label: "Più tardi", value: false }, { label: "Aggiorna adesso", value: true, primary: true }]);
   if (!ok) return;
+  // Le novità si mostrano alla prossima apertura, dalla versione nuova
+  store.set("newsPending", { version: u.version, notes: u.notes || "" });
   updateCorner.disabled = true;
   updateLink.disabled = true;
   const show = (p) => { updateCorner.textContent = `Scarico l’aggiornamento… ${Math.round(p * 100)}%`; };
@@ -241,6 +243,14 @@ async function boot() {
     }
   }).catch(() => {});
   setTimeout(() => checkUpdate(), 4000);
+  // Dopo un aggiornamento: cosa c'è di nuovo (una volta sola)
+  const news = store.get("newsPending", null);
+  if (news && news.version === VERSION) {
+    store.set("newsPending", null);
+    setTimeout(() => modal(`Benvenuto nella ${VERSION}`, news.notes || "OrbitLR è aggiornata.", [{ label: "Bene!", value: true, primary: true }]), 1200);
+  } else if (news && news.version !== VERSION && Date.now() - store.get("updateCheck", 0) > 7 * 86400e3) {
+    store.set("newsPending", null);
+  }
   setInterval(() => checkUpdate(), 3600e3);
   app.checkUpdate = checkUpdate;
   setTimeout(() => splash.classList.add("out"), 450);
