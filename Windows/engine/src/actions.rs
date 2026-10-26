@@ -182,7 +182,10 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
         "social" => vec![video::social(tools(ctx)?, src, &info, if p_str.is_empty() { "9x16" } else { &p_str }, &dir, cancel, progress)?],
         "mute" => vec![video::mute(tools(ctx)?, src, &info, &dir, cancel, progress)?],
         "rotate" => {
-            let d = num(param).unwrap_or(90.0) as i32;
+            let d = num(param).or_else(|| field(param, "angle")).unwrap_or(90.0) as i32;
+            if kind == Kind::Pdf {
+                return Ok(vec![Output::of(&pdf::rotate_pages(src, d as i64, &s("pages"), &dir)?)]);
+            }
             if kind == Kind::Image { vec![images::rotate(t, src, d, &dir)?] } else { vec![video::rotate(tools(ctx)?, src, &info, d, &dir, cancel, progress)?] }
         }
         // ── Audio
@@ -237,6 +240,9 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
             if kind == Kind::Image { vec![crate::hide::photo(t, src, &hp, &dir)?] } else { vec![crate::hide::movie(tools(ctx)?, src, &info, &hp, &dir, cancel, progress)?] }
         }
         // ── PDF
+        "protect" => vec![pdf::protect(src, &s("password"), &dir)?],
+        "unprotect" => vec![pdf::unprotect(src, &s("password"), &dir)?],
+        "reorder" => vec![pdf::reorder(src, &p_str, &dir)?],
         "split" => pdf::split(src, &dir)?,
         "pdfcompress" => vec![pdf::compress(src, if p_str.is_empty() { "medium" } else { &p_str }, &dir, cancel, progress)?],
         "extract" => vec![pdf::extract(src, &p_str, &dir)?],

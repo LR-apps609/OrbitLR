@@ -57,7 +57,8 @@ export async function run(action, files, param, origin) {
     title: actionName(action),
     origin,
     files: files.map((f) => ({ path: f.path, name: f.name, size: f.size })),
-    param,
+    // Le password non restano mai nella cronologia
+    param: ["protect", "unprotect"].includes(action) ? null : param,
     state: "running",
     progress: 0,
     results: [], // { source, outputs:[{path,name,size}], error }
@@ -67,6 +68,7 @@ export async function run(action, files, param, origin) {
   notify(job);
   try {
     await invoke("start_job", { id, action, files: job.files.map((f) => f.path), param: param ?? null, outDir: outDir() });
+    param = null;
   } catch (e) {
     job.state = "failed";
     job.results.push({ source: job.files[0]?.name, outputs: [], error: String(e) });

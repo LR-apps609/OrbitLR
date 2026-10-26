@@ -246,3 +246,35 @@ mod tests {
         let _ = std::fs::remove_dir_all(&d);
     }
 }
+
+// ───────────────────────── Le parole nei nomi dei file creati, nella lingua dell'app (come sul Mac)
+
+static LANG_EN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// L'app dice in che lingua parla («en» = inglese, altro = italiano).
+pub fn set_lang(lang: &str) {
+    LANG_EN.store(lang.starts_with("en"), std::sync::atomic::Ordering::Relaxed);
+}
+
+/// «protetto» → «protected» quando l'app è in inglese.
+pub fn tag(it: &str) -> String {
+    if !LANG_EN.load(std::sync::atomic::Ordering::Relaxed) {
+        return it.to_string();
+    }
+    let en = match it {
+        "protetto" => "protected", "sbloccato" => "unlocked", "ruotato" => "rotated", "riordinato" => "reordered",
+        "compresso" => "compressed", "taglio" => "trimmed", "più leggero" => "smaller", "più leggera" => "smaller",
+        "senza metadati" => "no metadata", "senza sfondo" => "no background", "migliorata" => "enhanced",
+        "trascrizione" => "transcript", "suoneria" => "ringtone", "voce" => "voice", "pagine" => "pages", "uniti" => "merged",
+        other => other,
+    };
+    en.to_string()
+}
+
+#[cfg(test)]
+mod tag_tests {
+    #[test]
+    fn italiano_di_base() {
+        assert_eq!(super::tag("protetto"), "protetto");
+    }
+}

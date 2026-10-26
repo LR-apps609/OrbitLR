@@ -69,6 +69,10 @@ export const TOOLS = {
   pdfmerge: { title: "Unisci", hint: "Più PDF in uno, nell'ordine dell'elenco", icon: "combine", min: 2 },
   split: { title: "Dividi in pagine", hint: "Un PDF per ogni pagina", icon: "split" },
   extract: { title: "Estrai alcune pagine", hint: "Scegli quali, per esempio 1-3, 5", icon: "file-output", params: "pages" },
+  protect: { title: "Proteggi con password", hint: "Serve la password per aprirlo (AES-256)", icon: "lock", params: "password", isNew: true },
+  unprotect: { title: "Togli la password", hint: "Se la conosci: una copia che si apre senza", icon: "lock-open", params: "password", isNew: true },
+  prot: { title: "Ruota le pagine", hint: "Tutte le pagine di 90° o capovolte", icon: "rotate-cw", params: "rotate", id: "rotate", isNew: true },
+  reorder: { title: "Riordina le pagine", hint: "Scrivi il nuovo ordine, per esempio 3, 1, 2", icon: "list-ordered", params: "order", isNew: true },
 };
 
 export const GROUPS = {
@@ -83,7 +87,7 @@ export const GROUPS = {
     ["Audio e sottotitoli", ["transcribe", "voiceclean", "normalize", "mute"]],
     ["Altro", ["hidemark", "vrotate"]],
   ],
-  pdf: [["Peso", ["pdfcompress"]], ["Organizza", ["pdfmerge", "split", "extract"]]],
+  pdf: [["Peso", ["pdfcompress"]], ["Organizza", ["pdfmerge", "split", "extract", "reorder", "prot"]], ["Proteggi", ["protect", "unprotect"]]],
 };
 
 /** Le scelte dei parametri, come le manopole dell'app per Mac. */
@@ -217,7 +221,7 @@ export const ACTION_NAMES = {
   speed: "Cambia la velocità", vmerge: "Unisci i video", amerge: "Unisci", normalize: "Volume uniforme", voiceclean: "Voce più pulita", mute: "Togli l'audio",
   rotate: "Ruota", hidemark: "Nascondi un logo", ocr: "Estrai il testo", resize: "Ridimensiona", strip: "Rimuovi i metadati", merge: "Unisci in un PDF", pdfmerge: "Unisci i PDF", split: "Dividi in pagine",
   extract: "Estrai pagine", pdfcompress: "Comprimi il PDF", vproject: "Esporta il montaggio", ringtone: "Suoneria", silence: "Togli i silenzi", whatsapp: "Vocale per WhatsApp", tts: "Testo in voce", transcribe: "Trascrivi",
-  removebg: "Rimuovi lo sfondo", aienhance: "Migliora con l'IA", upscale: "Ingrandisci", link: "Scarica da un link",
+  removebg: "Rimuovi lo sfondo", aienhance: "Migliora con l'IA", upscale: "Ingrandisci", link: "Scarica da un link", protect: "Proteggi con password", unprotect: "Togli la password", reorder: "Riordina le pagine",
 };
 
 export function actionName(id) {

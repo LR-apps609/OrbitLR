@@ -180,6 +180,27 @@ export function mediaPage(kind, app, opts = {}) {
 
   function paramsFor(id, actionId, tool) {
     const t = targets();
+    if (tool.params === "order") {
+      const input = h("input", { type: "text", placeholder: "es. 3, 1, 2" });
+      return h("div.params", h("p.hint", "Scrivi le pagine nel nuovo ordine: quelle che non scrivi restano dopo, nell'ordine di prima."), h("div.field", input),
+        h("button.btn.primary.big", { onclick: () => input.value.trim() ? go(actionId, input.value.trim()) : toast("Scrivi il nuovo ordine, per esempio 3, 1, 2") }, "Riordina"));
+    }
+    if (tool.params === "password") {
+      const lock = actionId === "protect";
+      const p1 = h("input", { type: "password", placeholder: "Password", autocomplete: "new-password", "aria-label": "Password" });
+      const p2 = lock ? h("input", { type: "password", placeholder: "Ripeti la password", autocomplete: "new-password", "aria-label": "Ripeti la password" }) : null;
+      const start = () => {
+        const a = p1.value;
+        if (lock && a.length < 4) return toast("La password deve avere almeno 4 caratteri.");
+        if (lock && a !== p2.value) return toast("Le due password non sono uguali.");
+        if (!lock && !a) return toast("Scrivi la password del PDF.");
+        p1.value = "";
+        if (p2) p2.value = "";
+        go(actionId, { password: a });
+      };
+      return h("div.params", h("p.hint", lock ? "Serve per aprire il PDF (cifratura AES-256). Se la dimentichi non si recupera: scrivila da qualche parte." : "La password con cui si apre il PDF: esce una copia senza password."),
+        h("div.field", p1), p2 ? h("div.field", p2) : null, h("button.btn.primary.big", { onclick: start }, lock ? "Proteggi" : "Sblocca"));
+    }
     if (tool.params === "pages") {
       const input = h("input", { type: "text", placeholder: "es. 1-3, 5" });
       return h("div.params", h("p.hint", "Le pagine da tenere, in un PDF nuovo."), h("div.field", input),

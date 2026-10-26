@@ -309,3 +309,194 @@ mod tests {
         assert!(parse_pages("", 6).is_err());
     }
 }
+
+// ───────────────────────── Proteggi, sblocca, ruota, riordina (come sul Mac)
+
+fn save_as(doc: &mut lopdf::Document, dir: &Path, base: &str) -> Result<PathBuf> {
+    let of = names::OutFile::new(dir, base, "pdf")?;
+    doc.save(&of.tmp).map_err(|e| EngineError::new(format!("non riesco a scrivere il PDF: {e}")))?;
+    of.commit()
+}
+
+/// Con una password per aprirlo (AES-256, la cifratura più forte dei PDF).
+pub fn protect(src: &Path, password: &str, dir: &Path) -> Result<PathBuf> {
+    use lopdf::encryption::crypt_filters::{Aes256CryptFilter, CryptFilter};
+    use lopdf::{EncryptionState, EncryptionVersion, Permissions};
+    use std::collections::BTreeMap;
+    use std::sync::Arc;
+    if password.chars().count() < 4 {
+        return Err(EngineError::new("la password deve avere almeno 4 caratteri"));
+    }
+    let mut doc = load(src)?;
+    let mut key = [0u8; 32];
+    getrandom::fill(&mut key).map_err(|_| EngineError::new("non riesco a creare la chiave di cifratura"))?;
+    let filter: Arc<dyn CryptFilter> = Arc::new(Aes256CryptFilter);
+    let v = EncryptionVersion::V5 {
+        encrypt_metadata: true,
+        crypt_filters: BTreeMap::from([(b"StdCF".to_vec(), filter)]),
+        file_encryption_key: &key,
+        stream_filter: b"StdCF".to_vec(),
+        string_filter: b"StdCF".to_vec(),
+        owner_password: password,
+        user_password: password,
+        permissions: Permissions::all(),
+    };
+    let state = EncryptionState::try_from(v).map_err(|e| EngineError::new(format!("non riesco a proteggere il PDF: {e}")))?;
+    doc.encrypt(&state).map_err(|e| EngineError::new(format!("non riesco a proteggere il PDF: {e}")))?;
+    save_as(&mut doc, dir, &format!("{} ({})", names::stem(src), crate::names::tag("protetto")))
+}
+
+/// Toglie la password (serve quella giusta).
+pub fn unprotect(src: &Path, password: &str, dir: &Path) -> Result<PathBuf> {
+    let name = src.file_name().unwrap_or_default().to_string_lossy().to_string();
+    let probe = lopdf::Document::load(src).map_err(|_| EngineError::new(format!("«{name}» non è un PDF valido")))?;
+    if !probe.is_encrypted() {
+        return Err(EngineError::new(format!("«{name}» non ha una password")));
+    }
+    drop(probe);
+    let mut doc = lopdf::Document::load_with_password(src, password).map_err(|_| EngineError::new("password sbagliata"))?;
+    if doc.is_encrypted() {
+        doc.decrypt(password).map_err(|_| EngineError::new("password sbagliata"))?;
+    }
+    doc.encryption_state = None;
+    save_as(&mut doc, dir, &format!("{} ({})", names::stem(src), crate::names::tag("sbloccato")))
+}
+
+/// Porta dentro ogni pagina le misure, le risorse e la rotazione che ereditava dai genitori.
+fn flatten_inherited(doc: &mut lopdf::Document, pid: lopdf::ObjectId) {
+    use lopdf::Object;
+    let mut inherited: Vec<(Vec<u8>, Object)> = Vec::new();
+    let mut parent = doc.get_dictionary(pid).ok().and_then(|d| d.get(b"Parent").ok()).and_then(|o| o.as_reference().ok());
+    let mut guard = 0;
+    while let Some(par) = parent {
+        guard += 1;
+        if guard > 64 {
+            break;
+        }
+        let Ok(pd) = doc.get_dictionary(par) else { break };
+        for key in [&b"MediaBox"[..], b"CropBox", b"Resources", b"Rotate"] {
+            if !inherited.iter().any(|(k, _)| k == key) {
+                if let Ok(v) = pd.get(key) {
+                    inherited.push((key.to_vec(), v.clone()));
+                }
+            }
+        }
+        parent = pd.get(b"Parent").ok().and_then(|o| o.as_reference().ok());
+    }
+    if let Ok(Object::Dictionary(d)) = doc.get_object_mut(pid) {
+        for (k, v) in inherited {
+            if d.get(&k).is_err() {
+                d.set(k, v);
+            }
+        }
+    }
+}
+
+/// Ruota le pagine scelte («» = tutte) di 90, 180 o 270 gradi.
+pub fn rotate_pages(src: &Path, angle: i64, pages: &str, dir: &Path) -> Result<PathBuf> {
+    use lopdf::Object;
+    if angle % 90 != 0 {
+        return Err(EngineError::new("scegli 90°, 180° o 270°"));
+    }
+    let mut doc = load(src)?;
+    let all = doc.get_pages();
+    let pick: Vec<u32> = if pages.trim().is_empty() { all.keys().copied().collect() } else { parse_pages(pages, all.len())? };
+    for n in pick {
+        let Some(&pid) = all.get(&n) else { continue };
+        flatten_inherited(&mut doc, pid);
+        if let Ok(Object::Dictionary(d)) = doc.get_object_mut(pid) {
+            let cur = d.get(b"Rotate").ok().and_then(|o| o.as_i64().ok()).unwrap_or(0);
+            d.set("Rotate", Object::Integer(((cur + angle) % 360 + 360) % 360));
+        }
+    }
+    save_as(&mut doc, dir, &format!("{} ({})", names::stem(src), crate::names::tag("ruotato")))
+}
+
+/// Nuovo ordine delle pagine: quelle scritte prima (es. «3, 1, 2»), poi le altre come erano.
+pub fn reorder(src: &Path, order: &str, dir: &Path) -> Result<PathBuf> {
+    use lopdf::Object;
+    let mut doc = load(src)?;
+    let all = doc.get_pages();
+    let total = all.len();
+    let mut seq = parse_pages(order, total)?;
+    for n in 1..=total as u32 {
+        if !seq.contains(&n) {
+            seq.push(n);
+        }
+    }
+    let ids: Vec<lopdf::ObjectId> = seq.iter().filter_map(|n| all.get(n).copied()).collect();
+    for &pid in &ids {
+        flatten_inherited(&mut doc, pid);
+    }
+    let root = doc.catalog().ok().and_then(|c| c.get(b"Pages").ok()).and_then(|o| o.as_reference().ok()).ok_or_else(|| EngineError::new("il PDF non ha un indice delle pagine"))?;
+    for &pid in &ids {
+        if let Ok(Object::Dictionary(d)) = doc.get_object_mut(pid) {
+            d.set("Parent", Object::Reference(root));
+        }
+    }
+    if let Ok(Object::Dictionary(d)) = doc.get_object_mut(root) {
+        d.set("Kids", Object::Array(ids.iter().map(|k| Object::Reference(*k)).collect()));
+        d.set("Count", Object::Integer(ids.len() as i64));
+    }
+    doc.prune_objects();
+    save_as(&mut doc, dir, &format!("{} ({})", names::stem(src), crate::names::tag("riordinato")))
+}
+
+#[cfg(test)]
+mod tests_protect {
+    use super::*;
+
+    fn sample(dir: &Path, n: u32) -> PathBuf {
+        let mut pages = Vec::new();
+        for i in 0..n {
+            let img = image::RgbImage::from_pixel(40 + i * 20, 30, image::Rgb([200, (i * 40) as u8, 10]));
+            let mut buf = std::io::Cursor::new(Vec::new());
+            image::DynamicImage::ImageRgb8(img).write_to(&mut buf, image::ImageFormat::Jpeg).unwrap();
+            pages.push((buf.into_inner(), 40 + i * 20, 30));
+        }
+        let p = dir.join("prova.pdf");
+        images_to_pdf(&pages, &p).unwrap();
+        p
+    }
+
+    fn tmp(name: &str) -> PathBuf {
+        let d = std::env::temp_dir().join(format!("orbit-pdf-{name}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&d);
+        std::fs::create_dir_all(&d).unwrap();
+        d
+    }
+
+    #[test]
+    fn proteggi_e_sblocca() {
+        let d = tmp("pw");
+        let src = sample(&d, 2);
+        let locked = protect(&src, "segreta1", &d).unwrap();
+        let doc = lopdf::Document::load(&locked).unwrap();
+        assert!(doc.is_encrypted() || doc.encryption_state.is_some());
+        assert!(unprotect(&locked, "sbagliata", &d).is_err());
+        let open = unprotect(&locked, "segreta1", &d).unwrap();
+        assert_eq!(page_count(&open).unwrap(), 2);
+        assert!(protect(&src, "ab", &d).is_err());
+    }
+
+    #[test]
+    fn ruota_e_riordina() {
+        let d = tmp("rot");
+        let src = sample(&d, 3);
+        let r = rotate_pages(&src, 90, "2", &d).unwrap();
+        let doc = lopdf::Document::load(&r).unwrap();
+        let pages = doc.get_pages();
+        let rot = |n: u32| doc.get_dictionary(pages[&n]).unwrap().get(b"Rotate").ok().and_then(|o| o.as_i64().ok()).unwrap_or(0);
+        assert_eq!((rot(1), rot(2), rot(3)), (0, 90, 0));
+        // 3, 1 → poi la 2: le altezze dicono l'ordine (foto sempre più larghe, pagine sempre più basse)
+        let o = reorder(&src, "3, 1", &d).unwrap();
+        let doc = lopdf::Document::load(&o).unwrap();
+        let w: Vec<i64> = doc.get_pages().values().map(|&id| {
+            let mb = doc.get_dictionary(id).unwrap().get(b"MediaBox").unwrap().as_array().unwrap().clone();
+            mb[3].as_float().map(|f| f as i64).or_else(|_| mb[3].as_i64()).unwrap()
+        }).collect();
+        assert_eq!(w.len(), 3);
+        // altezze originali: p1 > p2 > p3 → nuovo ordine 3, 1, 2: basso, alto, medio
+        assert!(w[0] < w[2] && w[2] < w[1], "ordine sbagliato: {w:?}");
+    }
+}

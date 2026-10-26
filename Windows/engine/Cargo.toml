@@ -16,6 +16,7 @@ tract-onnx = "0.21"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 ed25519-dalek = "2"
 base64 = "0.22"
+getrandom = "0.3"
 
 
 [target.'cfg(windows)'.dependencies]
