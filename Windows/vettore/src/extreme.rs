@@ -405,7 +405,8 @@ fn refit_colors(layers: &mut [Layer], k: f64, t: &Target, r: &[[f32; 4]]) {
 }
 
 /// L'ottimizzazione: al massimo `budget` di tempo o `max_iters` passate; ritorna la perdita prima e dopo.
-pub fn optimize(layers: &mut [Layer], k: f64, t: &Target, max_iters: usize, budget: Duration, progress: &mut dyn FnMut(f64), cancelled: &dyn Fn() -> bool) -> (f64, f64) {
+/// `threads`: quanti core usare per i gradienti delle forme (ogni forma si calcola da sola).
+pub fn optimize(layers: &mut [Layer], k: f64, t: &Target, max_iters: usize, budget: Duration, threads: usize, progress: &mut dyn FnMut(f64), cancelled: &dyn Fn() -> bool) -> (f64, f64) {
     let started = Instant::now();
     let w = t.w;
     let h = t.h;
@@ -417,28 +418,61 @@ pub fn optimize(layers: &mut [Layer], k: f64, t: &Target, max_iters: usize, budg
     let mut best_layers: Vec<Layer> = layers.to_vec();
     let mut since_best = 0;
     // passo massimo per iterazione: mezzo pixel dell'immagine (in coordinate di lavoro)
+    // (passi più fini alla fine abbassano ancora l'errore, ma piegano le curve sui pixel: provato, peggio)
     let max_step = 0.5 / k;
     let lr = 0.15 / k;
     for it in 0..max_iters {
         if cancelled() || started.elapsed() > budget {
+            if std::env::var("VETTORE_DEBUG").is_ok() {
+                eprintln!("  fermata a {it}: tempo {} annullato {}", started.elapsed() > budget, cancelled());
+            }
             break;
         }
         let e: Vec<[f32; 4]> = r.iter().zip(&t.px).map(|(a, b)| [a[0] - b[0], a[1] - b[1], a[2] - b[2], a[3] - b[3]]).collect();
-        for (li, l) in layers.iter_mut().enumerate() {
-            if l.rect {
-                continue;
+        {
+            let mut jobs: Vec<(&mut Shape, &mut Adam, Option<&Vec<bool>>)> = vec![];
+            for ((l, ad), sm) in layers.iter_mut().zip(adam.iter_mut()).zip(smooth.iter()) {
+                if l.rect {
+                    continue;
+                }
+                for (si, (s, a)) in l.shapes.iter_mut().zip(ad.iter_mut()).enumerate() {
+                    jobs.push((s, a, sm.get(si)));
+                }
             }
-            for (si, s) in l.shapes.iter_mut().enumerate() {
-                let g = shape_grad(s, &r, &e, w, h, k);
-                let step = adam[li][si].step(&g, lr, max_step);
+            let (r, e) = (&r, &e);
+            let one = move |(s, a, sm): &mut (&mut Shape, &mut Adam, Option<&Vec<bool>>)| {
+                let g = shape_grad(s, r, e, w, h, k);
+                let step = a.step(&g, lr, max_step);
                 let mut pv = params_of(s);
                 for (p, d) in pv.iter_mut().zip(&step) {
                     *p += d;
                 }
                 set_params(s, &pv);
-                if let Some(sm) = smooth[li].get(si) {
+                if let Some(sm) = sm {
                     keep_smooth(s, sm);
                 }
+            };
+            if threads <= 1 || jobs.len() < 2 * threads {
+                jobs.iter_mut().for_each(one);
+            } else {
+                // a pezzi per peso (i nodi), così i core finiscono insieme
+                let one = &one;
+                let chunk = jobs.len().div_ceil(threads * 4);
+                let mut parts: Vec<&mut [(&mut Shape, &mut Adam, Option<&Vec<bool>>)]> = jobs.chunks_mut(chunk).collect();
+                let next = std::sync::atomic::AtomicUsize::new(0);
+                let parts_ref: Vec<std::sync::Mutex<&mut [(&mut Shape, &mut Adam, Option<&Vec<bool>>)]>> = parts.drain(..).map(std::sync::Mutex::new).collect();
+                std::thread::scope(|sc| {
+                    for _ in 0..threads {
+                        sc.spawn(|| {
+                            crate::lower_priority();
+                            loop {
+                                let i = next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                                let Some(p) = parts_ref.get(i) else { break };
+                                p.lock().unwrap().iter_mut().for_each(one);
+                            }
+                        });
+                    }
+                });
             }
         }
         if it % 20 == 19 {
@@ -458,6 +492,9 @@ pub fn optimize(layers: &mut [Layer], k: f64, t: &Target, max_iters: usize, budg
         }
         // avanzamento: di solito si ferma entro qualche centinaio di passate
         progress((it as f64 / 400.0).max(started.elapsed().as_secs_f64() / budget.as_secs_f64()).min(0.98));
+    }
+    if std::env::var("VETTORE_DEBUG").is_ok() {
+        eprintln!("  ottimizzazione: {first:.6} → {best:.6}, {:.1} s", started.elapsed().as_secs_f64());
     }
     layers.clone_from_slice(&best_layers);
     (first, best)

@@ -63,11 +63,13 @@ pub struct Opts {
     pub extreme: bool,
     /// Tempo massimo per «Estrema», in secondi
     pub extreme_secs: u64,
+    /// Quanti calcoli insieme per «Estrema» (0 = tutti i core meno uno)
+    pub threads: usize,
 }
 
 impl Default for Opts {
     fn default() -> Self {
-        Opts { mode: Mode::Auto, detail: 2, transparent: false, gradients: true, precise: false, extreme: false, extreme_secs: 240 }
+        Opts { mode: Mode::Auto, detail: 2, transparent: false, gradients: true, precise: false, extreme: false, extreme_secs: 300, threads: 0 }
     }
 }
 
@@ -407,6 +409,7 @@ fn mask_contours(mask: &[bool], w: usize, h: usize, pad: usize) -> Vec<Vec<P>> {
         .collect()
 }
 
+#[derive(Clone, Copy)]
 struct Fmt {
     k: f64,
     dec: usize,
@@ -529,7 +532,7 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
         (_, true) => (3200.0 / maxside).clamp(0.6, 6.0),
     };
     let (ww, wh) = (((w as f64 * s).round() as u32).max(2), ((h as f64 * s).round() as u32).max(2));
-    let base: RgbaImage = match upscaled {
+    let make_base = |upscaled: Option<&DynamicImage>| -> RgbaImage { match upscaled {
         Some(up) => {
             let mut u = image::imageops::resize(&up.to_rgba8(), ww, wh, image::imageops::FilterType::Triangle);
             // la trasparenza viene dall'originale
@@ -547,7 +550,10 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
                 b
             }
         }
-    };
+    } };
+    let base = make_base(upscaled);
+    // per «Estrema»: anche la versione senza l'ingrandimento con l'IA, come tentativo in più
+    let plain: Option<RgbaImage> = None;
     if cancelled() {
         return Err("annullato".into());
     }
@@ -563,6 +569,80 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
         _ => 1.0,
     };
 
+
+    let ctx = Ctx { orig: &orig, small: &small, lut: &lut, mode, s, u, wu, hu, w, h, has_alpha, o, base: &base, plain: plain.as_ref(), fmt: f };
+    let def = Var { tolk, detail, plain: false };
+    let cand = if o.extreme {
+        extreme_search(&ctx, def, progress, cancelled)?
+    } else {
+        trace_variant(&ctx, &def, progress, cancelled)?
+    };
+    progress(1.0);
+    Ok(cand_output(&cand, &f, w, h, mode))
+}
+
+fn cand_output(cand: &Cand, f: &Fmt, w: u32, h: u32, mode: Mode) -> Output {
+    if let Some(col) = cand.bw {
+        let shapes: &[Shape] = cand.layers.first().map(|l| &l.shapes[..]).unwrap_or(&[]);
+        let fill = match cand.layers.first().map(|l| &l.fill) {
+            Some(extreme::Fill::Flat(c)) => hexf(*c),
+            _ => hex(col),
+        };
+        let svg = format!(
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\" viewBox=\"0 0 {w} {h}\"><path fill=\"{}\" fill-rule=\"evenodd\" d=\"{}\"/></svg>\n",
+            fill,
+            shapes_to_d(shapes, f)
+        );
+        return Output { svg, mode, colors: 1, shapes: shapes.len() };
+    }
+    let layers = &cand.layers;
+    let nshapes = layers.iter().map(|l| if l.rect { 1 } else { l.shapes.len() }).sum();
+    let svg = format!("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\" viewBox=\"0 0 {w} {h}\">{}</svg>\n", layers_svg(layers, f, w, h));
+    Output { svg, mode, colors: cand.colors, shapes: nshapes }
+}
+
+/// Quello che serve per ricalcare (uguale per tutti i tentativi).
+#[derive(Clone, Copy)]
+struct Ctx<'a> {
+    orig: &'a RgbaImage,
+    small: &'a RgbaImage,
+    lut: &'a LabLut,
+    mode: Mode,
+    s: f64,
+    u: f64,
+    wu: usize,
+    hu: usize,
+    w: u32,
+    h: u32,
+    has_alpha: bool,
+    o: &'a Opts,
+    base: &'a RgbaImage,
+    plain: Option<&'a RgbaImage>,
+    fmt: Fmt,
+}
+
+/// Un modo di ricalcare: tolleranza delle curve, quanti colori, con o senza l'ingrandimento con l'IA.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Var {
+    tolk: f64,
+    detail: u8,
+    plain: bool,
+}
+
+/// Un ricalco pronto (per «Estrema»: un tentativo).
+struct Cand {
+    layers: Vec<extreme::Layer>,
+    colors: usize,
+    /// bianco e nero: il colore dell'inchiostro
+    bw: Option<[u8; 3]>,
+    /// bianco e nero con «Estrema»: la carta e l'inchiostro puliti da raggiungere
+    target: Option<extreme::Target>,
+}
+
+fn trace_variant(c: &Ctx, v: &Var, progress: &mut dyn FnMut(f64), cancelled: &dyn Fn() -> bool) -> Result<Cand, String> {
+    let Ctx { small, lut, mode, s, u, wu, hu, w, h, has_alpha, o, .. } = *c;
+    let base: &RgbaImage = if v.plain { c.plain.unwrap_or(c.base) } else { c.base };
+    let (tolk, detail) = (v.tolk, v.detail);
     if mode == Mode::Bw {
         // Bianco e nero: lo sfondo si «spiana» (luce non uniforme), poi la soglia a metà tra carta e inchiostro
         let g: Vec<f32> = base.pixels().map(|p| if p.0[3] < 128 { 255.0 } else { 0.299 * p.0[0] as f32 + 0.587 * p.0[1] as f32 + 0.114 * p.0[2] as f32 }).collect();
@@ -596,31 +676,18 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
         } else {
             vec![]
         };
-        let mut shapes = if o.precise || o.extreme {
-            trace_precise(&field, wu, hu, u, tolk, (3.0 * u) as usize, progress, 0.45, if o.extreme { 0.6 } else { 0.95 }, cancelled)?
+        let shapes = if o.precise || o.extreme {
+            trace_precise(&field, wu, hu, u, tolk, (3.0 * u) as usize, progress, 0.45, 0.95, cancelled)?
         } else {
             let fo = FitOpts { sigma: 0.6 * u, tol: 0.5 * u * tolk, corner_win: (1.5 * u).round().max(3.0) as usize, corner_deg: 50.0 };
             trace_mask(&mask, wu, hu, u, &fo, (3.0 * u) as usize)
         };
-        if o.extreme && !shapes.is_empty() {
-            let inkf = [col[0] as f32 / 255.0, col[1] as f32 / 255.0, col[2] as f32 / 255.0];
-            let t = target_of(&orig, Some((&field, wu, hu, inkf, [1.0, 1.0, 1.0])));
-            let mut layers = vec![extreme::Layer { fill: extreme::Fill::Flat(inkf), shapes, rect: false }];
-            let budget = std::time::Duration::from_secs(o.extreme_secs.max(5));
-            let (a, b) = extreme::optimize(&mut layers, 1.0 / s, &t, 2000, budget, &mut |p| progress(0.6 + 0.38 * p), cancelled);
-            if std::env::var("VETTORE_DEBUG").is_ok() {
-                eprintln!("estrema: errore {a:.6} → {b:.6}");
-            }
-            shapes = layers.pop().map(|l| l.shapes).unwrap_or_default();
-        }
+        let inkf = [col[0] as f32 / 255.0, col[1] as f32 / 255.0, col[2] as f32 / 255.0];
+        let target = if o.extreme { Some(target_of(c.orig, Some((&field, wu, hu, inkf, [1.0, 1.0, 1.0])))) } else { None };
         progress(0.95);
-        let svg = format!(
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\" viewBox=\"0 0 {w} {h}\"><path fill=\"{}\" fill-rule=\"evenodd\" d=\"{}\"/></svg>\n",
-            hex(col),
-            shapes_to_d(&shapes, &f)
-        );
-        return Ok(Output { svg, mode, colors: 1, shapes: shapes.len() });
+        return Ok(Cand { layers: vec![extreme::Layer { fill: extreme::Fill::Flat(inkf), shapes, rect: false }], colors: 1, bw: Some(col), target });
     }
+
 
     // Colori
     let po = match (mode, detail) {
@@ -738,7 +805,7 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
     let base_lab: Vec<[f32; 3]> = if o.gradients || o.precise { base.pixels().map(|p| lut.lab(p.0[0], p.0[1], p.0[2])).collect() } else { vec![] };
     let dil = (2.0 * s).round().max(1.0) as usize;
     let mut layers: Vec<extreme::Layer> = vec![];
-    let pspan = if o.extreme { 0.4 } else { 0.6 };
+    let pspan = 0.6;
     let to01 = |c: [u8; 3]| [c[0] as f32 / 255.0, c[1] as f32 / 255.0, c[2] as f32 / 255.0];
     for (n, &c) in order.iter().enumerate() {
         if cancelled() {
@@ -781,20 +848,144 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
         }
         layers.push(extreme::Layer { fill, shapes, rect: false });
     }
-    if o.extreme {
-        // l'originale, alle sue dimensioni (premoltiplicato)
-        // l'originale ripulito dal filtro che rispetta i bordi: si insegue la forma, non gli artefatti JPEG
-        let t = target_of(&small, None);
-        let budget = std::time::Duration::from_secs(o.extreme_secs.max(5));
-        let (a, b) = extreme::optimize(&mut layers, 1.0 / s, &t, 2000, budget, &mut |p| progress(0.75 + 0.24 * p), cancelled);
-        if std::env::var("VETTORE_DEBUG").is_ok() {
-            eprintln!("estrema: errore {a:.6} → {b:.6}");
+    progress(0.98);
+    Ok(Cand { layers, colors: order.len(), bw: None, target: None })
+}
+
+/// Quanti calcoli insieme: tutti i core meno uno (il computer resta usabile).
+pub fn workers(asked: usize) -> usize {
+    let n = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(2);
+    if asked > 0 { asked.min(n).max(1) } else { n.saturating_sub(1).max(1) }
+}
+
+/// I calcoli lunghi vanno a priorità bassa: il computer resta reattivo (su Mac ci pensa l'app).
+pub(crate) fn lower_priority() {
+    #[cfg(windows)]
+    unsafe {
+        use windows_sys::Win32::System::Threading::{GetCurrentThread, SetThreadPriority, THREAD_PRIORITY_BELOW_NORMAL};
+        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
+    }
+}
+
+/// I tentativi di «Estrema». Provato sui file di prova con l'originale vero accanto: nel bianco e nero
+/// (firme, disegni a tratto) una tolleranza più stretta a volte rende meglio, e il confronto con la carta e
+/// l'inchiostro puliti sa sceglierla; nei loghi a colori le differenze tra tentativi sono sotto il pixel e il
+/// confronto con l'originale piccolo sceglie spesso quello sbagliato: lì un solo ricalco.
+fn variants(c: &Ctx, def: Var) -> Vec<Var> {
+    let mut v = vec![def];
+    if c.mode == Mode::Bw {
+        v.push(Var { tolk: def.tolk * 0.5, ..def });
+        v.push(Var { tolk: def.tolk * 0.7, ..def });
+        v.push(Var { tolk: def.tolk * 1.4, ..def });
+    }
+    v
+}
+
+/// «Estrema»: più ricalchi diversi in parallelo, ognuno ottimizzato per un po' contro l'originale; il migliore
+/// (confrontato sulla stessa immagine) continua da solo con tutti i core finché il tempo finisce o non migliora più.
+fn extreme_search(c: &Ctx, def: Var, progress: &mut dyn FnMut(f64), cancelled: &dyn Fn() -> bool) -> Result<Cand, String> {
+    use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
+    use std::sync::Mutex;
+    use std::time::{Duration, Instant};
+    let started = Instant::now();
+    let total = Duration::from_secs(c.o.extreme_secs.max(5));
+    let vars = variants(c, def);
+    let threads = workers(c.o.threads).min(vars.len());
+    let rounds = vars.len().div_ceil(threads);
+    // il tempo diviso tra i giri; ogni tentativo usa i core rimasti liberi per i suoi calcoli
+    let per_try = total.mul_f64(1.0 / rounds as f64);
+    let inner = (workers(c.o.threads) / threads).max(1);
+    let k = 1.0 / c.s;
+    // l'immagine da raggiungere a colori: l'originale ripulito (si insegue la forma, non gli artefatti JPEG)
+    let color_target = if c.mode == Mode::Bw { None } else { Some(target_of(c.small, None)) };
+    let stop = AtomicBool::new(false);
+    let next = AtomicUsize::new(0);
+    let done = AtomicUsize::new(0);
+    let prog: Vec<AtomicU64> = vars.iter().map(|_| AtomicU64::new(0f64.to_bits())).collect();
+    let results: Mutex<Vec<Option<Result<Cand, String>>>> = Mutex::new(vars.iter().map(|_| None).collect());
+    std::thread::scope(|sc| {
+        for _ in 0..threads {
+            sc.spawn(|| {
+                lower_priority();
+                loop {
+                    let i = next.fetch_add(1, Ordering::SeqCst);
+                    if i >= vars.len() {
+                        break;
+                    }
+                    let set = |p: f64| prog[i].store(p.to_bits(), Ordering::Relaxed);
+                    let stopped = || stop.load(Ordering::Relaxed);
+                    let r = trace_variant(c, &vars[i], &mut |p| set(0.5 * p), &stopped).map(|mut cand| {
+                        if let Some(t) = cand.target.as_ref().or(color_target.as_ref()) {
+                            if !cand.layers.iter().all(|l| l.rect || l.shapes.is_empty()) {
+                                extreme::optimize(&mut cand.layers, k, t, 2000, per_try, inner, &mut |p| set(0.5 + 0.5 * p), &stopped);
+                            }
+                        }
+                        cand
+                    });
+                    set(1.0);
+                    results.lock().unwrap()[i] = Some(r);
+                    done.fetch_add(1, Ordering::SeqCst);
+                }
+            });
+        }
+        while done.load(Ordering::SeqCst) < vars.len() {
+            std::thread::sleep(Duration::from_millis(150));
+            if cancelled() {
+                stop.store(true, Ordering::Relaxed);
+            }
+            let p: f64 = prog.iter().map(|a| f64::from_bits(a.load(Ordering::Relaxed))).sum::<f64>() / vars.len() as f64;
+            progress(0.2 + 0.78 * p);
+        }
+    });
+    if cancelled() {
+        return Err("annullato".into());
+    }
+    let mut cands: Vec<(usize, Cand)> = vec![];
+    let mut first_err = None;
+    for (i, r) in results.into_inner().unwrap().into_iter().enumerate() {
+        match r {
+            Some(Ok(cand)) => cands.push((i, cand)),
+            Some(Err(e)) => {
+                first_err.get_or_insert(e);
+            }
+            None => {}
         }
     }
-    progress(1.0);
-    let nshapes = layers.iter().map(|l| if l.rect { 1 } else { l.shapes.len() }).sum();
-    let svg = format!("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\" viewBox=\"0 0 {w} {h}\">{}</svg>\n", layers_svg(&layers, &f, w, h));
-    Ok(Output { svg, mode, colors: order.len(), shapes: nshapes })
+    if cands.is_empty() {
+        return Err(first_err.unwrap_or_else(|| "nessun ricalco riuscito".into()));
+    }
+    if cands.len() == 1 {
+        return Ok(cands.swap_remove(0).1);
+    }
+    // Il confronto tra i tentativi (bianco e nero): sulla carta e l'inchiostro puliti del ricalco normale
+    let judge: &extreme::Target = match cands.iter().find(|(i, _)| *i == 0).and_then(|(_, c)| c.target.as_ref()).or_else(|| cands[0].1.target.as_ref()).or(color_target.as_ref()) {
+        Some(t) => t,
+        None => return Ok(cands.swap_remove(0).1),
+    };
+    // un poco di preferenza per i disegni più semplici a parità di errore (file più puliti)
+    let score = |cand: &Cand| {
+        let nodes: usize = cand.layers.iter().map(|l| l.shapes.iter().map(fit::nodes).sum::<usize>()).sum();
+        extreme::loss(&extreme::render(&cand.layers, k, judge), judge) * (1.0 + 0.01 * (1.0 + nodes as f64 / 500.0).ln())
+    };
+    let scores: Vec<f64> = cands.iter().map(|(_, cand)| score(cand)).collect();
+    if let Ok(dir) = std::env::var("VETTORE_DUMP") {
+        for (i, cand) in &cands {
+            let _ = std::fs::write(format!("{dir}.v{i}.svg"), cand_output(cand, &c.fmt, c.w, c.h, c.mode).svg);
+        }
+    }
+    let best = (0..cands.len()).min_by(|a, b| scores[*a].partial_cmp(&scores[*b]).unwrap_or(std::cmp::Ordering::Equal)).unwrap();
+    if std::env::var("VETTORE_DEBUG").is_ok() {
+        for (n, (i, _)) in cands.iter().enumerate() {
+            eprintln!("estrema: tentativo {:?} → {:.6}{}", vars[*i], scores[n], if n == best { "  ← il migliore" } else { "" });
+        }
+    }
+    // (il migliore non si ottimizza ancora: altre passate abbassano l'errore sull'originale piccolo
+    // ma piegano le curve sui pixel; provato con l'originale vero accanto, peggio)
+    let (_, cand) = cands.swap_remove(best);
+    if std::env::var("VETTORE_DEBUG").is_ok() {
+        eprintln!("estrema: {:.0} s in tutto", started.elapsed().as_secs_f64());
+    }
+    Ok(cand)
 }
 
 fn hexf(c: [f32; 3]) -> String {

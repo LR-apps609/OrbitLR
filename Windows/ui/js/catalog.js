@@ -221,7 +221,7 @@ export const KNOBS = {
     options: [
       { value: "auto", label: t("Automatico"), small: t("consigliato") },
       { value: "auto+", label: t("Precisione massima"), small: t("ricalco lento, fino a qualche minuto") },
-      { value: "auto*", label: t("Estrema"), small: t("ottimizza tutto il disegno, qualche minuto") },
+      { value: "auto*", label: t("Estrema"), small: t("ottimizza tutto il disegno, fino a 5 minuti") },
       { value: "logo", label: t("Logo e disegni"), small: t("colori pieni") },
       { value: "logot", label: t("Logo senza sfondo"), small: t("trasparente") },
       { value: "bw", label: t("Firme e scansioni"), small: t("un colore, trasparente") },
@@ -229,9 +229,9 @@ export const KNOBS = {
       { value: "bw+", label: t("Firma, precisione massima"), small: t("ricalco lento") },
       { value: "photo", label: t("Foto"), small: t("effetto illustrazione") },
       { value: "photomax", label: t("Foto, più dettaglio"), small: t("file più grande") },
-      { value: "photo*", label: t("Foto, estrema"), small: t("il più fedele, qualche minuto") },
+      { value: "photo*", label: t("Foto, estrema"), small: t("la più fedele, fino a 5 minuti") },
     ],
-    hint: t("«Precisione massima» ricalca ogni curva sul bordo vero, punto per punto. «Estrema» poi ridisegna l'SVG intero e lo confronta con l'originale pixel per pixel, finché non migliora più. Sulle immagini piccole i bordi si ricostruiscono prima con l'IA (la prima volta scarica il motore, 45 MB). Tutto sul computer."),
+    hint: t("«Precisione massima» ricalca ogni curva sul bordo vero, punto per punto. «Estrema» poi ridisegna l'SVG intero e lo confronta con l'originale pixel per pixel, finché non migliora più; per firme e disegni a tratto prova più ricalchi e tiene il migliore. Usa tutti i core meno uno, a priorità bassa. Sulle immagini piccole i bordi si ricostruiscono prima con l'IA (la prima volta scarica il motore, 45 MB). Tutto sul computer."),
     default: "auto",
   },
   upscale: {

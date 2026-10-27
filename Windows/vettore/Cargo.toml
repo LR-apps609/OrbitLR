@@ -13,3 +13,6 @@ tiny-skia = { version = "0.11", default-features = false, features = ["std", "si
 [[bin]]
 name = "orbit-vector"
 path = "src/bin/orbit-vector.rs"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_System_Threading"] }

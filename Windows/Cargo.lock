@@ -5716,6 +5716,7 @@ dependencies = [
  "image",
  "imageproc",
  "tiny-skia",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

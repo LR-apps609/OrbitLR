@@ -1,3 +1,15 @@
+Novità per Windows 0.10.0 «Estrema»:
+• Vettoriale (SVG) → «Estrema»: dopo il ricalco OrbitLR disegna l'SVG intero, lo confronta con l'originale pixel per pixel e sposta insieme tutti i punti di tutte le curve e i colori finché non migliora più
+• Firme e disegni a tratto: prova più ricalchi diversi, uno per core, e tiene quello che combacia meglio; il colore dell'inchiostro ora è quello vero
+• Sfumature unite: dove un colore cambia piano piano non ci sono più fasce, ma una sfumatura sola
+• Usa tutti i core meno uno, a priorità bassa: il computer resta usabile. Fino a 5 minuti, di solito meno
+
+What’s new in Windows 0.10.0 “Extreme”:
+• Vector (SVG) → “Extreme”: after tracing, OrbitLR draws the whole SVG, compares it with the original pixel by pixel and moves all the points of all the curves, and the colors, together until it stops improving
+• Signatures and line drawings: it tries several different tracings, one per core, and keeps the one that matches best; the ink color is now the true one
+• Merged gradients: where a color changes slowly there are no more bands, just one gradient
+• It uses all cores but one, at low priority: the computer stays usable. Up to 5 minutes, usually less
+
 Novità per Windows 0.9.0 «Ricalco»:
 • Vettoriale (SVG) → «Precisione massima»: OrbitLR ricalca ogni curva sul bordo vero dell'immagine, punto per punto, come a mano. Dai pixel sfumati dei bordi capisce dove passa il contorno con una precisione più fine di un pixel
 • Angoli netti dove due lati dritti si incontrano, curve che passano esattamente sul bordo, colori presi dall'interno di ogni forma

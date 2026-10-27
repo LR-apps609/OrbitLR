@@ -29,7 +29,11 @@ fn main() {
             }
             "--seconds" => {
                 i += 1;
-                o.extreme_secs = args.get(i).and_then(|s| s.parse().ok()).unwrap_or(240);
+                o.extreme_secs = args.get(i).and_then(|s| s.parse().ok()).unwrap_or(300);
+            }
+            "--threads" => {
+                i += 1;
+                o.threads = args.get(i).and_then(|s| s.parse().ok()).unwrap_or(0);
             }
             "--upscaled" => {
                 i += 1;

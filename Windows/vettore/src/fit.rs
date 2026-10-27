@@ -381,6 +381,14 @@ fn snap_axes(start: &mut P, segs: &mut [Seg], tol: f64) {
     }
 }
 
+/// Quanti nodi ha una forma (per preferire, a parità di errore, il disegno più semplice).
+pub fn nodes(s: &Shape) -> usize {
+    match s {
+        Shape::Circle { .. } => 1,
+        Shape::Path { segs, .. } => segs.len(),
+    }
+}
+
 pub fn seg_end(s: &Seg) -> P {
     end_of(s)
 }
