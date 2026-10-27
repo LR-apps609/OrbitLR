@@ -1,3 +1,5 @@
+/* Gli elementi nascosti restano nascosti anche quando hanno un display proprio (su GitHub Pages non c'è lo scheletro di claude.ai) */
+[hidden]{display:none!important}
 /* Layout: two tabs under one floating header. Converter = a living forest-green slab with the real pie and a giant
    drop zone, then a paper band with the challenge and the invite. Applicazione = hero with the logo in orbit,
    scroll-driven manifesto, an interactive "what it does" pie, privacy tiles, downloads with requirements and news. */
