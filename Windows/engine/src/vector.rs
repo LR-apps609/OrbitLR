@@ -12,6 +12,15 @@ use std::path::{Path, PathBuf};
 /// con «+» in fondo (per esempio «logo+») la precisione massima: il ricalco lento.
 pub fn opts(param: &str) -> vettore::Opts {
     let mut o = vettore::Opts::default();
+    // «*» in fondo: Estrema (l'SVG intero ottimizzato contro l'originale, qualche minuto)
+    let param = match param.strip_suffix('*') {
+        Some(p) => {
+            o.precise = true;
+            o.extreme = true;
+            p
+        }
+        None => param,
+    };
     let param = match param.strip_suffix('+') {
         Some(p) => {
             o.precise = true;

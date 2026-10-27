@@ -8,6 +8,7 @@ license = "MIT"
 [dependencies]
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "bmp", "tiff", "webp"] }
 imageproc = { version = "0.25", default-features = false }
+tiny-skia = { version = "0.11", default-features = false, features = ["std", "simd"] }
 
 [[bin]]
 name = "orbit-vector"

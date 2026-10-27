@@ -15,6 +15,7 @@
 
 pub mod fit;
 pub mod precise;
+pub mod extreme;
 
 use fit::{FitOpts, Seg, Shape, P};
 use image::{DynamicImage, GenericImageView, GrayImage, Luma, RgbaImage};
@@ -58,11 +59,15 @@ pub struct Opts {
     pub gradients: bool,
     /// «Precisione massima»: il ricalco lento, curva per curva sul bordo vero (anche qualche minuto)
     pub precise: bool,
+    /// «Estrema»: dopo il ricalco, l'SVG intero si ottimizza contro l'originale (qualche minuto)
+    pub extreme: bool,
+    /// Tempo massimo per «Estrema», in secondi
+    pub extreme_secs: u64,
 }
 
 impl Default for Opts {
     fn default() -> Self {
-        Opts { mode: Mode::Auto, detail: 2, transparent: false, gradients: true, precise: false }
+        Opts { mode: Mode::Auto, detail: 2, transparent: false, gradients: true, precise: false, extreme: false, extreme_secs: 240 }
     }
 }
 
@@ -584,15 +589,30 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
         let core = &inks[..(inks.len() * 3 / 10).max(1).min(inks.len())];
         let col = if core.is_empty() { [0, 0, 0] } else { median_rgb(core.iter().map(|c| c.1)) };
         progress(0.45);
-        let shapes = if o.precise {
-            // copertura: 0 sulla carta, 1 nell'inchiostro pieno; il bordo vero è a metà
+        // copertura: 0 sulla carta, 1 nell'inchiostro pieno; il bordo vero è a metà
+        let field: Vec<f32> = if o.precise || o.extreme {
             let alpha: Vec<f32> = base.pixels().map(|p| p.0[3] as f32 / 255.0).collect();
-            let field: Vec<f32> = norm.iter().zip(&alpha).map(|(v, a)| (((paper - v) / (paper - ink).max(1.0)).clamp(0.0, 1.0)) * a).collect();
-            trace_precise(&field, wu, hu, u, tolk, (3.0 * u) as usize, progress, 0.45, 0.95, cancelled)?
+            norm.iter().zip(&alpha).map(|(v, a)| (((paper - v) / (paper - ink).max(1.0)).clamp(0.0, 1.0)) * a).collect()
+        } else {
+            vec![]
+        };
+        let mut shapes = if o.precise || o.extreme {
+            trace_precise(&field, wu, hu, u, tolk, (3.0 * u) as usize, progress, 0.45, if o.extreme { 0.6 } else { 0.95 }, cancelled)?
         } else {
             let fo = FitOpts { sigma: 0.6 * u, tol: 0.5 * u * tolk, corner_win: (1.5 * u).round().max(3.0) as usize, corner_deg: 50.0 };
             trace_mask(&mask, wu, hu, u, &fo, (3.0 * u) as usize)
         };
+        if o.extreme && !shapes.is_empty() {
+            let inkf = [col[0] as f32 / 255.0, col[1] as f32 / 255.0, col[2] as f32 / 255.0];
+            let t = target_of(&orig, Some((&field, wu, hu, inkf, [1.0, 1.0, 1.0])));
+            let mut layers = vec![extreme::Layer { fill: extreme::Fill::Flat(inkf), shapes, rect: false }];
+            let budget = std::time::Duration::from_secs(o.extreme_secs.max(5));
+            let (a, b) = extreme::optimize(&mut layers, 1.0 / s, &t, 2000, budget, &mut |p| progress(0.6 + 0.38 * p), cancelled);
+            if std::env::var("VETTORE_DEBUG").is_ok() {
+                eprintln!("estrema: errore {a:.6} → {b:.6}");
+            }
+            shapes = layers.pop().map(|l| l.shapes).unwrap_or_default();
+        }
         progress(0.95);
         let svg = format!(
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\" viewBox=\"0 0 {w} {h}\"><path fill=\"{}\" fill-rule=\"evenodd\" d=\"{}\"/></svg>\n",
@@ -635,6 +655,13 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
                 lbl[i] = best[i].1;
             }
         }
+    }
+    // Sfumature: colori vicini che insieme formano una sfumatura regolare diventano un solo strato sfumato
+    // (al posto delle fasce). Solo con la precisione massima e oltre.
+    let mut remap: Vec<usize> = (0..pal.len()).collect();
+    if (o.precise || o.extreme) && mode != Mode::Bw {
+        let lab_all: Vec<[f32; 3]> = base.pixels().map(|p| lut.lab(p.0[0], p.0[1], p.0[2])).collect();
+        merge_gradients(&mut lbl, &lab_all, &pal, wu, hu, &mut remap);
     }
     let mut area = vec![0usize; pal.len()];
     for &l in &lbl {
@@ -710,23 +737,20 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
     let rgb: Vec<[u8; 3]> = pal.iter().map(|c| lab_to_rgb(*c)).collect();
     let base_lab: Vec<[f32; 3]> = if o.gradients || o.precise { base.pixels().map(|p| lut.lab(p.0[0], p.0[1], p.0[2])).collect() } else { vec![] };
     let dil = (2.0 * s).round().max(1.0) as usize;
-    let mut body = String::new();
-    let mut nshapes = 0;
+    let mut layers: Vec<extreme::Layer> = vec![];
+    let pspan = if o.extreme { 0.4 } else { 0.6 };
+    let to01 = |c: [u8; 3]| [c[0] as f32 / 255.0, c[1] as f32 / 255.0, c[2] as f32 / 255.0];
     for (n, &c) in order.iter().enumerate() {
         if cancelled() {
             return Err("annullato".into());
         }
-        progress(0.35 + 0.6 * n as f64 / order.len() as f64);
-        let mut col = hex(rgb[c]);
-        if let Some(g) = gradient_for(&lbl, &base_lab, wu, c as u8, s) {
-            let id = format!("g{n}");
-            let _ = write!(body, "<linearGradient id=\"{id}\" gradientUnits=\"userSpaceOnUse\" x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\"><stop offset=\"0\" stop-color=\"{}\"/><stop offset=\"1\" stop-color=\"{}\"/></linearGradient>",
-                f.n(g.0 + 0.5), f.n(g.1 + 0.5), f.n(g.2 + 0.5), f.n(g.3 + 0.5), hex(g.4), hex(g.5));
-            col = format!("url(#{id})");
-        }
+        progress(0.35 + pspan * n as f64 / order.len() as f64);
+        let fill = match gradient_for(&lbl, &base_lab, wu, c as u8, s) {
+            Some(g) => extreme::Fill::Linear { p0: P::new(g.0 + 0.5, g.1 + 0.5), p1: P::new(g.2 + 0.5, g.3 + 0.5), c0: to01(g.4), c1: to01(g.5) },
+            None => extreme::Fill::Flat(to01(rgb[c])),
+        };
         if n == 0 && !any_none && !has_alpha {
-            let _ = write!(body, "<rect width=\"{w}\" height=\"{h}\" fill=\"{col}\"/>");
-            nshapes += 1;
+            layers.push(extreme::Layer { fill, shapes: vec![], rect: true });
             continue;
         }
         let own: Vec<bool> = lbl.iter().map(|&l| l == c as u8).collect();
@@ -742,11 +766,12 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
                 let inset = |l: usize| l == c || (near[i] && rank[l] != usize::MAX && rank[l] > n);
                 let a = base.as_raw()[i * 4 + 3] as f32 / 255.0;
                 let (ci, cj, t) = mix(&pal, &base_lab[i]);
+                let (ci, cj) = (remap[ci], remap[cj]);
                 let m = (if inset(ci) { 1.0 - t } else { 0.0 }) + (if inset(cj) { t } else { 0.0 });
                 m * a
             }).collect();
-            let p0 = 0.35 + 0.6 * n as f64 / order.len() as f64;
-            let p1 = 0.35 + 0.6 * (n + 1) as f64 / order.len() as f64;
+            let p0 = 0.35 + pspan * n as f64 / order.len() as f64;
+            let p1 = 0.35 + pspan * (n + 1) as f64 / order.len() as f64;
             trace_precise(&field, wu, hu, u, tolk, pad, progress, p0, p1, cancelled)?
         } else {
             trace_mask(&mask, wu, hu, u, &fo, pad)
@@ -754,12 +779,85 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
         if shapes.is_empty() {
             continue;
         }
-        nshapes += shapes.len();
-        let _ = write!(body, "<path fill=\"{col}\" fill-rule=\"evenodd\" d=\"{}\"/>", shapes_to_d(&shapes, &f));
+        layers.push(extreme::Layer { fill, shapes, rect: false });
+    }
+    if o.extreme {
+        // l'originale, alle sue dimensioni (premoltiplicato)
+        // l'originale ripulito dal filtro che rispetta i bordi: si insegue la forma, non gli artefatti JPEG
+        let t = target_of(&small, None);
+        let budget = std::time::Duration::from_secs(o.extreme_secs.max(5));
+        let (a, b) = extreme::optimize(&mut layers, 1.0 / s, &t, 2000, budget, &mut |p| progress(0.75 + 0.24 * p), cancelled);
+        if std::env::var("VETTORE_DEBUG").is_ok() {
+            eprintln!("estrema: errore {a:.6} → {b:.6}");
+        }
     }
     progress(1.0);
-    let svg = format!("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\" viewBox=\"0 0 {w} {h}\">{body}</svg>\n");
+    let nshapes = layers.iter().map(|l| if l.rect { 1 } else { l.shapes.len() }).sum();
+    let svg = format!("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\" viewBox=\"0 0 {w} {h}\">{}</svg>\n", layers_svg(&layers, &f, w, h));
     Ok(Output { svg, mode, colors: order.len(), shapes: nshapes })
+}
+
+fn hexf(c: [f32; 3]) -> String {
+    hex([(c[0].clamp(0.0, 1.0) * 255.0).round() as u8, (c[1].clamp(0.0, 1.0) * 255.0).round() as u8, (c[2].clamp(0.0, 1.0) * 255.0).round() as u8])
+}
+
+fn layers_svg(layers: &[extreme::Layer], f: &Fmt, w: u32, h: u32) -> String {
+    let mut body = String::new();
+    for (n, l) in layers.iter().enumerate() {
+        let col = match &l.fill {
+            extreme::Fill::Flat(c) => hexf(*c),
+            extreme::Fill::Linear { p0, p1, c0, c1 } => {
+                let id = format!("g{n}");
+                let _ = write!(body, "<linearGradient id=\"{id}\" gradientUnits=\"userSpaceOnUse\" x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\"><stop offset=\"0\" stop-color=\"{}\"/><stop offset=\"1\" stop-color=\"{}\"/></linearGradient>",
+                    f.n(p0.x), f.n(p0.y), f.n(p1.x), f.n(p1.y), hexf(*c0), hexf(*c1));
+                format!("url(#{id})")
+            }
+        };
+        if l.rect {
+            let _ = write!(body, "<rect width=\"{w}\" height=\"{h}\" fill=\"{col}\"/>");
+        } else {
+            let _ = write!(body, "<path fill=\"{col}\" fill-rule=\"evenodd\" d=\"{}\"/>", shapes_to_d(&l.shapes, f));
+        }
+    }
+    body
+}
+
+/// L'immagine da raggiungere per «Estrema»: l'originale premoltiplicato, o (bianco e nero) la sua versione pulita.
+fn target_of(orig: &RgbaImage, bw: Option<(&[f32], usize, usize, [f32; 3], [f32; 3])>) -> extreme::Target {
+    let (w, h) = (orig.width() as usize, orig.height() as usize);
+    match bw {
+        None => extreme::Target {
+            w,
+            h,
+            px: orig.pixels().map(|p| {
+                let a = p.0[3] as f32 / 255.0;
+                [p.0[0] as f32 / 255.0 * a, p.0[1] as f32 / 255.0 * a, p.0[2] as f32 / 255.0 * a, a]
+            }).collect(),
+            bg: None,
+        },
+        Some((field, fw, fh, ink, paper)) => {
+            // la copertura (0…1) riportata alle dimensioni dell'originale: carta + inchiostro × copertura
+            let mut px = Vec::with_capacity(w * h);
+            let (kx, ky) = (fw as f64 / w as f64, fh as f64 / h as f64);
+            for y in 0..h {
+                for x in 0..w {
+                    let (x0, x1) = ((x as f64 * kx) as usize, (((x + 1) as f64 * kx).ceil() as usize).min(fw).max((x as f64 * kx) as usize + 1));
+                    let (y0, y1) = ((y as f64 * ky) as usize, (((y + 1) as f64 * ky).ceil() as usize).min(fh).max((y as f64 * ky) as usize + 1));
+                    let mut acc = 0.0f32;
+                    let mut n = 0.0f32;
+                    for yy in y0..y1 {
+                        for xx in x0..x1 {
+                            acc += field[yy * fw + xx];
+                            n += 1.0;
+                        }
+                    }
+                    let c = if n > 0.0 { acc / n } else { 0.0 };
+                    px.push([paper[0] + (ink[0] - paper[0]) * c, paper[1] + (ink[1] - paper[1]) * c, paper[2] + (ink[2] - paper[2]) * c, 1.0]);
+                }
+            }
+            extreme::Target { w, h, px, bg: Some(paper) }
+        }
+    }
 }
 
 fn median_rgb(it: impl Iterator<Item = [u8; 3]>) -> [u8; 3] {
@@ -996,6 +1094,20 @@ mod tests {
     }
 
     #[test]
+    fn estrema_migliora_e_resta_valida() {
+        let big = RgbaImage::from_fn(900, 600, |x, y| {
+            let (dx, dy) = (x as f64 - 600.0, y as f64 - 300.0);
+            if dx * dx + dy * dy < 150.0 * 150.0 { image::Rgba([240, 180, 50, 255]) } else if (100..400).contains(&x) && (150..450).contains(&y) { image::Rgba([30, 80, 120, 255]) } else { image::Rgba([255, 255, 255, 255]) }
+        });
+        let small = DynamicImage::ImageRgba8(image::imageops::resize(&big, 180, 120, image::imageops::FilterType::Triangle));
+        let o = Opts { mode: Mode::Logo, precise: true, extreme: true, extreme_secs: 20, ..Default::default() };
+        let out = vectorize(&small, None, &o, &mut |_| {}, &|| false).unwrap();
+        assert!(out.svg.starts_with("<svg") && out.svg.trim_end().ends_with("</svg>"));
+        assert!(!out.svg.contains("NaN") && !out.svg.contains("inf"), "{}", out.svg);
+        assert_eq!(out.colors, 3);
+    }
+
+    #[test]
     fn pixel_art_a_quadratini() {
         let img = RgbaImage::from_fn(8, 8, |x, y| if (x + y) % 2 == 0 { image::Rgba([0, 0, 0, 255]) } else { image::Rgba([255, 255, 255, 255]) });
         let out = run(img, Mode::Auto);
@@ -1095,6 +1207,123 @@ fn shift(s: &mut Shape, d: f64) {
                         m(p);
                     }
                 }
+            }
+        }
+    }
+}
+
+/// Una sfumatura lineare sui pixel dati: (errore medio ΔE, differenza tra gli estremi ΔE).
+fn linear_fit(pts: &[(f64, f64, [f64; 3])]) -> Option<(f64, f64)> {
+    let n = pts.len() as f64;
+    if n < 50.0 {
+        return None;
+    }
+    let (mx, my) = (pts.iter().map(|p| p.0).sum::<f64>() / n, pts.iter().map(|p| p.1).sum::<f64>() / n);
+    let mut mean = [0.0; 3];
+    for p in pts {
+        for k in 0..3 {
+            mean[k] += p.2[k] / n;
+        }
+    }
+    let (mut sxx, mut sxy, mut syy) = (0.0, 0.0, 0.0);
+    let (mut sxc, mut syc) = ([0.0; 3], [0.0; 3]);
+    for p in pts {
+        let (dx, dy) = (p.0 - mx, p.1 - my);
+        sxx += dx * dx;
+        sxy += dx * dy;
+        syy += dy * dy;
+        for k in 0..3 {
+            sxc[k] += dx * (p.2[k] - mean[k]);
+            syc[k] += dy * (p.2[k] - mean[k]);
+        }
+    }
+    let det = sxx * syy - sxy * sxy;
+    if det.abs() < 1e-9 {
+        return None;
+    }
+    let mut g = [[0.0f64; 2]; 3];
+    for k in 0..3 {
+        g[k][0] = (sxc[k] * syy - syc[k] * sxy) / det;
+        g[k][1] = (syc[k] * sxx - sxc[k] * sxy) / det;
+    }
+    let mut err = 0.0;
+    let (mut tmin, mut tmax) = (f64::MAX, f64::MIN);
+    for p in pts {
+        let (dx, dy) = (p.0 - mx, p.1 - my);
+        let mut e = 0.0;
+        for k in 0..3 {
+            let pred = mean[k] + g[k][0] * dx + g[k][1] * dy;
+            e += (p.2[k] - pred).powi(2);
+        }
+        err += e.sqrt();
+        // proiezione sulla direzione di massima variazione (per l'ampiezza)
+        let v = (0..3).map(|k| (g[k][0] * dx + g[k][1] * dy).powi(2)).sum::<f64>().sqrt() * (g[0][0] * dx + g[0][1] * dy + g[1][0] * dx + g[1][1] * dy + g[2][0] * dx + g[2][1] * dy).signum();
+        tmin = tmin.min(v);
+        tmax = tmax.max(v);
+    }
+    Some((err / n, tmax - tmin))
+}
+
+/// Unisce a coppie i colori confinanti che insieme sono una sfumatura regolare (finché ce ne sono).
+fn merge_gradients(lbl: &mut [u8], lab: &[[f32; 3]], pal: &[[f32; 3]], w: usize, h: usize, remap: &mut [usize]) {
+    let k = pal.len();
+    for _round in 0..k {
+        // confini tra i colori
+        let mut touch = vec![0usize; k * k];
+        let mut count = vec![0usize; k];
+        for y in 0..h {
+            for x in 0..w {
+                let a = lbl[y * w + x];
+                if a == NONE {
+                    continue;
+                }
+                count[a as usize] += 1;
+                if x + 1 < w {
+                    let b = lbl[y * w + x + 1];
+                    if b != NONE && b != a {
+                        touch[a as usize * k + b as usize] += 1;
+                    }
+                }
+                if y + 1 < h {
+                    let b = lbl[(y + 1) * w + x];
+                    if b != NONE && b != a {
+                        touch[a as usize * k + b as usize] += 1;
+                    }
+                }
+            }
+        }
+        let mut best: Option<(f64, usize, usize)> = None;
+        for a in 0..k {
+            for b in a + 1..k {
+                let t = touch[a * k + b] + touch[b * k + a];
+                // confine lungo (non due macchie che si sfiorano) e colori non troppo lontani
+                if t < 40 || count[a] == 0 || count[b] == 0 || d2(&pal[a], &pal[b]).sqrt() > 30.0 {
+                    continue;
+                }
+                let step = ((count[a] + count[b]) / 20_000).max(1);
+                let pts: Vec<(f64, f64, [f64; 3])> = (0..w * h)
+                    .filter(|&i| lbl[i] == a as u8 || lbl[i] == b as u8)
+                    .step_by(step)
+                    .map(|i| ((i % w) as f64, (i / w) as f64, [lab[i][0] as f64, lab[i][1] as f64, lab[i][2] as f64]))
+                    .collect();
+                if let Some((err, range)) = linear_fit(&pts) {
+                    // la sfumatura spiega i due colori quasi come due tinte piatte, e c'è davvero una variazione
+                    if err < 4.5 && range > 6.0 && best.map(|bb| err < bb.0).unwrap_or(true) {
+                        best = Some((err, a, b));
+                    }
+                }
+            }
+        }
+        let Some((_, a, b)) = best else { break };
+        let (keep, gone) = if count[a] >= count[b] { (a, b) } else { (b, a) };
+        for l in lbl.iter_mut() {
+            if *l == gone as u8 {
+                *l = keep as u8;
+            }
+        }
+        for r in remap.iter_mut() {
+            if *r == gone {
+                *r = keep;
             }
         }
     }
