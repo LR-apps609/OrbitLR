@@ -426,3 +426,16 @@ footer a{color:var(--on-forest-muted)}
 .bgfx[data-fx="dl"]::after,.bgfx[data-fx="foot"]::after{content:"";position:absolute;inset:0 0 auto;height:200px;background:linear-gradient(var(--forest-2),rgba(10,24,19,0))}
 .bgfx[data-fx="foot"]::after{height:90px}
 .bgfx[data-fx="man"]::after{content:"";position:absolute;inset:auto 0 0;height:180px;background:linear-gradient(rgba(10,24,19,0),var(--forest-2))}
+
+/* Il titolo dell'apertura più piccolo: protagonisti sono «Carica un file» e il cerchio dove trascinare */
+.hero h1.big{font-size:clamp(30px,3.6vw,48px);line-height:.98;letter-spacing:-.03em}
+.hero .upload{font-size:24px;padding:20px 34px 20px 26px;border-radius:22px;gap:14px;box-shadow:0 18px 40px -14px rgba(226,181,98,.55),0 0 0 0 rgba(226,181,98,.5)}
+.hero .upload svg{width:30px;height:30px}
+.hero .up-txt small{font-size:14.5px}
+@media (prefers-reduced-motion:no-preference){
+  .hero .upload{animation:upPulse 2.8s ease-in-out infinite}
+  @keyframes upPulse{0%,100%{box-shadow:0 18px 40px -14px rgba(226,181,98,.55),0 0 0 0 rgba(226,181,98,.45)}55%{box-shadow:0 18px 40px -14px rgba(226,181,98,.55),0 0 0 12px rgba(226,181,98,0)}}
+}
+.dropzone b{font-size:clamp(24px,2.8vw,34px)}
+.dz-or{font-size:18px}
+@media (max-width:860px){.hero h1.big{font-size:clamp(28px,8vw,38px)}.hero .upload{font-size:20px;padding:16px 24px 16px 20px}}
