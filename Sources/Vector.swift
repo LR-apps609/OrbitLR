@@ -19,6 +19,8 @@ enum Vector {
     static func arguments(_ param: String) -> [String] {
         // 4.4 · «+» in fondo: precisione massima (il ricalco lento, curva per curva sul bordo vero)
         if param.hasSuffix("+") { return arguments(String(param.dropLast())) + ["--precise"] }
+        // 4.5 · «*» in fondo: Estrema (più ricalchi in parallelo, il migliore ottimizzato contro l'originale)
+        if param.hasSuffix("*") { return arguments(String(param.dropLast())) + ["--extreme"] }
         switch param {
         case "logo": return ["--mode", "logo"]
         case "logot": return ["--mode", "logo", "--transparent"]
@@ -47,7 +49,7 @@ enum Vector {
 
         var args = [input.path, out.path] + arguments(param)
         var base = 0.0
-        if !param.hasPrefix("photo") && side > 96 && side <= (param.hasSuffix("+") ? aiBelowPrecise : aiBelow) {
+        if !param.hasPrefix("photo") && side > 96 && side <= (param.hasSuffix("+") || param.hasSuffix("*") ? aiBelowPrecise : aiBelow) {
             let up = tmp.appendingPathComponent("ingrandita.png")
             do {
                 // «Più nitido» 4×: i bordi tornano netti
@@ -62,6 +64,8 @@ enum Vector {
         let p = Process()
         p.executableURL = exe
         p.arguments = args
+        // «Estrema» usa tutti i core meno uno: a priorità bassa, il Mac resta reattivo
+        p.qualityOfService = .utility
         let err = Pipe()
         p.standardError = err
         p.standardOutput = FileHandle.nullDevice

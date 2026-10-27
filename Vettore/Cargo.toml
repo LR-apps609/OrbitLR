@@ -8,10 +8,14 @@ license = "MIT"
 [dependencies]
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "bmp", "tiff", "webp"] }
 imageproc = { version = "0.25", default-features = false }
+tiny-skia = { version = "0.11", default-features = false, features = ["std", "simd"] }
 
 [[bin]]
 name = "orbit-vector"
 path = "src/bin/orbit-vector.rs"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_System_Threading"] }
 
 [workspace]
 

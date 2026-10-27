@@ -5351,6 +5351,26 @@
         }
       }
     },
+    "Estrema": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extreme"
+          }
+        }
+      }
+    },
+    "Estrema · ottimizza tutto il disegno, fino a 5 minuti": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extreme · optimizes the whole drawing, up to 5 minutes"
+          }
+        }
+      }
+    },
     "Evidenziata": {
       "localizations": {
         "en": {
@@ -5896,6 +5916,16 @@
         }
       }
     },
+    "Foto estrema": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo extreme"
+          }
+        }
+      }
+    },
     "Foto più piccole e leggere": {
       "localizations": {
         "en": {
@@ -5922,6 +5952,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Photo+"
+          }
+        }
+      }
+    },
+    "Foto, estrema · la più fedele, fino a 5 minuti": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo, extreme · the most faithful, up to 5 minutes"
           }
         }
       }

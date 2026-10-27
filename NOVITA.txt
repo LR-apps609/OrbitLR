@@ -1,3 +1,9 @@
+Novità della 4.5 «Estrema»:
+• Vettoriale (SVG) → «Estrema»: dopo il ricalco OrbitLR disegna l’SVG intero, lo confronta con l’originale pixel per pixel e sposta insieme tutti i punti di tutte le curve e i colori finché non migliora più
+• Firme e disegni a tratto: prova più ricalchi diversi, uno per core, e tiene quello che combacia meglio; il colore dell’inchiostro ora è quello vero
+• Sfumature unite: dove un colore cambia piano piano non ci sono più fasce, ma una sfumatura sola
+• Usa tutti i core meno uno, a priorità bassa: il Mac resta usabile. Fino a 5 minuti, di solito meno
+
 Novità della 4.4.1 «Centrato»:
 • Il pulsante «Nuovo aggiornamento» in alto è centrato come gli altri pulsanti della barra
 

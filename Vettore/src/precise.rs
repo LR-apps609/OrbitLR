@@ -109,7 +109,9 @@ pub fn iso_contours(v: &[f32], w: usize, h: usize) -> Vec<Vec<P>> {
         }
     }
     let mut out = vec![];
-    let keys: Vec<Key> = next.keys().copied().collect();
+    // in ordine fisso: lo stesso file dà sempre lo stesso SVG
+    let mut keys: Vec<Key> = next.keys().copied().collect();
+    keys.sort_by_key(|k| (k.2, k.1, k.0));
     let mut used: std::collections::HashSet<Key> = std::collections::HashSet::new();
     for k0 in keys {
         if used.contains(&k0) {

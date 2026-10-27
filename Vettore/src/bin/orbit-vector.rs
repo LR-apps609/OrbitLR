@@ -23,6 +23,18 @@ fn main() {
             "--transparent" => o.transparent = true,
             "--flat" => o.gradients = false,
             "--precise" => o.precise = true,
+            "--extreme" => {
+                o.precise = true;
+                o.extreme = true;
+            }
+            "--seconds" => {
+                i += 1;
+                o.extreme_secs = args.get(i).and_then(|s| s.parse().ok()).unwrap_or(300);
+            }
+            "--threads" => {
+                i += 1;
+                o.threads = args.get(i).and_then(|s| s.parse().ok()).unwrap_or(0);
+            }
             "--upscaled" => {
                 i += 1;
                 up = args.get(i).cloned();

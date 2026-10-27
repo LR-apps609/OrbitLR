@@ -1,3 +1,9 @@
+What’s new in 4.5 “Extreme”:
+• Vector (SVG) → “Extreme”: after tracing, OrbitLR draws the whole SVG, compares it with the original pixel by pixel and moves all the points of all the curves, and the colors, together until it stops improving
+• Signatures and line drawings: it tries several different tracings, one per core, and keeps the one that matches best; the ink color is now the true one
+• Merged gradients: where a color changes slowly there are no more bands, just one gradient
+• It uses all cores but one, at low priority: the Mac stays usable. Up to 5 minutes, usually less
+
 What’s new in 4.4.1 “Centered”:
 • The “New update” button at the top is centered like the other toolbar buttons
 

@@ -15,6 +15,7 @@
 
 pub mod fit;
 pub mod precise;
+pub mod extreme;
 
 use fit::{FitOpts, Seg, Shape, P};
 use image::{DynamicImage, GenericImageView, GrayImage, Luma, RgbaImage};
@@ -58,11 +59,17 @@ pub struct Opts {
     pub gradients: bool,
     /// «Precisione massima»: il ricalco lento, curva per curva sul bordo vero (anche qualche minuto)
     pub precise: bool,
+    /// «Estrema»: dopo il ricalco, l'SVG intero si ottimizza contro l'originale (qualche minuto)
+    pub extreme: bool,
+    /// Tempo massimo per «Estrema», in secondi
+    pub extreme_secs: u64,
+    /// Quanti calcoli insieme per «Estrema» (0 = tutti i core meno uno)
+    pub threads: usize,
 }
 
 impl Default for Opts {
     fn default() -> Self {
-        Opts { mode: Mode::Auto, detail: 2, transparent: false, gradients: true, precise: false }
+        Opts { mode: Mode::Auto, detail: 2, transparent: false, gradients: true, precise: false, extreme: false, extreme_secs: 300, threads: 0 }
     }
 }
 
@@ -402,6 +409,7 @@ fn mask_contours(mask: &[bool], w: usize, h: usize, pad: usize) -> Vec<Vec<P>> {
         .collect()
 }
 
+#[derive(Clone, Copy)]
 struct Fmt {
     k: f64,
     dec: usize,
@@ -524,7 +532,7 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
         (_, true) => (3200.0 / maxside).clamp(0.6, 6.0),
     };
     let (ww, wh) = (((w as f64 * s).round() as u32).max(2), ((h as f64 * s).round() as u32).max(2));
-    let base: RgbaImage = match upscaled {
+    let make_base = |upscaled: Option<&DynamicImage>| -> RgbaImage { match upscaled {
         Some(up) => {
             let mut u = image::imageops::resize(&up.to_rgba8(), ww, wh, image::imageops::FilterType::Triangle);
             // la trasparenza viene dall'originale
@@ -542,7 +550,10 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
                 b
             }
         }
-    };
+    } };
+    let base = make_base(upscaled);
+    // per «Estrema»: anche la versione senza l'ingrandimento con l'IA, come tentativo in più
+    let plain: Option<RgbaImage> = None;
     if cancelled() {
         return Err("annullato".into());
     }
@@ -558,6 +569,80 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
         _ => 1.0,
     };
 
+
+    let ctx = Ctx { orig: &orig, small: &small, lut: &lut, mode, s, u, wu, hu, w, h, has_alpha, o, base: &base, plain: plain.as_ref(), fmt: f };
+    let def = Var { tolk, detail, plain: false };
+    let cand = if o.extreme {
+        extreme_search(&ctx, def, progress, cancelled)?
+    } else {
+        trace_variant(&ctx, &def, progress, cancelled)?
+    };
+    progress(1.0);
+    Ok(cand_output(&cand, &f, w, h, mode))
+}
+
+fn cand_output(cand: &Cand, f: &Fmt, w: u32, h: u32, mode: Mode) -> Output {
+    if let Some(col) = cand.bw {
+        let shapes: &[Shape] = cand.layers.first().map(|l| &l.shapes[..]).unwrap_or(&[]);
+        let fill = match cand.layers.first().map(|l| &l.fill) {
+            Some(extreme::Fill::Flat(c)) => hexf(*c),
+            _ => hex(col),
+        };
+        let svg = format!(
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\" viewBox=\"0 0 {w} {h}\"><path fill=\"{}\" fill-rule=\"evenodd\" d=\"{}\"/></svg>\n",
+            fill,
+            shapes_to_d(shapes, f)
+        );
+        return Output { svg, mode, colors: 1, shapes: shapes.len() };
+    }
+    let layers = &cand.layers;
+    let nshapes = layers.iter().map(|l| if l.rect { 1 } else { l.shapes.len() }).sum();
+    let svg = format!("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\" viewBox=\"0 0 {w} {h}\">{}</svg>\n", layers_svg(layers, f, w, h));
+    Output { svg, mode, colors: cand.colors, shapes: nshapes }
+}
+
+/// Quello che serve per ricalcare (uguale per tutti i tentativi).
+#[derive(Clone, Copy)]
+struct Ctx<'a> {
+    orig: &'a RgbaImage,
+    small: &'a RgbaImage,
+    lut: &'a LabLut,
+    mode: Mode,
+    s: f64,
+    u: f64,
+    wu: usize,
+    hu: usize,
+    w: u32,
+    h: u32,
+    has_alpha: bool,
+    o: &'a Opts,
+    base: &'a RgbaImage,
+    plain: Option<&'a RgbaImage>,
+    fmt: Fmt,
+}
+
+/// Un modo di ricalcare: tolleranza delle curve, quanti colori, con o senza l'ingrandimento con l'IA.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Var {
+    tolk: f64,
+    detail: u8,
+    plain: bool,
+}
+
+/// Un ricalco pronto (per «Estrema»: un tentativo).
+struct Cand {
+    layers: Vec<extreme::Layer>,
+    colors: usize,
+    /// bianco e nero: il colore dell'inchiostro
+    bw: Option<[u8; 3]>,
+    /// bianco e nero con «Estrema»: la carta e l'inchiostro puliti da raggiungere
+    target: Option<extreme::Target>,
+}
+
+fn trace_variant(c: &Ctx, v: &Var, progress: &mut dyn FnMut(f64), cancelled: &dyn Fn() -> bool) -> Result<Cand, String> {
+    let Ctx { small, lut, mode, s, u, wu, hu, w, h, has_alpha, o, .. } = *c;
+    let base: &RgbaImage = if v.plain { c.plain.unwrap_or(c.base) } else { c.base };
+    let (tolk, detail) = (v.tolk, v.detail);
     if mode == Mode::Bw {
         // Bianco e nero: lo sfondo si «spiana» (luce non uniforme), poi la soglia a metà tra carta e inchiostro
         let g: Vec<f32> = base.pixels().map(|p| if p.0[3] < 128 { 255.0 } else { 0.299 * p.0[0] as f32 + 0.587 * p.0[1] as f32 + 0.114 * p.0[2] as f32 }).collect();
@@ -584,23 +669,25 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
         let core = &inks[..(inks.len() * 3 / 10).max(1).min(inks.len())];
         let col = if core.is_empty() { [0, 0, 0] } else { median_rgb(core.iter().map(|c| c.1)) };
         progress(0.45);
-        let shapes = if o.precise {
-            // copertura: 0 sulla carta, 1 nell'inchiostro pieno; il bordo vero è a metà
+        // copertura: 0 sulla carta, 1 nell'inchiostro pieno; il bordo vero è a metà
+        let field: Vec<f32> = if o.precise || o.extreme {
             let alpha: Vec<f32> = base.pixels().map(|p| p.0[3] as f32 / 255.0).collect();
-            let field: Vec<f32> = norm.iter().zip(&alpha).map(|(v, a)| (((paper - v) / (paper - ink).max(1.0)).clamp(0.0, 1.0)) * a).collect();
+            norm.iter().zip(&alpha).map(|(v, a)| (((paper - v) / (paper - ink).max(1.0)).clamp(0.0, 1.0)) * a).collect()
+        } else {
+            vec![]
+        };
+        let shapes = if o.precise || o.extreme {
             trace_precise(&field, wu, hu, u, tolk, (3.0 * u) as usize, progress, 0.45, 0.95, cancelled)?
         } else {
             let fo = FitOpts { sigma: 0.6 * u, tol: 0.5 * u * tolk, corner_win: (1.5 * u).round().max(3.0) as usize, corner_deg: 50.0 };
             trace_mask(&mask, wu, hu, u, &fo, (3.0 * u) as usize)
         };
+        let inkf = [col[0] as f32 / 255.0, col[1] as f32 / 255.0, col[2] as f32 / 255.0];
+        let target = if o.extreme { Some(target_of(c.orig, Some((&field, wu, hu, inkf, [1.0, 1.0, 1.0])))) } else { None };
         progress(0.95);
-        let svg = format!(
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\" viewBox=\"0 0 {w} {h}\"><path fill=\"{}\" fill-rule=\"evenodd\" d=\"{}\"/></svg>\n",
-            hex(col),
-            shapes_to_d(&shapes, &f)
-        );
-        return Ok(Output { svg, mode, colors: 1, shapes: shapes.len() });
+        return Ok(Cand { layers: vec![extreme::Layer { fill: extreme::Fill::Flat(inkf), shapes, rect: false }], colors: 1, bw: Some(col), target });
     }
+
 
     // Colori
     let po = match (mode, detail) {
@@ -635,6 +722,13 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
                 lbl[i] = best[i].1;
             }
         }
+    }
+    // Sfumature: colori vicini che insieme formano una sfumatura regolare diventano un solo strato sfumato
+    // (al posto delle fasce). Solo con la precisione massima e oltre.
+    let mut remap: Vec<usize> = (0..pal.len()).collect();
+    if (o.precise || o.extreme) && mode != Mode::Bw {
+        let lab_all: Vec<[f32; 3]> = base.pixels().map(|p| lut.lab(p.0[0], p.0[1], p.0[2])).collect();
+        merge_gradients(&mut lbl, &lab_all, &pal, wu, hu, &mut remap);
     }
     let mut area = vec![0usize; pal.len()];
     for &l in &lbl {
@@ -710,23 +804,20 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
     let rgb: Vec<[u8; 3]> = pal.iter().map(|c| lab_to_rgb(*c)).collect();
     let base_lab: Vec<[f32; 3]> = if o.gradients || o.precise { base.pixels().map(|p| lut.lab(p.0[0], p.0[1], p.0[2])).collect() } else { vec![] };
     let dil = (2.0 * s).round().max(1.0) as usize;
-    let mut body = String::new();
-    let mut nshapes = 0;
+    let mut layers: Vec<extreme::Layer> = vec![];
+    let pspan = 0.6;
+    let to01 = |c: [u8; 3]| [c[0] as f32 / 255.0, c[1] as f32 / 255.0, c[2] as f32 / 255.0];
     for (n, &c) in order.iter().enumerate() {
         if cancelled() {
             return Err("annullato".into());
         }
-        progress(0.35 + 0.6 * n as f64 / order.len() as f64);
-        let mut col = hex(rgb[c]);
-        if let Some(g) = gradient_for(&lbl, &base_lab, wu, c as u8, s) {
-            let id = format!("g{n}");
-            let _ = write!(body, "<linearGradient id=\"{id}\" gradientUnits=\"userSpaceOnUse\" x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\"><stop offset=\"0\" stop-color=\"{}\"/><stop offset=\"1\" stop-color=\"{}\"/></linearGradient>",
-                f.n(g.0 + 0.5), f.n(g.1 + 0.5), f.n(g.2 + 0.5), f.n(g.3 + 0.5), hex(g.4), hex(g.5));
-            col = format!("url(#{id})");
-        }
+        progress(0.35 + pspan * n as f64 / order.len() as f64);
+        let fill = match gradient_for(&lbl, &base_lab, wu, c as u8, s) {
+            Some(g) => extreme::Fill::Linear { p0: P::new(g.0 + 0.5, g.1 + 0.5), p1: P::new(g.2 + 0.5, g.3 + 0.5), c0: to01(g.4), c1: to01(g.5) },
+            None => extreme::Fill::Flat(to01(rgb[c])),
+        };
         if n == 0 && !any_none && !has_alpha {
-            let _ = write!(body, "<rect width=\"{w}\" height=\"{h}\" fill=\"{col}\"/>");
-            nshapes += 1;
+            layers.push(extreme::Layer { fill, shapes: vec![], rect: true });
             continue;
         }
         let own: Vec<bool> = lbl.iter().map(|&l| l == c as u8).collect();
@@ -742,11 +833,12 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
                 let inset = |l: usize| l == c || (near[i] && rank[l] != usize::MAX && rank[l] > n);
                 let a = base.as_raw()[i * 4 + 3] as f32 / 255.0;
                 let (ci, cj, t) = mix(&pal, &base_lab[i]);
+                let (ci, cj) = (remap[ci], remap[cj]);
                 let m = (if inset(ci) { 1.0 - t } else { 0.0 }) + (if inset(cj) { t } else { 0.0 });
                 m * a
             }).collect();
-            let p0 = 0.35 + 0.6 * n as f64 / order.len() as f64;
-            let p1 = 0.35 + 0.6 * (n + 1) as f64 / order.len() as f64;
+            let p0 = 0.35 + pspan * n as f64 / order.len() as f64;
+            let p1 = 0.35 + pspan * (n + 1) as f64 / order.len() as f64;
             trace_precise(&field, wu, hu, u, tolk, pad, progress, p0, p1, cancelled)?
         } else {
             trace_mask(&mask, wu, hu, u, &fo, pad)
@@ -754,12 +846,209 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
         if shapes.is_empty() {
             continue;
         }
-        nshapes += shapes.len();
-        let _ = write!(body, "<path fill=\"{col}\" fill-rule=\"evenodd\" d=\"{}\"/>", shapes_to_d(&shapes, &f));
+        layers.push(extreme::Layer { fill, shapes, rect: false });
     }
-    progress(1.0);
-    let svg = format!("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\" viewBox=\"0 0 {w} {h}\">{body}</svg>\n");
-    Ok(Output { svg, mode, colors: order.len(), shapes: nshapes })
+    progress(0.98);
+    Ok(Cand { layers, colors: order.len(), bw: None, target: None })
+}
+
+/// Quanti calcoli insieme: tutti i core meno uno (il computer resta usabile).
+pub fn workers(asked: usize) -> usize {
+    let n = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(2);
+    if asked > 0 { asked.min(n).max(1) } else { n.saturating_sub(1).max(1) }
+}
+
+/// I calcoli lunghi vanno a priorità bassa: il computer resta reattivo (su Mac ci pensa l'app).
+pub(crate) fn lower_priority() {
+    #[cfg(windows)]
+    unsafe {
+        use windows_sys::Win32::System::Threading::{GetCurrentThread, SetThreadPriority, THREAD_PRIORITY_BELOW_NORMAL};
+        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
+    }
+}
+
+/// I tentativi di «Estrema». Provato sui file di prova con l'originale vero accanto: nel bianco e nero
+/// (firme, disegni a tratto) una tolleranza più stretta a volte rende meglio, e il confronto con la carta e
+/// l'inchiostro puliti sa sceglierla; nei loghi a colori le differenze tra tentativi sono sotto il pixel e il
+/// confronto con l'originale piccolo sceglie spesso quello sbagliato: lì un solo ricalco.
+fn variants(c: &Ctx, def: Var) -> Vec<Var> {
+    let mut v = vec![def];
+    if c.mode == Mode::Bw {
+        v.push(Var { tolk: def.tolk * 0.5, ..def });
+        v.push(Var { tolk: def.tolk * 0.7, ..def });
+        v.push(Var { tolk: def.tolk * 1.4, ..def });
+    }
+    v
+}
+
+/// «Estrema»: più ricalchi diversi in parallelo, ognuno ottimizzato per un po' contro l'originale; il migliore
+/// (confrontato sulla stessa immagine) continua da solo con tutti i core finché il tempo finisce o non migliora più.
+fn extreme_search(c: &Ctx, def: Var, progress: &mut dyn FnMut(f64), cancelled: &dyn Fn() -> bool) -> Result<Cand, String> {
+    use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
+    use std::sync::Mutex;
+    use std::time::{Duration, Instant};
+    let started = Instant::now();
+    let total = Duration::from_secs(c.o.extreme_secs.max(5));
+    let vars = variants(c, def);
+    let threads = workers(c.o.threads).min(vars.len());
+    let rounds = vars.len().div_ceil(threads);
+    // il tempo diviso tra i giri; ogni tentativo usa i core rimasti liberi per i suoi calcoli
+    let per_try = total.mul_f64(1.0 / rounds as f64);
+    let inner = (workers(c.o.threads) / threads).max(1);
+    let k = 1.0 / c.s;
+    // l'immagine da raggiungere a colori: l'originale ripulito (si insegue la forma, non gli artefatti JPEG)
+    let color_target = if c.mode == Mode::Bw { None } else { Some(target_of(c.small, None)) };
+    let stop = AtomicBool::new(false);
+    let next = AtomicUsize::new(0);
+    let done = AtomicUsize::new(0);
+    let prog: Vec<AtomicU64> = vars.iter().map(|_| AtomicU64::new(0f64.to_bits())).collect();
+    let results: Mutex<Vec<Option<Result<Cand, String>>>> = Mutex::new(vars.iter().map(|_| None).collect());
+    std::thread::scope(|sc| {
+        for _ in 0..threads {
+            sc.spawn(|| {
+                lower_priority();
+                loop {
+                    let i = next.fetch_add(1, Ordering::SeqCst);
+                    if i >= vars.len() {
+                        break;
+                    }
+                    let set = |p: f64| prog[i].store(p.to_bits(), Ordering::Relaxed);
+                    let stopped = || stop.load(Ordering::Relaxed);
+                    let r = trace_variant(c, &vars[i], &mut |p| set(0.5 * p), &stopped).map(|mut cand| {
+                        if let Some(t) = cand.target.as_ref().or(color_target.as_ref()) {
+                            if !cand.layers.iter().all(|l| l.rect || l.shapes.is_empty()) {
+                                extreme::optimize(&mut cand.layers, k, t, 2000, per_try, inner, &mut |p| set(0.5 + 0.5 * p), &stopped);
+                            }
+                        }
+                        cand
+                    });
+                    set(1.0);
+                    results.lock().unwrap()[i] = Some(r);
+                    done.fetch_add(1, Ordering::SeqCst);
+                }
+            });
+        }
+        while done.load(Ordering::SeqCst) < vars.len() {
+            std::thread::sleep(Duration::from_millis(150));
+            if cancelled() {
+                stop.store(true, Ordering::Relaxed);
+            }
+            let p: f64 = prog.iter().map(|a| f64::from_bits(a.load(Ordering::Relaxed))).sum::<f64>() / vars.len() as f64;
+            progress(0.2 + 0.78 * p);
+        }
+    });
+    if cancelled() {
+        return Err("annullato".into());
+    }
+    let mut cands: Vec<(usize, Cand)> = vec![];
+    let mut first_err = None;
+    for (i, r) in results.into_inner().unwrap().into_iter().enumerate() {
+        match r {
+            Some(Ok(cand)) => cands.push((i, cand)),
+            Some(Err(e)) => {
+                first_err.get_or_insert(e);
+            }
+            None => {}
+        }
+    }
+    if cands.is_empty() {
+        return Err(first_err.unwrap_or_else(|| "nessun ricalco riuscito".into()));
+    }
+    if cands.len() == 1 {
+        return Ok(cands.swap_remove(0).1);
+    }
+    // Il confronto tra i tentativi (bianco e nero): sulla carta e l'inchiostro puliti del ricalco normale
+    let judge: &extreme::Target = match cands.iter().find(|(i, _)| *i == 0).and_then(|(_, c)| c.target.as_ref()).or_else(|| cands[0].1.target.as_ref()).or(color_target.as_ref()) {
+        Some(t) => t,
+        None => return Ok(cands.swap_remove(0).1),
+    };
+    // un poco di preferenza per i disegni più semplici a parità di errore (file più puliti)
+    let score = |cand: &Cand| {
+        let nodes: usize = cand.layers.iter().map(|l| l.shapes.iter().map(fit::nodes).sum::<usize>()).sum();
+        extreme::loss(&extreme::render(&cand.layers, k, judge), judge) * (1.0 + 0.01 * (1.0 + nodes as f64 / 500.0).ln())
+    };
+    let scores: Vec<f64> = cands.iter().map(|(_, cand)| score(cand)).collect();
+    if let Ok(dir) = std::env::var("VETTORE_DUMP") {
+        for (i, cand) in &cands {
+            let _ = std::fs::write(format!("{dir}.v{i}.svg"), cand_output(cand, &c.fmt, c.w, c.h, c.mode).svg);
+        }
+    }
+    let best = (0..cands.len()).min_by(|a, b| scores[*a].partial_cmp(&scores[*b]).unwrap_or(std::cmp::Ordering::Equal)).unwrap();
+    if std::env::var("VETTORE_DEBUG").is_ok() {
+        for (n, (i, _)) in cands.iter().enumerate() {
+            eprintln!("estrema: tentativo {:?} → {:.6}{}", vars[*i], scores[n], if n == best { "  ← il migliore" } else { "" });
+        }
+    }
+    // (il migliore non si ottimizza ancora: altre passate abbassano l'errore sull'originale piccolo
+    // ma piegano le curve sui pixel; provato con l'originale vero accanto, peggio)
+    let (_, cand) = cands.swap_remove(best);
+    if std::env::var("VETTORE_DEBUG").is_ok() {
+        eprintln!("estrema: {:.0} s in tutto", started.elapsed().as_secs_f64());
+    }
+    Ok(cand)
+}
+
+fn hexf(c: [f32; 3]) -> String {
+    hex([(c[0].clamp(0.0, 1.0) * 255.0).round() as u8, (c[1].clamp(0.0, 1.0) * 255.0).round() as u8, (c[2].clamp(0.0, 1.0) * 255.0).round() as u8])
+}
+
+fn layers_svg(layers: &[extreme::Layer], f: &Fmt, w: u32, h: u32) -> String {
+    let mut body = String::new();
+    for (n, l) in layers.iter().enumerate() {
+        let col = match &l.fill {
+            extreme::Fill::Flat(c) => hexf(*c),
+            extreme::Fill::Linear { p0, p1, c0, c1 } => {
+                let id = format!("g{n}");
+                let _ = write!(body, "<linearGradient id=\"{id}\" gradientUnits=\"userSpaceOnUse\" x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\"><stop offset=\"0\" stop-color=\"{}\"/><stop offset=\"1\" stop-color=\"{}\"/></linearGradient>",
+                    f.n(p0.x), f.n(p0.y), f.n(p1.x), f.n(p1.y), hexf(*c0), hexf(*c1));
+                format!("url(#{id})")
+            }
+        };
+        if l.rect {
+            let _ = write!(body, "<rect width=\"{w}\" height=\"{h}\" fill=\"{col}\"/>");
+        } else {
+            let _ = write!(body, "<path fill=\"{col}\" fill-rule=\"evenodd\" d=\"{}\"/>", shapes_to_d(&l.shapes, f));
+        }
+    }
+    body
+}
+
+/// L'immagine da raggiungere per «Estrema»: l'originale premoltiplicato, o (bianco e nero) la sua versione pulita.
+fn target_of(orig: &RgbaImage, bw: Option<(&[f32], usize, usize, [f32; 3], [f32; 3])>) -> extreme::Target {
+    let (w, h) = (orig.width() as usize, orig.height() as usize);
+    match bw {
+        None => extreme::Target {
+            w,
+            h,
+            px: orig.pixels().map(|p| {
+                let a = p.0[3] as f32 / 255.0;
+                [p.0[0] as f32 / 255.0 * a, p.0[1] as f32 / 255.0 * a, p.0[2] as f32 / 255.0 * a, a]
+            }).collect(),
+            bg: None,
+        },
+        Some((field, fw, fh, ink, paper)) => {
+            // la copertura (0…1) riportata alle dimensioni dell'originale: carta + inchiostro × copertura
+            let mut px = Vec::with_capacity(w * h);
+            let (kx, ky) = (fw as f64 / w as f64, fh as f64 / h as f64);
+            for y in 0..h {
+                for x in 0..w {
+                    let (x0, x1) = ((x as f64 * kx) as usize, (((x + 1) as f64 * kx).ceil() as usize).min(fw).max((x as f64 * kx) as usize + 1));
+                    let (y0, y1) = ((y as f64 * ky) as usize, (((y + 1) as f64 * ky).ceil() as usize).min(fh).max((y as f64 * ky) as usize + 1));
+                    let mut acc = 0.0f32;
+                    let mut n = 0.0f32;
+                    for yy in y0..y1 {
+                        for xx in x0..x1 {
+                            acc += field[yy * fw + xx];
+                            n += 1.0;
+                        }
+                    }
+                    let c = if n > 0.0 { acc / n } else { 0.0 };
+                    px.push([paper[0] + (ink[0] - paper[0]) * c, paper[1] + (ink[1] - paper[1]) * c, paper[2] + (ink[2] - paper[2]) * c, 1.0]);
+                }
+            }
+            extreme::Target { w, h, px, bg: Some(paper) }
+        }
+    }
 }
 
 fn median_rgb(it: impl Iterator<Item = [u8; 3]>) -> [u8; 3] {
@@ -996,6 +1285,20 @@ mod tests {
     }
 
     #[test]
+    fn estrema_migliora_e_resta_valida() {
+        let big = RgbaImage::from_fn(900, 600, |x, y| {
+            let (dx, dy) = (x as f64 - 600.0, y as f64 - 300.0);
+            if dx * dx + dy * dy < 150.0 * 150.0 { image::Rgba([240, 180, 50, 255]) } else if (100..400).contains(&x) && (150..450).contains(&y) { image::Rgba([30, 80, 120, 255]) } else { image::Rgba([255, 255, 255, 255]) }
+        });
+        let small = DynamicImage::ImageRgba8(image::imageops::resize(&big, 180, 120, image::imageops::FilterType::Triangle));
+        let o = Opts { mode: Mode::Logo, precise: true, extreme: true, extreme_secs: 20, ..Default::default() };
+        let out = vectorize(&small, None, &o, &mut |_| {}, &|| false).unwrap();
+        assert!(out.svg.starts_with("<svg") && out.svg.trim_end().ends_with("</svg>"));
+        assert!(!out.svg.contains("NaN") && !out.svg.contains("inf"), "{}", out.svg);
+        assert_eq!(out.colors, 3);
+    }
+
+    #[test]
     fn pixel_art_a_quadratini() {
         let img = RgbaImage::from_fn(8, 8, |x, y| if (x + y) % 2 == 0 { image::Rgba([0, 0, 0, 255]) } else { image::Rgba([255, 255, 255, 255]) });
         let out = run(img, Mode::Auto);
@@ -1095,6 +1398,123 @@ fn shift(s: &mut Shape, d: f64) {
                         m(p);
                     }
                 }
+            }
+        }
+    }
+}
+
+/// Una sfumatura lineare sui pixel dati: (errore medio ΔE, differenza tra gli estremi ΔE).
+fn linear_fit(pts: &[(f64, f64, [f64; 3])]) -> Option<(f64, f64)> {
+    let n = pts.len() as f64;
+    if n < 50.0 {
+        return None;
+    }
+    let (mx, my) = (pts.iter().map(|p| p.0).sum::<f64>() / n, pts.iter().map(|p| p.1).sum::<f64>() / n);
+    let mut mean = [0.0; 3];
+    for p in pts {
+        for k in 0..3 {
+            mean[k] += p.2[k] / n;
+        }
+    }
+    let (mut sxx, mut sxy, mut syy) = (0.0, 0.0, 0.0);
+    let (mut sxc, mut syc) = ([0.0; 3], [0.0; 3]);
+    for p in pts {
+        let (dx, dy) = (p.0 - mx, p.1 - my);
+        sxx += dx * dx;
+        sxy += dx * dy;
+        syy += dy * dy;
+        for k in 0..3 {
+            sxc[k] += dx * (p.2[k] - mean[k]);
+            syc[k] += dy * (p.2[k] - mean[k]);
+        }
+    }
+    let det = sxx * syy - sxy * sxy;
+    if det.abs() < 1e-9 {
+        return None;
+    }
+    let mut g = [[0.0f64; 2]; 3];
+    for k in 0..3 {
+        g[k][0] = (sxc[k] * syy - syc[k] * sxy) / det;
+        g[k][1] = (syc[k] * sxx - sxc[k] * sxy) / det;
+    }
+    let mut err = 0.0;
+    let (mut tmin, mut tmax) = (f64::MAX, f64::MIN);
+    for p in pts {
+        let (dx, dy) = (p.0 - mx, p.1 - my);
+        let mut e = 0.0;
+        for k in 0..3 {
+            let pred = mean[k] + g[k][0] * dx + g[k][1] * dy;
+            e += (p.2[k] - pred).powi(2);
+        }
+        err += e.sqrt();
+        // proiezione sulla direzione di massima variazione (per l'ampiezza)
+        let v = (0..3).map(|k| (g[k][0] * dx + g[k][1] * dy).powi(2)).sum::<f64>().sqrt() * (g[0][0] * dx + g[0][1] * dy + g[1][0] * dx + g[1][1] * dy + g[2][0] * dx + g[2][1] * dy).signum();
+        tmin = tmin.min(v);
+        tmax = tmax.max(v);
+    }
+    Some((err / n, tmax - tmin))
+}
+
+/// Unisce a coppie i colori confinanti che insieme sono una sfumatura regolare (finché ce ne sono).
+fn merge_gradients(lbl: &mut [u8], lab: &[[f32; 3]], pal: &[[f32; 3]], w: usize, h: usize, remap: &mut [usize]) {
+    let k = pal.len();
+    for _round in 0..k {
+        // confini tra i colori
+        let mut touch = vec![0usize; k * k];
+        let mut count = vec![0usize; k];
+        for y in 0..h {
+            for x in 0..w {
+                let a = lbl[y * w + x];
+                if a == NONE {
+                    continue;
+                }
+                count[a as usize] += 1;
+                if x + 1 < w {
+                    let b = lbl[y * w + x + 1];
+                    if b != NONE && b != a {
+                        touch[a as usize * k + b as usize] += 1;
+                    }
+                }
+                if y + 1 < h {
+                    let b = lbl[(y + 1) * w + x];
+                    if b != NONE && b != a {
+                        touch[a as usize * k + b as usize] += 1;
+                    }
+                }
+            }
+        }
+        let mut best: Option<(f64, usize, usize)> = None;
+        for a in 0..k {
+            for b in a + 1..k {
+                let t = touch[a * k + b] + touch[b * k + a];
+                // confine lungo (non due macchie che si sfiorano) e colori non troppo lontani
+                if t < 40 || count[a] == 0 || count[b] == 0 || d2(&pal[a], &pal[b]).sqrt() > 30.0 {
+                    continue;
+                }
+                let step = ((count[a] + count[b]) / 20_000).max(1);
+                let pts: Vec<(f64, f64, [f64; 3])> = (0..w * h)
+                    .filter(|&i| lbl[i] == a as u8 || lbl[i] == b as u8)
+                    .step_by(step)
+                    .map(|i| ((i % w) as f64, (i / w) as f64, [lab[i][0] as f64, lab[i][1] as f64, lab[i][2] as f64]))
+                    .collect();
+                if let Some((err, range)) = linear_fit(&pts) {
+                    // la sfumatura spiega i due colori quasi come due tinte piatte, e c'è davvero una variazione
+                    if err < 4.5 && range > 6.0 && best.map(|bb| err < bb.0).unwrap_or(true) {
+                        best = Some((err, a, b));
+                    }
+                }
+            }
+        }
+        let Some((_, a, b)) = best else { break };
+        let (keep, gone) = if count[a] >= count[b] { (a, b) } else { (b, a) };
+        for l in lbl.iter_mut() {
+            if *l == gone as u8 {
+                *l = keep as u8;
+            }
+        }
+        for r in remap.iter_mut() {
+            if *r == gone {
+                *r = keep;
             }
         }
     }
