@@ -1,3 +1,8 @@
+What’s new in 4.4 “Tracing”:
+• Vector (SVG) → “Maximum precision”: OrbitLR traces every curve onto the true edge of the image, point by point, as if by hand. From the soft pixels along the edges it works out where the outline runs, finer than a pixel
+• Sharp corners where two straight sides meet, curves that run exactly on the edge, colors taken from inside each shape
+• It is slower (up to a few minutes on large images) but gives the most faithful result: for logos, text, icons and signatures
+
 What’s new in 4.3 “Vector”:
 • Images → “Vector (SVG)”, also as an SVG slice in the pie: logos, drawings, signatures and photos become an SVG that stays sharp at any size
 • Clean colors without halos, straight lines, crisp corners, true circles and gradients where they belong; on small images the edges are first rebuilt with AI, on your Mac

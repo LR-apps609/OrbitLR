@@ -1,3 +1,8 @@
+Novità della 4.4 «Ricalco»:
+• Vettoriale (SVG) → «Precisione massima»: OrbitLR ricalca ogni curva sul bordo vero dell’immagine, punto per punto, come a mano. Dai pixel sfumati dei bordi capisce dove passa il contorno con una precisione più fine di un pixel
+• Angoli netti dove due lati dritti si incontrano, curve che passano esattamente sul bordo, colori presi dall’interno di ogni forma
+• È più lenta (fino a qualche minuto sulle immagini grandi) ma è il risultato più fedele: per loghi, testi, icone e firme
+
 Novità della 4.3 «Vettoriale»:
 • Immagini → «Vettoriale (SVG)», anche come spicchio SVG nella torta: loghi, disegni, firme e foto diventano un SVG nitido a qualunque misura
 • Colori puliti senza aloni, linee dritte, angoli netti, cerchi veri e sfumature dove servono; sulle immagini piccole i bordi si ricostruiscono prima con l’IA, sul Mac

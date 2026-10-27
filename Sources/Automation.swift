@@ -405,9 +405,12 @@ enum ParamChoices {
             KnobOption(value: "2", short: "2×", label: String(localized: "2×, più dettagli"))]
         case .vector: return [
             KnobOption(value: "auto", short: "Auto", label: String(localized: "Automatico (consigliato)")),
+            KnobOption(value: "auto+", short: String(localized: "Preciso"), label: String(localized: "Precisione massima · ricalco lento, fino a qualche minuto")),
             KnobOption(value: "logo", short: String(localized: "Logo"), label: String(localized: "Logo e disegni · colori pieni")),
             KnobOption(value: "logot", short: String(localized: "Senza sfondo"), label: String(localized: "Logo senza sfondo · trasparente")),
             KnobOption(value: "bw", short: String(localized: "Firma"), label: String(localized: "Firme e scansioni · un colore, trasparente")),
+            KnobOption(value: "logo+", short: String(localized: "Logo+"), label: String(localized: "Logo, precisione massima · ricalco lento")),
+            KnobOption(value: "bw+", short: String(localized: "Firma+"), label: String(localized: "Firma, precisione massima · ricalco lento")),
             KnobOption(value: "photo", short: String(localized: "Foto"), label: String(localized: "Foto · effetto illustrazione")),
             KnobOption(value: "photomax", short: String(localized: "Foto+"), label: String(localized: "Foto, più dettaglio · file più grande"))]
         case .aienhance: return [

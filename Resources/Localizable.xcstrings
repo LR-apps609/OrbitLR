@@ -5726,6 +5726,26 @@
         }
       }
     },
+    "Firma+": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signature+"
+          }
+        }
+      }
+    },
+    "Firma, precisione massima · ricalco lento": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signature, maximum precision · slow tracing"
+          }
+        }
+      }
+    },
     "Firme e scansioni · un colore, trasparente": {
       "localizations": {
         "en": {
@@ -7776,6 +7796,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Logo without background · transparent"
+          }
+        }
+      }
+    },
+    "Logo+": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logo+"
+          }
+        }
+      }
+    },
+    "Logo, precisione massima · ricalco lento": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logo, maximum precision · slow tracing"
           }
         }
       }
@@ -10262,6 +10302,26 @@
         }
       }
     },
+    "Precisione massima · ricalco lento, fino a qualche minuto": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maximum precision · slow tracing, up to a few minutes"
+          }
+        }
+      }
+    },
+    "Preciso": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Precise"
+          }
+        }
+      }
+    },
     "Premi «Esporta» (⌘E). I tuoi video originali non vengono mai modificati.": {
       "localizations": {
         "en": {
@@ -11052,12 +11112,12 @@
         }
       }
     },
-    "Rende al meglio con loghi, icone, disegni e firme. Sulle immagini piccole i bordi si ricostruiscono prima con l’IA. Tutto sul Mac.": {
+    "Rende al meglio con loghi, icone, disegni e firme. «Precisione massima» ricalca ogni curva sul bordo vero, punto per punto: più lento, il risultato più fedele. Tutto sul Mac.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Works best with logos, icons, drawings and signatures. On small images the edges are first rebuilt with AI. Everything stays on your Mac."
+            "value": "Works best with logos, icons, drawings and signatures. “Maximum precision” traces every curve onto the true edge, point by point: slower, the most faithful result. Everything stays on your Mac."
           }
         }
       }

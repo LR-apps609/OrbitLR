@@ -12,9 +12,13 @@ import ImageIO
 enum Vector {
     /// Lato lungo sotto il quale conviene ingrandire con l'IA prima di vettorializzare.
     static let aiBelow = 1000
+    /// Con la precisione massima l'ingrandimento con l'IA vale la pena anche su immagini più grandi.
+    static let aiBelowPrecise = 1600
 
     /// «auto», «logo», «logot» (logo senza sfondo), «bw» (firme e scansioni), «photo», «photomax».
     static func arguments(_ param: String) -> [String] {
+        // 4.4 · «+» in fondo: precisione massima (il ricalco lento, curva per curva sul bordo vero)
+        if param.hasSuffix("+") { return arguments(String(param.dropLast())) + ["--precise"] }
         switch param {
         case "logo": return ["--mode", "logo"]
         case "logot": return ["--mode", "logo", "--transparent"]
@@ -43,7 +47,7 @@ enum Vector {
 
         var args = [input.path, out.path] + arguments(param)
         var base = 0.0
-        if !param.hasPrefix("photo") && side > 96 && side <= aiBelow {
+        if !param.hasPrefix("photo") && side > 96 && side <= (param.hasSuffix("+") ? aiBelowPrecise : aiBelow) {
             let up = tmp.appendingPathComponent("ingrandita.png")
             do {
                 // «Più nitido» 4×: i bordi tornano netti

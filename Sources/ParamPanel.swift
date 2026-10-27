@@ -195,7 +195,7 @@ struct ParamView: View {
         switch kind {
         case .removebg: return String(localized: "Funziona meglio con persone, animali e oggetti ben distinti dallo sfondo.")
         case .straighten: return String(localized: "OrbitLR trova il foglio nella foto, corregge la prospettiva e lo pulisce come una scansione.")
-        case .vector: return String(localized: "Rende al meglio con loghi, icone, disegni e firme. Sulle immagini piccole i bordi si ricostruiscono prima con l’IA. Tutto sul Mac.")
+        case .vector: return String(localized: "Rende al meglio con loghi, icone, disegni e firme. «Precisione massima» ricalca ogni curva sul bordo vero, punto per punto: più lento, il risultato più fedele. Tutto sul Mac.")
         case .stack: return String(localized: "Seleziona 3–10 foto della stessa scena (una raffica va benissimo) oppure un video breve: OrbitLR le allinea e le unisce. I dettagli vengono dagli scatti veri.")
         default: return String(localized: "Contorni nitidi con la tecnologia di Apple. Non inventa dettagli che non ci sono.")
         }
