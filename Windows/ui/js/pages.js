@@ -6,7 +6,7 @@ import { askName, describe, presets, removePreset, renamePreset, suggestName } f
 import { invoke, openPath, openUrl, pickFolder, reveal } from "./api.js";
 import { actionName } from "./catalog.js";
 import { clearHistory, getHistory, removeFromHistory, running, savedThisMonth, subscribe, cancel } from "./jobs.js";
-import { fmtBytes, gainText, h, ico, modal, store } from "./util.js";
+import { env, fmtBytes, gainText, h, ico, modal, store } from "./util.js";
 import { install as installOffice, isInstalling, officeReady } from "./office.js";
 import { t, tr, LOCALE } from "./i18n.js";
 
@@ -165,7 +165,9 @@ const FAQ = [
   ["Generale", t("Un lavoro non è riuscito: cosa faccio?"), t("Leggi il messaggio nella barra in basso: dice cosa è successo e cosa fare. Se non basta, premi «Segnala»: si apre un'email già pronta, senza nomi di file.")],
   ["Generale", t("Come metto OrbitLR in inglese?"), t("Opzioni → «Lingua · Language» → English. Di base OrbitLR segue la lingua di Windows.")],
   ["Generale", t("I miei file vengono caricati su internet?"), t("No. OrbitLR lavora tutto sul tuo computer, anche senza connessione.")],
-];
+];const FAQ_SMARTSCREEN = FAQ.find((f) => f[1] === t("Windows dice «Windows ha protetto il PC»"));
+const FAQ_EXPLORER = FAQ.find((f) => f[1] === t("Si può usare direttamente da Esplora file?"));
+
 
 export function helpPage(app) {
   const list = h("div", { style: { display: "grid", gap: "8px" } });
@@ -173,7 +175,9 @@ export function helpPage(app) {
   const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   function render() {
     const q = norm(input.value.trim());
-    const items = FAQ.filter(([s, a, b]) => !q || norm(t(s) + " " + a + " " + b).includes(q));
+    // Dal Microsoft Store: niente avviso di Windows, e il tasto destro passa da «Apri con»
+    const faq = env.store ? FAQ.filter((f) => f !== FAQ_SMARTSCREEN).map((f) => (f === FAQ_EXPLORER ? [f[0], f[1], t("Sì, in due modi: tasto destro su un file → «Apri con» → OrbitLR, oppure seleziona i file in Esplora file e premi Ctrl+Alt+C: OrbitLR si apre con la torta pronta. L'icona vicino all'orologio riapre OrbitLR con un clic.")] : f)) : FAQ;
+    const items = faq.filter(([s, a, b]) => !q || norm(t(s) + " " + a + " " + b).includes(q));
     list.replaceChildren(...(items.length ? items.map(([s, a, b]) => h("details.faq", h("summary", ico("chevron-right", 16), a, h("span", { style: { marginLeft: "auto", fontSize: "11px", color: "var(--brass)", fontWeight: 900, textTransform: "uppercase" } }, t(s))), h("p", b)))
       : [h("p", { style: { color: "var(--quiet)" } }, t("Nessuna risposta: prova un'altra parola, oppure «Segnala» e scrivici."))]));
   }

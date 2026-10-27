@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OrbitLR per il Microsoft Store (MSIX). I valori tra @…@ li mette la compilazione:
+     identità e editore da store/identita.json (Partner Center → Identità del prodotto), versione da tauri.conf.json. -->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap uap3 desktop rescap">
+
+  <Identity Name="@NAME@" Publisher="@PUBLISHER@" Version="@VERSION@" ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>OrbitLR</DisplayName>
+    <PublisherDisplayName>@PUBLISHER_DISPLAY@</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+    <Description>Converti, comprimi e modifica foto, video, audio e PDF, tutto sul tuo computer.</Description>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="it-IT" />
+    <Resource Language="en-US" />
+  </Resources>
+
+  <Applications>
+    <Application Id="OrbitLR" Executable="orbitlr.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="OrbitLR"
+        Description="Converti, comprimi e modifica foto, video, audio e PDF"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" ShortName="OrbitLR">
+          <uap:ShowNameOnTiles>
+            <uap:ShowOn Tile="square150x150Logo" />
+            <uap:ShowOn Tile="wide310x150Logo" />
+          </uap:ShowNameOnTiles>
+        </uap:DefaultTile>
+      </uap:VisualElements>
+      <Extensions>
+        <!-- Tasto destro → «Apri con» → OrbitLR (al posto della voce «Apri con OrbitLR» dell'installazione dal sito) -->
+        <uap3:Extension Category="windows.fileTypeAssociation">
+          <uap3:FileTypeAssociation Name="immagini" Parameters="&quot;%1&quot;">
+            <uap:DisplayName>Immagine</uap:DisplayName>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.jpg</uap:FileType><uap:FileType>.jpeg</uap:FileType><uap:FileType>.png</uap:FileType>
+              <uap:FileType>.webp</uap:FileType><uap:FileType>.heic</uap:FileType><uap:FileType>.heif</uap:FileType>
+              <uap:FileType>.gif</uap:FileType><uap:FileType>.bmp</uap:FileType><uap:FileType>.tif</uap:FileType>
+              <uap:FileType>.tiff</uap:FileType><uap:FileType>.avif</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap3:FileTypeAssociation>
+        </uap3:Extension>
+        <uap3:Extension Category="windows.fileTypeAssociation">
+          <uap3:FileTypeAssociation Name="video" Parameters="&quot;%1&quot;">
+            <uap:DisplayName>Video</uap:DisplayName>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.mp4</uap:FileType><uap:FileType>.mov</uap:FileType><uap:FileType>.mkv</uap:FileType>
+              <uap:FileType>.avi</uap:FileType><uap:FileType>.webm</uap:FileType><uap:FileType>.m4v</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap3:FileTypeAssociation>
+        </uap3:Extension>
+        <uap3:Extension Category="windows.fileTypeAssociation">
+          <uap3:FileTypeAssociation Name="audio" Parameters="&quot;%1&quot;">
+            <uap:DisplayName>Audio</uap:DisplayName>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.mp3</uap:FileType><uap:FileType>.wav</uap:FileType><uap:FileType>.m4a</uap:FileType>
+              <uap:FileType>.aac</uap:FileType><uap:FileType>.flac</uap:FileType><uap:FileType>.ogg</uap:FileType>
+              <uap:FileType>.opus</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap3:FileTypeAssociation>
+        </uap3:Extension>
+        <uap3:Extension Category="windows.fileTypeAssociation">
+          <uap3:FileTypeAssociation Name="documenti" Parameters="&quot;%1&quot;">
+            <uap:DisplayName>Documento</uap:DisplayName>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.pdf</uap:FileType><uap:FileType>.docx</uap:FileType><uap:FileType>.xlsx</uap:FileType>
+              <uap:FileType>.pptx</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap3:FileTypeAssociation>
+        </uap3:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <Capability Name="internetClient" />
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

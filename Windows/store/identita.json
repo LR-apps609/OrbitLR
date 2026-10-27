@@ -1,0 +1,7 @@
+{
+  "_nota": "Valori di prova. Per lo Store vanno copiati da Partner Center → OrbitLR → Gestione prodotti → Identità del prodotto.",
+  "name": "LRApps.OrbitLR-prova",
+  "publisher": "CN=OrbitLR-prova",
+  "publisherDisplay": "LR Apps",
+  "prova": true
+}

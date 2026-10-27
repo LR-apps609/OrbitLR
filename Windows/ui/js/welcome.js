@@ -1,14 +1,14 @@
 // Benvenuto al primo avvio (tre schermate) e «Lo sapevi?» agli avvii successivi, come sul Mac.
 // I consigli si spengono con «Non mostrare più» o dalle Opzioni.
 
-import { h, ico, store } from "./util.js";
+import { env, h, ico, store } from "./util.js";
 import { t } from "./i18n.js";
 import { play } from "./sounds.js";
 
 const STEPS = () => [
   { icon: "circle-arrow-down", title: t("Trascina un file, scegli uno spicchio"), text: t("Lascia cadere foto, video, audio o PDF nella scheda Conversione: intorno al file si apre la torta con quello che puoi farne. Il file nuovo finisce accanto all'originale.") },
   { icon: "layers", title: t("Una scheda per ogni tipo di file"), text: t("Immagini, Video, Audio e File hanno tutti gli strumenti: comprimi, taglia, togli lo sfondo, firma un PDF, crea una suoneria. Tutto sul computer, niente viene caricato.") },
-  { icon: "external-link", title: t("OrbitLR è sempre a portata di mano"), text: t("In Esplora file: tasto destro → «Apri con OrbitLR», oppure seleziona i file e premi Ctrl+Alt+C. Chiudendo la finestra resta l'icona vicino all'orologio.") },
+  { icon: "external-link", title: t("OrbitLR è sempre a portata di mano"), text: env.store ? t("In Esplora file: tasto destro → «Apri con» → OrbitLR, oppure seleziona i file e premi Ctrl+Alt+C. Chiudendo la finestra resta l'icona vicino all'orologio.") : t("In Esplora file: tasto destro → «Apri con OrbitLR», oppure seleziona i file e premi Ctrl+Alt+C. Chiudendo la finestra resta l'icona vicino all'orologio.") },
 ];
 
 const TIPS = () => [

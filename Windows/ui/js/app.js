@@ -12,7 +12,7 @@ import { videoTab } from "./video.js";
 import { activityPage, helpPage, report, settingsPage } from "./pages.js";
 import { autoPage } from "./auto.js";
 import { showFeedback } from "./feedback.js";
-import { extOf, fmtBytes, h, ico, modal, store, toast } from "./util.js";
+import { env, extOf, fmtBytes, h, ico, modal, store, toast } from "./util.js";
 import { t, tr, LANG, isEn } from "./i18n.js";
 
 const VERSION = "0.7.0";
@@ -243,6 +243,7 @@ async function boot() {
   window.__TAURI__?.event.listen("open-files", (e) => handleDrop(e.payload || []));
   // File passati all'avvio (Apri con…); nelle prove automatiche anche scheda e azione
   invoke("startup").then(async (st) => {
+    env.store = !!st?.store;
     if (!st || !st.files?.length) return;
     if (st.tab) {
       show(st.tab);

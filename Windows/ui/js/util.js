@@ -63,6 +63,9 @@ export function gainText(before, after) {
   return pct >= 3 ? `${base} · −${pct}%` : pct <= -3 ? `${base} · +${-pct}%` : base;
 }
 
+/** Com'è installata l'app: dal Microsoft Store gli aggiornamenti e il tasto destro funzionano diversamente. */
+export const env = { store: false };
+
 export const store = {
   get(k, d) {
     try {

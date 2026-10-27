@@ -600,6 +600,10 @@ struct UpdateInfo {
 /// C'è un aggiornamento firmato più nuovo di questa versione?
 #[tauri::command]
 async fn update_check(version: String, build: u64) -> Result<Option<UpdateInfo>, String> {
+    // Dal Microsoft Store gli aggiornamenti arrivano dallo Store
+    if is_store() {
+        return Ok(None);
+    }
     tauri::async_runtime::spawn_blocking(move || {
         let m = orbit_engine::update::check().map_err(|e| e.0)?;
         Ok(m.filter(|m| orbit_engine::update::is_newer(m, &version, build)).map(|m| UpdateInfo { version: m.version, build: m.build, notes: m.notes, notes_en: m.notes_en, size: m.size }))
@@ -611,6 +615,9 @@ async fn update_check(version: String, build: u64) -> Result<Option<UpdateInfo>,
 /// Scarica l'aggiornamento (controllato), chiude OrbitLR, lo installa in silenzio e la riapre.
 #[tauri::command]
 async fn update_install(app: tauri::AppHandle, state: State<'_, Shared>, version: String, build: u64) -> Result<(), String> {
+    if is_store() {
+        return Err("gli aggiornamenti arrivano dal Microsoft Store".into());
+    }
     let st = state.inner().clone();
     let app2 = app.clone();
     let setup = tauri::async_runtime::spawn_blocking(move || -> Result<PathBuf, String> {
@@ -776,6 +783,22 @@ struct Startup {
     tab: Option<String>,
     action: Option<String>,
     param: Option<String>,
+    /// Installata dal Microsoft Store (pacchetto MSIX): gli aggiornamenti li fa lo Store
+    store: bool,
+}
+
+/// L'app gira come pacchetto MSIX (Microsoft Store)?
+#[cfg(windows)]
+fn is_store() -> bool {
+    use windows_sys::Win32::Storage::Packaging::Appx::GetCurrentPackageFullName;
+    let mut len: u32 = 0;
+    // Senza pacchetto risponde APPMODEL_ERROR_NO_PACKAGE (15700); con il pacchetto chiede un buffer più grande
+    unsafe { GetCurrentPackageFullName(&mut len, std::ptr::null_mut()) != 15700 }
+}
+
+#[cfg(not(windows))]
+fn is_store() -> bool {
+    std::env::var("ORBIT_STORE").is_ok()
 }
 
 /// I file con cui è stata aperta l'app («Apri con OrbitLR» da Esplora file) e, nelle prove automatiche,
@@ -787,7 +810,7 @@ fn startup() -> Startup {
         files.extend(list.split(';').filter(|p| Path::new(p).is_file()).map(String::from));
     }
     let var = |k: &str| std::env::var(k).ok().filter(|v| !v.is_empty());
-    Startup { files, tab: var("ORBIT_PROVA_SCHEDA"), action: var("ORBIT_PROVA_AZIONE"), param: var("ORBIT_PROVA_PARAMETRO") }
+    Startup { files, tab: var("ORBIT_PROVA_SCHEDA"), action: var("ORBIT_PROVA_AZIONE"), param: var("ORBIT_PROVA_PARAMETRO"), store: is_store() }
 }
 
 #[derive(Serialize)]
