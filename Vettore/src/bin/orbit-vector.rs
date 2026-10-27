@@ -22,6 +22,7 @@ fn main() {
             }
             "--transparent" => o.transparent = true,
             "--flat" => o.gradients = false,
+            "--precise" => o.precise = true,
             "--upscaled" => {
                 i += 1;
                 up = args.get(i).cloned();

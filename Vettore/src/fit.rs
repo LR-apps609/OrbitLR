@@ -381,6 +381,29 @@ fn snap_axes(start: &mut P, segs: &mut [Seg], tol: f64) {
     }
 }
 
+pub fn seg_end(s: &Seg) -> P {
+    end_of(s)
+}
+
+pub fn circle_of(p: &[P]) -> (f64, f64, f64, f64) {
+    fit_circle(p)
+}
+
+/// La retta migliore (punto medio, direzione) per dei punti.
+pub fn line_of(p: &[P]) -> (P, P) {
+    let n = p.len() as f64;
+    let (mx, my) = (p.iter().map(|q| q.x).sum::<f64>() / n, p.iter().map(|q| q.y).sum::<f64>() / n);
+    let (mut sxx, mut sxy, mut syy) = (0.0, 0.0, 0.0);
+    for q in p {
+        let (dx, dy) = (q.x - mx, q.y - my);
+        sxx += dx * dx;
+        sxy += dx * dy;
+        syy += dy * dy;
+    }
+    let th = 0.5 * (2.0 * sxy).atan2(sxx - syy);
+    (P::new(mx, my), P::new(th.cos(), th.sin()))
+}
+
 fn end_of(s: &Seg) -> P {
     match s {
         Seg::Line(p) => *p,
