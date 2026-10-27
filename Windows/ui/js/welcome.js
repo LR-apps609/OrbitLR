@@ -20,6 +20,7 @@ const TIPS = () => [
   [t("Al telefono"), t("Dalla barra del risultato, «Al telefono» mostra un codice QR: inquadralo e il file arriva sul telefono, sulla stessa Wi-Fi.")],
   [t("Cartelle automatiche"), t("Scegli una cartella e cosa fare: ogni file che ci arriva viene sistemato da solo.")],
   [t("Video Downloader"), t("Nelle schede Video e Audio incolla un link: OrbitLR scarica il video o solo l'audio.")],
+  [t("Da logo a vettoriale"), t("Trascina un logo o una firma e scegli lo spicchio SVG: diventa nitido a qualunque misura, con i colori puliti.")],
   [t("Togli un logo"), t("In Immagini, «Nascondi un logo» → «Togli con l'IA»: lo sfondo dietro viene ricostruito, sul computer.")],
   [t("Radio di notte"), t("In Opzioni → Aspetto scegli la modalità scura; lì spegni anche i suoni.")],
 ];

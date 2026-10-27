@@ -32,6 +32,7 @@ pub mod scan;
 pub mod speech;
 pub mod tools;
 pub mod update;
+pub mod vector;
 pub mod video;
 pub mod watch;
 pub mod whisper;

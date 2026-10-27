@@ -1,3 +1,15 @@
+Novità per Windows 0.8.0 «Vettoriale»:
+• Immagini → «Vettoriale (SVG)», e lo spicchio SVG nella torta: loghi, disegni, firme e foto diventano un SVG nitido a qualunque misura
+• Colori puliti senza aloni, linee dritte, angoli netti, cerchi veri e sfumature dove servono; sulle immagini piccole i bordi si ricostruiscono prima con l'IA
+• Firme e scansioni in un solo colore con lo sfondo trasparente; «Logo senza sfondo» toglie lo sfondo da solo
+• «Confronta» funziona anche con l'SVG: trascina la linea tra originale e vettoriale
+
+What’s new in Windows 0.8.0 “Vector”:
+• Images → “Vector (SVG)”, and the SVG slice in the pie: logos, drawings, signatures and photos become an SVG that stays sharp at any size
+• Clean colors without halos, straight lines, crisp corners, true circles and gradients where they belong; on small images the edges are first rebuilt with AI
+• Signatures and scans in a single color with a transparent background; “Logo without background” removes the background by itself
+• “Compare” works with SVG too: drag the line between the original and the vector
+
 Novità per Windows 0.7.0 «Come il Mac»:
 • La linguetta sul bordo destro dello schermo: ci lasci cadere i file da qualsiasi parte e si aprono in OrbitLR (si spegne nelle Opzioni)
 • «Questo mese hai risparmiato…»: nel Cassetto e in Attività vedi quanto spazio hai liberato con compressioni e conversioni

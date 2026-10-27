@@ -84,7 +84,7 @@ jobs:
           ORBIT_WHISPER_MODEL: ${{ github.workspace }}\modello-voce\ggml-small-q5_1.bin
         run: |
           set +e
-          cargo test -p orbit_engine --release 2>&1 | tee test.log
+          cargo test -p orbit_engine -p vettore --release 2>&1 | tee test.log
           st=${PIPESTATUS[0]}
           echo "::notice::$(grep -E '^test result' test.log | tr '\n' ' ')"
           for t in $(grep -E '^test .* FAILED$' test.log | awk '{print $2}'); do echo "::error::Prova fallita: $t"; done

@@ -54,7 +54,7 @@ export function resultBar(origin) {
     }
     const first = outs[0];
     const src = job.results[0];
-    const canCompare = outs.length === 1 && job.results.length === 1 && src?.sourcePath && isImg(src.sourcePath) && isImg(first.path);
+    const canCompare = outs.length === 1 && job.results.length === 1 && src?.sourcePath && isImg(src.sourcePath) && (isImg(first.path) || /\.svg$/i.test(first.path));
     let detail;
     if (job.action === "vproject" || job.action === "tts") {
       detail = h("span", `${job.action === "vproject" ? t("Montaggio pronto") : t("File audio pronto")} · ${fmtBytes(first.size)}`);

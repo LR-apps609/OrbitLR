@@ -53,7 +53,7 @@ fn esrgan_exe(data_dir: &Path) -> PathBuf {
 pub fn pending_download(action: &str, data_dir: &Path) -> Option<(&'static str, u64)> {
     match action {
         "removebg" if !download::ready(&bg_model_path(data_dir), &BG_MODEL) => Some((BG_MODEL.what, BG_MODEL.bytes / 1_000_000)),
-        "aienhance" | "upscale" if !esrgan_ready(data_dir) => Some((ESRGAN_ZIP.what, ESRGAN_ZIP.bytes / 1_000_000)),
+        "aienhance" | "upscale" | "vector" if !esrgan_ready(data_dir) => Some((ESRGAN_ZIP.what, ESRGAN_ZIP.bytes / 1_000_000)),
         _ => None,
     }
 }

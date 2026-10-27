@@ -19,6 +19,7 @@ base64 = "0.22"
 getrandom = "0.3"
 imageproc = { version = "0.25", default-features = false }
 qrcode = { version = "0.14", default-features = false, features = ["svg"] }
+vettore = { path = "../vettore" }
 
 
 [target.'cfg(windows)'.dependencies]

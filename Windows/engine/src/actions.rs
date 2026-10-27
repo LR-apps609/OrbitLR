@@ -270,6 +270,13 @@ pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel:
                 }
             }
         }
+        // ── Vettoriale (SVG)
+        "vector" => {
+            if kind != Kind::Image {
+                return Err(EngineError::new("funziona sulle immagini"));
+            }
+            vec![crate::vector::vectorize(t, ctx.data_dir.as_deref(), src, if p_str.is_empty() { "auto" } else { &p_str }, &dir, cancel, progress)?]
+        }
         // ── Nascondi un logo (foto e video)
         "hidemark" => {
             let hp: crate::hide::Params = serde_json::from_value(param.clone()).map_err(|_| EngineError::new("disegna almeno una zona sul logo"))?;

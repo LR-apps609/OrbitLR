@@ -17,7 +17,7 @@ export const AUDIO_EXTS = ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aac", "w
 
 /** Formati in cui convertire, per tipo (i più usati prima). */
 export const CONVERT = {
-  image: ["jpg", "png", "webp", "pdf", "avif", "ico", "bmp", "tiff", "gif"],
+  image: ["jpg", "png", "webp", "pdf", "svg", "avif", "ico", "bmp", "tiff", "gif"],
   video: ["mp4", "mp3", "mov", "mkv", "webm", "gif", "m4a", "wav", "avi"],
   audio: ["mp3", "m4a", "wav", "flac", "ogg", "opus"],
   pdf: ["png", "jpg"],
@@ -25,7 +25,7 @@ export const CONVERT = {
   other: [],
 };
 
-const FMT_ICON = { docx: "file-text", odt: "file-text", rtf: "file-text", txt: "file-text", xlsx: "list-ordered", ods: "list-ordered", csv: "list-ordered", pptx: "square-play", odp: "square-play", jpg: "image", png: "image", webp: "image", avif: "image", ico: "square-play", bmp: "image", tiff: "image", gif: "film", pdf: "file-text",
+const FMT_ICON = { docx: "file-text", odt: "file-text", rtf: "file-text", txt: "file-text", xlsx: "list-ordered", ods: "list-ordered", csv: "list-ordered", pptx: "square-play", odp: "square-play", jpg: "image", png: "image", webp: "image", avif: "image", ico: "square-play", bmp: "image", tiff: "image", gif: "film", pdf: "file-text", svg: "pen-tool",
   mp4: "film", mov: "film", mkv: "film", webm: "film", avi: "film", mp3: "music", m4a: "music", wav: "audio-waveform", flac: "audio-waveform", ogg: "music", opus: "mic" };
 /** Word, Excel e PowerPoint (con LibreOffice): in cosa si può convertire un documento. */
 const DOC_GROUPS = [
@@ -58,6 +58,7 @@ export const TOOLS = {
   straighten: { title: t("Raddrizza un documento"), hint: t("La foto storta di un foglio diventa una pagina dritta, come uno scanner"), icon: "crop", params: "straighten", isNew: true },
   stack: { title: t("Unisci più scatti"), hint: t("Più foto della stessa scena, allineate e fuse: meno rumore al buio"), icon: "layers", min: 2, isNew: true },
   upscale: { title: t("Ingrandisci"), hint: t("Due o quattro volte più grande, con i contorni nitidi"), icon: "zoom-in", params: "upscale", isNew: true },
+  vector: { title: t("Vettoriale (SVG)"), hint: t("Loghi, disegni, firme e foto diventano un SVG: nitido a qualunque misura"), icon: "pen-tool", params: "vector", isNew: true },
   // Video
   vcompress: { title: t("Comprimi"), hint: t("Più leggero senza perdere qualità, o per Discord, WhatsApp ed email"), icon: "minimize-2", params: "vcompress" },
   vresize: { title: t("Cambia la grandezza"), hint: t("Full HD, HD o più piccolo, per pesare meno"), icon: "monitor-smartphone", params: "vresize" },
@@ -91,7 +92,7 @@ export const TOOLS = {
 export const GROUPS = {
   image: [
     [t("Modifica"), ["icompress", "resize", "removebg", "rotate", "hidemark", "strip"]],
-    [t("Migliora"), ["aienhance", "upscale", "stack"]],
+    [t("Migliora"), ["aienhance", "upscale", "vector", "stack"]],
     [t("Documenti e più foto"), ["straighten", "ocr", "merge", "rename"]],
   ],
   video: [
@@ -216,6 +217,18 @@ export const KNOBS = {
     hint: t("Usa la scheda video del PC. Stessa misura, meno rumore e più dettaglio."),
     default: "70",
   },
+  vector: {
+    options: [
+      { value: "auto", label: t("Automatico"), small: t("consigliato") },
+      { value: "logo", label: t("Logo e disegni"), small: t("colori pieni") },
+      { value: "logot", label: t("Logo senza sfondo"), small: t("trasparente") },
+      { value: "bw", label: t("Firme e scansioni"), small: t("un colore, trasparente") },
+      { value: "photo", label: t("Foto"), small: t("effetto illustrazione") },
+      { value: "photomax", label: t("Foto, più dettaglio"), small: t("file più grande") },
+    ],
+    hint: t("Sulle immagini piccole i bordi si ricostruiscono prima con l'IA (la prima volta scarica il motore, 45 MB). Tutto sul computer."),
+    default: "auto",
+  },
   upscale: {
     options: [
       { value: "2", label: "2×", small: t("il doppio") },
@@ -248,7 +261,7 @@ export const ACTION_NAMES = {
   speed: t("Cambia la velocità"), vmerge: t("Unisci i video"), amerge: t("Unisci"), normalize: t("Volume uniforme"), voiceclean: t("Voce più pulita"), mute: t("Togli l'audio"),
   rotate: t("Ruota"), hidemark: t("Nascondi un logo"), ocr: t("Estrai il testo"), pdftext: t("Estrai il testo"), pdfedit: t("Compila, firma e oscura"), subextract: t("Estrai i sottotitoli"), subembed: t("Aggiungi i sottotitoli"), resize: t("Ridimensiona"), strip: t("Rimuovi i metadati"), merge: t("Unisci in un PDF"), pdfmerge: t("Unisci i PDF"), split: t("Dividi in pagine"),
   extract: t("Estrai pagine"), pdfcompress: t("Comprimi il PDF"), vproject: t("Esporta il montaggio"), ringtone: t("Suoneria"), silence: t("Togli i silenzi"), whatsapp: t("Vocale per WhatsApp"), tts: t("Testo in voce"), transcribe: t("Trascrivi"),
-  removebg: t("Rimuovi lo sfondo"), aienhance: t("Migliora con l'IA"), upscale: t("Ingrandisci"), link: t("Scarica da un link"), protect: t("Proteggi con password"), unprotect: t("Togli la password"), reorder: t("Riordina le pagine"), rename: t("Rinomina tutti"), straighten: t("Raddrizza un documento"), stack: t("Unisci più scatti"),
+  removebg: t("Rimuovi lo sfondo"), aienhance: t("Migliora con l'IA"), upscale: t("Ingrandisci"), vector: t("Vettoriale (SVG)"), link: t("Scarica da un link"), protect: t("Proteggi con password"), unprotect: t("Togli la password"), reorder: t("Riordina le pagine"), rename: t("Rinomina tutti"), straighten: t("Raddrizza un documento"), stack: t("Unisci più scatti"),
 };
 
 export function actionName(id) {

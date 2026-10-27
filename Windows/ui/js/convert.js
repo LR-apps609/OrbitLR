@@ -70,6 +70,11 @@ export function convertPage(app) {
       askOffice(app).then((ok) => ok && run("to:" + fmt, list, null, "convert"));
       return;
     }
+    // SVG: è il «Vettoriale», con la scelta automatica
+    if (kind === "image" && fmt === "svg") {
+      run("vector", list, "auto", "convert");
+      return;
+    }
     run("to:" + fmt, list, null, "convert");
   }
 
