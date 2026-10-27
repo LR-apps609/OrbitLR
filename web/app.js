@@ -159,7 +159,7 @@ function slicesFor(){
       app('upscale', 'Ingrandisci', 'Upscale', 'Due o quattro volte più grande, con i contorni nitidi.', 'Two or four times bigger, with crisp edges.'),
       app('straighten', 'Raddrizza\nun foglio', 'Straighten\na sheet', '«Raddrizza un documento»: la foto storta di un foglio diventa una pagina dritta, come uno scanner.', '“Straighten a Document”: a crooked photo of a sheet becomes a straight page, like a scanner.'),
       app('ocr', 'Estrai\nil testo', 'Extract\ntext', 'Dalle foto e dagli screenshot, in un file di testo.', 'From photos and screenshots, into a text file.'),
-      app('hidemark', 'Nascondi\nun logo', 'Hide\na logo', 'Sfoca o copri a quadretti una scritta o un logo.', 'Blur or pixelate a caption or a logo.'),
+      app('vector', 'Vettoriale\nSVG', 'Vector\nSVG', 'Loghi, disegni e firme diventano SVG, nitidi a qualunque misura.', 'Logos, drawings and signatures become SVG, sharp at any size.'),
       back() ];
     return [
       { id: 'to:jpg', it: 'JPG', en: 'JPG', real: true }, { id: 'to:png', it: 'PNG', en: 'PNG', real: true },
@@ -928,7 +928,7 @@ function renderQuiz(){
 
 /* ---------- Il manifesto: scorrendo, la torta si riempie di quello che fa l'app ---------- */
 const MG = [
-  { it: 'Foto', en: 'Photos', c: 'var(--s4)', t: [['Comprimi sotto un peso', 'Compress under a size'], ['Rimuovi lo sfondo', 'Remove Background'], ['Migliora con l’IA', 'Enhance with AI'], ['Raddrizza un documento', 'Straighten a Document']] },
+  { it: 'Foto', en: 'Photos', c: 'var(--s4)', t: [['Comprimi sotto un peso', 'Compress under a size'], ['Rimuovi lo sfondo', 'Remove Background'], ['Migliora con l’IA', 'Enhance with AI'], ['Da logo a SVG', 'Logo to SVG']] },
   { it: 'Video', en: 'Video', c: 'var(--s3)', t: [['Taglia senza perdita', 'Lossless Trim'], ['Formato social', 'Social Format'], ['Sottotitoli', 'Subtitles'], ['Montaggio', 'Editor']] },
   { it: 'Audio', en: 'Audio', c: 'var(--s2)', t: [['Suoneria', 'Ringtone'], ['Voce più pulita', 'Cleaner Voice'], ['Trascrivi', 'Transcribe'], ['Da un link', 'From a Link']] },
   { it: 'PDF', en: 'PDF', c: 'var(--s1)', t: [['Compila e firma', 'Fill and Sign'], ['Unisci e dividi', 'Merge and Split'], ['Proteggi con password', 'Protect with Password'], ['Comprimi il PDF', 'Compress PDF']] },
@@ -978,7 +978,7 @@ const CATS = [
     ['Sfondo', 'Background', 'Rimuovi lo sfondo', 'Remove Background', 'Resta solo il soggetto: trasparente, su bianco o ritagliato.', 'Only the subject stays: transparent, on white or cropped.'],
     ['IA', 'AI', 'Migliora con l’IA e ingrandisci', 'Enhance with AI and upscale', 'Più nitida senza inventare dettagli; due o quattro volte più grande.', 'Sharper without inventing details; two or four times bigger.'],
     ['Scanner', 'Scanner', 'Raddrizza un documento', 'Straighten a Document', 'La foto storta di un foglio diventa una pagina dritta, JPG o PDF.', 'A crooked photo of a sheet becomes a straight page, JPG or PDF.'],
-    ['Testo', 'Text', 'Estrai il testo', 'Extract Text', 'Dalle foto e dagli screenshot, in un file di testo.', 'From photos and screenshots, into a text file.'] ] },
+    ['SVG', 'SVG', 'Vettoriale (SVG)', 'Vector (SVG)', 'Loghi, disegni e firme diventano SVG: colori puliti, angoli netti, nitidi a qualunque misura. Con «Precisione massima» ricalca ogni curva.', 'Logos, drawings and signatures become SVG: clean colors, crisp corners, sharp at any size. “Maximum precision” traces every curve.'] ] },
   { it: 'Video', en: 'Video', c: 'var(--s3)', t: [
     ['Comprimi', 'Compress', 'Comprimi', 'Compress', 'Di solito la metà del peso, o per Discord 9 MB, WhatsApp 15 MB, email 18 MB.', 'Usually half the size, or for Discord 9 MB, WhatsApp 15 MB, email 18 MB.'],
     ['Taglia', 'Trim', 'Taglia senza perdita', 'Lossless Trim', 'Tieni solo un pezzo, in pochi secondi anche su un film di due ore.', 'Keep just a piece, in seconds even on a two-hour film.'],
