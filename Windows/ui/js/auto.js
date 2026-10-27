@@ -8,7 +8,7 @@ import { t, tr, tc } from "./i18n.js";
 
 // Le mie azioni che una cartella può fare da sola (come nel motore: mai rinomina, password o unioni)
 const AUTO_OK = {
-  image: (a) => a.startsWith("to:") || ["icompress", "resize", "rotate", "strip", "removebg", "aienhance", "upscale", "ocr", "straighten"].includes(a),
+  image: (a) => a.startsWith("to:") || ["icompress", "resize", "rotate", "strip", "removebg", "aienhance", "upscale", "ocr", "straighten", "vector"].includes(a),
   video: (a) => a.startsWith("to:") || ["vcompress", "vresize", "social", "speed", "mute", "rotate", "voiceclean", "normalize"].includes(a),
   audio: (a) => a.startsWith("to:") || ["normalize", "voiceclean", "silence", "whatsapp", "speed"].includes(a),
   pdf: (a) => ["pdfcompress", "split"].includes(a),

@@ -53,7 +53,7 @@ const AUD: &[&str] = &["mp3", "m4a", "wav", "flac", "ogg", "opus", "aac", "wma",
 /// Le azioni che una cartella automatica può fare da sola (mai rinomina, password o lavori su più file).
 pub fn allowed(action: &str, media: &str) -> bool {
     let ok = match media {
-        "image" => action.starts_with("to:") || ["icompress", "resize", "rotate", "strip", "removebg", "aienhance", "upscale", "ocr", "straighten"].contains(&action),
+        "image" => action.starts_with("to:") || ["icompress", "resize", "rotate", "strip", "removebg", "aienhance", "upscale", "ocr", "straighten", "vector"].contains(&action),
         "video" => action.starts_with("to:") || ["vcompress", "vresize", "social", "speed", "mute", "rotate", "voiceclean", "normalize"].contains(&action),
         "audio" => action.starts_with("to:") || ["normalize", "voiceclean", "silence", "whatsapp", "speed"].contains(&action),
         "pdf" => ["pdfcompress", "split"].contains(&action),
