@@ -34,7 +34,7 @@ enum Kind: String, CaseIterable, Codable {
 }
 
 enum ParamKind { case resize, pdfcompress, vcompress, cut, gifcut, extract, vresize, speed, rotate, reorder, password, unlock, rename,
-                     removebg, straighten, upscale, aienhance, stack, social, ringtone, hidemark, icompress }
+                     removebg, straighten, upscale, aienhance, stack, social, ringtone, hidemark, icompress, vector }
 
 struct Action: Identifiable, Hashable {
     let id: String          // lo stesso identificativo dello script, es. "to:pdf" o "resize"
@@ -168,6 +168,8 @@ enum Catalog {
         "vproject": Action(id: "vproject", short: String(localized: "Montaggio"), title: String(localized: "Esporta il montaggio"), hint: String(localized: "Il progetto della scheda Video"), symbol: "film.stack"),
         "tts": Action(id: "tts", short: String(localized: "Leggi"), title: String(localized: "Testo in voce"), hint: String(localized: "Un file audio letto da una voce naturale"), symbol: "text.bubble"),
         "aienhance": Action(id: "aienhance", short: String(localized: "Migliora"), title: String(localized: "Migliora con l’IA"), hint: String(localized: "Più nitida e pulita, senza inventare dettagli"), symbol: "sparkles", param: .aienhance),
+        // 4.3 · Loghi, disegni, firme e foto in SVG (lo stesso motore di Windows)
+        "vector": Action(id: "vector", short: "SVG", title: String(localized: "Vettoriale (SVG)"), hint: String(localized: "Nitido a qualunque misura: loghi, disegni, firme e foto"), symbol: "scribble.variable", param: .vector),
     ]
 
     /// Un’azione dal suo identificativo (per i preset).
@@ -211,7 +213,7 @@ enum Catalog {
         case .img:
             switch id {
             case "icompress", "resize", "removebg", "hidemark", "straighten": return String(localized: "Modifica")
-            case "aienhance", "upscale", "stack": return String(localized: "Migliora")
+            case "aienhance", "upscale", "stack", "vector": return String(localized: "Migliora")
             default: return String(localized: "Altro")
             }
         case .video:
@@ -234,7 +236,7 @@ enum Catalog {
 
     /// Le conversioni sono quelle che cambiano il formato (più «Unisci in un PDF» e «Copia il testo» del PDF).
     static func isConversion(_ id: String) -> Bool {
-        id.hasPrefix("to:") || id == "merge" || id == "pdftext"
+        id.hasPrefix("to:") || id == "merge" || id == "pdftext" || id == "vector"
     }
 
     /// Lo spicchio che porta il file nella sua scheda, dove ci sono tutte le modifiche.
@@ -281,7 +283,7 @@ enum Catalog {
         case .pdf:   order = ["to:docx", "to:png", "to:jpg", "pdftext", "split", "extract", "pdfcompress",
                               "pdfedit", "redact", "searchable",
                               "merge", "rotate", "reorder", "protect", "unprotect", "rename"]
-        case .img:   order = ["to:jpg", "to:png", "to:heic", "icompress", "resize", "strip", "ocr", "to:pdf",
+        case .img:   order = ["to:jpg", "to:png", "to:heic", "icompress", "resize", "strip", "ocr", "to:pdf", "vector",
                               "aienhance", "stack", "removebg", "hidemark", "straighten", "upscale", "searchable",
                               "to:webp", "to:tiff", "to:ico", "merge", "rename"]
         case .doc:   order = ["to:pdf", "to:docx", "to:odt", "to:txt", "to:md", "to:html", "to:rtf", "tts", "rename"]
@@ -315,7 +317,7 @@ enum Catalog {
                 if id == "stack" && kind == .img && mergeable < 2 { continue }      // servono almeno 2 foto
                 // 2.9.4 · Filigrana dei video: solo i formati che macOS sa leggere
                 if id == "hidemark" && kind == .video && !exts.isEmpty && !exts.isSubset(of: MediaTabModel.readable) { continue }
-                if hasSvg && ["resize", "strip", "ocr", "removebg", "hidemark", "straighten", "upscale", "aienhance", "searchable"].contains(id) { continue }
+                if hasSvg && ["resize", "strip", "ocr", "removebg", "hidemark", "straighten", "upscale", "aienhance", "searchable", "vector"].contains(id) { continue }
                 if hasRaw && id == "strip" { continue }
                 if let a = tools[id] { out.append(a) }
             }

@@ -13,7 +13,7 @@ enum FileTag {
         "senza logo": "no watermark", "senza sfondo": "no background", "trascrizione": "transcript",
         "ricercabile": "searchable", "raddrizzato": "straightened", "migliorata": "enhanced",
         "oscurato": "redacted", "firmato": "signed", "compilato": "filled", "scatti": "shots",
-        "video uniti": "merged videos", "audio uniti": "merged audio", "IA": "AI",
+        "video uniti": "merged videos", "audio uniti": "merged audio", "IA": "AI", "vettoriale": "vector",
     ]
 
     /// La parola nella lingua dell'app (in italiano resta com'è).

@@ -20,7 +20,7 @@ import UniformTypeIdentifiers
 // ════════════════════════════════════════════════════════════════════
 
 enum Tools {
-    static let ids: Set<String> = ["searchable", "removebg", "straighten", "upscale", "aienhance", "stack", "hidemark"]
+    static let ids: Set<String> = ["searchable", "removebg", "straighten", "upscale", "aienhance", "stack", "hidemark", "vector"]
 
     /// Esegue uno strumento su un file e restituisce il file creato.
     static func run(job: Job, file: URL, dir: URL, progress: @escaping (Double) -> Void) async throws -> URL {
@@ -85,6 +85,11 @@ enum Tools {
             let label = parsed.factor == 1 ? FileTag.t("migliorata") : "\(FileTag.t("IA")) \(parsed.factor)×"
             let out = Destination.unique(dir, base: "\(base) (\(label))", ext: ext)
             try AIEnhance.run(file, param: p, out: out, progress: progress)
+            return out
+        case "vector":
+            // 4.3 · Vettoriale (SVG), con lo stesso motore di Windows
+            let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("vettoriale")))", ext: "svg")
+            try Vector.run(file, param: job.param.isEmpty ? "auto" : job.param, out: out, progress: progress)
             return out
         default:
             throw NativeError(String(localized: "Strumento sconosciuto"))

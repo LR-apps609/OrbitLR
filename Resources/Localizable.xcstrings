@@ -2591,6 +2591,16 @@
         }
       }
     },
+    "Automatico (consigliato)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatic (recommended)"
+          }
+        }
+      }
+    },
     "Automazioni": {
       "extractionState": "manual",
       "localizations": {
@@ -2980,6 +2990,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Finding voices…"
+          }
+        }
+      }
+    },
+    "Che cosa è": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What it is"
           }
         }
       }
@@ -4479,6 +4499,16 @@
         }
       }
     },
+    "Crea l’SVG": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create the SVG"
+          }
+        }
+      }
+    },
     "Creato «%@»": {
       "localizations": {
         "en": {
@@ -5696,6 +5726,16 @@
         }
       }
     },
+    "Firme e scansioni · un colore, trasparente": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signatures and scans · one color, transparent"
+          }
+        }
+      }
+    },
     "Fogli": {
       "localizations": {
         "en": {
@@ -5816,6 +5856,16 @@
         }
       }
     },
+    "Foto": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo"
+          }
+        }
+      }
+    },
     "Foto HEIC e WebP in Download → JPG": {
       "localizations": {
         "en": {
@@ -5832,6 +5882,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Smaller, lighter photos"
+          }
+        }
+      }
+    },
+    "Foto · effetto illustrazione": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo · illustration look"
+          }
+        }
+      }
+    },
+    "Foto+": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo+"
+          }
+        }
+      }
+    },
+    "Foto, più dettaglio · file più grande": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo, more detail · bigger file"
           }
         }
       }
@@ -6474,6 +6554,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Your text"
+          }
+        }
+      }
+    },
+    "Il vettoriale non è riuscito": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The vector conversion failed"
           }
         }
       }
@@ -7650,12 +7740,42 @@
         }
       }
     },
+    "Logo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logo"
+          }
+        }
+      }
+    },
+    "Logo e disegni · colori pieni": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logos and drawings · solid colors"
+          }
+        }
+      }
+    },
     "Logo nascosto ✓": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Logo hidden ✓"
+          }
+        }
+      }
+    },
+    "Logo senza sfondo · trasparente": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logo without background · transparent"
           }
         }
       }
@@ -7826,6 +7946,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The AI model is missing from the app"
+          }
+        }
+      }
+    },
+    "Manca il motore del vettoriale nell’app: reinstalla OrbitLR": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The vector engine is missing from the app: reinstall OrbitLR"
           }
         }
       }
@@ -8636,6 +8766,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sharpness"
+          }
+        }
+      }
+    },
+    "Nitido a qualunque misura: loghi, disegni, firme e foto": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sharp at any size: logos, drawings, signatures and photos"
           }
         }
       }
@@ -10912,6 +11052,16 @@
         }
       }
     },
+    "Rende al meglio con loghi, icone, disegni e firme. Sulle immagini piccole i bordi si ricostruiscono prima con l’IA. Tutto sul Mac.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Works best with logos, icons, drawings and signatures. On small images the edges are first rebuilt with AI. Everything stays on your Mac."
+          }
+        }
+      }
+    },
     "Rende il volume uniforme: né troppo basso né distorto. Per vocali, lezioni e podcast.": {
       "localizations": {
         "en": {
@@ -12508,6 +12658,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Without this password the PDF can’t be opened: keep it safe."
+          }
+        }
+      }
+    },
+    "Senza sfondo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No background"
           }
         }
       }
@@ -15339,6 +15499,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vertical, square, or 4:5 for Reels, TikTok, and posts"
+          }
+        }
+      }
+    },
+    "Vettoriale (SVG)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vector (SVG)"
           }
         }
       }

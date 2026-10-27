@@ -1,3 +1,9 @@
+What’s new in 4.3 “Vector”:
+• Images → “Vector (SVG)”, also as an SVG slice in the pie: logos, drawings, signatures and photos become an SVG that stays sharp at any size
+• Clean colors without halos, straight lines, crisp corners, true circles and gradients where they belong; on small images the edges are first rebuilt with AI, on your Mac
+• Signatures and scans in a single color with a transparent background; “Logo without background” removes the background by itself
+• The same engine as OrbitLR for Windows: the same file gives the same SVG on both
+
 What’s new in 4.2.1 “English Names”:
 • The files you create now have English names too: “photo (smaller).jpg”, “song (trimmed).mp3”, “video (with music).mp4”
 

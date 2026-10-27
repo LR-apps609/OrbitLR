@@ -1,3 +1,9 @@
+Novità della 4.3 «Vettoriale»:
+• Immagini → «Vettoriale (SVG)», anche come spicchio SVG nella torta: loghi, disegni, firme e foto diventano un SVG nitido a qualunque misura
+• Colori puliti senza aloni, linee dritte, angoli netti, cerchi veri e sfumature dove servono; sulle immagini piccole i bordi si ricostruiscono prima con l’IA, sul Mac
+• Firme e scansioni in un solo colore con lo sfondo trasparente; «Logo senza sfondo» toglie lo sfondo da solo
+• Lo stesso motore di OrbitLR per Windows: lo stesso file dà lo stesso SVG su tutti e due
+
 Novità della 4.2.1 «Nomi in inglese»:
 • Con OrbitLR in inglese anche i file creati hanno il nome in inglese: «photo (smaller).jpg», «song (trimmed).mp3», «video (with music).mp4». In italiano tutto resta com’era
 

@@ -11,3 +11,4 @@ build-test/
 test.log
 Sources/OrbitLR.entitlements
 Resources/Motori/
+Vettore/target/

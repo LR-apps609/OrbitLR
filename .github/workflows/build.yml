@@ -41,6 +41,31 @@ jobs:
           ./Resources/Motori/ffmpeg -hide_banner -version | head -n 1
           rm -f motori-1.zip
 
+      - name: Motore del vettoriale (orbit-vector, lo stesso di Windows; Apple Silicon e Intel)
+        run: |
+          set -euo pipefail
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+          cd Vettore
+          cargo test --release --lib
+          for t in aarch64-apple-darwin x86_64-apple-darwin; do
+            cargo build --release --bin orbit-vector --target $t
+          done
+          mkdir -p ../Resources/Motori
+          lipo -create -output ../Resources/Motori/orbit-vector target/aarch64-apple-darwin/release/orbit-vector target/x86_64-apple-darwin/release/orbit-vector
+          codesign -f -s - --options runtime ../Resources/Motori/orbit-vector
+          lipo -info ../Resources/Motori/orbit-vector
+          # Prova vera: un logo piccolo diventa un SVG (un rettangolo pieno resta pieno)
+          python3 -c "
+          import struct, zlib
+          w, h = 120, 80
+          rows = b''.join(b'\\x00' + b''.join((b'\\x1e\\x50\\x78' if 20 <= x < 100 and 15 <= y < 65 else b'\\xff\\xff\\xff') for x in range(w)) for y in range(h))
+          def chunk(t, d): return struct.pack('>I', len(d)) + t + d + struct.pack('>I', zlib.crc32(t + d) & 0xffffffff)
+          open('/tmp/prova.png', 'wb').write(b'\\x89PNG\\r\\n\\x1a\\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(rows)) + chunk(b'IEND', b''))
+          "
+          ../Resources/Motori/orbit-vector /tmp/prova.png /tmp/prova.svg
+          head -c 300 /tmp/prova.svg; echo
+          echo "::notice::Motore del vettoriale pronto: $(du -h ../Resources/Motori/orbit-vector | cut -f1), $(lipo -archs ../Resources/Motori/orbit-vector)"
+
       - name: XcodeGen
         run: brew install xcodegen
 

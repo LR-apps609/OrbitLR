@@ -403,6 +403,13 @@ enum ParamChoices {
         case .stack: return [
             KnobOption(value: "1", short: "1×", label: String(localized: "Stessa dimensione, meno rumore")),
             KnobOption(value: "2", short: "2×", label: String(localized: "2×, più dettagli"))]
+        case .vector: return [
+            KnobOption(value: "auto", short: "Auto", label: String(localized: "Automatico (consigliato)")),
+            KnobOption(value: "logo", short: String(localized: "Logo"), label: String(localized: "Logo e disegni · colori pieni")),
+            KnobOption(value: "logot", short: String(localized: "Senza sfondo"), label: String(localized: "Logo senza sfondo · trasparente")),
+            KnobOption(value: "bw", short: String(localized: "Firma"), label: String(localized: "Firme e scansioni · un colore, trasparente")),
+            KnobOption(value: "photo", short: String(localized: "Foto"), label: String(localized: "Foto · effetto illustrazione")),
+            KnobOption(value: "photomax", short: String(localized: "Foto+"), label: String(localized: "Foto, più dettaglio · file più grande"))]
         case .aienhance: return [
             KnobOption(value: "b0-1", short: String(localized: "Fedele"), label: String(localized: "Fedele · stessa dimensione")),
             KnobOption(value: "b0-2", short: String(localized: "F 2×"), label: String(localized: "Fedele · 2×")),
@@ -426,6 +433,7 @@ enum ParamChoices {
         case .removebg: return "transparent"
         case .straighten: return "color-jpg"
         case .upscale: return "2"
+        case .vector: return "auto"
         case .aienhance: return "b0-2"
         case .stack: return "2"
         case .social: return "9x16"

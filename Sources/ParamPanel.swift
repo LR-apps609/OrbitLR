@@ -120,7 +120,7 @@ struct ParamView: View {
     @State var follow = true        // Formato social: segui il soggetto
     @State var videoSeconds: Double? = nil   // 2.7.5 · per il peso previsto di Comprimi e Formato social
 
-    private var presetable: Bool { [.resize, .icompress, .pdfcompress, .vcompress, .vresize, .speed, .rotate, .removebg, .straighten, .upscale, .aienhance, .stack, .social].contains(kind) }
+    private var presetable: Bool { [.resize, .icompress, .pdfcompress, .vcompress, .vresize, .speed, .rotate, .removebg, .straighten, .upscale, .aienhance, .stack, .social, .vector].contains(kind) }
 
     private var fileKind: Kind? { files.first.flatMap { Catalog.kind(of: $0) } }
     private var tint: Color { Theme.color(fileKind) }
@@ -177,7 +177,7 @@ struct ParamView: View {
         .onAppear {
             if kind == .gifcut { end = "0:05" }
             if kind == .rename { baseName = Self.suggestedBase(files) }
-            if [.removebg, .straighten, .upscale, .stack, .social].contains(kind) { choice = ParamChoices.defaultValue(for: kind) }
+            if [.removebg, .straighten, .upscale, .stack, .social, .vector].contains(kind) { choice = ParamChoices.defaultValue(for: kind) }
         }
     }
 
@@ -186,6 +186,7 @@ struct ParamView: View {
         case .removebg: return String(localized: "Risultato")
         case .straighten: return String(localized: "Come salvarlo")
         case .stack: return String(localized: "Risultato")
+        case .vector: return String(localized: "Che cosa è")
         default: return String(localized: "Quanto")
         }
     }
@@ -194,6 +195,7 @@ struct ParamView: View {
         switch kind {
         case .removebg: return String(localized: "Funziona meglio con persone, animali e oggetti ben distinti dallo sfondo.")
         case .straighten: return String(localized: "OrbitLR trova il foglio nella foto, corregge la prospettiva e lo pulisce come una scansione.")
+        case .vector: return String(localized: "Rende al meglio con loghi, icone, disegni e firme. Sulle immagini piccole i bordi si ricostruiscono prima con l’IA. Tutto sul Mac.")
         case .stack: return String(localized: "Seleziona 3–10 foto della stessa scena (una raffica va benissimo) oppure un video breve: OrbitLR le allinea e le unisce. I dettagli vengono dagli scatti veri.")
         default: return String(localized: "Contorni nitidi con la tecnologia di Apple. Non inventa dettagli che non ci sono.")
         }
@@ -221,6 +223,7 @@ struct ParamView: View {
         case .social: return String(localized: "Esporta")
         case .ringtone: return String(localized: "Crea la suoneria")
         case .hidemark: return String(localized: "Crea")
+        case .vector: return String(localized: "Crea l’SVG")
         }
     }
 
@@ -389,7 +392,7 @@ struct ParamView: View {
                 }
             }
             note(String(localized: "Intensità 0 = Fedele: pulisce e rende nitido senza inventare. Più sali, più il risultato è incisivo, ma il modello ricostruisce texture che nella foto non c’erano. Tra 1 e 99 si usano tutti e due i modelli (tempo doppio)."))
-        case .removebg, .straighten, .upscale, .stack:
+        case .removebg, .straighten, .upscale, .stack, .vector:
             Knob(title: toolTitle, options: ParamChoices.options(for: kind) ?? [], selection: $choice, tint: tint)
             note(toolNote)
         case .rename:
@@ -489,7 +492,7 @@ struct ParamView: View {
             finish(password)
         case .aienhance:
             finish("b\(aiStrength)-\(aiSize)")
-        case .removebg, .straighten, .upscale, .stack:
+        case .removebg, .straighten, .upscale, .stack, .vector:
             finish(choice.isEmpty ? ParamChoices.defaultValue(for: kind) : choice)
         case .rename:
             let base = baseName.trimmingCharacters(in: .whitespaces)
