@@ -1,9 +1,11 @@
 // Attività, Opzioni, Aiuto e «Segnala un problema».
 
+import { setTips, tipsOn } from "./welcome.js";
+import { play, setSounds, soundsOn } from "./sounds.js";
 import { askName, describe, presets, removePreset, renamePreset, suggestName } from "./presets.js";
 import { invoke, openPath, openUrl, pickFolder, reveal } from "./api.js";
 import { actionName } from "./catalog.js";
-import { clearHistory, getHistory, removeFromHistory, running, subscribe, cancel } from "./jobs.js";
+import { clearHistory, getHistory, removeFromHistory, running, savedThisMonth, subscribe, cancel } from "./jobs.js";
 import { fmtBytes, gainText, h, ico, modal, store } from "./util.js";
 import { install as installOffice, isInstalling, officeReady } from "./office.js";
 import { t, tr, LOCALE } from "./i18n.js";
@@ -11,8 +13,9 @@ import { t, tr, LOCALE } from "./i18n.js";
 // ── Attività: in corso in cima, poi la cronologia giorno per giorno
 export function activityPage() {
   const body = h("div.list");
+  const subEl = h("div.sub");
   const el = h("div.page",
-    h("div.head", h("div", h("h1", t("Attività")), h("div.sub", t("Quello che è in corso e quello che hai fatto"))), h("div.grow"),
+    h("div.head", h("div", h("h1", t("Attività")), subEl), h("div.grow"),
       h("button.btn", { onclick: async () => { if (await modal(t("Cancellare la cronologia?"), t("I file creati restano dove sono: si cancella solo questo elenco."), [{ label: t("Annulla"), value: false }, { label: t("Cancella"), value: true, primary: true }])) clearHistory(); } }, ico("trash-2", 15), t("Cancella tutto"))),
     h("div.page-scroll", body));
 
@@ -38,6 +41,9 @@ export function activityPage() {
   function render() {
     const live = running();
     const hist = getHistory();
+    // Come sul Mac: quanto hai risparmiato questo mese
+    const saved = savedThisMonth();
+    subEl.textContent = saved > 0 ? t`Quello che è in corso e quello che hai fatto · ${fmtBytes(saved)} risparmiati questo mese` : t("Quello che è in corso e quello che hai fatto");
     body.replaceChildren();
     if (!live.length && !hist.length) {
       body.append(h("div.empty", h("div.box", { style: { cursor: "default" } }, ico("clock", 40), h("h3", t("Niente ancora")), h("div", t("Qui trovi i lavori in corso e quelli fatti, con i file creati.")))));
@@ -101,7 +107,14 @@ export function settingsPage(app) {
             h("button.btn.ghost", { onclick: () => { removePreset(p.id); render(); } }, t("Togli"))))),
         h("div.set", h("h3", t("Aspetto")),
           h("div.opts", [["auto", t("Come Windows")], ["light", t("Chiaro")], ["dark", t("Radio di notte")]].map(([v, l]) =>
-            h("button.opt" + (v === theme ? ".on" : ""), { onclick: () => { store.set("theme", v); app.applyTheme(); render(); } }, l)))),
+            h("button.opt" + (v === theme ? ".on" : ""), { onclick: () => { store.set("theme", v); app.applyTheme(); render(); } }, l))),
+          h("div.opts", { style: { marginTop: "8px" } }, [[true, t("Suoni accesi")], [false, t("Senza suoni")]].map(([v, l]) =>
+            h("button.opt" + (v === soundsOn() ? ".on" : ""), { onclick: () => { setSounds(v); if (v) play("select"); render(); } }, l))),
+          h("div.opts", { style: { marginTop: "8px" } }, [[true, t("Consigli all'avvio")], [false, t("Senza consigli")]].map(([v, l]) =>
+            h("button.opt" + (v === tipsOn() ? ".on" : ""), { onclick: () => { setTips(v); render(); } }, l))),
+          h("p", { style: { margin: "12px 0 4px", fontSize: "13px", color: "var(--quiet)" } }, t("Linguetta sul bordo destro dello schermo: ci lasci cadere i file e si aprono in OrbitLR.")),
+          h("div.opts", [[true, t("Linguetta accesa")], [false, t("Senza linguetta")]].map(([v, l]) =>
+            h("button.opt" + (v === (store.get("shelf", true) !== false) ? ".on" : ""), { onclick: () => { store.set("shelf", v); invoke("shelf_show", { on: v }).catch(() => {}); render(); } }, l)))),
         h("div.set", h("h3", t("Componenti")),
           h("p", eng.office ? t("LibreOffice è installato: Word, Excel e PowerPoint si convertono in PDF e negli altri formati.") : t("LibreOffice (facoltativo, gratuito, circa 350 MB) serve solo per Word, Excel e PowerPoint.")),
           eng.office ? null : h("div", h("button.btn.brass", { disabled: isInstalling() || null, onclick: async () => { await installOffice(app); await officeReady(app); render(); } }, ico("download", 15), isInstalling() ? t("Installazione in corso…") : t("Installa LibreOffice")))),

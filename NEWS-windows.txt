@@ -1,3 +1,15 @@
+Novità per Windows 0.7.0 «Come il Mac»:
+• La linguetta sul bordo destro dello schermo: ci lasci cadere i file da qualsiasi parte e si aprono in OrbitLR (si spegne nelle Opzioni)
+• «Questo mese hai risparmiato…»: nel Cassetto e in Attività vedi quanto spazio hai liberato con compressioni e conversioni
+• Suoni discreti come sul Mac: un clic sugli spicchi, un «ding» a lavoro finito (si spengono nelle Opzioni → Aspetto)
+• Benvenuto al primo avvio e «Lo sapevi?»: un consiglio a ogni apertura, finché vuoi
+
+What’s new in Windows 0.7.0 “Like the Mac”:
+• A tab on the right edge of the screen: drop files on it from anywhere and they open in OrbitLR (turn it off in Settings)
+• “This month you saved…”: the Drawer and Activity show how much space your compressions and conversions freed up
+• Subtle sounds like on the Mac: a click on the slices, a “ding” when a job is done (turn them off in Settings → Appearance)
+• A welcome on first launch and “Did you know?”: a tip every time you open the app, as long as you like
+
 Novità per Windows 0.6.0 «Inquadra»:
 • Video → «Formato social» con «Inquadra le persone»: il video riempie lo schermo verticale e l'inquadratura segue i volti (con il rilevamento di Windows, sul computer)
 • Foto → «Nascondi un logo» → «Togli con l'IA»: il logo sparisce e lo sfondo dietro viene ricostruito, sul computer (la prima volta scarica il modello, 211 MB)

@@ -3,7 +3,8 @@
   "identifier": "default",
   "description": "Solo quello che serve alla finestra di OrbitLR",
   "windows": [
-    "main"
+    "main",
+    "linguetta"
   ],
   "permissions": [
     "core:default",

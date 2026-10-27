@@ -95,6 +95,8 @@ input, textarea, select, button { font: inherit; color: inherit; }
 .drawer { background: var(--card); border-radius: var(--radius); padding: 10px 10px 8px; box-shadow: var(--shadow); margin-bottom: 8px; max-height: 260px; display: flex; flex-direction: column; min-height: 0; }
 .drawer h4 { margin: 0 0 4px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
 .drawer h4 .ico { color: var(--brass); }
+.drawer p.saved { margin: 0 0 6px; display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--sage-deep); }
+.drawer p.saved .ico { flex: none; }
 .drawer p { margin: 0; font-size: 12px; color: var(--quiet); }
 .drawer ul { list-style: none; margin: 4px 0 0; padding: 0; overflow: auto; }
 .drawer li { display: flex; align-items: center; gap: 8px; padding: 5px 4px; border-radius: 8px; cursor: pointer; font-size: 12.5px; }
@@ -528,3 +530,24 @@ textarea.tts:focus { border-color: var(--brass); }
 .recent-row .n { font-weight: 800; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .recent-row .s { color: var(--quiet); font-size: 12px; font-variant-numeric: tabular-nums; }
 .recent-row:hover { border-color: var(--brass); }
+
+/* 0.7 · Benvenuto al primo avvio e «Lo sapevi?», come sul Mac */
+.welcome-bg { background: rgba(14, 24, 18, .5); backdrop-filter: blur(6px); }
+.modal.welcome { width: min(460px, 92vw); padding: 28px 28px 22px; justify-items: center; text-align: center; gap: 10px; }
+.welcome .w-mark img { border-radius: 14px; box-shadow: var(--shadow); }
+.welcome .w-step { font-size: 11.5px; letter-spacing: .1em; color: var(--quiet); }
+.welcome .w-ico { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; background: var(--sage-soft, rgba(94, 143, 120, .15)); color: var(--sage-deep); }
+.welcome h2 { margin: 2px 0 0; font-size: 24px; }
+.welcome h3 { margin: 0; font-size: 15px; color: var(--brass); }
+.welcome p { margin: 0; color: var(--quiet); line-height: 1.5; max-width: 38ch; }
+.welcome .w-dots { display: flex; gap: 6px; margin: 4px 0; }
+.welcome .w-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); transition: background .2s, transform .2s; }
+.welcome .w-dots i.on { background: var(--sage-deep); transform: scale(1.25); }
+.welcome .w-btns { display: flex; gap: 8px; justify-content: center; width: 100%; }
+.tip-card { position: fixed; right: 18px; bottom: 18px; z-index: 30; width: min(320px, calc(100vw - 36px)); background: var(--panel); border-radius: 16px; box-shadow: var(--shadow-up); padding: 12px 14px; display: grid; gap: 6px; opacity: 0; transform: translateY(10px); transition: opacity .3s, transform .3s; }
+.tip-card.in { opacity: 1; transform: none; }
+.tip-card .tip-head { display: flex; align-items: center; gap: 6px; color: var(--brass); font-size: 12.5px; }
+.tip-card .tip-head .btn { margin-left: auto; }
+.tip-card h4 { margin: 0; font-size: 14.5px; }
+.tip-card p { margin: 0; font-size: 13px; color: var(--quiet); line-height: 1.45; }
+.tip-card .tip-btns { display: flex; gap: 6px; justify-content: flex-end; }

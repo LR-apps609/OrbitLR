@@ -1,10 +1,12 @@
 // OrbitLR per Windows: la finestra con la barra laterale e le schede.
 
+import { play, prepareSounds } from "./sounds.js";
 import { DEMO, invoke, onDrop, openPath, openUrl, reveal } from "./api.js";
 import { kindOfExt } from "./catalog.js";
 import { audioPage } from "./audio.js";
 import { convertPage } from "./convert.js";
-import { getDrawer, running, subscribe } from "./jobs.js";
+import { getDrawer, getHistory, running, savedThisMonth, subscribe } from "./jobs.js";
+import { startWelcome } from "./welcome.js";
 import { mediaPage } from "./media.js";
 import { videoTab } from "./video.js";
 import { activityPage, helpPage, report, settingsPage } from "./pages.js";
@@ -13,7 +15,7 @@ import { showFeedback } from "./feedback.js";
 import { extOf, fmtBytes, h, ico, modal, store, toast } from "./util.js";
 import { t, tr, LANG, isEn } from "./i18n.js";
 
-const VERSION = "0.6.0";
+const VERSION = "0.7.0";
 // Numero della compilazione (lo scrive GitHub quando crea l'installazione)
 const BUILD = 0;
 
@@ -56,6 +58,7 @@ const navButtons = {};
 const activityBadge = h("span.badge", { hidden: true });
 const drawerList = h("ul");
 const drawerEmpty = h("p", t("I file che crei finiscono qui: un clic per vederli nella cartella."));
+const drawerSaved = h("p.saved", { hidden: true });
 const updateLink = h("button.btn.brass", { hidden: true, style: { width: "100%", marginBottom: "8px" }, onclick: () => askUpdate() });
 // Come sul Mac: in alto a destra, appena c'è un aggiornamento
 const updateCorner = h("button.update-corner", { hidden: true, onclick: () => askUpdate() }, ico("circle-arrow-down", 15), t("Nuovo aggiornamento disponibile"));
@@ -94,7 +97,7 @@ function sidebar() {
     nav,
     h("div.side-fill"),
     updateLink,
-    h("div.drawer", h("h4", ico("archive", 15), t("Cassetto")), drawerEmpty, drawerList),
+    h("div.drawer", h("h4", ico("archive", 15), t("Cassetto")), drawerSaved, drawerEmpty, drawerList),
     foot,
     h("div.ver", `OrbitLR ${VERSION}${BUILD ? ` (${BUILD})` : ""}${DEMO ? t(" · prova") : ""}`));
 }
@@ -102,6 +105,10 @@ function sidebar() {
 function renderDrawer() {
   const items = getDrawer().slice(0, 12);
   drawerEmpty.hidden = items.length > 0;
+  // 0.7 · Come sul Mac: «Questo mese hai risparmiato 3,4 GB»
+  const saved = savedThisMonth();
+  drawerSaved.hidden = saved <= 0;
+  drawerSaved.replaceChildren(ico("circle-arrow-down", 14), h("span", t`Questo mese hai risparmiato ${fmtBytes(saved)}`));
   let clickTimer;
   drawerList.replaceChildren(...items.map((d) => h("li", { title: t`${d.name}\nClic: mostra nella cartella · Doppio clic: apri`,
     onclick: () => { clearTimeout(clickTimer); clickTimer = setTimeout(() => reveal(d.path), 260); },
@@ -199,7 +206,14 @@ async function boot() {
   const saved = store.get("tab", "convert");
   show(TABS.some((t) => t.id === saved) || EXTRA[saved] ? saved : "convert");
   renderDrawer();
-  subscribe(() => {
+  prepareSounds();
+  subscribe((job) => {
+    // Un «ding» a lavoro finito, un suono se non è riuscito (come sul Mac)
+    if (job && job.ended && !job._sounded && job.state) {
+      job._sounded = true;
+      if (job.state === "failed" || (job.results || []).some((r) => r.error)) play("fail");
+      else if (job.state === "done") play("done");
+    }
     renderDrawer();
     const n = running().length;
     activityBadge.hidden = n === 0;
@@ -207,7 +221,7 @@ async function boot() {
   });
   onDrop((type, paths) => {
     document.querySelectorAll(".dropzone, .empty .box").forEach((d) => d.classList.toggle("over", type === "enter" || type === "over"));
-    if (type === "drop") handleDrop(paths);
+    if (type === "drop") { play("drop"); handleDrop(paths); }
   });
   // Niente menu del browser e niente navigazione accidentale trascinando un link
   window.addEventListener("dragover", (e) => e.preventDefault());
@@ -248,6 +262,9 @@ async function boot() {
   setTimeout(() => checkUpdate(), 4000);
   // Dopo un aggiornamento: cosa c'è di nuovo (una volta sola)
   const news = store.get("newsPending", null);
+  // 0.7 · Benvenuto al primo avvio, poi «Lo sapevi?» (non nelle prove automatiche; chi usa già l'app non rivede il benvenuto)
+  if (!store.get("welcomed", false) && (getHistory().length || store.get("updateCheck", 0))) store.set("welcomed", true);
+  if (!navigator.webdriver) startWelcome(!!(news && news.version === VERSION));
   if (news && news.version === VERSION) {
     store.set("newsPending", null);
     setTimeout(() => modal(t`Benvenuto nella ${VERSION}`, news.notes || t("OrbitLR è aggiornata."), [{ label: t("Bene!"), value: true, primary: true }]), 1200);

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>OrbitLR</title>
+<style>
+  /* La linguetta: una striscia salvia sul bordo destro; con un file sopra si apre la «tasca» con la torta */
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; font-family: "Segoe UI", system-ui, sans-serif; user-select: none; }
+  .tab { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; display: grid; place-items: center; cursor: pointer;
+    background: linear-gradient(180deg, #5E8F78, #4A6B55); border-radius: 12px 0 0 12px; box-shadow: -3px 0 12px rgba(0, 0, 0, .25); }
+  .tab::before { content: ""; width: 4px; height: 46px; border-radius: 4px; background: rgba(255, 255, 255, .55); }
+  .tab:hover { background: linear-gradient(180deg, #6AA088, #557A62); }
+  .pocket { position: absolute; inset: 0; display: none; place-items: center; text-align: center; padding: 14px; color: #F4F2EA;
+    background: radial-gradient(circle at 50% 35%, #2B5446, #12221E 75%); border-radius: 18px 0 0 18px; box-shadow: -6px 0 24px rgba(0, 0, 0, .35); }
+  .pocket svg { width: 96px; height: 96px; }
+  .pocket b { display: block; font-size: 15px; margin-top: 8px; }
+  .pocket span { font-size: 12px; opacity: .75; }
+  body.open .tab { display: none; }
+  body.open .pocket { display: grid; }
+  body.over .pocket svg { animation: spin 1.2s ease-in-out infinite alternate; }
+  @keyframes spin { to { transform: rotate(40deg) scale(1.06); } }
+  @media (prefers-reduced-motion: reduce) { body.over .pocket svg { animation: none; } }
+</style>
+</head>
+<body>
+<div class="tab" id="tab" title="OrbitLR · lascia qui i file"></div>
+<div class="pocket" aria-hidden="true">
+  <div>
+    <svg viewBox="-50 -50 100 100">
+      <circle r="46" fill="#F4EEDC" stroke="#C1913E" stroke-width="3"/>
+      <g stroke="#F4EEDC" stroke-width="2">
+        <path d="M0 0 L0 -44 A44 44 0 0 1 38 -22 Z" fill="#7C9AC8"/><path d="M0 0 L38 -22 A44 44 0 0 1 38 22 Z" fill="#C76B4F"/>
+        <path d="M0 0 L38 22 A44 44 0 0 1 0 44 Z" fill="#9A7FC0"/><path d="M0 0 L0 44 A44 44 0 0 1 -38 22 Z" fill="#D9A441"/>
+        <path d="M0 0 L-38 22 A44 44 0 0 1 -38 -22 Z" fill="#5E8F78"/><path d="M0 0 L-38 -22 A44 44 0 0 1 0 -44 Z" fill="#6AAFA8"/>
+      </g>
+      <circle r="15" fill="#12221E" stroke="#C1913E" stroke-width="2"/>
+    </svg>
+    <b id="t1">Lascia qui i file</b>
+    <span id="t2">si aprono in OrbitLR</span>
+  </div>
+</div>
+<script src="js/shelf.js"></script>
+</body>
+</html>

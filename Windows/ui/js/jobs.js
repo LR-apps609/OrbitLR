@@ -24,6 +24,30 @@ export function running() {
 export function getHistory() {
   return history;
 }
+/** Spazio risparmiato nel mese corrente (compressioni e conversioni riuscite, escluse quelle annullate), come sul Mac. */
+export function savedThisMonth() {
+  const now = new Date();
+  let sum = 0;
+  for (const j of history) {
+    if (j.undone || !j.ended) continue;
+    const d = new Date(j.ended);
+    if (d.getFullYear() !== now.getFullYear() || d.getMonth() !== now.getMonth()) continue;
+    for (const r of j.results || []) {
+      if (r.error || !r.sourceSize || !r.outputs?.length) continue;
+      const after = r.outputs.reduce((a, o) => a + (o.size || 0), 0);
+      if (after > 0 && after < r.sourceSize) sum += r.sourceSize - after;
+    }
+  }
+  return sum;
+}
+
+/** Un lavoro annullato non conta più nello spazio risparmiato. */
+export function markUndone(id) {
+  history = history.map((j) => (j.id === id ? { ...j, undone: true } : j));
+  store.set("history", history);
+  notify({ id });
+}
+
 export function getDrawer() {
   return drawer;
 }

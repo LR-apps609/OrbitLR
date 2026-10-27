@@ -1,6 +1,7 @@
 // Conversione: trascina un file, si apre la torta con i formati. Lo spicchio «Modifica» porta il file
 // nella sua scheda. Con tipi diversi insieme, una torta piccola per tipo. Tasti 1–9; Invio = ultima scelta.
 
+import { play } from "./sounds.js";
 import { invoke, pickFiles, setDemoPick } from "./api.js";
 import { CONVERT, KINDS, docTargets, fmtIcon } from "./catalog.js";
 import { askOffice } from "./office.js";
@@ -114,7 +115,7 @@ export function convertPage(app) {
       if (n <= 9) keyMap.push(s.go);
       const b = h("button.slice" + (s.edit ? ".edit" : "") + (s.mine ? ".mine" : ""), {
         style: { left: R + Math.cos(a) * ring + "px", top: R + Math.sin(a) * ring + "px", animationDelay: i * 30 + "ms" },
-        onclick: s.go, title: s.mine ? t("Una delle mie azioni") : s.id === "more" ? t("Altri formati") : s.id === "back" ? t("Torna ai formati principali") : s.edit ? t("Apri nella sua scheda con tutti gli strumenti") : t`Converti in ${s.label}`,
+        onclick: () => { play("select"); s.go(); }, onpointerenter: () => play("tick"), title: s.mine ? t("Una delle mie azioni") : s.id === "more" ? t("Altri formati") : s.id === "back" ? t("Torna ai formati principali") : s.edit ? t("Apri nella sua scheda con tutti gli strumenti") : t`Converti in ${s.label}`,
       }, n <= 9 ? h("span.k", String(n)) : null, ico(s.icon, 18), s.label);
       node.append(b);
     });

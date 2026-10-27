@@ -823,6 +823,55 @@ fn show_main(app: &tauri::AppHandle) {
     }
 }
 
+// ── La linguetta sul bordo dello schermo (il «ripiano» del Mac): una striscia sottile sul lato destro,
+//    a metà altezza, sempre sopra le altre finestre. Ci lasci cadere dei file e si aprono in OrbitLR.
+const SHELF_THIN: f64 = 18.0;
+const SHELF_OPEN: f64 = 230.0;
+const SHELF_H: f64 = 170.0;
+
+/// Mette la linguetta al suo posto: aperta (file sopra) o sottile. Misure logiche, schermo principale.
+fn shelf_place(app: &tauri::AppHandle, open: bool) {
+    let Some(w) = app.get_webview_window("linguetta") else { return };
+    let Ok(Some(m)) = w.primary_monitor().or_else(|_| w.current_monitor()) else { return };
+    let sf = m.scale_factor();
+    let wa = m.work_area();
+    let (ax, ay) = (wa.position.x as f64 / sf, wa.position.y as f64 / sf);
+    let (aw, ah) = (wa.size.width as f64 / sf, wa.size.height as f64 / sf);
+    let width = if open { SHELF_OPEN } else { SHELF_THIN };
+    let height = if open { SHELF_H + 60.0 } else { SHELF_H };
+    let _ = w.set_size(tauri::LogicalSize::new(width, height));
+    let _ = w.set_position(tauri::LogicalPosition::new(ax + aw - width, ay + (ah - height) / 2.0));
+}
+
+/// Accende o spegne la linguetta (dalle Opzioni, e all'avvio).
+#[tauri::command]
+fn shelf_show(app: tauri::AppHandle, on: bool) {
+    if let Some(w) = app.get_webview_window("linguetta") {
+        if on {
+            shelf_place(&app, false);
+            let _ = w.show();
+        } else {
+            let _ = w.hide();
+        }
+    }
+}
+
+/// La linguetta si allarga quando ci passa sopra un file, e torna sottile dopo.
+#[tauri::command]
+fn shelf_expand(app: tauri::AppHandle, open: bool) {
+    shelf_place(&app, open);
+}
+
+/// File lasciati cadere sulla linguetta (o un clic): si apre OrbitLR con quei file.
+#[tauri::command]
+fn shelf_drop(app: tauri::AppHandle, paths: Vec<String>) {
+    shelf_place(&app, false);
+    show_main(&app);
+    if !paths.is_empty() {
+        let _ = app.emit("open-files", paths);
+    }
+}
+
 /// Windows è in italiano? (per le poche parole del menu vicino all'orologio, prima che parta la finestra)
 fn windows_italian() -> bool {
     #[cfg(windows)]
@@ -954,6 +1003,24 @@ fn main() {
                 }
                 tray.build(app)?;
             }
+            // La linguetta sul bordo dello schermo: nasce nascosta, la pagina la accende se è attiva nelle Opzioni
+            {
+                let built = tauri::WebviewWindowBuilder::new(app, "linguetta", tauri::WebviewUrl::App("shelf.html".into()))
+                    .title("OrbitLR · linguetta")
+                    .inner_size(SHELF_THIN, SHELF_H)
+                    .decorations(false)
+                    .transparent(true)
+                    .shadow(false)
+                    .always_on_top(true)
+                    .skip_taskbar(true)
+                    .resizable(false)
+                    .focused(false)
+                    .visible(false)
+                    .build();
+                if let Err(e) = built {
+                    eprintln!("linguetta non creata: {e}");
+                }
+            }
             // Ctrl+Alt+C: i file selezionati in Esplora file arrivano nella torta (come ⌥⌘C sul Mac)
             {
                 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
@@ -1009,7 +1076,7 @@ fn main() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install, update_check, update_install, undo_result, allow_made, set_lang, pdf_info, pdf_page, silences, phone_share, phone_stop])
+        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install, update_check, update_install, undo_result, allow_made, set_lang, pdf_info, pdf_page, silences, phone_share, phone_stop, shelf_show, shelf_expand, shelf_drop])
         .run(tauri::generate_context!())
         .expect("OrbitLR non è riuscita ad avviarsi");
 }

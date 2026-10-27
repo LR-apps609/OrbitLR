@@ -98,6 +98,7 @@ export function resultBar(origin) {
     try {
       await invoke("undo_result", { paths: outs.map((o) => o.path) });
       job.undone = true;
+      markUndone(job.id);
       render(job);
     } catch (e) {
       toast(tr(String(e)));
