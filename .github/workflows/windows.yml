@@ -227,13 +227,14 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
-          & ".\Windows\src-tauri\motori\ffmpeg.exe" -hide_banner -loglevel error -y -f lavfi -i "color=c=white:s=400x260" -vf "drawbox=x=40:y=30:w=320:h=200:color=0x1E5078:t=fill,drawbox=x=150:y=80:w=100:h=100:color=0xF0B432:t=fill" -frames:v 1 "$env:RUNNER_TEMP\Logo prova.png"
+          & ".\Windows\src-tauri\motori\ffmpeg.exe" -hide_banner -loglevel error -y -f lavfi -i "color=c=white:s=1200x780" -vf "drawbox=x=120:y=90:w=960:h=600:color=0x1E5078:t=fill,drawbox=x=450:y=240:w=300:h=300:color=0xF0B432:t=fill" -frames:v 1 "$env:RUNNER_TEMP\Logo prova.png"
           Get-Process orbitlr -ErrorAction SilentlyContinue | Stop-Process -Force
           $env:ORBIT_PROVA_FILE = "$env:RUNNER_TEMP\Logo prova.png"
           $env:ORBIT_PROVA_SCHEDA = "image"
           $env:ORBIT_PROVA_AZIONE = "vector"
           $env:ORBIT_PROVA_PARAMETRO = "auto"
           $app = Start-Process -FilePath ".\Windows\target\release\orbitlr.exe" -PassThru
+          # (oltre i 1000 px non serve l'ingrandimento con l'IA: si prova il motore del vettoriale da solo)
           $svg = $null
           for ($i = 0; $i -lt 60 -and -not $svg; $i++) { Start-Sleep -Seconds 2; $svg = Get-ChildItem "$env:RUNNER_TEMP" -Filter "Logo prova (vettoriale)*.svg" -ErrorAction SilentlyContinue | Where-Object { $_.Length -gt 0 } }
           Get-Process orbitlr -ErrorAction SilentlyContinue | Stop-Process -Force
