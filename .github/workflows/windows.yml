@@ -236,7 +236,7 @@ jobs:
           $app = Start-Process -FilePath ".\Windows\target\release\orbitlr.exe" -PassThru
           # (oltre i 1000 px non serve l'ingrandimento con l'IA: si prova il motore del vettoriale da solo)
           $svg = $null
-          for ($i = 0; $i -lt 60 -and -not $svg; $i++) { Start-Sleep -Seconds 2; $svg = Get-ChildItem "$env:RUNNER_TEMP" -Filter "Logo prova (vettoriale)*.svg" -ErrorAction SilentlyContinue | Where-Object { $_.Length -gt 0 } }
+          for ($i = 0; $i -lt 60 -and -not $svg; $i++) { Start-Sleep -Seconds 2; $svg = Get-ChildItem "$env:RUNNER_TEMP" -Filter "Logo prova (*).svg" -ErrorAction SilentlyContinue | Where-Object { $_.Length -gt 0 } }
           Get-Process orbitlr -ErrorAction SilentlyContinue | Stop-Process -Force
           if ($svg) {
             $txt = Get-Content $svg[0].FullName -Raw

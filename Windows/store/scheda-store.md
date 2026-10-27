@@ -37,6 +37,7 @@ FOTO
 • Togli lo sfondo e i loghi con l'intelligenza artificiale, sul computer
 • Migliora e ingrandisci, raddrizza un documento fotografato, estrai il testo
 • Togli la posizione GPS e gli altri metadati
+• Trasforma loghi, disegni e firme in vettoriale (SVG), nitido a qualunque misura
 
 VIDEO
 • Comprimi per WhatsApp, Discord o email mantenendo la qualità
@@ -69,6 +70,7 @@ E poi: cartelle automatiche che sistemano da sole i file in arrivo, «Le mie azi
 - Word, Excel e PowerPoint in PDF
 - Cartelle automatiche
 - Togli GPS e metadati da foto e video
+- Loghi, disegni e firme in vettoriale (SVG)
 - Passa i file al telefono con un QR
 - Niente account, pubblicità o abbonamenti
 
@@ -100,6 +102,7 @@ PHOTOS
 • Remove backgrounds and logos with on-device AI
 • Enhance and upscale, straighten a photographed document, extract text
 • Remove GPS location and other metadata
+• Turn logos, drawings and signatures into vector graphics (SVG), sharp at any size
 
 VIDEO
 • Compress for WhatsApp, Discord or email while keeping the quality
@@ -132,6 +135,7 @@ Plus: watch folders that tidy up incoming files on their own, "My actions" for c
 - Word, Excel and PowerPoint to PDF
 - Watch folders
 - Remove GPS and metadata from photos and videos
+- Logos, drawings and signatures to vector (SVG)
 - Send files to your phone with a QR code
 - No account, ads or subscriptions
 
