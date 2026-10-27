@@ -1,4 +1,4 @@
-Novità della 4.4.1:
+Novità della 4.4.1 «Centrato»:
 • Il pulsante «Nuovo aggiornamento» in alto è centrato come gli altri pulsanti della barra
 
 Novità della 4.4 «Ricalco»:
