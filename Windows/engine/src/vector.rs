@@ -8,9 +8,17 @@ use crate::run::Cancel;
 use crate::tools::Tools;
 use std::path::{Path, PathBuf};
 
-/// Le scelte: «auto», «logo», «logot» (logo senza sfondo), «bw», «photo», «photomax».
+/// Le scelte: «auto», «logo», «logot» (logo senza sfondo), «bw», «photo», «photomax»;
+/// con «+» in fondo (per esempio «logo+») la precisione massima: il ricalco lento.
 pub fn opts(param: &str) -> vettore::Opts {
     let mut o = vettore::Opts::default();
+    let param = match param.strip_suffix('+') {
+        Some(p) => {
+            o.precise = true;
+            p
+        }
+        None => param,
+    };
     match param {
         "logo" => o.mode = vettore::Mode::Logo,
         "logot" => {
@@ -30,6 +38,8 @@ pub fn opts(param: &str) -> vettore::Opts {
 
 /// Lato lungo sotto il quale conviene ingrandire con l'IA prima di vettorializzare.
 const AI_BELOW: u32 = 1000;
+/// Con la precisione massima l'ingrandimento con l'IA vale la pena anche su immagini più grandi.
+const AI_BELOW_PRECISE: u32 = 1600;
 
 pub fn vectorize(tools: Option<&Tools>, data_dir: Option<&Path>, src: &Path, param: &str, dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<PathBuf> {
     let photo = crate::images::open(tools, src)?;
@@ -42,7 +52,8 @@ pub fn vectorize(tools: Option<&Tools>, data_dir: Option<&Path>, src: &Path, par
     // Ingrandimento con l'IA (non per le foto: lì si vuole il disegno della foto, non dettagli in più)
     let mut base = 0.0;
     let mut up: Option<image::DynamicImage> = None;
-    if o.mode != vettore::Mode::Photo && w.max(h) <= AI_BELOW && w.max(h) > 96 {
+    let below = if o.precise { AI_BELOW_PRECISE } else { AI_BELOW };
+    if o.mode != vettore::Mode::Photo && w.max(h) <= below && w.max(h) > 96 {
         if let Some(data) = data_dir {
             let tmp = std::env::temp_dir().join(format!("orbitlr-vettoriale-{}-{}", std::process::id(), std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or(0)));
             struct Clean(PathBuf);

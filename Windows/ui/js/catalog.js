@@ -220,13 +220,16 @@ export const KNOBS = {
   vector: {
     options: [
       { value: "auto", label: t("Automatico"), small: t("consigliato") },
+      { value: "auto+", label: t("Precisione massima"), small: t("ricalco lento, fino a qualche minuto") },
       { value: "logo", label: t("Logo e disegni"), small: t("colori pieni") },
       { value: "logot", label: t("Logo senza sfondo"), small: t("trasparente") },
       { value: "bw", label: t("Firme e scansioni"), small: t("un colore, trasparente") },
+      { value: "logo+", label: t("Logo, precisione massima"), small: t("ricalco lento") },
+      { value: "bw+", label: t("Firma, precisione massima"), small: t("ricalco lento") },
       { value: "photo", label: t("Foto"), small: t("effetto illustrazione") },
       { value: "photomax", label: t("Foto, più dettaglio"), small: t("file più grande") },
     ],
-    hint: t("Sulle immagini piccole i bordi si ricostruiscono prima con l'IA (la prima volta scarica il motore, 45 MB). Tutto sul computer."),
+    hint: t("«Precisione massima» ricalca ogni curva sul bordo vero, punto per punto: più lento, il risultato più fedele. Sulle immagini piccole i bordi si ricostruiscono prima con l'IA (la prima volta scarica il motore, 45 MB). Tutto sul computer."),
     default: "auto",
   },
   upscale: {

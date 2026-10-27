@@ -14,6 +14,7 @@
 //! «photo» (tanti colori), «auto» (sceglie da solo).
 
 pub mod fit;
+pub mod precise;
 
 use fit::{FitOpts, Seg, Shape, P};
 use image::{DynamicImage, GenericImageView, GrayImage, Luma, RgbaImage};
@@ -55,11 +56,13 @@ pub struct Opts {
     pub transparent: bool,
     /// Sfumature vere (gradienti lineari) dove il colore cambia in modo regolare
     pub gradients: bool,
+    /// «Precisione massima»: il ricalco lento, curva per curva sul bordo vero (anche qualche minuto)
+    pub precise: bool,
 }
 
 impl Default for Opts {
     fn default() -> Self {
-        Opts { mode: Mode::Auto, detail: 2, transparent: false, gradients: true }
+        Opts { mode: Mode::Auto, detail: 2, transparent: false, gradients: true, precise: false }
     }
 }
 
@@ -513,9 +516,12 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
     let detail = o.detail.clamp(1, 3);
     let maxside = w.max(h) as f64;
     // Scala di lavoro: abbastanza grande per bordi precisi, non troppo per la memoria
-    let s = match mode {
-        Mode::Photo => (1400.0 / maxside).clamp(0.2, 2.0),
-        _ => (2200.0 / maxside).clamp(0.4, 4.0),
+    // con la precisione massima si lavora più in grande (più tempo, bordi ancora più fini)
+    let s = match (mode, o.precise) {
+        (Mode::Photo, false) => (1400.0 / maxside).clamp(0.2, 2.0),
+        (Mode::Photo, true) => (2000.0 / maxside).clamp(0.3, 3.0),
+        (_, false) => (2200.0 / maxside).clamp(0.4, 4.0),
+        (_, true) => (3200.0 / maxside).clamp(0.6, 6.0),
     };
     let (ww, wh) = (((w as f64 * s).round() as u32).max(2), ((h as f64 * s).round() as u32).max(2));
     let base: RgbaImage = match upscaled {
@@ -578,8 +584,15 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
         let core = &inks[..(inks.len() * 3 / 10).max(1).min(inks.len())];
         let col = if core.is_empty() { [0, 0, 0] } else { median_rgb(core.iter().map(|c| c.1)) };
         progress(0.45);
-        let fo = FitOpts { sigma: 0.6 * u, tol: 0.5 * u * tolk, corner_win: (1.5 * u).round().max(3.0) as usize, corner_deg: 50.0 };
-        let shapes = trace_mask(&mask, wu, hu, u, &fo, (3.0 * u) as usize);
+        let shapes = if o.precise {
+            // copertura: 0 sulla carta, 1 nell'inchiostro pieno; il bordo vero è a metà
+            let alpha: Vec<f32> = base.pixels().map(|p| p.0[3] as f32 / 255.0).collect();
+            let field: Vec<f32> = norm.iter().zip(&alpha).map(|(v, a)| (((paper - v) / (paper - ink).max(1.0)).clamp(0.0, 1.0)) * a).collect();
+            trace_precise(&field, wu, hu, u, tolk, (3.0 * u) as usize, progress, 0.45, 0.95, cancelled)?
+        } else {
+            let fo = FitOpts { sigma: 0.6 * u, tol: 0.5 * u * tolk, corner_win: (1.5 * u).round().max(3.0) as usize, corner_deg: 50.0 };
+            trace_mask(&mask, wu, hu, u, &fo, (3.0 * u) as usize)
+        };
         progress(0.95);
         let svg = format!(
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\" viewBox=\"0 0 {w} {h}\"><path fill=\"{}\" fill-rule=\"evenodd\" d=\"{}\"/></svg>\n",
@@ -668,8 +681,34 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
         Mode::Photo => FitOpts { sigma: 0.7 * u, tol: 0.8 * u * tolk, corner_win: (1.5 * u).round().max(3.0) as usize, corner_deg: 55.0 },
         _ => FitOpts { sigma: 0.6 * u, tol: 0.6 * u * tolk, corner_win: (1.5 * u).round().max(3.0) as usize, corner_deg: 50.0 },
     };
+    // Precisione massima: il colore di ogni strato è la media del suo interno nell'immagine originale
+    // (lontano dai bordi sfumati; l'ingrandimento con l'IA può spostare un poco i colori)
+    let pal: Vec<[f32; 3]> = if o.precise {
+        let (sw, sh) = (w as usize, h as usize);
+        let lab_s: Vec<Option<[f32; 3]>> = small.pixels().map(|p| if p.0[3] >= 250 { Some(lut.lab(p.0[0], p.0[1], p.0[2])) } else { None }).collect();
+        let lbl_s: Vec<u8> = lab_s.iter().map(|l| l.map(|l| nearest(&pal, &l)).unwrap_or(NONE)).collect();
+        pal.iter().enumerate().map(|(c, old)| {
+            let own: Vec<bool> = lbl_s.iter().map(|&l| l == c as u8).collect();
+            let cnt = box_count(&own, sw, sh, 1);
+            let mut acc = [0f64; 3];
+            let mut n = 0f64;
+            for i in 0..sw * sh {
+                if cnt[i] == 9 {
+                    if let Some(l) = lab_s[i] {
+                        for k in 0..3 {
+                            acc[k] += l[k] as f64;
+                        }
+                        n += 1.0;
+                    }
+                }
+            }
+            if n < 6.0 { *old } else { [(acc[0] / n) as f32, (acc[1] / n) as f32, (acc[2] / n) as f32] }
+        }).collect()
+    } else {
+        pal
+    };
     let rgb: Vec<[u8; 3]> = pal.iter().map(|c| lab_to_rgb(*c)).collect();
-    let base_lab: Vec<[f32; 3]> = if o.gradients { base.pixels().map(|p| lut.lab(p.0[0], p.0[1], p.0[2])).collect() } else { vec![] };
+    let base_lab: Vec<[f32; 3]> = if o.gradients || o.precise { base.pixels().map(|p| lut.lab(p.0[0], p.0[1], p.0[2])).collect() } else { vec![] };
     let dil = (2.0 * s).round().max(1.0) as usize;
     let mut body = String::new();
     let mut nshapes = 0;
@@ -693,7 +732,25 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
         let own: Vec<bool> = lbl.iter().map(|&l| l == c as u8).collect();
         let near = dilate(&own, wu, hu, dil);
         let mask: Vec<bool> = (0..wu * hu).map(|i| own[i] || (near[i] && lbl[i] != NONE && rank[lbl[i] as usize] > n)).collect();
-        let shapes = trace_mask(&mask, wu, hu, u, &fo, if any_none || has_alpha { 0 } else { (3.0 * u) as usize });
+        let pad = if any_none || has_alpha { 0 } else { (3.0 * u) as usize };
+        let shapes = if o.precise {
+            // copertura morbida: nei pixel di bordo, quanto il colore sta tra i due colori vicini
+            let field: Vec<f32> = (0..wu * hu).map(|i| {
+                if lbl[i] == NONE && base.as_raw()[i * 4 + 3] < 8 {
+                    return 0.0;
+                }
+                let inset = |l: usize| l == c || (near[i] && rank[l] != usize::MAX && rank[l] > n);
+                let a = base.as_raw()[i * 4 + 3] as f32 / 255.0;
+                let (ci, cj, t) = mix(&pal, &base_lab[i]);
+                let m = (if inset(ci) { 1.0 - t } else { 0.0 }) + (if inset(cj) { t } else { 0.0 });
+                m * a
+            }).collect();
+            let p0 = 0.35 + 0.6 * n as f64 / order.len() as f64;
+            let p1 = 0.35 + 0.6 * (n + 1) as f64 / order.len() as f64;
+            trace_precise(&field, wu, hu, u, tolk, pad, progress, p0, p1, cancelled)?
+        } else {
+            trace_mask(&mask, wu, hu, u, &fo, pad)
+        };
         if shapes.is_empty() {
             continue;
         }
@@ -921,10 +978,124 @@ mod tests {
     }
 
     #[test]
+    fn precisione_massima_angoli_e_cerchi() {
+        // Un quadrato ruotato (angoli netti) e un cerchio, con i bordi sfumati come in una foto vera
+        let big = RgbaImage::from_fn(1200, 800, |x, y| {
+            let (dx, dy) = (x as f64 - 800.0, y as f64 - 400.0);
+            let (u, v) = ((x as f64 - 350.0 + y as f64 - 400.0) / 2f64.sqrt(), (x as f64 - 350.0 - (y as f64 - 400.0)) / 2f64.sqrt());
+            if dx * dx + dy * dy < 200.0 * 200.0 { image::Rgba([240, 180, 50, 255]) } else if u.abs() < 180.0 && v.abs() < 180.0 { image::Rgba([30, 80, 120, 255]) } else { image::Rgba([255, 255, 255, 255]) }
+        });
+        let small = image::imageops::resize(&big, 240, 160, image::imageops::FilterType::Triangle);
+        let o = Opts { mode: Mode::Logo, precise: true, ..Default::default() };
+        let out = vectorize(&DynamicImage::ImageRgba8(small), None, &o, &mut |_| {}, &|| false).unwrap();
+        assert_eq!(out.colors, 3, "{}", out.svg);
+        assert!(out.svg.contains('A'), "il cerchio è un cerchio vero: {}", out.svg);
+        // il quadrato ruotato: quattro lati dritti
+        let blue = out.svg.split("<path").find(|p| p.contains("#1e5078") || p.contains("#1f5078") || p.contains("#1e5079")).expect("strato blu");
+        assert!(blue.matches('L').count() >= 4, "{blue}");
+    }
+
+    #[test]
     fn pixel_art_a_quadratini() {
         let img = RgbaImage::from_fn(8, 8, |x, y| if (x + y) % 2 == 0 { image::Rgba([0, 0, 0, 255]) } else { image::Rgba([255, 255, 255, 255]) });
         let out = run(img, Mode::Auto);
         assert!(out.svg.contains("crispEdges"));
         assert_eq!(out.colors, 2);
+    }
+}
+
+/// I due colori della tavolozza più vicini a `l` e quanto `l` sta verso il secondo (0…1): i pixel di bordo
+/// sono un misto dei due colori ai lati.
+fn mix(pal: &[[f32; 3]], l: &[f32; 3]) -> (usize, usize, f32) {
+    let mut best = [(f32::MAX, 0usize); 2];
+    for (i, p) in pal.iter().enumerate() {
+        let d = d2(p, l);
+        if d < best[0].0 {
+            best[1] = best[0];
+            best[0] = (d, i);
+        } else if d < best[1].0 {
+            best[1] = (d, i);
+        }
+    }
+    let (i, j) = (best[0].1, best[1].1);
+    if i == j || best[1].0 == f32::MAX {
+        return (i, i, 0.0);
+    }
+    let (a, b) = (pal[i], pal[j]);
+    let v = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+    let vv = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+    if vv < 1e-6 {
+        return (i, j, 0.0);
+    }
+    let q = [l[0] - a[0], l[1] - a[1], l[2] - a[2]];
+    let t = ((q[0] * v[0] + q[1] * v[1] + q[2] * v[2]) / vv).clamp(0.0, 1.0);
+    // lontano dal segmento tra i due colori: non è un bordo sfumato, è un colore a sé
+    let proj = [a[0] + t * v[0], a[1] + t * v[1], a[2] + t * v[2]];
+    if d2(&proj, l).sqrt() > 18.0 {
+        return (i, j, 0.0);
+    }
+    (i, j, t)
+}
+
+/// Il ricalco preciso di uno strato dal suo campo di copertura.
+#[allow(clippy::too_many_arguments)]
+fn trace_precise(field: &[f32], w: usize, h: usize, u: f64, tolk: f64, pad: usize, progress: &mut dyn FnMut(f64), p0: f64, p1: f64, cancelled: &dyn Fn() -> bool) -> Result<Vec<Shape>, String> {
+    // bordo: ripetuto (le forme che toccano il bordo dell'immagine lo oltrepassano) e poi una cornice a 0
+    let pad = pad + 1;
+    let (pw, ph) = (w + 2 * pad, h + 2 * pad);
+    let mut v = vec![0f32; pw * ph];
+    for y in 1..ph - 1 {
+        for x in 1..pw - 1 {
+            let xx = (x as isize - pad as isize).clamp(0, w as isize - 1) as usize;
+            let yy = (y as isize - pad as isize).clamp(0, h as isize - 1) as usize;
+            v[y * pw + x] = field[yy * w + xx];
+        }
+    }
+    let fld = precise::Field { v: &v, w: pw, h: ph };
+    let fo = precise::fit_opts(u, tolk);
+    let min_area = 1.5 * u * u;
+    let contours: Vec<Vec<P>> = precise::iso_contours(&v, pw, ph).into_iter().filter(|c| fit::polygon_area(c).abs() >= min_area).collect();
+    let total: usize = contours.iter().map(|c| c.len()).sum::<usize>().max(1);
+    let mut done = 0usize;
+    let mut out = vec![];
+    for c in contours {
+        if cancelled() {
+            return Err("annullato".into());
+        }
+        done += c.len();
+        if let Some(mut sh) = fit::fit_contour(&c, &fo) {
+            precise::refine(&mut sh, &fld, 30, 1.5 * u);
+            // di nuovo nelle coordinate senza bordo
+            shift(&mut sh, -(pad as f64));
+            out.push(sh);
+        }
+        progress(p0 + (p1 - p0) * done as f64 / total as f64);
+    }
+    Ok(out)
+}
+
+fn shift(s: &mut Shape, d: f64) {
+    let m = |p: &mut P| {
+        p.x += d;
+        p.y += d;
+    };
+    match s {
+        Shape::Circle { cx, cy, .. } => {
+            *cx += d;
+            *cy += d;
+        }
+        Shape::Path { start, segs } => {
+            m(start);
+            for g in segs.iter_mut() {
+                match g {
+                    Seg::Line(p) => m(p),
+                    Seg::Cubic(a, b, p) => {
+                        m(a);
+                        m(b);
+                        m(p);
+                    }
+                }
+            }
+        }
     }
 }

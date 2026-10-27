@@ -1,3 +1,13 @@
+Novità per Windows 0.9.0 «Ricalco»:
+• Vettoriale (SVG) → «Precisione massima»: OrbitLR ricalca ogni curva sul bordo vero dell'immagine, punto per punto, come a mano. Dai pixel sfumati dei bordi capisce dove passa il contorno con una precisione più fine di un pixel
+• Angoli netti dove due lati dritti si incontrano, curve che passano esattamente sul bordo, colori presi dall'interno di ogni forma
+• Più lenta (fino a qualche minuto sulle immagini grandi), ma il risultato più fedele: per loghi, testi, icone e firme
+
+What’s new in Windows 0.9.0 “Tracing”:
+• Vector (SVG) → “Maximum precision”: OrbitLR traces every curve onto the true edge of the image, point by point, as if by hand. From the soft pixels along the edges it works out where the outline runs, finer than a pixel
+• Sharp corners where two straight sides meet, curves that run exactly on the edge, colors taken from inside each shape
+• Slower (up to a few minutes on large images), but the most faithful result: for logos, text, icons and signatures
+
 Novità per Windows 0.8.0 «Vettoriale»:
 • Immagini → «Vettoriale (SVG)», e lo spicchio SVG nella torta: loghi, disegni, firme e foto diventano un SVG nitido a qualunque misura
 • Colori puliti senza aloni, linee dritte, angoli netti, cerchi veri e sfumature dove servono; sulle immagini piccole i bordi si ricostruiscono prima con l'IA
