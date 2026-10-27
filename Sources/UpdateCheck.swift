@@ -105,6 +105,8 @@ enum UpdateCheck {
     /// 4.1.2 · Dal pulsante «Aggiornamento disponibile»: scarica e installa subito (il clic è già la conferma).
     @MainActor
     static func install(_ rel: Release) async {
+        guard !UpdateBadge.shared.installing else { return }
+        UpdateBadge.shared.progress = 0
         UpdateBadge.shared.installing = true
         await download(rel)
         UpdateBadge.shared.installing = false
@@ -118,9 +120,10 @@ enum UpdateCheck {
         try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
         let dest = dir.appendingPathComponent("OrbitLR.\(rel.version).orbitlr")
         do {
-            let (tmp, resp) = try await URLSession.shared.download(from: rel.asset)
-            guard (resp as? HTTPURLResponse)?.statusCode == 200 else { throw URLError(.badServerResponse) }
-            try fm.moveItem(at: tmp, to: dest)
+            // 4.5.1 · Con la percentuale, come su Windows: il pulsante in alto dice a che punto è il download
+            try await DownloadWithProgress.run(rel.asset, to: dest) { p in
+                Task { @MainActor in UpdateBadge.shared.progress = p }
+            }
         } catch {
             let a = NSAlert()
             a.messageText = String(localized: "Il download non è riuscito")
@@ -151,6 +154,70 @@ final class UpdateBadge: ObservableObject {
     static let shared = UpdateBadge()
     @Published var available: UpdateCheck.Release? = nil
     @Published var installing = false
+    /// 4.5.1 · Quanto è stato scaricato (0…1), mostrato sul pulsante
+    @Published var progress: Double = 0
+    /// Il testo del pulsante mentre scarica: «Scarico l’aggiornamento… 86%»
+    var downloadingText: String {
+        let pct = Int((progress * 100).rounded(.down))
+        return String(localized: "Scarico l’aggiornamento… \(pct)%")
+    }
+}
+
+/// 4.5.1 · Download con l'avanzamento: lo stesso file di prima, scaricato con un delegato che dice quanti byte
+/// sono arrivati. Il file viene spostato al suo posto appena finisce (il file temporaneo sparisce subito dopo).
+final class DownloadWithProgress: NSObject, URLSessionDownloadDelegate, @unchecked Sendable {
+    private let dest: URL
+    private let onProgress: @Sendable (Double) -> Void
+    private var cont: CheckedContinuation<Void, Error>?
+    private var lastPct = -1
+    private let lock = NSLock()
+
+    private init(dest: URL, onProgress: @escaping @Sendable (Double) -> Void) {
+        self.dest = dest
+        self.onProgress = onProgress
+    }
+
+    static func run(_ url: URL, to dest: URL, onProgress: @escaping @Sendable (Double) -> Void) async throws {
+        let d = DownloadWithProgress(dest: dest, onProgress: onProgress)
+        let session = URLSession(configuration: .default, delegate: d, delegateQueue: nil)
+        defer { session.finishTasksAndInvalidate() }
+        try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
+            d.lock.lock(); d.cont = c; d.lock.unlock()
+            session.downloadTask(with: url).resume()
+        }
+    }
+
+    private func finish(_ r: Result<Void, Error>) {
+        lock.lock(); let c = cont; cont = nil; lock.unlock()
+        c?.resume(with: r)
+    }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        guard totalBytesExpectedToWrite > 0 else { return }
+        let p = min(1, Double(totalBytesWritten) / Double(totalBytesExpectedToWrite))
+        let pct = Int(p * 100)
+        lock.lock(); let changed = pct != lastPct; lastPct = pct; lock.unlock()
+        if changed { onProgress(p) }
+    }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        guard (downloadTask.response as? HTTPURLResponse)?.statusCode == 200 else {
+            finish(.failure(URLError(.badServerResponse)))
+            return
+        }
+        do {
+            try? FileManager.default.removeItem(at: dest)
+            try FileManager.default.moveItem(at: location, to: dest)
+            onProgress(1)
+            finish(.success(()))
+        } catch {
+            finish(.failure(error))
+        }
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        if let error { finish(.failure(error)) } else { finish(.failure(URLError(.unknown))) }
+    }
 }
 
 /// Il pulsante in alto a destra nella finestra, accanto a «Tasti».
@@ -160,7 +227,7 @@ struct UpdateBadgeButton: View {
     var body: some View {
         if let rel = badge.available {
             Button { Task { @MainActor in await UpdateCheck.install(rel) } } label: {
-                Label(badge.installing ? String(localized: "Scarico l’aggiornamento…") : String(localized: "Nuovo aggiornamento: \(rel.version)"),
+                Label(badge.installing ? badge.downloadingText : String(localized: "Nuovo aggiornamento: \(rel.version)"),
                       systemImage: badge.installing ? "arrow.down.circle" : "arrow.down.circle.fill")
                     .labelStyle(.titleAndIcon)
                     .font(.system(size: 12.5, weight: .bold))
@@ -171,7 +238,9 @@ struct UpdateBadgeButton: View {
             .buttonStyle(.borderedProminent)
             .buttonBorderShape(.capsule)
             .tint(Theme.brass)
-            .disabled(badge.installing)
+            .monospacedDigit()
+            .animation(.default, value: badge.installing)
+            .allowsHitTesting(!badge.installing)
             .help("È uscita OrbitLR \(rel.version): un clic la scarica e la installa, e OrbitLR si riapre da sola")
             .accessibilityLabel("Installa l’aggiornamento \(rel.version)")
         }

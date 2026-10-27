@@ -1,3 +1,6 @@
+Novità della 4.5.1 «Percentuale»:
+• Aggiornamento con la percentuale: il pulsante in alto mostra «Scarico l’aggiornamento… 86%» mentre scarica, come su Windows
+
 Novità della 4.5 «Estrema»:
 • Vettoriale (SVG) → «Estrema»: dopo il ricalco OrbitLR disegna l’SVG intero, lo confronta con l’originale pixel per pixel e sposta insieme tutti i punti di tutte le curve e i colori finché non migliora più
 • Firme e disegni a tratto: prova più ricalchi diversi, uno per core, e tiene quello che combacia meglio; il colore dell’inchiostro ora è quello vero

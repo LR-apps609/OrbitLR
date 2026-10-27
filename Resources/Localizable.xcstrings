@@ -12192,6 +12192,16 @@
         }
       }
     },
+    "Scarico l’aggiornamento… %lld%%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downloading the update… %lld%%"
+          }
+        }
+      }
+    },
     "Scarico l’audio…": {
       "localizations": {
         "en": {

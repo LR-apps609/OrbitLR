@@ -1,3 +1,6 @@
+What’s new in 4.5.1 “Percentage”:
+• Updates with a percentage: the button at the top shows “Downloading the update… 86%” while it downloads, like on Windows
+
 What’s new in 4.5 “Extreme”:
 • Vector (SVG) → “Extreme”: after tracing, OrbitLR draws the whole SVG, compares it with the original pixel by pixel and moves all the points of all the curves, and the colors, together until it stops improving
 • Signatures and line drawings: it tries several different tracings, one per core, and keeps the one that matches best; the ink color is now the true one

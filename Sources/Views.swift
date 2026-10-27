@@ -1073,7 +1073,7 @@ struct MenuUpdateRow: View {
             Button { Task { @MainActor in await UpdateCheck.install(rel) } } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "arrow.down.circle.fill").foregroundStyle(Theme.brass)
-                    Text(badge.installing ? String(localized: "Scarico l’aggiornamento…") : String(localized: "Nuova versione \(rel.version) · Installa"))
+                    Text(badge.installing ? badge.downloadingText : String(localized: "Nuova versione \(rel.version) · Installa"))
                         .font(.system(size: 12.5, weight: .semibold))
                     Spacer()
                 }
