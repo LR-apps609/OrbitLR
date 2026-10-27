@@ -165,10 +165,12 @@ struct UpdateBadgeButton: View {
                     .labelStyle(.titleAndIcon)
                     .font(.system(size: 12.5, weight: .bold))
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 10).padding(.vertical, 4)
-                    .background(Capsule().fill(Theme.brass))
             }
-            .buttonStyle(.plain)
+            // 4.4.1 · Pulsante di sistema colorato: nella barra in alto resta centrato come «Tasti»
+            // (con lo sfondo disegnato a mano finiva spostato a sinistra dentro il gruppo della barra)
+            .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.capsule)
+            .tint(Theme.brass)
             .disabled(badge.installing)
             .help("È uscita OrbitLR \(rel.version): un clic la scarica e la installa, e OrbitLR si riapre da sola")
             .accessibilityLabel("Installa l’aggiornamento \(rel.version)")

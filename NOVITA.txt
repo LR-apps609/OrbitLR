@@ -1,3 +1,6 @@
+Novità della 4.4.1:
+• Il pulsante «Nuovo aggiornamento» in alto è centrato come gli altri pulsanti della barra
+
 Novità della 4.4 «Ricalco»:
 • Vettoriale (SVG) → «Precisione massima»: OrbitLR ricalca ogni curva sul bordo vero dell’immagine, punto per punto, come a mano. Dai pixel sfumati dei bordi capisce dove passa il contorno con una precisione più fine di un pixel
 • Angoli netti dove due lati dritti si incontrano, curve che passano esattamente sul bordo, colori presi dall’interno di ogni forma

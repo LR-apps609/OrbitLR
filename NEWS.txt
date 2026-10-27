@@ -1,3 +1,6 @@
+What’s new in 4.4.1:
+• The “New update” button at the top is centered like the other toolbar buttons
+
 What’s new in 4.4 “Tracing”:
 • Vector (SVG) → “Maximum precision”: OrbitLR traces every curve onto the true edge of the image, point by point, as if by hand. From the soft pixels along the edges it works out where the outline runs, finer than a pixel
 • Sharp corners where two straight sides meet, curves that run exactly on the edge, colors taken from inside each shape
