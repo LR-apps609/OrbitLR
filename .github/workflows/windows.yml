@@ -223,6 +223,25 @@ jobs:
           if ($jpg) { Write-Output "::notice::Cartella automatica riuscita: $($jpg[0].Name) creato da solo" } else { Write-Output "::warning::La cartella automatica non ha creato il JPG" }
           if ($made) { Write-Output "::notice::Lavoro vero dentro l'app riuscito: $($made[0].Name) $([math]::Round($made[0].Length/1MB,1)) MB" } else { Write-Output "::warning::Il lavoro di prova dentro l'app non ha creato il file" }
 
+      - name: Vettoriale dentro l'app (un logo diventa SVG)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          & ".\Windows\src-tauri\motori\ffmpeg.exe" -hide_banner -loglevel error -y -f lavfi -i "color=c=white:s=400x260" -vf "drawbox=x=40:y=30:w=320:h=200:color=0x1E5078:t=fill,drawbox=x=150:y=80:w=100:h=100:color=0xF0B432:t=fill" -frames:v 1 "$env:RUNNER_TEMP\Logo prova.png"
+          Get-Process orbitlr -ErrorAction SilentlyContinue | Stop-Process -Force
+          $env:ORBIT_PROVA_FILE = "$env:RUNNER_TEMP\Logo prova.png"
+          $env:ORBIT_PROVA_SCHEDA = "image"
+          $env:ORBIT_PROVA_AZIONE = "vector"
+          $env:ORBIT_PROVA_PARAMETRO = "auto"
+          $app = Start-Process -FilePath ".\Windows\target\release\orbitlr.exe" -PassThru
+          $svg = $null
+          for ($i = 0; $i -lt 60 -and -not $svg; $i++) { Start-Sleep -Seconds 2; $svg = Get-ChildItem "$env:RUNNER_TEMP" -Filter "Logo prova (vettoriale)*.svg" -ErrorAction SilentlyContinue | Where-Object { $_.Length -gt 0 } }
+          Get-Process orbitlr -ErrorAction SilentlyContinue | Stop-Process -Force
+          if ($svg) {
+            $txt = Get-Content $svg[0].FullName -Raw
+            Write-Output "::notice::Vettoriale riuscito dentro l'app: $($svg[0].Name) $($svg[0].Length) byte · $($txt.Substring(0, [Math]::Min(160, $txt.Length)))"
+          } else { Write-Output "::warning::Il vettoriale dentro l'app non ha creato l'SVG" }
+
       - uses: actions/upload-artifact@v4
         with:
           name: windows
