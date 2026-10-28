@@ -14,11 +14,12 @@ import { addPreset, askName, presets, runSteps, suggestName } from "./presets.js
 import { subscribe } from "./jobs.js";
 import { fmtBytes, fmtTime, h, ico, store, toast } from "./util.js";
 import { t, tr, tc } from "./i18n.js";
+import { SIMPLE, getLevel, levelSeg } from "./levels.js";
 
 const COPY = {
   image: { title: t("Immagini"), one: tc("one", "foto"), many: tc("many", "foto"), empty: t("Trascina qui le foto"), emptySub: t("JPG, PNG, HEIC dell'iPhone, WebP, AVIF e altre"), filters: [{ name: t("Immagini"), extensions: ["jpg", "jpeg", "png", "heic", "heif", "webp", "avif", "gif", "bmp", "tif", "tiff", "ico", "jfif"] }] },
   video: { title: t("Video"), one: tc("one", "video"), many: tc("many", "video"), empty: t("Trascina qui i video"), emptySub: t("MP4, MOV dell'iPhone, MKV, AVI, WebM e altri. Anche film di ore: si lavorano sul computer."), filters: [{ name: t("Video"), extensions: ["mp4", "mov", "m4v", "mkv", "webm", "avi", "wmv", "flv", "mpg", "mpeg", "ts", "mts", "m2ts", "3gp"] }] },
-  pdf: { title: t("File"), one: "PDF", many: "PDF", empty: t("Trascina qui i PDF"), emptySub: t("Unisci, dividi ed estrai pagine. Word, Excel e PowerPoint arriveranno con un componente facoltativo."), filters: [{ name: "PDF", extensions: ["pdf"] }] },
+  pdf: { title: t("PDF e documenti"), one: "PDF", many: "PDF", empty: t("Trascina qui i PDF"), emptySub: t("Unisci, dividi ed estrai pagine. Word, Excel e PowerPoint arriveranno con un componente facoltativo."), filters: [{ name: "PDF", extensions: ["pdf"] }] },
 };
 
 export function mediaPage(kind, app, opts = {}) {
@@ -31,6 +32,12 @@ export function mediaPage(kind, app, opts = {}) {
   const bar = resultBar(kind);
   // Video: il video scaricato da un link arriva nell'elenco, pronto da tagliare, comprimere o montare
   const dl = kind === "video" ? downloaderBar({ video: true, onFile: (p) => add([p]) }) : null;
+  // 1.0 · Nelle altre schede i due Downloader restano in vista: il video va in Video, l'audio in Audio
+  const dlRow = kind === "video" ? null : h("div.dl-row",
+    downloaderBar({ video: true, onFile: (p) => app.openIn("video", [p]) }),
+    downloaderBar({ video: false, onFile: (p) => app.openIn("audio", [p]) }));
+  let level = getLevel(kind);
+  let openGroup = null; // in Completo: il gruppo aperto (null: il primo)
   const head = h("div.head");
   const grid = h("div.grid");
   const left = h("div.files");
@@ -101,9 +108,8 @@ export function mediaPage(kind, app, opts = {}) {
       h("div", h("h1", c.title), h("div.sub", files.length ? `${files.length} ${files.length === 1 ? c.one : c.many} · ${fmtBytes(total)}${selected.size ? t` · ${selected.size} scelti` : ""}` : t("Niente ancora"))),
       h("div.grow"),
       dl,
-      opts.onEditor ? h("div.seg", { role: "tablist" },
-        h("button.on", { role: "tab", "aria-selected": "true" }, t("Strumenti veloci")),
-        h("button", { role: "tab", title: t("Montaggio completo (Ctrl+Maiusc+E)"), onclick: () => opts.onEditor(targets().map((f) => f.path)) }, ico("film", 14), " Editor")) : null,
+      levelSeg(kind, level, (v) => { level = v; openTool = null; closeTrim(); render(); },
+        kind === "video" && opts.onEditor ? () => opts.onEditor(targets().map((f) => f.path)) : kind === "pdf" ? () => clickTool("pdfedit") : null),
       files.length ? h("button.btn", { onclick: pick }, ico("plus", 16), t("Aggiungi…")) : null,
       files.length ? h("button.btn.icon", { title: t("Togli tutto"), "aria-label": t("Togli tutto"), onclick: clearAll }, ico("x", 16)) : null].filter(Boolean));
   }
@@ -112,7 +118,7 @@ export function mediaPage(kind, app, opts = {}) {
     if (!files.length) {
       const box = h("div.box", { role: "button", tabindex: "0", onclick: pick, onkeydown: (e) => e.key === "Enter" && pick() },
         ico(KINDS[kind].icon, 44), h("h3", c.empty), h("div", t("oppure clicca per sceglierli")), h("div", { style: { fontSize: "12.5px" } }, c.emptySub));
-      left.replaceChildren(head, h("div.empty", box), bar.el);
+      left.replaceChildren(...[head, dlRow, h("div.empty", box), bar.el].filter(Boolean));
       return;
     }
     grid.replaceChildren(...files.map((f) => {
@@ -130,7 +136,7 @@ export function mediaPage(kind, app, opts = {}) {
         h("button.rm", { title: t("Togli"), "aria-label": t`Togli ${f.name}`, onclick: (e) => { e.stopPropagation(); files = files.filter((x) => x !== f); selected.delete(f.path); closeTrim(); render(); } }, ico("x", 13)));
       return tile;
     }));
-    left.replaceChildren(head, trim ? h("div.page-scroll", trim.el) : grid, bar.el);
+    left.replaceChildren(...[head, dlRow, trim ? h("div.page-scroll", trim.el) : grid, bar.el].filter(Boolean));
   }
 
   function meta(f) {
@@ -145,6 +151,31 @@ export function mediaPage(kind, app, opts = {}) {
     if (action === "transcribe") param = { lang: store.get("voiceLang", "auto") };
     if (!t.length) return pick();
     run(action, t, param, kind);
+  }
+
+  /** Un clic su uno strumento: parte subito, oppure apre le sue scelte. */
+  function clickTool(id) {
+    const tg = targets();
+    const tool = TOOLS[id];
+    const actionId = tool.id || id;
+    if (!files.length) return pick();
+    if (tool.min && tg.length < tool.min) return toast(t`Servono almeno ${tool.min} file: aggiungine un altro.`);
+    if (!tool.params) return go(actionId, null);
+    if (tool.params === "trim") return openTrim(id);
+    if (tool.params === "zones") return openZones(id);
+    if (tool.params === "pdfedit") {
+      const one = tg.length === 1 ? tg[0] : files.length === 1 ? files[0] : null;
+      return one ? openPdfEditor(one) : toast(t("Scegli un PDF solo (clic sulla miniatura) e poi «Compila, firma e oscura»."));
+    }
+    openTool = openTool === id ? null : id;
+    renderTools();
+  }
+
+  /** Il riquadro delle scelte: in Semplice sotto i riquadri grandi, in Completo sotto lo strumento. */
+  function placePanel(panel) {
+    const slot = right.querySelector(".simple-slot");
+    if (slot) slot.replaceChildren(panel);
+    else right.querySelector(".tool.on")?.after(panel);
   }
 
   function renderTools() {
@@ -162,37 +193,54 @@ export function mediaPage(kind, app, opts = {}) {
           h("span.ic", "★"), h("span.txt", h("b", p.name), h("span", what))));
       }
     }
+    if (level === "simple") return renderSimple();
     if (CONVERT[kind].length) {
       right.append(h("div.group", t("Converti in")),
         h("div.fmt-grid", CONVERT[kind].map((f) => h("button.fmt", { onclick: () => go("to:" + f), disabled: !files.length || null, title: t`Converti in ${f.toUpperCase()}` }, f.toUpperCase()))));
     }
-    for (const [g, ids] of GROUPS[kind] || []) {
-      right.append(h("div.group", g));
+    const groups = GROUPS[kind] || [];
+    const current = openGroup ?? groups[0]?.[0];
+    for (const [g, ids] of groups) {
+      const isOpen = current === g;
+      right.append(h("button.group-h" + (isOpen ? ".open" : ""), { type: "button", "aria-expanded": isOpen ? "true" : "false", onclick: () => { openGroup = isOpen ? "" : g; openTool = null; closeTrim(); render(); } },
+        h("span", g), h("span.n", String(ids.length)), ico("chevron-down", 15)));
+      if (!isOpen) continue;
       for (const id of ids) {
         const tool = TOOLS[id];
         const actionId = tool.id || id;
         const tooFew = tool.min && n < tool.min;
-        const btn = h("button.tool" + (openTool === id ? ".on" : ""), {
-          disabled: !files.length || null,
-          onclick: () => {
-            if (tooFew) return toast(t`Servono almeno ${tool.min} file: aggiungine un altro.`);
-            if (!tool.params) return go(actionId, null);
-            if (tool.params === "trim") return openTrim(id);
-            if (tool.params === "zones") return openZones(id);
-            if (tool.params === "pdfedit") {
-              const one = tg.length === 1 ? tg[0] : null;
-              return one ? openPdfEditor(one) : toast(t("Scegli un PDF solo (clic sulla miniatura) e poi «Compila, firma e oscura»."));
-            }
-            openTool = openTool === id ? null : id;
-            renderTools();
-          } },
+        right.append(h("button.tool" + (openTool === id ? ".on" : ""), { disabled: !files.length || null, onclick: () => clickTool(id) },
           h("span.ic", ico(tool.icon, 18)),
-          h("span.txt", h("b", tool.title, tool.isNew ? h("span.new", t("NUOVO")) : null), h("span", tooFew ? t`Scegli almeno ${tool.min} file` : tool.hint)));
-        right.append(btn);
+          h("span.txt", h("b", tool.title), h("span", tooFew ? t`Scegli almeno ${tool.min} file` : tool.hint))));
         // Taglio e zone hanno il loro riquadro (aggiunto da openTrim / openZones)
         if (openTool === id && tool.params && !["trim", "zones"].includes(tool.params)) right.append(paramsFor(id, actionId, tool));
       }
     }
+  }
+
+  /** Semplice: le 6 azioni più usate in riquadri grandi; le scelte si aprono sotto. */
+  function renderSimple() {
+    const ids = (SIMPLE[kind] || []).filter((id) => id === "convert" ? CONVERT[kind].length : id.startsWith("to:") ? CONVERT[kind].includes(id.slice(3)) : TOOLS[id]);
+    const tile = (id, icon, title, hint, onclick) =>
+      h("button.tool.big" + (openTool === id ? ".on" : ""), { type: "button", disabled: !files.length || null, onclick },
+        h("span.ic", ico(icon, 20)), h("span.txt", h("b", title), h("span", hint)));
+    const tiles = ids.map((id) => {
+      if (id === "convert") return tile("convert", "arrow-left-right", t("Cambia formato"), CONVERT[kind].slice(0, 4).map((x) => x.toUpperCase()).join(", "), () => { openTool = openTool === "convert" ? null : "convert"; renderTools(); });
+      if (id.startsWith("to:")) return tile(id, fmtIcon(id.slice(3)), t("Solo l’audio"), t`In ${id.slice(3).toUpperCase()}`, () => go(id, null));
+      const tool = TOOLS[id];
+      return tile(id, tool.icon, tool.title, tool.hint, () => clickTool(id));
+    });
+    const slot = h("div.simple-slot");
+    if (openTool === "convert") {
+      slot.append(h("div.params", h("div.fmt-grid", CONVERT[kind].map((f) => h("button.fmt", { onclick: () => go("to:" + f), title: t`Converti in ${f.toUpperCase()}` }, f.toUpperCase())))));
+    } else if (openTool && TOOLS[openTool]?.params && !["trim", "zones"].includes(TOOLS[openTool].params)) {
+      slot.append(paramsFor(openTool, TOOLS[openTool].id || openTool, TOOLS[openTool]));
+    }
+    const total = (GROUPS[kind] || []).reduce((a, [, x]) => a + x.length, 0) + (CONVERT[kind].length ? 1 : 0);
+    const more = Math.max(0, total - tiles.length);
+    right.append(h("div.simple-grid", tiles), slot,
+      more ? h("button.more", { type: "button", onclick: () => { level = "complete"; store.set("level." + kind, "complete"); openTool = null; closeTrim(); render(); } },
+        more === 1 ? t("1 altra funzione in Completo") : t`Altre ${more} funzioni in Completo`, ico("arrow-right", 14)) : null);
   }
 
   function paramsFor(id, actionId, tool) {
@@ -267,7 +315,7 @@ export function mediaPage(kind, app, opts = {}) {
       } }, isGif ? t("Crea la GIF") : t("Taglia")),
       h("button.btn.ghost", { onclick: () => { closeTrim(); render(); } }, t("Annulla")));
     render();
-    right.querySelector(".tool.on")?.after(panel);
+    placePanel(panel);
   }
 
   function openZones(id) {
@@ -300,7 +348,7 @@ export function mediaPage(kind, app, opts = {}) {
       } }, t("Nascondi")),
       h("button.btn.ghost", { onclick: () => { closeTrim(); render(); } }, t("Annulla")));
     render();
-    right.querySelector(".tool.on")?.after(panel);
+    placePanel(panel);
   }
 
   function closeTrim() {
@@ -316,5 +364,5 @@ export function mediaPage(kind, app, opts = {}) {
   }
 
   render();
-  return { el, add, kind, show() {}, get count() { return files.length; } };
+  return { el, add, kind, show() {}, refresh() { level = getLevel(kind); render(); }, get count() { return files.length; } };
 }

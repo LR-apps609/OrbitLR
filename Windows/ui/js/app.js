@@ -40,11 +40,11 @@ const app = {
 window.orbit = app;
 
 const TABS = [
-  { id: "convert", label: t("Conversione"), icon: "arrow-left-right", make: () => convertPage(app) },
+  { id: "convert", label: t("Converti"), icon: "arrow-left-right", make: () => convertPage(app) },
   { id: "image", label: t("Immagini"), icon: "image", make: () => mediaPage("image", app) },
   { id: "video", label: t("Video"), icon: "film", make: () => videoTab(app) },
   { id: "audio", label: t("Audio"), icon: "audio-lines", make: () => audioPage(app) },
-  { id: "pdf", label: t("File"), icon: "file-text", make: () => mediaPage("pdf", app) },
+  { id: "pdf", label: t("PDF e documenti"), icon: "file-text", make: () => mediaPage("pdf", app) },
 ];
 const EXTRA = {
   activity: { label: t("Attività"), make: () => activityPage(app) },

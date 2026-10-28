@@ -551,3 +551,23 @@ textarea.tts:focus { border-color: var(--brass); }
 .tip-card h4 { margin: 0; font-size: 14.5px; }
 .tip-card p { margin: 0; font-size: 13px; color: var(--quiet); line-height: 1.45; }
 .tip-card .tip-btns { display: flex; gap: 6px; justify-content: flex-end; }
+
+/* 1.0 · Semplice · Completo · Editor (come sul Mac 5.0) */
+.seg.level { flex: none; }
+.dl-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 2px 0 10px; }
+.dl-row .dl { flex: 1 1 280px; min-width: 0; }
+.simple-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-top: 12px; }
+.tool.big { flex-direction: column; align-items: flex-start; gap: 8px; min-height: 118px; padding: 12px; background: var(--card); border-radius: 14px; box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 9%, transparent); }
+.tool.big:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--brass) 60%, transparent); }
+.tool.big.on { box-shadow: 0 0 0 2px var(--brass); }
+.tool.big .ic { width: 36px; height: 36px; border-radius: 10px; }
+.tool.big b { font-size: 14px; }
+.tool.big .txt > span { font-size: 12px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.simple-slot:not(:empty) { margin-top: 10px; }
+.more { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; border: 0; background: none; padding: 4px 0; font: inherit; font-size: 13px; font-weight: 800; color: var(--brass); cursor: pointer; }
+.group-h { display: flex; width: 100%; align-items: center; gap: 8px; margin: 14px 0 6px; padding: 6px 2px; border: 0; background: none; cursor: pointer; font: inherit; font-size: 11px; font-weight: 900; letter-spacing: .09em; text-transform: uppercase; color: var(--brass); text-align: left; }
+.group-h .n { color: var(--quiet); letter-spacing: 0; font-weight: 800; }
+.group-h svg { margin-left: auto; transition: transform .15s; transform: rotate(-90deg); color: var(--quiet); }
+.group-h.open svg { transform: none; }
+.dl-row .dl-in { flex: 1 1 auto; width: auto; min-width: 60px; }
+.dl-row .dl-go { flex: none; }

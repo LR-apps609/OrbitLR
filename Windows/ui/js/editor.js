@@ -8,6 +8,7 @@ import { PRESETS, emptyLook, feMatrix, isIdentity, resolve } from "./look.js";
 import { resultBar } from "./resultbar.js";
 import { ANIMS, COLORS, STYLES, drawText, exportOverlay, newText, stateAt } from "./textdraw.js";
 import { baseName, fmtTime, h, ico, modal, store, toast } from "./util.js";
+import { levelSeg } from "./levels.js";
 
 const TRANSITIONS = [["fade", t("Dissolvenza")], ["black", t("Al nero")], ["white", t("Al bianco")], ["slide", t("Scorrimento")], ["zoom", t("Zoom")], ["blur", t("Sfocatura")]];
 const SPEEDS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
@@ -84,7 +85,7 @@ export function editorPage(app, onBack) {
       }));
     el.replaceChildren(
       h("div.head", h("div", h("h1", t("Progetti")), h("div.sub", t("Montaggi con tagli, filtri, testi e musica: si salvano da soli"))), h("div.grow"),
-        h("div.seg", h("button", { onclick: onBack }, t("Strumenti veloci")), h("button.on", ico("film", 14), " Editor"))),
+        levelSeg("video", "editor", () => onBack(), () => {})),
       h("div.page-scroll", grid));
   }
 

@@ -5,6 +5,7 @@ import { run } from "./jobs.js";
 import { resultBar } from "./resultbar.js";
 import { createTrim } from "./trim.js";
 import { downloaderBar } from "./downloader.js";
+import { SIMPLE, getLevel, levelSeg } from "./levels.js";
 import { fmtBytes, fmtTime, h, ico, store, toast } from "./util.js";
 import { t, tr } from "./i18n.js";
 
@@ -26,6 +27,7 @@ export function audioPage(app) {
   let file = null; // {path,name,size,info}
   let others = []; // per «Unisci»
   let tool = store.get("audio.tool", "ringtone");
+  let level = getLevel("audio");
   let trim = null;
   const opts = {
     ringLen: store.get("audio.ringLen", 30), fade: true, normalize: true, ringFmt: store.get("audio.ringFmt", "m4r"),
@@ -172,6 +174,7 @@ export function audioPage(app) {
     const head = h("div.head",
       h("div", h("h1", tool === "tts" ? t("Testo in voce") : file ? file.name.replace(/\.[^.]+$/, "") : t("Audio")),
         h("div.sub", file ? `${file.info.ext.toUpperCase()} · ${fmtTime(file.info.duration)} · ${fmtBytes(file.size)}` : t("Suonerie, tagli, volume, voce pulita e altro"))),
+      levelSeg("audio", level, (v) => { level = v; if (v === "simple" && !SIMPLE.audio.includes(tool) && tool !== "tts") tool = "ringtone"; render(); }, null),
       h("div.grow"),
       dl,
       file ? h("button.btn", { onclick: pick }, t("Apri un altro…")) : null,
@@ -198,7 +201,9 @@ export function audioPage(app) {
           ...recent().slice(0, 6).map((p) => h("button.recent-row", { onclick: () => resume(p), title: p.path },
             ico("audio-lines", 15), h("span.n", p.name.replace(/\.[^.]+$/, "")),
             h("span.s", `${TOOLS.find((x) => x.id === p.tool)?.short || ""} · ${fmtTime(p.start)}–${fmtTime(p.end)}`)))) : null);
-    const grid = h("div.tool-grid", TOOLS.map((x) => h("button.tg" + (x.id === tool ? ".on" : ""), { onclick: () => { tool = x.id; remember(); render(); }, "aria-pressed": x.id === tool ? "true" : "false" }, ico(x.icon, 20), x.short)));
+    // 1.0 · Semplice: le 6 più usate; Completo: tutte
+    const shown = level === "complete" ? TOOLS : TOOLS.filter((x) => SIMPLE.audio.includes(x.id) || x.id === tool);
+    const grid = h("div.tool-grid", shown.map((x) => h("button.tg" + (x.id === tool ? ".on" : ""), { onclick: () => { tool = x.id; remember(); render(); }, "aria-pressed": x.id === tool ? "true" : "false" }, ico(x.icon, 20), x.short)));
     const side = h("div.side-card",
       h("div.scroll", grid, ...options()),
       h("div.act", h("button.btn.primary.big", { onclick: start, disabled: (!file && !tl.noFile) || (tool === "merge" && !others.length) || null }, tl.go)));

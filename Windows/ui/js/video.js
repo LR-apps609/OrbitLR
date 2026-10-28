@@ -15,6 +15,7 @@ export function videoTab(app) {
     mode = m;
     store.set("videoMode", m);
     if (m !== "editor") editor.leave();
+    if (m !== "editor") tools.refresh?.();
     el.replaceChildren((m === "editor" ? editor : tools).el);
     if (m === "editor" && paths?.length) editor.openWith(paths);
   }

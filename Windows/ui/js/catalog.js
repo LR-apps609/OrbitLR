@@ -101,7 +101,7 @@ export const GROUPS = {
     [t("Audio e sottotitoli"), ["transcribe", "voiceclean", "normalize", "mute", "subextract", "subembed"]],
     [t("Altro"), ["hidemark", "vrotate", "vstrip", "rename"]],
   ],
-  pdf: [[t("Modifica"), ["pdfedit"]], [t("Peso"), ["pdfcompress"]], [t("Organizza"), ["pdfmerge", "split", "extract", "reorder", "prot"]], [t("Testo"), ["pdftext"]], [t("Proteggi"), ["protect", "unprotect"]], [t("Altro"), ["rename"]]],
+  pdf: [[t("Pagine"), ["pdfmerge", "split", "extract", "reorder", "prot"]], [t("Peso e testo"), ["pdfcompress", "pdftext"]], [t("Firma e proteggi"), ["pdfedit", "protect", "unprotect"]], [t("Altro"), ["rename"]]],
 };
 
 /** Le scelte dei parametri, come le manopole dell'app per Mac. */
