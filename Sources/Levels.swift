@@ -58,21 +58,37 @@ enum Levels {
 }
 
 /// L'interruttore in alto: Semplice · Completo · (Editor).
+/// Disegnato in SwiftUI (non il controllo segmentato del Mac): costa poco anche quando la scheda si nasconde e torna.
 struct LevelPicker: View {
     @Binding var level: ViewLevel
     let editorTitle: String?
 
     var body: some View {
-        Picker("Quanto vedere", selection: $level) {
-            Text("Semplice").tag(ViewLevel.simple)
-            Text("Completo").tag(ViewLevel.complete)
-            if let e = editorTitle { Text(e).tag(ViewLevel.editor) }
+        HStack(spacing: 2) {
+            option(.simple, String(localized: "Semplice"))
+            option(.complete, String(localized: "Completo"))
+            if let e = editorTitle { option(.editor, e) }
         }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        .controlSize(.small)
+        .padding(3)
+        .background(Capsule().fill(Theme.ink.opacity(0.07)))
         .fixedSize()
         .help("Semplice: le cose che si fanno di più. Completo: tutte le funzioni, divise in gruppi.")
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Quanto vedere")
+    }
+
+    private func option(_ v: ViewLevel, _ title: String) -> some View {
+        let on = level == v
+        return Button { level = v } label: {
+            Text(title)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(on ? Theme.background : Theme.ink.opacity(0.75))
+                .padding(.horizontal, 11).padding(.vertical, 4)
+                .background(Capsule().fill(on ? Theme.ink : .clear))
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 }
 
