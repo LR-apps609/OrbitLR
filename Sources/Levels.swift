@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 // ════════════════════════════════════════════════════════════════════
 //  5.0 · Quanto vedere in ogni sezione: «Semplice» (le 6 cose che si fanno di più, in grande),
@@ -83,7 +84,7 @@ struct LevelPicker: View {
             Text(title)
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(on ? Theme.background : Theme.ink.opacity(0.75))
-                .padding(.horizontal, 10).padding(.vertical, 4)
+                .padding(.horizontal, 9).padding(.vertical, 4)
                 .background(Capsule().fill(on ? Theme.ink : .clear))
                 .contentShape(Capsule())
         }
@@ -217,7 +218,8 @@ enum SimpleItem: Identifiable {
 }
 
 /// 5.0 · In Immagini e in PDF e documenti: i due Downloader sempre in vista, sotto il titolo.
-/// Il video scaricato arriva in Video, l'audio in Audio.
+/// Due pulsanti colorati (leggeri: la barra con il campo di testo, qui due volte, rallentava il cambio di scheda).
+/// Se negli appunti c'è già un link, parte da quello. Il video scaricato arriva in Video, l'audio in Audio.
 struct DownloadersRow: View {
     @State private var showVideo = false
     @State private var showAudio = false
@@ -225,8 +227,9 @@ struct DownloadersRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            DownloaderBar(video: true) { t in link = t; showVideo = true }
-            DownloaderBar(video: false) { t in link = t; showAudio = true }
+            pill(video: true) { link = clipboardLink(); showVideo = true }
+            pill(video: false) { link = clipboardLink(); showAudio = true }
+            Text("Incolla un link · funziona con migliaia di siti").font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1)
             Spacer(minLength: 0)
         }
         .sheet(isPresented: $showVideo) {
@@ -244,5 +247,22 @@ struct DownloadersRow: View {
                 app.selection = .audio
             }, close: { showAudio = false })
         }
+    }
+
+    private func pill(video: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(video ? String(localized: "Video Downloader") : String(localized: "Audio Downloader"), systemImage: "arrow.down.circle.fill")
+                .font(.system(size: 12.5, weight: .bold)).foregroundStyle(.white)
+                .padding(.horizontal, 12).padding(.vertical, 6)
+                .background(Capsule().fill(Theme.color(video ? .video : .audio)))
+        }
+        .buttonStyle(Pressable())
+        .fixedSize()
+        .help(video ? String(localized: "Video Downloader · incolla un link") : String(localized: "Audio Downloader · incolla un link"))
+    }
+
+    private func clipboardLink() -> String {
+        let s = NSPasteboard.general.string(forType: .string) ?? ""
+        return MusicLink.link(from: s) != nil ? s : ""
     }
 }
