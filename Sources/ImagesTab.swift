@@ -258,7 +258,7 @@ struct KindTabView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             Divider()
             Group {
-                if level == .complete {
+                if true {
                     ImagesInspector(m: m, tint: tint, noun: style.noun)
                 } else {
                     SimplePanel(m: m, kind: style.kind, tint: tint) { withAnimation(Motion.quick) { levels.set(style.kind, .complete) } }
