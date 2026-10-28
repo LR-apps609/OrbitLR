@@ -12,6 +12,12 @@ use std::path::{Path, PathBuf};
 /// con «+» in fondo (per esempio «logo+») la precisione massima: il ricalco lento.
 pub fn opts(param: &str) -> vettore::Opts {
     let mut o = vettore::Opts::default();
+    // «pack»: il pacchetto logo (ZIP con SVG, PDF, EPS, PNG, un colore, icone), dal ricalco di precisione senza sfondo
+    if param == "pack" {
+        o.precise = true;
+        o.transparent = true;
+        return o;
+    }
     // «*» in fondo: Estrema (l'SVG intero ottimizzato contro l'originale, qualche minuto)
     let param = match param.strip_suffix('*') {
         Some(p) => {
@@ -86,6 +92,13 @@ pub fn vectorize(tools: Option<&Tools>, data_dir: Option<&Path>, src: &Path, par
     }
     cancel.check()?;
     let out = vettore::vectorize(&img, up.as_ref(), &o, &mut |p| progress(base + (1.0 - base) * p), &|| cancel.is_cancelled()).map_err(|e| if cancel.is_cancelled() { EngineError::cancelled() } else { EngineError::new(e) })?;
+    if param == "pack" {
+        let stem = names::stem(src);
+        let root = format!("{stem} ({})", names::tag("pacchetto logo"));
+        let of = names::OutFile::new(dir, &root, "zip")?;
+        std::fs::write(&of.tmp, out.pack_zip(&stem, &root, names::english()))?;
+        return of.commit();
+    }
     let of = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), names::tag("vettoriale")), "svg")?;
     std::fs::write(&of.tmp, out.svg.as_bytes())?;
     of.commit()
@@ -119,6 +132,14 @@ mod tests {
         // il cerchio è un cerchio vero (due archi), i colori sono quelli giusti
         assert!(svg.contains('A'), "{svg}");
         assert!(svg.contains("#1e5078") || svg.contains("#1e4f78") || svg.contains("#1f5078"), "{svg}");
+        // il pacchetto logo: uno ZIP con dentro SVG, PDF, EPS, PNG e la versione a un colore
+        let z = vectorize(None, None, &src, "pack", &dir, &Cancel::new(), &mut |_| {}).unwrap();
+        let data = std::fs::read(&z).unwrap();
+        assert!(z.to_string_lossy().ends_with(".zip") && data.starts_with(b"PK"));
+        let s = String::from_utf8_lossy(&data);
+        for f in ["logo.svg", "logo.pdf", "logo.eps", "PNG/logo-1024.png", "logo-nero.svg", "LEGGIMI.txt"] {
+            assert!(s.contains(f), "manca {f}");
+        }
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

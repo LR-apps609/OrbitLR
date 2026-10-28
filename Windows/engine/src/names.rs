@@ -256,6 +256,11 @@ pub fn set_lang(lang: &str) {
     LANG_EN.store(lang.starts_with("en"), std::sync::atomic::Ordering::Relaxed);
 }
 
+/// L'app è in inglese?
+pub fn english() -> bool {
+    LANG_EN.load(std::sync::atomic::Ordering::Relaxed)
+}
+
 /// «protetto» → «protected» quando l'app è in inglese.
 pub fn tag(it: &str) -> String {
     if !LANG_EN.load(std::sync::atomic::Ordering::Relaxed) {
@@ -269,7 +274,7 @@ pub fn tag(it: &str) -> String {
         "Compressi" => "Compressed", "Convertiti" => "Converted",
         "tagliato" => "trimmed", "senza pause" => "no pauses", "vocale" => "voice note", "logo nascosto" => "logo hidden",
         "ruotata" => "rotated", "testo" => "text", "senza audio" => "no audio", "sfondo bianco" => "white background",
-        "voce pulita" => "clean voice", "con sottotitoli" => "with subtitles", "volume uniforme" => "even volume", "pagina" => "page", "Testo" => "Text", "Montaggio" => "Edit", "raddrizzato" => "straightened", "scatti" => "shots", "vettoriale" => "vector",
+        "voce pulita" => "clean voice", "con sottotitoli" => "with subtitles", "volume uniforme" => "even volume", "pagina" => "page", "Testo" => "Text", "Montaggio" => "Edit", "raddrizzato" => "straightened", "scatti" => "shots", "vettoriale" => "vector", "pacchetto logo" => "logo pack",
         other => other,
     };
     en.to_string()

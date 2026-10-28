@@ -1,5 +1,6 @@
 //! orbit-vector: la stessa vettorializzazione di OrbitLR per Windows, da riga di comando (la usa l'app per Mac).
 //! uso: orbit-vector <immagine> <uscita.svg> [--mode auto|logo|bw|photo] [--detail 1|2|3] [--transparent] [--upscaled <immagine 4×>]
+//!      orbit-vector <immagine> <uscita.zip> --pack [--name <nome>] [--root <cartella>] [--en]: il pacchetto logo
 //! Sul canale d'errore scrive «PROGRESS 0.42» mentre lavora; alla fine stampa una riga JSON con il riassunto.
 
 use std::io::Write;
@@ -9,6 +10,11 @@ fn main() {
     let mut pos = vec![];
     let mut o = vettore::Opts::default();
     let mut up: Option<String> = None;
+    // «Pacchetto logo»: l'uscita è uno ZIP (SVG, PDF, EPS, PNG, un colore, icone)
+    let mut pack = false;
+    let mut name: Option<String> = None;
+    let mut root: Option<String> = None;
+    let mut en = false;
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
@@ -35,6 +41,16 @@ fn main() {
                 i += 1;
                 o.threads = args.get(i).and_then(|s| s.parse().ok()).unwrap_or(0);
             }
+            "--pack" => pack = true,
+            "--en" => en = true,
+            "--name" => {
+                i += 1;
+                name = args.get(i).cloned();
+            }
+            "--root" => {
+                i += 1;
+                root = args.get(i).cloned();
+            }
             "--upscaled" => {
                 i += 1;
                 up = args.get(i).cloned();
@@ -46,6 +62,13 @@ fn main() {
     if pos.len() != 2 {
         eprintln!("uso: orbit-vector <immagine> <uscita.svg> [--mode auto|logo|bw|photo] [--detail 1|2|3] [--transparent] [--upscaled <immagine>]");
         std::process::exit(2);
+    }
+    if pack {
+        // un logo: senza sfondo e con il ricalco di precisione (le foto restano come sono)
+        o.precise = true;
+        if o.mode != vettore::Mode::Photo {
+            o.transparent = true;
+        }
     }
     let img = match image::open(&pos[0]) {
         Ok(i) => i,
@@ -64,7 +87,14 @@ fn main() {
     }, &|| false);
     match res {
         Ok(out) => {
-            if let Err(e) = std::fs::write(&pos[1], out.svg.as_bytes()) {
+            let data = if pack {
+                let stem = name.clone().unwrap_or_else(|| std::path::Path::new(&pos[0]).file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_else(|| "logo".into()));
+                let r = root.clone().unwrap_or_else(|| stem.clone());
+                out.pack_zip(&stem, &r, en)
+            } else {
+                out.svg.clone().into_bytes()
+            };
+            if let Err(e) = std::fs::write(&pos[1], &data) {
                 eprintln!("ERROR non riesco a salvare: {e}");
                 std::process::exit(1);
             }

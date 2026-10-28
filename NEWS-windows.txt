@@ -1,3 +1,13 @@
+Novità per Windows 0.11.0 «Pacchetto»:
+• Vettoriale (SVG) → «Pacchetto logo (ZIP)»: dallo stesso logo, tutti i file che servono. SVG per il web, PDF ed EPS vettoriali per la tipografia, PNG trasparenti a 512, 1024 e 2048 pixel
+• La versione a un colore, nera e bianca, come la fa un grafico: le zone si alternano piene e vuote, così stelle, cerchi e scritte restano visibili. Per timbri, incisioni e fondi scuri
+• Se il logo è quasi quadrato, anche le icone per un sito (favicon e icona per l'iPhone). Dentro c'è un LEGGIMI che spiega quale file usare
+
+What’s new in Windows 0.11.0 “Pack”:
+• Vector (SVG) → “Logo pack (ZIP)”: from the same logo, every file you need. SVG for the web, vector PDF and EPS for print shops, transparent PNGs at 512, 1024 and 2048 pixels
+• The one-color version, black and white, the way a designer makes it: areas alternate filled and empty, so stars, circles and lettering stay visible. For stamps, engraving and dark backgrounds
+• If the logo is almost square, icons for a website too (favicon and iPhone icon). A README inside explains which file to use
+
 Novità per Windows 0.10.0 «Estrema»:
 • Vettoriale (SVG) → «Estrema»: dopo il ricalco OrbitLR disegna l'SVG intero, lo confronta con l'originale pixel per pixel e sposta insieme tutti i punti di tutte le curve e i colori finché non migliora più
 • Firme e disegni a tratto: prova più ricalchi diversi, uno per core, e tiene quello che combacia meglio; il colore dell'inchiostro ora è quello vero

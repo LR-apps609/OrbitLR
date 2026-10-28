@@ -222,6 +222,7 @@ export const KNOBS = {
       { value: "auto", label: t("Automatico"), small: t("consigliato") },
       { value: "auto+", label: t("Precisione massima"), small: t("ricalco lento, fino a qualche minuto") },
       { value: "auto*", label: t("Estrema"), small: t("ottimizza tutto il disegno, fino a 5 minuti") },
+      { value: "pack", label: t("Pacchetto logo (ZIP)"), small: t("SVG, PDF, EPS, PNG e versione a un colore") },
       { value: "logo", label: t("Logo e disegni"), small: t("colori pieni") },
       { value: "logot", label: t("Logo senza sfondo"), small: t("trasparente") },
       { value: "bw", label: t("Firme e scansioni"), small: t("un colore, trasparente") },
