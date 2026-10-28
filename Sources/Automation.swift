@@ -407,6 +407,7 @@ enum ParamChoices {
             KnobOption(value: "auto", short: "Auto", label: String(localized: "Automatico (consigliato)")),
             KnobOption(value: "auto+", short: String(localized: "Preciso"), label: String(localized: "Precisione massima · ricalco lento, fino a qualche minuto")),
             KnobOption(value: "auto*", short: String(localized: "Estrema"), label: String(localized: "Estrema · ottimizza tutto il disegno, fino a 5 minuti")),
+            KnobOption(value: "pack", short: String(localized: "Pacchetto"), label: String(localized: "Pacchetto logo (ZIP) · SVG, PDF, EPS, PNG e versione a un colore")),
             KnobOption(value: "logo", short: String(localized: "Logo"), label: String(localized: "Logo e disegni · colori pieni")),
             KnobOption(value: "logot", short: String(localized: "Senza sfondo"), label: String(localized: "Logo senza sfondo · trasparente")),
             KnobOption(value: "bw", short: String(localized: "Firma"), label: String(localized: "Firme e scansioni · un colore, trasparente")),

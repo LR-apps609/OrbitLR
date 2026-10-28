@@ -9786,6 +9786,26 @@
         }
       }
     },
+    "Pacchetto": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pack"
+          }
+        }
+      }
+    },
+    "Pacchetto logo (ZIP) · SVG, PDF, EPS, PNG e versione a un colore": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logo pack (ZIP) · SVG, PDF, EPS, PNG and a one-color version"
+          }
+        }
+      }
+    },
     "Pagina %lld di %lld": {
       "localizations": {
         "en": {

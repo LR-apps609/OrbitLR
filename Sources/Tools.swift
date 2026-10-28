@@ -88,6 +88,13 @@ enum Tools {
             return out
         case "vector":
             // 4.3 · Vettoriale (SVG), con lo stesso motore di Windows
+            // 4.6 · «Pacchetto logo»: uno ZIP con SVG, PDF, EPS, PNG, la versione a un colore e le icone
+            if job.param == "pack" {
+                let root = "\(base) (\(FileTag.t("pacchetto logo")))"
+                let out = Destination.unique(dir, base: root, ext: "zip")
+                try Vector.run(file, param: "pack", out: out, name: base, root: out.deletingPathExtension().lastPathComponent, progress: progress)
+                return out
+            }
             let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("vettoriale")))", ext: "svg")
             try Vector.run(file, param: job.param.isEmpty ? "auto" : job.param, out: out, progress: progress)
             return out

@@ -658,8 +658,10 @@ checksum = "a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563"
 name = "vettore"
 version = "0.1.0"
 dependencies = [
+ "crc32fast",
  "image",
  "imageproc",
+ "miniz_oxide 0.8.9",
  "tiny-skia",
  "windows-sys",
 ]

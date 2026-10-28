@@ -16,6 +16,7 @@
 pub mod fit;
 pub mod precise;
 pub mod extreme;
+pub mod pack;
 
 use fit::{FitOpts, Seg, Shape, P};
 use image::{DynamicImage, GenericImageView, GrayImage, Luma, RgbaImage};
@@ -79,6 +80,22 @@ pub struct Output {
     pub mode: Mode,
     pub colors: usize,
     pub shapes: usize,
+    /// Il disegno, per il pacchetto logo (PDF, EPS, PNG…)
+    pub art: pack::Art,
+}
+
+impl Output {
+    /// «Pacchetto logo»: lo ZIP con SVG, PDF, EPS, PNG, la versione a un colore e (se quasi quadrato) le icone.
+    /// `name`: il nome del file originale senza estensione; `root`: la cartella dentro lo ZIP.
+    pub fn pack_zip(&self, name: &str, root: &str, en: bool) -> Vec<u8> {
+        let dec = if self.art.w.max(self.art.h) >= 1000 { 1 } else { 2 };
+        let svg_of = |a: &pack::Art| {
+            let f = Fmt { k: a.s, dec };
+            format!("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\" viewBox=\"0 0 {w} {h}\">{}</svg>\n", layers_svg(&a.layers, &f, a.w, a.h), w = a.w, h = a.h)
+        };
+        let items = pack::build(&self.art, &self.svg, &svg_of, name, en);
+        pack::zip(&items, root)
+    }
 }
 
 const NONE: u8 = 255;
@@ -459,7 +476,7 @@ fn shapes_to_d(shapes: &[Shape], f: &Fmt) -> String {
     d
 }
 
-fn trace_mask(mask: &[bool], w: usize, h: usize, u: f64, fo: &FitOpts, pad: usize) -> Vec<Shape> {
+pub(crate) fn trace_mask(mask: &[bool], w: usize, h: usize, u: f64, fo: &FitOpts, pad: usize) -> Vec<Shape> {
     let min_area = 1.5 * u * u;
     mask_contours(mask, w, h, pad)
         .into_iter()
@@ -593,12 +610,12 @@ fn cand_output(cand: &Cand, f: &Fmt, w: u32, h: u32, mode: Mode) -> Output {
             fill,
             shapes_to_d(shapes, f)
         );
-        return Output { svg, mode, colors: 1, shapes: shapes.len() };
+        return Output { svg, mode, colors: 1, shapes: shapes.len(), art: pack::Art { w, h, s: f.k, layers: cand.layers.clone() } };
     }
     let layers = &cand.layers;
     let nshapes = layers.iter().map(|l| if l.rect { 1 } else { l.shapes.len() }).sum();
     let svg = format!("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\" viewBox=\"0 0 {w} {h}\">{}</svg>\n", layers_svg(layers, f, w, h));
-    Output { svg, mode, colors: cand.colors, shapes: nshapes }
+    Output { svg, mode, colors: cand.colors, shapes: nshapes, art: pack::Art { w, h, s: f.k, layers: cand.layers.clone() } }
 }
 
 /// Quello che serve per ricalcare (uguale per tutti i tentativi).
@@ -1126,8 +1143,10 @@ fn pixel_art(img: &RgbaImage) -> Option<Output> {
     }
     let mut body = String::new();
     let mut shapes = 0;
+    let mut layers = vec![];
     for c in &cols {
         let mut d = String::new();
+        let mut sh = vec![];
         for y in 0..h {
             let mut x = 0;
             while x < w {
@@ -1138,6 +1157,8 @@ fn pixel_art(img: &RgbaImage) -> Option<Output> {
                         x += 1;
                     }
                     let _ = write!(d, "M{x0} {y}h{}v1h-{}z", x - x0, x - x0);
+                    let (a, b, yy) = (x0 as f64, x as f64, y as f64);
+                    sh.push(Shape::Path { start: P::new(a, yy), segs: vec![Seg::Line(P::new(b, yy)), Seg::Line(P::new(b, yy + 1.0)), Seg::Line(P::new(a, yy + 1.0))] });
                     shapes += 1;
                 } else {
                     x += 1;
@@ -1145,9 +1166,10 @@ fn pixel_art(img: &RgbaImage) -> Option<Output> {
             }
         }
         let _ = write!(body, "<path fill=\"{}\" d=\"{d}\"/>", hex(*c));
+        layers.push(extreme::Layer { fill: extreme::Fill::Flat([c[0] as f32 / 255.0, c[1] as f32 / 255.0, c[2] as f32 / 255.0]), shapes: sh, rect: false });
     }
     let svg = format!("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\" viewBox=\"0 0 {w} {h}\" shape-rendering=\"crispEdges\">{body}</svg>\n");
-    Some(Output { svg, mode: Mode::Logo, colors: cols.len(), shapes })
+    Some(Output { svg, mode: Mode::Logo, colors: cols.len(), shapes, art: pack::Art { w, h, s: 1.0, layers } })
 }
 
 /// Una sfumatura lineare per lo strato `c`, se il colore dentro cambia davvero in modo regolare.

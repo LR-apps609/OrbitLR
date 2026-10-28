@@ -1,3 +1,8 @@
+Novità della 4.6 «Pacchetto»:
+• Vettoriale (SVG) → «Pacchetto logo (ZIP)»: dallo stesso logo, tutti i file che servono. SVG per il web, PDF ed EPS vettoriali per la tipografia, PNG trasparenti a 512, 1024 e 2048 pixel
+• La versione a un colore, nera e bianca, come la fa un grafico: le zone si alternano piene e vuote, così stelle, cerchi e scritte restano visibili. Per timbri, incisioni e fondi scuri
+• Se il logo è quasi quadrato, anche le icone per un sito (favicon e icona per l’iPhone). Dentro c’è un LEGGIMI che spiega quale file usare
+
 Novità della 4.5.1 «Percentuale»:
 • Aggiornamento con la percentuale: il pulsante in alto mostra «Scarico l’aggiornamento… 86%» mentre scarica, come su Windows
 

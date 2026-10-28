@@ -1,3 +1,8 @@
+What’s new in 4.6 “Pack”:
+• Vector (SVG) → “Logo pack (ZIP)”: from the same logo, every file you need. SVG for the web, vector PDF and EPS for print shops, transparent PNGs at 512, 1024 and 2048 pixels
+• The one-color version, black and white, the way a designer makes it: areas alternate filled and empty, so stars, circles and lettering stay visible. For stamps, engraving and dark backgrounds
+• If the logo is almost square, icons for a website too (favicon and iPhone icon). A README inside explains which file to use
+
 What’s new in 4.5.1 “Percentage”:
 • Updates with a percentage: the button at the top shows “Downloading the update… 86%” while it downloads, like on Windows
 

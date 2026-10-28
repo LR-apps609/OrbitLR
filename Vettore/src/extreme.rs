@@ -38,7 +38,7 @@ fn rgb8(c: [f32; 3]) -> Color {
     Color::from_rgba8((c[0].clamp(0.0, 1.0) * 255.0).round() as u8, (c[1].clamp(0.0, 1.0) * 255.0).round() as u8, (c[2].clamp(0.0, 1.0) * 255.0).round() as u8, 255)
 }
 
-fn path_of(shapes: &[Shape], k: f64) -> Option<tiny_skia::Path> {
+pub(crate) fn path_of(shapes: &[Shape], k: f64) -> Option<tiny_skia::Path> {
     let mut pb = PathBuilder::new();
     let q = |p: P| ((p.x * k) as f32, (p.y * k) as f32);
     for s in shapes {

@@ -17,6 +17,8 @@ enum Vector {
 
     /// «auto», «logo», «logot» (logo senza sfondo), «bw» (firme e scansioni), «photo», «photomax».
     static func arguments(_ param: String) -> [String] {
+        // 4.6 · «pack»: il pacchetto logo (il motore sceglie da solo precisione e sfondo trasparente)
+        if param == "pack" { return ["--mode", "auto", "--pack"] + (AppLanguage.active == "en" ? ["--en"] : []) }
         // 4.4 · «+» in fondo: precisione massima (il ricalco lento, curva per curva sul bordo vero)
         if param.hasSuffix("+") { return arguments(String(param.dropLast())) + ["--precise"] }
         // 4.5 · «*» in fondo: Estrema (più ricalchi in parallelo, il migliore ottimizzato contro l'originale)
@@ -31,7 +33,7 @@ enum Vector {
         }
     }
 
-    static func run(_ src: URL, param: String, out: URL, progress: @escaping (Double) -> Void) throws {
+    static func run(_ src: URL, param: String, out: URL, name: String? = nil, root: String? = nil, progress: @escaping (Double) -> Void) throws {
         guard let exe = Paths.motori?.appendingPathComponent("orbit-vector"),
               FileManager.default.isExecutableFile(atPath: exe.path) else {
             throw NativeError(String(localized: "Manca il motore del vettoriale nell’app: reinstalla OrbitLR"))
@@ -48,8 +50,10 @@ enum Vector {
         let side = max(cg.width, cg.height)
 
         var args = [input.path, out.path] + arguments(param)
+        if let name { args += ["--name", name] }
+        if let root { args += ["--root", root] }
         var base = 0.0
-        if !param.hasPrefix("photo") && side > 96 && side <= (param.hasSuffix("+") || param.hasSuffix("*") ? aiBelowPrecise : aiBelow) {
+        if !param.hasPrefix("photo") && side > 96 && side <= (param.hasSuffix("+") || param.hasSuffix("*") || param == "pack" ? aiBelowPrecise : aiBelow) {
             let up = tmp.appendingPathComponent("ingrandita.png")
             do {
                 // «Più nitido» 4×: i bordi tornano netti
