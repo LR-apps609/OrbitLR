@@ -32,10 +32,6 @@ export function mediaPage(kind, app, opts = {}) {
   const bar = resultBar(kind);
   // Video: il video scaricato da un link arriva nell'elenco, pronto da tagliare, comprimere o montare
   const dl = kind === "video" ? downloaderBar({ video: true, onFile: (p) => add([p]) }) : null;
-  // 1.0 · Nelle altre schede i due Downloader restano in vista: il video va in Video, l'audio in Audio
-  const dlRow = kind === "video" ? null : h("div.dl-row",
-    downloaderBar({ video: true, onFile: (p) => app.openIn("video", [p]) }),
-    downloaderBar({ video: false, onFile: (p) => app.openIn("audio", [p]) }));
   let level = getLevel(kind);
   let openGroup = null; // in Completo: il gruppo aperto (null: il primo)
   const head = h("div.head");
@@ -118,7 +114,7 @@ export function mediaPage(kind, app, opts = {}) {
     if (!files.length) {
       const box = h("div.box", { role: "button", tabindex: "0", onclick: pick, onkeydown: (e) => e.key === "Enter" && pick() },
         ico(KINDS[kind].icon, 44), h("h3", c.empty), h("div", t("oppure clicca per sceglierli")), h("div", { style: { fontSize: "12.5px" } }, c.emptySub));
-      left.replaceChildren(...[head, dlRow, h("div.empty", box), bar.el].filter(Boolean));
+      left.replaceChildren(head, h("div.empty", box), bar.el);
       return;
     }
     grid.replaceChildren(...files.map((f) => {
@@ -136,7 +132,7 @@ export function mediaPage(kind, app, opts = {}) {
         h("button.rm", { title: t("Togli"), "aria-label": t`Togli ${f.name}`, onclick: (e) => { e.stopPropagation(); files = files.filter((x) => x !== f); selected.delete(f.path); closeTrim(); render(); } }, ico("x", 13)));
       return tile;
     }));
-    left.replaceChildren(...[head, dlRow, trim ? h("div.page-scroll", trim.el) : grid, bar.el].filter(Boolean));
+    left.replaceChildren(head, trim ? h("div.page-scroll", trim.el) : grid, bar.el);
   }
 
   function meta(f) {
