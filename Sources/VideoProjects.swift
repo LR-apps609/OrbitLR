@@ -165,15 +165,15 @@ struct VideoModeSwitch: View {
     @State private var mode = AppState.shared.videoMode
     @Environment(\.undoManager) private var undo
 
-    @AppStorage(Levels.key(.video)) private var level: ViewLevel = .simple
+    @ObservedObject private var levels = LevelStore.shared
 
     /// 5.0 · Nel montaggio: lo stesso interruttore di sempre, con «Montaggio» scelto.
     var body: some View {
-        LevelPicker(level: Binding(get: { mode == .montage ? .editor : level }, set: { v in
+        LevelPicker(level: Binding(get: { mode == .montage ? .editor : levels.level(.video) }, set: { v in
             if v == .editor {
                 Self.openEditor(undo: undo)
             } else {
-                level = v
+                levels.set(.video, v)
                 withAnimation(Motion.page) { app.videoMode = .tools }
             }
         }), editorTitle: Levels.editorTitle(.video))

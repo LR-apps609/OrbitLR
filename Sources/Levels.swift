@@ -11,6 +11,28 @@ enum ViewLevel: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+/// Le scelte di ogni sezione, salvate nelle preferenze. (Non @AppStorage: quello ridisegnava le schede a ogni
+/// preferenza scritta, anche a ogni cambio di scheda.)
+final class LevelStore: ObservableObject {
+    static let shared = LevelStore()
+    @Published private var levels: [Kind: ViewLevel] = [:]
+
+    func level(_ k: Kind) -> ViewLevel {
+        if let l = levels[k] { return l }
+        return ViewLevel(rawValue: UserDefaults.standard.string(forKey: Levels.key(k)) ?? "") == .complete ? .complete : .simple
+    }
+
+    func set(_ k: Kind, _ l: ViewLevel) {
+        guard l != .editor, level(k) != l else { return }
+        levels[k] = l
+        UserDefaults.standard.set(l.rawValue, forKey: Levels.key(k))
+    }
+
+    func binding(_ k: Kind) -> Binding<ViewLevel> {
+        Binding(get: { self.level(k) }, set: { self.set(k, $0) })
+    }
+}
+
 enum Levels {
     /// La chiave delle preferenze per la sezione.
     static func key(_ k: Kind) -> String { "level.\(k.rawValue)" }

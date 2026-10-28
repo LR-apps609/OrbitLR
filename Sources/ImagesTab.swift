@@ -198,14 +198,14 @@ struct KindTabView: View {
     @ObservedObject var m: KindTabModel
     let style: KindTabStyle
     /// 5.0 · Semplice · Completo · (Editor), ricordato per ogni sezione
-    @AppStorage private var level: ViewLevel
+    @ObservedObject private var levels = LevelStore.shared
+    private var level: ViewLevel { levels.level(style.kind) }
     @Environment(\.undoManager) private var undo
     @State private var targeted = false
 
     init(m: KindTabModel, style: KindTabStyle) {
         self.m = m
         self.style = style
-        _level = AppStorage(wrappedValue: .simple, Levels.key(style.kind))
     }
 
     /// L'interruttore: «Editor» apre l'editor della sezione (il montaggio, l'editor PDF) e non resta scelto.
@@ -218,7 +218,7 @@ struct KindTabView: View {
                     m.run(a)
                 }
             } else {
-                withAnimation(Motion.quick) { level = v }
+                withAnimation(Motion.quick) { levels.set(style.kind, v) }
             }
         })
     }
@@ -261,7 +261,7 @@ struct KindTabView: View {
                 if level == .complete {
                     ImagesInspector(m: m, tint: tint, noun: style.noun)
                 } else {
-                    SimplePanel(m: m, kind: style.kind, tint: tint) { withAnimation(Motion.quick) { level = .complete } }
+                    SimplePanel(m: m, kind: style.kind, tint: tint) { withAnimation(Motion.quick) { levels.set(style.kind, .complete) } }
                 }
             }
             .frame(width: 300)

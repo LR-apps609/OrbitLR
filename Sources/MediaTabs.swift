@@ -441,7 +441,8 @@ struct AudioTabView: View {
     @ObservedObject var m: MediaTabModel
     @State private var tool: AudioTool = .ringtone
     /// 5.0 · Semplice (le 6 più usate) o Completo (tutte)
-    @AppStorage(Levels.key(.audio)) private var level: ViewLevel = .simple
+    @ObservedObject private var levels = LevelStore.shared
+    private var level: ViewLevel { levels.level(.audio) }
     private static let simpleTools: [AudioTool] = [.ringtone, .cut, .whatsapp, .voiceclean, .normalize, .transcribe]
     private var shownTools: [AudioTool] { level == .complete ? AudioTool.allCases : Self.simpleTools }
 
@@ -505,7 +506,7 @@ struct AudioTabView: View {
         .onChange(of: m.restoredTool) { _, v in
             // 2.8.5 · progetto ripreso: torna lo strumento che usavi
             if let v, let t = AudioTool(rawValue: v) {
-                if level != .complete && !Self.simpleTools.contains(t) { level = .complete }
+                if level != .complete && !Self.simpleTools.contains(t) { levels.set(.audio, .complete) }
                 tool = t
             }
             m.restoredTool = nil
@@ -549,7 +550,7 @@ struct AudioTabView: View {
                 }
             }
             LevelPicker(level: Binding(get: { level == .editor ? .complete : level }, set: { v in
-                withAnimation(Motion.quick) { level = v }
+                withAnimation(Motion.quick) { levels.set(.audio, v) }
                 if v == .simple && !Self.simpleTools.contains(tool) { tool = .ringtone }
             }), editorTitle: nil).padding(.leading, 8)
             Spacer(minLength: 8)
