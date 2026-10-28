@@ -141,10 +141,16 @@ enum VideoProjectLibrary {
 /// 3.7 · La scheda Video: la base (strumenti su uno o più video) oppure l'editor completo (progetti).
 struct VideoTabView: View {
     @ObservedObject var s: VideoProjectStore
-    @ObservedObject private var app = AppState.shared
+    /// 5.0 · Solo il modo (strumenti o montaggio): osservare tutta l'app ridisegnava il Video a ogni cambio di scheda
+    @State private var mode = AppState.shared.videoMode
 
     var body: some View {
-        if app.videoMode == .tools {
+        content.onReceive(AppState.shared.$videoMode.removeDuplicates()) { v in withAnimation(Motion.page) { mode = v } }
+    }
+
+    @ViewBuilder private var content: some View {
+        let app = AppState.shared
+        if mode == .tools {
             KindTabView(m: app.videoTools, style: .video)
         } else {
             VideoEditorView(s: s)
@@ -155,14 +161,15 @@ struct VideoTabView: View {
 /// 3.7 · Un pulsante solo: dalla base si apre l'editor completo (stile CapCut), dall'editor si torna alla base.
 /// Se nella base ci sono già dei video, l'editor li prende in un progetto nuovo: nessun file da ritrascinare.
 struct VideoModeSwitch: View {
-    @ObservedObject private var app = AppState.shared
+    private var app: AppState { AppState.shared }
+    @State private var mode = AppState.shared.videoMode
     @Environment(\.undoManager) private var undo
 
     @AppStorage(Levels.key(.video)) private var level: ViewLevel = .simple
 
     /// 5.0 · Nel montaggio: lo stesso interruttore di sempre, con «Montaggio» scelto.
     var body: some View {
-        LevelPicker(level: Binding(get: { app.videoMode == .montage ? .editor : level }, set: { v in
+        LevelPicker(level: Binding(get: { mode == .montage ? .editor : level }, set: { v in
             if v == .editor {
                 Self.openEditor(undo: undo)
             } else {
@@ -170,8 +177,9 @@ struct VideoModeSwitch: View {
                 withAnimation(Motion.page) { app.videoMode = .tools }
             }
         }), editorTitle: Levels.editorTitle(.video))
+        .onReceive(AppState.shared.$videoMode.removeDuplicates()) { mode = $0 }
         .background(Button("") {
-            if app.videoMode == .tools { Self.openEditor(undo: undo) } else { withAnimation(Motion.page) { app.videoMode = .tools } }
+            if mode == .tools { Self.openEditor(undo: undo) } else { withAnimation(Motion.page) { app.videoMode = .tools } }
         }.keyboardShortcut("e", modifiers: [.command, .shift]).opacity(0).allowsHitTesting(false))
     }
 
