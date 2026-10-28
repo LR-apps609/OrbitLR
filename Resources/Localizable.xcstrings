@@ -630,6 +630,34 @@
         }
       }
     },
+    "%lld file non sono %@: aprili da Converti.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld file isn’t %@: open it from Convert."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld files aren’t %@: open them from Convert."
+                }
+              }
+            }
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld file non sono %2$@: aprili da Conversione."
+          }
+        }
+      }
+    },
     "%lld file pronti": {
       "localizations": {
         "en": {
@@ -1041,6 +1069,16 @@
       }
     },
     "1 file non è %@: aprilo da Conversione.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 file isn’t %@: open it from Convert."
+          }
+        }
+      }
+    },
+    "1 file non è %@: aprilo da Converti.": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4208,6 +4246,16 @@
         }
       }
     },
+    "Converti cambia il formato. Immagini, PDF e documenti, Video e Audio fanno tutto il resto: ritagli, suonerie, montaggi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert changes the format. Images, PDFs and documents, Video, and Audio do everything else: crops, ringtones, edits."
+          }
+        }
+      }
+    },
     "Converti con OrbitLR": {
       "localizations": {
         "en": {
@@ -6317,6 +6365,16 @@
         }
       }
     },
+    "I tuoi file non lasciano mai il Mac: OrbitLR li lavora qui. Su internet va solo quando lo chiedi tu (Video e Audio Downloader) e, una volta sola, per scaricare il motore di alcune funzioni (IA, trascrizione) e per controllare gli aggiornamenti.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your files never leave your Mac: OrbitLR works on them right here. It only goes online when you ask it to (Video and Audio Downloader) and, just once, to download the engine for some features (AI, transcription) and to check for updates."
+          }
+        }
+      }
+    },
     "I valori scritti nei campi diventano parte della pagina": {
       "localizations": {
         "en": {
@@ -6935,6 +6993,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Back one second · pause · play"
+          }
+        }
+      }
+    },
+    "Informativa sulla privacy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacy policy"
           }
         }
       }
@@ -8646,6 +8714,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The pie menu only has conversions, for quick picks. The “Edit” slice takes the file to its tab (Images, Files, Video or Audio), where you’ll find everything else."
+          }
+        }
+      }
+    },
+    "Nel menu a torta ci sono solo le conversioni, per scegliere al volo. Lo spicchio «Modifica» porta il file nella sua scheda (Immagini, PDF e documenti, Video o Audio), dove trovi tutto il resto.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The pie menu only has conversions, for quick picks. The “Edit” slice takes the file to its tab (Images, PDFs and documents, Video or Audio), where you’ll find everything else."
           }
         }
       }
@@ -14811,6 +14889,16 @@
         }
       }
     },
+    "Trascina il file in Converti (oppure clicca e sceglilo), poi clicca il formato che ti serve. Il file nuovo viene creato senza toccare l’originale.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag the file into Convert (or click and choose it), then click the format you need. The new file is created without touching the original."
+          }
+        }
+      }
+    },
     "Trascina il risultato": {
       "localizations": {
         "en": {
@@ -14822,6 +14910,16 @@
       }
     },
     "Trascina il video in Conversione e scegli MP3 (o M4A).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag the video into Convert and choose MP3 (or M4A)."
+          }
+        }
+      }
+    },
+    "Trascina il video in Converti e scegli MP3 (o M4A).": {
       "localizations": {
         "en": {
           "stringUnit": {

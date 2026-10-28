@@ -95,7 +95,7 @@ final class KindTabModel: ObservableObject, @unchecked Sendable {
         if others > 0 {
             let what = accepts == [.img] ? String(localized: "un’immagine") : (accepts == [.video] ? String(localized: "un video") : String(localized: "un documento"))
             let whatMany = accepts == [.img] ? String(localized: "immagini") : (accepts == [.video] ? String(localized: "video") : String(localized: "documenti"))
-            notice = others == 1 ? String(localized: "1 file non è \(what): aprilo da Conversione.") : String(localized: "\(others) file non sono \(whatMany): aprili da Conversione.")
+            notice = others == 1 ? String(localized: "1 file non è \(what): aprilo da Converti.") : String(localized: "\(others) file non sono \(whatMany): aprili da Converti.")
         } else if fresh.count > room {
             notice = String(localized: "Al massimo \(Self.maxFiles) file insieme.")
         } else {

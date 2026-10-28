@@ -1005,6 +1005,12 @@ struct SettingsView: View {
                     Toggle("Controlla da sola se c’è una versione nuova (una volta al giorno)", isOn: $autoUpdate)
                     Button("Controlla adesso…") { Task { @MainActor in await UpdateCheck.check(userInitiated: true) } }
                 }
+                // 5.0 · La promessa sulla privacy, scritta con precisione
+                Section("Privacy") {
+                    Text("I tuoi file non lasciano mai il Mac: OrbitLR li lavora qui. Su internet va solo quando lo chiedi tu (Video e Audio Downloader) e, una volta sola, per scaricare il motore di alcune funzioni (IA, trascrizione) e per controllare gli aggiornamenti.")
+                        .font(.callout).fixedSize(horizontal: false, vertical: true)
+                    Link("Informativa sulla privacy", destination: URL(string: "https://lr-apps609.github.io/OrbitLR/privacy.html")!)
+                }
                 // 3.0 · Quello che serve di rado, chiuso di base
                 Section {
                     DisclosureGroup("Avanzate", isExpanded: $advanced) {

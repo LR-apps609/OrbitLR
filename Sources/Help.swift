@@ -19,9 +19,9 @@ struct FAQ: Identifiable, Equatable {
     static let all: [FAQ] = [
         // Conversione
         FAQ(id: "convert", section: "Conversione", question: String(localized: "Come converto un file?"),
-            answer: String(localized: "Trascina il file in Conversione (oppure clicca e sceglilo), poi clicca il formato che ti serve. Il file nuovo viene creato senza toccare l’originale."), place: .workspace),
+            answer: String(localized: "Trascina il file in Converti (oppure clicca e sceglilo), poi clicca il formato che ti serve. Il file nuovo viene creato senza toccare l’originale."), place: .workspace),
         FAQ(id: "edit", section: "Conversione", question: String(localized: "Dove sono le modifiche, come ridimensionare o tagliare?"),
-            answer: String(localized: "Nel menu a torta ci sono solo le conversioni, per scegliere al volo. Lo spicchio «Modifica» porta il file nella sua scheda (Immagini, File, Video o Audio), dove trovi tutto il resto."), place: .workspace),
+            answer: String(localized: "Nel menu a torta ci sono solo le conversioni, per scegliere al volo. Lo spicchio «Modifica» porta il file nella sua scheda (Immagini, PDF e documenti, Video o Audio), dove trovi tutto il resto."), place: .workspace),
         FAQ(id: "where", section: "Conversione", question: String(localized: "Dove finiscono i file creati?"),
             answer: String(localized: "Nella cartella scelta in Opzioni → «Dove salvarli» (di base, la stessa cartella dell’originale). Alla fine la barra in basso dice in che cartella è, e «Mostra nel Finder» la apre.")),
         FAQ(id: "many", section: "Conversione", question: String(localized: "Posso convertire tanti file insieme?"),
@@ -84,7 +84,7 @@ struct FAQ: Identifiable, Equatable {
         FAQ(id: "atts", section: "Audio", question: String(localized: "Come trasformo un testo in voce?"),
             answer: String(localized: "Apri Audio, scegli «Testo in voce», scrivi o incolla il testo e scegli la voce. Le voci «Premium» di macOS sono le più naturali."), place: .audio),
         FAQ(id: "aextract", section: "Audio", question: String(localized: "Come prendo l’audio da un video?"),
-            answer: String(localized: "Trascina il video in Conversione e scegli MP3 (o M4A)."), place: .workspace),
+            answer: String(localized: "Trascina il video in Converti e scegli MP3 (o M4A)."), place: .workspace),
         // Aggiornamenti e problemi
         FAQ(id: "update", section: "Aggiornamenti e problemi", question: String(localized: "Come aggiorno OrbitLR?"),
             answer: String(localized: "Dal menu OrbitLR → «Controlla aggiornamenti…». OrbitLR controlla anche da sola una volta al giorno e ti avvisa se c’è una versione nuova.")),

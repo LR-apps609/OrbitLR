@@ -487,7 +487,7 @@ struct WelcomeView: View {
                      tips: [String(localized: "Funziona anche con le cartelle"), String(localized: "Tasti 1–8 per scegliere, Invio ripete l’ultima scelta"),
                             String(localized: "Spazio mostra l’anteprima del file")]),
             PageInfo(symbol: "square.grid.2x2.fill", color: Theme.color(.video), title: String(localized: "Per modificare, le schede"),
-                     text: String(localized: "Conversione cambia il formato. Immagini, File, Video e Audio fanno tutto il resto: ritagli, suonerie, montaggi."),
+                     text: String(localized: "Converti cambia il formato. Immagini, PDF e documenti, Video e Audio fanno tutto il resto: ritagli, suonerie, montaggi."),
                      tips: [String(localized: "Lo spicchio «Modifica» porta il file nella sua scheda"),
                             String(localized: "Nel Cassetto ritrovi i file creati: trascinali su un’altra scheda"),
                             String(localized: "Attività mostra i lavori in corso e quelli fatti")]),
