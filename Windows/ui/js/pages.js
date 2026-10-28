@@ -121,14 +121,18 @@ export function settingsPage(app) {
         h("div.set", h("h3", t("Motore")),
           h("p", eng.ready ? t`Pronto · ${String(eng.version || "").replace(/^ffmpeg version /, "ffmpeg ").split(" Copyright")[0]}` : t("Il motore video non si è avviato: reinstalla OrbitLR.")),
           eng.ready ? h("p", t`Per comprimere usa: ${gpuText}${eng.hevc?.length ? t(" · HEVC disponibile") : ""}`) : null,
-          h("p", t("Tutto avviene sul tuo computer: nessun file viene caricato su internet."))))));
+        ),
+        // 1.0 · La promessa sulla privacy, scritta con precisione
+        h("div.set", h("h3", "Privacy"),
+          h("p", t("I tuoi file non lasciano mai il computer: OrbitLR li lavora qui. Su internet va solo quando lo chiedi tu (Video e Audio Downloader) e, una volta sola, per scaricare il motore di alcune funzioni (IA, trascrizione) e per controllare gli aggiornamenti.")),
+          h("button.btn", { onclick: () => openUrl("https://lr-apps609.github.io/OrbitLR/privacy.html") }, ico("external-link", 15), t("Informativa sulla privacy"))))));
   }
   return { el, show: render };
 }
 
 // ── Aiuto
 const FAQ = [
-  ["Conversione", t("Come converto un file?"), t("Trascinalo nella finestra (anche più file o una cartella): si apre la torta con i formati. Clic sul formato, oppure il tasto con il suo numero. Il file nuovo va accanto all'originale, che non si tocca.")],
+  ["Converti", t("Come converto un file?"), t("Trascinalo nella finestra (anche più file o una cartella): si apre la torta con i formati. Clic sul formato, oppure il tasto con il suo numero. Il file nuovo va accanto all'originale, che non si tocca.")],
   ["Video", t("Come rendo un video più leggero senza perdere qualità?"), t("Video → scegli il video → «Comprimi» → «Stessa qualità, meno peso». OrbitLR usa la scheda video del computer (NVIDIA, Intel o AMD) quando c'è, ed è molto più veloce.")],
   ["Video", t("Devo mandare un video su WhatsApp, Discord o per email"), t("In «Comprimi» scegli WhatsApp, Discord o Email: il video starà sotto quel peso. Prima si tengono qualità e misura; la risoluzione scende solo se serve.")],
   ["Video", t("Posso lavorare film lunghi, di 2 ore o 5 GB?"), t("Sì: tutto avviene sul computer, senza caricare niente. OrbitLR controlla prima che ci sia spazio sul disco. «Taglia» su un film lungo è istantaneo perché non ricodifica.")],
@@ -144,29 +148,29 @@ const FAQ = [
   ["Immagini", t("Le foto HEIC dell'iPhone si aprono?"), t("Sì: trascinale e convertile in JPG con un clic. Se una non si apre, sull'iPhone scegli Impostazioni → Fotocamera → Formati → «Più compatibile».")],
   ["Audio", t("Come trascrivo un audio o un video?"), t("Audio (o Video) → «Trascrivi»: ottieni il testo (.txt) e i sottotitoli (.srt). Tutto sul computer; solo la prima volta si scarica il modello della voce (circa 190 MB). La lingua si sceglie in Opzioni.")],
   ["Video", t("Come aggiungo i sottotitoli automatici?"), t("Nell'editor apri «Testi» e premi «Sottotitoli automatici»: OrbitLR ascolta le clip e scrive le frasi in basso, al momento giusto, con la parola detta che si accende. Poi li correggi come gli altri testi; Ctrl+Z li toglie tutti.")],
-  ["File", t("Come rendo un PDF più leggero per l'email?"), t("File → trascina il PDF → «Comprimi» → «Schermo ed email». Le foto dentro vengono ricompresse; testo, link e moduli restano come sono. Se il PDF è già leggero, OrbitLR te lo dice e non crea copie inutili.")],
+  ["PDF e documenti", t("Come rendo un PDF più leggero per l'email?"), t("PDF e documenti → trascina il PDF → «Comprimi» → «Schermo ed email». Le foto dentro vengono ricompresse; testo, link e moduli restano come sono. Se il PDF è già leggero, OrbitLR te lo dice e non crea copie inutili.")],
   ["Generale", t("Posso far convertire o comprimere i file da soli?"), t("Sì: «Cartelle automatiche». Attiva per esempio «Foto HEIC e WebP in JPG» sulla cartella Download: ogni foto HEIC scaricata diventa JPG da sola. Per i video c'è la cartella «Da comprimere». Funziona con OrbitLR aperta, anche ridotta a icona.")],
-  ["File", t("Come converto Word, Excel o PowerPoint in PDF?"), t("Trascina il documento in Conversione e scegli PDF (o DOCX, XLSX, CSV…). La prima volta OrbitLR ti propone di installare LibreOffice, gratuito: lo usa in silenzio, senza aprire finestre. Macro e collegamenti esterni dei documenti restano spenti.")],
-  ["File", t("Come unisco più PDF?"), t("File → trascina i PDF → «Unisci». L'ordine è quello dell'elenco.")],
+  ["PDF e documenti", t("Come converto Word, Excel o PowerPoint in PDF?"), t("Trascina il documento in Converti e scegli PDF (o DOCX, XLSX, CSV…). La prima volta OrbitLR ti propone di installare LibreOffice, gratuito: lo usa in silenzio, senza aprire finestre. Macro e collegamenti esterni dei documenti restano spenti.")],
+  ["PDF e documenti", t("Come unisco più PDF?"), t("PDF e documenti → trascina i PDF → «Unisci». L'ordine è quello dell'elenco.")],
   ["Generale", t("Windows dice «Windows ha protetto il PC»"), t("Succede con le app nuove senza la firma a pagamento di Microsoft. Clicca «Ulteriori informazioni» e poi «Esegui comunque». Si fa una volta sola.")],
-  ["Conversione", t("Si può usare direttamente da Esplora file?"), t("Sì, in due modi: tasto destro su un file → «Apri con OrbitLR», oppure seleziona i file in Esplora file e premi Ctrl+Alt+C: OrbitLR si apre con la torta pronta. L'icona vicino all'orologio riapre OrbitLR con un clic.")],
-  ["Conversione", t("Come annullo una conversione?"), t("Nella barra del risultato, in basso, premi «Annulla»: il file appena creato va nel Cestino e l'originale resta dov'era.")],
-  ["Conversione", t("Posso convertire tanti file insieme?"), t("Sì: trascina più file o una cartella intera. Con tipi diversi compare una torta per tipo; ogni file nuovo va accanto al suo originale.")],
-  ["Conversione", t("Posso scegliere senza mouse?"), t("Sì: ogni spicchio ha un numero, premi il tasto. Invio ripete l'ultima scelta per quel tipo di file, Esc toglie i file.")],
-  ["Conversione", t("Come salvo una scelta che uso spesso?"), t("Apri uno strumento con delle scelte (per esempio «Comprimi»), scegli e premi «★ Salva come mia azione». La ritrovi in cima agli strumenti e come spicchio con la stella nella torta. Si rinomina o si toglie nelle Opzioni.")],
-  ["Conversione", t("Come confronto il risultato con l'originale?"), t("Dopo aver lavorato una foto, nella barra del risultato premi «Confronta»: originale e risultato uno sopra l'altro, con la linea da trascinare (o le frecce).")],
+  ["Converti", t("Si può usare direttamente da Esplora file?"), t("Sì, in due modi: tasto destro su un file → «Apri con OrbitLR», oppure seleziona i file in Esplora file e premi Ctrl+Alt+C: OrbitLR si apre con la torta pronta. L'icona vicino all'orologio riapre OrbitLR con un clic.")],
+  ["Converti", t("Come annullo una conversione?"), t("Nella barra del risultato, in basso, premi «Annulla»: il file appena creato va nel Cestino e l'originale resta dov'era.")],
+  ["Converti", t("Posso convertire tanti file insieme?"), t("Sì: trascina più file o una cartella intera. Con tipi diversi compare una torta per tipo; ogni file nuovo va accanto al suo originale.")],
+  ["Converti", t("Posso scegliere senza mouse?"), t("Sì: ogni spicchio ha un numero, premi il tasto. Invio ripete l'ultima scelta per quel tipo di file, Esc toglie i file.")],
+  ["Converti", t("Come salvo una scelta che uso spesso?"), t("Apri uno strumento con delle scelte (per esempio «Comprimi»), scegli e premi «★ Salva come mia azione». La ritrovi in cima agli strumenti e come spicchio con la stella nella torta. Si rinomina o si toglie nelle Opzioni.")],
+  ["Converti", t("Come confronto il risultato con l'originale?"), t("Dopo aver lavorato una foto, nella barra del risultato premi «Confronta»: originale e risultato uno sopra l'altro, con la linea da trascinare (o le frecce).")],
   ["Immagini", t("Come tolgo lo sfondo da una foto?"), t("Immagini → scegli la foto → «Rimuovi lo sfondo» → trasparente, su bianco o ritagliato. Tutto sul computer: la prima volta scarica il modello (179 MB).")],
   ["Immagini", t("Come rendo una foto più nitida o più grande?"), t("«Migliora con l'IA» la rende più pulita alla stessa misura; «Ingrandisci» la fa 2 o 4 volte più grande con i contorni nitidi. Usano la scheda video del PC; la prima volta scaricano il motore (45 MB).")],
   ["Audio", t("Come scarico una canzone o un video da un link?"), t("In Audio (o Video) incolla il link nella barra in alto a destra e premi Invio: funziona con migliaia di siti. Il file va in Download ed entra subito nella scheda. I siti protetti (Netflix, Spotify…) non si scaricano.")],
-  ["Audio", t("Come prendo l'audio da un video?"), t("Trascina il video in Conversione e scegli MP3 (o M4A, WAV). Il video non si tocca.")],
+  ["Audio", t("Come prendo l'audio da un video?"), t("Trascina il video in Converti e scegli MP3 (o M4A, WAV). Il video non si tocca.")],
   ["Audio", t("Come trasformo un testo in voce?"), t("Audio → «Testo in voce»: scrivi o incolla il testo, scegli la voce e premi «Crea il file audio». Il file MP3 va in Download. Altre voci: Impostazioni di Windows → Ora e lingua → Voce.")],
-  ["File", t("Come metto una password a un PDF?"), t("File → il PDF → «Proteggi con password»: scrivi la password due volte. Cifratura AES-256. Se la dimentichi non si recupera. Per toglierla: «Togli la password».")],
-  ["File", t("Come cambio l'ordine delle pagine di un PDF?"), t("File → il PDF → «Riordina le pagine» e scrivi il nuovo ordine, per esempio 3, 1, 2: le pagine che non scrivi restano dopo. «Ruota le pagine» le gira di 90° o le capovolge.")],
+  ["PDF e documenti", t("Come metto una password a un PDF?"), t("File → il PDF → «Proteggi con password»: scrivi la password due volte. Cifratura AES-256. Se la dimentichi non si recupera. Per toglierla: «Togli la password».")],
+  ["PDF e documenti", t("Come cambio l'ordine delle pagine di un PDF?"), t("File → il PDF → «Riordina le pagine» e scrivi il nuovo ordine, per esempio 3, 1, 2: le pagine che non scrivi restano dopo. «Ruota le pagine» le gira di 90° o le capovolge.")],
   ["Generale", t("Come rinomino tanti file insieme?"), t("Scegli i file in Immagini, Video o File → «Rinomina tutti»: scrivi il nome (per esempio Vacanze) e diventano Vacanze 001, Vacanze 002… in ordine di nome. Non si creano copie.")],
   ["Generale", t("Come aggiorno OrbitLR?"), t("Da sola: quando c'è una versione nuova compare in alto a destra «Nuovo aggiornamento disponibile». Un clic, e OrbitLR scarica, controlla la firma, si aggiorna e si riapre.")],
   ["Generale", t("Un lavoro non è riuscito: cosa faccio?"), t("Leggi il messaggio nella barra in basso: dice cosa è successo e cosa fare. Se non basta, premi «Segnala»: si apre un'email già pronta, senza nomi di file.")],
   ["Generale", t("Come metto OrbitLR in inglese?"), t("Opzioni → «Lingua · Language» → English. Di base OrbitLR segue la lingua di Windows.")],
-  ["Generale", t("I miei file vengono caricati su internet?"), t("No. OrbitLR lavora tutto sul tuo computer, anche senza connessione.")],
+  ["Generale", t("I miei file vengono caricati su internet?"), t("No: i tuoi file non lasciano mai il computer. OrbitLR va su internet solo per i Downloader, quando li usi, per scaricare una volta il motore di alcune funzioni (IA, trascrizione) e per controllare gli aggiornamenti.")],
 ];const FAQ_SMARTSCREEN = FAQ.find((f) => f[1] === t("Windows dice «Windows ha protetto il PC»"));
 const FAQ_EXPLORER = FAQ.find((f) => f[1] === t("Si può usare direttamente da Esplora file?"));
 
