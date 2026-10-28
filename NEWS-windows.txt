@@ -1,3 +1,17 @@
+Novità per Windows 1.0 «Semplice»:
+• La nuova OrbitLR: ogni sezione (Immagini, Video, Audio, PDF e documenti) si apre in «Semplice», con le 6 cose che si fanno di più in grande. In alto l'interruttore «Semplice · Completo»: in Completo ci sono tutte le funzioni, in gruppi che si aprono uno alla volta. Ogni sezione si ricorda la tua scelta
+• In Video «Montaggio» e in PDF e documenti «Editor PDF» sono nello stesso interruttore
+• Nomi più chiari: «Converti», «PDF e documenti», «Cartelle automatiche»
+• Vettoriale con forme pulite: lati dritti, stelle e poligoni regolari, bordi allineati tra le forme, esatti quando il disegno lo era
+• Passare da una sezione all'altra è più veloce
+
+What’s new in Windows 1.0 “Simple”:
+• The new OrbitLR: every section (Images, Video, Audio, PDFs and documents) opens in “Simple”, with the 6 things people do most, big. At the top the “Simple · Complete” switch: Complete has every feature, in groups that open one at a time. Each section remembers your choice
+• In Video “Editor” and in PDFs and documents “PDF editor” are in the same switch
+• Clearer names: “Convert”, “PDFs and documents”, “Watch Folders”
+• Vector with clean shapes: straight sides, regular stars and polygons, edges aligned across shapes, exact when the drawing was
+• Switching between sections is faster
+
 Novità per Windows 0.11.0 «Pacchetto»:
 • Vettoriale (SVG) → «Pacchetto logo (ZIP)»: dallo stesso logo, tutti i file che servono. SVG per il web, PDF ed EPS vettoriali per la tipografia, PNG trasparenti a 512, 1024 e 2048 pixel
 • La versione a un colore, nera e bianca, come la fa un grafico: le zone si alternano piene e vuote, così stelle, cerchi e scritte restano visibili. Per timbri, incisioni e fondi scuri

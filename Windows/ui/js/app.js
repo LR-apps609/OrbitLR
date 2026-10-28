@@ -15,7 +15,7 @@ import { showFeedback } from "./feedback.js";
 import { env, extOf, fmtBytes, h, ico, modal, store, toast } from "./util.js";
 import { t, tr, LANG, isEn } from "./i18n.js";
 
-const VERSION = "0.11.0";
+const VERSION = "1.0.0";
 // Numero della compilazione (lo scrive GitHub quando crea l'installazione)
 const BUILD = 0;
 
