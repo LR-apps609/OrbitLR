@@ -62,6 +62,7 @@ struct SimplePanel: View {
     let showAll: () -> Void
 
     private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
+    @State private var showFormats = false
 
     /// Le azioni di Semplice che ci sono davvero per questi file (le altre si saltano), e quante ne restano fuori.
     /// (Le azioni si calcolano una volta sola per disegno: sono la parte costosa.)
@@ -96,6 +97,20 @@ struct SimplePanel: View {
                 LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(items) { it in tile(it) }
                 }
+                if showFormats, case .formats(let formats)? = items.first(where: { $0.id == "convert" }) {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 70), spacing: 8)], spacing: 8) {
+                        ForEach(formats) { a in
+                            Button { m.run(a) } label: {
+                                Text(a.short).font(.system(size: 12.5, weight: .bold)).lineLimit(1)
+                                    .frame(maxWidth: .infinity).padding(.vertical, 8)
+                                    .background(RoundedRectangle(cornerRadius: 9).fill(Theme.card))
+                                    .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(tint.opacity(0.35)))
+                            }
+                            .buttonStyle(Pressable())
+                            .help(m.estimates[a.id].map { "\(a.title) · \(SizeEstimate.label($0))" } ?? a.title)
+                        }
+                    }
+                }
                 if hidden > 0 {
                     Button(action: showAll) {
                         HStack(spacing: 6) {
@@ -118,21 +133,12 @@ struct SimplePanel: View {
     @ViewBuilder private func tile(_ it: SimpleItem) -> some View {
         switch it {
         case .formats(let formats):
-            Menu {
-                ForEach(formats) { a in
-                    Button {
-                        m.run(a)
-                    } label: {
-                        if let b = m.estimates[a.id] { Text("\(a.short) · \(SizeEstimate.label(b))") } else { Text(a.short) }
-                    }
-                }
-            } label: {
+            // Un pulsante e i formati sotto (un menu per riquadro costava troppo da disegnare)
+            Button { withAnimation(Motion.quick) { showFormats.toggle() } } label: {
                 tileLabel(symbol: "arrow.left.arrow.right", title: String(localized: "Cambia formato"),
                           hint: formats.prefix(4).map(\.short).joined(separator: ", "))
             }
-            .menuStyle(.button)
-            .buttonStyle(.plain)
-            .menuIndicator(.hidden)
+            .buttonStyle(Pressable())
         case .action(let a):
             Button { m.run(a) } label: {
                 tileLabel(symbol: a.symbol, title: a.title, hint: a.hint)

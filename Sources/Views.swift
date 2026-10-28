@@ -23,6 +23,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         switch self {
         case .workspace: return String(localized: "Converti")
         case .files: return String(localized: "PDF e documenti")
+        case .automation: return String(localized: "Cartelle automatiche")   // come il titolo della pagina e come su Windows
         default: return String(localized: String.LocalizationValue(rawValue))
         }
     }
