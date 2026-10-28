@@ -286,13 +286,17 @@ struct KindTabView: View {
                 Text(style.title).font(.system(size: 22, weight: .bold, design: .rounded))
                 Text(subtitle).font(.system(size: 12.5)).foregroundStyle(.secondary)
                     .help(m.files.isEmpty ? "" : (fem ? String(localized: "Clic su una foto per sceglierla, ⌘-clic per sceglierne più di una") : String(localized: "Clic su un file per sceglierlo, ⌘-clic per sceglierne più di uno")))
+                // 5.0 · L'interruttore sotto il titolo: la riga resta libera per il Downloader e i pulsanti
+                Group {
+                    if style.kind == .video {
+                        VideoModeSwitch()          // lo stesso interruttore, con ⇧⌘E per il montaggio
+                    } else {
+                        LevelPicker(level: levelBinding, editorTitle: Levels.editorTitle(style.kind))
+                    }
+                }
+                .padding(.top, 6)
             }
             .layoutPriority(1)          // 4.1.6 · prima il titolo; la barra del downloader prende lo spazio che resta
-            if style.kind == .video {
-                VideoModeSwitch().padding(.leading, 8)          // lo stesso interruttore, con ⇧⌘E per il montaggio
-            } else {
-                LevelPicker(level: levelBinding, editorTitle: Levels.editorTitle(style.kind)).padding(.leading, 8)
-            }
             Spacer()
             // 4.1.3 · Discreto, come nella scheda Audio
             if style.kind == .video {

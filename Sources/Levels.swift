@@ -83,7 +83,7 @@ struct LevelPicker: View {
             Text(title)
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(on ? Theme.background : Theme.ink.opacity(0.75))
-                .padding(.horizontal, 11).padding(.vertical, 4)
+                .padding(.horizontal, 10).padding(.vertical, 4)
                 .background(Capsule().fill(on ? Theme.ink : .clear))
                 .contentShape(Capsule())
         }
