@@ -232,8 +232,6 @@ struct KindTabView: View {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 12) {
                 header
-                // 5.0 · I Downloader sempre in vista (in Video sono nel titolo)
-                if style.kind != .video { DownloadersRow() }
                 if m.files.isEmpty {
                     MediaDropZone(kind: style.kind, title: style.dropTitle, subtitle: style.dropSubtitle,
                                   targeted: targeted) { choose() }
