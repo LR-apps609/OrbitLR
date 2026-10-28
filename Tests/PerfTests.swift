@@ -37,6 +37,7 @@ final class PerfTests: XCTestCase {
         let h = host(MainWindow())
         h.view.layoutSubtreeIfNeeded()
         var worstFirst = 0.0, worstBack = 0.0
+        var nameFirst = "", nameBack = ""
         for pass in 0..<2 {
             for tab in SidebarItem.tabs + [.activity, .workspace] {
                 let t0 = CACurrentMediaTime()
@@ -45,13 +46,13 @@ final class PerfTests: XCTestCase {
                 RunLoop.main.run(until: Date().addingTimeInterval(0.01))
                 h.view.layoutSubtreeIfNeeded()
                 let s = CACurrentMediaTime() - t0 - 0.01
-                if pass == 0 { worstFirst = max(worstFirst, s) } else { worstBack = max(worstBack, s) }
+                if pass == 0 { if s > worstFirst { worstFirst = s; nameFirst = tab.rawValue } } else if s > worstBack { worstBack = s; nameBack = tab.rawValue }
                 print("TEMPO: scheda \(tab.rawValue) \(pass == 0 ? "prima volta" : "ritorno") \(ms(s))")
             }
         }
         app.selection = .workspace
-        XCTAssertLessThan(worstFirst, 1.5, "una scheda ci mette troppo a comparire la prima volta (\(ms(worstFirst)))")
-        XCTAssertLessThan(worstBack, 0.5, "tornare su una scheda già aperta deve essere quasi istantaneo (\(ms(worstBack)))")
+        XCTAssertLessThan(worstFirst, 1.5, "una scheda ci mette troppo a comparire la prima volta (\(nameFirst): \(ms(worstFirst)))")
+        XCTAssertLessThan(worstBack, 0.5, "tornare su una scheda già aperta deve essere quasi istantaneo (\(nameBack): \(ms(worstBack)))")
     }
 
     func testLeSchedeDiLavoroRestanoVive() {
