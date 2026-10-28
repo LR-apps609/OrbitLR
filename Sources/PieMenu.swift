@@ -800,8 +800,8 @@ extension PieKeys {
 
 /// Etichetta «Nuovo» sulle azioni appena arrivate, finché non le usi una volta.
 enum NewBadges {
-    /// 3.0 · Solo la novità che conta: lo spicchio «Modifica» (uno per menu, si spegne al primo uso).
-    static let ids: Set<String> = ["__open:images", "__open:files", "__open:audio", "__open:videotools"]
+    /// 5.0 · Prima versione pubblica: per chi arriva adesso niente è «nuovo» (le etichette tornano per le novità future).
+    static let ids: Set<String> = []
     static func isNew(_ id: String) -> Bool { ids.contains(id) && !UserDefaults.standard.bool(forKey: "seen." + id) }
     static func markSeen(_ id: String) { if ids.contains(id) { UserDefaults.standard.set(true, forKey: "seen." + id) } }
 }

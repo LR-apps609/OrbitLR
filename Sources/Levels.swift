@@ -48,6 +48,7 @@ struct LevelPicker: View {
         }
         .pickerStyle(.segmented)
         .labelsHidden()
+        .controlSize(.small)
         .fixedSize()
         .help("Semplice: le cose che si fanno di più. Completo: tutte le funzioni, divise in gruppi.")
     }
@@ -62,13 +63,16 @@ struct SimplePanel: View {
 
     private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
 
-    /// Le azioni di Semplice che ci sono davvero per questi file (le altre si saltano).
-    private var items: [SimpleItem] {
+    /// Le azioni di Semplice che ci sono davvero per questi file (le altre si saltano), e quante ne restano fuori.
+    /// (Le azioni si calcolano una volta sola per disegno: sono la parte costosa.)
+    private func compute() -> (items: [SimpleItem], hidden: Int) {
         let all = m.actions
+        let formats = all.filter { $0.id.hasPrefix("to:") }
+        let tools = all.filter { !$0.id.hasPrefix("to:") }
         var out: [SimpleItem] = []
         for id in Levels.simpleIDs(m.kind ?? kind) {
             if id == "convert" {
-                if !m.formats.isEmpty { out.append(.formats) }
+                if !formats.isEmpty { out.append(.formats(formats)) }
             } else if let a = all.first(where: { $0.id == id }) {
                 out.append(.action(a))
             }
@@ -76,17 +80,16 @@ struct SimplePanel: View {
         }
         // I file di un tipo senza una lista sua (documenti, fogli…): le prime azioni, in ordine
         if out.count < 4 {
-            for a in m.tools where !out.contains(where: { $0.id == a.id }) {
+            for a in tools where !out.contains(where: { $0.id == a.id }) {
                 out.append(.action(a))
                 if out.count == 6 { break }
             }
         }
-        return out
+        return (out, max(0, tools.count + (formats.isEmpty ? 0 : 1) - out.count))
     }
 
-    private var hidden: Int { max(0, m.tools.count + (m.formats.isEmpty ? 0 : 1) - items.count) }
-
     var body: some View {
+        let (items, hidden) = compute()
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Cosa vuoi fare?").font(.system(size: 15, weight: .bold))
@@ -114,9 +117,9 @@ struct SimplePanel: View {
 
     @ViewBuilder private func tile(_ it: SimpleItem) -> some View {
         switch it {
-        case .formats:
+        case .formats(let formats):
             Menu {
-                ForEach(m.formats) { a in
+                ForEach(formats) { a in
                     Button {
                         m.run(a)
                     } label: {
@@ -125,7 +128,7 @@ struct SimplePanel: View {
                 }
             } label: {
                 tileLabel(symbol: "arrow.left.arrow.right", title: String(localized: "Cambia formato"),
-                          hint: m.formats.prefix(4).map(\.short).joined(separator: ", "))
+                          hint: formats.prefix(4).map(\.short).joined(separator: ", "))
             }
             .menuStyle(.button)
             .buttonStyle(.plain)
@@ -159,7 +162,7 @@ struct SimplePanel: View {
 }
 
 enum SimpleItem: Identifiable {
-    case formats
+    case formats([Action])
     case action(Action)
     var id: String {
         switch self {
