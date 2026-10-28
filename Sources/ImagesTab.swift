@@ -186,7 +186,7 @@ struct KindTabStyle {
         intro: String(localized: "Comprimi, taglia, fai una GIF e altro, su uno o tanti video"), noun: "video", types: [.movie])
 
     static let files = KindTabStyle(
-        title: String(localized: "File"), kind: .pdf, dropTitle: String(localized: "Trascina qui PDF e documenti"),
+        title: String(localized: "PDF e documenti"), kind: .pdf, dropTitle: String(localized: "Trascina qui PDF e documenti"),
         dropSubtitle: String(localized: "oppure clicca per sceglierli · PDF, Word, Excel, PowerPoint, testi · fino a \(KindTabModel.maxFiles) insieme"),
         intro: String(localized: "Unisci, comprimi, converti e proteggi PDF e documenti"), noun: "file",
         types: [.pdf, .plainText, .rtf, .html, UTType(filenameExtension: "docx"), UTType(filenameExtension: "doc"),
@@ -197,7 +197,31 @@ struct KindTabStyle {
 struct KindTabView: View {
     @ObservedObject var m: KindTabModel
     let style: KindTabStyle
+    /// 5.0 · Semplice · Completo · (Editor), ricordato per ogni sezione
+    @AppStorage private var level: ViewLevel
+    @Environment(\.undoManager) private var undo
     @State private var targeted = false
+
+    init(m: KindTabModel, style: KindTabStyle) {
+        self.m = m
+        self.style = style
+        _level = AppStorage(wrappedValue: .simple, Levels.key(style.kind))
+    }
+
+    /// L'interruttore: «Editor» apre l'editor della sezione (il montaggio, l'editor PDF) e non resta scelto.
+    private var levelBinding: Binding<ViewLevel> {
+        Binding(get: { level == .editor ? .complete : level }, set: { v in
+            if v == .editor {
+                if style.kind == .video {
+                    VideoModeSwitch.openEditor(undo: undo)
+                } else if style.kind == .pdf, let a = Catalog.action(id: "pdfedit", kind: .pdf) {
+                    m.run(a)
+                }
+            } else {
+                withAnimation(Motion.quick) { level = v }
+            }
+        })
+    }
     /// 4.1.3 · «Da un link…» (solo nella scheda Video)
     @State private var showLink = false
     @State private var linkText = ""
@@ -208,6 +232,8 @@ struct KindTabView: View {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 12) {
                 header
+                // 5.0 · I Downloader sempre in vista (in Video sono nel titolo)
+                if style.kind != .video { DownloadersRow() }
                 if m.files.isEmpty {
                     MediaDropZone(kind: style.kind, title: style.dropTitle, subtitle: style.dropSubtitle,
                                   targeted: targeted) { choose() }
@@ -231,8 +257,14 @@ struct KindTabView: View {
             .padding(20)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             Divider()
-            ImagesInspector(m: m, tint: tint, noun: style.noun)
-                .frame(width: 300)
+            Group {
+                if level == .complete {
+                    ImagesInspector(m: m, tint: tint, noun: style.noun)
+                } else {
+                    SimplePanel(m: m, kind: style.kind, tint: tint) { withAnimation(Motion.quick) { level = .complete } }
+                }
+            }
+            .frame(width: 300)
         }
         .background(Theme.background)
         .onDrop(of: [UTType.fileURL], isTargeted: $targeted) { providers in
@@ -256,7 +288,11 @@ struct KindTabView: View {
                     .help(m.files.isEmpty ? "" : (fem ? String(localized: "Clic su una foto per sceglierla, ⌘-clic per sceglierne più di una") : String(localized: "Clic su un file per sceglierlo, ⌘-clic per sceglierne più di uno")))
             }
             .layoutPriority(1)          // 4.1.6 · prima il titolo; la barra del downloader prende lo spazio che resta
-            if style.kind == .video { VideoModeSwitch().padding(.leading, 8) }
+            if style.kind == .video {
+                VideoModeSwitch().padding(.leading, 8)          // lo stesso interruttore, con ⇧⌘E per il montaggio
+            } else {
+                LevelPicker(level: levelBinding, editorTitle: Levels.editorTitle(style.kind)).padding(.leading, 8)
+            }
             Spacer()
             // 4.1.3 · Discreto, come nella scheda Audio
             if style.kind == .video {
@@ -378,6 +414,8 @@ private struct ImagesInspector: View {
     let tint: Color
     let noun: String
     @State private var hovered: String? = nil
+    /// Il gruppo aperto (nil: il primo; "": nessuno)
+    @State private var open: String? = nil
 
     var body: some View {
         ScrollView {
@@ -405,10 +443,29 @@ private struct ImagesInspector: View {
                         ForEach(m.formats) { a in formatButton(a) }
                     }
                 } }
+                // 5.0 · Completo: i gruppi si aprono uno alla volta (il primo aperto)
                 ForEach(m.toolGroups) { g in
-                    section(g.title) {
-                        VStack(spacing: 2) {
-                            ForEach(g.actions) { a in toolRow(a) }
+                    let isOpen = (open ?? m.toolGroups.first?.title) == g.title
+                    VStack(alignment: .leading, spacing: 6) {
+                        Button {
+                            withAnimation(Motion.quick) { open = isOpen ? "" : g.title }
+                        } label: {
+                            HStack(spacing: 6) {
+                                SectionLabel(text: g.title)
+                                Text("\(g.actions.count)").font(.system(size: 11, weight: .semibold)).foregroundStyle(.tertiary)
+                                Spacer()
+                                Image(systemName: "chevron.down").font(.system(size: 11, weight: .bold)).foregroundStyle(.secondary)
+                                    .rotationEffect(.degrees(isOpen ? 0 : -90))
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(g.title)
+                        .accessibilityValue(isOpen ? String(localized: "aperto") : String(localized: "chiuso"))
+                        if isOpen {
+                            VStack(spacing: 2) {
+                                ForEach(g.actions) { a in toolRow(a) }
+                            }
                         }
                     }
                 }

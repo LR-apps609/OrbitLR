@@ -1000,6 +1000,16 @@
     "0:00": {},
     "0:00.0": {},
     "1": {},
+    "1 altra funzione in Completo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 more feature in Complete"
+          }
+        }
+      }
+    },
     "1 carattere": {
       "localizations": {
         "en": {
@@ -1757,6 +1767,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Height"
+          }
+        }
+      }
+    },
+    "Altre %lld funzioni in Completo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld more features in Complete"
           }
         }
       }
@@ -2824,6 +2844,16 @@
         }
       }
     },
+    "Cambia formato": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change format"
+          }
+        }
+      }
+    },
     "Cambia la grandezza": {
       "localizations": {
         "en": {
@@ -3712,6 +3742,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Done · verified"
+          }
+        }
+      }
+    },
+    "Completo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Complete"
           }
         }
       }
@@ -5055,6 +5095,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Editor"
+          }
+        }
+      }
+    },
+    "Editor PDF": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PDF editor"
           }
         }
       }
@@ -9756,6 +9806,16 @@
         }
       }
     },
+    "PDF e documenti": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PDFs and documents"
+          }
+        }
+      }
+    },
     "PPTX · per PowerPoint e Keynote": {
       "localizations": {
         "en": {
@@ -10878,6 +10938,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Amount"
+          }
+        }
+      }
+    },
+    "Quanto vedere": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How much to show"
           }
         }
       }
@@ -12768,6 +12838,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Selection"
+          }
+        }
+      }
+    },
+    "Semplice": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simple"
+          }
+        }
+      }
+    },
+    "Semplice: le cose che si fanno di più. Completo: tutte le funzioni, divise in gruppi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simple: the things people do most. Complete: every feature, in groups."
           }
         }
       }
@@ -15947,6 +16037,16 @@
         }
       }
     },
+    "aperto": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "open"
+          }
+        }
+      }
+    },
     "azione sconosciuta": {
       "localizations": {
         "en": {
@@ -15998,6 +16098,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Altro"
+          }
+        }
+      }
+    },
+    "chiuso": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "closed"
           }
         }
       }
@@ -16755,6 +16865,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "couldn’t read the audio"
+          }
+        }
+      }
+    },
+    "level.montage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editor"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Montaggio"
           }
         }
       }

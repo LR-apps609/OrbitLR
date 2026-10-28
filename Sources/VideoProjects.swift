@@ -158,28 +158,28 @@ struct VideoModeSwitch: View {
     @ObservedObject private var app = AppState.shared
     @Environment(\.undoManager) private var undo
 
+    @AppStorage(Levels.key(.video)) private var level: ViewLevel = .simple
+
+    /// 5.0 · Nel montaggio: lo stesso interruttore di sempre, con «Montaggio» scelto.
     var body: some View {
-        if app.videoMode == .tools {
-            Button { openEditor() } label: {
-                Label("Editor", systemImage: "film.stack")
-                    .font(.system(size: 12.5, weight: .semibold))
+        LevelPicker(level: Binding(get: { app.videoMode == .montage ? .editor : level }, set: { v in
+            if v == .editor {
+                Self.openEditor(undo: undo)
+            } else {
+                level = v
+                withAnimation(Motion.page) { app.videoMode = .tools }
             }
-            .buttonStyle(.borderedProminent).tint(Theme.color(.video))
-            .keyboardShortcut("e", modifiers: [.command, .shift])
-            .help("Apri l’editor completo: più video in fila, testi, sottotitoli, musica ed effetti (⇧⌘E)")
-        } else {
-            Button { withAnimation(Motion.page) { app.videoMode = .tools } } label: {
-                Label("Base", systemImage: "chevron.left").font(.system(size: 12.5, weight: .semibold))
-            }
-            .keyboardShortcut("e", modifiers: [.command, .shift])
-            .help("Torna alle cose di base: taglia, comprimi, cambia grandezza, Discord e WhatsApp (⇧⌘E)")
-        }
+        }), editorTitle: Levels.editorTitle(.video))
+        .background(Button("") {
+            if app.videoMode == .tools { Self.openEditor(undo: undo) } else { withAnimation(Motion.page) { app.videoMode = .tools } }
+        }.keyboardShortcut("e", modifiers: [.command, .shift]).opacity(0).allowsHitTesting(false))
     }
 
     /// I video già portati nell'editor: tornando avanti e indietro non si creano progetti doppi.
     private static var lastSent: [URL] = []
 
-    private func openEditor() {
+    static func openEditor(undo: UndoManager?) {
+        let app = AppState.shared
         let files = app.videoTools.targets
         withAnimation(Motion.page) { app.videoMode = .montage }
         guard !files.isEmpty, files != Self.lastSent else { return }

@@ -440,6 +440,10 @@ final class SpeechPreview: NSObject, ObservableObject, AVSpeechSynthesizerDelega
 struct AudioTabView: View {
     @ObservedObject var m: MediaTabModel
     @State private var tool: AudioTool = .ringtone
+    /// 5.0 · Semplice (le 6 più usate) o Completo (tutte)
+    @AppStorage(Levels.key(.audio)) private var level: ViewLevel = .simple
+    private static let simpleTools: [AudioTool] = [.ringtone, .cut, .whatsapp, .voiceclean, .normalize, .transcribe]
+    private var shownTools: [AudioTool] { level == .complete ? AudioTool.allCases : Self.simpleTools }
 
     init(m: MediaTabModel, startTool: AudioTool = .ringtone) {
         self.m = m
@@ -500,7 +504,10 @@ struct AudioTabView: View {
         }
         .onChange(of: m.restoredTool) { _, v in
             // 2.8.5 · progetto ripreso: torna lo strumento che usavi
-            if let v, let t = AudioTool(rawValue: v) { tool = t }
+            if let v, let t = AudioTool(rawValue: v) {
+                if level != .complete && !Self.simpleTools.contains(t) { level = .complete }
+                tool = t
+            }
             m.restoredTool = nil
         }
         .onChange(of: tool) { _, t in
@@ -541,6 +548,10 @@ struct AudioTabView: View {
                     Text("Suonerie, tagli, volume, voce e altro").font(.system(size: 12.5)).foregroundStyle(.secondary)
                 }
             }
+            LevelPicker(level: Binding(get: { level == .editor ? .complete : level }, set: { v in
+                withAnimation(Motion.quick) { level = v }
+                if v == .simple && !Self.simpleTools.contains(tool) { tool = .ringtone }
+            }), editorTitle: nil).padding(.leading, 8)
             Spacer(minLength: 8)
             if let trim = m.trim, tool != .tts { PlayButton(trim: trim, tint: tint) }
             // 4.1 · Discreto: un pulsante come gli altri, accanto ad «Apri un altro…»
@@ -600,7 +611,7 @@ struct AudioTabView: View {
     private var inspector: some View {
         VStack(alignment: .leading, spacing: 0) {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
-                ForEach(AudioTool.allCases) { t in
+                ForEach(shownTools) { t in
                     ToolTab(title: t.short, symbol: t.symbol, hint: t.title + ": " + t.hint, selected: tool == t, tint: tint) { tool = t }
                 }
             }

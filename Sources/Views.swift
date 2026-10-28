@@ -18,6 +18,14 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     static let kept: [SidebarItem] = tabs
     /// Per chi vuole di più: chiuso di base, si apre con un clic.
     static let advanced: [SidebarItem] = [.automation, .presets, .components]
+    /// 5.0 · Il nome che si vede (il valore resta quello di sempre: è salvato nelle preferenze)
+    var title: String {
+        switch self {
+        case .workspace: return String(localized: "Converti")
+        case .files: return String(localized: "PDF e documenti")
+        default: return String(localized: String.LocalizationValue(rawValue))
+        }
+    }
     var symbol: String {
         switch self {
         case .workspace: return "chart.pie.fill"
@@ -190,7 +198,7 @@ struct MainWindow: View {
                 }
             }
             .animation(Motion.quick, value: app.selection)
-            .navigationTitle(String(localized: String.LocalizationValue(current.rawValue)))
+            .navigationTitle(current.title)
             .onAppear {
                 visited.insert(current)
                 // 3.4.2 · Dopo l'avvio, a macchina libera, le altre schede si preparano una alla volta:
@@ -241,7 +249,7 @@ struct MainWindow: View {
     @ViewBuilder private func sidebarRow(_ item: SidebarItem) -> some View {
         HStack(spacing: 6) {
             Label {
-                Text(String(localized: String.LocalizationValue(item.rawValue)))
+                Text(item.title)
             } icon: {
                 Image(systemName: item.symbol).foregroundStyle(item.color)
             }
