@@ -17,6 +17,7 @@ pub mod fit;
 pub mod precise;
 pub mod extreme;
 pub mod pack;
+pub mod clean;
 
 use fit::{FitOpts, Seg, Shape, P};
 use image::{DynamicImage, GenericImageView, GrayImage, Luma, RgbaImage};
@@ -589,11 +590,15 @@ pub fn vectorize(img: &DynamicImage, upscaled: Option<&DynamicImage>, o: &Opts, 
 
     let ctx = Ctx { orig: &orig, small: &small, lut: &lut, mode, s, u, wu, hu, w, h, has_alpha, o, base: &base, plain: plain.as_ref(), fmt: f };
     let def = Var { tolk, detail, plain: false };
-    let cand = if o.extreme {
+    let mut cand = if o.extreme {
         extreme_search(&ctx, def, progress, cancelled)?
     } else {
         trace_variant(&ctx, &def, progress, cancelled)?
     };
+    // forme pulite: linee a 0°/45°/90°, stelle e poligoni regolari, allineamenti tra forme (non nelle foto)
+    if mode != Mode::Photo && std::env::var("VETTORE_NOCLEAN").is_err() {
+        clean::clean(&mut cand.layers, s);
+    }
     progress(1.0);
     Ok(cand_output(&cand, &f, w, h, mode))
 }
