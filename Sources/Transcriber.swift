@@ -44,7 +44,7 @@ enum Transcriber {
         guard rec.supportsOnDeviceRecognition else {
             throw NativeError(String(localized: "il Mac non ha ancora la lingua per riconoscere la voce senza internet. Impostazioni di Sistema → Tastiera → Dettatura: attivala con la lingua giusta, attendi lo scaricamento e riprova"))
         }
-        let asset = AVURLAsset(url: file)
+        let asset = AVURLAsset.precise(file)
         let audioTracks = try await asset.loadTracks(withMediaType: .audio)
         guard !audioTracks.isEmpty else { throw NativeError(String(localized: "il file non contiene audio")) }
         let duration = max(1, try await asset.load(.duration).seconds)

@@ -294,7 +294,7 @@ enum Media {
         var renderSize = CGSize.zero
         var maxFPS: Double = 24
         for f in files {
-            let a = AVURLAsset(url: f)
+            let a = AVURLAsset.precise(f)
             guard let v = try await a.loadTracks(withMediaType: .video).first else {
                 throw NativeError(String(localized: "«\(f.lastPathComponent)» non contiene video"))
             }
@@ -340,11 +340,11 @@ enum Media {
     // MARK: - Aggiungi musica
 
     private static func addMusic(_ file: URL, music: URL, replace: Bool, out: URL, job: Job, progress: @escaping (Double) -> Void) async throws {
-        let video = AVURLAsset(url: file)
+        let video = AVURLAsset.precise(file)
         guard let v = try await video.loadTracks(withMediaType: .video).first else { throw NativeError(String(localized: "il file non contiene video")) }
         let d = try await video.load(.duration)
         guard d.seconds.isFinite, d.seconds > 0 else { throw NativeError(String(localized: "non riesco a leggere la durata")) }
-        let song = AVURLAsset(url: music)
+        let song = AVURLAsset.precise(music)
         guard let m = try await song.loadTracks(withMediaType: .audio).first else { throw NativeError(String(localized: "il file della musica non contiene audio")) }
         let md = try await song.load(.duration)
         guard md.seconds.isFinite, md.seconds > 0.5 else { throw NativeError(String(localized: "la musica è troppo corta")) }
@@ -440,7 +440,7 @@ enum Media {
         // Tratti da leggere
         var parts: [(AVURLAsset, AVAssetTrack, CMTimeRange)] = []
         for (url, s, e) in inputs {
-            let a = AVURLAsset(url: url)
+            let a = AVURLAsset.precise(url)
             guard let t = try await a.loadTracks(withMediaType: .audio).first else {
                 throw NativeError(String(localized: "«\(url.lastPathComponent)» non contiene audio"))
             }
@@ -1053,5 +1053,14 @@ final class SpeechFileWriter: NSObject, AVSpeechSynthesizerDelegate, @unchecked 
         } catch {
             c?.resume(throwing: NativeError(String(localized: "non riesco a salvare il file audio")))
         }
+    }
+}
+
+extension AVURLAsset {
+    /// 5.0.1 · Tempi esatti. Senza questa opzione macOS «stima» dove cade un secondo negli MP3 (e in altri formati
+    /// compressi): l'onda era giusta, ma l'anteprima e il taglio partivano qualche secondo più in là.
+    /// Sugli MP4 e MOV non costa niente; su un MP3 macOS legge il file una volta, in un attimo.
+    static func precise(_ url: URL) -> AVURLAsset {
+        AVURLAsset(url: url, options: [AVURLAssetPreferPreciseDurationAndTimingKey: true])
     }
 }

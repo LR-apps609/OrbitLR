@@ -53,7 +53,7 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
     init(url: URL, isVideo: Bool, defaultLength: Double?) {
         self.url = url
         self.isVideo = isVideo
-        self.player = AVPlayer(url: url)
+        self.player = AVPlayer(playerItem: AVPlayerItem(asset: AVURLAsset.precise(url)))
         observer = player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 0.03, preferredTimescale: 600), queue: .main) { [weak self] t in
             guard let self else { return }
             let s = t.seconds
@@ -79,7 +79,7 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
 
     @MainActor
     private func load(defaultLength: Double?) async {
-        let asset = AVURLAsset(url: url)
+        let asset = AVURLAsset.precise(url)
         let d = (try? await asset.load(.duration))?.seconds ?? 0
         duration = d.isFinite && d > 0 ? d : 0
         start = 0
@@ -277,7 +277,7 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
     /// 4.1.1 · Picchi e volume medio (RMS) insieme, nella stessa lettura del file.
     static func waveformLevels(url: URL, duration: Double, bins: Int, stop: StopFlag? = nil) async -> (peaks: [Float], rms: [Float]) {
         await Task.detached(priority: .userInitiated) { () -> (peaks: [Float], rms: [Float]) in
-            let asset = AVURLAsset(url: url)
+            let asset = AVURLAsset.precise(url)
             guard let track = try? await asset.loadTracks(withMediaType: .audio).first,
                   let reader = try? AVAssetReader(asset: asset) else { return ([], []) }
             let rate = 8000.0

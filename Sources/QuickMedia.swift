@@ -12,7 +12,10 @@ import UniformTypeIdentifiers
 // ════════════════════════════════════════════════════════════════════
 
 enum QuickMedia {
-    static let ids: Set<String> = ["cut", "gifcut", "vcompress", "normalize", "vresize"]
+    static let ids: Set<String> = ["cut", "gifcut", "vcompress", "normalize", "vresize", "clipaudio"]
+    /// 5.0.1 · L'audio di un pezzo di video (dal Montaggio): «inizio|fine» in secondi del file.
+    static let clipAudio = Action(id: "clipaudio", short: String(localized: "Audio"), title: String(localized: "Estrai l’audio della clip"),
+                                  hint: String(localized: "Solo il pezzo tenuto nella clip"), symbol: "waveform")
     static let videoIn: Set<String> = ["mp4", "mov", "m4v"]
     static let audioIn: Set<String> = ["m4a", "mp3", "wav", "aiff", "aac", "caf"]
 
@@ -23,7 +26,7 @@ enum QuickMedia {
         let exts = job.mainFiles.map { Catalog.norm($0.pathExtension) }
         guard !exts.isEmpty else { return false }
         switch id {
-        case "vcompress", "gifcut", "vresize": return exts.allSatisfy { videoIn.contains($0) }
+        case "vcompress", "gifcut", "vresize", "clipaudio": return exts.allSatisfy { videoIn.contains($0) }
         case "cut": return exts.allSatisfy { videoIn.contains($0) || audioIn.contains($0) }
         case "normalize": return exts.allSatisfy { audioIn.contains($0) }     // i video restano al motore classico
         default: return false
@@ -48,6 +51,11 @@ enum QuickMedia {
             let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("taglio")))", ext: ext)
             try await Media.renderAudio([(file, start, end)], out: out, bitrate: 256_000, channels: 2, fadeIn: 0, fadeOut: 0,
                                         normalize: false, maxSeconds: nil, format: fmt, job: job, progress: progress)
+            return out
+        case "clipaudio":
+            let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("audio")))", ext: "m4a")
+            try await Media.renderAudio([(file, start, end)], out: out, bitrate: 256_000, channels: 2, fadeIn: 0, fadeOut: 0,
+                                        normalize: false, maxSeconds: nil, format: .aac, job: job, progress: progress)
             return out
         case "normalize":
             let (fmt, ext) = audioFormat(for: e)
@@ -107,7 +115,7 @@ enum QuickMedia {
 
     private static func cutVideo(_ file: URL, start: Double?, end: Double?, out: URL, job: Job,
                                  progress: @escaping (Double) -> Void) async throws {
-        let asset = AVURLAsset(url: file)
+        let asset = AVURLAsset.precise(file)
         let d = try await asset.load(.duration).seconds
         guard d.isFinite, d > 0 else { throw NativeError(String(localized: "non riesco a leggere la durata")) }
         // 3.6 · Prima il taglio istantaneo e senza perdita (anche su un film di 2 ore: secondi);
@@ -147,7 +155,7 @@ enum QuickMedia {
 
     private static func gif(_ file: URL, start: Double?, end: Double?, out: URL, job: Job,
                             progress: @escaping (Double) -> Void) async throws {
-        let asset = AVURLAsset(url: file)
+        let asset = AVURLAsset.precise(file)
         let d = try await asset.load(.duration).seconds
         guard d.isFinite, d > 0 else { throw NativeError(String(localized: "non riesco a leggere la durata")) }
         let r = range(start, end ?? ((start ?? 0) + 5), duration: d)

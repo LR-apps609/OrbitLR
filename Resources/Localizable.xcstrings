@@ -2842,6 +2842,16 @@
         }
       }
     },
+    "Butta le modifiche non salvate e torna all’ultima versione salvata (chiede conferma)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Throws away unsaved changes and goes back to the last saved version (asks first)"
+          }
+        }
+      }
+    },
     "COSA C’È DI NUOVO": {
       "localizations": {
         "en": {
@@ -4627,6 +4637,16 @@
         }
       }
     },
+    "C’è già una musica: c’è posto per una traccia audio sola. Togli la musica e riprova.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There’s already music: there’s room for one audio track only. Remove the music and try again."
+          }
+        }
+      }
+    },
     "C’è un lavoro in corso": {
       "localizations": {
         "en": {
@@ -5439,6 +5459,36 @@
         }
       }
     },
+    "Estrai l’audio della clip": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extract the clip’s audio"
+          }
+        }
+      }
+    },
+    "Estrai l’audio della clip (M4A)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extract the clip’s audio (M4A)"
+          }
+        }
+      }
+    },
+    "Estrai l’audio di tutto il video (MP3)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extract the whole video’s audio (MP3)"
+          }
+        }
+      }
+    },
     "Estrai l’audio in %@": {
       "localizations": {
         "en": {
@@ -5758,6 +5808,16 @@
         }
       }
     },
+    "Fine della musica": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End of the music"
+          }
+        }
+      }
+    },
     "Fine qui": {
       "localizations": {
         "en": {
@@ -5784,6 +5844,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "End with Video"
+          }
+        }
+      }
+    },
+    "Finisce qui": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ends here"
           }
         }
       }
@@ -5830,6 +5900,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Up to 30 seconds. This creates an .m4r file: connect your iPhone, open it in Finder, and drag the ringtone onto it."
+          }
+        }
+      }
+    },
+    "Fino alla fine": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To the end"
           }
         }
       }
@@ -6622,6 +6702,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The project from the Video tab"
+          }
+        }
+      }
+    },
+    "Il progetto torna all’ultima versione salvata. Le modifiche che vedi nell’anteprima si perdono.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The project goes back to the last saved version. The changes you see in the preview are lost."
           }
         }
       }
@@ -7467,12 +7557,32 @@
         }
       }
     },
+    "La musica finisce nel punto dell’indicatore (oppure trascina il bordo destro della sua barra)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The music ends at the playhead (or drag the right edge of its bar)"
+          }
+        }
+      }
+    },
     "La musica non si apre: %@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Can’t open the music: %@"
+          }
+        }
+      }
+    },
+    "La musica torna ad andare fino alla fine del video": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The music plays to the end of the video again"
           }
         }
       }
@@ -7994,6 +8104,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Brightness"
+          }
+        }
+      }
+    },
+    "L’audio della clip diventa la traccia audio sotto il video: lo sposti, lo accorci e lo tagli da solo. La clip resta muta": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The clip’s audio becomes the audio track under the video: move it, shorten it and trim it on its own. The clip stays muted"
           }
         }
       }
@@ -8554,6 +8674,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Music From Here"
+          }
+        }
+      }
+    },
+    "Musica fino a qui": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music up to here"
+          }
+        }
+      }
+    },
+    "Musica fino alla fine": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music to the end"
           }
         }
       }
@@ -10724,6 +10864,16 @@
         }
       }
     },
+    "Prima riporta la clip a velocità 1×: l’audio staccato va alla velocità normale.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First set the clip back to 1× speed: detached audio plays at normal speed."
+          }
+        }
+      }
+    },
     "Prima scegli le opzioni, poi parte": {
       "localizations": {
         "en": {
@@ -11096,6 +11246,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "This action doesn’t work with %@."
+          }
+        }
+      }
+    },
+    "Questa clip non ha audio.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This clip has no audio."
           }
         }
       }
@@ -12170,6 +12330,26 @@
         }
       }
     },
+    "Salva il progetto adesso (⌘S). Lo ritrovi in Progetti": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save the project now (⌘S). You’ll find it in Projects"
+          }
+        }
+      }
+    },
+    "Salva progetto": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save project"
+          }
+        }
+      }
+    },
     "Salva tra le mie azioni": {
       "localizations": {
         "en": {
@@ -12406,6 +12586,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Discard and Close"
+          }
+        }
+      }
+    },
+    "Scarta le modifiche": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard changes"
           }
         }
       }
@@ -12890,6 +13080,16 @@
         }
       }
     },
+    "Sei sicuro di voler scartare le modifiche al progetto?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Are you sure you want to discard your changes to the project?"
+          }
+        }
+      }
+    },
     "Seleziona 3–10 foto della stessa scena (una raffica va benissimo) oppure un video breve: OrbitLR le allinea e le unisce. I dettagli vengono dagli scatti veri.": {
       "localizations": {
         "en": {
@@ -13247,6 +13447,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Only content you have the right to download: your own, free to use, or with the creator’s permission. The audio lands in Downloads and opens here, ready for ringtones, trimming, and converting."
+          }
+        }
+      }
+    },
+    "Solo il pezzo tenuto nella clip": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only the part kept in the clip"
           }
         }
       }
@@ -13699,6 +13909,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Check “Save to My Actions” when you choose the options, then assign it ⌃⌥1…9 on the “My Actions” page: select files in Finder and it runs on its own."
+          }
+        }
+      }
+    },
+    "Stacca l’audio": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detach audio"
           }
         }
       }
@@ -14995,6 +15215,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Drag to set where the music starts in the video"
+          }
+        }
+      }
+    },
+    "Trascina per decidere dove parte la musica nel video; trascina il bordo destro per farla finire prima": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag to choose where the music starts in the video; drag the right edge to end it earlier"
+          }
+        }
+      }
+    },
+    "Trascina per far finire la musica prima": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag to end the music earlier"
           }
         }
       }

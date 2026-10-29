@@ -77,6 +77,31 @@ final class VideoProjectTests: XCTestCase {
         XCTAssertEqual(firstReal?.timeMapping.target.start.seconds ?? -1, 3, accuracy: 0.05)
     }
 
+    /// 5.0.1 · «Finisce qui»: la musica si ferma dove scegli, anche con «Ripeti».
+    func testMusicEndsWhereChosen() async throws {
+        let v = try await Fixtures.video(name: "fine.mp4", width: 320, height: 180, seconds: 8)
+        let song = try Fixtures.wav(Fixtures.tone(seconds: 3), name: "brano-fine.wav")
+        let iv = try await info(v), isong = try await info(song)
+        var p = VideoProject()
+        p.clips = [clip(v, iv)]
+        p.music = VPMusic(path: song.path)
+        p.music?.loop = true
+        p.music?.offset = 1
+        p.music?.end = 5.5
+        let infos = [v.path: iv, song.path: isong]
+        let built = try await VideoProjectBuilder.build(p, infos: infos, speech: [:], maxSide: 640)
+        let t = built.composition.tracks(withMediaType: .audio).last
+        XCTAssertEqual(t?.timeRange.end.seconds ?? 0, 5.5, accuracy: 0.1, "la musica finisce nel punto scelto")
+        XCTAssertEqual(VideoProjectBuilder.musicEnd(p, songDuration: isong.duration) ?? 0, 5.5, accuracy: 0.05)
+        // Una fine prima dell'inizio non rompe niente: la musica dura almeno un attimo
+        p.music?.end = 0.5
+        XCTAssertGreaterThan(VideoProjectBuilder.musicStop(p.music!, total: p.duration), 1)
+        // Un progetto salvato prima della 5.0.1 (senza «end») si apre ancora
+        let old = #"{"path":"/a.wav","offset":0,"inPoint":0,"loop":false,"volume":0.8,"fadeIn":1,"fadeOut":2,"duck":true}"#
+        let m = try JSONDecoder().decode(VPMusic.self, from: Data(old.utf8))
+        XCTAssertNil(m.end)
+    }
+
     func testFadesAndDuckingEnvelope() throws {
         let comp = AVMutableComposition()
         let track = try XCTUnwrap(comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid))

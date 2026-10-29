@@ -1,5 +1,8 @@
 Novità della 5.0.1 «Funzioni»:
 • Montaggio: nella scheda Clip la parte «Taglia» si chiama «Funzioni» e c’è anche la velocità della clip (da 0,25× a 4×), oltre che in Effetti
+• Montaggio: «Finisce qui» per la musica (o trascina il bordo destro della sua barra), e la barra mostra l’onda: si vede dove c’è suono. «Stacca l’audio» trasforma l’audio di una clip in una traccia da spostare e tagliare. «Estrai l’audio della clip» salva solo il pezzo tenuto
+• Montaggio: «Salva progetto» in alto (⌘S), e «Scarta» chiede conferma
+• Taglio degli MP3 (anche quelli creati con OrbitLR): anteprima e file tagliato partono esattamente dove indica l’onda. Prima, su alcuni MP3, partivano qualche secondo più in là
 • Permessi al primo avvio: le notifiche non restano più in attesa all’infinito. OrbitLR dice dove guardare (l’avviso in alto a destra) e, se non rispondi, va avanti: si possono dare dopo. «Più tardi» funziona anche mentre chiede
 
 Novità della 5.0 «Semplice»:

@@ -95,6 +95,23 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         return i.displaySize
     }
     var songDuration: Double? { project.music.flatMap { infos[$0.path]?.duration } }
+    /// 5.0.1 · L'onda della musica (o dell'audio staccato), per disegnarla dentro la sua barra: 50 punti al secondo.
+    @Published private(set) var musicPeaks: [Float] = []
+    private var musicPeaksPath: String? = nil
+    static let musicPeaksRate = 50.0
+    func loadMusicPeaks() {
+        guard let m = project.music, let d = songDuration, d > 0 else { return }
+        guard musicPeaksPath != m.path else { return }
+        musicPeaksPath = m.path
+        musicPeaks = []
+        let path = m.path
+        Task { @MainActor [weak self] in
+            let bins = max(10, min(200_000, Int(d * Self.musicPeaksRate)))
+            let p = await TrimModel.waveformLevels(url: URL(fileURLWithPath: path), duration: d, bins: bins).peaks
+            guard let self, self.musicPeaksPath == path else { return }
+            self.musicPeaks = p
+        }
+    }
     var musicEnd: Double? { VideoProjectBuilder.musicEnd(project, songDuration: songDuration) }
     var speechOnTimeline: [ClosedRange<Double>] { VideoProjectBuilder.speechOnTimeline(project, speech: speech) }
 
@@ -671,7 +688,54 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
 
     func musicStartHere(_ undo: UndoManager?) {
         let t = clock.time
-        change(undo, String(localized: "Musica da qui")) { $0.music?.offset = t }
+        change(undo, String(localized: "Musica da qui")) { p in
+            p.music?.offset = t
+            if let e = p.music?.end, e < t + 0.2 { p.music?.end = nil }     // la fine resta dopo l'inizio
+        }
+    }
+
+    /// 5.0.1 · La musica finisce nel punto dell'indicatore.
+    func musicEndHere(_ undo: UndoManager?) {
+        guard let m = project.music, clock.time > m.offset + 0.2 else { NSSound.beep(); return }
+        let t = clock.time
+        change(undo, String(localized: "Musica fino a qui")) { $0.music?.end = t }
+    }
+
+    /// 5.0.1 · La musica torna ad andare fino alla fine del video.
+    func musicToEnd(_ undo: UndoManager?) {
+        change(undo, String(localized: "Musica fino alla fine")) { $0.music?.end = nil }
+    }
+
+    /// 5.0.1 · «Stacca l'audio»: l'audio della clip diventa la traccia audio sotto il video (come nei programmi di
+    /// montaggio): si sposta, si accorcia e si taglia da solo, e la clip resta muta. Una traccia sola: se c'è già
+    /// una musica, prima si toglie.
+    func detachClipAudio(_ undo: UndoManager?) {
+        guard let i = targetIndex, project.clips.indices.contains(i) else { NSSound.beep(); return }
+        let c = project.clips[i]
+        guard project.music == nil else {
+            notice = String(localized: "C’è già una musica: c’è posto per una traccia audio sola. Togli la musica e riprova.")
+            NSSound.beep(); return
+        }
+        guard abs(c.speed - 1) < 0.001 else {
+            notice = String(localized: "Prima riporta la clip a velocità 1×: l’audio staccato va alla velocità normale.")
+            NSSound.beep(); return
+        }
+        guard infos[c.path]?.hasAudio != false else { notice = String(localized: "Questa clip non ha audio."); NSSound.beep(); return }
+        let start = project.starts[i]
+        change(undo, String(localized: "Stacca l’audio")) { p in
+            var m = VPMusic(path: c.path)
+            m.bookmark = c.bookmark
+            m.offset = start
+            m.inPoint = c.inPoint
+            m.end = start + c.length
+            m.loop = false
+            m.volume = 1
+            m.fadeIn = 0
+            m.fadeOut = 0
+            m.duck = false
+            p.music = m
+            p.clips[i].muted = true
+        }
     }
 
     /// Fa finire la canzone insieme al video (sceglie da che punto farla partire).
@@ -847,6 +911,10 @@ struct VideoEditorView: View {
     }
     @State private var targeted = false
     @State private var askClose = false
+    /// 5.0.1 · «Scarta» chiede conferma: un clic sbagliato non butta il lavoro
+    @State private var askDiscard = false
+    /// 5.0.1 · «Salvato» per un attimo dopo «Salva progetto»
+    @State private var savedFlash = false
 
     private let tint = Theme.color(.video)
 
@@ -895,6 +963,12 @@ struct VideoEditorView: View {
         }
         .onDisappear { s.pause() }
         .background(EditorKeys(s: s))
+        .confirmationDialog("Sei sicuro di voler scartare le modifiche al progetto?", isPresented: $askDiscard) {
+            Button("Scarta le modifiche", role: .destructive) { s.discardChanges(undo) }
+            Button("Continua a modificare", role: .cancel) {}
+        } message: {
+            Text("Il progetto torna all’ultima versione salvata. Le modifiche che vedi nell’anteprima si perdono.")
+        }
         .confirmationDialog("Ci sono modifiche non applicate", isPresented: $askClose) {
             Button("Applica e chiudi") { s.applyChanges(); s.closeProject(undo) }
             Button("Scarta e chiudi", role: .destructive) { s.discardChanges(undo); s.closeProject(undo) }
@@ -925,6 +999,18 @@ struct VideoEditorView: View {
                     .help("Ripeti (⇧⌘Z)").accessibilityLabel(String(localized: "edit.redo", defaultValue: "Ripeti", comment: "Rifà la modifica annullata (⇧⌘Z)"))
                 Button { choose(audio: false) } label: { Label("Video", systemImage: "plus") }
                     .help("Aggiungi altri video in fondo")
+                // 5.0.1 · Salva il progetto quando vuoi (le modifiche in sospeso diventano definitive)
+                Button {
+                    s.applyChanges()
+                    s.saveNow()
+                    withAnimation(Motion.quick) { savedFlash = true }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { withAnimation(Motion.quick) { savedFlash = false } }
+                } label: {
+                    Label(savedFlash ? String(localized: "Salvato") : String(localized: "Salva progetto"),
+                          systemImage: savedFlash ? "checkmark" : "square.and.arrow.down")
+                }
+                .keyboardShortcut("s", modifiers: .command)
+                .help("Salva il progetto adesso (⌘S). Lo ritrovi in Progetti")
                 Button("Esporta") { s.export() }
                     .primaryButton(!s.hasPending)      // 3.0 · un solo pulsante principale: con modifiche in sospeso è «Applica»
                     .keyboardShortcut("e", modifiers: .command)
@@ -984,8 +1070,8 @@ struct VideoEditorView: View {
                     .help("Tieni premuto per vedere com’era prima delle modifiche")
                     .accessibilityAddTraits(.isButton)
                 Spacer(minLength: 4)
-                Button("Scarta") { s.discardChanges(undo) }
-                    .help("Butta le modifiche non applicate e torna all’ultima versione applicata")
+                Button("Scarta") { askDiscard = true }
+                    .help("Butta le modifiche non salvate e torna all’ultima versione salvata (chiede conferma)")
                 Button("Applica") { s.applyChanges() }
                     .buttonStyle(.borderedProminent).tint(Theme.accent)
                     .keyboardShortcut(.return, modifiers: .command)
@@ -1096,8 +1182,9 @@ struct VideoEditorView: View {
 
     private var otherMenu: some View {
         Menu {
-            Button("Estrai l’audio (M4A)") { quick("to:m4a", param: "") }
-            Button("Estrai l’audio (MP3)") { quick("to:mp3", param: "") }
+            // 5.0.1 · Solo il pezzo che hai tenuto nella clip (prima era tutto il video originale)
+            Button("Estrai l’audio della clip (M4A)") { extractClipAudio() }
+            Button("Estrai l’audio di tutto il video (MP3)") { quick("to:mp3", param: "") }
             Button("GIF della clip") { quickGIF() }
             Button("Comprimi la clip a 25 MB") { quick("vcompress", param: "25") }
         } label: {
@@ -1122,10 +1209,18 @@ struct VideoEditorView: View {
                 HStack(spacing: 6) {
                     Button("Parte qui") { s.musicStartHere(undo) }
                         .help("La musica comincia nel punto dell’indicatore (oppure trascina la barra della musica)")
-                    Button("Finisce col video") { s.alignMusicEnd(undo) }
-                        .help("Sceglie da dove far partire la canzone perché finisca insieme al video")
+                    // 5.0.1 · La fine della musica
+                    Button("Finisce qui") { s.musicEndHere(undo) }
+                        .help("La musica finisce nel punto dell’indicatore (oppure trascina il bordo destro della sua barra)")
+                    if m.end != nil {
+                        Button("Fino alla fine") { s.musicToEnd(undo) }
+                            .help("La musica torna ad andare fino alla fine del video")
+                    }
                 }
                 .controlSize(.small)
+                Button("Finisce col video") { s.alignMusicEnd(undo) }
+                    .help("Sceglie da dove far partire la canzone perché finisca insieme al video")
+                    .controlSize(.small)
                 Toggle("Ripeti finché il video finisce", isOn: bind(\.loop, String(localized: "Ripeti la musica"))).toggleStyle(.checkbox)
                     .font(.system(size: 12))
                 if let sd = s.songDuration, sd > 1 {
@@ -1171,6 +1266,9 @@ struct VideoEditorView: View {
         .help(muted ? String(localized: "Riaccende l’audio di questa clip") : String(localized: "Spegne l’audio solo di questa clip (la musica resta)"))
         Button { s.muteFromHere(undo) } label: { Label("Spegni da qui", systemImage: "speaker.slash.circle") }
             .help("Spegne l’audio dall’indicatore alla fine della clip. Per un tratto in mezzo: dividi (S) e togli l’audio solo da quel pezzo")
+        // 5.0.1 · L'audio della clip diventa una traccia sua, da spostare e tagliare
+        Button { s.detachClipAudio(undo) } label: { Label("Stacca l’audio", systemImage: "waveform.badge.plus") }
+            .help("L’audio della clip diventa la traccia audio sotto il video: lo sposti, lo accorci e lo tagli da solo. La clip resta muta")
     }
 
     @ViewBuilder private var originalOptions: some View {
@@ -1254,6 +1352,12 @@ struct VideoEditorView: View {
     private func quick(_ id: String, param: String) {
         guard let c = targetClip, let action = Catalog.action(id: id, kind: .video) else { NSSound.beep(); return }
         s.lastJob = QueueStore.shared.enqueue(files: [c.url], action: action, param: param)
+    }
+
+    /// 5.0.1 · L'audio del pezzo tenuto nella clip, in un file M4A accanto al video.
+    private func extractClipAudio() {
+        guard let c = targetClip else { NSSound.beep(); return }
+        s.lastJob = QueueStore.shared.enqueue(files: [c.url], action: QuickMedia.clipAudio, param: String(format: "%.3f|%.3f", c.inPoint, c.outPoint))
     }
 
     private func quickGIF() {
@@ -1531,6 +1635,8 @@ private struct ProjectTimeline: View {
     @State private var dragBefore: VideoProject? = nil
     @State private var textDrag: (id: UUID, start: Double, end: Double, mode: Int)? = nil
     @State private var dragStartOffset: Double = 0
+    /// 5.0.1 · La fine della musica all'inizio del trascinamento
+    @State private var dragStartEnd: Double? = nil
     @State private var moving: UUID? = nil
     @State private var moveDX: CGFloat = 0
     @State private var trimBefore: VideoProject? = nil
@@ -1826,27 +1932,42 @@ private struct ProjectTimeline: View {
     @ViewBuilder private func musicRow(total: Double, pps: CGFloat, width: CGFloat) -> some View {
         if let m = s.project.music {
             let start = min(max(0, m.offset), total)
-            let end = s.musicEnd ?? total
+            let end = s.musicEnd ?? VideoProjectBuilder.musicStop(m, total: total)
             let w = max(24, CGFloat(max(0.1, end - start)) * pps)
+            let shown = min(w, max(24, width - CGFloat(start) * pps))
+            let color = Theme.color(.audio)
             ZStack(alignment: .leading) {
                 Rectangle().fill(Theme.ink.opacity(0.04))
-                HStack(spacing: 6) {
-                    Image(systemName: m.loop ? "repeat" : "music.note").font(.system(size: 10, weight: .bold))
-                    Text(m.name).font(.system(size: 11, weight: .semibold)).lineLimit(1).truncationMode(.middle)
-                    Spacer(minLength: 0)
+                // 5.0.1 · Barra trasparente con dentro l'onda: si vede dove c'è suono e dove no
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 6).fill(color.opacity(0.12))
+                    MusicWave(peaks: s.musicPeaks, rate: VideoProjectStore.musicPeaksRate, inPoint: m.inPoint,
+                              songDuration: s.songDuration ?? 0, loop: m.loop, pps: pps, color: color)
+                    HStack(spacing: 5) {
+                        Image(systemName: m.loop ? "repeat" : "music.note").font(.system(size: 9, weight: .bold))
+                        Text(m.name).font(.system(size: 10.5, weight: .semibold)).lineLimit(1).truncationMode(.middle)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 6).padding(.vertical, 1)
+                    .foregroundStyle(Theme.ink)
+                    .frame(maxHeight: .infinity, alignment: .top)
+                    .allowsHitTesting(false)
                 }
-                .padding(.horizontal, 8)
-                .foregroundStyle(Theme.ink)
-                .frame(width: min(w, max(24, width - CGFloat(start) * pps)), height: 26, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 6).fill(Theme.color(.audio).opacity(0.55)))
-                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Theme.color(.audio), lineWidth: 1))
+                .frame(width: shown, height: 26, alignment: .leading)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(color, lineWidth: 1))
+                .contentShape(Rectangle())
                 .offset(x: CGFloat(start) * pps)
                 .gesture(DragGesture(minimumDistance: 2)
                     .onChanged { v in
-                        if dragBefore == nil { dragBefore = s.project; dragStartOffset = m.offset }
+                        if dragBefore == nil { dragBefore = s.project; dragStartOffset = m.offset; dragStartEnd = m.end }
                         let raw = min(max(0, dragStartOffset + Double(v.translation.width / pps)), max(0, total - 0.5))
                         let o = min(max(0, Snap.to(raw, Snap.marks(s.project, playhead: clock.time), pps: pps, id: "m")), max(0, total - 0.5))
-                        s.live { $0.music?.offset = o }
+                        let shift = o - dragStartOffset
+                        s.live { p in
+                            p.music?.offset = o
+                            if let e = dragStartEnd { p.music?.end = e + shift }      // la fine si sposta con lei
+                        }
                     }
                     .onEnded { _ in
                         Snap.reset()
@@ -1854,9 +1975,33 @@ private struct ProjectTimeline: View {
                         dragBefore = nil
                     })
                 .onTapGesture { openMusic() }
-                .help("Trascina per decidere dove parte la musica nel video")
+                .help("Trascina per decidere dove parte la musica nel video; trascina il bordo destro per farla finire prima")
+                // 5.0.1 · Il bordo destro: dove finisce la musica
+                Rectangle().fill(color)
+                    .frame(width: 6, height: 26)
+                    .overlay(Capsule().fill(Color.white.opacity(0.85)).frame(width: 2, height: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: 3))
+                    .contentShape(Rectangle().inset(by: -4))
+                    .offset(x: CGFloat(start) * pps + shown - 6)
+                    .onHover { inside in if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() } }
+                    .gesture(DragGesture(minimumDistance: 1)
+                        .onChanged { v in
+                            if dragBefore == nil { dragBefore = s.project; dragStartEnd = end }
+                            let base = dragStartEnd ?? end
+                            let raw = base + Double(v.translation.width / pps)
+                            let e = min(max(start + 0.2, Snap.to(raw, Snap.marks(s.project, playhead: clock.time), pps: pps, id: "me")), total)
+                            s.live { $0.music?.end = e >= total - 0.01 ? nil : e }
+                        }
+                        .onEnded { _ in
+                            Snap.reset()
+                            if let b = dragBefore { s.commit(from: b, undo, String(localized: "Fine della musica")) }
+                            dragBefore = nil
+                            dragStartEnd = nil
+                        })
+                    .help("Trascina per far finire la musica prima")
             }
             .clipShape(RoundedRectangle(cornerRadius: 6))
+            .task(id: m.path + "\(s.songDuration ?? 0)") { s.loadMusicPeaks() }
         } else {
             Button(action: openMusic) {
                 Label("Aggiungi musica", systemImage: "plus")
@@ -2298,5 +2443,43 @@ final class MontageFrames: @unchecked Sendable {
         g.requestedTimeToleranceBefore = CMTime(value: 1, timescale: 10)
         g.requestedTimeToleranceAfter = CMTime(value: 1, timescale: 10)
         return try? await g.image(at: CMTime(seconds: min(t, max(0, b.duration - 0.05)), preferredTimescale: 600)).image
+    }
+}
+
+/// 5.0.1 · L'onda della musica dentro la sua barra nel Montaggio. Segue il punto della canzone da cui parte
+/// e, se si ripete, ricomincia da lì.
+private struct MusicWave: View {
+    let peaks: [Float]
+    let rate: Double
+    let inPoint: Double
+    let songDuration: Double
+    let loop: Bool
+    let pps: CGFloat
+    let color: Color
+
+    var body: some View {
+        Canvas { ctx, size in
+            guard !peaks.isEmpty, pps > 0, songDuration > 0 else { return }
+            let avail = max(0.05, songDuration - inPoint)
+            let step: CGFloat = 2.5
+            let mid = size.height / 2 + 4                  // un filo sotto il nome
+            let maxH = (size.height - 10) / 2
+            var path = Path()
+            var x: CGFloat = 0
+            while x < size.width {
+                var t = Double(x / pps)
+                if t >= avail { if loop { t = t.truncatingRemainder(dividingBy: avail) } else { break } }
+                let a = Int((inPoint + t) * rate), b = Int((inPoint + t + Double(step / pps)) * rate)
+                var v: Float = 0
+                if a < peaks.count {
+                    for j in max(0, a)...min(peaks.count - 1, max(a, b)) where peaks[j] > v { v = peaks[j] }
+                }
+                let h = max(0.5, CGFloat(v) * maxH)
+                path.addRect(CGRect(x: x, y: mid - h, width: step - 1, height: h * 2))
+                x += step
+            }
+            ctx.fill(path, with: .color(color.opacity(0.75)))
+        }
+        .allowsHitTesting(false)
     }
 }

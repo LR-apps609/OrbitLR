@@ -101,6 +101,8 @@ struct VPMusic: Codable, Equatable, Sendable {
     var fadeOut: Double = 2
     /// Abbassa la musica dove nel video c'è una voce.
     var duck = true
+    /// 5.0.1 · Dove finisce nel video (secondi del montaggio); nil = fino alla fine del video.
+    var end: Double? = nil
     var url: URL { URL(fileURLWithPath: path) }
     var name: String { url.lastPathComponent }
 }
@@ -170,7 +172,7 @@ struct VPMediaInfo: Sendable, Equatable {
     var hasAudio: Bool
 
     static func load(_ url: URL) async throws -> VPMediaInfo {
-        let a = AVURLAsset(url: url)
+        let a = AVURLAsset.precise(url)
         let d = try await a.load(.duration).seconds
         guard d.isFinite, d > 0 else { throw NativeError(String(localized: "«\(url.lastPathComponent)» non si legge")) }
         let v = try await a.loadTracks(withMediaType: .video).first
@@ -221,7 +223,15 @@ enum VideoProjectBuilder {
         let start = min(max(0, m.offset), total)
         let avail = max(0, sd - min(max(0, m.inPoint), sd))
         guard avail > 0.05 else { return start }
-        return m.loop ? total : min(total, start + avail)
+        let stop = musicStop(m, total: total)
+        return m.loop ? stop : min(stop, start + avail)
+    }
+
+    /// 5.0.1 · Il punto del montaggio oltre il quale la musica non va: la sua fine scelta, o la fine del video.
+    static func musicStop(_ m: VPMusic, total: Double) -> Double {
+        let start = min(max(0, m.offset), total)
+        guard let e = m.end else { return total }
+        return min(total, max(start + 0.1, e))
     }
 
     /// Momenti del montaggio in cui c'è una voce (da quelli trovati nei singoli file).
@@ -316,7 +326,7 @@ enum VideoProjectBuilder {
         var placements: [Placement] = []
         for c in p.clips {
             guard let info = infos[c.path], info.hasVideo else { continue }
-            let a = AVURLAsset(url: c.url)
+            let a = AVURLAsset.precise(c.url)
             guard let v = try await a.loadTracks(withMediaType: .video).first else { continue }
             let s = min(max(0, c.inPoint), max(0, info.videoDuration - 0.05))
             let e = min(max(s + 0.05, c.outPoint), info.videoDuration)
@@ -454,17 +464,18 @@ enum VideoProjectBuilder {
 
         // Musica
         if let m = p.music, let mi = infos[m.path], mi.hasAudio, mi.duration > 0.2 {
-            let song = AVURLAsset(url: m.url)
+            let song = AVURLAsset.precise(m.url)
             if let st = try await song.loadTracks(withMediaType: .audio).first,
                let mT = comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) {
                 // La traccia audio può finire qualche millesimo prima del file: si usa la sua fine vera
                 let trackEnd = (try? await st.load(.timeRange))?.end.seconds ?? mi.duration
                 let songLen = min(mi.duration, trackEnd.isFinite && trackEnd > 0 ? trackEnd : mi.duration)
                 let start = min(max(0, m.offset), total)
+                let stop = musicStop(m, total: total)        // 5.0.1 · «Finisce qui»
                 let inP = min(max(0, m.inPoint), max(0, songLen - 0.2))
                 var t = start
-                while t < total - 0.05 {
-                    let len = min(songLen - inP, total - t)
+                while t < stop - 0.05 {
+                    let len = min(songLen - inP, stop - t)
                     guard len > 0.05 else { break }
                     do {
                         try mT.insertTimeRange(CMTimeRange(start: cm(inP), duration: cm(len)), of: st, at: cm(t))
@@ -604,7 +615,7 @@ enum SpeechDetector {
     }
 
     private static func detect(_ url: URL) async throws -> [ClosedRange<Double>] {
-        let asset = AVURLAsset(url: url)
+        let asset = AVURLAsset.precise(url)
         guard let track = try await asset.loadTracks(withMediaType: .audio).first else { return [] }
         return try analyze(asset: asset, track: track)
     }

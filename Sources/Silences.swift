@@ -20,7 +20,7 @@ enum Silences {
     /// I tratti parlati del file tra `start` e `end` (secondi del file), già con un po' d'aria ai bordi.
     static func voiced(in url: URL, start: Double, end: Double) async throws -> [ClosedRange<Double>] {
         guard end > start + 0.05 else { return [] }
-        let asset = AVURLAsset(url: url)
+        let asset = AVURLAsset.precise(url)
         guard let track = try await asset.loadTracks(withMediaType: .audio).first else {
             throw NativeError(String(localized: "questa clip non ha audio"))
         }
