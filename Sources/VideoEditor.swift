@@ -1035,7 +1035,8 @@ struct VideoEditorView: View {
                 Text(String(localized: "Clip \(i + 1) di \(s.project.clips.count) · \(formatShort(c.length))") + (abs(c.speed - 1) > 0.001 ? " · " + EffectOptions.speedLabel(c.speed) : ""))
                     .font(.system(size: 12.5, weight: .semibold))
             }
-            SectionLabel(text: String(localized: "Taglia"))
+            // 5.0.1 · «Funzioni»: tagli, spostamenti e la velocità della clip, nello stesso posto
+            SectionLabel(text: String(localized: "Funzioni"))
             HStack(spacing: 6) {
                 Button("Inizio qui") { s.trimStartHere(undo) }.help("Taglia la clip da qui in poi")
                 Button("Fine qui") { s.trimEndHere(undo) }.help("Taglia la clip fino a qui")
@@ -1047,6 +1048,20 @@ struct VideoEditorView: View {
                 Button { s.move(-1, undo) } label: { Label(String(localized: "clip.moveEarlier", defaultValue: "Prima", comment: "Sposta la clip prima"), systemImage: "arrow.left") }.help("Sposta la clip prima")
                 Button { s.move(1, undo) } label: { Label(String(localized: "clip.moveLater", defaultValue: "Dopo", comment: "Sposta la clip dopo"), systemImage: "arrow.right") }.help("Sposta la clip dopo")
                 Button("Intera") { s.restoreClip(undo) }.help("Riporta la clip alla sua durata intera")
+            }
+            if let i = s.targetIndex, s.project.clips.indices.contains(i) {
+                HStack(spacing: 6) {
+                    Text("Velocità").font(.system(size: 12))
+                    Menu {
+                        ForEach(VPEffects.speeds, id: \.self) { v in
+                            Button(EffectOptions.speedLabel(v)) { setSpeed(v) }
+                        }
+                    } label: {
+                        Label(EffectOptions.speedLabel(s.project.clips[i].speed), systemImage: "speedometer")
+                    }
+                    .menuStyle(.button).fixedSize()
+                    .help("Velocità della clip: la voce non cambia tono")
+                }
             }
             // 4.0 · Le pause lunghe spariscono da sole (tagli netti, come nei video dei social)
             Button { s.removeSilences(undo) } label: { Label("Togli i silenzi", systemImage: "waveform.badge.minus") }
@@ -1065,6 +1080,17 @@ struct VideoEditorView: View {
                     .help("Togli la clip dal montaggio (⌫ · si può annullare con ⌘Z; il tuo video resta dov’è)")
                 otherMenu
             }
+        }
+    }
+
+    /// 5.0.1 · La velocità della clip scelta (la stessa di «Effetti»).
+    private func setSpeed(_ v: Double) {
+        guard let i = s.targetIndex else { NSSound.beep(); return }
+        s.change(undo, String(localized: "Velocità")) { p in
+            guard p.clips.indices.contains(i) else { return }
+            var e = p.clips[i].fx ?? VPEffects()
+            e.speed = v
+            p.clips[i].fx = e.isIdentity ? nil : e
         }
     }
 

@@ -6134,6 +6134,16 @@
         }
       }
     },
+    "Funzioni": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tools"
+          }
+        }
+      }
+    },
     "GIF animata (tutto il video)": {
       "localizations": {
         "en": {

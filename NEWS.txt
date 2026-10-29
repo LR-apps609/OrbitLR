@@ -1,3 +1,6 @@
+What’s new in 5.0.1 “Tools”:
+• Editor: in the Clip tab the “Trim” part is now “Tools”, and the clip speed (0.25× to 4×) is there too, as well as in Effects
+
 What’s new in 5.0 “Simple”:
 • The new OrbitLR: every section (Images, Video, Audio, PDFs and documents) opens in “Simple”, with the 6 things people do most, big. At the top the “Simple · Complete” switch: Complete has every feature, in groups that open one at a time. Each section remembers your choice
 • In Video “Editor” and in PDFs and documents “PDF editor” are in the same switch
