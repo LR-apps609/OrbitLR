@@ -16570,6 +16570,16 @@
         }
       }
     },
+    "circa %lld h %lld min": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "about %1$lld h %2$lld min"
+          }
+        }
+      }
+    },
     "circa %lld min": {
       "localizations": {
         "en": {
@@ -17430,6 +17440,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "video memory not available"
+          }
+        }
+      }
+    },
+    "meno di un minuto": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "less than a minute"
           }
         }
       }

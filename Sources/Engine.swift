@@ -66,6 +66,25 @@ final class Job: ObservableObject, Identifiable, @unchecked Sendable {
     var kind: Kind? { mainFiles.first.flatMap { Catalog.kind(of: $0) } }
 
     /// L'avanzamento da mostrare: quello vero se il motore lo dice, altrimenti la stima.
+    /// 5.1 · «circa 2 min», calcolato da quanto si è fatto finora. Nil se è troppo presto per dirlo.
+    var remainingText: String? {
+        guard state == .running, let s = startedAt else { return nil }
+        let p = shownProgress, el = Date().timeIntervalSince(s)
+        guard p > 0.05, p < 0.995, el > 4 else { return nil }
+        let left = el / p * (1 - p)
+        if left < 50 { return String(localized: "meno di un minuto") }
+        let m = Int((left / 60).rounded())
+        if m < 60 { return String(localized: "circa \(m) min") }
+        let h = Int(left / 3600), mm = Int(left.truncatingRemainder(dividingBy: 3600) / 60)
+        return String(localized: "circa \(h) h \(mm) min")
+    }
+
+    /// Stato con il tempo rimasto, per le righe dei lavori in corso.
+    var statusWithTime: String {
+        guard let r = remainingText else { return status }
+        return status + " · " + r
+    }
+
     var shownProgress: Double {
         switch state {
         case .waiting: return 0

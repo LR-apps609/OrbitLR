@@ -83,7 +83,10 @@ enum Media {
         let base = first.deletingPathExtension().lastPathComponent
         switch job.action.id {
         case "vproject":
-            let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("montaggio")))", ext: "mp4")
+            let snapURL = URL(fileURLWithPath: job.param)
+            try VideoProjectExport.checkSpace(snapshot: snapURL, dir: dir)
+            let name = VideoProjectExport.outputBase(snapshot: snapURL, fallback: "\(base) (\(FileTag.t("montaggio")))")
+            let out = Destination.unique(dir, base: name, ext: "mp4")
             try await VideoProjectExport.run(snapshot: URL(fileURLWithPath: job.param), out: out, job: job, progress: progress)
             return out
         case "vmerge":

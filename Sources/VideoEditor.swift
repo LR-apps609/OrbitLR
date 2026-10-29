@@ -839,7 +839,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         pause()
         applyChanges()          // 2.9.10 · si esporta quello che si vede, e diventa definitivo
         do {
-            let snap = try VideoProjectExport.writeSnapshot(project, speech: speech)
+            let snap = try VideoProjectExport.writeSnapshot(project, speech: speech, bytes: estimate?.bytes)
             var seen = Set<String>()
             let files = project.clips.map { $0.url }.filter { seen.insert($0.path).inserted }
             guard let action = Catalog.action(id: "vproject", kind: .video) else { return }

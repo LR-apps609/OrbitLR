@@ -284,7 +284,7 @@ struct JobStrip: View {
     private var statusText: String {
         switch job.state {
         case .waiting: return String(localized: "In attesa")
-        case .running: return job.status
+        case .running: return job.statusWithTime
         case .done:
             // Sempre anche la cartella: il file creato si trova subito
             let folder = job.outputs.first.map { Self.folderName($0) } ?? ""

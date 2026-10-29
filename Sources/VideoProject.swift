@@ -685,10 +685,12 @@ enum SpeechDetector {
 struct VPSnapshot: Codable {
     var project: VideoProject
     var speech: [String: [[Double]]]
+    /// 5.1 · peso stimato, per controllare lo spazio sul disco prima di cominciare
+    var bytes: Int64? = nil
 }
 
 enum VideoProjectExport {
-    static func writeSnapshot(_ p: VideoProject, speech: [String: [ClosedRange<Double>]]) throws -> URL {
+    static func writeSnapshot(_ p: VideoProject, speech: [String: [ClosedRange<Double>]], bytes: Int64? = nil) throws -> URL {
         let dir = Paths.support.appendingPathComponent("Progetti video")
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         // I vecchi file di esportazione (più di un giorno) si tolgono
@@ -700,7 +702,7 @@ enum VideoProjectExport {
             }
         }
         let url = dir.appendingPathComponent("esporta-\(UUID().uuidString).json")
-        let snap = VPSnapshot(project: p, speech: speech.mapValues { $0.map { [$0.lowerBound, $0.upperBound] } })
+        let snap = VPSnapshot(project: p, speech: speech.mapValues { $0.map { [$0.lowerBound, $0.upperBound] } }, bytes: bytes)
         try JSONEncoder().encode(snap).write(to: url, options: .atomic)
         return url
     }
@@ -714,6 +716,21 @@ enum VideoProjectExport {
         }
         let k = min(1, Double(p.resolution) / max(1, min(cw, ch)))
         return (CGSize(width: cw, height: ch), CGSize(width: Media.even(cw * k), height: Media.even(ch * k)))
+    }
+
+    /// 5.1 · il nome del file esportato viene dal nome del progetto («Gita al lago.mp4»).
+    static func outputBase(snapshot: URL, fallback: String) -> String {
+        guard let d = try? Data(contentsOf: snapshot), let snap = try? JSONDecoder().decode(VPSnapshot.self, from: d) else { return fallback }
+        let n = (snap.project.name ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
+        return n.isEmpty ? fallback : n
+    }
+
+    /// 5.1 · prima di cominciare: c'è abbastanza spazio sul disco?
+    static func checkSpace(snapshot: URL, dir: URL) throws {
+        guard let d = try? Data(contentsOf: snapshot), let snap = try? JSONDecoder().decode(VPSnapshot.self, from: d),
+              let b = snap.bytes, b > 0 else { return }
+        try SmartVideo.ensureSpace(in: dir, for: b)
     }
 
     static func run(snapshot: URL, out: URL, job: Job, progress: @escaping (Double) -> Void) async throws {

@@ -429,7 +429,7 @@ struct JobCard: View {
                 }
                 HStack(spacing: 6) {
                     Image(systemName: statusSymbol).font(.system(size: 11, weight: .bold)).foregroundStyle(statusColor)
-                    Text(job.status).font(.system(size: 12, weight: job.state == .running ? .regular : .semibold))
+                    Text(job.state == .running ? job.statusWithTime : job.status).font(.system(size: 12, weight: job.state == .running ? .regular : .semibold))
                         .foregroundStyle(statusColor).lineLimit(2)
                 }
             }
@@ -946,7 +946,7 @@ struct RunningRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(job.title).font(.system(size: 12, weight: .semibold)).lineLimit(1).truncationMode(.middle)
                 ProgressBar(value: job.shownProgress, tint: Theme.color(job.kind))
-                Text(job.status).font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(1)
+                Text(job.statusWithTime).font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(1)
             }
         }
     }
