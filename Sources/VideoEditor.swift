@@ -17,10 +17,13 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     static let shared = VideoProjectStore()
 
     @Published private(set) var project = VideoProject()
-    /// 2.9.10 · L'ultima versione confermata (salvata). Le modifiche si vedono subito in `project`;
-    /// diventano definitive con «Applica», oppure si buttano con «Annulla».
+    /// 5.1 · Salvataggio unico: il progetto si salva da solo mentre lavori (entro un secondo da ogni modifica).
+    /// `saved` è quello che c'è sul disco; `opened` com'era quando l'hai aperto («Ripristina…» e «Prima / dopo»).
     @Published private(set) var saved = VideoProject()
-    /// 2.9.10 · «Prima/dopo»: l'anteprima mostra la versione confermata
+    @Published private(set) var opened = VideoProject()
+    /// 5.1 · L'ora dell'ultimo salvataggio, per «Salvato alle 14:32»
+    @Published private(set) var savedAt: Date? = nil
+    /// 2.9.10 · «Prima/dopo»: l'anteprima mostra il progetto com'era all'apertura
     @Published var showingBefore = false { didSet { if showingBefore != oldValue { scheduleRebuild() } } }
     /// 2.9.10 · Chiede al pannello Testi di mettere il cursore nel campo del testo
     @Published var focusTextPending = false
@@ -123,24 +126,24 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         return project.clip(at: clock.time)?.index
     }
 
-    // MARK: 2.9.10 · Modifiche da confermare
+    // MARK: 5.1 · Salvataggio unico
 
-    /// Ci sono modifiche visibili nell'anteprima ma non ancora confermate.
-    var hasPending: Bool { currentID != nil && project != saved }
+    /// Il progetto è cambiato da quando l'hai aperto (per «Ripristina…» e «Prima / dopo»).
+    var changedSinceOpen: Bool { currentID != nil && project != opened }
 
-    /// «Applica»: le modifiche diventano definitive e si salvano.
+    /// ⌘S: niente da confermare, scrive subito sul disco quello che c'è.
     func applyChanges() {
-        guard project != saved else { return }
         saved = project
-        scheduleSave()
+        saveNow()
     }
 
-    /// «Annulla»: si torna all'ultima versione confermata.
-    func discardChanges(_ undo: UndoManager?) {
-        guard project != saved else { return }
+    /// «Ripristina…»: il progetto torna com'era quando l'hai aperto. Si annulla con ⌘Z.
+    func revertToOpened(_ undo: UndoManager?) {
+        guard changedSinceOpen else { return }
         showingBefore = false
-        apply(saved)
-        undo?.removeAllActions(withTarget: self)
+        let before = project
+        apply(opened)
+        registerUndo(undo, String(localized: "Ripristina com’era all’apertura"), before: before)
     }
 
     // MARK: Modifiche (ognuna si può annullare con ⌘Z)
@@ -200,7 +203,11 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         ensureLoaded()
         ensureSpeech()
         scheduleRebuild()
-        // 2.9.10 · niente salvataggio qui: si salva con «Applica» (o chiudendo il progetto, o esportando)
+        // 5.1 · Ogni modifica si salva da sola (entro un secondo): un crash non perde più il lavoro
+        if currentID != nil, p != saved {
+            saved = p
+            scheduleSave()
+        }
     }
 
     // MARK: File
@@ -366,7 +373,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     private func scheduleRebuild() {
         rebuildTask?.cancel()
         Perf.begin(.previewRebuild)
-        let p = showingBefore ? saved : project, inf = infos, sp = speech
+        let p = showingBefore ? opened : project, inf = infos, sp = speech
         rebuildTask = Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: 120_000_000)
             guard let self, !Task.isCancelled else { return }
@@ -615,13 +622,19 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     /// 2.7.3 · Apre un progetto nuovo e vuoto (quello aperto resta salvato tra i Progetti).
     /// 3.9 · `vertical`: parte già in 9:16 (TikTok, Reels, Shorts), a 1080p.
     func newProject(_ undo: UndoManager?, vertical: Bool = false) {
+        // 5.1 · Il progetto aperto resta salvato com'è; si dice dove trovarlo
+        let previous = currentID != nil && !project.clips.isEmpty ? VideoProjectLibrary.displayName(project) : nil
         closeProject(undo)
         var p = VideoProject()
         if vertical { p.aspect = "9x16"; p.resolution = 1080; p.fps = 30 }
         p.name = VideoProjectLibrary.uniqueName(existing: library.map { $0.name })
         currentID = UUID()
+        if folder == VideoProjectLibrary.folder { Self.rememberOpen(currentID) }
         project = p
         saved = p
+        opened = p
+        savedAt = nil
+        if let previous { notice = String(localized: "Progetto nuovo. «\(previous)» è salvato in Progetti.") }
         scheduleRebuild()
     }
 
@@ -634,12 +647,12 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             return
         }
         notice = Self.relink(&p)
-        // 4.1.4 · Video su un disco scollegato: il progetto sul disco resta com'era finché non lo modifichi
-        // (prima chiudendolo si salvava senza quelle clip, o si cancellava del tutto)
-        openedIncomplete = notice != nil ? p : nil
         currentID = id
+        if folder == VideoProjectLibrary.folder { Self.rememberOpen(id) }
         project = p
         saved = p
+        opened = p
+        savedAt = (try? VideoProjectLibrary.url(for: id, in: folder).resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
         ensureLoaded()
         ensureSpeech()
         scheduleRebuild()
@@ -650,15 +663,23 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         pause()
         rebuildTask?.cancel()
         saveWork?.cancel()
-        // 2.9.10 · Chiudere tiene le modifiche (la finestra chiede prima, se ce ne sono da confermare)
+        // 5.1 · Chiudere tiene tutto (il salvataggio è continuo); un progetto chiuso vuoto va nel Cestino
         saved = project
         showingBefore = false
         saveNow()
+        if let id = currentID, project.clips.isEmpty, project.music == nil, (project.missing ?? []).isEmpty,
+           FileManager.default.fileExists(atPath: VideoProjectLibrary.url(for: id, in: folder).path) {
+            VideoProjectLibrary.trash(id, in: folder)
+        }
+        if folder == VideoProjectLibrary.folder { Self.rememberOpen(nil) }
         undo?.removeAllActions(withTarget: self)        // il ⌘Z di un progetto non deve toccare un altro
         if let id = currentID { covers[id] = nil }      // la copertina si rifà: la prima clip può essere cambiata
         currentID = nil
         project = VideoProject()
         saved = project
+        opened = project
+        savedAt = nil
+        timelineZoom = 1                                  // 5.1 · lo zoom è del progetto, non passa al prossimo
         selected = nil
         selectedText = nil
         notice = nil
@@ -674,7 +695,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     func renameProject(_ id: UUID, to name: String) {
         let n = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !n.isEmpty else { return }
-        if id == currentID { project.name = n; saved.name = n; scheduleSave() } else { VideoProjectLibrary.rename(id, to: n, in: folder) }
+        if id == currentID { project.name = n; saved.name = n; opened.name = n; scheduleSave() } else { VideoProjectLibrary.rename(id, to: n, in: folder) }
         refreshLibrary()
     }
 
@@ -847,22 +868,23 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     private func scheduleSave() {
         saveWork?.cancel()
         guard let url = saveURL else { return }
-        if let o = openedIncomplete, o == saved { return }
         let p = saved
-        let w = DispatchWorkItem { VideoProjectLibrary.save(p, to: url) }
+        let w = DispatchWorkItem { [weak self] in
+            VideoProjectLibrary.save(p, to: url)
+            DispatchQueue.main.async { self?.savedAt = Date() }
+        }
         saveWork = w
         VideoProjectLibrary.queue.asyncAfter(deadline: .now() + 0.6, execute: w)
     }
 
-    /// Il progetto come si è aperto quando mancava qualche file (nil = tutto a posto).
-    private var openedIncomplete: VideoProject? = nil
 
     /// Salva subito (alla chiusura del progetto).
     func saveNow() {
         guard let url = saveURL else { return }
-        if let o = openedIncomplete, o == saved { return }
+        saveWork?.cancel()
         let p = saved
         VideoProjectLibrary.queue.sync { VideoProjectLibrary.save(p, to: url) }   // in coda dopo eventuali salvataggi in corso
+        savedAt = Date()
     }
 
     /// Aggiunge (o rinfresca) i segnalibri prima di salvare.
@@ -881,22 +903,77 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         return u.path
     }
 
-    /// Ritrova i file spostati; toglie quelli spariti e restituisce l'avviso da mostrare (nil se va tutto bene).
+    /// Ritrova i file spostati. 5.1 · Quelli che non si trovano non si perdono più: le clip escono dalla sequenza
+    /// e restano nel progetto (`missing`), la musica resta com'è; restituisce l'avviso da mostrare (nil se va tutto bene).
     static func relink(_ p: inout VideoProject) -> String? {
         let fm = FileManager.default
-        let before = p.clips.count
         // File spostati o rinominati: li ritrova il segnalibro
         for i in p.clips.indices where !fm.fileExists(atPath: p.clips[i].path) {
             if let found = Self.resolve(p.clips[i].bookmark) { p.clips[i].path = found }
         }
         if let m = p.music, !fm.fileExists(atPath: m.path) { p.music?.path = Self.resolve(m.bookmark) ?? m.path }
-        p.clips = p.clips.filter { fm.fileExists(atPath: $0.path) && $0.length > 0.05 }
-        var lost: [String] = []
-        if p.clips.count < before { lost.append(before - p.clips.count == 1 ? String(localized: "1 clip") : String(localized: "\(before - p.clips.count) clip")) }
-        if let m = p.music, !fm.fileExists(atPath: m.path) { p.music = nil; lost.append(String(localized: "la musica")) }
-        guard !lost.isEmpty else { return nil }
-        let and = String(localized: " e ")
-        return String(localized: "Non trovo più \(lost.joined(separator: and)) del progetto: il file è stato cancellato o è su un disco scollegato.")
+        var missing = p.missing ?? []
+        for (i, c) in p.clips.enumerated().reversed() where !fm.fileExists(atPath: c.path) {
+            missing.append(VPMissingClip(clip: c, index: i))
+            p.clips.remove(at: i)
+        }
+        p.clips = p.clips.filter { $0.length > 0.05 }
+        missing.sort { $0.index < $1.index }
+        p.missing = missing.isEmpty ? nil : missing
+        let musicLost = p.music.map { !fm.fileExists(atPath: $0.path) } ?? false
+        return missingNotice(clips: missing.count, music: musicLost)
+    }
+
+    static func missingNotice(clips: Int, music: Bool) -> String? {
+        guard clips > 0 || music else { return nil }
+        if clips == 0 { return String(localized: "Non trovo la musica di questo progetto. Resta nel progetto finché non la ritrovi.") }
+        if clips == 1 { return String(localized: "Non trovo 1 video di questo progetto. Resta nel progetto finché non lo ritrovi.") }
+        return String(localized: "Non trovo \(clips) video di questo progetto. Restano nel progetto finché non li ritrovi.")
+    }
+
+    var hasMissing: Bool {
+        !(project.missing ?? []).isEmpty || (project.music.map { !FileManager.default.fileExists(atPath: $0.path) } ?? false)
+    }
+
+    /// 5.1 · «Trova…»: i file scelti (o quelli dentro le cartelle scelte) con lo stesso nome tornano al loro posto.
+    func findMissing(in urls: [URL], undo: UndoManager?) {
+        let files = PieController.expand(urls)
+        let byName = Dictionary(files.map { ($0.lastPathComponent, $0) }, uniquingKeysWith: { a, _ in a })
+        change(undo, String(localized: "Ritrova i file")) { p in
+            var still: [VPMissingClip] = []
+            for m in p.missing ?? [] {
+                if let u = byName[m.name] {
+                    var c = m.clip
+                    c.path = u.path
+                    c.bookmark = try? u.bookmarkData()
+                    p.clips.insert(c, at: min(m.index, p.clips.count))
+                } else { still.append(m) }
+            }
+            p.missing = still.isEmpty ? nil : still
+            if let m = p.music, !FileManager.default.fileExists(atPath: m.path), let u = byName[URL(fileURLWithPath: m.path).lastPathComponent] {
+                p.music?.path = u.path
+            }
+        }
+        let musicLost = project.music.map { !FileManager.default.fileExists(atPath: $0.path) } ?? false
+        notice = Self.missingNotice(clips: project.missing?.count ?? 0, music: musicLost)
+        ensureLoaded()
+    }
+
+    // MARK: 5.1 · Riaprire dove eri
+
+    static let openKey = "video.openProject"
+
+    static func rememberOpen(_ id: UUID?) {
+        if let id { UserDefaults.standard.set(id.uuidString, forKey: openKey) } else { UserDefaults.standard.removeObject(forKey: openKey) }
+    }
+
+    /// All'avvio: il progetto che era aperto (anche dopo un crash) torna aperto, nel Montaggio.
+    func restoreLastOpen() {
+        guard currentID == nil, folder == VideoProjectLibrary.folder,
+              let s = UserDefaults.standard.string(forKey: Self.openKey), let id = UUID(uuidString: s),
+              FileManager.default.fileExists(atPath: VideoProjectLibrary.url(for: id, in: folder).path) else { return }
+        openProject(id, undo: nil)
+        AppState.shared.videoMode = .montage
     }
 }
 
@@ -963,9 +1040,8 @@ struct VideoEditorView: View {
         _tool = State(initialValue: startTool)
     }
     @State private var targeted = false
-    @State private var askClose = false
-    /// 5.0.1 · «Scarta» chiede conferma: un clic sbagliato non butta il lavoro
-    @State private var askDiscard = false
+    /// 5.1 · «Ripristina…» chiede conferma (e si annulla con ⌘Z)
+    @State private var askRevert = false
     /// 5.0.1 · «Salvato» per un attimo dopo «Salva progetto»
     @State private var savedFlash = false
 
@@ -1016,19 +1092,27 @@ struct VideoEditorView: View {
         }
         .onDisappear { s.pause() }
         .background(EditorKeys(s: s))
-        .confirmationDialog("Sei sicuro di voler scartare le modifiche al progetto?", isPresented: $askDiscard) {
-            Button("Scarta le modifiche", role: .destructive) { s.discardChanges(undo) }
-            Button("Continua a modificare", role: .cancel) {}
+        .confirmationDialog("Ripristinare il progetto com’era quando l’hai aperto?", isPresented: $askRevert) {
+            Button("Ripristina", role: .destructive) { s.revertToOpened(undo) }
+            Button("Annulla", role: .cancel) {}
         } message: {
-            Text("Il progetto torna all’ultima versione salvata. Le modifiche che vedi nell’anteprima si perdono.")
+            Text("Le modifiche fatte da allora spariscono. Puoi riaverle con ⌘Z.")
         }
-        .confirmationDialog("Ci sono modifiche non applicate", isPresented: $askClose) {
-            Button("Applica e chiudi") { s.applyChanges(); s.closeProject(undo) }
-            Button("Scarta e chiudi", role: .destructive) { s.discardChanges(undo); s.closeProject(undo) }
-            Button("Continua a modificare", role: .cancel) {}
-        } message: {
-            Text("Vuoi tenere le modifiche che vedi nell’anteprima?")
-        }
+    }
+
+    /// 5.1 · «Salvato alle 14:32 · »
+    private var savedLine: String {
+        guard let d = s.savedAt else { return "" }
+        let f = DateFormatter(); f.timeStyle = .short; f.dateStyle = .none
+        return String(localized: "Salvato alle \(f.string(from: d))") + " · "
+    }
+
+    private func findMissing() {
+        let p = NSOpenPanel()
+        p.allowsMultipleSelection = true
+        p.canChooseDirectories = true
+        p.message = String(localized: "Scegli i file del progetto, o la cartella dove sono adesso")
+        Sheet.choose(p) { urls in if !urls.isEmpty { s.findMissing(in: urls, undo: undo) } }
     }
 
     private var header: some View {
@@ -1038,9 +1122,15 @@ struct VideoEditorView: View {
                     .font(.system(size: s.project.clips.isEmpty ? 22 : 15, weight: .bold, design: s.project.clips.isEmpty ? .rounded : .default))
                     .lineLimit(1)
                 if !s.project.clips.isEmpty {
-                    Text(String(localized: "\(s.project.clips.count) clip · \(formatShort(s.project.duration))") + (s.project.music != nil ? String(localized: " · con musica") : "")
+                    Text(savedLine + String(localized: "\(s.project.clips.count) clip · \(formatShort(s.project.duration))") + (s.project.music != nil ? String(localized: " · con musica") : "")
                          + (s.estimate.map { " · ≈ " + Fmt.bytes($0.bytes) } ?? ""))
                         .font(.system(size: 12.5)).foregroundStyle(.secondary).lineLimit(1)
+                }
+                // 5.1 · File non trovati: restano nel progetto, «Trova…» li rimette al loro posto
+                if s.hasMissing {
+                    Button { findMissing() } label: { Label("Trova i file…", systemImage: "magnifyingglass") }
+                        .controlSize(.small)
+                        .help("Scegli i file o la cartella dove sono adesso: tornano al loro posto nel progetto")
                 }
             }
             if s.building { ProgressView().controlSize(.small).help("Preparo l’anteprima") }
@@ -1065,12 +1155,12 @@ struct VideoEditorView: View {
                 .keyboardShortcut("s", modifiers: .command)
                 .help("Salva il progetto adesso (⌘S). Lo ritrovi in Progetti")
                 Button("Esporta") { s.export() }
-                    .primaryButton(!s.hasPending)      // 3.0 · un solo pulsante principale: con modifiche in sospeso è «Applica»
+                    .primaryButton(true)               // 5.1 · l'unico pulsante principale del Montaggio
                     .keyboardShortcut("e", modifiers: .command)
                     .help("Crea il video finale (⌘E). Le modifiche in sospeso vengono applicate")
             }
             // 2.7.3 · ✕ in alto a destra: chiude il progetto (resta salvato) e torna ai Progetti
-            Button { if s.hasPending { askClose = true } else { s.closeProject(undo) } } label: {
+            Button { s.closeProject(undo) } label: {
                 Image(systemName: "xmark").font(.system(size: 12, weight: .bold))
                     .frame(width: 26, height: 26)
                     .background(Circle().fill(Theme.ink.opacity(0.08)))
@@ -1103,14 +1193,14 @@ struct VideoEditorView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .scrollIndicators(.visible)
-            if s.hasPending || s.showingBefore { pendingBar }
+            if s.changedSinceOpen || s.showingBefore { pendingBar }
         }
         .background(RoundedRectangle(cornerRadius: 14).fill(Theme.card))
         .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Theme.stroke, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 
-    /// 2.9.10 · Le modifiche si vedono subito; qui si confermano o si buttano.
+    /// 5.1 · Tutto è già salvato: qui si confronta con com'era all'apertura, e si può tornarci.
     private var pendingBar: some View {
         VStack(spacing: 8) {
             Divider()
@@ -1120,15 +1210,11 @@ struct VideoEditorView: View {
                     .padding(.horizontal, 10).padding(.vertical, 5)
                     .background(Capsule().fill(s.showingBefore ? Theme.brass.opacity(0.35) : Theme.ink.opacity(0.07)))
                     .onLongPressGesture(minimumDuration: 0, maximumDistance: 50, perform: {}, onPressingChanged: { s.showingBefore = $0 })
-                    .help("Tieni premuto per vedere com’era prima delle modifiche")
+                    .help("Tieni premuto per vedere com’era quando hai aperto il progetto")
                     .accessibilityAddTraits(.isButton)
                 Spacer(minLength: 4)
-                Button("Scarta") { askDiscard = true }
-                    .help("Butta le modifiche non salvate e torna all’ultima versione salvata (chiede conferma)")
-                Button("Applica") { s.applyChanges() }
-                    .buttonStyle(.borderedProminent).tint(Theme.accent)
-                    .keyboardShortcut(.return, modifiers: .command)
-                    .help("Rendi definitive le modifiche (⌘↩)")
+                Button("Ripristina…") { askRevert = true }
+                    .help("Riporta il progetto com’era quando l’hai aperto (chiede conferma, si annulla con ⌘Z)")
             }
             .controlSize(.small)
             .padding(.horizontal, 10).padding(.bottom, 10)

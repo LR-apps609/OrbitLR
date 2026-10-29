@@ -38,13 +38,11 @@ enum VideoProjectLibrary {
         return try? JSONDecoder().decode(VideoProject.self, from: d)
     }
 
-    /// Un progetto vuoto non si tiene: non c'è niente da riprendere.
+    /// 5.1 · Si salva anche un progetto svuotato mentre ci lavori (il salvataggio è continuo): lo si mette nel
+    /// Cestino solo chiudendolo vuoto. Un progetto nuovo e mai riempito non si scrive affatto.
     static func save(_ p: VideoProject, to url: URL) {
         let fm = FileManager.default
-        guard !p.clips.isEmpty || p.music != nil else {
-            try? fm.removeItem(at: url)
-            return
-        }
+        guard !p.clips.isEmpty || p.music != nil || !(p.missing ?? []).isEmpty || fm.fileExists(atPath: url.path) else { return }
         try? fm.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         if let d = try? JSONEncoder().encode(VideoProjectStore.withBookmarks(p)) { try? d.write(to: url, options: .atomic) }
     }
@@ -103,7 +101,8 @@ enum VideoProjectLibrary {
     static func trash(_ id: UUID, in folder: URL) {
         let u = url(for: id, in: folder)
         queue.sync {
-            if (try? FileManager.default.trashItem(at: u, resultingItemURL: nil)) == nil { try? FileManager.default.removeItem(at: u) }
+            // 5.1 · Sempre nel Cestino: se non si può, il progetto resta dov'è (mai cancellato del tutto)
+            _ = try? FileManager.default.trashItem(at: u, resultingItemURL: nil)
         }
     }
 

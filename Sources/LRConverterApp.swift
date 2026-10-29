@@ -42,8 +42,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         Paths.installScript()
         WatchStore.shared.start()            // cartelle automatiche
         DropShelf.shared.start()             // 3.9.1 · il ripiano al bordo dello schermo quando trascini dei file
-        UpdateCheck.autoCheckSoon()          // 2.8.1 · una volta al giorno, in silenzio
+        UpdateCheck.autoCheckSoon()          // 2.8.1 · in silenzio, al massimo ogni 3 ore
         Appearance.apply()
+        // 5.1 · Il progetto video che era aperto (anche dopo un crash) torna aperto, dov'eri
+        DispatchQueue.main.async { VideoProjectStore.shared.restoreLastOpen() }
         Sounds.shared.prepare()
         cleanOldTemporaryFiles()
         ThumbCache.trimDisk()                // 3.4.4 · miniature sul disco: via quelle vecchie
@@ -251,10 +253,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         }
     }
 
-    /// 2.9.10 · Uscendo dall'app, le modifiche del Video ancora da confermare non si perdono.
+    /// 5.1 · Uscendo dall'app il progetto è già salvato; si scrive l'ultimo secondo, se manca.
+    /// Il progetto resta segnato come aperto: al prossimo avvio torna dov'eri.
     func applicationWillTerminate(_ notification: Notification) {
         let s = VideoProjectStore.shared
-        if s.hasPending { s.applyChanges(); s.saveNow() }
+        if s.currentID != nil { s.applyChanges() }
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,

@@ -110,6 +110,13 @@ struct VPMusic: Codable, Equatable, Sendable {
     var name: String { url.lastPathComponent }
 }
 
+/// 5.1 · Una clip senza il suo file, con il posto che aveva nella sequenza.
+struct VPMissingClip: Codable, Equatable, Sendable {
+    var clip: VPClip
+    var index: Int
+    var name: String { clip.url.lastPathComponent }
+}
+
 struct VideoProject: Codable, Equatable, Sendable {
     /// 2.7.3 · Nome del progetto nella schermata Progetti.
     var name: String? = nil
@@ -129,6 +136,9 @@ struct VideoProject: Codable, Equatable, Sendable {
     var hide: String? = nil
     /// 2.9.9 · Testi animati sopra il video.
     var texts: [VPText]? = nil
+    /// 5.1 · Clip i cui file non si trovano (disco scollegato, file spostato): restano nel progetto, fuori dalla
+    /// sequenza, finché non si ritrovano. Prima, alla prima modifica, si perdevano per sempre.
+    var missing: [VPMissingClip]? = nil
 
     /// Il look che si vede su una clip: il suo, altrimenti quello del progetto.
     func effectiveLook(_ c: VPClip) -> VPLook? { c.look ?? look }
