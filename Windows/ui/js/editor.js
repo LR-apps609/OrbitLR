@@ -11,7 +11,7 @@ import { baseName, fmtTime, h, ico, modal, store, toast } from "./util.js";
 import { levelSeg } from "./levels.js";
 
 const TRANSITIONS = [["fade", t("Dissolvenza")], ["black", t("Al nero")], ["white", t("Al bianco")], ["slide", t("Scorrimento")], ["zoom", t("Zoom")], ["blur", t("Sfocatura")]];
-const SPEEDS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
+const SPEEDS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8, 12];
 const TOOLS = [["clip", t("Clip"), "scissors"], ["look", t("Filtri"), "sparkles"], ["fx", t("Effetti"), "wand-sparkles"], ["text", t("Testi"), "file-text"], ["audio", t("Audio"), "music"], ["format", t("Formato"), "crop"]];
 
 function newProject(n) {
@@ -54,6 +54,16 @@ export function editorPage(app, onBack) {
         toast(t("Non riesco a salvare il progetto: troppi progetti grandi. Eliminane qualcuno da «Progetti»."));
       }
     }, 400);
+  }
+
+  /** 1.0.1 · «Salva progetto»: subito, con la conferma. */
+  function saveNow() {
+    clearTimeout(saveTimer);
+    if (!current) return;
+    current.data = p;
+    current.name = p.name;
+    current.updated = Date.now();
+    toast(saveLibrary() ? t("Progetto salvato") : t("Non riesco a salvare il progetto: troppi progetti grandi. Eliminane qualcuno da «Progetti»."));
   }
 
   function showProjects() {
@@ -303,7 +313,8 @@ export function editorPage(app, onBack) {
     }
     active.playbackRate = speed;
     active.muted = c.muted || p.originalMuted;
-    active.volume = Math.min(1, p.originalVolume ?? 1);
+    // 1.0.1 · Ogni pezzo diviso ha il suo volume
+    active.volume = Math.min(1, (p.originalVolume ?? 1) * (c.volume ?? 1));
     const lf = lookFilter(c, at.i);
     active.style.filter = lf.filter;
     active.style.transform = clipTransform(c, at.local);
@@ -355,7 +366,7 @@ export function editorPage(app, onBack) {
     }
     const local = t - (m.offset || 0);
     music.volume = Math.min(1, m.volume ?? 0.8);
-    if (local < 0 || !playing) {
+    if (local < 0 || !playing || t >= musicStop(m)) {
       music.pause();
       if (seek && local >= 0) try { music.currentTime = (m.in || 0) + local; } catch {}
       return;
@@ -443,6 +454,8 @@ export function editorPage(app, onBack) {
       h("button.btn.icon", { title: t("Annulla (Ctrl+Z)"), "aria-label": tc("undo", "Annulla"), onclick: doUndo }, ico("undo-2", 16)),
       h("button.btn.icon", { title: t("Rifai (Ctrl+Y)"), "aria-label": t("Rifai"), onclick: doRedo, style: { transform: "scaleX(-1)" } }, ico("undo-2", 16)),
       h("button.btn", { onclick: pickClips }, ico("plus", 15), t("Aggiungi video")),
+      // 1.0.1 · Salva subito (oltre al salvataggio automatico)
+      h("button.btn", { title: t("Salva il progetto adesso (Ctrl+S). Lo ritrovi in Progetti"), onclick: saveNow }, ico("save", 15), t("Salva progetto")),
       h("button.btn.brass", { onclick: exportVideo }, ico("download", 15), t("Esporta")));
     const ctrl = h("div.ed-ctrl", playBtn, timeLabel, h("div.grow"),
       h("button.btn", { title: t("Testo (T)"), onclick: addText }, ico("plus", 14), t("Testo")),
@@ -470,7 +483,7 @@ export function editorPage(app, onBack) {
 
   // ── Sequenza
   function updatePlayhead() {
-    if (timeLabel) timeLabel.textContent = `${fmtTime(time, true)} / ${fmtTime(total())}`;
+    if (timeLabel) timeLabel.textContent = `${pps >= 300 ? fmtMs(time, 0.001) : fmtTime(time, true)} / ${fmtTime(total())}`;
     if (playheadEl) playheadEl.style.left = 12 + time * pps + "px";
   }
 
@@ -479,8 +492,17 @@ export function editorPage(app, onBack) {
     const T = total();
     const width = Math.max(600, 24 + T * pps + 200);
     const ruler = h("div.ruler", { style: { width: width + "px" } });
-    const step = pps >= 80 ? 1 : pps >= 30 ? 2 : pps >= 12 ? 5 : 10;
-    for (let s = 0; s <= T + 5; s += step) ruler.append(h("span", { style: { left: 12 + s * pps + "px" } }, fmtTime(s)));
+    // 1.0.1 · Con lo zoom il righello arriva ai millisecondi; si disegnano solo i segni visibili
+    const step = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 30, 60].find((st) => st * pps >= 70) || 60;
+    const fillRuler = (left, w) => {
+      const v0 = Math.max(0, (left - 400) / pps), v1 = (left + w + 400) / pps;
+      const marks = [];
+      for (let k = Math.floor(v0 / step); k * step <= Math.min(T + 5, v1); k++) {
+        const s = k * step;
+        marks.push(h("span", { style: { left: 12 + s * pps + "px" } }, step < 1 ? fmtMs(s, step) : fmtTime(s)));
+      }
+      ruler.replaceChildren(...marks);
+    };
     const clipsRow = h("div.row.clips", { style: { width: width + "px" } });
     let x = 12;
     p.clips.forEach((c, i) => {
@@ -510,9 +532,18 @@ export function editorPage(app, onBack) {
         style: { left: 12 + t.start * pps + "px", width: Math.max(12, (t.end - t.start) * pps) + "px" },
         onpointerdown: (e) => dragText(e, k),
       }, h("span.lbl", t.text), h("div.edge.l", { onpointerdown: (e) => trimText(e, k, "start") }), h("div.edge.r", { onpointerdown: (e) => trimText(e, k, "end") }))));
-    const musicRow = h("div.row.music", { style: { width: width + "px" } },
-      p.music ? h("div.mblk", { style: { left: 12 + (p.music.offset || 0) * pps + "px", width: Math.max(20, (T - (p.music.offset || 0)) * pps) + "px" }, onclick: () => { tool = "audio"; renderInspector(); renderToolbar(); } },
-        ico("music", 12), h("span.lbl", baseName(p.music.path))) : null);
+    // 1.0.1 · La barra della musica: trasparente con l'onda dentro, si trascina, il bordo destro decide dove finisce
+    let musicRow;
+    if (p.music) {
+      const m = p.music;
+      const mEnd = musicStop(m);
+      const wave = h("canvas.mwave");
+      const blk = h("div.mblk.wave", { style: { left: 12 + (m.offset || 0) * pps + "px", width: Math.max(20, (mEnd - (m.offset || 0)) * pps) + "px" },
+        onpointerdown: (e) => dragMusic(e) },
+        wave, ico("music", 12), h("span.lbl", baseName(m.path)), h("div.edge.r", { onpointerdown: (e) => trimMusicEnd(e) }));
+      musicRow = h("div.row.music", { style: { width: width + "px" } }, blk);
+      requestAnimationFrame(() => drawMusicWave(wave, m));
+    } else musicRow = h("div.row.music", { style: { width: width + "px" } });
     playheadEl = h("div.playhead");
     const inner = h("div.tl-inner", { style: { width: width + "px" } }, ruler, clipsRow, textRow, musicRow, playheadEl);
     inner.addEventListener("pointerdown", (e) => {
@@ -524,16 +555,23 @@ export function editorPage(app, onBack) {
       inner.onpointermove = move;
       inner.onpointerup = () => { inner.onpointermove = null; };
     });
-    const zoom = h("input", { type: "range", min: 8, max: 200, value: pps, "aria-label": t("Zoom della sequenza"), oninput: (e) => { pps = Number(e.target.value); renderTimeline(); } });
+    // 1.0.1 · Zoom fino al millisecondo: cursore logaritmico, da 8 a 4000 pixel al secondo
+    const zoom = h("input", { type: "range", min: 0, max: 1000, value: Math.round(ppsToZoom(pps)), "aria-label": t("Zoom della sequenza"), title: t("Zoom della sequenza: Ctrl + rotella, oppure + e −"), oninput: (e) => zoomTo(zoomToPps(Number(e.target.value))) });
     const scroller = h("div.tl-scroll", inner);
     const prevScroll = timelineEl.querySelector(".tl-scroll")?.scrollLeft || 0;
     timelineEl.replaceChildren(h("div.tl-side", h("span", ico("film", 14)), h("span", ico("file-text", 14)), h("span", ico("music", 14)), h("div.zoom", ico("search", 13), zoom)), scroller);
     scroller.scrollLeft = prevScroll;
+    fillRuler(scroller.scrollLeft, scroller.clientWidth || 2000);
+    let rulerRaf = 0;
+    scroller.addEventListener("scroll", () => {
+      cancelAnimationFrame(rulerRaf);
+      rulerRaf = requestAnimationFrame(() => fillRuler(scroller.scrollLeft, scroller.clientWidth));
+    });
     scroller.addEventListener("wheel", (e) => {
       if (e.ctrlKey) {
         e.preventDefault();
-        pps = Math.max(8, Math.min(200, pps * (e.deltaY < 0 ? 1.15 : 0.87)));
-        renderTimeline();
+        const r = scroller.getBoundingClientRect();
+        zoomTo(pps * (e.deltaY < 0 ? 1.18 : 0.85), (scroller.scrollLeft + e.clientX - r.left - 12) / pps, e.clientX - r.left);
       }
     }, { passive: false });
     updatePlayhead();
@@ -632,6 +670,109 @@ export function editorPage(app, onBack) {
   }
 
   /** Trascinamento: la cattura sta sul contenitore della sequenza, che resta anche quando la sequenza si ridisegna. */
+  // ── 1.0.1 · Musica: fine, onda, trascinamento
+  const musicPeaks = {}; // path → picchi (50 al secondo)
+  const PEAKS_RATE = 50;
+  function songLen(m) { return infos[m.path]?.duration || 0; }
+  /** Dove finisce la musica nel montaggio: la fine scelta, la fine del brano (se non si ripete) o la fine del video. */
+  function musicStop(m) {
+    const T = total(), off = m.offset || 0;
+    let e = m.end != null ? Math.min(T, Math.max(off + 0.1, m.end)) : T;
+    const sl = songLen(m);
+    if (!m.looped && sl > 0) e = Math.min(e, off + Math.max(0.05, sl - (m.in || 0)));
+    return e;
+  }
+  function drawMusicWave(cv, m) {
+    if (!cv.isConnected) return;
+    const r = cv.getBoundingClientRect();
+    // Una tela non può superare ~32 000 pixel: con lo zoom alto si disegna a risoluzione ridotta
+    const kx = Math.min(devicePixelRatio, 30000 / Math.max(1, r.width));
+    cv.width = Math.max(1, Math.round(r.width * kx));
+    cv.height = Math.max(1, Math.round(r.height * devicePixelRatio));
+    const pk = musicPeaks[m.path];
+    const sl = songLen(m);
+    if (!pk) {
+      if (sl > 0 && musicPeaks[m.path] === undefined) {
+        musicPeaks[m.path] = null;
+        invoke("waveform", { path: m.path, points: Math.max(50, Math.min(200000, Math.round(sl * PEAKS_RATE))) })
+          .then((v) => { musicPeaks[m.path] = v; renderTimeline(); }).catch(() => {});
+      }
+      return;
+    }
+    const g = cv.getContext("2d");
+    const rate = pk.length / Math.max(0.05, sl);
+    const avail = Math.max(0.05, sl - (m.in || 0));
+    const step = Math.max(1, 2.5 * kx), mid = cv.height / 2 + 3 * devicePixelRatio, maxH = cv.height / 2 - 5 * devicePixelRatio;
+    g.fillStyle = getComputedStyle(cv).color;
+    for (let x = 0; x < cv.width; x += step) {
+      let tt = x / kx / pps;
+      if (tt >= avail) { if (m.looped) tt %= avail; else break; }
+      const a = Math.floor(((m.in || 0) + tt) * rate), b = Math.floor(((m.in || 0) + tt + step / kx / pps) * rate);
+      let v = 0;
+      for (let j = Math.max(0, a); j <= Math.min(pk.length - 1, Math.max(a, b)); j++) if (pk[j] > v) v = pk[j];
+      const hh = Math.max(0.5, v * maxH);
+      g.fillRect(x, mid - hh, Math.max(0.5, step - kx), hh * 2);
+    }
+  }
+  function dragMusic(e) {
+    if (e.target.classList.contains("edge")) return;
+    e.preventDefault();
+    tool = "audio"; renderToolbar(); renderInspector();
+    const m = p.music, before = JSON.stringify(p);
+    const x0 = e.clientX, o0 = m.offset || 0, e0 = m.end;
+    capture(e, (ev) => {
+      const o = Math.max(0, Math.min(Math.max(0, total() - 0.5), o0 + (ev.clientX - x0) / pps));
+      m.offset = o;
+      if (e0 != null) m.end = e0 + (o - o0);
+      renderTimeline();
+    }, () => { if (JSON.stringify(p) !== before) { undo.push(before); redo = []; afterChange(); } });
+  }
+  function trimMusicEnd(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const m = p.music, before = JSON.stringify(p);
+    const x0 = e.clientX, v0 = musicStop(m);
+    capture(e, (ev) => {
+      const v = Math.max((m.offset || 0) + 0.2, Math.min(total(), v0 + (ev.clientX - x0) / pps));
+      m.end = v >= total() - 0.01 ? null : v;
+      renderTimeline();
+    }, () => { if (JSON.stringify(p) !== before) { undo.push(before); redo = []; afterChange(); } });
+  }
+  /** 1.0.1 · «Stacca l'audio»: l'audio della clip diventa la traccia audio sotto il video; la clip resta muta. */
+  function detachAudio(ci) {
+    const c = p.clips[ci];
+    if (!c) return;
+    if (p.music) return toast(t("C’è già una musica: c’è posto per una traccia audio sola. Togli la musica e riprova."));
+    if ((c.fx?.speed || 1) !== 1) return toast(t("Prima riporta la clip a velocità 1×: l’audio staccato va alla velocità normale."));
+    if (infos[c.path] && !infos[c.path].has_audio) return toast(t("Questa clip non ha audio."));
+    const start = p.clips.slice(0, ci).reduce((a, x) => a + clipLen(x), 0);
+    change((pp) => {
+      pp.music = { path: c.path, offset: start, in: c.in, end: start + clipLen(c), looped: false, volume: 1, fadeIn: 0, fadeOut: 0, duck: false };
+      pp.clips[ci].muted = true;
+    });
+  }
+
+  // ── 1.0.1 · Zoom della sequenza fino al millisecondo
+  const PPS_MIN = 8, PPS_MAX = 4000;
+  function ppsToZoom(v) { return (Math.log(v / PPS_MIN) / Math.log(PPS_MAX / PPS_MIN)) * 1000; }
+  function zoomToPps(z) { return PPS_MIN * Math.pow(PPS_MAX / PPS_MIN, z / 1000); }
+  /** Cambia lo zoom tenendo fermo un momento (sotto il puntatore, o l'indicatore). */
+  function zoomTo(v, anchorT = time, anchorX = null) {
+    const sc = timelineEl.querySelector(".tl-scroll");
+    const ax = anchorX ?? (sc ? 12 + anchorT * pps - sc.scrollLeft : 0);
+    pps = Math.max(PPS_MIN, Math.min(PPS_MAX, v));
+    renderTimeline();
+    const sc2 = timelineEl.querySelector(".tl-scroll");
+    if (sc2) sc2.scrollLeft = Math.max(0, 12 + anchorT * pps - ax);
+  }
+  /** «0:03,250»: i millesimi quando lo zoom li fa vedere. */
+  function fmtMs(s, step) {
+    const digits = step < 0.01 ? 3 : step < 0.1 ? 2 : 1;
+    const whole = Math.floor(s + 1e-9);
+    const frac = Math.round((s - whole) * 10 ** digits);
+    return `${fmtTime(whole)},${String(Math.min(frac, 10 ** digits - 1)).padStart(digits, "0")}`;
+  }
+
   function capture(e, move, up) {
     timelineEl.setPointerCapture(e.pointerId);
     const end = () => {
@@ -819,6 +960,7 @@ export function editorPage(app, onBack) {
             h("button.btn", { title: t("Toglie le pause lunghe: utile per i video in cui parli"), onclick: () => removeSilences(ci) }, ico("audio-waveform", 14), t("Togli i silenzi")),
             h("button.btn", { onclick: () => change((pp) => pp.clips.splice(ci + 1, 0, { ...JSON.parse(JSON.stringify(c)), id: uid(), transition: null })) }, t("Duplica")),
             h("button.btn", { onclick: () => change((pp) => (pp.clips[ci].muted = !pp.clips[ci].muted)) }, ico(c.muted ? "volume-2" : "volume-x", 14), c.muted ? t("Riattiva l'audio") : t("Togli l'audio")),
+            h("button.btn", { title: t("L’audio della clip diventa la traccia audio sotto il video: lo sposti, lo accorci e lo tagli da solo. La clip resta muta"), onclick: () => detachAudio(ci) }, ico("audio-waveform", 14), t("Stacca l’audio")),
             h("button.btn", { disabled: ci === 0 || null, onclick: () => change((pp) => { const [x] = pp.clips.splice(ci, 1); pp.clips.splice(ci - 1, 0, x); sel.index = ci - 1; }) }, t("◀ Sposta")),
             h("button.btn", { disabled: ci === p.clips.length - 1 || null, onclick: () => change((pp) => { const [x] = pp.clips.splice(ci, 1); pp.clips.splice(ci + 1, 0, x); sel.index = ci + 1; }) }, t("Sposta ▶")),
             h("button.btn", { onclick: () => { sel = { kind: "clip", index: ci }; deleteSelected(); } }, ico("trash-2", 14), t("Elimina"))),
@@ -904,8 +1046,15 @@ export function editorPage(app, onBack) {
           h("span.ic", ico("file-text", 16)), h("span.txt", h("b", t.text.slice(0, 40)), h("span", `${fmtTime(t.start)} – ${fmtTime(t.end)}`)))));
       }
     } else if (tool === "audio") {
-      box.push(h("div.group", t("Audio dei video")),
-        h("label.check", h("input", { type: "checkbox", checked: p.originalMuted || null, onchange: (e) => change((pp) => (pp.originalMuted = e.target.checked)) }), t("Senza audio originale")),
+      // 1.0.1 · Prima la clip scelta (un pezzo diviso è una clip a sé), poi tutti i video insieme
+      if (c) {
+        box.push(h("div.group", t("Audio di questa clip")),
+          h("p.hint", t`Clip ${ci + 1} di ${p.clips.length}: vale solo per questo pezzo`),
+          h("label.check", h("input", { type: "checkbox", checked: c.muted || null, onchange: (e) => change((pp) => (pp.clips[ci].muted = e.target.checked)) }), t("Muta questa clip")),
+          slider(t("Volume della clip"), c.volume ?? 1, 0, 2, 0.05, (v) => (p.clips[ci].volume = v), (v) => Math.round(v * 100) + "%"));
+      }
+      box.push(h("div.group", t("Tutti i video insieme")),
+        h("label.check", h("input", { type: "checkbox", checked: p.originalMuted || null, onchange: (e) => change((pp) => (pp.originalMuted = e.target.checked)) }), t("Muti tutti")),
         slider(t("Volume"), p.originalVolume ?? 1, 0, 2, 0.05, (v) => (p.originalVolume = v), (v) => Math.round(v * 100) + "%"));
       box.push(h("div.group", t("Musica")));
       if (!p.music) {
@@ -920,7 +1069,9 @@ export function editorPage(app, onBack) {
           slider(t("Dissolvenza iniziale"), m.fadeIn ?? 1, 0, 5, 0.5, (v) => (p.music.fadeIn = v), (v) => dec(String(v).replace(".", ",") + " s")),
           slider(t("Dissolvenza finale"), m.fadeOut ?? 2, 0, 5, 0.5, (v) => (p.music.fadeOut = v), (v) => dec(String(v).replace(".", ",") + " s")),
           h("div.btns",
-            h("button.btn", { onclick: () => setM((x) => (x.offset = time)) }, t("Parte qui")),
+            h("button.btn", { onclick: () => setM((x) => { x.offset = time; if (x.end != null && x.end < time + 0.2) x.end = null; }) }, t("Parte qui")),
+            h("button.btn", { title: t("La musica finisce nel punto dell’indicatore (oppure trascina il bordo destro della sua barra)"), onclick: () => { if (time > (m.offset || 0) + 0.2) setM((x) => (x.end = time)); } }, t("Finisce qui")),
+            m.end != null ? h("button.btn", { onclick: () => setM((x) => (x.end = null)) }, t("Fino alla fine")) : null,
             h("button.btn", { onclick: pickMusic }, t("Cambia")),
             h("button.btn", { onclick: () => change((pp) => (pp.music = null)) }, ico("trash-2", 14), t("Togli"))));
       }
@@ -1072,11 +1223,11 @@ export function editorPage(app, onBack) {
     const project = {
       name: p.name,
       clips: p.clips.map((c) => ({
-        path: c.path, in_point: c.in, out_point: c.out, muted: !!c.muted, look: lk(c.look),
+        path: c.path, in_point: c.in, out_point: c.out, muted: !!c.muted, volume: c.volume ?? null, look: lk(c.look),
         transition: c.transition ? { kind: c.transition.kind, duration: c.transition.duration } : null,
         fx: c.fx ? { speed: c.fx.speed || 1, zoom: c.fx.zoom || "none", flip_h: !!c.fx.flipH, flip_v: !!c.fx.flipV, rotate: c.fx.rotate || 0, blur: c.fx.blur || 0, fade_in: c.fx.fadeIn || 0, fade_out: c.fx.fadeOut || 0 } : null,
       })),
-      music: p.music ? { path: p.music.path, offset: p.music.offset || 0, in_point: p.music.in || 0, looped: !!p.music.looped, volume: p.music.volume ?? 0.8, fade_in: p.music.fadeIn ?? 1, fade_out: p.music.fadeOut ?? 2, duck: p.music.duck !== false } : null,
+      music: p.music ? { path: p.music.path, offset: p.music.offset || 0, in_point: p.music.in || 0, looped: !!p.music.looped, volume: p.music.volume ?? 0.8, fade_in: p.music.fadeIn ?? 1, fade_out: p.music.fadeOut ?? 2, duck: p.music.duck !== false, end: p.music.end ?? null } : null,
       original_volume: p.originalVolume ?? 1,
       original_muted: !!p.originalMuted,
       aspect: p.aspect || "orig",
@@ -1096,6 +1247,7 @@ export function editorPage(app, onBack) {
     const k = e.key;
     if ((e.ctrlKey || e.metaKey) && (k === "z" || k === "Z")) { e.preventDefault(); e.shiftKey ? doRedo() : doUndo(); return; }
     if ((e.ctrlKey || e.metaKey) && (k === "y" || k === "Y")) { e.preventDefault(); doRedo(); return; }
+    if ((e.ctrlKey || e.metaKey) && (k === "s" || k === "S")) { e.preventDefault(); saveNow(); return; }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (k === " " && !(e.target instanceof Element && e.target.closest("button"))) { e.preventDefault(); playing ? stop() : play(); }
     else if (k === "s" || k === "S") splitHere();
@@ -1104,8 +1256,11 @@ export function editorPage(app, onBack) {
     else if (k === "j" || k === "J") seekTo(time - 1);
     else if (k === "k" || k === "K") stop();
     else if (k === "l" || k === "L") play();
-    else if (k === "ArrowLeft") { e.preventDefault(); seekTo(time - (e.shiftKey ? 1 : 1 / (p.fps || 30))); }
-    else if (k === "ArrowRight") { e.preventDefault(); seekTo(time + (e.shiftKey ? 1 : 1 / (p.fps || 30))); }
+    // 1.0.1 · ← → un fotogramma, Maiusc un secondo, Alt un millisecondo; + e − lo zoom della sequenza
+    else if (k === "ArrowLeft") { e.preventDefault(); seekTo(time - (e.altKey ? 0.001 : e.shiftKey ? 1 : 1 / (p.fps || 30))); }
+    else if (k === "ArrowRight") { e.preventDefault(); seekTo(time + (e.altKey ? 0.001 : e.shiftKey ? 1 : 1 / (p.fps || 30))); }
+    else if (k === "+" || k === "=") { e.preventDefault(); zoomTo(pps * 1.6, time); }
+    else if (k === "-" || k === "_") { e.preventDefault(); zoomTo(pps / 1.6, time); }
     else if (k === "Home") seekTo(0);
     else if (k === "End") seekTo(total());
   }

@@ -45,6 +45,8 @@ pub struct Clip {
     pub in_point: f64,
     pub out_point: f64,
     pub muted: bool,
+    /// 1.0.1 · Volume di questa clip (None = 100%): ogni pezzo diviso ha il suo
+    pub volume: Option<f64>,
     pub look: Option<Look>,
     /// Tra la clip precedente e questa
     pub transition: Option<Transition>,
@@ -53,7 +55,7 @@ pub struct Clip {
 
 impl Clip {
     pub fn speed(&self) -> f64 {
-        self.fx.as_ref().map(|f| if f.speed > 0.0 { f.speed } else { 1.0 }).unwrap_or(1.0).clamp(0.25, 4.0)
+        self.fx.as_ref().map(|f| if f.speed > 0.0 { f.speed } else { 1.0 }).unwrap_or(1.0).clamp(0.25, 12.0)
     }
     pub fn length(&self) -> f64 {
         (self.out_point - self.in_point).max(0.0) / self.speed()
@@ -75,6 +77,8 @@ pub struct Music {
     pub fade_out: f64,
     /// Abbassa la musica quando si parla
     pub duck: bool,
+    /// 1.0.1 · Dove finisce nel montaggio (None = fino alla fine del video)
+    pub end: Option<f64>,
 }
 
 /// Un'immagine di una sequenza, con quanto resta sullo schermo.
@@ -265,7 +269,7 @@ pub fn build(p: &Project, infos: &[FileInfo], w: u32, h: u32) -> Result<(Vec<OsS
         g.push_str(&format!("[{i}:v]{}[v{i}];", v.join(",")));
 
         // Audio della clip
-        let vol = if c.muted { 0.0 } else { orig_vol };
+        let vol = if c.muted { 0.0 } else { orig_vol * c.volume.unwrap_or(1.0).clamp(0.0, 2.0) };
         if info.has_audio && vol > 0.001 {
             let mut au: Vec<String> = vec!["asetpts=PTS-STARTPTS".into(), "aresample=48000".into(), "aformat=sample_fmts=fltp:channel_layouts=stereo".into()];
             if (speed - 1.0).abs() > 0.001 {
@@ -372,7 +376,8 @@ pub fn build(p: &Project, infos: &[FileInfo], w: u32, h: u32) -> Result<(Vec<OsS
         }
         a.extend(args!["-ss", format!("{:.3}", m.in_point.max(0.0)), "-i", &m.path]);
         let idx = next_input;
-        let play = (total - m.offset.max(0.0)).max(0.1);
+        let stop = m.end.map(|e| e.min(total).max(m.offset.max(0.0) + 0.1)).unwrap_or(total);
+        let play = (stop - m.offset.max(0.0)).max(0.1);
         let vol = m.volume.clamp(0.0, 2.0);
         let mut mf = vec![format!("atrim=0:{play:.3}"), "asetpts=PTS-STARTPTS".into(), "aresample=48000".into(), "aformat=sample_fmts=fltp:channel_layouts=stereo".into(), format!("volume={vol:.3}")];
         if m.fade_in > 0.01 {
@@ -491,5 +496,18 @@ mod tests {
         assert!((total - 6.0).abs() < 1e-9);
         let g = a.iter().map(|x| x.to_string_lossy().to_string()).find(|x| x.contains("xfade")).unwrap();
         assert!(g.contains("xfade=transition=fade:duration=0.800:offset=3.600"), "{g}");
+    }
+
+    #[test]
+    fn volume_per_clip_e_fine_della_musica() {
+        let c1 = Clip { path: "a".into(), out_point: 4.0, ..Default::default() };
+        let c2 = Clip { path: "a".into(), in_point: 4.0, out_point: 8.0, volume: Some(0.25), ..Default::default() };
+        let song = env!("CARGO_MANIFEST_DIR").to_string() + "/Cargo.toml"; // basta un file che esista
+        let m = Music { path: song, offset: 1.0, end: Some(5.0), volume: 1.0, ..Default::default() };
+        let p = Project { clips: vec![c1, c2], music: Some(m), original_volume: 1.0, ..Default::default() };
+        let (a, _) = build(&p, &[info(1280, 720), info(1280, 720)], 1280, 720).unwrap();
+        let g = a.iter().map(|x| x.to_string_lossy().to_string()).find(|x| x.contains("[mus]")).unwrap();
+        assert!(g.contains("volume=0.250"), "il secondo pezzo ha il suo volume: {g}");
+        assert!(g.contains("atrim=0:4.000"), "la musica va da 1 a 5 s: {g}");
     }
 }

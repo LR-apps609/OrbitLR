@@ -1,8 +1,16 @@
 Novità per Windows 1.0.1 «Funzioni»:
-• Montaggio: nella scheda Clip ci sono «Funzioni» e anche la velocità della clip (da 0,25× a 4×), oltre che in Effetti
+• Montaggio: nella scheda Clip ci sono «Funzioni» e anche la velocità della clip, ora da 0,25× a 12× (nuove 6×, 8× e 12×)
+• Montaggio: ogni pezzo diviso ha il suo audio. In Audio, «Muta questa clip» e il volume valgono solo per il pezzo scelto; sotto, quelli di tutti i video insieme
+• Montaggio: zoom della sequenza fino al millisecondo (Ctrl + rotella, + e −); con Alt + ← → l'indicatore si sposta di un millisecondo
+• Montaggio: la barra della musica è trasparente con l'onda dentro, si trascina, e il bordo destro (o «Finisce qui») decide dove finisce. «Stacca l'audio» trasforma l'audio di una clip in una traccia da spostare e tagliare
+• Montaggio: «Salva progetto» in alto (Ctrl+S)
 
 What’s new in Windows 1.0.1 “Tools”:
-• Editor: the Clip tab now has “Tools” and the clip speed (0.25× to 4×) too, as well as in Effects
+• Editor: the Clip tab now has “Tools” and the clip speed too, now from 0.25× to 12× (new 6×, 8× and 12×)
+• Editor: every split piece has its own audio. In Audio, “Mute this clip” and the volume apply only to the chosen piece; below, those for all videos together
+• Editor: timeline zoom down to the millisecond (Ctrl + wheel, + and −); Alt + ← → moves the playhead by one millisecond
+• Editor: the music bar is transparent with the waveform inside, can be dragged, and its right edge (or “Ends here”) sets where it ends. “Detach audio” turns a clip’s audio into a track you can move and trim
+• Editor: “Save project” at the top (Ctrl+S)
 
 Novità per Windows 1.0 «Semplice»:
 • La nuova OrbitLR: ogni sezione (Immagini, Video, Audio, PDF e documenti) si apre in «Semplice», con le 6 cose che si fanno di più in grande. In alto l'interruttore «Semplice · Completo»: in Completo ci sono tutte le funzioni, in gruppi che si aprono uno alla volta. Ogni sezione si ricorda la tua scelta

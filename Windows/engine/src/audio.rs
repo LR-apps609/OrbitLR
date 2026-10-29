@@ -177,7 +177,7 @@ pub fn remove_silence(tools: &Tools, src: &Path, info: &FileInfo, dir: &Path, ca
 
 /// La catena di atempo per qualsiasi velocità (ogni anello tra 0,5 e 2).
 pub fn atempo_chain(factor: f64) -> String {
-    let mut f = if factor.is_finite() { factor.clamp(0.25, 4.0) } else { 1.0 };
+    let mut f = if factor.is_finite() { factor.clamp(0.25, 12.0) } else { 1.0 };
     let mut parts = Vec::new();
     while f > 2.0 {
         parts.push("atempo=2.0".to_string());

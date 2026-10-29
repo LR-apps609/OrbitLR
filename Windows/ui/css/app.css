@@ -397,6 +397,12 @@ textarea.tts:focus { border-color: var(--brass); }
 .tblk.on { box-shadow: 0 0 0 2px var(--brass); }
 .mblk { position: absolute; top: 0; height: 28px; border-radius: 8px; background: #D9A441; display: flex; align-items: center; gap: 6px; padding-left: 8px; color: #fff; cursor: pointer; overflow: hidden; }
 .mblk .lbl { position: static; }
+/* 1.0.1 · Barra della musica trasparente con l'onda dentro; il bordo destro decide dove finisce */
+.mblk.wave { background: rgba(217,164,65,.16); border: 1px solid #D9A441; color: #B98320; cursor: grab; align-items: flex-start; padding-top: 2px; }
+.mblk.wave .lbl { color: var(--ink, #222); text-shadow: none; position: relative; z-index: 1; font-size: 10.5px; }
+.mblk.wave svg { position: relative; z-index: 1; }
+.mblk .mwave { position: absolute; inset: 0; width: 100%; height: 100%; color: rgba(217,164,65,.85); pointer-events: none; }
+.mblk .edge.r { background: #D9A441; width: 7px; }
 .row .hint { position: absolute; top: 18px; color: var(--quiet); font-size: 12.5px; }
 .playhead { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--terra); pointer-events: none; z-index: 6; }
 .playhead::before { content: ""; position: absolute; top: 0; left: -5px; border: 6px solid transparent; border-top-color: var(--terra); }
