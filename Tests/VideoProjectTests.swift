@@ -77,6 +77,23 @@ final class VideoProjectTests: XCTestCase {
         XCTAssertEqual(firstReal?.timeMapping.target.start.seconds ?? -1, 3, accuracy: 0.05)
     }
 
+    /// 5.0.1 · Ogni pezzo diviso ha il suo volume: abbassarne uno non tocca gli altri.
+    func testClipVolumeOnlyOnThatClip() async throws {
+        let v = try await Fixtures.video(name: "voce.mp4", width: 320, height: 180, seconds: 6)
+        let iv = try await info(v)
+        var p = VideoProject()
+        p.clips = [clip(v, iv, 0, 3), clip(v, iv, 3, 6)]
+        p.clips[1].volume = 0.25
+        let built = try await VideoProjectBuilder.build(p, infos: [v.path: iv], speech: [:], maxSide: 640)
+        guard let op = built.audioMix.inputParameters.first else { return }     // il video di prova può non avere audio
+        var s1: Float = -1, e1: Float = -1, r1 = CMTimeRange()
+        _ = op.getVolumeRamp(for: CMTime(seconds: 1, preferredTimescale: 600), startVolume: &s1, endVolume: &e1, timeRange: &r1)
+        var s2: Float = -1, e2: Float = -1, r2 = CMTimeRange()
+        _ = op.getVolumeRamp(for: CMTime(seconds: 4.5, preferredTimescale: 600), startVolume: &s2, endVolume: &e2, timeRange: &r2)
+        XCTAssertEqual(s1, 1, accuracy: 0.01, "il primo pezzo resta al 100%")
+        XCTAssertEqual(s2, 0.25, accuracy: 0.01, "il secondo pezzo ha il suo volume")
+    }
+
     /// 5.0.1 · «Finisce qui»: la musica si ferma dove scegli, anche con «Ripeti».
     func testMusicEndsWhereChosen() async throws {
         let v = try await Fixtures.video(name: "fine.mp4", width: 320, height: 180, seconds: 8)

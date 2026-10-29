@@ -24,6 +24,9 @@ struct VPClip: Codable, Equatable, Identifiable, Sendable {
     /// 2.7.4 · Audio di questa clip spento (per un solo tratto: si divide la clip e si spegne quel pezzo).
     var muted: Bool? = nil
     var isMuted: Bool { muted ?? false }
+    /// 5.0.1 · Volume di questa clip (nil = 100%): ogni pezzo diviso ha il suo.
+    var volume: Double? = nil
+    var clipVolume: Double { min(1, max(0, volume ?? 1)) }
     /// 2.9 · Filtro e regolazioni solo di questa clip (nil = quelli di tutto il progetto).
     var look: VPLook? = nil
     /// 2.9.2 · Transizione tra la clip precedente e questa (nil = taglio netto).
@@ -280,6 +283,8 @@ enum VideoProjectBuilder {
         var fx: VPEffects? = nil
         var area: CGRect = .null
         var trackID: CMPersistentTrackID = kCMPersistentTrackID_Invalid
+        /// 5.0.1 · Volume della clip
+        var volume: Float = 1
     }
 
     /// 2.9.3 · Durata vera di una transizione: mai più del 40% di ciascuna delle due clip, mai più di 2 secondi.
@@ -350,7 +355,7 @@ enum VideoProjectBuilder {
             // Dove sta la clip sulla tela, con l'origine in basso (come Core Image)
             let area = CGRect(x: tx, y: canvas.height - ty - ds.height * fit, width: ds.width * fit, height: ds.height * fit)
             placements.append(Placement(start: cursor.seconds, end: (cursor + lenT).seconds, transform: t, look: p.effectiveLook(c),
-                                        fx: c.fx, area: area))
+                                        fx: c.fx, area: area, volume: Float(c.clipVolume)))
             cursor = cursor + lenT
         }
         guard cursor.seconds > 0.05 else { throw NativeError(String(localized: "il montaggio è vuoto")) }
@@ -442,10 +447,13 @@ enum VideoProjectBuilder {
             comp.removeTrack(aT)
         } else {
             let op = AVMutableAudioMixInputParameters(track: aT)
-            let vol = Float(p.originalMuted ? 0 : min(1, max(0, p.originalVolume)))
-            op.setVolume(vol, at: .zero)
+            let all = Float(p.originalMuted ? 0 : min(1, max(0, p.originalVolume)))
+            op.setVolume(all, at: .zero)
+            // 5.0.1 · Il volume di ogni clip (ogni pezzo diviso ha il suo), per il volume di tutti i video
+            for pl in placements { op.setVolume(all * pl.volume, at: cm(pl.start)) }
             // 2.9.8 · Dissolvenze delle clip anche nell'audio
             for (i, pl) in placements.enumerated() {
+                let vol = all * pl.volume
                 guard let fx = pl.fx else { continue }
                 let len = pl.end - pl.start
                 if fx.fadeIn > 0.01 {
@@ -455,7 +463,7 @@ enum VideoProjectBuilder {
                     let d = min(fx.fadeOut, len)
                     op.setVolumeRamp(fromStartVolume: vol, toEndVolume: 0, timeRange: CMTimeRange(start: cm(pl.end - d), duration: cm(d)))
                     let nextFades = i + 1 < placements.count && (placements[i + 1].fx?.fadeIn ?? 0) > 0.01
-                    if !nextFades { op.setVolume(vol, at: cm(pl.end)) }
+                    if !nextFades { op.setVolume(i + 1 < placements.count ? all * placements[i + 1].volume : vol, at: cm(pl.end)) }
                 }
             }
             op.audioTimePitchAlgorithm = .spectral        // 2.9.8 · velocità diverse: la voce non cambia tono

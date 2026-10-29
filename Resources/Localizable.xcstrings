@@ -2559,6 +2559,16 @@
         }
       }
     },
+    "Audio di questa clip": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio of this clip"
+          }
+        }
+      }
+    },
     "Audio e sottotitoli": {
       "localizations": {
         "en": {
@@ -3399,6 +3409,16 @@
           "stringUnit": {
             "state": "new",
             "value": "Clip %1$lld di %2$lld, %3$@"
+          }
+        }
+      }
+    },
+    "Clip %lld di %lld: vale solo per questo pezzo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clip %lld of %lld: applies to this piece only"
           }
         }
       }
@@ -8694,6 +8714,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Music to the end"
+          }
+        }
+      }
+    },
+    "Muta questa clip": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mute this clip"
+          }
+        }
+      }
+    },
+    "Muti tutti": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mute all"
           }
         }
       }
@@ -15519,6 +15559,16 @@
         }
       }
     },
+    "Tutti i video insieme": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All videos together"
+          }
+        }
+      }
+    },
     "Tutto": {
       "localizations": {
         "en": {
@@ -16237,6 +16287,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Volume"
+          }
+        }
+      }
+    },
+    "Volume della clip": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clip volume"
           }
         }
       }

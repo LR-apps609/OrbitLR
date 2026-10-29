@@ -1272,8 +1272,23 @@ struct VideoEditorView: View {
     }
 
     @ViewBuilder private var originalOptions: some View {
-        SectionLabel(text: String(localized: "Audio dei video"))
-        Toggle("Muto", isOn: Binding(get: { s.project.originalMuted },
+        // 5.0.1 · Prima la clip scelta (un pezzo diviso è una clip a sé), poi tutti i video insieme
+        if let i = s.targetIndex, s.project.clips.indices.contains(i) {
+            let c = s.project.clips[i]
+            SectionLabel(text: String(localized: "Audio di questa clip"))
+            Text("Clip \(i + 1) di \(s.project.clips.count): vale solo per questo pezzo").font(.system(size: 11.5)).foregroundStyle(.secondary)
+            Toggle("Muta questa clip", isOn: Binding(get: { c.isMuted }, set: { v in
+                s.change(undo, v ? String(localized: "Spegni l’audio della clip") : String(localized: "Riaccendi l’audio della clip")) { $0.clips[i].muted = v ? true : nil }
+            }))
+            .toggleStyle(.checkbox)
+            EditSlider(title: String(localized: "Volume"), value: c.clipVolume, range: 0...1,
+                       text: "\(Int((c.clipVolume * 100).rounded()))%", width: 260, s: s, undo: undo,
+                       name: String(localized: "Volume della clip")) { p, v in if p.clips.indices.contains(i) { p.clips[i].volume = v >= 0.995 ? nil : v } }
+                .disabled(c.isMuted)
+            Divider()
+        }
+        SectionLabel(text: String(localized: "Tutti i video insieme"))
+        Toggle("Muti tutti", isOn: Binding(get: { s.project.originalMuted },
                                       set: { v in s.change(undo, v ? String(localized: "Audio originale muto") : String(localized: "Audio originale attivo")) { $0.originalMuted = v } }))
             .toggleStyle(.checkbox)
         EditSlider(title: String(localized: "Volume"), value: s.project.originalVolume, range: 0...1,
@@ -2110,7 +2125,8 @@ private struct LookOptions: View {
     @ObservedObject var s: VideoProjectStore
     let undo: UndoManager?
     let tint: Color
-    @State private var onlyClip = false
+    /// 5.0.1 · Di base solo la clip scelta: quello che fai a un pezzo diviso resta su quel pezzo
+    @State private var onlyClip = true
 
     private var clipIndex: Int? { onlyClip ? s.targetIndex : nil }
 
