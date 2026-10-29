@@ -812,6 +812,8 @@ export function editorPage(app, onBack) {
       if (!c) box.push(h("p.hint", t("Aggiungi dei video con «Aggiungi video» o trascinandoli qui.")));
       else {
         box.push(h("div.group", t`Clip ${ci + 1} di ${p.clips.length}`), h("p.hint", t`${baseName(c.path)} · da ${fmtTime(c.in, true)} a ${fmtTime(c.out, true)} · ${fmtTime(clipLen(c), true)}`),
+          // 1.0.1 · «Funzioni»: tagli, spostamenti e la velocità della clip, nello stesso posto (come sul Mac 5.0.1)
+          h("div.group", t("Funzioni")),
           h("div.btns",
             h("button.btn", { onclick: splitHere }, ico("scissors", 14), t("Dividi qui")),
             h("button.btn", { title: t("Toglie le pause lunghe: utile per i video in cui parli"), onclick: () => removeSilences(ci) }, ico("audio-waveform", 14), t("Togli i silenzi")),
@@ -820,6 +822,9 @@ export function editorPage(app, onBack) {
             h("button.btn", { disabled: ci === 0 || null, onclick: () => change((pp) => { const [x] = pp.clips.splice(ci, 1); pp.clips.splice(ci - 1, 0, x); sel.index = ci - 1; }) }, t("◀ Sposta")),
             h("button.btn", { disabled: ci === p.clips.length - 1 || null, onclick: () => change((pp) => { const [x] = pp.clips.splice(ci, 1); pp.clips.splice(ci + 1, 0, x); sel.index = ci + 1; }) }, t("Sposta ▶")),
             h("button.btn", { onclick: () => { sel = { kind: "clip", index: ci }; deleteSelected(); } }, ico("trash-2", 14), t("Elimina"))),
+          h("div.group", t("Velocità")),
+          chips(SPEEDS.map((s) => [s, dec(String(s).replace(".", ",") + "×")]), c.fx?.speed || 1,
+            (v) => change((pp) => { const f = (pp.clips[ci].fx = pp.clips[ci].fx || {}); f.speed = v; })),
           h("p.hint", t("Trascina i bordi della clip nella sequenza per accorciarla; trascinala per spostarla. Tasti: S divide, Canc elimina, Ctrl+Z annulla.")));
       }
     } else if (tool === "look") {

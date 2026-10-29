@@ -254,6 +254,7 @@ export const EN = {
  "Fotografa il foglio su un fondo scuro, con tutti e quattro gli angoli dentro la foto.": "Photograph the sheet on a dark background, with all four corners inside the photo.",
  "Freddo": "Cool",
  "Full HD, HD o più piccolo, per pesare meno": "Full HD, HD, or smaller, for a smaller file",
+ "Funzioni": "Tools",
  "GIF da un pezzo": "GIF from a Part",
  "Generale": "General",
  "Grafica Intel": "Intel graphics",

@@ -1,3 +1,9 @@
+Novità per Windows 1.0.1 «Funzioni»:
+• Montaggio: nella scheda Clip ci sono «Funzioni» e anche la velocità della clip (da 0,25× a 4×), oltre che in Effetti
+
+What’s new in Windows 1.0.1 “Tools”:
+• Editor: the Clip tab now has “Tools” and the clip speed (0.25× to 4×) too, as well as in Effects
+
 Novità per Windows 1.0 «Semplice»:
 • La nuova OrbitLR: ogni sezione (Immagini, Video, Audio, PDF e documenti) si apre in «Semplice», con le 6 cose che si fanno di più in grande. In alto l'interruttore «Semplice · Completo»: in Completo ci sono tutte le funzioni, in gruppi che si aprono uno alla volta. Ogni sezione si ricorda la tua scelta
 • In Video «Montaggio» e in PDF e documenti «Editor PDF» sono nello stesso interruttore
