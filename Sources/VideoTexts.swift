@@ -263,6 +263,9 @@ struct TextOptions: View {
     @State private var typingBefore: VideoProject? = nil
     /// 3.3 · Sottotitoli automatici in corso, e l'esito in una frase.
     @State private var listening = false
+    /// 5.1 · avanzamento e annullamento dei sottotitoli automatici
+    @State private var listenProgress = 0.0
+    @State private var listenTask: Task<Void, Never>? = nil
     @State private var subsNote: String? = nil
 
     private var texts: [VPText] { s.project.texts ?? [] }
@@ -295,22 +298,29 @@ struct TextOptions: View {
             Button(action: add) { Label("Aggiungi un testo", systemImage: "plus").frame(maxWidth: .infinity) }
                 .buttonStyle(.borderedProminent).tint(Theme.accent)
             // 3.3 · Le parole dette nelle clip diventano sottotitoli, al momento giusto
-            Button {
-                listening = true
-                subsNote = nil
-                Task { @MainActor in
-                    subsNote = await AutoSubtitles.run(s, undo: undo)
-                    listening = false
+            if listening {
+                // 5.1 · Avanzamento e Interrompi
+                HStack(spacing: 8) {
+                    ProgressView(value: listenProgress).controlSize(.small)
+                    Text("Ascolto le clip… \(Int(listenProgress * 100))%").font(.system(size: 12)).monospacedDigit()
+                    Button("Interrompi") { listenTask?.cancel() }.controlSize(.small)
                 }
-            } label: {
-                HStack(spacing: 6) {
-                    if listening { ProgressView().controlSize(.small) } else { Image(systemName: "captions.bubble") }
-                    Text(listening ? String(localized: "Ascolto le clip…") : String(localized: "Sottotitoli automatici"))
+            } else {
+                Button {
+                    listening = true
+                    listenProgress = 0
+                    subsNote = nil
+                    listenTask = Task { @MainActor in
+                        subsNote = await AutoSubtitles.run(s, undo: undo) { p in listenProgress = p }
+                        listening = false
+                        listenTask = nil
+                    }
+                } label: {
+                    Label("Sottotitoli automatici", systemImage: "captions.bubble").frame(maxWidth: .infinity)
                 }
-                .frame(maxWidth: .infinity)
+                .disabled(s.project.clips.isEmpty)
+                .help(s.project.clips.isEmpty ? String(localized: "Aggiungi prima un video.") : String(localized: "OrbitLR ascolta le clip e scrive i sottotitoli in basso. Poi li correggi come gli altri testi; ⌘Z li toglie tutti"))
             }
-            .disabled(listening || s.project.clips.isEmpty)
-            .help("OrbitLR ascolta le clip e scrive i sottotitoli in basso. Poi li correggi come gli altri testi; ⌘Z li toglie tutti")
             if let n = subsNote {
                 Text(n).font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }

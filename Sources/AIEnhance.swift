@@ -38,7 +38,8 @@ enum AIEnhance {
         return (param.hasPrefix("n") ? 100 : 0, f)
     }
 
-    static func run(_ src: URL, param: String, out: URL, progress: @escaping (Double) -> Void) throws {
+    /// 5.1 · `cancelled`: se diventa vero (Interrompi), il lavoro si ferma al riquadro successivo.
+    static func run(_ src: URL, param: String, out: URL, cancelled: @escaping () -> Bool = { false }, progress: @escaping (Double) -> Void) throws {
         let parsed = parse(param)
         let factor = parsed.factor
         let strength = Double(parsed.strength) / 100
@@ -83,10 +84,10 @@ enum AIEnhance {
         let both = useFaithful && useSharp
         var imgA: CGImage? = nil, imgB: CGImage? = nil
         if let m = faithful {
-            imgA = try upscale4(source, width: ww, height: wh, model: m) { p in progress(both ? p / 2 : p) }
+            imgA = try upscale4(source, width: ww, height: wh, model: m, cancelled: cancelled) { p in progress(both ? p / 2 : p) }
         }
         if let m = sharpModel {
-            imgB = try upscale4(source, width: ww, height: wh, model: m) { p in progress(both ? 0.5 + p / 2 : p) }
+            imgB = try upscale4(source, width: ww, height: wh, model: m, cancelled: cancelled) { p in progress(both ? 0.5 + p / 2 : p) }
         }
         guard let big = imgA ?? imgB else { throw NativeError(String(localized: "Il modello di IA non ha prodotto un risultato")) }
         var result = CIImage(cgImage: big)
@@ -147,6 +148,7 @@ enum AIEnhance {
     // MARK: Riquadri
 
     private static func upscale4(_ img: CIImage, width w: Int, height h: Int, model: MLModel,
+                                 cancelled: () -> Bool = { false },
                                  progress: @escaping (Double) -> Void) throws -> CGImage {
         let step = tile - pad * 2
         let ow = w * scale, oh = h * scale
@@ -166,6 +168,7 @@ enum AIEnhance {
 
         for r in 0..<rows {
             for c in 0..<cols {
+                if cancelled() { throw NativeError("annullato") }       // 5.1 · Interrompi si ferma qui
                 let x0 = c * step, y0 = r * step
                 let region = CGRect(x: x0 - pad, y: y0 - pad, width: tile, height: tile)
                 let piece = extended.cropped(to: region)

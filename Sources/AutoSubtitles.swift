@@ -130,9 +130,13 @@ enum AutoSubtitles {
         req.shouldReportPartialResults = false
         req.requiresOnDeviceRecognition = true
         req.addsPunctuation = true
-        return try await withCheckedThrowingContinuation { c in
+        // 5.1 · «Interrompi» ferma anche l'ascolto in corso (Task annullato → riconoscimento annullato)
+        final class Box: @unchecked Sendable { var task: SFSpeechRecognitionTask? }
+        let box = Box()
+        return try await withTaskCancellationHandler {
+          try await withCheckedThrowingContinuation { c in
             var done = false
-            rec.recognitionTask(with: req) { result, error in
+            box.task = rec.recognitionTask(with: req) { result, error in
                 guard !done else { return }
                 if let result, result.isFinal {
                     done = true
@@ -145,20 +149,31 @@ enum AutoSubtitles {
                     c.resume(throwing: error)
                 }
             }
+          }
+        } onCancel: {
+            box.task?.cancel()
         }
     }
 
     /// Ascolta tutte le clip con l'audio acceso e mette i sottotitoli nel progetto (un solo ⌘Z li toglie).
+    /// 5.1 · `progress` da 0 a 1 (una clip alla volta); i sottotitoli vanno sempre nel progetto da cui sono partiti:
+    /// se intanto hai cambiato progetto o le clip, non si mettono nel posto sbagliato.
     @MainActor
-    static func run(_ s: VideoProjectStore, undo: UndoManager?) async -> String {
+    static func run(_ s: VideoProjectStore, undo: UndoManager?, progress: @escaping (Double) -> Void = { _ in }) async -> String {
         guard await authorize() else {
             return String(localized: "Per i sottotitoli serve il permesso «Riconoscimento vocale»: Impostazioni di Sistema → Privacy e sicurezza.")
         }
+        let projectID = s.currentID, signature = s.project.timingSignature
         let clips = s.project.clips, starts = s.project.starts
         var all: [Line] = []
         var cache: [String: [Word]] = [:]
         var offline = false
+        let total = max(1, clips.filter { !$0.isMuted }.count)
+        var done = 0
+        progress(0)
         for (c, start) in zip(clips, starts) where !c.isMuted {
+            if Task.isCancelled { return String(localized: "Sottotitoli interrotti: non ho aggiunto niente.") }
+            defer { done += 1; progress(Double(done) / Double(total)) }
             let ws: [Word]
             if let hit = cache[c.path] { ws = hit } else {
                 do { ws = try await words(in: c.url, locale: preferredLocale()) }
@@ -171,6 +186,13 @@ enum AutoSubtitles {
         if all.isEmpty && offline {
             // 3.5.2 · L'audio non lascia mai il Mac: se la lingua non è pronta, si spiega come averla
             return String(localized: "Il Mac non ha ancora la lingua per riconoscere la voce senza internet. Impostazioni di Sistema → Tastiera → Dettatura: attivala con la lingua giusta, attendi lo scaricamento e riprova.")
+        }
+        if Task.isCancelled { return String(localized: "Sottotitoli interrotti: non ho aggiunto niente.") }
+        guard s.currentID == projectID else {
+            return String(localized: "Hai aperto un altro progetto mentre ascoltavo: i sottotitoli non sono stati aggiunti. Torna al progetto e riprova.")
+        }
+        guard s.project.timingSignature == signature else {
+            return String(localized: "Le clip sono cambiate mentre ascoltavo: premi di nuovo «Sottotitoli automatici».")
         }
         guard !all.isEmpty else { return String(localized: "Non ho sentito parole nelle clip (o l’audio è spento).") }
         let new = texts(all)

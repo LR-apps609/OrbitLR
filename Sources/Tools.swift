@@ -43,7 +43,20 @@ enum Tools {
             var inpainter: Inpainter? = nil
             if spec.style == "ai" {
                 if !ModelStore.shared.isReady { await MainActor.run { job.status = String(localized: "Scarico il modello di IA (solo la prima volta)…") } }
-                inpainter = Inpainter(model: try await ModelStore.shared.lama())
+                // 5.1 · Il download si vede in percentuale e «Interrompi» lo ferma davvero
+                let load = Task { try await ModelStore.shared.lama() }
+                let watch = Task { @MainActor in
+                    while !Task.isCancelled {
+                        if job.cancelRequested { load.cancel(); break }
+                        if let p = ModelStore.shared.progress {
+                            job.status = String(localized: "Scarico il modello di IA (solo la prima volta)… \(Int(p * 100))%")
+                        }
+                        try? await Task.sleep(nanoseconds: 250_000_000)
+                    }
+                }
+                defer { watch.cancel() }
+                do { inpainter = Inpainter(model: try await load.value) }
+                catch { if job.cancelRequested { throw NativeError("annullato") } else { throw error } }
                 await MainActor.run { job.status = String(localized: "Ricostruisco la zona con l’IA…") }
             }
             if kind == .video {
@@ -84,7 +97,7 @@ enum Tools {
             let parsed = AIEnhance.parse(p)
             let label = parsed.factor == 1 ? FileTag.t("migliorata") : "\(FileTag.t("IA")) \(parsed.factor)×"
             let out = Destination.unique(dir, base: "\(base) (\(label))", ext: ext)
-            try AIEnhance.run(file, param: p, out: out, progress: progress)
+            try AIEnhance.run(file, param: p, out: out, cancelled: { job.cancelRequested }, progress: progress)
             return out
         case "vector":
             // 4.3 · Vettoriale (SVG), con lo stesso motore di Windows
@@ -92,11 +105,11 @@ enum Tools {
             if job.param == "pack" {
                 let root = "\(base) (\(FileTag.t("pacchetto logo")))"
                 let out = Destination.unique(dir, base: root, ext: "zip")
-                try Vector.run(file, param: "pack", out: out, name: base, root: out.deletingPathExtension().lastPathComponent, progress: progress)
+                try Vector.run(file, param: "pack", out: out, name: base, root: out.deletingPathExtension().lastPathComponent, job: job, progress: progress)
                 return out
             }
             let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("vettoriale")))", ext: "svg")
-            try Vector.run(file, param: job.param.isEmpty ? "auto" : job.param, out: out, progress: progress)
+            try Vector.run(file, param: job.param.isEmpty ? "auto" : job.param, out: out, job: job, progress: progress)
             return out
         default:
             throw NativeError(String(localized: "Strumento sconosciuto"))

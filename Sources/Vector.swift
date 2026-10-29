@@ -33,7 +33,9 @@ enum Vector {
         }
     }
 
-    static func run(_ src: URL, param: String, out: URL, name: String? = nil, root: String? = nil, progress: @escaping (Double) -> Void) throws {
+    /// 5.1 · `job`: Interrompi chiude davvero il motore (prima il lavoro arrivava fino in fondo).
+    static func run(_ src: URL, param: String, out: URL, name: String? = nil, root: String? = nil, job: Job? = nil,
+                    progress: @escaping (Double) -> Void) throws {
         guard let exe = Paths.motori?.appendingPathComponent("orbit-vector"),
               FileManager.default.isExecutableFile(atPath: exe.path) else {
             throw NativeError(String(localized: "Manca il motore del vettoriale nell’app: reinstalla OrbitLR"))
@@ -57,10 +59,12 @@ enum Vector {
             let up = tmp.appendingPathComponent("ingrandita.png")
             do {
                 // «Più nitido» 4×: i bordi tornano netti
-                try AIEnhance.run(input, param: "b100-4", out: up, progress: { p in progress(p * 0.6) })
+                try AIEnhance.run(input, param: "b100-4", out: up, cancelled: { job?.cancelRequested ?? false },
+                                  progress: { p in progress(p * 0.6) })
                 args += ["--upscaled", up.path]
                 base = 0.6
             } catch {
+                if job?.cancelRequested == true { throw NativeError("annullato") }
                 NSLog("Vettoriale: ingrandimento con l’IA non riuscito (\(error.localizedDescription)), vado avanti senza")
             }
         }
@@ -86,9 +90,16 @@ enum Vector {
                 }
             }
         }
+        if job?.cancelRequested == true { throw NativeError("annullato") }
         try p.run()
+        job?.process = p                                   // 5.1 · così «Interrompi» lo chiude
         p.waitUntilExit()
+        job?.process = nil
         err.fileHandleForReading.readabilityHandler = nil
+        if job?.cancelRequested == true {
+            try? FileManager.default.removeItem(at: out)
+            throw NativeError("annullato")
+        }
         lock.lock(); let msg = lastError; lock.unlock()
         guard p.terminationStatus == 0, FileManager.default.fileExists(atPath: out.path) else {
             throw NativeError(msg.isEmpty ? String(localized: "Il vettoriale non è riuscito") : msg.prefix(1).uppercased() + msg.dropFirst())
