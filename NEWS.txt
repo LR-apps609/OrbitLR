@@ -1,3 +1,7 @@
+What’s new in 5.0.2 “Sonoma”:
+• On macOS 14 (Sonoma) the sidebar no longer stays “squeezed” with cut-off items: it redraws once the window is in place and when its width changes
+• Video thumbnails show up even when Quick Look doesn’t provide them (it happened on some Macs with macOS 14)
+
 What’s new in 5.0.1 “Tools”:
 • Editor: in the Clip tab the “Trim” part is now “Tools”, and the clip speed (0.25× to 4×) is there too, as well as in Effects. New 6×, 8× and 12× speeds
 • Editor: every split piece has its own audio. In Audio, “Mute this clip” and the volume apply only to the chosen piece; below, those for all videos together. Filters, by default, go on the chosen clip only
