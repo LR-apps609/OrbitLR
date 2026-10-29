@@ -64,6 +64,13 @@ struct MainWindow: View {
     @AppStorage("sidebarAdvanced") private var advancedOpen = false
     /// 3.4.2 · Le schede già aperte almeno una volta (restano vive)
     @State private var visited: Set<SidebarItem> = []
+    /// 5.0.2 · macOS 14 (Sonoma) a volte disegna la barra laterale prima di sapere quanto è larga (voci «I…»,
+    /// sotto i pallini della finestra) e poi non la ridisegna. Lì la si ricostruisce quando cambia larghezza o si riapre.
+    @State private var sidebarVisibility: NavigationSplitViewVisibility = .all
+    @State private var sidebarBucket = 0
+    @State private var sidebarKick = 0
+    private static let sonoma = ProcessInfo.processInfo.operatingSystemVersion.majorVersion < 15
+    private var sidebarID: String { Self.sonoma ? "\(sidebarBucket)-\(sidebarKick)-\(sidebarVisibility == .detailOnly ? 0 : 1)" : "s" }
 
     private var current: SidebarItem { app.selection ?? .workspace }
 
@@ -100,7 +107,7 @@ struct MainWindow: View {
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $sidebarVisibility) {
             VStack(spacing: 0) {
                 HStack(spacing: 10) {
                     Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 30, height: 30)
@@ -174,6 +181,19 @@ struct MainWindow: View {
                 .padding(12)
             }
             .background(LinearGradient(colors: [Theme.sageLight, Theme.sage.opacity(0.85)], startPoint: .top, endPoint: .bottom))
+            .id(sidebarID)
+            .background(GeometryReader { g in Color.clear.preference(key: SidebarWidthKey.self, value: g.size.width) })
+            .onPreferenceChange(SidebarWidthKey.self) { w in
+                guard Self.sonoma else { return }
+                let b = Int((w / 6).rounded())
+                if b != sidebarBucket { sidebarBucket = b }
+            }
+            .onAppear {
+                // Sonoma: un secondo disegno a finestra già al suo posto
+                guard Self.sonoma, sidebarKick == 0 else { return }        // una volta sola (il ridisegno la fa riapparire)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { sidebarKick = 1 }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { sidebarKick = 2 }
+            }
             .navigationSplitViewColumnWidth(min: 210, ideal: 230)
         } detail: {
             // 3.4.2 · Schede istantanee: le schede di lavoro restano vive dopo la prima apertura.
@@ -1099,4 +1119,10 @@ struct MenuUpdateRow: View {
             .disabled(badge.installing)
         }
     }
+}
+
+/// 5.0.2 · La larghezza della barra laterale (per ridisegnarla su Sonoma).
+private struct SidebarWidthKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
 }

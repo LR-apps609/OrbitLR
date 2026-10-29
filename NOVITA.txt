@@ -1,3 +1,7 @@
+Novità della 5.0.2 «Sonoma»:
+• Su macOS 14 (Sonoma) la barra a sinistra non resta più «schiacciata» con le voci tagliate: si ridisegna appena la finestra è al suo posto e quando cambia larghezza
+• Le miniature dei video compaiono anche quando Quick Look non le dà (succedeva su alcuni Mac con macOS 14)
+
 Novità della 5.0.1 «Funzioni»:
 • Montaggio: nella scheda Clip la parte «Taglia» si chiama «Funzioni» e c’è anche la velocità della clip (da 0,25× a 4×), oltre che in Effetti. Nuove velocità 6×, 8× e 12×
 • Montaggio: ogni pezzo diviso ha il suo audio. In Audio, «Muta questa clip» e il volume valgono solo per il pezzo scelto; sotto, quelli di tutti i video insieme. I filtri, di base, vanno solo sulla clip scelta

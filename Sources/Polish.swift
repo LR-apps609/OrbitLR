@@ -1,3 +1,6 @@
+import ImageIO
+import UniformTypeIdentifiers
+import AVFoundation
 import SwiftUI
 import QuartzCore
 import AppKit
@@ -66,7 +69,8 @@ final class ThumbCache: @unchecked Sendable {
             let req = QLThumbnailGenerator.Request(fileAt: url, size: CGSize(width: side, height: side),
                                                    scale: 2, representationTypes: .thumbnail)
             QLThumbnailGenerator.shared.generateBestRepresentation(for: req) { [weak self] rep, _ in
-                let img = rep?.nsImage
+                // 5.0.2 · Se Quick Look non dà la miniatura (su alcuni Mac con macOS 14, per i video), la si fa da sé
+                let img = rep?.nsImage ?? Self.fallback(url, side: side)
                 if img == nil { self?.latest.removeObject(forKey: quick) }
                 if let img, let self {
                     self.cache.setObject(img, forKey: k as NSString)
@@ -83,6 +87,28 @@ final class ThumbCache: @unchecked Sendable {
                 DispatchQueue.main.async { done(img) }
             }
         }
+    }
+
+    /// 5.0.2 · Miniatura senza Quick Look: un fotogramma per i video, ImageIO per le foto.
+    static func fallback(_ url: URL, side: CGFloat) -> NSImage? {
+        let type = UTType(filenameExtension: url.pathExtension.lowercased())
+        if type?.conforms(to: .movie) == true || type?.conforms(to: .video) == true {
+            let gen = AVAssetImageGenerator(asset: AVURLAsset(url: url))
+            gen.appliesPreferredTrackTransform = true
+            gen.maximumSize = CGSize(width: side * 2, height: side * 2)
+            gen.requestedTimeToleranceAfter = CMTime(seconds: 1, preferredTimescale: 600)
+            for t in [0.5, 0.0] {
+                if let cg = try? gen.copyCGImage(at: CMTime(seconds: t, preferredTimescale: 600), actualTime: nil) {
+                    return NSImage(cgImage: cg, size: .zero)
+                }
+            }
+            return nil
+        }
+        guard let src = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
+        let opts: [CFString: Any] = [kCGImageSourceCreateThumbnailFromImageAlways: true, kCGImageSourceThumbnailMaxPixelSize: side * 2,
+                                     kCGImageSourceCreateThumbnailWithTransform: true]
+        guard let cg = CGImageSourceCreateThumbnailAtIndex(src, 0, opts as CFDictionary) else { return nil }
+        return NSImage(cgImage: cg, size: .zero)
     }
 
     /// La stessa, da attendere dentro una `.task` (così una risposta per un file vecchio si può scartare).
