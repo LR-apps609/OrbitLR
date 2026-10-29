@@ -633,18 +633,26 @@ struct PermissionsView: View {
                         status(it.state)
                     }
                     .padding(.vertical, 5).padding(.horizontal, 12)
+                    // 5.0.1 · Le notifiche si chiedono con un avviso, non con una finestra: si dice dove guardare
+                    if it.id == "notifications" && it.state == .asking {
+                        Text("macOS lo chiede con un avviso in alto a destra: premi «Opzioni» → «Consenti».")
+                            .font(.system(size: 11)).foregroundStyle(Theme.brass)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.leading, 44).padding(.trailing, 12).padding(.bottom, 4)
+                    }
                 }
             }
             .padding(.vertical, 4)
             .background(RoundedRectangle(cornerRadius: 12).fill(Theme.ink.opacity(0.05)))
             .padding(.horizontal, 28)
-            if p.items.contains(where: { $0.state == .denied }) {
+            if p.items.contains(where: { $0.state == .denied || $0.state == .later }) {
                 Text("Quelli con ✕ si possono dare dopo in Impostazioni di Sistema → Privacy e sicurezza.")
                     .font(.system(size: 11)).foregroundStyle(.secondary)
             }
             Spacer(minLength: 0)
             HStack {
-                if !p.done && !p.running { Button("Più tardi") { onDone() } }
+                // 5.0.1 · «Più tardi» anche mentre chiede: se una richiesta di macOS non si vede, non si resta bloccati
+                if !p.done { Button("Più tardi") { onDone() } }
                 Spacer()
                 Button(p.done ? String(localized: "Continua") : String(localized: "Concedi i permessi")) {
                     if p.done { onDone() } else { p.askAll { } }
@@ -663,6 +671,7 @@ struct PermissionsView: View {
         case .asking: ProgressView().controlSize(.small)
         case .granted: Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.green)
         case .denied: Image(systemName: "xmark.circle.fill").foregroundStyle(.red.opacity(0.75))
+        case .later: Image(systemName: "clock").foregroundStyle(Theme.ink.opacity(0.45)).help("Si può dare dopo")
         }
     }
 }

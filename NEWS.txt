@@ -1,5 +1,6 @@
 What’s new in 5.0.1 “Tools”:
 • Editor: in the Clip tab the “Trim” part is now “Tools”, and the clip speed (0.25× to 4×) is there too, as well as in Effects
+• Permissions at first launch: notifications no longer wait forever. OrbitLR tells you where to look (the notice at the top right) and, if you don’t answer, moves on: you can allow them later. “Later” works while it asks, too
 
 What’s new in 5.0 “Simple”:
 • The new OrbitLR: every section (Images, Video, Audio, PDFs and documents) opens in “Simple”, with the 6 things people do most, big. At the top the “Simple · Complete” switch: Complete has every feature, in groups that open one at a time. Each section remembers your choice

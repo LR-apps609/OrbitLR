@@ -13140,6 +13140,16 @@
         }
       }
     },
+    "Si può dare dopo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can allow it later"
+          }
+        }
+      }
+    },
     "Si può sempre annullare": {
       "localizations": {
         "en": {
@@ -17010,6 +17020,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "macOS stopped the job: try again (if your Mac was asleep or under heavy load, it should work now)."
+          }
+        }
+      }
+    },
+    "macOS lo chiede con un avviso in alto a destra: premi «Opzioni» → «Consenti».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS asks with a notice at the top right: click “Options” → “Allow”."
           }
         }
       }
