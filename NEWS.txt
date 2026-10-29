@@ -1,6 +1,7 @@
 What’s new in 5.0.2 “Sonoma”:
 • On macOS 14 (Sonoma) the sidebar no longer stays “squeezed” with cut-off items: it redraws once the window is in place and when its width changes
 • Video thumbnails show up even when Quick Look doesn’t provide them (it happened on some Macs with macOS 14)
+• Editor: if macOS rejects the preview (seen on macOS 14 with two or more videos), OrbitLR rebuilds it with the simple engine instead of leaving it empty, and writes the reason in the log (sent with “Report”). Same for exporting
 
 What’s new in 5.0.1 “Tools”:
 • Editor: in the Clip tab the “Trim” part is now “Tools”, and the clip speed (0.25× to 4×) is there too, as well as in Effects. New 6×, 8× and 12× speeds
