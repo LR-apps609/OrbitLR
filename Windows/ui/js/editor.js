@@ -961,6 +961,8 @@ export function editorPage(app, onBack) {
             h("button.btn", { onclick: () => change((pp) => pp.clips.splice(ci + 1, 0, { ...JSON.parse(JSON.stringify(c)), id: uid(), transition: null })) }, t("Duplica")),
             h("button.btn", { onclick: () => change((pp) => (pp.clips[ci].muted = !pp.clips[ci].muted)) }, ico(c.muted ? "volume-2" : "volume-x", 14), c.muted ? t("Riattiva l'audio") : t("Togli l'audio")),
             h("button.btn", { title: t("L’audio della clip diventa la traccia audio sotto il video: lo sposti, lo accorci e lo tagli da solo. La clip resta muta"), onclick: () => detachAudio(ci) }, ico("audio-waveform", 14), t("Stacca l’audio")),
+            // 1.0.1 · Solo il pezzo tenuto nella clip, in un file audio accanto al video
+            h("button.btn", { title: t("Solo il pezzo tenuto nella clip"), onclick: () => run("cut", [{ path: c.path, name: baseName(c.path), size: infos[c.path]?.size || 0 }], { start: +c.in.toFixed(3), end: +c.out.toFixed(3), audio: true }, "editor") }, ico("music", 14), t("Estrai l’audio della clip")),
             h("button.btn", { disabled: ci === 0 || null, onclick: () => change((pp) => { const [x] = pp.clips.splice(ci, 1); pp.clips.splice(ci - 1, 0, x); sel.index = ci - 1; }) }, t("◀ Sposta")),
             h("button.btn", { disabled: ci === p.clips.length - 1 || null, onclick: () => change((pp) => { const [x] = pp.clips.splice(ci, 1); pp.clips.splice(ci + 1, 0, x); sel.index = ci + 1; }) }, t("Sposta ▶")),
             h("button.btn", { onclick: () => { sel = { kind: "clip", index: ci }; deleteSelected(); } }, ico("trash-2", 14), t("Elimina"))),

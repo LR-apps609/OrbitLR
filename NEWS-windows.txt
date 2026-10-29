@@ -1,3 +1,9 @@
+Novità per Windows 1.0.2:
+• Montaggio: «Estrai l'audio della clip» salva solo il pezzo tenuto, in un file audio accanto al video
+
+What’s new in Windows 1.0.2:
+• Editor: “Extract the clip’s audio” saves only the part you kept, as an audio file next to the video
+
 Novità per Windows 1.0.1 «Funzioni»:
 • Montaggio: nella scheda Clip ci sono «Funzioni» e anche la velocità della clip, ora da 0,25× a 12× (nuove 6×, 8× e 12×)
 • Montaggio: ogni pezzo diviso ha il suo audio. In Audio, «Muta questa clip» e il volume valgono solo per il pezzo scelto; sotto, quelli di tutti i video insieme
