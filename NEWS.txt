@@ -1,5 +1,7 @@
 What’s new in 5.0.1 “Tools”:
-• Editor: in the Clip tab the “Trim” part is now “Tools”, and the clip speed (0.25× to 4×) is there too, as well as in Effects
+• Editor: in the Clip tab the “Trim” part is now “Tools”, and the clip speed (0.25× to 4×) is there too, as well as in Effects. New 6×, 8× and 12× speeds
+• Editor: every split piece has its own audio. In Audio, “Mute this clip” and the volume apply only to the chosen piece; below, those for all videos together. Filters, by default, go on the chosen clip only
+• Editor: timeline zoom down to the millisecond (⌘+ and ⌘−, or two fingers on the trackpad); ⌥← → moves the playhead by one millisecond
 • Editor: “Ends here” for the music (or drag the right edge of its bar), and the bar shows the waveform: you see where there’s sound. “Detach audio” turns a clip’s audio into a track you can move and trim. “Extract the clip’s audio” saves only the part you kept
 • Editor: “Save project” at the top (⌘S), and “Discard” asks first
 • Trimming MP3s (including those made with OrbitLR): preview and trimmed file start exactly where the waveform shows. Before, on some MP3s, they started a few seconds later

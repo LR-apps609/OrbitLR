@@ -8398,6 +8398,16 @@
         }
       }
     },
+    "Meno zoom (⌘−)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom out (⌘−)"
+          }
+        }
+      }
+    },
     "Menu a torta": {
       "localizations": {
         "en": {
@@ -10586,6 +10596,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Later"
+          }
+        }
+      }
+    },
+    "Più zoom, fino al millisecondo (⌘+, oppure due dita sul trackpad). ⌥← → sposta di un millisecondo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom in, down to the millisecond (⌘+, or two fingers on the trackpad). ⌥← → moves by one millisecond"
           }
         }
       }
@@ -15595,6 +15615,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Whole edit"
+          }
+        }
+      }
+    },
+    "Tutto il montaggio nella larghezza": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fit the whole edit"
           }
         }
       }

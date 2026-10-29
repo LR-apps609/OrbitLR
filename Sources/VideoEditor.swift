@@ -97,6 +97,8 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     var songDuration: Double? { project.music.flatMap { infos[$0.path]?.duration } }
     /// 5.0.1 · L'onda della musica (o dell'audio staccato), per disegnarla dentro la sua barra: 50 punti al secondo.
     @Published private(set) var musicPeaks: [Float] = []
+    /// 5.0.1 · Zoom della sequenza (1 = tutto il montaggio nella larghezza): fino al millisecondo
+    @Published var timelineZoom: Double = 1
     private var musicPeaksPath: String? = nil
     static let musicPeaksRate = 50.0
     func loadMusicPeaks() {
@@ -1395,6 +1397,9 @@ private struct EditorKeys: View {
             key(.rightArrow, []) { arrow(1) { s.step(1.0 / 30) } }
             key(.leftArrow, .shift) { arrow(-1) { s.step(-1) } }
             key(.rightArrow, .shift) { arrow(1) { s.step(1) } }
+            // 5.0.1 · ⌥ ← → un millisecondo
+            key(.leftArrow, .option) { arrow(-1) { s.step(-0.001) } }
+            key(.rightArrow, .option) { arrow(1) { s.step(0.001) } }
             key(.home, []) { s.pause(); s.seek(0) }
             key(.end, []) { s.pause(); s.seek(s.project.duration) }
         }
@@ -1565,7 +1570,7 @@ private struct PlaybackBar: View {
             .help("Riproduci / pausa (Spazio)")
             .accessibilityLabel(clock.playing ? String(localized: "Pausa") : String(localized: "Riproduci"))
             Spacer()
-            Text("\(formatTime(clock.time)) / \(formatTime(s.project.duration))")
+            Text("\(s.timelineZoom > 1.01 ? formatTimeMs(clock.time) : formatTime(clock.time)) / \(formatTime(s.project.duration))")
                 .font(.system(size: 12, design: .rounded)).monospacedDigit().foregroundStyle(Color.white.opacity(0.9))
         }
         .padding(10)
@@ -1660,35 +1665,88 @@ private struct ProjectTimeline: View {
     @State private var frozenPPS: CGFloat = 1
     @State private var transitionFor: UUID? = nil
 
+    /// 5.0.1 · Lo zoom più forte: fino a 4000 punti al secondo (un millisecondo = 4 punti), senza superare
+    /// una sequenza larga 16 000 punti (oltre, macOS non disegna più le immagini).
+    private func maxZoom(total: Double, width: CGFloat) -> Double {
+        max(1, min(4000 * total, 16_000) / Double(max(width, 1)))
+    }
+
     var body: some View {
         GeometryReader { g in
             let total = max(s.project.duration, 0.1)
-            let pps = g.size.width / CGFloat(total)
-            ZStack(alignment: .topLeading) {
-                VStack(alignment: .leading, spacing: 6) {
-                    ruler(total: total, pps: pps, width: g.size.width)
-                        .frame(height: 16)
-                    clipsRow(pps: pps)
-                        .frame(height: 52)
-                    textsRow(total: total, pps: pps, width: g.size.width)
-                        .frame(height: 22)
-                    musicRow(total: total, pps: pps, width: g.size.width)
-                        .frame(height: 26)
+            let zoom = min(max(1, s.timelineZoom), maxZoom(total: total, width: g.size.width))
+            let width = g.size.width * CGFloat(zoom)
+            let pps = width / CGFloat(total)
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: zoom > 1.01) {
+                    ZStack(alignment: .topLeading) {
+                        // Il punto dell'indicatore: lo zoom lo tiene in vista
+                        HStack(spacing: 0) {
+                            Color.clear.frame(width: max(0, CGFloat(clock.time) * pps), height: 1)
+                            Color.clear.frame(width: 1, height: 1).id("indicatore")
+                        }
+                        VStack(alignment: .leading, spacing: 6) {
+                            ruler(total: total, pps: pps, width: width)
+                                .frame(height: 16)
+                            clipsRow(pps: pps)
+                                .frame(height: 52)
+                            textsRow(total: total, pps: pps, width: width)
+                                .frame(height: 22)
+                            musicRow(total: total, pps: pps, width: width)
+                                .frame(height: 26)
+                        }
+                        PlayheadLine(clock: clock, pps: pps, size: CGSize(width: width, height: g.size.height))
+                            .allowsHitTesting(false)
+                    }
+                    .frame(width: width, height: g.size.height, alignment: .topLeading)
                 }
-                PlayheadLine(clock: clock, pps: pps, size: g.size)
-                    .allowsHitTesting(false)
+                .scrollDisabled(zoom <= 1.01)
+                .onChange(of: s.timelineZoom) { _, _ in
+                    DispatchQueue.main.async { proxy.scrollTo("indicatore", anchor: .center) }
+                }
+                .gesture(MagnifyGesture().onChanged { v in
+                    if zoomStart == nil { zoomStart = s.timelineZoom }
+                    s.timelineZoom = min(max(1, (zoomStart ?? 1) * v.magnification), maxZoom(total: total, width: g.size.width))
+                }.onEnded { _ in zoomStart = nil })
+                .overlay(alignment: .topTrailing) { zoomControls(total: total, width: g.size.width) }
             }
         }
     }
 
+    @State private var zoomStart: Double? = nil
+
+    /// 5.0.1 · − / + e «Adatta»: lo zoom della sequenza (anche con due dita sul trackpad, ⌘+ e ⌘−)
+    private func zoomControls(total: Double, width: CGFloat) -> some View {
+        let mz = maxZoom(total: total, width: width)
+        return HStack(spacing: 2) {
+            Button { s.timelineZoom = max(1, s.timelineZoom / 1.8) } label: { Image(systemName: "minus.magnifyingglass") }
+                .keyboardShortcut("-", modifiers: .command)
+                .help("Meno zoom (⌘−)")
+            Button { s.timelineZoom = min(mz, s.timelineZoom * 1.8) } label: { Image(systemName: "plus.magnifyingglass") }
+                .keyboardShortcut("+", modifiers: .command)
+                .help("Più zoom, fino al millisecondo (⌘+, oppure due dita sul trackpad). ⌥← → sposta di un millisecondo")
+            if s.timelineZoom > 1.01 {
+                Button { s.timelineZoom = 1 } label: { Image(systemName: "arrow.left.and.right.square") }
+                    .help("Tutto il montaggio nella larghezza")
+            }
+        }
+        .buttonStyle(.plain)
+        .font(.system(size: 12, weight: .semibold))
+        .foregroundStyle(Theme.ink.opacity(0.7))
+        .padding(.horizontal, 6).padding(.vertical, 2)
+        .background(Capsule().fill(Theme.background.opacity(0.92)))
+        .offset(y: -2)
+    }
+
     // Righello: clic o trascinamento per spostarsi
     private func ruler(total: Double, pps: CGFloat, width: CGFloat) -> some View {
-        let step: Double = total <= 20 ? 2 : total <= 60 ? 5 : total <= 180 ? 15 : total <= 600 ? 60 : 300
+        // 5.0.1 · Con lo zoom il righello arriva ai millesimi
+        let step = TrimTimeline.tickStep(span: total, width: width * 0.75)
         let marks = Array(stride(from: 0.0, through: total, by: step))
         return ZStack(alignment: .topLeading) {
             Rectangle().fill(Theme.ink.opacity(0.05))
             ForEach(marks, id: \.self) { t in
-                Text(formatShort(t)).font(.system(size: 9.5)).foregroundStyle(.secondary).monospacedDigit()
+                Text(step < 1 ? TrimTimeline.tickLabel(t, step: step) : formatShort(t)).font(.system(size: 9.5)).foregroundStyle(.secondary).monospacedDigit()
                     .fixedSize()
                     .offset(x: min(CGFloat(t) * pps + 2, max(0, width - 28)), y: 1)
             }

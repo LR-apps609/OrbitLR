@@ -34,8 +34,8 @@ struct VPClip: Codable, Equatable, Identifiable, Sendable {
     /// 2.9.8 · Effetti di questa clip (velocità, zoom lento, capovolgi e ruota, sfocatura, dissolvenze).
     var fx: VPEffects? = nil
     var url: URL { URL(fileURLWithPath: path) }
-    /// Velocità della clip (0,25×–4×).
-    var speed: Double { min(4, max(0.25, fx?.speed ?? 1)) }
+    /// Velocità della clip (0,25×–12×).
+    var speed: Double { min(12, max(0.25, fx?.speed ?? 1)) }
     /// Il pezzo di file usato, in secondi del file.
     var sourceLength: Double { max(0, outPoint - inPoint) }
     /// Quanto dura nel montaggio (con la velocità).
@@ -61,7 +61,7 @@ struct VPEffects: Codable, Equatable, Sendable {
         abs(speed - 1) < 0.001 && zoom == "none" && !flipH && !flipV && rotate % 360 == 0 && blur < 0.001 && fadeIn < 0.01 && fadeOut < 0.01
     }
 
-    static let speeds: [Double] = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4]
+    static let speeds: [Double] = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8, 12]
 
     /// Capovolgi e ruota nello spazio dell'immagine diritta (origine in alto a sinistra), larga w e alta h.
     func orientation(width w: CGFloat, height h: CGFloat) -> (CGAffineTransform, CGSize) {
