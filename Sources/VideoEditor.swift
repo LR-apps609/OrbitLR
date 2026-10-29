@@ -336,6 +336,33 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
 
     // MARK: Anteprima
 
+    /// 5.0.2 · Il motore dell'anteprima: quello a fotogrammi (transizioni, filtri per clip); se macOS lo rifiuta,
+    /// per il resto della sessione si usa quello semplice.
+    private var previewEngine: VideoProjectBuilder.Engine = VideoProjectBuilder.preferredEngine
+
+    /// Aspetta che il lettore dica se il montaggio si può riprodurre (al massimo 3 secondi).
+    static func playable(_ item: AVPlayerItem) async -> Bool {
+        for _ in 0..<60 {
+            switch item.status {
+            case .readyToPlay: return true
+            case .failed: return false
+            default: try? await Task.sleep(nanoseconds: 50_000_000)
+            }
+        }
+        return item.status != .failed
+    }
+
+    /// 5.0.2 · Una riga nel registro dell'app (va nelle segnalazioni, senza nomi di file).
+    static func log(_ text: String) {
+        let line = "[\(Date())] Montaggio: \(text)\n"
+        guard let data = line.data(using: .utf8) else { return }
+        if let h = try? FileHandle(forWritingTo: Paths.log) {
+            h.seekToEndOfFile(); h.write(data); try? h.close()
+        } else {
+            try? data.write(to: Paths.log)
+        }
+    }
+
     private func scheduleRebuild() {
         rebuildTask?.cancel()
         Perf.begin(.previewRebuild)
@@ -351,7 +378,16 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
                 return
             }
             self.building = true
-            let built = try? await VideoProjectBuilder.build(p, infos: inf, speech: sp, maxSide: 1280)
+            var engine = self.previewEngine
+            var built: VPBuilt?
+            do { built = try await VideoProjectBuilder.build(p, infos: inf, speech: sp, maxSide: 1280, engine: engine) }
+            catch {
+                Self.log("anteprima del montaggio non costruita (\(engine)): \(error.localizedDescription)")
+                if engine == .frames {
+                    engine = .layers
+                    built = try? await VideoProjectBuilder.build(p, infos: inf, speech: sp, maxSide: 1280, engine: .layers)
+                }
+            }
             self.building = false
             guard !Task.isCancelled else { return }
             guard let built else {
@@ -367,8 +403,23 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             item.audioTimePitchAlgorithm = .spectral          // 2.9.8 · clip più veloci o lente: la voce non cambia tono
             let t = min(self.clock.time, max(0, built.duration - 0.05))
             // 3.4.6 · Il lettore nuovo si prepara dietro le quinte, già sul punto giusto; poi si scambia
-            let next = AVPlayer(playerItem: item)
+            var next = AVPlayer(playerItem: item)
             next.automaticallyWaitsToMinimizeStalling = false
+            // 5.0.2 · Se il lettore rifiuta il montaggio (succedeva su macOS 14 con più clip: anteprima vuota),
+            // si scrive il motivo nel registro e si riprova con il motore semplice: l'anteprima non sparisce mai
+            if await !Self.playable(item) {
+                Self.log("anteprima del montaggio rifiutata (\(engine), \(p.clips.count) clip): \(item.error?.localizedDescription ?? "?")")
+                if engine == .frames, let simple = try? await VideoProjectBuilder.build(p, infos: inf, speech: sp, maxSide: 1280, engine: .layers) {
+                    self.previewEngine = .layers
+                    let it2 = AVPlayerItem(asset: simple.composition)
+                    it2.videoComposition = simple.videoComposition
+                    it2.audioMix = simple.audioMix
+                    it2.audioTimePitchAlgorithm = .spectral
+                    next = AVPlayer(playerItem: it2)
+                    next.automaticallyWaitsToMinimizeStalling = false
+                }
+            }
+            guard !Task.isCancelled else { return }
             _ = await next.seek(to: VideoProjectBuilder.cm(t), toleranceBefore: .zero, toleranceAfter: .zero)
             guard !Task.isCancelled else { return }
             let now = min(self.clock.time, max(0, built.duration - 0.05))

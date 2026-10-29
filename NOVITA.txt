@@ -1,6 +1,7 @@
 Novità della 5.0.2 «Sonoma»:
 • Su macOS 14 (Sonoma) la barra a sinistra non resta più «schiacciata» con le voci tagliate: si ridisegna appena la finestra è al suo posto e quando cambia larghezza
 • Le miniature dei video compaiono anche quando Quick Look non le dà (succedeva su alcuni Mac con macOS 14)
+• Montaggio: se macOS rifiuta l’anteprima (visto su macOS 14 con due o più video), OrbitLR la rifà con il motore semplice invece di lasciare il riquadro vuoto, e scrive il motivo nel registro (arriva con «Segnala»). Lo stesso per l’esportazione
 
 Novità della 5.0.1 «Funzioni»:
 • Montaggio: nella scheda Clip la parte «Taglia» si chiama «Funzioni» e c’è anche la velocità della clip (da 0,25× a 4×), oltre che in Effetti. Nuove velocità 6×, 8× e 12×

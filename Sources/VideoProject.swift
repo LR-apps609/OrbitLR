@@ -722,7 +722,20 @@ enum VideoProjectExport {
             }
             infos[path] = try await VPMediaInfo.load(URL(fileURLWithPath: path))
         }
-        let built = try await VideoProjectBuilder.build(p, infos: infos, speech: speech, maxSide: 3840)
+        // 5.0.2 · Se il motore a fotogrammi non riesce (visto su macOS 14 con più clip), si riprova con quello semplice
+        do {
+            try await render(p, infos: infos, speech: speech, out: out, job: job, engine: VideoProjectBuilder.preferredEngine, progress: progress)
+        } catch {
+            if job.cancelRequested || VideoProjectBuilder.preferredEngine == .layers { throw error }
+            VideoProjectStore.log("esportazione con il motore a fotogrammi non riuscita: \(error.localizedDescription); riprovo con quello semplice")
+            try? FileManager.default.removeItem(at: out)
+            try await render(p, infos: infos, speech: speech, out: out, job: job, engine: .layers, progress: progress)
+        }
+    }
+
+    private static func render(_ p: VideoProject, infos: [String: VPMediaInfo], speech: [String: [ClosedRange<Double>]], out: URL, job: Job,
+                               engine: VideoProjectBuilder.Engine, progress: @escaping (Double) -> Void) async throws {
+        let built = try await VideoProjectBuilder.build(p, infos: infos, speech: speech, maxSide: 3840, engine: engine)
         let canvas = built.renderSize
         let sizes = outputSize(canvas: canvas, project: p)
         let cropW = Double(sizes.crop.width), cropH = Double(sizes.crop.height)
