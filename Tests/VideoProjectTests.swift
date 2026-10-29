@@ -79,13 +79,13 @@ final class VideoProjectTests: XCTestCase {
 
     /// 5.0.1 · Ogni pezzo diviso ha il suo volume: abbassarne uno non tocca gli altri.
     func testClipVolumeOnlyOnThatClip() async throws {
-        let v = try await Fixtures.video(name: "voce.mp4", width: 320, height: 180, seconds: 6)
+        let v = try await Fixtures.video(name: "voce.mp4", width: 320, height: 180, seconds: 6, audio: Fixtures.tone(seconds: 6))
         let iv = try await info(v)
         var p = VideoProject()
         p.clips = [clip(v, iv, 0, 3), clip(v, iv, 3, 6)]
         p.clips[1].volume = 0.25
         let built = try await VideoProjectBuilder.build(p, infos: [v.path: iv], speech: [:], maxSide: 640)
-        guard let op = built.audioMix.inputParameters.first else { return }     // il video di prova può non avere audio
+        let op = try XCTUnwrap(built.audioMix.inputParameters.first, "il video di prova ha l’audio")
         var s1: Float = -1, e1: Float = -1, r1 = CMTimeRange()
         _ = op.getVolumeRamp(for: CMTime(seconds: 1, preferredTimescale: 600), startVolume: &s1, endVolume: &e1, timeRange: &r1)
         var s2: Float = -1, e2: Float = -1, r2 = CMTimeRange()
