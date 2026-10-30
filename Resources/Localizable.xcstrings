@@ -1699,6 +1699,16 @@
         }
       }
     },
+    "Aggiungi prima un video.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a video first."
+          }
+        }
+      }
+    },
     "Aggiungi prima un video: il testo va sopra il montaggio.": {
       "localizations": {
         "en": {
@@ -2585,6 +2595,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Listening to the clips…"
+          }
+        }
+      }
+    },
+    "Ascolto le clip… %lld%%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listening to the clips… %lld%%"
           }
         }
       }
@@ -5097,6 +5117,16 @@
         }
       }
     },
+    "Devo salvare il progetto?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Do I need to save the project?"
+          }
+        }
+      }
+    },
     "Di 90° o 180°": {
       "localizations": {
         "en": {
@@ -6705,6 +6735,16 @@
         }
       }
     },
+    "Hai aperto un altro progetto mentre ascoltavo: i sottotitoli non sono stati aggiunti. Torna al progetto e riprova.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You opened another project while I was listening: the subtitles weren’t added. Go back to the project and try again."
+          }
+        }
+      }
+    },
     "Hai già l’ultima versione": {
       "localizations": {
         "en": {
@@ -8187,6 +8227,16 @@
         }
       }
     },
+    "Le clip sono cambiate mentre ascoltavo: premi di nuovo «Sottotitoli automatici».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The clips changed while I was listening: press “Automatic Subtitles” again."
+          }
+        }
+      }
+    },
     "Le domande più frequenti. Scrivi una parola per cercare.": {
       "localizations": {
         "en": {
@@ -8253,6 +8303,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "My Actions"
+          }
+        }
+      }
+    },
+    "Le modifiche fatte da allora spariscono. Puoi riaverle con ⌘Z.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The changes made since then go away. You can get them back with ⌘Z."
           }
         }
       }
@@ -9648,6 +9708,16 @@
         }
       }
     },
+    "No: il progetto si salva da solo mentre lavori, e sotto il nome vedi «Salvato alle…». ⌘Z torna indietro. «Ripristina…» lo riporta a com’era quando l’hai aperto; tieni premuto «Prima / dopo» per confrontare.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No: the project saves itself as you work, and under its name you see “Saved at…”. ⌘Z goes back. “Revert…” takes it back to how it was when you opened it; hold “Before / After” to compare."
+          }
+        }
+      }
+    },
     "Nome": {
       "localizations": {
         "en": {
@@ -10028,12 +10098,42 @@
         }
       }
     },
+    "Non trovo %lld video di questo progetto. Restano nel progetto finché non li ritrovi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can’t find %lld videos in this project. They stay in the project until you find them."
+          }
+        }
+      }
+    },
+    "Non trovo 1 video di questo progetto. Resta nel progetto finché non lo ritrovi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can’t find 1 video in this project. It stays in the project until you find it."
+          }
+        }
+      }
+    },
     "Non trovo il foglio nella foto. Prova con uno sfondo più scuro del foglio.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Can’t find the page in the photo. Try a background darker than the paper."
+          }
+        }
+      }
+    },
+    "Non trovo la musica di questo progetto. Resta nel progetto finché non la ritrovi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can’t find this project’s music. It stays in the project until you find it."
           }
         }
       }
@@ -11550,6 +11650,16 @@
         }
       }
     },
+    "Progetto nuovo. «%@» è salvato in Progetti.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New project. “%@” is saved in Projects."
+          }
+        }
+      }
+    },
     "Progetto senza nome": {
       "localizations": {
         "en": {
@@ -12720,6 +12830,16 @@
         }
       }
     },
+    "Riporta il progetto com’era quando l’hai aperto (chiede conferma, si annulla con ⌘Z)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takes the project back to how it was when you opened it (asks first, undo with ⌘Z)"
+          }
+        }
+      }
+    },
     "Riporta la clip alla sua durata intera": {
       "localizations": {
         "en": {
@@ -12750,12 +12870,42 @@
         }
       }
     },
+    "Ripristina com’era all’apertura": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revert to how it was when opened"
+          }
+        }
+      }
+    },
     "Ripristina l’ordine di partenza": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Reset to Default Order"
+          }
+        }
+      }
+    },
+    "Ripristinare il progetto com’era quando l’hai aperto?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revert the project to how it was when you opened it?"
+          }
+        }
+      }
+    },
+    "Ripristina…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revert…"
           }
         }
       }
@@ -12896,6 +13046,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cutout"
+          }
+        }
+      }
+    },
+    "Ritrova i file": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find the Files"
           }
         }
       }
@@ -13080,6 +13240,16 @@
         }
       }
     },
+    "Salvato alle %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved at %@"
+          }
+        }
+      }
+    },
     "Salvato in «%@»": {
       "localizations": {
         "en": {
@@ -13210,6 +13380,16 @@
         }
       }
     },
+    "Scarico il modello di IA (solo la prima volta)… %lld%%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downloading the AI model (first time only)… %lld%%"
+          }
+        }
+      }
+    },
     "Scarico il modello… %lld%%": {
       "localizations": {
         "en": {
@@ -13326,6 +13506,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choose files"
+          }
+        }
+      }
+    },
+    "Scegli i file del progetto, o la cartella dove sono adesso": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose the project’s files, or the folder they’re in now"
+          }
+        }
+      }
+    },
+    "Scegli i file o la cartella dove sono adesso: tornano al loro posto nel progetto": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose the files or the folder they’re in now: they go back to their place in the project"
           }
         }
       }
@@ -14481,6 +14681,16 @@
         }
       }
     },
+    "Sottotitoli interrotti: non ho aggiunto niente.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subtitles stopped: nothing was added."
+          }
+        }
+      }
+    },
     "Sottotitolo": {
       "localizations": {
         "en": {
@@ -15539,6 +15749,16 @@
         }
       }
     },
+    "Tieni premuto per vedere com’era quando hai aperto il progetto": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold to see how it was when you opened the project"
+          }
+        }
+      }
+    },
     "Tieni solo un pezzo": {
       "localizations": {
         "en": {
@@ -16335,6 +16555,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Find and redact: a name, a word, a number…"
+          }
+        }
+      }
+    },
+    "Trova i file…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find Files…"
           }
         }
       }
