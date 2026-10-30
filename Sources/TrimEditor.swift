@@ -251,15 +251,24 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
     }
 
     /// Mette la selezione sul ritornello (e ci porta la testina).
-    func suggestChorus(length: Double) {
+    func suggestChorus(length: Double, undoable: Bool = true) {
         let s = Self.loudestWindow(peaks: levels.first(where: { $0.count <= 20_000 }) ?? peaks, duration: duration, length: length)
+        let b = (start, end)
         start = s
         end = min(duration, s + length)
+        if undoable { commitSelection(from: b, undo: undoTarget, name: String(localized: "Vai al ritornello")) }
         if !playing { seek(start) }
     }
 
-    func markIn() { setStart(playhead) }
-    func markOut() { setEnd(playhead) }
+    /// 5.1 · ⌘Z su tutto quello che cambia la selezione (non solo sulle maniglie).
+    weak var undoTarget: UndoManager?
+    func undoable(_ name: String, _ f: () -> Void) {
+        let b = (start, end)
+        f()
+        commitSelection(from: b, undo: undoTarget, name: name)
+    }
+    func markIn() { undoable(String(localized: "Inizio qui")) { setStart(playhead) } }
+    func markOut() { undoable(String(localized: "Fine qui")) { setEnd(playhead) } }
 
     /// 2.8.4 · ⌘Z sulla selezione: si registra una volta, alla fine del trascinamento.
     func commitSelection(from before: (Double, Double), undo: UndoManager?, name: String = String(localized: "Cambia la selezione")) {
@@ -406,6 +415,7 @@ struct TrimEditorView: View {
 
     @State private var startText = ""
     @State private var endText = ""
+    @Environment(\.undoManager) private var undoManager
 
     init(url: URL, mode: ParamKind, onDone: @escaping (String?) -> Void, closeGuard: CloseGuard? = nil) {
         let kind = Catalog.kind(of: url)
@@ -465,11 +475,11 @@ struct TrimEditorView: View {
             }
 
             HStack(spacing: 18) {
-                timeField(String(localized: "Inizio"), text: $startText, minus: { m.setStart(m.start - 0.1) }, plus: { m.setStart(m.start + 0.1) }) {
-                    if let v = parseTime(startText) { m.setStart(v) } else { startText = formatTime(m.start) }
+                timeField(String(localized: "Inizio"), text: $startText, minus: { m.undoable(String(localized: "Inizio")) { m.setStart(m.start - 0.1) } }, plus: { m.undoable(String(localized: "Inizio")) { m.setStart(m.start + 0.1) } }) {
+                    if let v = parseTime(startText) { m.undoable(String(localized: "Inizio")) { m.setStart(v) } } else { startText = formatTimeMs(m.start) }
                 }
-                timeField(String(localized: "Fine"), text: $endText, minus: { m.setEnd(m.end - 0.1) }, plus: { m.setEnd(m.end + 0.1) }) {
-                    if let v = parseTime(endText) { m.setEnd(v) } else { endText = formatTime(m.end) }
+                timeField(String(localized: "Fine"), text: $endText, minus: { m.undoable(String(localized: "Fine")) { m.setEnd(m.end - 0.1) } }, plus: { m.undoable(String(localized: "Fine")) { m.setEnd(m.end + 0.1) } }) {
+                    if let v = parseTime(endText) { m.undoable(String(localized: "Fine")) { m.setEnd(v) } } else { endText = formatTimeMs(m.end) }
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Selezione").font(.system(size: 11)).foregroundStyle(.secondary)
@@ -499,11 +509,12 @@ struct TrimEditorView: View {
         .padding(22)
         .frame(width: 760)
         .onAppear {
-            startText = formatTime(m.start); endText = formatTime(m.end)
+            startText = formatTimeMs(m.start); endText = formatTimeMs(m.end)
+            m.undoTarget = undoManager
             closeGuard?.ask = { mayDiscard() }
         }
-        .onChange(of: m.start) { _, v in startText = formatTime(v) }
-        .onChange(of: m.end) { _, v in endText = formatTime(v) }
+        .onChange(of: m.start) { _, v in startText = formatTimeMs(v) }
+        .onChange(of: m.end) { _, v in endText = formatTimeMs(v) }
         .onDisappear { m.pause() }
     }
 
@@ -513,7 +524,7 @@ struct TrimEditorView: View {
             Text(title).font(.system(size: 11)).foregroundStyle(.secondary)
             HStack(spacing: 4) {
                 Button(action: minus) { Image(systemName: "minus") }.help("−0,1 s")
-                TextField("0:00.0", text: text).frame(width: 84).multilineTextAlignment(.center).onSubmit(commit)
+                TextField("0:00,000", text: text).frame(width: 96).multilineTextAlignment(.center).onSubmit(commit)
                 Button(action: plus) { Image(systemName: "plus") }.help("+0,1 s")
             }
         }
@@ -828,5 +839,30 @@ struct PlayerPreview: NSViewRepresentable {
                 }
             }
         }
+    }
+}
+
+
+/// 5.1 · Inizio e fine della selezione scrivibili al millesimo («1:02,345»), con ⌘Z.
+struct SelectionTimeFields: View {
+    @ObservedObject var trim: TrimModel
+    @State private var startText = ""
+    @State private var endText = ""
+    var body: some View {
+        HStack(spacing: 4) {
+            TextField("0:00,000", text: $startText).frame(width: 82).multilineTextAlignment(.center)
+                .onSubmit { if let v = parseTime(startText) { trim.undoable(String(localized: "Inizio")) { trim.setStart(v) } }; startText = formatTimeMs(trim.start) }
+                .help("Scrivi dove comincia, anche al millesimo (es. 1:02,345)")
+            Text("→").foregroundStyle(.secondary)
+            TextField("0:00,000", text: $endText).frame(width: 82).multilineTextAlignment(.center)
+                .onSubmit { if let v = parseTime(endText) { trim.undoable(String(localized: "Fine")) { trim.setEnd(v) } }; endText = formatTimeMs(trim.end) }
+                .help("Scrivi dove finisce, anche al millesimo (es. 1:02,345)")
+            Text("· \(formatTimeMs(max(0, trim.end - trim.start)))").monospacedDigit()
+        }
+        .font(.system(size: 12, weight: .semibold)).monospacedDigit()
+        .textFieldStyle(.roundedBorder).controlSize(.small)
+        .onAppear { startText = formatTimeMs(trim.start); endText = formatTimeMs(trim.end) }
+        .onChange(of: trim.start) { _, v in startText = formatTimeMs(v) }
+        .onChange(of: trim.end) { _, v in endText = formatTimeMs(v) }
     }
 }

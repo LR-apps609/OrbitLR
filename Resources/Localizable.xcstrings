@@ -13560,6 +13560,26 @@
         }
       }
     },
+    "Scrivi dove comincia, anche al millesimo (es. 1:02,345)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type where it starts, down to the millisecond (e.g. 1:02.345)"
+          }
+        }
+      }
+    },
+    "Scrivi dove finisce, anche al millesimo (es. 1:02,345)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type where it ends, down to the millisecond (e.g. 1:02.345)"
+          }
+        }
+      }
+    },
     "Scrivi il testo": {
       "localizations": {
         "en": {
@@ -19411,6 +19431,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "“Remove Metadata” strips the location, phone model, and date before you share a photo."
+          }
+        }
+      }
+    },
+    "· %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "· %@"
           }
         }
       }

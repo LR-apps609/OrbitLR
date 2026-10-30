@@ -553,7 +553,7 @@ struct AudioTabView: View {
                 // Suoneria: il riquadro va già sul ritornello
                 if tool == .ringtone, let t = m.trim {
                     let len = ringLength
-                    if t.loading { t.onLoaded = { [weak t] in t?.suggestChorus(length: len) } } else { t.suggestChorus(length: len) }
+                    if t.loading { t.onLoaded = { [weak t] in t?.suggestChorus(length: len, undoable: false) } } else { t.suggestChorus(length: len, undoable: false) }
                 }
             }, close: { showLink = false })
         }
@@ -858,6 +858,7 @@ private struct SelectionText: View {
 private struct AudioWave: View {
     @ObservedObject var trim: TrimModel
     let tint: Color
+    @Environment(\.undoManager) private var undoManager
     /// 3.0 · Solo Suoneria e Taglia usano la selezione: gli altri strumenti lavorano su tutto il file.
     var selection = true
 
@@ -874,12 +875,12 @@ private struct AudioWave: View {
                 .overlay { if trim.loading { ProgressView().controlSize(.small) } }
                 .padding(.top, 6)
             if trim.zoom > 1 { WaveOverview(m: trim, tint: tint).frame(height: 14) }
+            Color.clear.frame(height: 0).onAppear { trim.undoTarget = undoManager }.onChange(of: undoManager) { _, u in trim.undoTarget = u }
             HStack {
                 Text(t(trim.zoom > 1 ? trim.viewStart : 0)).font(.system(size: 12)).foregroundStyle(.secondary).monospacedDigit()
                 Spacer()
                 if selection {
-                    Text("\(t(trim.start)) → \(t(trim.end)) · \(t(max(0, trim.end - trim.start)))")
-                        .font(.system(size: 12, weight: .semibold)).monospacedDigit()
+                    SelectionTimeFields(trim: trim)        // 5.1 · tempi scrivibili al millesimo
                     Spacer()
                     Button("Inizio qui") { trim.markIn() }.keyboardShortcut("i", modifiers: []).controlSize(.small)
                         .help("La selezione comincia dove stai ascoltando (I)")
