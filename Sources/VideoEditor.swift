@@ -1929,6 +1929,20 @@ private struct ProjectTimeline: View {
         .help("Clicca o trascina per spostarti")
     }
 
+    @ViewBuilder private func clipMenu(_ c: VPClip) -> some View {
+        let pick = { s.selected = c.id }
+        Button(c.isMuted ? String(localized: "Riaccendi l’audio della clip") : String(localized: "Spegni l’audio della clip")) { pick(); s.toggleClipAudio(undo) }
+        Button("Stacca l’audio") { pick(); s.detachClipAudio(undo) }
+        Divider()
+        Button("Sposta la clip prima") { pick(); s.move(-1, undo) }
+        Button("Sposta la clip dopo") { pick(); s.move(1, undo) }
+        Button("Clip intera") { pick(); s.restoreClip(undo) }
+        Divider()
+        Button("Mostra nel Finder") { NSWorkspace.shared.activateFileViewerSelecting([c.url]) }
+        Divider()
+        Button("Togli la clip") { pick(); s.deleteClip(undo) }
+    }
+
     private func clipsRow(pps: CGFloat) -> some View {
         HStack(spacing: 2) {
             ForEach(slots) { slot in
@@ -1945,6 +1959,12 @@ private struct ProjectTimeline: View {
                     .accessibilityAddTraits(.isButton)
                     .accessibilityAddTraits(s.selected == c.id ? .isSelected : [])
                     .accessibilityAction { s.selected = c.id }
+                    // 5.1 · Clic destro con le azioni della clip; doppio clic apre lo strumento Clip
+                    .contextMenu { clipMenu(c) }
+                    .simultaneousGesture(TapGesture(count: 2).onEnded {
+                        s.selected = c.id
+                        s.lastTool = VideoEditTool.clip.rawValue
+                    })
                     .overlay(alignment: .leading) {
                         if s.selected == c.id { trimHandle(c, start: start, left: true, pps: pps) }
                     }
@@ -2118,6 +2138,20 @@ private struct ProjectTimeline: View {
                 .background(RoundedRectangle(cornerRadius: 5).fill(on ? Theme.brass : Theme.brass.opacity(0.35)))
                 .offset(x: x, y: 1)
                 .help("\(t.text) · \(formatShort(t.start))–\(formatShort(t.end)) · trascina per spostarlo, i bordi per allungarlo")
+                // 5.1 · Clic destro sul testo
+                .contextMenu {
+                    Button("Modifica il testo") { s.selectedText = t.id; openTexts(); s.seek(t.start + 0.05) }
+                    Button("Vai all’inizio del testo") { s.seek(t.start) }
+                    Divider()
+                    Button("Rimuovi il testo") {
+                        let id = t.id
+                        s.change(undo, String(localized: "Rimuovi il testo")) { p in
+                            p.texts?.removeAll { $0.id == id }
+                            if p.texts?.isEmpty == true { p.texts = nil }
+                        }
+                        if s.selectedText == id { s.selectedText = nil }
+                    }
+                }
             }
         }
     }
@@ -2219,6 +2253,14 @@ private struct ProjectTimeline: View {
                     })
                 .onTapGesture { openMusic() }
                 .help("Trascina per decidere dove parte la musica nel video; trascina il bordo destro per farla finire prima")
+                // 5.1 · Clic destro sulla musica
+                .contextMenu {
+                    Button("Apri le opzioni della musica") { openMusic() }
+                    Button("Musica fino a qui") { s.musicEndHere(undo) }
+                    Button("Mostra nel Finder") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: m.path)]) }
+                    Divider()
+                    Button("Rimuovi la musica") { s.removeMusic(undo) }
+                }
                 // 5.0.1 · Il bordo destro: dove finisce la musica
                 Rectangle().fill(color)
                     .frame(width: 6, height: 26)

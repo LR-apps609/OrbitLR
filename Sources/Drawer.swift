@@ -283,7 +283,12 @@ private struct DrawerAll: View {
                                 .controlSize(.small)
                         }
                         .onDrag { NSItemProvider(contentsOf: u) ?? NSItemProvider() }
+                        .onTapGesture(count: 2) { NSWorkspace.shared.open(u) }      // 5.1 · come nel Finder
+                        .help("\(u.lastPathComponent) · doppio clic per aprirlo")
                         .contextMenu {
+                            Button("Apri") { NSWorkspace.shared.open(u) }
+                            Button("Mostra nel Finder") { NSWorkspace.shared.activateFileViewerSelecting([u]) }
+                            Divider()
                             ForEach(Drawer.targets(for: u)) { t in
                                 Button { Drawer.send([u], to: t) } label: { Label(t.title, systemImage: t.symbol) }
                             }

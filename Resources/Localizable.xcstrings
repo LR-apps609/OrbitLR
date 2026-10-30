@@ -224,6 +224,16 @@
         }
       }
     },
+    "%@ · doppio clic per aprirlo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · double-click to open it"
+          }
+        }
+      }
+    },
     "%@ · max %@ MB": {
       "localizations": {
         "en": {
@@ -2445,6 +2455,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open Settings"
+          }
+        }
+      }
+    },
+    "Apri le opzioni della musica": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Music Options"
           }
         }
       }
@@ -8924,6 +8944,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Edit"
+          }
+        }
+      }
+    },
+    "Modifica il testo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit Text"
           }
         }
       }
@@ -16857,6 +16887,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Go to Chorus"
+          }
+        }
+      }
+    },
+    "Vai all’inizio del testo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go to the start of the text"
           }
         }
       }

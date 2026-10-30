@@ -363,7 +363,7 @@ struct ActivityView: View {
                             }
                             ForEach(HistoryDay.group(store.history)) { day in
                                 Section {
-                                    ForEach(day.entries) { e in HistoryRow(entry: e) }
+                                    ForEach(day.entries) { e in HistoryRow(entry: e) { preview = $0 } }
                                 } header: {
                                     DayHeader(day: day)
                                 }
@@ -375,7 +375,7 @@ struct ActivityView: View {
             }
             .padding(28)
         }
-        .quickLookPreview($preview, in: store.jobs.flatMap { $0.outputs })
+        .quickLookPreview($preview, in: store.jobs.flatMap { $0.outputs } + store.history.prefix(200).flatMap { $0.outputs.map { URL(fileURLWithPath: $0) } })
     }
 
     private var subtitle: String {
@@ -467,6 +467,21 @@ struct JobCard: View {
         .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Theme.stroke))
         .onHover { hover = $0 }
         .help(job.failures.joined(separator: "\n"))
+        // 5.1 · Doppio clic apre il risultato, clic destro le azioni del lavoro
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2) { if job.state == .done, let u = job.outputs.first { NSWorkspace.shared.open(u) } }
+        .contextMenu {
+            if job.state == .done, let u = job.outputs.first {
+                Button("Apri") { NSWorkspace.shared.open(u) }
+                Button("Anteprima") { onPreview(u) }
+                Button("Mostra nel Finder") { store.reveal(job.outputs.map { $0.path }) }
+            }
+            switch job.state {
+            case .running, .waiting: Button("Interrompi") { store.cancel(job) }
+            case .failed, .cancelled: Button("Riprova") { store.retry(job) }
+            case .done: EmptyView()
+            }
+        }
     }
 
     private var statusSymbol: String {
@@ -538,7 +553,14 @@ struct MonthStatsRow: View {
 
 struct HistoryRow: View {
     let entry: HistoryEntry
+    var onPreview: (URL) -> Void = { _ in }
     @EnvironmentObject var store: QueueStore
+
+    /// 5.1 · Il primo file creato, se c'è ancora.
+    private var firstOutput: URL? {
+        guard !entry.undone, let f = entry.outputs.first, FileManager.default.fileExists(atPath: f) else { return nil }
+        return URL(fileURLWithPath: f)
+    }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -587,6 +609,18 @@ struct HistoryRow: View {
         }
         .padding(12)
         .card(radius: 12)
+        // 5.1 · Doppio clic apre il file, clic destro le sue azioni
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2) { if let u = firstOutput { NSWorkspace.shared.open(u) } }
+        .contextMenu {
+            if let u = firstOutput {
+                Button("Apri") { NSWorkspace.shared.open(u) }
+                Button("Anteprima") { onPreview(u) }
+                Button("Mostra nel Finder") { store.reveal(entry.outputs) }
+                Divider()
+            }
+            Button("Togli dalla cronologia") { withAnimation(Motion.quick) { store.forgetUndoably(entry) } }
+        }
     }
 }
 
