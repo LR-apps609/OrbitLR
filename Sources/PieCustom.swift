@@ -75,9 +75,21 @@ struct PieCustomizeView: View {
             .frame(height: 380)
             .clipShape(RoundedRectangle(cornerRadius: 10))
 
+            UndoToastBar(place: .pieOrder)          // 5.1
+
             HStack {
                 Button("Ripristina l’ordine di partenza") {
-                    PieCustom.reset(kind)
+                    // 5.1 · L'ordine scelto non si perde: «Annulla» o ⌘Z lo rimettono
+                    let k = kind
+                    if let old = PieCustom.order(for: k), !old.isEmpty {
+                        PieCustom.reset(k)
+                        UndoToast.shared.post(String(localized: "Ordine di partenza ripristinato."), at: .pieOrder) {
+                            PieCustom.set(old, for: k)
+                            reload()
+                        }
+                    } else {
+                        PieCustom.reset(k)
+                    }
                     reload()
                 }
                 Spacer()

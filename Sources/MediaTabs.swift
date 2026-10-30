@@ -35,6 +35,12 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
     @Published var restoredTool: String? = nil
     var currentProject: UUID? = nil
     var currentTool = "ringtone"
+    /// 5.1 · Le opzioni della scheda, salvate nel progetto (testo in voce, voce, ritmo, suoneria, velocità)
+    var audioOptions = AudioOptions()
+    /// 5.1 · Le opzioni da rimettere quando si riprende un progetto (le legge la scheda e le azzera).
+    @Published var restoredOptions: AudioOptions? = nil
+    /// 5.1 · La durata della suoneria torna da un progetto: la selezione ripresa non va ridimensionata.
+    var keepSelectionOnce = false
     var restoringProject = false
     var projectSave: DispatchWorkItem? = nil
     var restoreCancellable: AnyCancellable? = nil
@@ -47,6 +53,13 @@ final class MediaTabModel: ObservableObject, @unchecked Sendable {
         let paths = UserDefaults.standard.stringArray(forKey: recentsKey) ?? []
         recents = paths.map { URL(fileURLWithPath: $0) }.filter { FileManager.default.fileExists(atPath: $0.path) }
         refreshProjects()
+    }
+
+    /// 5.1 · La scheda avvisa quando cambia un'opzione: si ricorda nel progetto.
+    func optionsChanged(_ o: AudioOptions) {
+        guard o != audioOptions else { return }
+        audioOptions = o
+        scheduleProjectSave()
     }
 
     /// La scheda avvisa quando cambia strumento: si ricorda nel progetto.
@@ -498,10 +511,26 @@ struct AudioTabView: View {
             }
             return true
         }
-        .onAppear { applyTrimRules(); m.currentTool = tool.rawValue; m.refreshProjects() }
+        .onAppear {
+            // 5.1 · Le opzioni restano quelle del modello anche se la scheda si ricrea
+            if m.audioOptions != currentOptions { applyOptions(m.audioOptions) }
+            applyTrimRules(); m.currentTool = tool.rawValue; m.refreshProjects()
+        }
         // 3.5.1 · Solo il cambio di scheda, non ogni modifica dell'app: la scheda nascosta non si ridisegna
         .onReceive(AppState.shared.$selection.dropFirst().removeDuplicates()) { now in
             if now == .audio { m.refreshProjects() } else { preview.stop(); m.trim?.pause() }
+        }
+        // 5.1 · Ogni opzione cambiata si salva nel progetto aperto
+        .onChange(of: currentOptions) { _, o in m.optionsChanged(o) }
+        .onChange(of: m.restoredOptions) { _, o in
+            guard let o else { return }
+            applyOptions(o)
+            m.restoredOptions = nil
+        }
+        .onChange(of: ringLength) { _, v in
+            // 5.1 · Durata tornata da un progetto: la selezione salvata resta com'era
+            if m.keepSelectionOnce { m.keepSelectionOnce = false } else { m.trim?.setLength(v) }
+            applyTrimRules()
         }
         .onChange(of: m.restoredTool) { _, v in
             // 2.8.5 · progetto ripreso: torna lo strumento che usavi
@@ -662,7 +691,7 @@ struct AudioTabView: View {
                 Text("20 secondi").tag(20.0); Text("30 secondi").tag(30.0)
             }
             .pickerStyle(.segmented).labelsHidden()
-            .onChange(of: ringLength) { _, v in m.trim?.setLength(v); applyTrimRules() }
+            // 5.1 · Il cambio di durata si gestisce sopra (vale anche quando torna da un progetto)
             if let t = m.trim {
                 Button { t.suggestChorus(length: ringLength) } label: { Label("Vai al ritornello", systemImage: "music.note") }
                     .controlSize(.small)
@@ -709,6 +738,21 @@ struct AudioTabView: View {
                 MergeList(m: m, tint: tint)
             }
         }
+    }
+
+    /// 5.1 · Rimette le opzioni salvate (progetto ripreso o scheda ricreata).
+    private func applyOptions(_ o: AudioOptions) {
+        if o.ringLength != ringLength { m.keepSelectionOnce = true }
+        text = o.ttsText; voiceId = o.voiceId; rate = o.rate
+        ringLength = o.ringLength; fade = o.fade; normalize = o.normalize; speed = o.speed
+    }
+
+    /// 5.1 · Le opzioni di adesso, come si salvano nel progetto.
+    private var currentOptions: AudioOptions {
+        var o = AudioOptions()
+        o.ttsText = text; o.voiceId = voiceId; o.rate = rate
+        o.ringLength = ringLength; o.fade = fade; o.normalize = normalize; o.speed = speed
+        return o
     }
 
     private var speedNote: String {
