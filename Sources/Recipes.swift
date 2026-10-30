@@ -188,7 +188,7 @@ private struct RecipeRow: View {
             Spacer()
             Text("\(recipe.steps.count) passi").font(.system(size: 12)).foregroundStyle(.secondary)
             Button(role: .destructive) { RecipeStore.shared.deleteUndoably(recipe) } label: { Image(systemName: "trash") }
-                .help("Elimina la ricetta (i file non vengono toccati)")
+                .help("Elimina la ricetta (i file non vengono toccati)").accessibilityLabel("Elimina la ricetta (i file non vengono toccati)")
         }
         .padding(12)
         .card(radius: 12)

@@ -278,7 +278,7 @@ struct PieView: View {
                         .background(Circle().fill(Theme.ink.opacity(0.75)))
                 }
                 .buttonStyle(.plain)
-                .help(removeHelp)
+                .help(removeHelp).accessibilityLabel(removeHelp)
                 .position(x: mid.x + centerSize * 0.27, y: mid.y - centerSize * 0.27)   // 2.9.2 · dentro il cerchio: fuori toccava lo spicchio
                 .opacity(Double(bloom))
             }

@@ -1382,7 +1382,7 @@ struct VideoEditorView: View {
                     Text(m.name).font(.system(size: 12, weight: .semibold)).lineLimit(1).truncationMode(.middle)
                     Spacer(minLength: 4)
                     Button("Cambia…") { choose(audio: true) }
-                    Button(role: .destructive) { s.removeMusic(undo) } label: { Image(systemName: "trash") }.help("Togli la musica")
+                    Button(role: .destructive) { s.removeMusic(undo) } label: { Image(systemName: "trash") }.help("Togli la musica").accessibilityLabel("Togli la musica")
                 }
                 .controlSize(.small)
                 HStack(spacing: 6) {
@@ -1894,13 +1894,13 @@ private struct ProjectTimeline: View {
         return HStack(spacing: 2) {
             Button { s.timelineZoom = max(1, s.timelineZoom / 1.8) } label: { Image(systemName: "minus.magnifyingglass") }
                 .keyboardShortcut("-", modifiers: .command)
-                .help("Meno zoom (⌘−)")
+                .help("Meno zoom (⌘−)").accessibilityLabel("Meno zoom (⌘−)")
             Button { s.timelineZoom = min(mz, s.timelineZoom * 1.8) } label: { Image(systemName: "plus.magnifyingglass") }
                 .keyboardShortcut("+", modifiers: .command)
-                .help("Più zoom, fino al millisecondo (⌘+, oppure due dita sul trackpad). ⌥← → sposta di un millisecondo")
+                .help("Più zoom, fino al millisecondo (⌘+, oppure due dita sul trackpad). ⌥← → sposta di un millisecondo").accessibilityLabel("Più zoom, fino al millisecondo (⌘+, oppure due dita sul trackpad). ⌥← → sposta di un millisecondo")
             if s.timelineZoom > 1.01 {
                 Button { s.timelineZoom = 1 } label: { Image(systemName: "arrow.left.and.right.square") }
-                    .help("Tutto il montaggio nella larghezza")
+                    .help("Tutto il montaggio nella larghezza").accessibilityLabel("Tutto il montaggio nella larghezza")
             }
         }
         .buttonStyle(.plain)
@@ -2628,7 +2628,7 @@ private struct EffectOptions: View {
                     Button { change(String(localized: "Ruota")) { $0.rotate = ($0.rotate + 90) % 360 } } label: {
                         Image(systemName: "rotate.right")
                     }
-                    .help("Ruota di 90° · ora \(fx.rotate)°")
+                    .help("Ruota di 90° · ora \(fx.rotate)°").accessibilityLabel("Ruota di 90° · ora \(fx.rotate)°")
                 }
                 EditSlider(title: String(localized: "Sfocatura"), value: fx.blur, range: 0...1, text: fx.blur < 0.01 ? String(localized: "No") : "\(Int(fx.blur * 100))%",
                            width: 260, s: s, undo: undo, name: String(localized: "Sfocatura")) { p, v in Self.edit(&p, i) { $0.blur = v } }

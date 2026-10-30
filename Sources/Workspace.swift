@@ -521,7 +521,7 @@ struct FileChip: View {
                     .hitArea()                      // 5.2 · area di clic di almeno 24 pt
             }
             .buttonStyle(.plain)
-            .help("Togli questo file")
+            .help("Togli questo file").accessibilityLabel("Togli questo file")
         }
         .padding(.horizontal, 10).padding(.vertical, 6)
         .background(Capsule().fill(Theme.ivory))
@@ -587,6 +587,7 @@ struct JobStatusBar: View {
                 }
                 .buttonStyle(.plain)
                 .onHover { hoverClose = $0 }
+                .accessibilityLabel("Chiudi")
                 .help(job.state == .running || job.state == .waiting
                       ? String(localized: "Nascondi: il lavoro continua e lo trovi in Attività") : String(localized: "Chiudi (il risultato resta in Attività)"))
             }

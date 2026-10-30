@@ -203,7 +203,7 @@ struct PresetRow: View {
             }
             .frame(width: 190)
             Button(role: .destructive) { askDelete() } label: { Image(systemName: "trash") }
-                .help("Elimina la scorciatoia")
+                .help("Elimina la scorciatoia").accessibilityLabel("Elimina la scorciatoia")
         }
         .padding(12)
         .card(radius: 12)

@@ -409,7 +409,7 @@ struct DownloaderBar: View {
             }
             .buttonStyle(.plain)
             .fixedSize()
-            .help(video ? String(localized: "Video Downloader · incolla un link") : String(localized: "Audio Downloader · incolla un link"))
+            .help(video ? String(localized: "Video Downloader · incolla un link") : String(localized: "Audio Downloader · incolla un link")).accessibilityLabel(video ? String(localized: "Video Downloader · incolla un link") : String(localized: "Audio Downloader · incolla un link"))
         }
     }
 

@@ -216,10 +216,12 @@ struct CompareView: View {
 
     private func stepper(_ label: String, index: Binding<Int>, count: Int) -> some View {
         HStack(spacing: 6) {
-            Button { index.wrappedValue = max(0, index.wrappedValue - 1) } label: { Image(systemName: "chevron.left") }
+            Button { index.wrappedValue = max(0, index.wrappedValue - 1) } label: { Image(systemName: "chevron.left").hitArea() }
+                .help("Coppia precedente").accessibilityLabel("Coppia precedente")
                 .disabled(index.wrappedValue == 0)
             Text(label).font(.system(size: 12, weight: .semibold)).monospacedDigit()
-            Button { index.wrappedValue = min(count - 1, index.wrappedValue + 1) } label: { Image(systemName: "chevron.right") }
+            Button { index.wrappedValue = min(count - 1, index.wrappedValue + 1) } label: { Image(systemName: "chevron.right").hitArea() }
+                .help("Coppia successiva").accessibilityLabel("Coppia successiva")
                 .disabled(index.wrappedValue >= count - 1)
         }
     }

@@ -353,7 +353,7 @@ private struct MergeList: View {
                     Spacer()
                     if i > 0 {
                         Button { m.removeExtra(u) } label: { Image(systemName: "minus.circle") }
-                            .buttonStyle(.borderless).help("Togli dall’elenco")
+                            .buttonStyle(.borderless).help("Togli dall’elenco").accessibilityLabel("Togli dall’elenco")
                     }
                 }
             }

@@ -137,7 +137,7 @@ struct HelpView: View {
                     .textFieldStyle(.plain).font(.system(size: 13.5))
                 if !query.isEmpty {
                     Button { query = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary).hitArea() }
-                        .buttonStyle(.plain).accessibilityLabel("Cancella la ricerca")
+                        .buttonStyle(.plain).help("Cancella la ricerca").accessibilityLabel("Cancella la ricerca")
                 }
             }
             .padding(.horizontal, 12).padding(.vertical, 9)

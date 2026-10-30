@@ -447,14 +447,14 @@ struct JobCard: View {
                         .buttonStyle(.borderedProminent).tint(Theme.brass)
                 }
                 if let first = job.outputs.first, job.state == .done {
-                    Button { onPreview(first) } label: { Image(systemName: "eye") }.help("Anteprima del risultato")
+                    Button { onPreview(first) } label: { Image(systemName: "eye") }.help("Anteprima del risultato").accessibilityLabel("Anteprima del risultato")
                 }
                 let pairs = job.comparePairs
                 if !pairs.isEmpty {
                     Button { CompareController.shared.show(pairs, title: job.title) } label: {
                         Image(systemName: "square.split.2x1")
                     }
-                    .help("Confronta: originale e risultato, con la linea da trascinare")
+                    .help("Confronta: originale e risultato, con la linea da trascinare").accessibilityLabel("Confronta: originale e risultato, con la linea da trascinare")
                 }
                 // 5.1 · Un solo «Riprova»: se c'è già il pulsante che risolve, non se ne aggiunge un altro
                 if !((job.state == .failed || job.state == .cancelled) && Fix.best(for: job) != nil) { actionButton }

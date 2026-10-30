@@ -183,7 +183,7 @@ struct ResultBubbleView: View {
                 Image(systemName: "xmark").font(.system(size: 10, weight: .bold)).frame(width: 24, height: 24)
                     .background(Circle().fill(Theme.ink.opacity(0.08)))
             }
-            .buttonStyle(.plain).accessibilityLabel("Chiudi")
+            .buttonStyle(.plain).help("Chiudi").accessibilityLabel("Chiudi")
         }
         .padding(12)
         .frame(width: ResultBubble.size.width, alignment: .topLeading)

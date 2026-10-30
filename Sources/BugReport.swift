@@ -212,7 +212,7 @@ struct BugReportView: View {
                                     }
                                     .buttonStyle(.plain)
                                     .offset(x: 6, y: -6)
-                                    .help("Togli")
+                                    .help("Togli").accessibilityLabel("Togli")
                                 }
                             }
                         }

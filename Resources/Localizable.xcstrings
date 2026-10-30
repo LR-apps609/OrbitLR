@@ -4746,6 +4746,26 @@
         }
       }
     },
+    "Coppia precedente": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous pair"
+          }
+        }
+      }
+    },
+    "Coppia successiva": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next pair"
+          }
+        }
+      }
+    },
     "Cosa fanno «Applica» e «Scarta»?": {
       "localizations": {
         "en": {
