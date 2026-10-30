@@ -229,6 +229,7 @@ struct VideoProjectsView: View {
             if let n = s.notice {
                 Label(n, systemImage: "info.circle").font(.system(size: 12.5)).foregroundStyle(.secondary)
             }
+            if let job = s.lastJob { JobStrip(job: job) }
             if s.library.isEmpty {
                 MediaDropZone(kind: .video, title: String(localized: "Trascina qui i video"),
                               subtitle: String(localized: "si apre un progetto nuovo · MP4, MOV, M4V · più video vanno in fila"),

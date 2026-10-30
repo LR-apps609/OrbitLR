@@ -690,7 +690,8 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         selected = nil
         selectedText = nil
         notice = nil
-        lastJob = nil
+        // 5.1 · Chiudendo mentre esporta, la striscia resta (anche in Progetti): l'esportazione non è più invisibile
+        if let j = lastJob, j.state != .running && j.state != .waiting { lastJob = nil }
         player.replaceCurrentItem(with: nil)
         incoming?.replaceCurrentItem(with: nil)
         incoming = nil
