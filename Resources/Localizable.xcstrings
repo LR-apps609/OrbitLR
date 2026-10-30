@@ -1759,6 +1759,16 @@
         }
       }
     },
+    "Aiuto di OrbitLR": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrbitLR Help"
+          }
+        }
+      }
+    },
     "Al bianco": {
       "localizations": {
         "en": {
@@ -2229,16 +2239,6 @@
         }
       }
     },
-    "Apri Impostazioni di Sistema": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open System Settings"
-          }
-        }
-      }
-    },
     "Apri OrbitLR": {
       "localizations": {
         "en": {
@@ -2389,6 +2389,16 @@
         }
       }
     },
+    "Apri le Impostazioni": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings"
+          }
+        }
+      }
+    },
     "Apri l’editor completo: più video in fila, testi, sottotitoli, musica ed effetti (⇧⌘E)": {
       "localizations": {
         "en": {
@@ -2445,6 +2455,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open the menu"
+          }
+        }
+      }
+    },
+    "Apri…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open…"
           }
         }
       }
@@ -6756,12 +6776,12 @@
         }
       }
     },
-    "Il codice è scaduto": {
+    "Il codice è scaduto.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The code has expired"
+            "value": "The code has expired."
           }
         }
       }
@@ -9104,6 +9124,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "No files are selected in the Finder."
+          }
+        }
+      }
+    },
+    "Nel Finder non c’è niente di selezionato.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing is selected in the Finder."
           }
         }
       }
@@ -12075,7 +12105,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Make a new one"
+            "value": "Generate Again"
           }
         }
       }
@@ -13470,6 +13500,16 @@
         }
       }
     },
+    "Segnala un problema…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Report a Problem…"
+          }
+        }
+      }
+    },
     "Sei sicuro di voler scartare le modifiche al progetto?": {
       "localizations": {
         "en": {
@@ -13506,16 +13546,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Select the video together with the .srt file"
-          }
-        }
-      }
-    },
-    "Seleziona prima uno o più file nel Finder, poi premi di nuovo la scorciatoia.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Select one or more files in the Finder first, then press the shortcut again."
           }
         }
       }
@@ -17762,12 +17792,12 @@
         }
       }
     },
-    "macOS non ha accettato la modifica (%@). Puoi farla a mano in Impostazioni di Sistema → Elementi login.": {
+    "macOS non ha permesso di aprire OrbitLR all’accesso.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS didn’t accept the change (%@). You can do it by hand in System Settings → Login Items."
+            "value": "macOS didn’t allow OrbitLR to open at login."
           }
         }
       }

@@ -265,7 +265,7 @@ struct SendToPhoneStrip: View {
                 .frame(width: 220, height: 220)
             } else if share.expired {
                 VStack(spacing: 10) {
-                    Label("Il codice è scaduto", systemImage: "clock.badge.xmark").foregroundStyle(.secondary)
+                    Label("Il codice è scaduto.", systemImage: "clock.badge.xmark").foregroundStyle(.secondary)
                     Button("Rigenera") { share.regenerate() }.buttonStyle(.borderedProminent)
                 }
                 .frame(width: 220, height: 220)

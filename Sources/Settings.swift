@@ -66,7 +66,7 @@ final class SettingsModel: ObservableObject {
                 revertingLogin = true
                 launchAtLogin = oldValue
                 revertingLogin = false
-                Self.loginItemAlert(String(localized: "macOS non ha accettato la modifica (\(error.localizedDescription)). Puoi farla a mano in Impostazioni di Sistema → Elementi login."))
+                Self.loginItemAlert(String(localized: "macOS non ha permesso di aprire OrbitLR all’accesso."))
             }
         }
     }
@@ -77,7 +77,7 @@ final class SettingsModel: ObservableObject {
             let a = NSAlert()
             a.messageText = String(localized: "Apri all’accesso")
             a.informativeText = text
-            a.addButton(withTitle: String(localized: "Apri Impostazioni di Sistema"))
+            a.addButton(withTitle: String(localized: "Apri le Impostazioni"))
             a.addButton(withTitle: String(localized: "Chiudi"))
             if a.runModal() == .alertFirstButtonReturn { SMAppService.openSystemSettingsLoginItems() }
         }

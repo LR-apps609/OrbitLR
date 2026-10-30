@@ -27,6 +27,23 @@ struct OrbitLRApp: App {
                     Task { @MainActor in await UpdateCheck.check(userInitiated: true) }
                 }
             }
+            // 5.1 · Un menu vero: File, Vista e Aiuto, come in ogni app del Mac
+            CommandGroup(replacing: .newItem) {
+                Button("Apri…") { app.openFiles() }.keyboardShortcut("o")
+            }
+            CommandGroup(before: .sidebar) {
+                ForEach(Array(SidebarItem.tabs.enumerated()), id: \.offset) { i, item in
+                    Button(item.title) { app.show(item) }
+                        .keyboardShortcut(KeyEquivalent(Character(String(i + 1))), modifiers: .command)
+                }
+                Button(SidebarItem.activity.title) { app.show(.activity) }.keyboardShortcut("0")
+                Divider()
+            }
+            CommandGroup(replacing: .help) {
+                Button("Aiuto di OrbitLR") { app.show(.help) }.keyboardShortcut("?")
+                Button("Segnala un problema…") { app.mainWindow?.makeKeyAndOrderFront(nil); app.showBugReport = true }
+                Button("Suggerisci un’idea…") { Feedback.show() }
+            }
         }
 
         MenuBarExtra {

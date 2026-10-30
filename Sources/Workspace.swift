@@ -33,6 +33,24 @@ final class AppState: ObservableObject, @unchecked Sendable {
     /// 3.5 · La finestra di cui si sorveglia la chiusura (una volta sola)
     static weak var closeWatched: NSWindow?
     @Published var showBugReport = false
+
+    /// 5.1 · Dal menu Vista (⌘1–5) e Aiuto: porta davanti la finestra e apre la scheda.
+    func show(_ item: SidebarItem) {
+        mainWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        selection = item
+    }
+
+    /// 5.1 · File → Apri file… (⌘O): i file vanno in Converti, come trascinarli sulla finestra.
+    func openFiles() {
+        show(.workspace)
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = true
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = true
+        panel.prompt = String(localized: "Apri")
+        Sheet.choose(panel) { [weak self] urls in if !urls.isEmpty { self?.workspace.load(urls, append: false) } }
+    }
 }
 
 /// Un gruppo di file dello stesso tipo, con il suo menu a torta.
