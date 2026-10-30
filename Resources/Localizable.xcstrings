@@ -13210,16 +13210,6 @@
         }
       }
     },
-    "Sblocca": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unlock"
-          }
-        }
-      }
-    },
     "Scarica": {
       "localizations": {
         "en": {

@@ -37,8 +37,8 @@ final class SystemWordsTests: XCTestCase {
     func testSectionNamesComeFromTitle() {
         XCTAssertEqual(SidebarItem.workspace.title, String(localized: "Converti"))
         XCTAssertEqual(SidebarItem.files.title, String(localized: "PDF e documenti"))
-        XCTAssertTrue(Help.sections.contains("Converti"))
-        XCTAssertFalse(Help.sections.contains("Conversione"))
+        XCTAssertTrue(FAQ.sections.contains("Converti"))
+        XCTAssertFalse(FAQ.sections.contains("Conversione"))
         XCTAssertEqual(BugReport.categories.first, "Converti")
     }
 
