@@ -246,7 +246,7 @@ struct DrawerRow: View {
                 .opacity(hover ? 1 : 0.55)
         }
         .padding(.vertical, 2).padding(.horizontal, 3)
-        .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Theme.ink.opacity(0.06) : .clear))
+        .background(RoundedRectangle(cornerRadius: Radius.s).fill(hover ? Theme.ink.opacity(0.06) : .clear))
         .contentShape(Rectangle())
         .onHover { hover = $0 }
         .onDrag { NSItemProvider(contentsOf: url) ?? NSItemProvider() }

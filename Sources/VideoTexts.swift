@@ -296,7 +296,7 @@ struct TextOptions: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Button(action: add) { Label("Aggiungi un testo", systemImage: "plus").frame(maxWidth: .infinity) }
-                .buttonStyle(.borderedProminent).tint(Theme.accent)
+                .primaryButton()
             // 3.3 · Le parole dette nelle clip diventano sottotitoli, al momento giusto
             if listening {
                 // 5.1 · Avanzamento e Interrompi
@@ -338,7 +338,7 @@ struct TextOptions: View {
                             }
                             .font(.system(size: 12))
                             .padding(.horizontal, 8).padding(.vertical, 5)
-                            .background(RoundedRectangle(cornerRadius: 6).fill(t.id == s.selectedText ? Theme.brass.opacity(0.3) : Color.clear))
+                            .background(RoundedRectangle(cornerRadius: Radius.s).fill(t.id == s.selectedText ? Theme.brass.opacity(0.3) : Color.clear))
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
@@ -466,7 +466,7 @@ struct TextDragLayer: View {
                     let size = Self.boxSize(t, canvas: canvasPx)
                     let cx = min(max(CGFloat(t.x) * vw, size.width / 2), vw - size.width / 2)
                     let cy = min(max(CGFloat(t.y) * vh, size.height / 2), vh - size.height / 2)
-                    RoundedRectangle(cornerRadius: 4)
+                    RoundedRectangle(cornerRadius: Radius.xs)
                         .strokeBorder(s.selectedText == t.id ? Theme.brass : Color.white.opacity(0.6),
                                       style: StrokeStyle(lineWidth: s.selectedText == t.id ? 2 : 1, dash: [4, 3]))
                         .frame(width: size.width + 8, height: size.height + 6)

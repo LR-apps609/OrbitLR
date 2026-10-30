@@ -133,7 +133,7 @@ struct ResultBubbleView: View {
                     }
                     HStack(spacing: 8) {
                         Button("Mostra nel Finder") { NSWorkspace.shared.activateFileViewerSelecting(job.outputs); close() }
-                            .buttonStyle(.borderedProminent).tint(Theme.accent)
+                            .primaryButton()
                         if job.outputs.count == 1 {
                             Button("Apri") { NSWorkspace.shared.open(job.outputs[0]); close() }
                         }
@@ -164,7 +164,7 @@ struct ResultBubbleView: View {
                     HStack(spacing: 6) {
                         if let fix = Fix.best(for: job) {
                             Button { QueueStore.shared.apply(fix, to: job); close() } label: { Label(fix.label, systemImage: fix.symbol) }
-                                .buttonStyle(.borderedProminent).tint(Theme.brass)
+                                .fixButton()
                         } else {
                             Button("Riprova") { QueueStore.shared.retry(job); close() }
                         }

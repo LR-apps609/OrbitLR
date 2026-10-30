@@ -450,8 +450,8 @@ struct TrimEditorView: View {
             if m.isVideo {
                 PlayerPreview(player: m.player)
                     .frame(height: 280)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.stroke))
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.l, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: Radius.l, style: .continuous).strokeBorder(Theme.stroke))
             }
 
             TrimTimeline(m: m, tint: tint)
@@ -608,7 +608,7 @@ struct TrimTimeline: View {
             let xe = sel ? xe0 : w + 100
             ZStack(alignment: .topLeading) {
                 // Sfondo: clic = sposta la testina
-                RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.parchment.opacity(0.55))
+                RoundedRectangle(cornerRadius: Radius.m, style: .continuous).fill(Theme.parchment.opacity(0.55))
                     .contentShape(Rectangle())
                     .gesture(SpatialTapGesture(coordinateSpace: .named("timeline")).onEnded { v in
                         m.seek(toT(v.location.x))
@@ -622,7 +622,7 @@ struct TrimTimeline: View {
                         }
                     }
                     .opacity(0.6)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.m, style: .continuous))
                     .allowsHitTesting(false)
                 }
 
@@ -664,7 +664,7 @@ struct TrimTimeline: View {
                                     let x = CGFloat((t - v0) / span) * size.width
                                     ctx.fill(Path(CGRect(x: x, y: 0, width: 1, height: 5)), with: .color(Theme.ink.opacity(0.35)))
                                     if x < size.width - 30 {
-                                        ctx.draw(Text(Self.tickLabel(t, step: step)).font(.system(size: 9.5)).foregroundColor(Theme.ink.opacity(0.55)),
+                                        ctx.draw(Text(Self.tickLabel(t, step: step)).font(.system(size: 10.5)).foregroundColor(Theme.ink.opacity(0.55)),
                                                  at: CGPoint(x: x + 3, y: 1), anchor: .topLeading)
                                     }
                                     t += step
@@ -684,7 +684,7 @@ struct TrimTimeline: View {
 
                 // Bordo della selezione (solo la parte visibile)
                 if sel && (ce > cs || (xe >= 0 && xs <= w)) {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(tint, lineWidth: 2)
+                    RoundedRectangle(cornerRadius: Radius.m, style: .continuous).strokeBorder(tint, lineWidth: 2)
                         .frame(width: max(4, ce - cs), height: h).offset(x: cs).allowsHitTesting(false)
                 }
 
@@ -739,7 +739,7 @@ struct TrimTimeline: View {
     }
 
     private func handle(height: CGFloat) -> some View {
-        RoundedRectangle(cornerRadius: 5, style: .continuous)
+        RoundedRectangle(cornerRadius: Radius.xs, style: .continuous)
             .fill(tint.gradient)
             .frame(width: 14, height: height + 12)
             .overlay(Capsule().fill(Color.white.opacity(0.9)).frame(width: 3, height: 24))

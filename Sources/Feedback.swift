@@ -116,8 +116,8 @@ struct FeedbackView: View {
                             Text(String(localized: String.LocalizationValue(f.name))).font(.system(size: 11.5, weight: .semibold))
                         }
                         .frame(width: 96, height: 72)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(face == f.id ? Theme.accent.opacity(0.18) : Theme.ink.opacity(0.05)))
-                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(face == f.id ? Theme.accent : .clear, lineWidth: 2))
+                        .background(RoundedRectangle(cornerRadius: Radius.l).fill(face == f.id ? Theme.accent.opacity(0.18) : Theme.ink.opacity(0.05)))
+                        .overlay(RoundedRectangle(cornerRadius: Radius.l).strokeBorder(face == f.id ? Theme.accent : .clear, lineWidth: 2))
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(String(localized: String.LocalizationValue(f.name)))
@@ -128,7 +128,7 @@ struct FeedbackView: View {
                 .font(.system(size: 13))
                 .frame(height: 110)
                 .padding(6)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Theme.ink.opacity(0.05)))
+                .background(RoundedRectangle(cornerRadius: Radius.m).fill(Theme.ink.opacity(0.05)))
                 .onChange(of: text) { _, v in ReportDraft.save(v, key: ReportDraft.ideaKey) }
             Text("Si apre un’email già pronta: contiene solo quello che scrivi e la versione di OrbitLR, niente nomi di file.")
                 .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
@@ -141,7 +141,7 @@ struct FeedbackView: View {
                 Spacer()
                 Button("Annulla") { cancel() }.keyboardShortcut(.cancelAction)
                 Button("Scrivi l’email") { send() }
-                .buttonStyle(.borderedProminent).tint(Theme.accent)
+                .primaryButton()
                 .disabled(!canSend)
                 .help(canSend ? String(localized: "Si apre un’email già pronta.") : String(localized: "Scegli una faccina o scrivi prima qualcosa."))
                 .keyboardShortcut(.defaultAction)

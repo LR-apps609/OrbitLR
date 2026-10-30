@@ -139,7 +139,7 @@ struct MainWindow: View {
                             }
                             .foregroundStyle(Theme.ink.opacity(0.75))
                             .padding(.horizontal, 8).padding(.vertical, 5)
-                            .background(RoundedRectangle(cornerRadius: 7).fill(Theme.cream.opacity(0.35)))
+                            .background(RoundedRectangle(cornerRadius: Radius.s).fill(Theme.cream.opacity(0.35)))
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
@@ -303,8 +303,8 @@ private struct FooterButton: View {
             }
             .frame(maxWidth: .infinity).padding(.vertical, 7)
             .foregroundStyle(Theme.ink)
-            .background(RoundedRectangle(cornerRadius: 8).fill(selected ? Theme.accent.opacity(0.18) : (hover ? Theme.ivory : Theme.ivory.opacity(0.7))))
-            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.stroke))
+            .background(RoundedRectangle(cornerRadius: Radius.m).fill(selected ? Theme.accent.opacity(0.18) : (hover ? Theme.ivory : Theme.ivory.opacity(0.7))))
+            .overlay(RoundedRectangle(cornerRadius: Radius.m).strokeBorder(Theme.stroke))
             .contentShape(Rectangle())
         }
         .buttonStyle(Pressable())
@@ -444,7 +444,7 @@ struct JobCard: View {
             HStack(spacing: 6) {
                 if let fix = Fix.best(for: job) {
                     Button { store.apply(fix, to: job) } label: { Label(fix.label, systemImage: fix.symbol) }
-                        .buttonStyle(.borderedProminent).tint(Theme.brass)
+                        .fixButton()
                 }
                 if let first = job.outputs.first, job.state == .done {
                     Button { onPreview(first) } label: { Image(systemName: "eye") }.help("Anteprima del risultato").accessibilityLabel("Anteprima del risultato")
@@ -463,8 +463,8 @@ struct JobCard: View {
             .fixedSize()
         }
         .padding(14)
-        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(hover ? Theme.cardHover : Theme.card))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Theme.stroke))
+        .background(RoundedRectangle(cornerRadius: Radius.xl, style: .continuous).fill(hover ? Theme.cardHover : Theme.card))
+        .overlay(RoundedRectangle(cornerRadius: Radius.xl, style: .continuous).strokeBorder(Theme.stroke))
         .onHover { hover = $0 }
         .help(job.failures.joined(separator: "\n"))
         // 5.1 · Doppio clic apre il risultato, clic destro le azioni del lavoro
@@ -703,7 +703,7 @@ struct ComponentsView: View {
                             .disabled(testing)
                         if !installer.missing.isEmpty && installer.brewPath != nil {
                             Button("Installa tutti i mancanti") { installer.install(installer.missing, id: "all") }
-                                .buttonStyle(.borderedProminent).tint(Theme.green).disabled(installer.running != nil)
+                                .primaryButton(Theme.green).disabled(installer.running != nil)
                                 .help(installer.running != nil ? String(localized: "Aspetta: sto già installando un programma.") : "")
                         }
                     }
@@ -832,7 +832,7 @@ struct ComponentsView: View {
 extension View {
     /// 3.0 · Il pulsante principale della schermata (uno solo): pieno se `on`, normale altrimenti.
     @ViewBuilder func primaryButton(_ on: Bool = true) -> some View {
-        if on { self.buttonStyle(.borderedProminent).tint(Theme.accent) } else { self.buttonStyle(.bordered) }
+        if on { self.primaryButton() } else { self.buttonStyle(.bordered) }
     }
 }
 
@@ -966,8 +966,8 @@ struct MenuDropZone: View {
             }
         }
         .frame(maxWidth: .infinity).padding(.vertical, 12)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Theme.accent.opacity(targeted ? 0.16 : 0.06)))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.accent.opacity(targeted ? 0.9 : 0.4), style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])))
+        .background(RoundedRectangle(cornerRadius: Radius.l).fill(Theme.accent.opacity(targeted ? 0.16 : 0.06)))
+        .overlay(RoundedRectangle(cornerRadius: Radius.l).strokeBorder(Theme.accent.opacity(targeted ? 0.9 : 0.4), style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])))
         .dropDestination(for: URL.self) { urls, _ in
             let files = urls.filter { $0.isFileURL }
             guard !files.isEmpty else { return false }
@@ -1159,7 +1159,7 @@ struct MenuUpdateRow: View {
                     Spacer()
                 }
                 .padding(8)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Theme.brass.opacity(0.14)))
+                .background(RoundedRectangle(cornerRadius: Radius.m).fill(Theme.brass.opacity(0.14)))
             }
             .buttonStyle(.plain)
             .disabled(badge.installing)

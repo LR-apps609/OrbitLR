@@ -284,7 +284,7 @@ struct AutomationView: View {
                                 }
                                 Spacer()
                                 Button("Attiva") { t.prepare?(); withAnimation(Motion.quick) { store.add(t.rule(), includeExisting: false) } }
-                                    .buttonStyle(.borderedProminent).tint(SidebarItem.automation.color)
+                                    .primaryButton(SidebarItem.automation.color)
                             }
                             .padding(12)
                             .card(radius: 12)
@@ -576,7 +576,7 @@ struct NewWatchView: View {
                 Button("Annulla") { done() }.keyboardShortcut(.cancelAction)
                 Button("Crea") { create() }
                     .keyboardShortcut(.defaultAction)
-                    .buttonStyle(.borderedProminent).tint(Theme.accent)
+                    .primaryButton()
                     .disabled(warning != nil)
             }
         }

@@ -411,7 +411,7 @@ struct WelcomeView: View {
                 Spacer()
                 Button("Inizia") { ctl.finish() }
                     .keyboardShortcut(.defaultAction)
-                    .buttonStyle(.borderedProminent).tint(Theme.accent)
+                    .primaryButton()
             }
             .padding(.horizontal, 28).padding(.bottom, 22)
         }
@@ -455,13 +455,13 @@ struct WelcomeView: View {
             }
             .scrollIndicators(.visible)          // 2.8.7 · la barra per scorrere si vede sempre
             .frame(maxHeight: .infinity)
-            .background(RoundedRectangle(cornerRadius: 12).fill(Theme.ink.opacity(0.05)))
+            .background(RoundedRectangle(cornerRadius: Radius.l).fill(Theme.ink.opacity(0.05)))
             .padding(.horizontal, 28)
             HStack {
                 Spacer()
                 Button("Inizia") { ctl.finish() }
                     .keyboardShortcut(.defaultAction)
-                    .buttonStyle(.borderedProminent).tint(Theme.accent)
+                    .primaryButton()
             }
             .padding(.horizontal, 28).padding(.bottom, 22)
         }
@@ -535,7 +535,7 @@ struct WelcomeView: View {
                 else { Button("Salta") { ctl.finish() } }
                 Button(n == pages.count - 1 ? String(localized: "Inizia") : String(localized: "Avanti")) { ctl.next() }
                     .keyboardShortcut(.defaultAction)
-                    .buttonStyle(.borderedProminent).tint(Theme.accent)
+                    .primaryButton()
             }
             .padding(.horizontal, 28).padding(.bottom, 22)
         }
@@ -643,7 +643,7 @@ struct PermissionsView: View {
                 }
             }
             .padding(.vertical, 4)
-            .background(RoundedRectangle(cornerRadius: 12).fill(Theme.ink.opacity(0.05)))
+            .background(RoundedRectangle(cornerRadius: Radius.l).fill(Theme.ink.opacity(0.05)))
             .padding(.horizontal, 28)
             if p.items.contains(where: { $0.state == .denied || $0.state == .later }) {
                 Text("Quelli con ✕ si possono dare dopo in Impostazioni di Sistema → Privacy e sicurezza.")
@@ -658,7 +658,7 @@ struct PermissionsView: View {
                     if p.done { onDone() } else { p.askAll { } }
                 }
                 .keyboardShortcut(.defaultAction)
-                .buttonStyle(.borderedProminent).tint(Theme.accent)
+                .primaryButton()
                 .disabled(p.running)
             }
             .padding(.horizontal, 28).padding(.bottom, 22)

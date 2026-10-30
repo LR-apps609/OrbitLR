@@ -116,8 +116,8 @@ struct ShortcutsPanel: View {
             .foregroundStyle(Theme.ink)
             .padding(.horizontal, k.count > 2 ? 7 : 5)
             .frame(minWidth: 22, minHeight: 20)
-            .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(Theme.ivory))
-            .overlay(RoundedRectangle(cornerRadius: 5, style: .continuous).strokeBorder(Theme.ink.opacity(0.18)))
+            .background(RoundedRectangle(cornerRadius: Radius.xs, style: .continuous).fill(Theme.ivory))
+            .overlay(RoundedRectangle(cornerRadius: Radius.xs, style: .continuous).strokeBorder(Theme.ink.opacity(0.18)))
             .shadow(color: Theme.shadow.opacity(0.12), radius: 0, y: 1)
     }
 }

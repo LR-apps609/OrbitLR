@@ -129,7 +129,7 @@ struct CompareView: View {
             let w = g.size.width, h = g.size.height
             let fit = fitted(in: g.size)
             ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.parchment.opacity(0.45))
+                RoundedRectangle(cornerRadius: Radius.xl, style: .continuous).fill(Theme.parchment.opacity(0.45))
                 if let before, let after {
                     layer(before, fit: fit, size: g.size)
                     layer(after, fit: fit, size: g.size)

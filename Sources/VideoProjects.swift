@@ -222,7 +222,7 @@ struct VideoProjectsView: View {
                 DownloaderBar(video: true) { t in linkText = t; showLink = true }
                     .help("Incolla il link di un video: si apre in un progetto nuovo")
                 Button { s.newProject(undo) } label: { Label("Nuovo progetto", systemImage: "plus") }
-                    .buttonStyle(.borderedProminent).tint(Theme.accent).controlSize(.large)
+                    .primaryButton().controlSize(.large)
                     .keyboardShortcut("n", modifiers: [.command, .shift])
                     .help("Inizia un nuovo montaggio (⇧⌘N)")
             }
@@ -315,10 +315,10 @@ private struct NewProjectCard: View {
                 Text(vertical ? "TikTok, Reels, Shorts" : String(localized: "o trascina qui dei video")).font(.system(size: 11.5)).foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity).frame(height: 178)
-            .background(RoundedRectangle(cornerRadius: 14).fill(hover || targeted ? Theme.cardHover : Theme.card))
-            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(tint.opacity(hover || targeted ? 0.7 : 0.35),
+            .background(RoundedRectangle(cornerRadius: Radius.xl).fill(hover || targeted ? Theme.cardHover : Theme.card))
+            .overlay(RoundedRectangle(cornerRadius: Radius.xl).strokeBorder(tint.opacity(hover || targeted ? 0.7 : 0.35),
                                                                       style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])))
-            .contentShape(RoundedRectangle(cornerRadius: 14))
+            .contentShape(RoundedRectangle(cornerRadius: Radius.xl))
         }
         .buttonStyle(.plain)
         .onHover { hover = $0 }
@@ -379,10 +379,10 @@ private struct ProjectCard: View {
             .padding(10)
         }
         .frame(height: 178)
-        .background(RoundedRectangle(cornerRadius: 14).fill(hover ? Theme.cardHover : Theme.card))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(hover ? tint.opacity(0.6) : Theme.stroke, lineWidth: 1))
-        .contentShape(RoundedRectangle(cornerRadius: 14))
+        .background(RoundedRectangle(cornerRadius: Radius.xl).fill(hover ? Theme.cardHover : Theme.card))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.xl))
+        .overlay(RoundedRectangle(cornerRadius: Radius.xl).strokeBorder(hover ? tint.opacity(0.6) : Theme.stroke, lineWidth: 1))
+        .contentShape(RoundedRectangle(cornerRadius: Radius.xl))
         .onTapGesture(perform: open)
         .onHover { hover = $0 }
         .contextMenu {

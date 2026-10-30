@@ -142,8 +142,8 @@ struct SimplePanel: View {
                             Button { m.run(a) } label: {
                                 Text(a.short).font(.system(size: 12.5, weight: .bold)).lineLimit(1)
                                     .frame(maxWidth: .infinity).padding(.vertical, 8)
-                                    .background(RoundedRectangle(cornerRadius: 9).fill(Theme.card))
-                                    .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(tint.opacity(0.35)))
+                                    .background(RoundedRectangle(cornerRadius: Radius.m).fill(Theme.card))
+                                    .overlay(RoundedRectangle(cornerRadius: Radius.m).strokeBorder(tint.opacity(0.35)))
                             }
                             .buttonStyle(Pressable())
                             .help(m.estimates[a.id].map { "\(a.title) · \(SizeEstimate.label($0))" } ?? a.title)
@@ -191,7 +191,7 @@ struct SimplePanel: View {
     private func tileLabel(symbol: String, title: String, hint: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Image(systemName: symbol).font(.system(size: 15, weight: .semibold)).foregroundStyle(tint)
-                .frame(width: 32, height: 32).background(RoundedRectangle(cornerRadius: 9).fill(tint.opacity(0.14)))
+                .frame(width: 32, height: 32).background(RoundedRectangle(cornerRadius: Radius.m).fill(tint.opacity(0.14)))
             Text(title).font(.system(size: 13.5, weight: .bold)).lineLimit(2).multilineTextAlignment(.leading)
             if !hint.isEmpty {
                 Text(hint).font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(3)

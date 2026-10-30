@@ -228,7 +228,7 @@ struct ParamView: View {
                     }
                 }
                 .padding(10)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Theme.parchment.opacity(0.4)))
+                .background(RoundedRectangle(cornerRadius: Radius.m).fill(Theme.parchment.opacity(0.4)))
             }
             if !error.isEmpty {
                 Label(error, systemImage: "exclamationmark.triangle.fill").font(.system(size: 12)).foregroundStyle(Theme.color(.pdf))
@@ -236,7 +236,7 @@ struct ParamView: View {
             HStack {
                 Spacer()
                 Button("Annulla") { if mayDiscard() { onDone(nil) } }.keyboardShortcut(.cancelAction)
-                Button(confirmTitle) { confirm() }.keyboardShortcut(.defaultAction).buttonStyle(.borderedProminent).tint(tint)
+                Button(confirmTitle) { confirm() }.keyboardShortcut(.defaultAction).primaryButton(tint)
             }
         }
         .padding(20)
@@ -485,7 +485,7 @@ struct ParamView: View {
             }
             .padding(10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 8).fill(Theme.parchment.opacity(0.5)))
+            .background(RoundedRectangle(cornerRadius: Radius.m).fill(Theme.parchment.opacity(0.5)))
             note(String(localized: "I file vengono rinominati in ordine di nome. Si può tornare indietro da Attività."))
         }
     }

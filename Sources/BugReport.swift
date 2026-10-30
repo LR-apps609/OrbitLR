@@ -181,8 +181,8 @@ struct BugReportView: View {
                     .scrollContentBackground(.hidden)
                     .padding(6)
                     .frame(height: 120)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Theme.ivory))
-                    .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.stroke))
+                    .background(RoundedRectangle(cornerRadius: Radius.m).fill(Theme.ivory))
+                    .overlay(RoundedRectangle(cornerRadius: Radius.m).strokeBorder(Theme.stroke))
                     .overlay(alignment: .topLeading) {
                         if text.isEmpty {
                             Text("Cosa stavi facendo, cosa ti aspettavi e cosa è successo invece.")
@@ -245,7 +245,7 @@ struct BugReportView: View {
                 Button("Annulla") { cancel() }.keyboardShortcut(.cancelAction)
                 Button { send() } label: { Label("Prepara l’email", systemImage: "paperplane.fill") }
                     .keyboardShortcut(.defaultAction)
-                    .buttonStyle(.borderedProminent).tint(Theme.accent)
+                    .primaryButton()
                     .disabled(!canSend)
                     .help(sendHelp)
             }

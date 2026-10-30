@@ -304,7 +304,7 @@ struct LinkSheet: View {
                 Spacer()
                 Button(job.running ? String(localized: "Interrompi") : String(localized: "Annulla")) { if job.running { job.cancel() } else { close() } }
                 Button("Scarica") { start() }
-                    .buttonStyle(.borderedProminent).tint(Theme.accent)
+                    .primaryButton()
                     .disabled(link == nil || job.running)
                     .keyboardShortcut(.defaultAction)
             }
@@ -445,8 +445,8 @@ struct DownloaderBar: View {
             .help("Scarica dal link (oppure premi Invio)")
         }
         .background(Theme.card)
-        .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous).strokeBorder(tint.opacity(focused ? 0.9 : 0.55), lineWidth: 1.5))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.m, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: Radius.m, style: .continuous).strokeBorder(tint.opacity(focused ? 0.9 : 0.55), lineWidth: 1.5))
         .shadow(color: tint.opacity(0.25), radius: 6, y: 1)
         .accessibilityElement(children: .contain)
     }

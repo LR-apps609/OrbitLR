@@ -233,7 +233,7 @@ struct HideMarkEditor: View {
                 Button("Annulla") { if mayDiscard() { onDone(nil) } }.keyboardShortcut(.cancelAction)
                 Button(frameSource != nil ? String(localized: "Applica") : isVideo ? String(localized: "Crea il video") : String(localized: "Crea la foto")) { onDone(HideMark.encode(spec)) }
                     .keyboardShortcut(.defaultAction)
-                    .buttonStyle(.borderedProminent).tint(Theme.accent)
+                    .primaryButton()
                     .disabled(spec.rects.isEmpty)
             }
         }
@@ -264,7 +264,7 @@ struct HideMarkEditor: View {
     private var canvas: some View {
         let size = fitted
         return ZStack(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: 10).fill(Color.black.opacity(0.85))
+            RoundedRectangle(cornerRadius: Radius.m).fill(Color.black.opacity(0.85))
             if let shown {
                 Image(nsImage: shown).resizable().frame(width: size.width, height: size.height)
                 ForEach(Array(spec.rects.enumerated()), id: \.offset) { i, r in
@@ -280,7 +280,7 @@ struct HideMarkEditor: View {
             }
         }
         .frame(width: size.width, height: size.height)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.m))
         .contentShape(Rectangle())
         .gesture(DragGesture(minimumDistance: 3)
             .onChanged { v in draft = norm(v.startLocation, v.location, size) }

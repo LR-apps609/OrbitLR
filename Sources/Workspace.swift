@@ -560,7 +560,7 @@ struct JobStatusBar: View {
             }
             if let fix = Fix.best(for: job) {
                 Button { store.apply(fix, to: job) } label: { Label(fix.label, systemImage: fix.symbol) }
-                    .buttonStyle(.borderedProminent).tint(Theme.brass)
+                    .fixButton()
             }
             let pairs = job.comparePairs
             if !pairs.isEmpty {
@@ -570,7 +570,7 @@ struct JobStatusBar: View {
             }
             if job.state == .done && !job.outputs.isEmpty {
                 UseInMenu(url: job.outputs[0])          // 3.0 · il passo successivo, in un clic
-                Button("Mostra nel Finder") { store.reveal(job.outputs.map { $0.path }) }.buttonStyle(.borderedProminent).tint(Theme.green)
+                Button("Mostra nel Finder") { store.reveal(job.outputs.map { $0.path }) }.primaryButton(Theme.green)
             } else if job.state == .running {
                 Button("Interrompi") { store.cancel(job) }
             }

@@ -2,7 +2,22 @@ import SwiftUI
 
 import AppKit
 
+/// 5.2 · Gli arrotondamenti dell'app: cinque misure, non più quindici. Le regole sono in Design/DESIGN.md.
+enum Radius {
+    static let xs: CGFloat = 5      // etichette, piccole barre
+    static let s: CGFloat = 7       // campi, miniature piccole
+    static let m: CGFloat = 9       // pulsanti, righe, riquadri interni
+    static let l: CGFloat = 12      // schede e strisce
+    static let xl: CGFloat = 14     // carte grandi e anteprime
+}
+
 extension View {
+    /// 5.2 · Ruoli dei pulsanti: uno per ruolo, sempre lo stesso aspetto.
+    /// Azione principale della schermata (una sola).
+    func primaryButton(_ tint: Color = Theme.accent) -> some View { buttonStyle(.borderedProminent).tint(tint) }
+    /// Il pulsante che risolve un errore («Libera spazio», «Scegli un’altra cartella»…).
+    func fixButton() -> some View { buttonStyle(.borderedProminent).tint(Theme.brass) }
+
     /// 5.2 · Area di clic di almeno 24 × 24 pt, anche quando il disegno resta piccolo.
     func hitArea(_ side: CGFloat = 24) -> some View {
         frame(minWidth: side, minHeight: side).contentShape(Rectangle())

@@ -252,7 +252,7 @@ struct SendToPhoneStrip: View {
             Text("Inquadra con l’iPhone").font(.headline)
             if let u = share.url, let img = SendToPhone.qrImage(u) {
                 Image(nsImage: img).interpolation(.none).resizable().frame(width: 200, height: 200)
-                    .padding(10).background(Color.white).clipShape(RoundedRectangle(cornerRadius: 10))
+                    .padding(10).background(Color.white).clipShape(RoundedRectangle(cornerRadius: Radius.m))
                 if share.downloaded {
                     Label("Scaricata sull’iPhone", systemImage: "checkmark.circle.fill").foregroundStyle(Theme.green)
                         .font(.system(size: 12, weight: .semibold))

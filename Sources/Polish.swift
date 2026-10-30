@@ -365,7 +365,7 @@ struct RadioIllustration: View {
 
                 // Scala con lancetta
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4).fill(Theme.ivory)
+                    RoundedRectangle(cornerRadius: Radius.xs).fill(Theme.ivory)
                     HStack(spacing: 5) {
                         ForEach(0..<8, id: \.self) { i in
                             Rectangle().fill(Theme.ink.opacity(i % 2 == 0 ? 0.35 : 0.18)).frame(width: 1, height: i % 2 == 0 ? 9 : 5)
@@ -376,8 +376,8 @@ struct RadioIllustration: View {
                         .offset(x: sweep ? 58 : 8)
                 }
                 .frame(width: 68, height: 18)
-                .clipShape(RoundedRectangle(cornerRadius: 4))
-                .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(Theme.brass.opacity(0.6)))
+                .clipShape(RoundedRectangle(cornerRadius: Radius.xs))
+                .overlay(RoundedRectangle(cornerRadius: Radius.xs).strokeBorder(Theme.brass.opacity(0.6)))
                 .offset(x: 38, y: -18)
 
                 // Manopole

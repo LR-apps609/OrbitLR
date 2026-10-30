@@ -362,7 +362,7 @@ private struct ImageTile: View {
     var body: some View {
         VStack(spacing: 5) {
             ZStack {
-                RoundedRectangle(cornerRadius: 10).fill(tint.opacity(0.12))
+                RoundedRectangle(cornerRadius: Radius.m).fill(tint.opacity(0.12))
                 if let image {
                     Image(nsImage: image).resizable().scaledToFit().padding(4)
                         .transition(.opacity)
@@ -372,7 +372,7 @@ private struct ImageTile: View {
             }
             .frame(height: 104)
             .animation(Motion.quick, value: image != nil)
-            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(selected ? Theme.brass : (hover ? tint.opacity(0.5) : .clear),
+            .overlay(RoundedRectangle(cornerRadius: Radius.m).strokeBorder(selected ? Theme.brass : (hover ? tint.opacity(0.5) : .clear),
                                                                      lineWidth: selected ? 3 : 1.5))
             .overlay(alignment: .topTrailing) {
                 if hover {
@@ -517,9 +517,9 @@ private struct ImagesInspector: View {
                 }
             }
             .frame(maxWidth: .infinity).padding(.vertical, 8)
-            .background(RoundedRectangle(cornerRadius: 9).fill(Theme.card))
-            .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(tint.opacity(0.35)))
-            .contentShape(RoundedRectangle(cornerRadius: 9))
+            .background(RoundedRectangle(cornerRadius: Radius.m).fill(Theme.card))
+            .overlay(RoundedRectangle(cornerRadius: Radius.m).strokeBorder(tint.opacity(0.35)))
+            .contentShape(RoundedRectangle(cornerRadius: Radius.m))
         }
         .buttonStyle(Pressable())
         .help(a.title + (a.hint.isEmpty ? "" : " · " + a.hint))
@@ -549,7 +549,7 @@ private struct ImagesInspector: View {
                 }
             }
             .padding(.horizontal, 8).padding(.vertical, 6)
-            .background(RoundedRectangle(cornerRadius: 8).fill(hovered == a.id ? tint.opacity(0.1) : .clear))
+            .background(RoundedRectangle(cornerRadius: Radius.m).fill(hovered == a.id ? tint.opacity(0.1) : .clear))
             .contentShape(Rectangle())
         }
         .buttonStyle(Pressable())

@@ -416,7 +416,7 @@ struct PieView: View {
             VStack(spacing: 6) {
                 Image(nsImage: model.icon).resizable().aspectRatio(contentMode: .fit)
                     .frame(width: centerSize * 0.40, height: centerSize * 0.40)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.m, style: .continuous))
                 Text(model.fileName).font(.system(size: 12, weight: .semibold)).lineLimit(2).truncationMode(.middle)
                     .multilineTextAlignment(.center)
                 Text(model.subtitle).font(.system(size: 10.5)).foregroundStyle(.secondary).lineLimit(1)

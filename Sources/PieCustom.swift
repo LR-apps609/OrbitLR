@@ -73,7 +73,7 @@ struct PieCustomizeView: View {
                 }
             }
             .frame(height: 380)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.m))
 
             UndoToastBar(place: .pieOrder)          // 5.1
 
@@ -95,7 +95,7 @@ struct PieCustomizeView: View {
                 Spacer()
                 Button("Fatto") { done() }
                     .keyboardShortcut(.defaultAction)
-                    .buttonStyle(.borderedProminent).tint(Theme.accent)
+                    .primaryButton()
             }
         }
         .padding(22)

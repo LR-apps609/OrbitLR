@@ -273,7 +273,7 @@ struct JobStrip: View {
             // 2.7.5 · Errore: il pulsante che lo risolve, subito accanto
             if let fix = Fix.best(for: job) {
                 Button { QueueStore.shared.apply(fix, to: job) } label: { Label(fix.label, systemImage: fix.symbol) }
-                    .buttonStyle(.borderedProminent).tint(Theme.brass)
+                    .fixButton()
             }
         }
         .padding(.horizontal, 14).padding(.vertical, 10)
@@ -323,9 +323,9 @@ struct Chip: View {
                 .lineLimit(1).fixedSize()
                 .padding(.horizontal, 11).padding(.vertical, 6)
                 .foregroundStyle(selected ? Color.white : Theme.ink)
-                .background(RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .background(RoundedRectangle(cornerRadius: Radius.m, style: .continuous)
                     .fill(selected ? AnyShapeStyle(tint.gradient) : AnyShapeStyle(Theme.ivory)))
-                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(selected ? Color.clear : Theme.stroke))
+                .overlay(RoundedRectangle(cornerRadius: Radius.m, style: .continuous).strokeBorder(selected ? Color.clear : Theme.stroke))
                 .contentShape(Rectangle())
         }
         .buttonStyle(Pressable())
@@ -662,16 +662,16 @@ struct AudioTabView: View {
             Button(action: start) {
                 Text(actionTitle).font(.system(size: 13.5, weight: .bold)).frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent).tint(Theme.accent).controlSize(.large)
+            .primaryButton().controlSize(.large)
             // Mentre si scrive il testo, Invio va a capo e non avvia
             .keyboardShortcut(tool == .tts ? nil : KeyboardShortcut.defaultAction)
             .disabled(!canStart)
             .help(canStart ? "" : (tool == .tts ? String(localized: "Scrivi prima un testo") : (tool == .merge ? String(localized: "Servono almeno due file") : String(localized: "Apri prima un file audio"))))
             .padding(10)
         }
-        .background(RoundedRectangle(cornerRadius: 14).fill(Theme.card))
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Theme.stroke, lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .background(RoundedRectangle(cornerRadius: Radius.xl).fill(Theme.card))
+        .overlay(RoundedRectangle(cornerRadius: Radius.xl).strokeBorder(Theme.stroke, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.xl))
     }
 
     /// Suoneria: selezione di 20–30 secondi, anche per i file aperti dopo.
@@ -955,9 +955,9 @@ private struct WaveOverview: View {
                 Capsule().fill(tint.opacity(0.45))
                     .frame(width: max(2, CGFloat((m.end - m.start) / d) * w), height: h * 0.5)
                     .offset(x: CGFloat(m.start / d) * w, y: h * 0.25)
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                RoundedRectangle(cornerRadius: Radius.xs, style: .continuous)
                     .strokeBorder(Theme.ink.opacity(0.55), lineWidth: 1.5)
-                    .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Theme.ink.opacity(0.10)))
+                    .background(RoundedRectangle(cornerRadius: Radius.xs, style: .continuous).fill(Theme.ink.opacity(0.10)))
                     .frame(width: vw, height: h)
                     .offset(x: vx)
             }

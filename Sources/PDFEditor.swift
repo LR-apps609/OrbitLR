@@ -810,7 +810,7 @@ struct PDFEditorView: View {
             Button("Annulla") { model.requestClose() }.keyboardShortcut(.cancelAction)   // 5.1 · chiede se ci sono modifiche
             Button { model.save() } label: { Label("Salva una copia", systemImage: "square.and.arrow.down") }
                 .keyboardShortcut("s", modifiers: .command)
-                .buttonStyle(.borderedProminent).tint(Theme.accent)
+                .primaryButton()
                 .disabled(model.saving)
         }
         .font(.system(size: 12))
@@ -832,7 +832,7 @@ struct SignaturePad: View {
             Text("Con il mouse o con un dito sul trackpad (tieni premuto mentre disegni). OrbitLR la ricorda per le prossime volte.")
                 .font(.system(size: 12)).foregroundStyle(.secondary)
             ZStack {
-                RoundedRectangle(cornerRadius: 12).fill(Color.white)
+                RoundedRectangle(cornerRadius: Radius.l).fill(Color.white)
                 Rectangle().fill(Color.gray.opacity(0.35)).frame(height: 1).offset(y: 50).padding(.horizontal, 30)
                 Canvas { ctx, _ in
                     for s in strokes + [current] where s.count > 1 {
@@ -841,7 +841,7 @@ struct SignaturePad: View {
                 }
             }
             .frame(width: size.width, height: size.height)
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.stroke))
+            .overlay(RoundedRectangle(cornerRadius: Radius.l).strokeBorder(Theme.stroke))
             .gesture(DragGesture(minimumDistance: 0)
                 .onChanged { v in current.append(v.location) }
                 .onEnded { _ in if current.count > 1 { strokes.append(current) }; current = [] })
@@ -851,7 +851,7 @@ struct SignaturePad: View {
                 Button("Annulla") { cancel() }.keyboardShortcut(.cancelAction)
                 Button("Usa questa firma") { done(render()) }
                     .keyboardShortcut(.defaultAction)
-                    .buttonStyle(.borderedProminent).tint(Theme.accent)
+                    .primaryButton()
                     .disabled(strokes.isEmpty)
             }
         }

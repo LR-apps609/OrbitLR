@@ -1239,9 +1239,9 @@ struct VideoEditorView: View {
             .scrollIndicators(.visible)
             if s.changedSinceOpen || s.showingBefore { pendingBar }
         }
-        .background(RoundedRectangle(cornerRadius: 14).fill(Theme.card))
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Theme.stroke, lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .background(RoundedRectangle(cornerRadius: Radius.xl).fill(Theme.card))
+        .overlay(RoundedRectangle(cornerRadius: Radius.xl).strokeBorder(Theme.stroke, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.xl))
     }
 
     /// 5.1 · Tutto è già salvato: qui si confronta con com'era all'apertura, e si può tornarci.
@@ -1624,11 +1624,11 @@ struct ToolTab: View {
             }
             .frame(maxWidth: .infinity).frame(height: 46)
             .foregroundStyle(selected ? Color.white : Theme.ink)
-            .background(RoundedRectangle(cornerRadius: 9).fill(selected ? tint : Theme.ink.opacity(0.05)))
+            .background(RoundedRectangle(cornerRadius: Radius.m).fill(selected ? tint : Theme.ink.opacity(0.05)))
             .overlay(alignment: .topTrailing) {
                 if used && !selected { Circle().fill(Theme.brass).frame(width: 6, height: 6).padding(5) }
             }
-            .contentShape(RoundedRectangle(cornerRadius: 9))
+            .contentShape(RoundedRectangle(cornerRadius: Radius.m))
         }
         .buttonStyle(Pressable())
         .help(hint)
@@ -1720,7 +1720,7 @@ private struct EditorPreview: View {
             .padding(10)
             PlaybackBar(s: s, clock: clock)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.xl, style: .continuous))
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .frame(minHeight: 200)
     }
@@ -1919,12 +1919,12 @@ private struct ProjectTimeline: View {
         return ZStack(alignment: .topLeading) {
             Rectangle().fill(Theme.ink.opacity(0.05))
             ForEach(marks, id: \.self) { t in
-                Text(step < 1 ? TrimTimeline.tickLabel(t, step: step) : formatShort(t)).font(.system(size: 9.5)).foregroundStyle(.secondary).monospacedDigit()
+                Text(step < 1 ? TrimTimeline.tickLabel(t, step: step) : formatShort(t)).font(.system(size: 10.5)).foregroundStyle(.secondary).monospacedDigit()
                     .fixedSize()
                     .offset(x: min(CGFloat(t) * pps + 2, max(0, width - 28)), y: 1)
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 4))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.xs))
         .contentShape(Rectangle())
         .gesture(DragGesture(minimumDistance: 0).onChanged { v in
             s.seek(Double(max(0, v.location.x) / pps))
@@ -2118,7 +2118,7 @@ private struct ProjectTimeline: View {
     @ViewBuilder private func textsRow(total: Double, pps: CGFloat, width: CGFloat) -> some View {
         let texts = s.project.texts ?? []
         ZStack(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: 5).fill(Theme.ink.opacity(0.04))
+            RoundedRectangle(cornerRadius: Radius.xs).fill(Theme.ink.opacity(0.04))
             if texts.isEmpty {
                 Text("Testi: premi «Testo» sull’anteprima").font(.system(size: 10.5)).foregroundStyle(.tertiary)
                     .padding(.leading, 8).frame(maxHeight: .infinity)
@@ -2140,7 +2140,7 @@ private struct ProjectTimeline: View {
                 }
                 .frame(width: w, height: 20)
                 .foregroundStyle(on ? Color.white : Theme.ink)
-                .background(RoundedRectangle(cornerRadius: 5).fill(on ? Theme.brass : Theme.brass.opacity(0.35)))
+                .background(RoundedRectangle(cornerRadius: Radius.xs).fill(on ? Theme.brass : Theme.brass.opacity(0.35)))
                 .offset(x: x, y: 1)
                 .help("\(t.text) · \(formatShort(t.start))–\(formatShort(t.end)) · trascina per spostarlo, i bordi per allungarlo")
                 // 5.1 · Clic destro sul testo
@@ -2223,7 +2223,7 @@ private struct ProjectTimeline: View {
                 Rectangle().fill(Theme.ink.opacity(0.04))
                 // 5.0.1 · Barra trasparente con dentro l'onda: si vede dove c'è suono e dove no
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 6).fill(color.opacity(0.12))
+                    RoundedRectangle(cornerRadius: Radius.s).fill(color.opacity(0.12))
                     MusicWave(peaks: s.musicPeaks, rate: VideoProjectStore.musicPeaksRate, inPoint: m.inPoint,
                               songDuration: s.songDuration ?? 0, loop: m.loop, pps: pps, color: color)
                     HStack(spacing: 5) {
@@ -2237,8 +2237,8 @@ private struct ProjectTimeline: View {
                     .allowsHitTesting(false)
                 }
                 .frame(width: shown, height: 26, alignment: .leading)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(color, lineWidth: 1))
+                .clipShape(RoundedRectangle(cornerRadius: Radius.s))
+                .overlay(RoundedRectangle(cornerRadius: Radius.s).strokeBorder(color, lineWidth: 1))
                 .contentShape(Rectangle())
                 .offset(x: CGFloat(start) * pps)
                 .gesture(DragGesture(minimumDistance: 2)
@@ -2291,7 +2291,7 @@ private struct ProjectTimeline: View {
                         })
                     .help("Trascina per far finire la musica prima")
             }
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.s))
             .task(id: m.path + "\(s.songDuration ?? 0)") { s.loadMusicPeaks() }
         } else {
             Button(action: openMusic) {
@@ -2299,7 +2299,7 @@ private struct ProjectTimeline: View {
                     .font(.system(size: 11.5, weight: .semibold))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .foregroundStyle(.secondary)
-                    .background(RoundedRectangle(cornerRadius: 6).strokeBorder(Theme.stroke, style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
+                    .background(RoundedRectangle(cornerRadius: Radius.s).strokeBorder(Theme.stroke, style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -2342,7 +2342,7 @@ private struct ClipBlock: View, Equatable {
                         .offset(x: CGFloat(r.lowerBound) * g.size.width)
                 }
                 Text(formatShort(clip.length))
-                    .font(.system(size: 9.5, weight: .bold)).monospacedDigit()
+                    .font(.system(size: 10.5, weight: .bold)).monospacedDigit()
                     .padding(.horizontal, 4).padding(.vertical, 1)
                     .background(RoundedRectangle(cornerRadius: 3).fill(Color.black.opacity(0.55)))
                     .foregroundStyle(Color.white)
@@ -2351,7 +2351,7 @@ private struct ClipBlock: View, Equatable {
                 if abs(clip.speed - 1) > 0.001 || !(clip.fx?.isIdentity ?? true) {
                     // 2.9.8 · clip con effetti: la velocità si legge subito
                     Text(abs(clip.speed - 1) > 0.001 ? EffectOptions.speedLabel(clip.speed) : "✦")
-                        .font(.system(size: 9.5, weight: .bold)).monospacedDigit()
+                        .font(.system(size: 10.5, weight: .bold)).monospacedDigit()
                         .padding(.horizontal, 4).padding(.vertical, 1)
                         .background(RoundedRectangle(cornerRadius: 3).fill(Theme.brass.opacity(0.9)))
                         .foregroundStyle(Color.white)
@@ -2377,8 +2377,8 @@ private struct ClipBlock: View, Equatable {
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(selected ? Theme.brass : Color.black.opacity(0.15), lineWidth: selected ? 3 : 1))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.s))
+            .overlay(RoundedRectangle(cornerRadius: Radius.s).strokeBorder(selected ? Theme.brass : Color.black.opacity(0.15), lineWidth: selected ? 3 : 1))
         }
     }
 
@@ -2481,12 +2481,12 @@ private struct PresetChip: View {
         Button(action: action) {
             VStack(spacing: 3) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 7).fill(tint.opacity(0.15))
+                    RoundedRectangle(cornerRadius: Radius.s).fill(tint.opacity(0.15))
                     if let image { Image(nsImage: image).resizable().scaledToFill() }
                 }
                 .frame(width: 70, height: 46)
-                .clipShape(RoundedRectangle(cornerRadius: 7))
-                .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(selected ? Theme.brass : Color.black.opacity(0.12), lineWidth: selected ? 2.5 : 1))
+                .clipShape(RoundedRectangle(cornerRadius: Radius.s))
+                .overlay(RoundedRectangle(cornerRadius: Radius.s).strokeBorder(selected ? Theme.brass : Color.black.opacity(0.12), lineWidth: selected ? 2.5 : 1))
                 Text(preset.name).font(.system(size: 10.5, weight: selected ? .bold : .regular)).lineLimit(1).minimumScaleFactor(0.8).frame(width: 76)
             }
         }
@@ -2558,8 +2558,8 @@ struct TransitionOptions: View {
                 Text(name).font(.system(size: 10)).lineLimit(1).minimumScaleFactor(0.8)
             }
             .frame(width: 78, height: 48)
-            .background(RoundedRectangle(cornerRadius: 7).fill(on ? tint.opacity(0.22) : Theme.ink.opacity(0.05)))
-            .overlay(RoundedRectangle(cornerRadius: 7).stroke(on ? tint : .clear, lineWidth: 1.5))
+            .background(RoundedRectangle(cornerRadius: Radius.s).fill(on ? tint.opacity(0.22) : Theme.ink.opacity(0.05)))
+            .overlay(RoundedRectangle(cornerRadius: Radius.s).stroke(on ? tint : .clear, lineWidth: 1.5))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
