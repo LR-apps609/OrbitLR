@@ -1,0 +1,48 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/SmartPDF.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "il PDF è protetto da password: toglila prima con «Togli la password»",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "«%@» è già compresso al massimo",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 57
+        }
+      },
+      {
+        "comment": "",
+        "key": "la compressione ha rovinato il PDF: lascio l'originale",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 53
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a scrivere il PDF compresso",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 49
+        }
+      },
+      {
+        "comment": "",
+        "key": "PDF danneggiato o non valido",
+        "location": {
+          "startingColumn": 90,
+          "startingLine": 25
+        }
+      }
+    ]
+  },
+  "version": 1
+}

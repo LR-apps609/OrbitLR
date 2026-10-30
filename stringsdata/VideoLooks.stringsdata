@@ -1,0 +1,120 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/VideoLooks.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Nessuno",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 39
+        }
+      },
+      {
+        "comment": "",
+        "key": "Vivido",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 40
+        }
+      },
+      {
+        "comment": "",
+        "key": "Caldo",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 41
+        }
+      },
+      {
+        "comment": "",
+        "key": "Freddo",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 42
+        }
+      },
+      {
+        "comment": "",
+        "key": "Bianco e nero",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 43
+        }
+      },
+      {
+        "comment": "",
+        "key": "Seppia",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "Vintage",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 45
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pellicola",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 46
+        }
+      },
+      {
+        "comment": "",
+        "key": "Notte",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 47
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sogno",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 48
+        }
+      },
+      {
+        "comment": "",
+        "key": "Drammatico",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 49
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pastello",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 50
+        }
+      },
+      {
+        "comment": "",
+        "key": "Radio",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 51
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nessuno",
+        "location": {
+          "startingColumn": 106,
+          "startingLine": 54
+        }
+      }
+    ]
+  },
+  "version": 1
+}

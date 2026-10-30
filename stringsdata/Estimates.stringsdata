@@ -1,0 +1,40 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Estimates.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Pesa già %@: è sotto il limite scelto",
+        "location": {
+          "startingColumn": 72,
+          "startingLine": 112
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ora %@ → al massimo %@ in tutto",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 114
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ora %@ → al massimo %@",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 115
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ora pesa %@",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 110
+        }
+      }
+    ]
+  },
+  "version": 1
+}

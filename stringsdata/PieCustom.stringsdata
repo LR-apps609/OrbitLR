@@ -1,0 +1,72 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/PieCustom.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Tipo di file",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "Personalizza il menu a torta",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 38
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina le azioni per ordinarle. Le prime 7 sono nell’anello principale, le altre in «Altro».",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 39
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 53
+        }
+      },
+      {
+        "comment": "",
+        "key": "fine anello principale",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 64
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ripristina l’ordine di partenza",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 81
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fatto",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ordine di partenza ripristinato.",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 86
+        }
+      }
+    ]
+  },
+  "version": 1
+}

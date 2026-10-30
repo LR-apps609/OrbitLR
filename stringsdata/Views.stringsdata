@@ -1,0 +1,1288 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Views.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Converti",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 24
+        }
+      },
+      {
+        "comment": "",
+        "key": "PDF e documenti",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cartelle automatiche",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "OrbitLR",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 114
+        }
+      },
+      {
+        "comment": "",
+        "key": "Schede",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 120
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nascondi Automazioni, Le mie azioni e Componenti",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 146
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mostra Automazioni, Le mie azioni e Componenti",
+        "location": {
+          "startingColumn": 136,
+          "startingLine": 146
+        }
+      },
+      {
+        "comment": "",
+        "key": "Avanzate",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 135
+        }
+      },
+      {
+        "comment": "",
+        "key": "La versione che hai. Clicca per controllare se ce n’è una nuova",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 178
+        }
+      },
+      {
+        "comment": "",
+        "key": "OrbitLR versione %@, controlla aggiornamenti",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 179
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opzioni",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 158
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dove salvare i file, aspetto, avvio (⌘,)",
+        "location": {
+          "startingColumn": 125,
+          "startingLine": 158
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aiuto",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 159
+        }
+      },
+      {
+        "comment": "",
+        "key": "Guida, domande frequenti e scorciatoie",
+        "location": {
+          "startingColumn": 133,
+          "startingLine": 159
+        }
+      },
+      {
+        "comment": "",
+        "key": "Segnala",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 161
+        }
+      },
+      {
+        "comment": "",
+        "key": "Segnala un problema: mi arriva con uno screenshot",
+        "location": {
+          "startingColumn": 123,
+          "startingLine": 161
+        }
+      },
+      {
+        "comment": "",
+        "key": "Segnala un problema",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 162
+        }
+      },
+      {
+        "comment": "",
+        "key": "OrbitLR %@",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 171
+        }
+      },
+      {
+        "comment": "",
+        "key": "Attività",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 330
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ancora nessun lavoro",
+        "location": {
+          "startingColumn": 109,
+          "startingLine": 349
+        }
+      },
+      {
+        "comment": "",
+        "key": "Qui vedi quello che OrbitLR sta facendo e tutto quello che hai creato, giorno per giorno.",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 350
+        }
+      },
+      {
+        "comment": "",
+        "key": "Niente in corso",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 385
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld in corso",
+        "location": {
+          "startingColumn": 95,
+          "startingLine": 385
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld in attesa",
+        "location": {
+          "startingColumn": 150,
+          "startingLine": 385
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ risparmiati questo mese",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 386
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli i completati",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 332
+        }
+      },
+      {
+        "comment": "",
+        "key": "Toglie dall’elenco i lavori finiti, non riusciti o interrotti (i file restano)",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 333
+        }
+      },
+      {
+        "comment": "",
+        "key": "Svuota la cronologia (i file non vengono toccati)",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 344
+        }
+      },
+      {
+        "comment": "",
+        "key": "Svuotare la cronologia?",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 338
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spariscono tutte le voci dall’elenco. I file creati restano dove sono.",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 339
+        }
+      },
+      {
+        "comment": "",
+        "key": "Svuota",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 340
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 341
+        }
+      },
+      {
+        "comment": "",
+        "key": "Svuota la cronologia…",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 343
+        }
+      },
+      {
+        "comment": "",
+        "key": "Adesso",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 358
+        }
+      },
+      {
+        "comment": "",
+        "key": "1 lavoro",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 391
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld lavori",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 391
+        }
+      },
+      {
+        "comment": "",
+        "key": "Oggi",
+        "location": {
+          "startingColumn": 81,
+          "startingLine": 651
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ieri",
+        "location": {
+          "startingColumn": 90,
+          "startingLine": 652
+        }
+      },
+      {
+        "comment": "",
+        "key": "Questa settimana",
+        "location": {
+          "startingColumn": 121,
+          "startingLine": 653
+        }
+      },
+      {
+        "comment": "",
+        "key": "Questo mese",
+        "location": {
+          "startingColumn": 116,
+          "startingLine": 654
+        }
+      },
+      {
+        "comment": "",
+        "key": "Anteprima del risultato",
+        "location": {
+          "startingColumn": 90,
+          "startingLine": 450
+        }
+      },
+      {
+        "comment": "",
+        "key": "Confronta: originale e risultato, con la linea da trascinare",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 457
+        }
+      },
+      {
+        "comment": "",
+        "key": "Interrompi",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 508
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mostra nel Finder",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 510
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riprova",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 512
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 475
+        }
+      },
+      {
+        "comment": "",
+        "key": "Anteprima",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 476
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mostra nel Finder",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 477
+        }
+      },
+      {
+        "comment": "",
+        "key": "Interrompi",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 480
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riprova",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 481
+        }
+      },
+      {
+        "comment": "",
+        "key": "File creati questo mese",
+        "location": {
+          "startingColumn": 91,
+          "startingLine": 524
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spazio risparmiato",
+        "location": {
+          "startingColumn": 97,
+          "startingLine": 528
+        }
+      },
+      {
+        "comment": "",
+        "key": "L’azione che usi di più",
+        "location": {
+          "startingColumn": 84,
+          "startingLine": 531
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 525
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nel Cestino",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 583
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mostra nel Finder",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 588
+        }
+      },
+      {
+        "comment": "",
+        "key": "Altro: elimina i file creati o togli la voce (il file resta dov’è)",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 607
+        }
+      },
+      {
+        "comment": "",
+        "key": "Altre azioni",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 608
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ · %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 573
+        }
+      },
+      {
+        "comment": "",
+        "key": "Elimina i file creati…",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 593
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli dalla cronologia",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 602
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spostare il file nel Cestino?",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 595
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spostare %lld file nel Cestino?",
+        "location": {
+          "startingColumn": 139,
+          "startingLine": 595
+        }
+      },
+      {
+        "comment": "",
+        "key": "Si possono ancora recuperare dal Cestino.",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 596
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sposta nel Cestino",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 597
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 598
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 617
+        }
+      },
+      {
+        "comment": "",
+        "key": "Anteprima",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 618
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mostra nel Finder",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 619
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli dalla cronologia",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 622
+        }
+      },
+      {
+        "comment": "",
+        "key": "1 lavoro",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 672
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld lavori",
+        "location": {
+          "startingColumn": 93,
+          "startingLine": 672
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ risparmiati",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 676
+        }
+      },
+      {
+        "comment": "",
+        "key": "Componenti",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 782
+        }
+      },
+      {
+        "comment": "",
+        "key": "Componenti",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 699
+        }
+      },
+      {
+        "comment": "",
+        "key": "I programmi che fanno il lavoro. Quelli mancanti servono solo ad alcune funzioni.",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 700
+        }
+      },
+      {
+        "comment": "",
+        "key": "Controllo in corso…",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 702
+        }
+      },
+      {
+        "comment": "",
+        "key": "Controllo automatico",
+        "location": {
+          "startingColumn": 105,
+          "startingLine": 702
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aspetta: sto già installando un programma.",
+        "location": {
+          "startingColumn": 84,
+          "startingLine": 707
+        }
+      },
+      {
+        "comment": "",
+        "key": "Installa tutti i mancanti",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 705
+        }
+      },
+      {
+        "comment": "",
+        "key": "Provo tutte le funzioni con file di prova (circa un minuto)…",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 812
+        }
+      },
+      {
+        "comment": "",
+        "key": "Già incluso in macOS",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 714
+        }
+      },
+      {
+        "comment": "",
+        "key": "JPG, PNG, HEIC, TIFF, ridimensionamento foto, MP4, MOV, M4A, HEVC, PDF e testo dalle immagini: funzionano senza installare nulla.",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 715
+        }
+      },
+      {
+        "comment": "",
+        "key": "Installa Homebrew",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 732
+        }
+      },
+      {
+        "comment": "",
+        "key": "Manca Homebrew",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 727
+        }
+      },
+      {
+        "comment": "",
+        "key": "Serve per installare gli altri componenti. Si installa una volta sola nel Terminale, con la password del Mac.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 728
+        }
+      },
+      {
+        "comment": "",
+        "key": "Installazione in corso… può richiedere qualche minuto",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 748
+        }
+      },
+      {
+        "comment": "",
+        "key": "Interrompi",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 753
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aspetta: sto già installando un programma.",
+        "location": {
+          "startingColumn": 76,
+          "startingLine": 802
+        }
+      },
+      {
+        "comment": "",
+        "key": "Installa",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 801
+        }
+      },
+      {
+        "comment": "",
+        "key": "Niente in corso",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 916
+        }
+      },
+      {
+        "comment": "",
+        "key": "Recenti",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 922
+        }
+      },
+      {
+        "comment": "",
+        "key": "Questo mese hai risparmiato %@",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 912
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri OrbitLR",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 935
+        }
+      },
+      {
+        "comment": "",
+        "key": "Guida rapida",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 940
+        }
+      },
+      {
+        "comment": "",
+        "key": "Suggerisci un’idea…",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 942
+        }
+      },
+      {
+        "comment": "",
+        "key": "Esci",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 945
+        }
+      },
+      {
+        "comment": "",
+        "key": "OrbitLR",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 904
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opzioni…",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 944
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rilascia qui",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 959
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina qui un file",
+        "location": {
+          "startingColumn": 83,
+          "startingLine": 959
+        }
+      },
+      {
+        "comment": "",
+        "key": "si apre la torta, senza aprire la finestra",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 960
+        }
+      },
+      {
+        "comment": "",
+        "key": "Più comodo: trascina un file da dove vuoi, OrbitLR compare sul lato dello schermo",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 963
+        }
+      },
+      {
+        "comment": "",
+        "key": "File creati",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 1017
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aspetto",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 1039
+        }
+      },
+      {
+        "comment": "",
+        "key": "Avvio",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 1057
+        }
+      },
+      {
+        "comment": "",
+        "key": "Privacy",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 1075
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il Cestino vale solo per conversioni, compressioni e ridimensionamenti riusciti. Si può sempre recuperare dal Cestino.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 1035
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dove salvarli",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 1018
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dopo la conversione, l’originale",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 1031
+        }
+      },
+      {
+        "comment": "",
+        "key": "Conserva le date originali dei file",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 1037
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nella stessa cartella dell’originale",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1019
+        }
+      },
+      {
+        "comment": "",
+        "key": "In una sottocartella «Convertiti»",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1020
+        }
+      },
+      {
+        "comment": "",
+        "key": "In una cartella a scelta",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1021
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nessuna cartella scelta",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 1025
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli…",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 1028
+        }
+      },
+      {
+        "comment": "",
+        "key": "Resta dov’è",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1032
+        }
+      },
+      {
+        "comment": "",
+        "key": "Va nel Cestino",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1033
+        }
+      },
+      {
+        "comment": "",
+        "key": "Chiaro o scuro",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 1041
+        }
+      },
+      {
+        "comment": "",
+        "key": "Colori",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 1046
+        }
+      },
+      {
+        "comment": "",
+        "key": "Suoni discreti (clic, scatto, fine lavoro)",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 1051
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come scegli le opzioni",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 1052
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come il Mac",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1042
+        }
+      },
+      {
+        "comment": "",
+        "key": "Chiaro",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1043
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scuro · radio di notte",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1044
+        }
+      },
+      {
+        "comment": "",
+        "key": "Da un elenco",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1053
+        }
+      },
+      {
+        "comment": "",
+        "key": "Con le manopole d’ottone",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1054
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri OrbitLR all’accesso al Mac (il menu si apre all’istante)",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 1058
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scorciatoia ⌥⌘C sui file selezionati nel Finder",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 1059
+        }
+      },
+      {
+        "comment": "",
+        "key": "⌥⌘C è già usata da un’altra app: nel Finder potrebbe non funzionare.",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 1061
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ripiano: quando trascini dei file, OrbitLR compare sul lato dello schermo",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 1064
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lato del ripiano",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 1066
+        }
+      },
+      {
+        "comment": "",
+        "key": "Controlla da sola se c’è una versione nuova (ogni 3 ore)",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 1071
+        }
+      },
+      {
+        "comment": "",
+        "key": "Controlla adesso…",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 1072
+        }
+      },
+      {
+        "comment": "",
+        "key": "Destra",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1067
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sinistra",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1068
+        }
+      },
+      {
+        "comment": "",
+        "key": "I tuoi file non lasciano mai il Mac: OrbitLR li lavora qui. Su internet va solo quando lo chiedi tu (Video e Audio Downloader) e, una volta sola, per scaricare il motore di alcune funzioni (IA, trascrizione) e per controllare gli aggiornamenti.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 1076
+        }
+      },
+      {
+        "comment": "",
+        "key": "Informativa sulla privacy",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 1078
+        }
+      },
+      {
+        "comment": "",
+        "key": "Avanzate",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 1082
+        }
+      },
+      {
+        "comment": "",
+        "key": "Immagini, MP4, MOV e M4A li fa direttamente macOS: più veloce e senza programmi da installare. Disattivalo solo se un risultato non ti convince.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1085
+        }
+      },
+      {
+        "comment": "",
+        "key": "Solo se un video si vede o si esporta male: torna al modo di prima, ma filtri ed effetti non si applicano.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1088
+        }
+      },
+      {
+        "comment": "",
+        "key": "Animazione di avvio",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 1083
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lascia fare a macOS quando può (consigliato)",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 1084
+        }
+      },
+      {
+        "comment": "",
+        "key": "Motore video classico (senza filtri)",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 1087
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascrizione e testo dalle foto",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 1090
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lingua della trascrizione",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 1094
+        }
+      },
+      {
+        "comment": "",
+        "key": "Menu del clic destro nel Finder",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 1102
+        }
+      },
+      {
+        "comment": "",
+        "key": "Veloce (scarica 470 MB)",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1091
+        }
+      },
+      {
+        "comment": "",
+        "key": "Precisa (scarica 1,6 GB, meglio per l’italiano)",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1092
+        }
+      },
+      {
+        "comment": "",
+        "key": "Automatica",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1095
+        }
+      },
+      {
+        "comment": "",
+        "key": "Italiano",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1096
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inglese",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1097
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spagnolo",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1098
+        }
+      },
+      {
+        "comment": "",
+        "key": "Francese",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1099
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tedesco",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1100
+        }
+      },
+      {
+        "comment": "",
+        "key": "Menu a torta",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1103
+        }
+      },
+      {
+        "comment": "",
+        "key": "Elenco classico",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1104
+        }
+      },
+      {
+        "comment": "",
+        "key": "Salvato",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 1116
+        }
+      },
+      {
+        "comment": "",
+        "key": "Chiudi",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 1121
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nuova versione %@ · Installa",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 1157
+        }
+      }
+    ]
+  },
+  "version": 1
+}

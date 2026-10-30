@@ -1,0 +1,360 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/TrimEditor.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Vai al ritornello",
+        "location": {
+          "startingColumn": 90,
+          "startingLine": 259
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizio qui",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 270
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fine qui",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 271
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cambia la selezione",
+        "location": {
+          "startingColumn": 110,
+          "startingLine": 274
+        }
+      },
+      {
+        "comment": "",
+        "key": "Buttare le scelte fatte?",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 435
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fino a 30 secondi. Si crea un file .m4r: collega l’iPhone, aprilo nel Finder e trascinaci la suoneria.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 492
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina le maniglie colorate, clicca sulla forma d’onda per spostarti. Spazio = riproduci, I/O = inizio/fine.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 493
+        }
+      },
+      {
+        "comment": "",
+        "key": "Durata totale %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 447
+        }
+      },
+      {
+        "comment": "",
+        "key": "GIF da un pezzo",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 443
+        }
+      },
+      {
+        "comment": "",
+        "key": "Suoneria iPhone",
+        "location": {
+          "startingColumn": 122,
+          "startingLine": 443
+        }
+      },
+      {
+        "comment": "",
+        "key": "Taglia",
+        "location": {
+          "startingColumn": 161,
+          "startingLine": 443
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ripeti",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 471
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizio qui",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 473
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tasto I",
+        "location": {
+          "startingColumn": 95,
+          "startingLine": 473
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fine qui",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 474
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tasto O",
+        "location": {
+          "startingColumn": 94,
+          "startingLine": 474
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pausa",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 465
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riproduci la selezione",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 465
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizio",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 478
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fine",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 481
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizio",
+        "location": {
+          "startingColumn": 112,
+          "startingLine": 478
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizio",
+        "location": {
+          "startingColumn": 193,
+          "startingLine": 478
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizio",
+        "location": {
+          "startingColumn": 84,
+          "startingLine": 479
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fine",
+        "location": {
+          "startingColumn": 108,
+          "startingLine": 481
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fine",
+        "location": {
+          "startingColumn": 183,
+          "startingLine": 481
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fine",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 482
+        }
+      },
+      {
+        "comment": "",
+        "key": "Selezione",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 485
+        }
+      },
+      {
+        "comment": "",
+        "key": "Crea la GIF",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 499
+        }
+      },
+      {
+        "comment": "",
+        "key": "Crea la suoneria",
+        "location": {
+          "startingColumn": 116,
+          "startingLine": 499
+        }
+      },
+      {
+        "comment": "",
+        "key": "Taglia",
+        "location": {
+          "startingColumn": 156,
+          "startingLine": 499
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 498
+        }
+      },
+      {
+        "comment": "",
+        "key": "−0,1 s",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 526
+        }
+      },
+      {
+        "comment": "",
+        "key": "0:00,000",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 527
+        }
+      },
+      {
+        "comment": "",
+        "key": "+0,1 s",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 528
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sposta l’inizio",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 714
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sposta la fine",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 721
+        }
+      },
+      {
+        "comment": "",
+        "key": "→",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 856
+        }
+      },
+      {
+        "comment": "",
+        "key": "· %@",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 860
+        }
+      },
+      {
+        "comment": "",
+        "key": "0:00,000",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 853
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi dove comincia, anche al millesimo (es. 1:02,345)",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 855
+        }
+      },
+      {
+        "comment": "",
+        "key": "0:00,000",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 857
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi dove finisce, anche al millesimo (es. 1:02,345)",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 859
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizio",
+        "location": {
+          "startingColumn": 95,
+          "startingLine": 854
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fine",
+        "location": {
+          "startingColumn": 93,
+          "startingLine": 858
+        }
+      }
+    ]
+  },
+  "version": 1
+}

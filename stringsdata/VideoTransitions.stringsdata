@@ -1,0 +1,16 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/VideoTransitions.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "fotogramma non disponibile",
+        "location": {
+          "startingColumn": 130,
+          "startingLine": 64
+        }
+      }
+    ]
+  },
+  "version": 1
+}

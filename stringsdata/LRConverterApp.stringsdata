@@ -1,0 +1,128 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/LRConverterApp.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Mostra",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 84
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nel Finder non c’è niente di selezionato.",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 73
+        }
+      },
+      {
+        "comment": "",
+        "key": "Un PDF ha modifiche non salvate",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 243
+        }
+      },
+      {
+        "comment": "",
+        "key": "Se esci adesso, firme, testi e oscuramenti che hai aggiunto vanno persi.",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 244
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rivedi",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 245
+        }
+      },
+      {
+        "comment": "",
+        "key": "Esci senza salvare",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 246
+        }
+      },
+      {
+        "comment": "",
+        "key": "C’è un lavoro in corso",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 257
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ci sono %lld lavori in corso",
+        "location": {
+          "startingColumn": 107,
+          "startingLine": 257
+        }
+      },
+      {
+        "comment": "",
+        "key": "Se esci adesso si interrompono. I file già pronti restano.",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 258
+        }
+      },
+      {
+        "comment": "",
+        "key": "Continua a lavorare",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 259
+        }
+      },
+      {
+        "comment": "",
+        "key": "Interrompi ed esci",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 260
+        }
+      },
+      {
+        "comment": "",
+        "key": "OrbitLR resta pronta",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 274
+        }
+      },
+      {
+        "comment": "",
+        "key": "La trovi nella barra in alto: ⌥⌘C sui file nel Finder, o trascinali sull’icona. Per chiuderla del tutto: ⌘Q.",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 275
+        }
+      },
+      {
+        "comment": "",
+        "key": "Va bene",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 276
+        }
+      },
+      {
+        "comment": "",
+        "key": "Esci del tutto",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 277
+        }
+      }
+    ]
+  },
+  "version": 1
+}

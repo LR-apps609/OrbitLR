@@ -1,0 +1,88 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Recipes.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Eliminata «%@».",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ricetta",
+        "location": {
+          "startingColumn": 94,
+          "startingLine": 120
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ricette",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 165
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quando lavori un file appena creato (per esempio converti in MP3, poi tagli), in Attività compare «Salva come ricetta»: la prossima volta fai tutti i passi con un clic, dal menu a torta.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 167
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld passi",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 189
+        }
+      },
+      {
+        "comment": "",
+        "key": "Elimina la ricetta (i file non vengono toccati)",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 191
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nome",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 184
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ricetta salvata",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 209
+        }
+      },
+      {
+        "comment": "",
+        "key": "La prossima volta fai tutti questi passi con un clic, dal menu a torta",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 217
+        }
+      },
+      {
+        "comment": "",
+        "key": "Salva come ricetta · %@",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 213
+        }
+      }
+    ]
+  },
+  "version": 1
+}

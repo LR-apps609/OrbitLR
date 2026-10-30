@@ -1,0 +1,97 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Levels.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "level.montage",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 54
+        },
+        "value": "Montaggio"
+      },
+      {
+        "comment": "",
+        "key": "Editor PDF",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 55
+        }
+      },
+      {
+        "comment": "",
+        "key": "Semplice: le cose che si fanno di più. Completo: tutte le funzioni, divise in gruppi.",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 76
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quanto vedere",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 78
+        }
+      },
+      {
+        "comment": "",
+        "key": "Semplice",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 69
+        }
+      },
+      {
+        "comment": "",
+        "key": "Completo",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 70
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi prima un file.",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 170
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cosa vuoi fare?",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 135
+        }
+      },
+      {
+        "comment": "",
+        "key": "1 altra funzione in Completo",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 156
+        }
+      },
+      {
+        "comment": "",
+        "key": "Altre %lld funzioni in Completo",
+        "location": {
+          "startingColumn": 118,
+          "startingLine": 156
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cambia formato",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 178
+        }
+      }
+    ]
+  },
+  "version": 1
+}

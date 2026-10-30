@@ -1,0 +1,456 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/VideoTexts.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Il tuo testo",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 15
+        }
+      },
+      {
+        "comment": "",
+        "key": "Colorata",
+        "location": {
+          "startingColumn": 88,
+          "startingLine": 34
+        }
+      },
+      {
+        "comment": "",
+        "key": "Evidenziata",
+        "location": {
+          "startingColumn": 128,
+          "startingLine": 34
+        }
+      },
+      {
+        "comment": "",
+        "key": "Più grande",
+        "location": {
+          "startingColumn": 171,
+          "startingLine": 34
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sottolineata",
+        "location": {
+          "startingColumn": 216,
+          "startingLine": 34
+        }
+      },
+      {
+        "comment": "",
+        "key": "Titolo",
+        "location": {
+          "startingColumn": 84,
+          "startingLine": 36
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sottotitolo",
+        "location": {
+          "startingColumn": 127,
+          "startingLine": 36
+        }
+      },
+      {
+        "comment": "",
+        "key": "Didascalia",
+        "location": {
+          "startingColumn": 174,
+          "startingLine": 36
+        }
+      },
+      {
+        "comment": "",
+        "key": "Grande",
+        "location": {
+          "startingColumn": 216,
+          "startingLine": 36
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dissolvenza",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 37
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scorrimento",
+        "location": {
+          "startingColumn": 127,
+          "startingLine": 37
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pop",
+        "location": {
+          "startingColumn": 170,
+          "startingLine": 37
+        }
+      },
+      {
+        "comment": "",
+        "key": "Macchina da scrivere",
+        "location": {
+          "startingColumn": 83,
+          "startingLine": 38
+        }
+      },
+      {
+        "comment": "",
+        "key": "Parola per parola",
+        "location": {
+          "startingColumn": 136,
+          "startingLine": 38
+        }
+      },
+      {
+        "comment": "",
+        "key": "Bianco",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 68
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nero",
+        "location": {
+          "startingColumn": 88,
+          "startingLine": 68
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ottone",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 69
+        }
+      },
+      {
+        "comment": "",
+        "key": "Salvia",
+        "location": {
+          "startingColumn": 96,
+          "startingLine": 69
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi un testo",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 290
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi prima un video: il testo va sopra il montaggio.",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 285
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi prima un video.",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 322
+        }
+      },
+      {
+        "comment": "",
+        "key": "OrbitLR ascolta le clip e scrive i sottotitoli in basso. Poi li correggi come gli altri testi; ⌘Z li toglie tutti",
+        "location": {
+          "startingColumn": 115,
+          "startingLine": 322
+        }
+      },
+      {
+        "comment": "",
+        "key": "Modello",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 357
+        }
+      },
+      {
+        "comment": "",
+        "key": "Animazione",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 363
+        }
+      },
+      {
+        "comment": "",
+        "key": "Parola detta",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 370
+        }
+      },
+      {
+        "comment": "",
+        "key": "Colore",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 378
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quando",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 390
+        }
+      },
+      {
+        "comment": "",
+        "key": "Per spostarlo, trascinalo sull’anteprima. Nella sequenza, sotto le clip, trascini il blocco o i suoi bordi.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 403
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il testo compare dal punto dell’indicatore per 3 secondi. Poi lo scrivi qui e lo trascini sull’anteprima.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 406
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi qui il testo",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 350
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi un testo",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 298
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ascolto le clip… %lld%%",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 305
+        }
+      },
+      {
+        "comment": "",
+        "key": "Interrompi",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 306
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sottotitoli automatici",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 319
+        }
+      },
+      {
+        "comment": "",
+        "key": "(vuoto)",
+        "location": {
+          "startingColumn": 89,
+          "startingLine": 335
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 358
+        }
+      },
+      {
+        "comment": "",
+        "key": "Modello del testo",
+        "location": {
+          "startingColumn": 104,
+          "startingLine": 358
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 364
+        }
+      },
+      {
+        "comment": "",
+        "key": "Animazione del testo",
+        "location": {
+          "startingColumn": 103,
+          "startingLine": 364
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 371
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come si accende la parola mentre viene detta",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 375
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stile della parola detta",
+        "location": {
+          "startingColumn": 123,
+          "startingLine": 371
+        }
+      },
+      {
+        "comment": "",
+        "key": "Colore del testo",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 381
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ → %@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 391
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizia qui",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 394
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il testo comincia nel punto dell’indicatore",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 395
+        }
+      },
+      {
+        "comment": "",
+        "key": "Finisci qui",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 396
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il testo finisce nel punto dell’indicatore",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 397
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi questo testo",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 400
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi il testo",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 400
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizio del testo",
+        "location": {
+          "startingColumn": 91,
+          "startingLine": 394
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fine del testo",
+        "location": {
+          "startingColumn": 92,
+          "startingLine": 396
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi il testo",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 440
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi il testo",
+        "location": {
+          "startingColumn": 120,
+          "startingLine": 417
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina per spostare il testo · doppio clic per scriverci",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 488
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sposta il testo",
+        "location": {
+          "startingColumn": 95,
+          "startingLine": 483
+        }
+      }
+    ]
+  },
+  "version": 1
+}

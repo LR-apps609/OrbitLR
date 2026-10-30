@@ -1,0 +1,160 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Tools.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "nessuna zona da coprire",
+        "location": {
+          "startingColumn": 99,
+          "startingLine": 41
+        }
+      },
+      {
+        "comment": "",
+        "key": "Strumento sconosciuto",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 115
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il PDF ha già il testo ricercabile in tutte le pagine",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 257
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco a creare il PDF",
+        "location": {
+          "startingColumn": 112,
+          "startingLine": 236
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il PDF è protetto da password",
+        "location": {
+          "startingColumn": 72,
+          "startingLine": 235
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco ad aprire il PDF",
+        "location": {
+          "startingColumn": 90,
+          "startingLine": 234
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco a creare il PDF",
+        "location": {
+          "startingColumn": 113,
+          "startingLine": 265
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scarico il modello di IA (solo la prima volta)…",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 45
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scarico il modello di IA (solo la prima volta)… %lld%%",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 52
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ricostruisco la zona con l’IA…",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 60
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non trovo un soggetto da ritagliare in questa foto",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 282
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco a creare il PDF",
+        "location": {
+          "startingColumn": 117,
+          "startingLine": 345
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco a raddrizzare il foglio",
+        "location": {
+          "startingColumn": 84,
+          "startingLine": 325
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non trovo il foglio nella foto. Prova con uno sfondo più scuro del foglio.",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 315
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco ad aprire l’immagine",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 126
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco a elaborare l’immagine",
+        "location": {
+          "startingColumn": 107,
+          "startingLine": 132
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco a salvare l’immagine",
+        "location": {
+          "startingColumn": 91,
+          "startingLine": 149
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco a creare il file",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 146
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco a ingrandire l’immagine",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 439
+        }
+      }
+    ]
+  },
+  "version": 1
+}

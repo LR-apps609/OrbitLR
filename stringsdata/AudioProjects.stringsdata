@@ -1,0 +1,152 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/AudioProjects.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Non trovo più il file di «%@»: è stato cancellato o è su un disco scollegato.",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 159
+        }
+      },
+      {
+        "comment": "",
+        "key": "Progetti",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 216
+        }
+      },
+      {
+        "comment": "",
+        "key": "si salvano da soli · clic per riprendere",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 217
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riprendi «%@» · clic destro per rinominare, duplicare o eliminare",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 253
+        }
+      },
+      {
+        "comment": "",
+        "key": "Progetto %@, %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 254
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld file",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 275
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 247
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rinomina…",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 248
+        }
+      },
+      {
+        "comment": "",
+        "key": "Duplica",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 249
+        }
+      },
+      {
+        "comment": "",
+        "key": "Elimina…",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 251
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rinomina il progetto",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 281
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rinomina",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 285
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 286
+        }
+      },
+      {
+        "comment": "",
+        "key": "Eliminare «%@»?",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 293
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il progetto va nel Cestino. Il file audio non viene toccato.",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 294
+        }
+      },
+      {
+        "comment": "",
+        "key": "Elimina",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 295
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 296
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio",
+        "location": {
+          "startingColumn": 76,
+          "startingLine": 273
+        }
+      }
+    ]
+  },
+  "version": 1
+}

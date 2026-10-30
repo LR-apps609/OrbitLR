@@ -1,0 +1,48 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Settings.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Manca un ultimo passo: in Impostazioni di Sistema → Elementi login, attiva OrbitLR.",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 61
+        }
+      },
+      {
+        "comment": "",
+        "key": "macOS non ha permesso di aprire OrbitLR all’accesso.",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 69
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri all’accesso",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 78
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri le Impostazioni",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 80
+        }
+      },
+      {
+        "comment": "",
+        "key": "Chiudi",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 81
+        }
+      }
+    ]
+  },
+  "version": 1
+}

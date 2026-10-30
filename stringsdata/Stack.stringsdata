@@ -1,0 +1,40 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Stack.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Non riesco a creare l’immagine",
+        "location": {
+          "startingColumn": 107,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le foto sono troppo diverse per essere allineate",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 48
+        }
+      },
+      {
+        "comment": "",
+        "key": "Servono almeno 2 foto della stessa scena",
+        "location": {
+          "startingColumn": 76,
+          "startingLine": 35
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco a leggere il video",
+        "location": {
+          "startingColumn": 90,
+          "startingLine": 175
+        }
+      }
+    ]
+  },
+  "version": 1
+}

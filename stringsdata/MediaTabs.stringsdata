@@ -1,0 +1,976 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/MediaTabs.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Preparo «%@»: si apre tra poco.",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 104
+        }
+      },
+      {
+        "comment": "",
+        "key": "Preparo %lld file: si aprono tra poco.",
+        "location": {
+          "startingColumn": 143,
+          "startingLine": 104
+        }
+      },
+      {
+        "comment": "",
+        "key": "Qui si aprono solo i video.",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 115
+        }
+      },
+      {
+        "comment": "",
+        "key": "Qui si aprono file audio (o video, per usarne l’audio).",
+        "location": {
+          "startingColumn": 106,
+          "startingLine": 115
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 204
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 204
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rilascia per aprire",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 230
+        }
+      },
+      {
+        "comment": "",
+        "key": "Interrompi",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 261
+        }
+      },
+      {
+        "comment": "",
+        "key": "Interrompi",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 262
+        }
+      },
+      {
+        "comment": "",
+        "key": "Originale e risultato fianco a fianco, con la linea da trascinare",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 268
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mostra nel Finder",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 271
+        }
+      },
+      {
+        "comment": "",
+        "key": "In attesa",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 299
+        }
+      },
+      {
+        "comment": "",
+        "key": "«%@» in %@",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 305
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld file in %@",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 306
+        }
+      },
+      {
+        "comment": "",
+        "key": "Interrotto",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 308
+        }
+      },
+      {
+        "comment": "",
+        "key": "Confronta",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 267
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivania",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 287
+        }
+      },
+      {
+        "comment": "",
+        "key": "Download",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 288
+        }
+      },
+      {
+        "comment": "",
+        "key": "Documenti",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 289
+        }
+      },
+      {
+        "comment": "",
+        "key": "Filmati",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 290
+        }
+      },
+      {
+        "comment": "",
+        "key": "Musica",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 291
+        }
+      },
+      {
+        "comment": "",
+        "key": "Immagini",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 292
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riuscito",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 307
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 350
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli dall’elenco",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 356
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi…",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 360
+        }
+      },
+      {
+        "comment": "",
+        "key": "Suoneria iPhone",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 372
+        }
+      },
+      {
+        "comment": "",
+        "key": "Taglia",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 373
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volume uniforme",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 374
+        }
+      },
+      {
+        "comment": "",
+        "key": "Voce più pulita",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 375
+        }
+      },
+      {
+        "comment": "",
+        "key": "Velocità",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 376
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi i silenzi",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 377
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascrivi",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 378
+        }
+      },
+      {
+        "comment": "",
+        "key": "Testo in voce",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 379
+        }
+      },
+      {
+        "comment": "",
+        "key": "Per WhatsApp",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 380
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unisci",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 381
+        }
+      },
+      {
+        "comment": "",
+        "key": "Suoneria",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 387
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volume",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 388
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pulisci",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 389
+        }
+      },
+      {
+        "comment": "",
+        "key": "Silenzi",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 390
+        }
+      },
+      {
+        "comment": "",
+        "key": "Voce",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 391
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sposta il riquadro sul pezzo che ti piace (fino a 30 secondi): ottieni la suoneria per iPhone.",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 399
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina le maniglie per tenere solo il pezzo che serve. Tasti I e O mentre ascolti.",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 400
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rende il volume uniforme: né troppo basso né distorto. Per vocali, lezioni e podcast.",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 401
+        }
+      },
+      {
+        "comment": "",
+        "key": "Attenua il ronzio e il fruscio di fondo e rende il volume uniforme. La voce resta naturale.",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 402
+        }
+      },
+      {
+        "comment": "",
+        "key": "Più lento o più veloce, su tutto il file. La voce mantiene il suo tono.",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 403
+        }
+      },
+      {
+        "comment": "",
+        "key": "Toglie le pause lunghe, su tutto il file. Ottimo per lezioni e registrazioni.",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 404
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le parole diventano testo e sottotitoli, sul Mac, senza internet.",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 405
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi o incolla un testo: una voce naturale lo legge in un file audio.",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 406
+        }
+      },
+      {
+        "comment": "",
+        "key": "Un vocale leggero con la voce chiara, che parte subito anche con poca rete.",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 407
+        }
+      },
+      {
+        "comment": "",
+        "key": "Più file audio in uno solo, nell’ordine dell’elenco.",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 408
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri un altro…",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 592
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri un altro file audio (questo resta tra i progetti)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 593
+        }
+      },
+      {
+        "comment": "",
+        "key": "Chiudi il file (resta tra i progetti)",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 599
+        }
+      },
+      {
+        "comment": "",
+        "key": "Chiudi il file",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 600
+        }
+      },
+      {
+        "comment": "",
+        "key": "Testo in voce",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 570
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi un testo: diventa un file audio",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 571
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 577
+        }
+      },
+      {
+        "comment": "",
+        "key": "Suonerie, tagli, volume, voce e altro",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 578
+        }
+      },
+      {
+        "comment": "",
+        "key": "1 carattere",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 623
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld caratteri",
+        "location": {
+          "startingColumn": 93,
+          "startingLine": 623
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi o incolla qui il testo da leggere…",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 616
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina qui un file audio",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 630
+        }
+      },
+      {
+        "comment": "",
+        "key": "oppure clicca per sceglierlo · MP3, M4A, WAV e altri · anche un video, per usarne l’audio",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 631
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi prima un testo",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 669
+        }
+      },
+      {
+        "comment": "",
+        "key": "Servono almeno due file",
+        "location": {
+          "startingColumn": 132,
+          "startingLine": 669
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri prima un file audio",
+        "location": {
+          "startingColumn": 179,
+          "startingLine": 669
+        }
+      },
+      {
+        "comment": "",
+        "key": "Durata",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 689
+        }
+      },
+      {
+        "comment": "",
+        "key": "Alla fine puoi mandarla all’iPhone con AirDrop o con il codice QR.",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 702
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le voci «Premium» sono le più naturali. Il file va in Download.",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 733
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri il primo file, poi aggiungi gli altri.",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 736
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 690
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sposta il riquadro sul pezzo più pieno della canzone, di solito il ritornello",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 698
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dissolvenza all’inizio e alla fine",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 700
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volume uniforme",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 701
+        }
+      },
+      {
+        "comment": "",
+        "key": "Voce",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 715
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mostra le voci di tutte le lingue",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 721
+        }
+      },
+      {
+        "comment": "",
+        "key": "Crea la suoneria",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 773
+        }
+      },
+      {
+        "comment": "",
+        "key": "Taglia",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 774
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rendi uniforme il volume",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 775
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pulisci la voce",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 776
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cambia la velocità",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 777
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi i silenzi",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 778
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascrivi",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 779
+        }
+      },
+      {
+        "comment": "",
+        "key": "Crea il file audio",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 780
+        }
+      },
+      {
+        "comment": "",
+        "key": "Crea il vocale",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 781
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unisci %lld file",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 782
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unisci",
+        "location": {
+          "startingColumn": 126,
+          "startingLine": 782
+        }
+      },
+      {
+        "comment": "",
+        "key": "20 secondi",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 691
+        }
+      },
+      {
+        "comment": "",
+        "key": "30 secondi",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 691
+        }
+      },
+      {
+        "comment": "",
+        "key": "Vai al ritornello",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 696
+        }
+      },
+      {
+        "comment": "",
+        "key": "Su tutto il file: da %@ a circa %@.",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 760
+        }
+      },
+      {
+        "comment": "",
+        "key": "Su tutto il file.",
+        "location": {
+          "startingColumn": 109,
+          "startingLine": 759
+        }
+      },
+      {
+        "comment": "",
+        "key": "La più naturale",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 716
+        }
+      },
+      {
+        "comment": "",
+        "key": "Velocità",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 723
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ferma",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 727
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ascolta una prova",
+        "location": {
+          "startingColumn": 90,
+          "startingLine": 727
+        }
+      },
+      {
+        "comment": "",
+        "key": "Altre voci…",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 730
+        }
+      },
+      {
+        "comment": "",
+        "key": "Impostazioni di Sistema → Accessibilità → Contenuti letti → Voce di sistema → Gestisci voci",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 731
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spazio",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 846
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pausa",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 843
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ascolta la selezione",
+        "location": {
+          "startingColumn": 81,
+          "startingLine": 843
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ → %@ · %@",
+        "location": {
+          "startingColumn": 14,
+          "startingLine": 853
+        }
+      },
+      {
+        "comment": "",
+        "key": "Su tutto il file",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 890
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizio qui",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 885
+        }
+      },
+      {
+        "comment": "",
+        "key": "La selezione comincia dove stai ascoltando (I)",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 886
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fine qui",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 887
+        }
+      },
+      {
+        "comment": "",
+        "key": "La selezione finisce dove stai ascoltando (O)",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 888
+        }
+      },
+      {
+        "comment": "",
+        "key": "Zoom %@×",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 904
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tutto il file",
+        "location": {
+          "startingColumn": 140,
+          "startingLine": 904
+        }
+      },
+      {
+        "comment": "",
+        "key": "Larghezza",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 907
+        }
+      },
+      {
+        "comment": "",
+        "key": "Allarga o restringi il tempo: al massimo si vede un quarto di secondo, per tagliare al millesimo. Anche pizzicando il trackpad o con ⌘ e la rotellina.",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 910
+        }
+      },
+      {
+        "comment": "",
+        "key": "Altezza",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 911
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riquadro più alto: si vedono meglio i suoni bassi e i silenzi",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 914
+        }
+      },
+      {
+        "comment": "",
+        "key": "Selezione",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 916
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ingrandisce sul pezzo scelto, per rifinire inizio e fine",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 917
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tutto",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 919
+        }
+      },
+      {
+        "comment": "",
+        "key": "Torna a vedere tutto il file",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 921
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: meno",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 931
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: più",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 933
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina per scorrere lungo il file",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 974
+        }
+      }
+    ]
+  },
+  "version": 1
+}

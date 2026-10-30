@@ -1,0 +1,656 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Help.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Come converto un file?",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 21
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina il file in Converti (oppure clicca e sceglilo), poi clicca il formato che ti serve. Il file nuovo viene creato senza toccare l’originale.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dove sono le modifiche, come ridimensionare o tagliare?",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 23
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nel menu a torta ci sono solo le conversioni, per scegliere al volo. Lo spicchio «Modifica» porta il file nella sua scheda (Immagini, PDF e documenti, Video o Audio), dove trovi tutto il resto.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 24
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dove finiscono i file creati?",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nella cartella scelta in Opzioni → «Dove salvarli» (di base, la stessa cartella dell’originale). Alla fine la barra in basso dice in che cartella è, e «Mostra nel Finder» la apre.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "Posso convertire tanti file insieme?",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 27
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sì: trascinane quanti vuoi. Con file dello stesso tipo basta un solo spicchio per tutti; con tipi diversi compare una torta per ogni tipo.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 28
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cosa vuol dire «≈ 1,2 MB» sotto uno spicchio?",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 29
+        }
+      },
+      {
+        "comment": "",
+        "key": "È il peso previsto del risultato, prima di scegliere: verde se il file diventa più leggero, color ottone se diventa più pesante. Compare solo dove la stima è affidabile.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 30
+        }
+      },
+      {
+        "comment": "",
+        "key": "Posso scegliere senza mouse?",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 31
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sì: i tasti da 1 a 8 scelgono lo spicchio con quel numero, Invio ripete l’ultima scelta (o quella consigliata), Esc chiude. Puoi anche scrivere per cercare un’azione.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 32
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come annullo una conversione?",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 33
+        }
+      },
+      {
+        "comment": "",
+        "key": "In Attività premi ⋯ accanto al lavoro e scegli «Elimina i file creati…»: vanno nel Cestino, da dove si possono recuperare. «Togli dalla cronologia» invece toglie solo la voce dall’elenco.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 34
+        }
+      },
+      {
+        "comment": "",
+        "key": "Si può usare direttamente dal Finder?",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 35
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sì: seleziona i file nel Finder e premi ⌥⌘C, oppure clic destro → OrbitLR. La torta si apre lì dove sei.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 36
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come inizio un montaggio?",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 38
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri Video e premi «Montaggio» in alto (⇧⌘E), poi «Nuovo progetto» (⇧⌘N) e trascina i tuoi video: si mettono in fila nell’ordine in cui li aggiungi. Se avevi già messo dei video nella scheda, il Montaggio li prende da solo.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 39
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come riprendo un progetto?",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 40
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri Video, premi «Montaggio» e clicca la copertina del progetto: riparte da dove eri rimasto. Il progetto si salva da solo mentre lavori; se OrbitLR si chiude, alla riapertura torni lì.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 41
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come accorcio o divido una clip?",
+        "location": {
+          "startingColumn": 72,
+          "startingLine": 42
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clicca la clip e trascina i suoi bordi d’ottone per accorciarla. Per dividerla, porta la linea nel punto giusto e premi S.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 43
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come tolgo una clip?",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clicca la clip e premi la ✕ nel suo angolo, oppure il tasto ⌫. Se ti sbagli, ⌘Z la rimette.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 45
+        }
+      },
+      {
+        "comment": "",
+        "key": "Voglio solo comprimere, tagliare o fare una GIF",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 46
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri Video e trascina uno o più video: scegli cosa fare (comprimi senza perdere qualità o per Discord, WhatsApp ed email, taglia, cambia grandezza, GIF e altro). Il Montaggio serve solo per mettere insieme più pezzi.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 47
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come tolgo le pause da un video in cui parlo?",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 48
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nel Montaggio clicca la clip e premi «Togli i silenzi»: OrbitLR ascolta e lascia solo i pezzi in cui si parla, con tagli netti. Se non ti piace, ⌘Z.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 49
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come aggiungo i sottotitoli automatici?",
+        "location": {
+          "startingColumn": 72,
+          "startingLine": 50
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nel montaggio apri «Testi» e premi «Sottotitoli automatici»: OrbitLR ascolta le clip e scrive le frasi in basso, al momento giusto. Poi li correggi come gli altri testi; ⌘Z li toglie tutti.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 51
+        }
+      },
+      {
+        "comment": "",
+        "key": "La voce si sente con un ronzio o un fruscio di fondo",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 52
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli «Voce più pulita» (nella scheda Audio, o nel menu di un video): OrbitLR attenua il ronzio e il fruscio costante e rende il volume uniforme. Il video non viene ricompresso. Funziona bene sui rumori costanti (ventola, condizionatore, traffico lontano), meno su voci o musica di sottofondo.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 53
+        }
+      },
+      {
+        "comment": "",
+        "key": "Posso far accendere le parole una alla volta, come sui social?",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 54
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sì: i sottotitoli automatici si accendono parola per parola. Su qualsiasi testo puoi scegliere l’animazione «Parola per parola».",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 55
+        }
+      },
+      {
+        "comment": "",
+        "key": "Posso rifare più passi con un clic?",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 56
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sì, con le ricette. Quando lavori un file appena creato (per esempio converti in MP3, poi tagli), in Attività compare «Salva come ricetta». Da quel momento la ricetta è nel menu a torta di quel tipo di file e fa tutti i passi da sola.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 57
+        }
+      },
+      {
+        "comment": "",
+        "key": "Posso convertire senza aprire la finestra?",
+        "location": {
+          "startingColumn": 81,
+          "startingLine": 58
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sì: clicca l’icona di OrbitLR nella barra in alto e trascina il file nel riquadro: la torta si apre accanto al puntatore. Oppure selezionalo nel Finder e premi ⌥⌘C.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 59
+        }
+      },
+      {
+        "comment": "",
+        "key": "Devo salvare il progetto?",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 60
+        }
+      },
+      {
+        "comment": "",
+        "key": "No: il progetto si salva da solo mentre lavori, e sotto il nome vedi «Salvato alle…». ⌘Z torna indietro. «Ripristina…» lo riporta a com’era quando l’hai aperto; tieni premuto «Prima / dopo» per confrontare.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 61
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come tolgo l’audio da un pezzo del video?",
+        "location": {
+          "startingColumn": 72,
+          "startingLine": 62
+        }
+      },
+      {
+        "comment": "",
+        "key": "In «Clip» porta la linea dove deve finire l’audio e premi «Spegni da qui». Per una clip intera usa «Spegni»; per un tratto in mezzo, dividi prima con S.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 63
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come faccio abbassare la musica quando qualcuno parla?",
+        "location": {
+          "startingColumn": 72,
+          "startingLine": 64
+        }
+      },
+      {
+        "comment": "",
+        "key": "In «Audio» attiva «Abbassa quando si parla»: OrbitLR trova le voci e abbassa la musica solo in quei momenti.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 65
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come faccio un video verticale per Reels o TikTok?",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 66
+        }
+      },
+      {
+        "comment": "",
+        "key": "In «Formato» scegli 9:16. Con «Inquadra le persone» l’inquadratura tiene al centro chi si muove.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 67
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come salvo il video finito?",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 68
+        }
+      },
+      {
+        "comment": "",
+        "key": "Premi «Esporta» (⌘E). I tuoi video originali non vengono mai modificati.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 69
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come chiudo un progetto?",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 70
+        }
+      },
+      {
+        "comment": "",
+        "key": "Con la ✕ in alto a destra nel montaggio: il progetto resta salvato e torni ai progetti.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 71
+        }
+      },
+      {
+        "comment": "",
+        "key": "Posso lavorare solo su alcune foto o file?",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 73
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sì: clicca un file per sceglierlo, ⌘-clic per sceglierne altri. Senza scelta si lavora su tutti. «Tutte» o «Tutti» toglie la scelta.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 74
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come tolgo lo sfondo da una foto?",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 75
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri Immagini, trascina la foto e nel pannello a destra scegli «Rimuovi lo sfondo».",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 76
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come unisco più PDF in uno solo?",
+        "location": {
+          "startingColumn": 83,
+          "startingLine": 77
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri File, trascina i PDF e scegli «Unisci in un PDF». L’ordine è quello dei file nella scheda.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 78
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come metto una password a un PDF?",
+        "location": {
+          "startingColumn": 85,
+          "startingLine": 79
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri File, trascina il PDF e scegli «Proteggi con password»: ti chiede la password due volte.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 80
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come taglio un audio?",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri Audio, trascina il file, scegli «Taglia» e sposta le maniglie sul pezzo che vuoi tenere.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 83
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come trasformo un testo in voce?",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 84
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri Audio, scegli «Testo in voce», scrivi o incolla il testo e scegli la voce. Le voci «Premium» di macOS sono le più naturali.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 85
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come prendo l’audio da un video?",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 86
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina il video in Converti e scegli MP3 (o M4A).",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 87
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come aggiorno OrbitLR?",
+        "location": {
+          "startingColumn": 92,
+          "startingLine": 89
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dal menu OrbitLR → «Controlla aggiornamenti…». OrbitLR controlla anche da sola una volta al giorno e ti avvisa se c’è una versione nuova.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 90
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nel Dock vedo ancora l’icona vecchia",
+        "location": {
+          "startingColumn": 90,
+          "startingLine": 91
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dopo l’aggiornamento il Dock si ridisegna da solo. Se resta vecchia, togli OrbitLR dal Dock e riaprila dalla cartella Applicazioni.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "Una conversione non è riuscita: cosa faccio?",
+        "location": {
+          "startingColumn": 91,
+          "startingLine": 93
+        }
+      },
+      {
+        "comment": "",
+        "key": "Accanto all’errore c’è un pulsante che prova a risolverlo (Riprova, Libera spazio, Scegli un’altra cartella…). Se non basta, usa «Segnala un problema» qui sotto.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 94
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ho sbagliato una modifica nel montaggio",
+        "location": {
+          "startingColumn": 93,
+          "startingLine": 95
+        }
+      },
+      {
+        "comment": "",
+        "key": "Premi ⌘Z per tornare indietro, anche più volte; ⇧⌘Z rifà quello che hai annullato.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aiuto",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 170
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nessuna risposta per «%@». Prova con un’altra parola, oppure scrivici con «Segnala un problema».",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 147
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aiuto",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 126
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le domande più frequenti. Scrivi una parola per cercare.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 127
+        }
+      },
+      {
+        "comment": "",
+        "key": "Suggerisci un’idea",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 131
+        }
+      },
+      {
+        "comment": "",
+        "key": "Segnala un problema",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 132
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cerca: video verticale, password, unire PDF…",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 136
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancella la ricerca",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 140
+        }
+      },
+      {
+        "comment": "",
+        "key": "Vai a %@ ›",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 194
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,209 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/BugReport.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Scrivi prima cosa è successo.",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 136
+        }
+      },
+      {
+        "comment": "",
+        "key": "Controlla l’indirizzo email.",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 137
+        }
+      },
+      {
+        "comment": "",
+        "key": "Si apre Mail con tutto già allegato.",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 138
+        }
+      },
+      {
+        "comment": "",
+        "key": "Buttare la segnalazione?",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 144
+        }
+      },
+      {
+        "comment": "",
+        "key": "Continua a scrivere",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 145
+        }
+      },
+      {
+        "comment": "",
+        "key": "La tua email (per risponderti)",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 162
+        }
+      },
+      {
+        "comment": "",
+        "key": "Categoria",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 170
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cosa è successo",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 178
+        }
+      },
+      {
+        "comment": "",
+        "key": "Screenshot",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 196
+        }
+      },
+      {
+        "comment": "",
+        "key": "Allega le informazioni tecniche (versione, macOS, ultimi lavori, registro), senza nomi di file",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 223
+        }
+      },
+      {
+        "comment": "",
+        "key": "Guarda cosa viene allegato",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 227
+        }
+      },
+      {
+        "comment": "",
+        "key": "Segnala un bug",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 156
+        }
+      },
+      {
+        "comment": "",
+        "key": "Raccontami cosa è successo: più dettagli, più in fretta si sistema.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 157
+        }
+      },
+      {
+        "comment": "",
+        "key": "Controlla l’indirizzo email.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 166
+        }
+      },
+      {
+        "comment": "",
+        "key": "nome@esempio.it",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 163
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 171
+        }
+      },
+      {
+        "comment": "Categoria: altro problema",
+        "key": "bug.other",
+        "location": {
+          "startingColumn": 104,
+          "startingLine": 172
+        },
+        "value": "Altro"
+      },
+      {
+        "comment": "",
+        "key": "Cosa stavi facendo, cosa ti aspettavi e cosa è successo invece.",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 188
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cattura una parte dello schermo",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 198
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli un’immagine…",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 200
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 214
+        }
+      },
+      {
+        "comment": "",
+        "key": "Versione %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 242
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 244
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mail non è configurata: ho salvato la segnalazione sulla Scrivania. Inviala a %@.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 347
+        }
+      },
+      {
+        "comment": "",
+        "key": "Prepara l’email",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 245
+        }
+      }
+    ]
+  },
+  "version": 1
+}

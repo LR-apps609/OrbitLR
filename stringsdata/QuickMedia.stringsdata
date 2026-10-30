@@ -1,0 +1,88 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/QuickMedia.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Audio",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 17
+        }
+      },
+      {
+        "comment": "",
+        "key": "Estrai l’audio della clip",
+        "location": {
+          "startingColumn": 112,
+          "startingLine": 17
+        }
+      },
+      {
+        "comment": "",
+        "key": "Solo il pezzo tenuto nella clip",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 18
+        }
+      },
+      {
+        "comment": "",
+        "key": "azione sconosciuta",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 94
+        }
+      },
+      {
+        "comment": "",
+        "key": "questo video non si può tagliare",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 125
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a leggere la durata",
+        "location": {
+          "startingColumn": 76,
+          "startingLine": 120
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a creare la GIF",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 191
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a creare la GIF",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 172
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a leggere la durata",
+        "location": {
+          "startingColumn": 76,
+          "startingLine": 160
+        }
+      },
+      {
+        "comment": "",
+        "key": "taglio non riuscito",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 150
+        }
+      }
+    ]
+  },
+  "version": 1
+}

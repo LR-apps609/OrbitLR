@@ -1,0 +1,72 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/FriendlyError.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Spazio su disco esaurito: libera un po’ di spazio e riprova.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 28
+        }
+      },
+      {
+        "comment": "",
+        "key": "OrbitLR non può scrivere in quella cartella: spostala altrove o scegli un’altra cartella nelle Opzioni.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 31
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il file non c’è più: forse è stato spostato, rinominato o è su un disco scollegato.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 34
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il suono di questo file non si può elaborare così: prova a convertirlo prima in M4A.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 37
+        }
+      },
+      {
+        "comment": "",
+        "key": "macOS ha interrotto il lavoro: riprova (se il Mac era in stop o sotto sforzo, ora dovrebbe andare).",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 40
+        }
+      },
+      {
+        "comment": "",
+        "key": "macOS non riesce a leggere questo file: può essere danneggiato o in un formato insolito.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 45
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il motore video di macOS si è riavviato durante il lavoro: riprova.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 48
+        }
+      },
+      {
+        "comment": "",
+        "key": "Qualcosa non è andato con questo file. Riprova; se succede ancora, usa «Segnala» e lo sistemiamo.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 52
+        }
+      }
+    ]
+  },
+  "version": 1
+}

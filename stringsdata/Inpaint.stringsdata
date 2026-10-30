@@ -1,0 +1,56 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Inpaint.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "non riesco ad aprire il modello scaricato",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 70
+        }
+      },
+      {
+        "comment": "",
+        "key": "il modello scaricato è rovinato, riprova",
+        "location": {
+          "startingColumn": 95,
+          "startingLine": 60
+        }
+      },
+      {
+        "comment": "",
+        "key": "il modello di IA non è ancora disponibile",
+        "location": {
+          "startingColumn": 108,
+          "startingLine": 59
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a scaricare il modello di IA (serve internet la prima volta)",
+        "location": {
+          "startingColumn": 90,
+          "startingLine": 76
+        }
+      },
+      {
+        "comment": "",
+        "key": "il modello di IA ha risposto in un formato inatteso",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 200
+        }
+      },
+      {
+        "comment": "",
+        "key": "il modello di IA non ha risposto",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 196
+        }
+      }
+    ]
+  },
+  "version": 1
+}

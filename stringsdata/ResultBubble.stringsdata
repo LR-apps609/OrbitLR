@@ -1,0 +1,161 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/ResultBubble.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "−%lld%% · risparmiati %@",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 103
+        }
+      },
+      {
+        "comment": "",
+        "key": "Download",
+        "location": {
+          "startingColumn": 133,
+          "startingLine": 108
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivania",
+        "location": {
+          "startingColumn": 131,
+          "startingLine": 109
+        }
+      },
+      {
+        "comment": "",
+        "key": "Chiudi",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 186
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annullato",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 124
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il file creato è nel Cestino; l’originale è dov’era.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 125
+        }
+      },
+      {
+        "comment": "",
+        "key": "Salvato in «%@»",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 127
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld file in «%@»",
+        "location": {
+          "startingColumn": 121,
+          "startingLine": 127
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fatto",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 158
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riuscito",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 161
+        }
+      },
+      {
+        "comment": "",
+        "key": "Interrotto",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 174
+        }
+      },
+      {
+        "comment": "Disfa il lavoro appena fatto (non «Cancel»)",
+        "key": "bubble.undo",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 141
+        },
+        "value": "Annulla"
+      },
+      {
+        "comment": "",
+        "key": "Mostra nella cartella",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 135
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 138
+        }
+      },
+      {
+        "comment": "",
+        "key": "Manda nel Cestino il file appena creato",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 142
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ti piace OrbitLR?",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 148
+        }
+      },
+      {
+        "comment": "",
+        "key": "No grazie",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 153
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri OrbitLR per i dettagli",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 162
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riprova",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 169
+        }
+      }
+    ]
+  },
+  "version": 1
+}

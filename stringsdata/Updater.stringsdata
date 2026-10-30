@@ -1,0 +1,152 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Updater.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Preparo i file…",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 17
+        }
+      },
+      {
+        "comment": "",
+        "key": "Controllo la firma…",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 18
+        }
+      },
+      {
+        "comment": "",
+        "key": "Preparo la nuova versione…",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 19
+        }
+      },
+      {
+        "comment": "",
+        "key": "Installo…",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 20
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fatto! Riapro OrbitLR…",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 21
+        }
+      },
+      {
+        "comment": "",
+        "key": "Installare OrbitLR %@?",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 86
+        }
+      },
+      {
+        "comment": "",
+        "key": "Versione attuale: %@. Aggiornamento firmato da OrbitLR e controllato.\n\nOrbitLR si chiuderà e si riaprirà da sola, già aggiornata. Ci vogliono pochi secondi.",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 87
+        }
+      },
+      {
+        "comment": "",
+        "key": "Installa",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 90
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 91
+        }
+      },
+      {
+        "comment": "",
+        "key": "L'app dentro l'aggiornamento non è integra: non la installo.",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 190
+        }
+      },
+      {
+        "comment": "",
+        "key": "Questo aggiornamento non è adatto a questo Mac.",
+        "location": {
+          "startingColumn": 141,
+          "startingLine": 190
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco a preparare l’installazione.",
+        "location": {
+          "startingColumn": 97,
+          "startingLine": 203
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiorno OrbitLR",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 367
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiornamento non riuscito",
+        "location": {
+          "startingColumn": 103,
+          "startingLine": 367
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@  →  %@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 370
+        }
+      },
+      {
+        "comment": "",
+        "key": "Copia i dettagli",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 383
+        }
+      },
+      {
+        "comment": "",
+        "key": "Chiudi",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 388
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ · quasi finito…",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 420
+        }
+      }
+    ]
+  },
+  "version": 1
+}

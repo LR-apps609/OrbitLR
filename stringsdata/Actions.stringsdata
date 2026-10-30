@@ -1,0 +1,1712 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Actions.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "documenti",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 8
+        }
+      },
+      {
+        "comment": "",
+        "key": "fogli di calcolo",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 9
+        }
+      },
+      {
+        "comment": "",
+        "key": "presentazioni",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 10
+        }
+      },
+      {
+        "comment": "",
+        "key": "file di testo",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 11
+        }
+      },
+      {
+        "comment": "",
+        "key": "immagini",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 12
+        }
+      },
+      {
+        "comment": "",
+        "key": "file audio",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 13
+        }
+      },
+      {
+        "comment": "",
+        "key": "video",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 14
+        }
+      },
+      {
+        "comment": "",
+        "key": "sottotitoli",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 16
+        }
+      },
+      {
+        "comment": "",
+        "key": "Documenti",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 23
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fogli",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 24
+        }
+      },
+      {
+        "comment": "",
+        "key": "Presentazioni",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "Testo e web",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "Immagini",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 27
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 28
+        }
+      },
+      {
+        "comment": "",
+        "key": "Video",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 29
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sottotitoli",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 31
+        }
+      },
+      {
+        "comment": "",
+        "key": "Altro",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 47
+        }
+      },
+      {
+        "comment": "",
+        "key": "Altri formati",
+        "location": {
+          "startingColumn": 104,
+          "startingLine": 47
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apre un secondo anello",
+        "location": {
+          "startingColumn": 146,
+          "startingLine": 47
+        }
+      },
+      {
+        "comment": "",
+        "key": "Da leggere e stampare ovunque",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 88
+        }
+      },
+      {
+        "comment": "",
+        "key": "DOCX · si modifica in Word e Pages",
+        "location": {
+          "startingColumn": 94,
+          "startingLine": 88
+        }
+      },
+      {
+        "comment": "",
+        "key": "Per LibreOffice",
+        "location": {
+          "startingColumn": 159,
+          "startingLine": 88
+        }
+      },
+      {
+        "comment": "",
+        "key": "Testo con formattazione semplice",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 89
+        }
+      },
+      {
+        "comment": "",
+        "key": "Solo testo, senza formattazione",
+        "location": {
+          "startingColumn": 96,
+          "startingLine": 89
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pagina web",
+        "location": {
+          "startingColumn": 158,
+          "startingLine": 89
+        }
+      },
+      {
+        "comment": "",
+        "key": "MD · testo con titoli e liste",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 90
+        }
+      },
+      {
+        "comment": "",
+        "key": "Libro elettronico",
+        "location": {
+          "startingColumn": 94,
+          "startingLine": 90
+        }
+      },
+      {
+        "comment": "",
+        "key": "XLSX · per Excel e Numbers",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 91
+        }
+      },
+      {
+        "comment": "",
+        "key": "Per LibreOffice Calc",
+        "location": {
+          "startingColumn": 92,
+          "startingLine": 91
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tabella semplice, per ogni programma",
+        "location": {
+          "startingColumn": 142,
+          "startingLine": 91
+        }
+      },
+      {
+        "comment": "",
+        "key": "PPTX · per PowerPoint e Keynote",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "Per LibreOffice Impress",
+        "location": {
+          "startingColumn": 97,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "Leggero, per condividere",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 93
+        }
+      },
+      {
+        "comment": "",
+        "key": "Senza perdita di qualità",
+        "location": {
+          "startingColumn": 88,
+          "startingLine": 93
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il formato di iPhone, molto leggero",
+        "location": {
+          "startingColumn": 144,
+          "startingLine": 93
+        }
+      },
+      {
+        "comment": "",
+        "key": "Leggero, per il web",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 94
+        }
+      },
+      {
+        "comment": "",
+        "key": "Alta qualità, per la stampa",
+        "location": {
+          "startingColumn": 85,
+          "startingLine": 94
+        }
+      },
+      {
+        "comment": "",
+        "key": "Icona per programmi e siti",
+        "location": {
+          "startingColumn": 143,
+          "startingLine": 94
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio compatibile ovunque",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 95
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio di qualità, per Apple",
+        "location": {
+          "startingColumn": 89,
+          "startingLine": 95
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio senza compressione",
+        "location": {
+          "startingColumn": 147,
+          "startingLine": 95
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio perfetto, più leggero del WAV",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio leggero, per il web",
+        "location": {
+          "startingColumn": 101,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "Video compatibile ovunque",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "Video per QuickTime e iMovie",
+        "location": {
+          "startingColumn": 89,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "Video con più audio e sottotitoli",
+        "location": {
+          "startingColumn": 147,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "Video per il web",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "Animazione senza audio",
+        "location": {
+          "startingColumn": 81,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converti in %@",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 112
+        }
+      },
+      {
+        "comment": "",
+        "key": "Un’immagine per ogni pagina",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 114
+        }
+      },
+      {
+        "comment": "",
+        "key": "Estrai l’audio in %@",
+        "location": {
+          "startingColumn": 85,
+          "startingLine": 115
+        }
+      },
+      {
+        "comment": "",
+        "key": "Solo l’audio del video",
+        "location": {
+          "startingColumn": 140,
+          "startingLine": 115
+        }
+      },
+      {
+        "comment": "",
+        "key": "GIF animata (tutto il video)",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 116
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converti in %@",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 119
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dimensione",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 127
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ridimensiona",
+        "location": {
+          "startingColumn": 105,
+          "startingLine": 127
+        }
+      },
+      {
+        "comment": "",
+        "key": "Foto più piccole e leggere",
+        "location": {
+          "startingColumn": 146,
+          "startingLine": 127
+        }
+      },
+      {
+        "comment": "",
+        "key": "Comprimi",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 128
+        }
+      },
+      {
+        "comment": "",
+        "key": "Comprimi",
+        "location": {
+          "startingColumn": 109,
+          "startingLine": 128
+        }
+      },
+      {
+        "comment": "",
+        "key": "Più leggera senza perdere qualità, o sotto un peso preciso (moduli, documenti)",
+        "location": {
+          "startingColumn": 146,
+          "startingLine": 128
+        }
+      },
+      {
+        "comment": "",
+        "key": "Metadati",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 129
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi i metadati",
+        "location": {
+          "startingColumn": 101,
+          "startingLine": 129
+        }
+      },
+      {
+        "comment": "",
+        "key": "Toglie posizione, modello del telefono e data dello scatto",
+        "location": {
+          "startingColumn": 148,
+          "startingLine": 129
+        }
+      },
+      {
+        "comment": "",
+        "key": "Testo",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 130
+        }
+      },
+      {
+        "comment": "",
+        "key": "Copia il testo",
+        "location": {
+          "startingColumn": 94,
+          "startingLine": 130
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il testo scritto nella foto, pronto da incollare",
+        "location": {
+          "startingColumn": 137,
+          "startingLine": 130
+        }
+      },
+      {
+        "comment": "",
+        "key": "Testo",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 131
+        }
+      },
+      {
+        "comment": "",
+        "key": "Copia il testo",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 131
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tutto il testo del PDF, anche dalle scansioni",
+        "location": {
+          "startingColumn": 145,
+          "startingLine": 131
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dividi",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 132
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dividi in pagine",
+        "location": {
+          "startingColumn": 99,
+          "startingLine": 132
+        }
+      },
+      {
+        "comment": "",
+        "key": "Un PDF per ogni pagina",
+        "location": {
+          "startingColumn": 144,
+          "startingLine": 132
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pagine",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 133
+        }
+      },
+      {
+        "comment": "",
+        "key": "Estrai alcune pagine",
+        "location": {
+          "startingColumn": 103,
+          "startingLine": 133
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli quali, es. 1–3, 5",
+        "location": {
+          "startingColumn": 152,
+          "startingLine": 133
+        }
+      },
+      {
+        "comment": "",
+        "key": "Comprimi",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 134
+        }
+      },
+      {
+        "comment": "",
+        "key": "Comprimi",
+        "location": {
+          "startingColumn": 113,
+          "startingLine": 134
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riduci il peso, per mandarlo via email",
+        "location": {
+          "startingColumn": 150,
+          "startingLine": 134
+        }
+      },
+      {
+        "comment": "",
+        "key": "Comprimi",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 135
+        }
+      },
+      {
+        "comment": "",
+        "key": "Comprimi",
+        "location": {
+          "startingColumn": 109,
+          "startingLine": 135
+        }
+      },
+      {
+        "comment": "",
+        "key": "Più leggero senza perdere qualità, o per Discord, WhatsApp ed email",
+        "location": {
+          "startingColumn": 146,
+          "startingLine": 135
+        }
+      },
+      {
+        "comment": "",
+        "key": "Taglia",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 136
+        }
+      },
+      {
+        "comment": "",
+        "key": "Taglia",
+        "location": {
+          "startingColumn": 95,
+          "startingLine": 136
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tieni solo un pezzo",
+        "location": {
+          "startingColumn": 130,
+          "startingLine": 136
+        }
+      },
+      {
+        "comment": "",
+        "key": "GIF da un pezzo",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 137
+        }
+      },
+      {
+        "comment": "",
+        "key": "Un’animazione da un tratto del video",
+        "location": {
+          "startingColumn": 123,
+          "startingLine": 137
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volume",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 138
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volume uniforme",
+        "location": {
+          "startingColumn": 107,
+          "startingLine": 138
+        }
+      },
+      {
+        "comment": "",
+        "key": "Né troppo basso né distorto",
+        "location": {
+          "startingColumn": 151,
+          "startingLine": 138
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pulisci voce",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 139
+        }
+      },
+      {
+        "comment": "",
+        "key": "Voce più pulita",
+        "location": {
+          "startingColumn": 115,
+          "startingLine": 139
+        }
+      },
+      {
+        "comment": "",
+        "key": "Meno ronzio e fruscio di fondo",
+        "location": {
+          "startingColumn": 160,
+          "startingLine": 139
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascrivi",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 140
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascrivi",
+        "location": {
+          "startingColumn": 112,
+          "startingLine": 140
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le parole in testo e sottotitoli, senza internet",
+        "location": {
+          "startingColumn": 150,
+          "startingLine": 140
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sottotitoli",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 141
+        }
+      },
+      {
+        "comment": "",
+        "key": "Estrai i sottotitoli",
+        "location": {
+          "startingColumn": 114,
+          "startingLine": 141
+        }
+      },
+      {
+        "comment": "",
+        "key": "Un file SRT per ogni lingua",
+        "location": {
+          "startingColumn": 163,
+          "startingLine": 141
+        }
+      },
+      {
+        "comment": "",
+        "key": "+ Sottotitoli",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 142
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi i sottotitoli",
+        "location": {
+          "startingColumn": 112,
+          "startingLine": 142
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dal file SRT con lo stesso nome del video",
+        "location": {
+          "startingColumn": 163,
+          "startingLine": 142
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unisci",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 143
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unisci in un PDF",
+        "location": {
+          "startingColumn": 99,
+          "startingLine": 143
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tutti i PDF e le immagini selezionati",
+        "location": {
+          "startingColumn": 144,
+          "startingLine": 143
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ruota",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 144
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ruota le pagine",
+        "location": {
+          "startingColumn": 100,
+          "startingLine": 144
+        }
+      },
+      {
+        "comment": "",
+        "key": "Di 90° o 180°",
+        "location": {
+          "startingColumn": 144,
+          "startingLine": 144
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ordina",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 145
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riordina le pagine",
+        "location": {
+          "startingColumn": 103,
+          "startingLine": 145
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nuovo ordine o pagine al contrario",
+        "location": {
+          "startingColumn": 150,
+          "startingLine": 145
+        }
+      },
+      {
+        "comment": "",
+        "key": "Proteggi",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 146
+        }
+      },
+      {
+        "comment": "",
+        "key": "Proteggi con password",
+        "location": {
+          "startingColumn": 105,
+          "startingLine": 146
+        }
+      },
+      {
+        "comment": "",
+        "key": "Serve la password per aprirlo",
+        "location": {
+          "startingColumn": 155,
+          "startingLine": 146
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sblocca",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 147
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi la password",
+        "location": {
+          "startingColumn": 108,
+          "startingLine": 147
+        }
+      },
+      {
+        "comment": "",
+        "key": "Una copia che si apre senza password",
+        "location": {
+          "startingColumn": 156,
+          "startingLine": 147
+        }
+      },
+      {
+        "comment": "",
+        "key": "Risoluz.",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 148
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cambia la grandezza",
+        "location": {
+          "startingColumn": 105,
+          "startingLine": 148
+        }
+      },
+      {
+        "comment": "",
+        "key": "Full HD, HD o più piccolo, per pesare meno",
+        "location": {
+          "startingColumn": 153,
+          "startingLine": 148
+        }
+      },
+      {
+        "comment": "",
+        "key": "Velocità",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 149
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cambia la velocità",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 149
+        }
+      },
+      {
+        "comment": "",
+        "key": "Da metà al doppio",
+        "location": {
+          "startingColumn": 150,
+          "startingLine": 149
+        }
+      },
+      {
+        "comment": "",
+        "key": "Silenzi",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 150
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi i silenzi",
+        "location": {
+          "startingColumn": 104,
+          "startingLine": 150
+        }
+      },
+      {
+        "comment": "",
+        "key": "Toglie le pause lunghe",
+        "location": {
+          "startingColumn": 150,
+          "startingLine": 150
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rinomina",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 151
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rinomina tutti",
+        "location": {
+          "startingColumn": 103,
+          "startingLine": 151
+        }
+      },
+      {
+        "comment": "",
+        "key": "Per esempio Vacanze 001, Vacanze 002…",
+        "location": {
+          "startingColumn": 146,
+          "startingLine": 151
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ricercabile",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 153
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rendi ricercabile",
+        "location": {
+          "startingColumn": 114,
+          "startingLine": 153
+        }
+      },
+      {
+        "comment": "",
+        "key": "Un PDF in cui cercare e copiare il testo, anche dalle scansioni",
+        "location": {
+          "startingColumn": 160,
+          "startingLine": 153
+        }
+      },
+      {
+        "comment": "",
+        "key": "Firma",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 154
+        }
+      },
+      {
+        "comment": "",
+        "key": "Compila e firma",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 154
+        }
+      },
+      {
+        "comment": "",
+        "key": "Moduli, firma, data e testo",
+        "location": {
+          "startingColumn": 146,
+          "startingLine": 154
+        }
+      },
+      {
+        "comment": "",
+        "key": "Oscura",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 155
+        }
+      },
+      {
+        "comment": "",
+        "key": "Oscura",
+        "location": {
+          "startingColumn": 101,
+          "startingLine": 155
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nasconde per davvero nomi, numeri e testo",
+        "location": {
+          "startingColumn": 136,
+          "startingLine": 155
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nascondi",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 156
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nascondi un logo",
+        "location": {
+          "startingColumn": 107,
+          "startingLine": 156
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sfoca o copri un logo, una data o una filigrana",
+        "location": {
+          "startingColumn": 152,
+          "startingLine": 156
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sfondo",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 157
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi lo sfondo",
+        "location": {
+          "startingColumn": 105,
+          "startingLine": 157
+        }
+      },
+      {
+        "comment": "",
+        "key": "Resta solo il soggetto, su sfondo trasparente",
+        "location": {
+          "startingColumn": 151,
+          "startingLine": 157
+        }
+      },
+      {
+        "comment": "",
+        "key": "Raddrizza",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 158
+        }
+      },
+      {
+        "comment": "",
+        "key": "Raddrizza il foglio",
+        "location": {
+          "startingColumn": 112,
+          "startingLine": 158
+        }
+      },
+      {
+        "comment": "",
+        "key": "Da una foto storta a una scansione pulita",
+        "location": {
+          "startingColumn": 160,
+          "startingLine": 158
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ingrandisci",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 159
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ingrandisci",
+        "location": {
+          "startingColumn": 108,
+          "startingLine": 159
+        }
+      },
+      {
+        "comment": "",
+        "key": "Due o quattro volte più grande, con i contorni nitidi",
+        "location": {
+          "startingColumn": 148,
+          "startingLine": 159
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unisci scatti",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 160
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unisci più scatti",
+        "location": {
+          "startingColumn": 106,
+          "startingLine": 160
+        }
+      },
+      {
+        "comment": "",
+        "key": "Più foto della stessa scena diventano una sola, più nitida",
+        "location": {
+          "startingColumn": 153,
+          "startingLine": 160
+        }
+      },
+      {
+        "comment": "",
+        "key": "Social",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 162
+        }
+      },
+      {
+        "comment": "",
+        "key": "Formato social",
+        "location": {
+          "startingColumn": 101,
+          "startingLine": 162
+        }
+      },
+      {
+        "comment": "",
+        "key": "Verticale, quadrato o 4:5 per Reels, TikTok e post",
+        "location": {
+          "startingColumn": 144,
+          "startingLine": 162
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unisci",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 163
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unisci i video",
+        "location": {
+          "startingColumn": 101,
+          "startingLine": 163
+        }
+      },
+      {
+        "comment": "",
+        "key": "Uno dopo l’altro, in un solo video",
+        "location": {
+          "startingColumn": 144,
+          "startingLine": 163
+        }
+      },
+      {
+        "comment": "",
+        "key": "Musica",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 164
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi musica",
+        "location": {
+          "startingColumn": 99,
+          "startingLine": 164
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sotto l’audio o al suo posto",
+        "location": {
+          "startingColumn": 143,
+          "startingLine": 164
+        }
+      },
+      {
+        "comment": "",
+        "key": "Suoneria",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 165
+        }
+      },
+      {
+        "comment": "",
+        "key": "Suoneria iPhone",
+        "location": {
+          "startingColumn": 107,
+          "startingLine": 165
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fino a 30 secondi, pronta per iPhone",
+        "location": {
+          "startingColumn": 151,
+          "startingLine": 165
+        }
+      },
+      {
+        "comment": "",
+        "key": "Vocale leggero",
+        "location": {
+          "startingColumn": 88,
+          "startingLine": 166
+        }
+      },
+      {
+        "comment": "",
+        "key": "Per WhatsApp e messaggi, voce chiara",
+        "location": {
+          "startingColumn": 131,
+          "startingLine": 166
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unisci",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 167
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unisci gli audio",
+        "location": {
+          "startingColumn": 101,
+          "startingLine": 167
+        }
+      },
+      {
+        "comment": "",
+        "key": "Uno dopo l’altro, in un solo file",
+        "location": {
+          "startingColumn": 146,
+          "startingLine": 167
+        }
+      },
+      {
+        "comment": "",
+        "key": "Montaggio",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 168
+        }
+      },
+      {
+        "comment": "",
+        "key": "Esporta il montaggio",
+        "location": {
+          "startingColumn": 108,
+          "startingLine": 168
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il progetto della scheda Video",
+        "location": {
+          "startingColumn": 157,
+          "startingLine": 168
+        }
+      },
+      {
+        "comment": "",
+        "key": "Leggi",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 169
+        }
+      },
+      {
+        "comment": "",
+        "key": "Testo in voce",
+        "location": {
+          "startingColumn": 94,
+          "startingLine": 169
+        }
+      },
+      {
+        "comment": "",
+        "key": "Un file audio letto da una voce naturale",
+        "location": {
+          "startingColumn": 136,
+          "startingLine": 169
+        }
+      },
+      {
+        "comment": "",
+        "key": "Migliora",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 170
+        }
+      },
+      {
+        "comment": "",
+        "key": "Migliora con l’IA",
+        "location": {
+          "startingColumn": 109,
+          "startingLine": 170
+        }
+      },
+      {
+        "comment": "",
+        "key": "Più nitida e pulita, senza inventare dettagli",
+        "location": {
+          "startingColumn": 157,
+          "startingLine": 170
+        }
+      },
+      {
+        "comment": "",
+        "key": "Vettoriale (SVG)",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 172
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nitido a qualunque misura: loghi, disegni, firme e foto",
+        "location": {
+          "startingColumn": 124,
+          "startingLine": 172
+        }
+      },
+      {
+        "comment": "",
+        "key": "Modifica",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 202
+        }
+      },
+      {
+        "comment": "",
+        "key": "Migliora",
+        "location": {
+          "startingColumn": 88,
+          "startingLine": 202
+        }
+      },
+      {
+        "comment": "",
+        "key": "Altro",
+        "location": {
+          "startingColumn": 119,
+          "startingLine": 202
+        }
+      },
+      {
+        "comment": "",
+        "key": "Peso e grandezza",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 203
+        }
+      },
+      {
+        "comment": "",
+        "key": "Taglia e unisci",
+        "location": {
+          "startingColumn": 98,
+          "startingLine": 203
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio e sottotitoli",
+        "location": {
+          "startingColumn": 136,
+          "startingLine": 203
+        }
+      },
+      {
+        "comment": "",
+        "key": "Altro",
+        "location": {
+          "startingColumn": 178,
+          "startingLine": 203
+        }
+      },
+      {
+        "comment": "",
+        "key": "Organizza",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 204
+        }
+      },
+      {
+        "comment": "",
+        "key": "Proteggi",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 204
+        }
+      },
+      {
+        "comment": "",
+        "key": "Altro",
+        "location": {
+          "startingColumn": 118,
+          "startingLine": 204
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le mie azioni",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 208
+        }
+      },
+      {
+        "comment": "",
+        "key": "Modifica",
+        "location": {
+          "startingColumn": 104,
+          "startingLine": 215
+        }
+      },
+      {
+        "comment": "",
+        "key": "Migliora",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 216
+        }
+      },
+      {
+        "comment": "",
+        "key": "Altro",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 217
+        }
+      },
+      {
+        "comment": "",
+        "key": "Taglia e unisci",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 221
+        }
+      },
+      {
+        "comment": "",
+        "key": "Peso e grandezza",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 222
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio e sottotitoli",
+        "location": {
+          "startingColumn": 110,
+          "startingLine": 223
+        }
+      },
+      {
+        "comment": "",
+        "key": "Altro",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 224
+        }
+      },
+      {
+        "comment": "",
+        "key": "Organizza",
+        "location": {
+          "startingColumn": 119,
+          "startingLine": 228
+        }
+      },
+      {
+        "comment": "",
+        "key": "Proteggi",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 229
+        }
+      },
+      {
+        "comment": "",
+        "key": "Altro",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 230
+        }
+      },
+      {
+        "comment": "",
+        "key": "Modifica",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 245
+        }
+      },
+      {
+        "comment": "",
+        "key": "Modifica in Immagini",
+        "location": {
+          "startingColumn": 118,
+          "startingLine": 245
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ridimensiona, togli lo sfondo, migliora e altro",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 246
+        }
+      },
+      {
+        "comment": "",
+        "key": "Modifica",
+        "location": {
+          "startingColumn": 72,
+          "startingLine": 248
+        }
+      },
+      {
+        "comment": "",
+        "key": "Modifica in File",
+        "location": {
+          "startingColumn": 110,
+          "startingLine": 248
+        }
+      },
+      {
+        "comment": "",
+        "key": "Comprimi, dividi, firma, proteggi e altro",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 249
+        }
+      },
+      {
+        "comment": "",
+        "key": "Modifica",
+        "location": {
+          "startingColumn": 81,
+          "startingLine": 250
+        }
+      },
+      {
+        "comment": "",
+        "key": "Modifica in Audio",
+        "location": {
+          "startingColumn": 119,
+          "startingLine": 250
+        }
+      },
+      {
+        "comment": "",
+        "key": "Taglia, suoneria, volume, velocità e altro",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 251
+        }
+      },
+      {
+        "comment": "",
+        "key": "Modifica",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 252
+        }
+      },
+      {
+        "comment": "",
+        "key": "Modifica in Video",
+        "location": {
+          "startingColumn": 124,
+          "startingLine": 252
+        }
+      },
+      {
+        "comment": "",
+        "key": "Comprimi, taglia, GIF, formato social e altro",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 253
+        }
+      }
+    ]
+  },
+  "version": 1
+}

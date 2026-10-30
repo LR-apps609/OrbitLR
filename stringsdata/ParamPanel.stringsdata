@@ -1,0 +1,1163 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/ParamPanel.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "Avviso: resta nella finestra senza buttare niente",
+        "key": "discard.keepEditing",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 93
+        },
+        "value": "Continua"
+      },
+      {
+        "comment": "",
+        "key": "Butta",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 102
+        }
+      },
+      {
+        "comment": "",
+        "key": "Buttare le scelte fatte?",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 188
+        }
+      },
+      {
+        "comment": "",
+        "key": "Gira la manopola trascinandola, con la rotellina o con le frecce. Un clic passa alla posizione successiva.",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 218
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld file",
+        "location": {
+          "startingColumn": 92,
+          "startingLine": 211
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nuova dimensione",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 325
+        }
+      },
+      {
+        "comment": "",
+        "key": "Per il web (1600 px, JPG leggero)",
+        "location": {
+          "startingColumn": 81,
+          "startingLine": 326
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lato lungo 1280 px",
+        "location": {
+          "startingColumn": 83,
+          "startingLine": 327
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lato lungo 1920 px",
+        "location": {
+          "startingColumn": 83,
+          "startingLine": 328
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lato lungo 3840 px (4K)",
+        "location": {
+          "startingColumn": 81,
+          "startingLine": 329
+        }
+      },
+      {
+        "comment": "",
+        "key": "Metà (50%)",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 330
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le foto più piccole della misura scelta non vengono ingrandite.",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 332
+        }
+      },
+      {
+        "comment": "",
+        "key": "Compressione",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 334
+        }
+      },
+      {
+        "comment": "",
+        "key": "Leggera",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 335
+        }
+      },
+      {
+        "comment": "",
+        "key": "Leggera (qualità di stampa)",
+        "location": {
+          "startingColumn": 106,
+          "startingLine": 335
+        }
+      },
+      {
+        "comment": "",
+        "key": "Media",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 336
+        }
+      },
+      {
+        "comment": "",
+        "key": "Media (consigliata)",
+        "location": {
+          "startingColumn": 105,
+          "startingLine": 336
+        }
+      },
+      {
+        "comment": "",
+        "key": "Forte",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 337
+        }
+      },
+      {
+        "comment": "",
+        "key": "Forte (file più piccolo possibile)",
+        "location": {
+          "startingColumn": 105,
+          "startingLine": 337
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 341
+        }
+      },
+      {
+        "comment": "Un valore scelto a mano",
+        "key": "param.custom",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 342
+        },
+        "value": "Altro"
+      },
+      {
+        "comment": "",
+        "key": "Un altro peso massimo, a scelta",
+        "location": {
+          "startingColumn": 171,
+          "startingLine": 342
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stessa misura e stessa qualità a occhio, con il formato moderno dei video (HEVC): di solito pesa la metà. Funziona anche con film lunghi.",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 351
+        }
+      },
+      {
+        "comment": "",
+        "key": "Prima si tengono qualità e misura; la risoluzione scende solo se il peso scelto non basta.",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 353
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 358
+        }
+      },
+      {
+        "comment": "Un valore scelto a mano",
+        "key": "param.custom",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 359
+        },
+        "value": "Altro"
+      },
+      {
+        "comment": "",
+        "key": "Un altro peso massimo, a scelta",
+        "location": {
+          "startingColumn": 171,
+          "startingLine": 359
+        }
+      },
+      {
+        "comment": "",
+        "key": "A occhio resta identica, ma pesa meno. JPEG e HEIC restano nel loro formato.",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 367
+        }
+      },
+      {
+        "comment": "",
+        "key": "Si cerca la qualità più alta che sta nel peso; la foto si rimpicciolisce solo se serve. Esce in JPG, senza dati personali (va bene per moduli e siti).",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 368
+        }
+      },
+      {
+        "comment": "",
+        "key": "Formato",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 372
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ · ora %@",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 378
+        }
+      },
+      {
+        "comment": "",
+        "key": "L’inquadratura segue le persone (o ciò che si muove in primo piano) con calma, senza scatti. Con scene affollate resta al centro.",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 380
+        }
+      },
+      {
+        "comment": "",
+        "key": "Esempi: 2 · 1-3 · 1,4,7-9 · 5- (dalla 5 alla fine)",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 394
+        }
+      },
+      {
+        "comment": "",
+        "key": "Risoluzione",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 396
+        }
+      },
+      {
+        "comment": "",
+        "key": "480p (leggero)",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 397
+        }
+      },
+      {
+        "comment": "",
+        "key": "HEVC: stessa risoluzione, file più piccolo",
+        "location": {
+          "startingColumn": 83,
+          "startingLine": 400
+        }
+      },
+      {
+        "comment": "",
+        "key": "Vale anche per i video verticali. I video più piccoli non vengono ingranditi.",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 402
+        }
+      },
+      {
+        "comment": "",
+        "key": "Velocità",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 404
+        }
+      },
+      {
+        "comment": "",
+        "key": "0,5×",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 405
+        }
+      },
+      {
+        "comment": "",
+        "key": "0,5× (metà)",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 405
+        }
+      },
+      {
+        "comment": "",
+        "key": "0,75×",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 406
+        }
+      },
+      {
+        "comment": "",
+        "key": "0,75×",
+        "location": {
+          "startingColumn": 104,
+          "startingLine": 406
+        }
+      },
+      {
+        "comment": "",
+        "key": "1,25×",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 407
+        }
+      },
+      {
+        "comment": "",
+        "key": "1,25×",
+        "location": {
+          "startingColumn": 104,
+          "startingLine": 407
+        }
+      },
+      {
+        "comment": "",
+        "key": "1,5×",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 408
+        }
+      },
+      {
+        "comment": "",
+        "key": "1,5×",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 408
+        }
+      },
+      {
+        "comment": "",
+        "key": "2× (doppia)",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 409
+        }
+      },
+      {
+        "comment": "",
+        "key": "La voce mantiene il suo tono, anche più veloce o più lenta.",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 411
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ruota tutte le pagine",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 413
+        }
+      },
+      {
+        "comment": "",
+        "key": "90° a sinistra",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 414
+        }
+      },
+      {
+        "comment": "",
+        "key": "90° a destra",
+        "location": {
+          "startingColumn": 85,
+          "startingLine": 416
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le pagine non indicate restano in fondo, nel loro ordine.",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 423
+        }
+      },
+      {
+        "comment": "",
+        "key": "Senza questa password il PDF non si potrà aprire: conservala bene.",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 427
+        }
+      },
+      {
+        "comment": "",
+        "key": "Intensità 0 = Fedele: pulisce e rende nitido senza inventare. Più sali, più il risultato è incisivo, ma il modello ricostruisce texture che nella foto non c’erano. Tra 1 e 99 si usano tutti e due i modelli (tempo doppio).",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 465
+        }
+      },
+      {
+        "comment": "",
+        "key": "I file vengono rinominati in ordine di nome. Si può tornare indietro da Attività.",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 489
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inquadra le persone",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 374
+        }
+      },
+      {
+        "comment": "",
+        "key": "1-3, 5, 8-",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 393
+        }
+      },
+      {
+        "comment": "",
+        "key": "Password",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 425
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ripeti la password",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 426
+        }
+      },
+      {
+        "comment": "",
+        "key": "Password attuale",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 429
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nome",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 470
+        }
+      },
+      {
+        "comment": "",
+        "key": "Salva tra le mie azioni",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 225
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nome dell’azione, per esempio «Instagram»",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 227
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 238
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ridimensiona",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 277
+        }
+      },
+      {
+        "comment": "",
+        "key": "Comprimi",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 278
+        }
+      },
+      {
+        "comment": "",
+        "key": "Taglia",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 279
+        }
+      },
+      {
+        "comment": "",
+        "key": "Crea la GIF",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 280
+        }
+      },
+      {
+        "comment": "",
+        "key": "Estrai",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 281
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converti",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 282
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cambia velocità",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 283
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ruota",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 284
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riordina",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 285
+        }
+      },
+      {
+        "comment": "",
+        "key": "Proteggi",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 286
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sblocca",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 287
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rinomina",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 288
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi lo sfondo",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 289
+        }
+      },
+      {
+        "comment": "",
+        "key": "Raddrizza",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 290
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ingrandisci",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 291
+        }
+      },
+      {
+        "comment": "",
+        "key": "Migliora",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 292
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unisci",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 293
+        }
+      },
+      {
+        "comment": "",
+        "key": "Esporta",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 294
+        }
+      },
+      {
+        "comment": "",
+        "key": "Crea la suoneria",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 295
+        }
+      },
+      {
+        "comment": "",
+        "key": "Crea",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 296
+        }
+      },
+      {
+        "comment": "",
+        "key": "Crea l’SVG",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 297
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi un numero intero, ad esempio 25.",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 520
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi un numero intero di KB, ad esempio 200.",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 526
+        }
+      },
+      {
+        "comment": "",
+        "key": "La fine deve essere dopo l’inizio.",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 538
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizio non valido. Esempi: 45 · 1:30",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 534
+        }
+      },
+      {
+        "comment": "",
+        "key": "Formato non valido. Esempi: 2 · 1-3 · 1,4,7-9",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 544
+        }
+      },
+      {
+        "comment": "",
+        "key": "Formato non valido. Esempi: 3,1,2 · 5-1",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 554
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le due password non coincidono.",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 559
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi una password.",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 558
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi la password del PDF.",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 562
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il numero iniziale deve essere un numero intero.",
+        "location": {
+          "startingColumn": 85,
+          "startingLine": 571
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi un nome valido (senza / o :).",
+        "location": {
+          "startingColumn": 108,
+          "startingLine": 570
+        }
+      },
+      {
+        "comment": "",
+        "key": "Risultato",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 257
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come salvarlo",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 258
+        }
+      },
+      {
+        "comment": "",
+        "key": "Risultato",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 259
+        }
+      },
+      {
+        "comment": "",
+        "key": "Che cosa è",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 260
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quanto",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 261
+        }
+      },
+      {
+        "comment": "",
+        "key": "Funziona meglio con persone, animali e oggetti ben distinti dallo sfondo.",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 267
+        }
+      },
+      {
+        "comment": "",
+        "key": "OrbitLR trova il foglio nella foto, corregge la prospettiva e lo pulisce come una scansione.",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 268
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rende al meglio con loghi, icone, disegni e firme. «Precisione massima» ricalca ogni curva sul bordo vero, punto per punto: più lento, il risultato più fedele. Tutto sul Mac.",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 269
+        }
+      },
+      {
+        "comment": "",
+        "key": "Seleziona 3–10 foto della stessa scena (una raffica va benissimo) oppure un video breve: OrbitLR le allinea e le unisce. I dettagli vengono dagli scatti veri.",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 270
+        }
+      },
+      {
+        "comment": "",
+        "key": "Contorni nitidi con la tecnologia di Apple. Non inventa dettagli che non ci sono.",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 271
+        }
+      },
+      {
+        "comment": "",
+        "key": "MB",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 347
+        }
+      },
+      {
+        "comment": "",
+        "key": "MB",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 346
+        }
+      },
+      {
+        "comment": "",
+        "key": "KB",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 364
+        }
+      },
+      {
+        "comment": "",
+        "key": "KB",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 363
+        }
+      },
+      {
+        "comment": "",
+        "key": "es. 3,1,2 oppure 5-1",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 420
+        }
+      },
+      {
+        "comment": "",
+        "key": "Al contrario",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 421
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dimensione",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 435
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stessa dimensione",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 436
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il doppio",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 437
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quattro volte",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 438
+        }
+      },
+      {
+        "comment": "",
+        "key": "Intensità",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 440
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fedele: non inventa",
+        "location": {
+          "startingColumn": 85,
+          "startingLine": 441
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fedele, un po’ più incisivo",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 442
+        }
+      },
+      {
+        "comment": "",
+        "key": "Metà e metà",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 443
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quasi tutto Più nitido",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 444
+        }
+      },
+      {
+        "comment": "",
+        "key": "Più nitido: ricostruisce texture",
+        "location": {
+          "startingColumn": 89,
+          "startingLine": 445
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dimensione",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 451
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stessa dimensione",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 452
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il doppio",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 453
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quattro volte",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 454
+        }
+      },
+      {
+        "comment": "",
+        "key": "Intensità",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 456
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fedele: non inventa",
+        "location": {
+          "startingColumn": 85,
+          "startingLine": 457
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fedele, un po’ più incisivo",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 458
+        }
+      },
+      {
+        "comment": "",
+        "key": "Metà e metà",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 459
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quasi tutto Più nitido",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 460
+        }
+      },
+      {
+        "comment": "",
+        "key": "Più nitido: ricostruisce texture",
+        "location": {
+          "startingColumn": 89,
+          "startingLine": 461
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cifre",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 476
+        }
+      },
+      {
+        "comment": "",
+        "key": "Da",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 473
+        }
+      },
+      {
+        "comment": "",
+        "key": "1",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 474
+        }
+      },
+      {
+        "comment": "",
+        "key": "1",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 477
+        }
+      },
+      {
+        "comment": "",
+        "key": "01",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 477
+        }
+      },
+      {
+        "comment": "",
+        "key": "001",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 477
+        }
+      },
+      {
+        "comment": "",
+        "key": "0001",
+        "location": {
+          "startingColumn": 83,
+          "startingLine": 477
+        }
+      },
+      {
+        "comment": "",
+        "key": "… e altri %lld",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 501
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizio",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 384
+        }
+      },
+      {
+        "comment": "",
+        "key": "0:00",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 385
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fine",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 388
+        }
+      },
+      {
+        "comment": "",
+        "key": "fino alla fine",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 389
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,88 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/AutoSubtitles.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Sottotitoli interrotti: non ho aggiunto niente.",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 175
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il Mac non ha ancora la lingua per riconoscere la voce senza internet. Impostazioni di Sistema → Tastiera → Dettatura: attivala con la lingua giusta, attendi lo scaricamento e riprova.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 188
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sottotitoli interrotti: non ho aggiunto niente.",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 190
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sottotitoli automatici",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 199
+        }
+      },
+      {
+        "comment": "",
+        "key": "1 sottotitolo aggiunto: controllalo nella riga «Testi».",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 203
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld sottotitoli aggiunti: controllali nella riga «Testi».",
+        "location": {
+          "startingColumn": 132,
+          "startingLine": 203
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non ho sentito parole nelle clip (o l’audio è spento).",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 197
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le clip sono cambiate mentre ascoltavo: premi di nuovo «Sottotitoli automatici».",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 195
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hai aperto un altro progetto mentre ascoltavo: i sottotitoli non sono stati aggiunti. Torna al progetto e riprova.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 192
+        }
+      },
+      {
+        "comment": "",
+        "key": "Per i sottotitoli serve il permesso «Riconoscimento vocale»: Impostazioni di Sistema → Privacy e sicurezza.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 164
+        }
+      }
+    ]
+  },
+  "version": 1
+}

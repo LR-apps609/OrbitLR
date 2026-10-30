@@ -1,0 +1,80 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Permissions.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Scrivania",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "per convertire i file che tieni sulla Scrivania",
+        "location": {
+          "startingColumn": 91,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "Documenti",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 27
+        }
+      },
+      {
+        "comment": "",
+        "key": "per aprire e salvare i tuoi progetti",
+        "location": {
+          "startingColumn": 93,
+          "startingLine": 27
+        }
+      },
+      {
+        "comment": "",
+        "key": "Download",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 28
+        }
+      },
+      {
+        "comment": "",
+        "key": "per i file scaricati e i risultati",
+        "location": {
+          "startingColumn": 92,
+          "startingLine": 28
+        }
+      },
+      {
+        "comment": "",
+        "key": "Notifiche",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 29
+        }
+      },
+      {
+        "comment": "",
+        "key": "per avvisarti quando un lavoro lungo è finito",
+        "location": {
+          "startingColumn": 97,
+          "startingLine": 29
+        }
+      },
+      {
+        "comment": "",
+        "key": "per leggere i file selezionati quando premi ⌥⌘C",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 30
+        }
+      }
+    ]
+  },
+  "version": 1
+}

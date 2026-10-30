@@ -1,0 +1,208 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/NativeEngine.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "non riesco a scrivere il PDF",
+        "location": {
+          "startingColumn": 81,
+          "startingLine": 212
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a creare il PDF",
+        "location": {
+          "startingColumn": 129,
+          "startingLine": 209
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a ridimensionare l’immagine",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 250
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a leggere l’immagine",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 270
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a scrivere l’immagine",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 278
+        }
+      },
+      {
+        "comment": "",
+        "key": "macOS non sa scrivere questo formato",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 224
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a leggere l’immagine",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 204
+        }
+      },
+      {
+        "comment": "",
+        "key": "macOS non riesce a leggere questo file",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 336
+        }
+      },
+      {
+        "comment": "",
+        "key": "conversione non riuscita",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 372
+        }
+      },
+      {
+        "comment": "",
+        "key": "la cartella creata è vuota",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 385
+        }
+      },
+      {
+        "comment": "",
+        "key": "il file creato è vuoto",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 389
+        }
+      },
+      {
+        "comment": "",
+        "key": "il file non è davvero un %@",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 398
+        }
+      },
+      {
+        "comment": "",
+        "key": "l’immagine creata non si apre",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 394
+        }
+      },
+      {
+        "comment": "",
+        "key": "il PDF creato non ha pagine",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 402
+        }
+      },
+      {
+        "comment": "",
+        "key": "il PDF creato non si apre",
+        "location": {
+          "startingColumn": 81,
+          "startingLine": 401
+        }
+      },
+      {
+        "comment": "",
+        "key": "la suoneria creata è danneggiata",
+        "location": {
+          "startingColumn": 129,
+          "startingLine": 408
+        }
+      },
+      {
+        "comment": "",
+        "key": "la suoneria creata non si apre",
+        "location": {
+          "startingColumn": 96,
+          "startingLine": 405
+        }
+      },
+      {
+        "comment": "",
+        "key": "il file creato non contiene audio né video",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 412
+        }
+      },
+      {
+        "comment": "",
+        "key": "il file creato ha durata zero",
+        "location": {
+          "startingColumn": 120,
+          "startingLine": 413
+        }
+      },
+      {
+        "comment": "",
+        "key": "il file non è davvero un %@",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 415
+        }
+      },
+      {
+        "comment": "",
+        "key": "il file non è davvero un %@",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 417
+        }
+      },
+      {
+        "comment": "",
+        "key": "il file non è davvero un FLAC",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 419
+        }
+      },
+      {
+        "comment": "",
+        "key": "il documento creato è danneggiato",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 421
+        }
+      },
+      {
+        "comment": "",
+        "key": "il testo creato non si legge",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 425
+        }
+      },
+      {
+        "comment": "",
+        "key": "il file creato non esiste",
+        "location": {
+          "startingColumn": 100,
+          "startingLine": 382
+        }
+      }
+    ]
+  },
+  "version": 1
+}

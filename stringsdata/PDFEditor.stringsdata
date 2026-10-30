@@ -1,0 +1,488 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/PDFEditor.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Compila",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 59
+        }
+      },
+      {
+        "comment": "",
+        "key": "Firma",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 60
+        }
+      },
+      {
+        "comment": "",
+        "key": "Data",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 61
+        }
+      },
+      {
+        "comment": "",
+        "key": "Testo",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 62
+        }
+      },
+      {
+        "comment": "",
+        "key": "Oscura",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 63
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi nei campi del modulo. Trascina firme e testi per spostarli, l’angolo in basso a destra per ridimensionare; ⌫ elimina, ⌘Z annulla.",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 77
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clicca sulla pagina dove vuoi la firma.",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 78
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clicca dove vuoi la data di oggi.",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 79
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi il testo qui sopra, poi clicca sulla pagina.",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 80
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina un rettangolo sopra ciò che vuoi nascondere.",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 81
+        }
+      },
+      {
+        "comment": "",
+        "key": "Letto e approvato",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 91
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sostituire la firma salvata?",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 111
+        }
+      },
+      {
+        "comment": "",
+        "key": "Potrai tornare a quella vecchia con ⌘Z.",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 112
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sostituisci",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 113
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 93,
+          "startingLine": 113
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi prima il testo.",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 257
+        }
+      },
+      {
+        "comment": "",
+        "key": "«%@» non compare nel documento.",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 328
+        }
+      },
+      {
+        "comment": "",
+        "key": "Oscurati %lld punti con «%@».",
+        "location": {
+          "startingColumn": 105,
+          "startingLine": 328
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nessun %@ trovato.",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 360
+        }
+      },
+      {
+        "comment": "",
+        "key": "Oscurati %lld %@.",
+        "location": {
+          "startingColumn": 93,
+          "startingLine": 360
+        }
+      },
+      {
+        "comment": "",
+        "key": "Oscura",
+        "location": {
+          "startingColumn": 122,
+          "startingLine": 403
+        }
+      },
+      {
+        "comment": "",
+        "key": "Compila e firma",
+        "location": {
+          "startingColumn": 152,
+          "startingLine": 403
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non sono riuscito a salvare il PDF.",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 402
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli prima un PDF.",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 446
+        }
+      },
+      {
+        "comment": "",
+        "key": "Seleziona un file PDF, poi riprova.",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 447
+        }
+      },
+      {
+        "comment": "",
+        "key": "Questo PDF è protetto da una password.",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 683
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ne faccio una copia senza password: poi apri quella.",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 684
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi la password…",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 685
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 121,
+          "startingLine": 685
+        }
+      },
+      {
+        "comment": "",
+        "key": "Oscura · %@",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 693
+        }
+      },
+      {
+        "comment": "",
+        "key": "Compila e firma · %@",
+        "location": {
+          "startingColumn": 100,
+          "startingLine": 693
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco ad aprire questo PDF.",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 677
+        }
+      },
+      {
+        "comment": "",
+        "key": "Salvare una copia con le modifiche prima di chiudere?",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 617
+        }
+      },
+      {
+        "comment": "",
+        "key": "Se non la salvi, firme, testi e oscuramenti che hai aggiunto vanno persi.",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 618
+        }
+      },
+      {
+        "comment": "",
+        "key": "Salva una copia…",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 619
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 620
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non salvare",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 621
+        }
+      },
+      {
+        "comment": "",
+        "key": "Strumento",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 753
+        }
+      },
+      {
+        "comment": "",
+        "key": "Testo da aggiungere",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 763
+        }
+      },
+      {
+        "comment": "",
+        "key": "Elimina l’elemento selezionato (⌫)",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 775
+        }
+      },
+      {
+        "comment": "",
+        "key": "Disegna la firma",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 769
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cambia firma",
+        "location": {
+          "startingColumn": 120,
+          "startingLine": 769
+        }
+      },
+      {
+        "comment": "",
+        "key": "Elimina",
+        "location": {
+          "startingColumn": 85,
+          "startingLine": 774
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trova e oscura: un nome, una parola, un numero…",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 780
+        }
+      },
+      {
+        "comment": "",
+        "key": "Oscura tutto",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 784
+        }
+      },
+      {
+        "comment": "",
+        "key": "Oscura in automatico",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 786
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rendi il modulo non modificabile",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 800
+        }
+      },
+      {
+        "comment": "",
+        "key": "I valori scritti nei campi diventano parte della pagina",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 801
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dopo l’oscuramento, testo ricercabile",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 802
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le pagine oscurate diventano immagini: con questa opzione il resto del testo si può ancora cercare e copiare",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 803
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 810
+        }
+      },
+      {
+        "comment": "",
+        "key": "Salva una copia",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 811
+        }
+      },
+      {
+        "comment": "",
+        "key": "Disegna la tua firma",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 831
+        }
+      },
+      {
+        "comment": "",
+        "key": "Con il mouse o con un dito sul trackpad (tieni premuto mentre disegni). OrbitLR la ricorda per le prossime volte.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 832
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancella",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 849
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 851
+        }
+      },
+      {
+        "comment": "",
+        "key": "Usa questa firma",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 852
+        }
+      },
+      {
+        "comment": "",
+        "key": "Buttare la firma disegnata?",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 865
+        }
+      },
+      {
+        "comment": "",
+        "key": "Butta",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 866
+        }
+      },
+      {
+        "comment": "",
+        "key": "Continua a disegnare",
+        "location": {
+          "startingColumn": 101,
+          "startingLine": 866
+        }
+      }
+    ]
+  },
+  "version": 1
+}

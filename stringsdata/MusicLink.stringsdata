@@ -1,0 +1,384 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/MusicLink.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Aggiorno il motore per i link…",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 58
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scarico il motore per i link (circa 35 MB, solo la prima volta)…",
+        "location": {
+          "startingColumn": 105,
+          "startingLine": 58
+        }
+      },
+      {
+        "comment": "",
+        "key": "il motore scaricato non è quello ufficiale (impronta diversa): non lo uso",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 69
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a scaricare il motore per i link",
+        "location": {
+          "startingColumn": 113,
+          "startingLine": 64
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a controllare il motore per i link",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 61
+        }
+      },
+      {
+        "comment": "",
+        "key": "serve internet per scaricare il motore la prima volta",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 83
+        }
+      },
+      {
+        "comment": "",
+        "key": "Questo sito protegge i suoi contenuti (DRM): non si possono scaricare.",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "Da questo link non so prendere l’audio. Prova con il link diretto della canzone.",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il contenuto è privato o richiede l’accesso: non si può scaricare.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 100
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il contenuto non è più disponibile.",
+        "location": {
+          "startingColumn": 121,
+          "startingLine": 102
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il sito ha rifiutato la richiesta. Riprova tra un po’: intanto aggiorno il motore.",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 103
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco a collegarmi: controlla internet e riprova.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non sono riuscito a scaricare l’audio da questo link.",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 107
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ci mette troppo: riprova più tardi.",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 169
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non ho trovato l’audio scaricato.",
+        "location": {
+          "startingColumn": 123,
+          "startingLine": 188
+        }
+      },
+      {
+        "comment": "",
+        "key": "Incolla qui il link del video",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 277
+        }
+      },
+      {
+        "comment": "",
+        "key": "Incolla qui il link della canzone",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 277
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il 4K spesso arriva in un formato che il Mac non apre da solo: OrbitLR lo converte in MP4, e ci vuole più tempo.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 289
+        }
+      },
+      {
+        "comment": "",
+        "key": "Solo contenuti che hai il diritto di scaricare: tuoi, liberi o con il permesso di chi li ha creati. Il video arriva in Download e si apre qui, pronto da tagliare, comprimere o montare.",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 300
+        }
+      },
+      {
+        "comment": "",
+        "key": "Solo contenuti che hai il diritto di scaricare: tuoi, liberi o con il permesso di chi li ha creati. L’audio arriva in Download e si apre qui, pronto per suoneria, taglio e conversione.",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 301
+        }
+      },
+      {
+        "comment": "",
+        "key": "Qualità",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 282
+        }
+      },
+      {
+        "comment": "",
+        "key": "Video Downloader",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 274
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio Downloader",
+        "location": {
+          "startingColumn": 88,
+          "startingLine": 274
+        }
+      },
+      {
+        "comment": "",
+        "key": "Funziona con migliaia di siti · incolla il link",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 275
+        }
+      },
+      {
+        "comment": "",
+        "key": "Preparo…",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 331
+        }
+      },
+      {
+        "comment": "",
+        "key": "MP4 fino a 1080p · si apre ovunque",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 283
+        }
+      },
+      {
+        "comment": "",
+        "key": "Massima qualità (anche 4K)",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 284
+        }
+      },
+      {
+        "comment": "",
+        "key": "Interrompi",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 305
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 90,
+          "startingLine": 305
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scarica",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 306
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scarico il video…",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 338
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scarico l’audio…",
+        "location": {
+          "startingColumn": 121,
+          "startingLine": 338
+        }
+      },
+      {
+        "comment": "",
+        "key": "oppure incolla un link →",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 367
+        }
+      },
+      {
+        "comment": "",
+        "key": "Video Downloader",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 368
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio Downloader",
+        "location": {
+          "startingColumn": 88,
+          "startingLine": 368
+        }
+      },
+      {
+        "comment": "",
+        "key": "· funziona con migliaia di siti",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 369
+        }
+      },
+      {
+        "comment": "",
+        "key": "Video Downloader · incolla un link",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 412
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio Downloader · incolla un link",
+        "location": {
+          "startingColumn": 104,
+          "startingLine": 412
+        }
+      },
+      {
+        "comment": "",
+        "key": "Video Downloader",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 397
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio Downloader",
+        "location": {
+          "startingColumn": 89,
+          "startingLine": 397
+        }
+      },
+      {
+        "comment": "",
+        "key": "Video Downloader",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 430
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio Downloader",
+        "location": {
+          "startingColumn": 89,
+          "startingLine": 430
+        }
+      },
+      {
+        "comment": "",
+        "key": "Incolla un link · funziona con migliaia di siti",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 431
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scarica dal link (oppure premi Invio)",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 445
+        }
+      },
+      {
+        "comment": "",
+        "key": "Video Downloader",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 420
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio Downloader",
+        "location": {
+          "startingColumn": 93,
+          "startingLine": 420
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scarica",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 439
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,472 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Intents.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Azione di OrbitLR",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 18
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converti in JPG",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 20
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converti in PNG",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 21
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converti in HEIC",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converti in PDF",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 23
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converti in MP3",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 24
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converti in M4A",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converti in MP4",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "Comprimi il video",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 27
+        }
+      },
+      {
+        "comment": "",
+        "key": "Comprimi il PDF",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 28
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ridimensiona le foto",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 29
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi i metadati",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 30
+        }
+      },
+      {
+        "comment": "",
+        "key": "Estrai il testo",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 31
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rendi ricercabile",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 32
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi lo sfondo",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 33
+        }
+      },
+      {
+        "comment": "",
+        "key": "Raddrizza il documento",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 34
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ingrandisci",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 35
+        }
+      },
+      {
+        "comment": "",
+        "key": "Migliora con IA",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 36
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dimensione",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 79
+        }
+      },
+      {
+        "comment": "",
+        "key": "Per il web (1600 px)",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 81
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lato lungo 1280 px",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 81
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lato lungo 1920 px",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 81
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lato lungo 3840 px (4K)",
+        "location": {
+          "startingColumn": 17,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "Metà (50%)",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "Compressione",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "Leggera (qualità di stampa)",
+        "location": {
+          "startingColumn": 17,
+          "startingLine": 99
+        }
+      },
+      {
+        "comment": "",
+        "key": "Media (consigliata)",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 99
+        }
+      },
+      {
+        "comment": "",
+        "key": "Forte",
+        "location": {
+          "startingColumn": 90,
+          "startingLine": 99
+        }
+      },
+      {
+        "comment": "",
+        "key": " e ",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 158
+        }
+      },
+      {
+        "comment": "",
+        "key": "Questa azione non vale per %@.",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 159
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nessun file che OrbitLR sappia aprire.",
+        "location": {
+          "startingColumn": 88,
+          "startingLine": 146
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riuscito",
+        "location": {
+          "startingColumn": 110,
+          "startingLine": 169
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converti con OrbitLR",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 179
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converte, comprime o ridimensiona i file con OrbitLR e restituisce i file creati.",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 180
+        }
+      },
+      {
+        "comment": "",
+        "key": "File",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 181
+        }
+      },
+      {
+        "comment": "",
+        "key": "File",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 183
+        }
+      },
+      {
+        "comment": "",
+        "key": "Azione",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 186
+        }
+      },
+      {
+        "comment": "",
+        "key": "Peso massimo del video (MB)",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 189
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dimensione delle foto",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 192
+        }
+      },
+      {
+        "comment": "",
+        "key": "Compressione del PDF",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 195
+        }
+      },
+      {
+        "comment": "",
+        "key": "Azione di OrbitLR",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 230
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 232
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 232
+        }
+      },
+      {
+        "comment": "",
+        "key": "Usa una delle mie azioni di OrbitLR",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 253
+        }
+      },
+      {
+        "comment": "",
+        "key": "Applica una delle tue azioni salvate ai file e restituisce i file creati.",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 254
+        }
+      },
+      {
+        "comment": "",
+        "key": "File",
+        "location": {
+          "startingColumn": 139,
+          "startingLine": 254
+        }
+      },
+      {
+        "comment": "",
+        "key": "File",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 256
+        }
+      },
+      {
+        "comment": "",
+        "key": "Azione",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 259
+        }
+      },
+      {
+        "comment": "",
+        "key": "OrbitLR sulla selezione del Finder",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 281
+        }
+      },
+      {
+        "comment": "",
+        "key": "Applica un’azione ai file selezionati nel Finder. Con Siri: «Converti in JPG con OrbitLR».",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 282
+        }
+      },
+      {
+        "comment": "",
+        "key": "File",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 283
+        }
+      },
+      {
+        "comment": "",
+        "key": "Azione",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 285
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fatto: «%@».",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 300
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fatto: %lld file pronti.",
+        "location": {
+          "startingColumn": 119,
+          "startingLine": 300
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nel Finder non c’è nessun file selezionato.",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 294
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sulla selezione del Finder",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 313
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converti file",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 317
+        }
+      },
+      {
+        "comment": "",
+        "key": "Usa una mia azione",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 321
+        }
+      }
+    ]
+  },
+  "version": 1
+}

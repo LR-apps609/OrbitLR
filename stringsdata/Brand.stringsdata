@@ -1,0 +1,48 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Brand.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "pochi secondi",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 163
+        }
+      },
+      {
+        "comment": "",
+        "key": "circa %lld s",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 164
+        }
+      },
+      {
+        "comment": "",
+        "key": "circa %lld min",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 166
+        }
+      },
+      {
+        "comment": "",
+        "key": "circa %lld min",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 167
+        }
+      },
+      {
+        "comment": "",
+        "key": "circa %lld min %lld s",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 168
+        }
+      }
+    ]
+  },
+  "version": 1
+}

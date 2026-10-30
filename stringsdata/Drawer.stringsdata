@@ -1,0 +1,192 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Drawer.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Aggiungi al Video",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 21
+        }
+      },
+      {
+        "comment": "",
+        "key": "Usa come musica nel Video",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "Comprimi, taglia e altro (Video)",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 23
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri in Audio",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 24
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri in Immagini",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri in File",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converti…",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 27
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mostra nel Finder",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 28
+        }
+      },
+      {
+        "comment": "",
+        "key": "«%@» non è più nel Cassetto.",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 112
+        }
+      },
+      {
+        "comment": "",
+        "key": "Usa questo file in un’altra scheda, senza passare dal Finder",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 196
+        }
+      },
+      {
+        "comment": "",
+        "key": "Usa %@ in un’altra scheda",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 197
+        }
+      },
+      {
+        "comment": "",
+        "key": "Usa in…",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 191
+        }
+      },
+      {
+        "comment": "",
+        "key": "I file che crei finiscono qui: trascinali su una scheda o usa «Usa in…».",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 223
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cassetto",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 213
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tutti (%lld)",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 216
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ · trascinalo su una scheda, oppure «Usa in…» · doppio clic per aprirlo",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 261
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli dal Cassetto",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 259
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cassetto",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 271
+        }
+      },
+      {
+        "comment": "",
+        "key": "Gli ultimi file creati con OrbitLR. Trascinali su una scheda, oppure clic destro per mandarli altrove.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 272
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ · doppio clic per aprirlo",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 287
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 289
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mostra nel Finder",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 290
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli dal Cassetto",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 296
+        }
+      }
+    ]
+  },
+  "version": 1
+}

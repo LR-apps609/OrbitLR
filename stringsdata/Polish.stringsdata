@@ -1,0 +1,48 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Polish.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Spazio risparmiato",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 234
+        }
+      },
+      {
+        "comment": "",
+        "key": "completato",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 323
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld per cento",
+        "location": {
+          "startingColumn": 88,
+          "startingLine": 323
+        }
+      },
+      {
+        "comment": "",
+        "key": "Avanzamento",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 322
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld%%",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 312
+        }
+      }
+    ]
+  },
+  "version": 1
+}

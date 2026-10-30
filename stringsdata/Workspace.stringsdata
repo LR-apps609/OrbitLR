@@ -1,0 +1,296 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Workspace.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Apri",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 51
+        }
+      },
+      {
+        "comment": "",
+        "key": "al massimo %lld tipi di file diversi alla volta",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 116
+        }
+      },
+      {
+        "comment": "",
+        "key": "al massimo %lld file dello stesso tipo",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 117
+        }
+      },
+      {
+        "comment": "",
+        "key": " e ",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 118
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ho tenuto %@: gli altri non sono stati aggiunti.",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 119
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nessuno di questi file si apre qui.",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 128
+        }
+      },
+      {
+        "comment": "",
+        "key": "e altri %lld · %@",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 179
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 397
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fino a %lld file dello stesso tipo, o %lld tipi diversi insieme",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 298
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rilascia qui",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 294
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina un file. Scegli cosa farne.",
+        "location": {
+          "startingColumn": 91,
+          "startingLine": 294
+        }
+      },
+      {
+        "comment": "",
+        "key": "oppure clicca per sceglierlo · dal Finder: clic destro → OrbitLR, oppure ⌥⌘C",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 295
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld tipi di file · %lld file",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 331
+        }
+      },
+      {
+        "comment": "",
+        "key": "Anteprima del file (Spazio)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 336
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli i file dalla scheda (restano dove sono)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 339
+        }
+      },
+      {
+        "comment": "",
+        "key": "Anteprima",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 335
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi file…",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 337
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli tutto",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 338
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clic su un’azione",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 380
+        }
+      },
+      {
+        "comment": "",
+        "key": "1–8 · Invio = ultima scelta",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 381
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi per cercare",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 382
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli questo file",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 425
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli il file",
+        "location": {
+          "startingColumn": 120,
+          "startingLine": 425
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli questi %lld file",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 494
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli il file",
+        "location": {
+          "startingColumn": 137,
+          "startingLine": 494
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ · %lld file",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 499
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli questo file",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 523
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nascondi: il lavoro continua e lo trovi in Attività",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 590
+        }
+      },
+      {
+        "comment": "",
+        "key": "Chiudi (il risultato resta in Attività)",
+        "location": {
+          "startingColumn": 119,
+          "startingLine": 590
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mostra nel Finder",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 572
+        }
+      },
+      {
+        "comment": "",
+        "key": "Interrompi",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 574
+        }
+      },
+      {
+        "comment": "",
+        "key": "Attività",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 576
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tutti i lavori, in corso e fatti",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 577
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina il file creato dove ti serve",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 605
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fatto · %@",
+        "location": {
+          "startingColumn": 90,
+          "startingLine": 549
+        }
+      },
+      {
+        "comment": "",
+        "key": "Confronta",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 567
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,16 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Hotkey.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "La scorciatoia ⌥⌘C è già usata da un’altra app. Puoi spegnere la nostra in Impostazioni → Avvio, oppure cambiarla nell’altra app.",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 65
+        }
+      }
+    ]
+  },
+  "version": 1
+}

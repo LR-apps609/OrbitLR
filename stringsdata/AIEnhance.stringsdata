@@ -1,0 +1,64 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/AIEnhance.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Il modello di IA non ha prodotto un risultato",
+        "location": {
+          "startingColumn": 81,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "L’immagine è troppo piccola",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 54
+        }
+      },
+      {
+        "comment": "",
+        "key": "Manca il modello di IA nell’app",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 133
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il modello di IA non ha restituito un’immagine",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 181
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco a ricomporre l’immagine",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 194
+        }
+      },
+      {
+        "comment": "",
+        "key": "Memoria insufficiente",
+        "location": {
+          "startingColumn": 94,
+          "startingLine": 167
+        }
+      },
+      {
+        "comment": "",
+        "key": "L’immagine è troppo grande per la memoria disponibile",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 158
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,571 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/ImagesTab.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "un’immagine",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "un video",
+        "location": {
+          "startingColumn": 122,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "un documento",
+        "location": {
+          "startingColumn": 154,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "immagini",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "video",
+        "location": {
+          "startingColumn": 121,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "documenti",
+        "location": {
+          "startingColumn": 150,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "1 file non è %@: aprilo da Converti.",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld file non sono %@: aprili da Converti.",
+        "location": {
+          "startingColumn": 120,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "Al massimo %lld file insieme.",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 100
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi prima almeno un’immagine.",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 132
+        }
+      },
+      {
+        "comment": "",
+        "key": "Immagini",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 178
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina qui le foto",
+        "location": {
+          "startingColumn": 88,
+          "startingLine": 178
+        }
+      },
+      {
+        "comment": "",
+        "key": "oppure clicca per sceglierle · JPG, PNG, HEIC, RAW, PSD, AVIF e altre · fino a %lld insieme",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 179
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converti, ridimensiona, togli lo sfondo e altro, su una o tante foto",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 180
+        }
+      },
+      {
+        "comment": "",
+        "key": "Video",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 184
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina qui i video",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 184
+        }
+      },
+      {
+        "comment": "",
+        "key": "oppure clicca per sceglierli · MP4, MOV, MKV, AVI e altri · fino a %lld insieme",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 185
+        }
+      },
+      {
+        "comment": "",
+        "key": "Comprimi, taglia, fai una GIF e altro, su uno o tanti video",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 186
+        }
+      },
+      {
+        "comment": "",
+        "key": "PDF e documenti",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 189
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina qui PDF e documenti",
+        "location": {
+          "startingColumn": 95,
+          "startingLine": 189
+        }
+      },
+      {
+        "comment": "",
+        "key": "oppure clicca per sceglierli · PDF, Word, Excel, PowerPoint, testi · fino a %lld insieme",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 190
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unisci, comprimi, converti e proteggi PDF e documenti",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 191
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli le foto",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 343
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli i video",
+        "location": {
+          "startingColumn": 122,
+          "startingLine": 343
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli i file",
+        "location": {
+          "startingColumn": 160,
+          "startingLine": 343
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tutte",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 306
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tutti",
+        "location": {
+          "startingColumn": 81,
+          "startingLine": 306
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lavora su tutte le foto, non solo su quelle scelte",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 307
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lavora su tutti i file, non solo su quelli scelti",
+        "location": {
+          "startingColumn": 129,
+          "startingLine": 307
+        }
+      },
+      {
+        "comment": "",
+        "key": "Incolla il link di un video: arriva qui, pronto da tagliare, comprimere o montare",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 302
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi…",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 309
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli tutto dalla scheda (i file restano dove sono)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 311
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli tutto dalla scheda",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 312
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clic su una foto per sceglierla, ⌘-clic per sceglierne più di una",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 286
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clic su un file per sceglierlo, ⌘-clic per sceglierne più di uno",
+        "location": {
+          "startingColumn": 167,
+          "startingLine": 286
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld %@ · %@",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 323
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld di %lld %@ scelte · %@",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 324
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld di %lld %@ scelti · %@",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 325
+        }
+      },
+      {
+        "comment": "",
+        "key": "noun.photo",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 332
+        },
+        "value": "foto"
+      },
+      {
+        "comment": "",
+        "key": "noun.video",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 333
+        },
+        "value": "video"
+      },
+      {
+        "comment": "",
+        "key": "noun.file",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 334
+        },
+        "value": "file"
+      },
+      {
+        "comment": "",
+        "key": "%@, scelta",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 407
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli dalla scheda (il file resta dov’è)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 384
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli dalla scheda",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 385
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tipi diversi",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 431
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converti in",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 443
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cosa vuoi fare?",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 426
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi delle foto per iniziare.",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 488
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi dei video per iniziare.",
+        "location": {
+          "startingColumn": 137,
+          "startingLine": 488
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi dei file per iniziare.",
+        "location": {
+          "startingColumn": 193,
+          "startingLine": 488
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sulla foto scelta",
+        "location": {
+          "startingColumn": 76,
+          "startingLine": 490
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sul video scelto",
+        "location": {
+          "startingColumn": 136,
+          "startingLine": 490
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sul file scelto",
+        "location": {
+          "startingColumn": 176,
+          "startingLine": 490
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sulle %lld foto scelte",
+        "location": {
+          "startingColumn": 224,
+          "startingLine": 490
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sui %lld %@ scelti",
+        "location": {
+          "startingColumn": 270,
+          "startingLine": 490
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sulla foto",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 491
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sul video",
+        "location": {
+          "startingColumn": 105,
+          "startingLine": 491
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sul file",
+        "location": {
+          "startingColumn": 138,
+          "startingLine": 491
+        }
+      },
+      {
+        "comment": "",
+        "key": "Su tutte le %lld foto",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 492
+        }
+      },
+      {
+        "comment": "",
+        "key": "Su tutti i %lld %@",
+        "location": {
+          "startingColumn": 85,
+          "startingLine": 492
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ogni tipo di file ha le sue azioni. Scegli su quali lavorare:",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 432
+        }
+      },
+      {
+        "comment": "",
+        "key": "Solo %@",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 436
+        }
+      },
+      {
+        "comment": "",
+        "key": "aperto",
+        "location": {
+          "startingColumn": 72,
+          "startingLine": 466
+        }
+      },
+      {
+        "comment": "",
+        "key": "chiuso",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 466
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 457
+        }
+      },
+      {
+        "comment": "",
+        "key": "Prima scegli le opzioni, poi parte",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 556
+        }
+      },
+      {
+        "comment": "",
+        "key": "Parte subito",
+        "location": {
+          "startingColumn": 108,
+          "startingLine": 556
+        }
+      },
+      {
+        "comment": "",
+        "key": " ",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 515
+        }
+      },
+      {
+        "comment": "",
+        "key": "circa ",
+        "location": {
+          "startingColumn": 100,
+          "startingLine": 527
+        }
+      },
+      {
+        "comment": "",
+        "key": "peso previsto %@",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 528
+        }
+      }
+    ]
+  },
+  "version": 1
+}

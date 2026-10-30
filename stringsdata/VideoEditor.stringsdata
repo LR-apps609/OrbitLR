@@ -1,0 +1,2579 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/VideoEditor.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Ripristina com’era all’apertura",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 148
+        }
+      },
+      {
+        "comment": "",
+        "key": "Preparo «%@»: entrano nel progetto tra poco.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 238
+        }
+      },
+      {
+        "comment": "",
+        "key": "Preparo %lld video: entrano nel progetto tra poco.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 239
+        }
+      },
+      {
+        "comment": "",
+        "key": "Preparo «%@» per la musica…",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 246
+        }
+      },
+      {
+        "comment": "",
+        "key": "Qui si aprono video (e un brano audio, per la musica).",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 226
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi musica",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 281
+        }
+      },
+      {
+        "comment": "",
+        "key": "«%@» non contiene audio.",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 279
+        }
+      },
+      {
+        "comment": "",
+        "key": "La musica non si apre: %@",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 290
+        }
+      },
+      {
+        "comment": "",
+        "key": "«%@» non contiene video.",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 260
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi video",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 269
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi %lld video",
+        "location": {
+          "startingColumn": 111,
+          "startingLine": 269
+        }
+      },
+      {
+        "comment": "",
+        "key": "«%@» non si apre: %@",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 265
+        }
+      },
+      {
+        "comment": "",
+        "key": "«%@» non si apre più.",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 310
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non c’è ancora niente da riprodurre.",
+        "location": {
+          "startingColumn": 94,
+          "startingLine": 498
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dividi",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 546
+        }
+      },
+      {
+        "comment": "",
+        "key": "Per dividere, porta l’indicatore dentro una clip (non sul bordo).",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 541
+        }
+      },
+      {
+        "comment": "",
+        "key": "Porta l’indicatore sopra una clip.",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 537
+        }
+      },
+      {
+        "comment": "",
+        "key": "Taglia l’inizio",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 569
+        }
+      },
+      {
+        "comment": "",
+        "key": "L’indicatore è troppo vicino al bordo della clip.",
+        "location": {
+          "startingColumn": 76,
+          "startingLine": 567
+        }
+      },
+      {
+        "comment": "",
+        "key": "Porta l’indicatore sopra una clip.",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 565
+        }
+      },
+      {
+        "comment": "",
+        "key": "Taglia la fine",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 577
+        }
+      },
+      {
+        "comment": "",
+        "key": "L’indicatore è troppo vicino al bordo della clip.",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 576
+        }
+      },
+      {
+        "comment": "",
+        "key": "Porta l’indicatore sopra una clip.",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 574
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clip intera",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 583
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sto ancora leggendo questa clip: riprova tra un attimo.",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 582
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli prima una clip nella sequenza.",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 581
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sposta la clip",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 594
+        }
+      },
+      {
+        "comment": "",
+        "key": "La clip è già l’ultima.",
+        "location": {
+          "startingColumn": 93,
+          "startingLine": 592
+        }
+      },
+      {
+        "comment": "",
+        "key": "La clip è già la prima.",
+        "location": {
+          "startingColumn": 144,
+          "startingLine": 592
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli prima una clip nella sequenza.",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 590
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spegni l’audio della clip",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 603
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riaccendi l’audio della clip",
+        "location": {
+          "startingColumn": 97,
+          "startingLine": 603
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli prima una clip nella sequenza.",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 601
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spegni l’audio da qui",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 614
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spegni l’audio della clip",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 611
+        }
+      },
+      {
+        "comment": "",
+        "key": "Porta l’indicatore sopra una clip.",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 608
+        }
+      },
+      {
+        "comment": "",
+        "key": "Elimina la clip",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 627
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli prima una clip nella sequenza.",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 626
+        }
+      },
+      {
+        "comment": "",
+        "key": "Progetto nuovo. «%@» è salvato in Progetti.",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 646
+        }
+      },
+      {
+        "comment": "",
+        "key": "Questo progetto non si apre più.",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 654
+        }
+      },
+      {
+        "comment": "",
+        "key": "Musica da qui",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 796
+        }
+      },
+      {
+        "comment": "",
+        "key": "Musica fino a qui",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 806
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non c’è una musica.",
+        "location": {
+          "startingColumn": 121,
+          "startingLine": 804
+        }
+      },
+      {
+        "comment": "",
+        "key": "Porta l’indicatore sopra la musica.",
+        "location": {
+          "startingColumn": 167,
+          "startingLine": 804
+        }
+      },
+      {
+        "comment": "",
+        "key": "Musica fino alla fine",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 811
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stacca l’audio",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 830
+        }
+      },
+      {
+        "comment": "",
+        "key": "Questa clip non ha audio.",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 828
+        }
+      },
+      {
+        "comment": "",
+        "key": "Prima riporta la clip a velocità 1×: l’audio staccato va alla velocità normale.",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 825
+        }
+      },
+      {
+        "comment": "",
+        "key": "C’è già una musica: c’è posto per una traccia audio sola. Togli la musica e riprova.",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 821
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli prima una clip nella sequenza.",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 818
+        }
+      },
+      {
+        "comment": "",
+        "key": "Finale insieme al video",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 850
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi la musica",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 857
+        }
+      },
+      {
+        "comment": "",
+        "key": "Un attimo: sto ancora trovando le voci nel video per abbassare la musica.",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 866
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il montaggio è vuoto.",
+        "location": {
+          "startingColumn": 72,
+          "startingLine": 864
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi almeno un video per esportare.",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 863
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco a preparare l’esportazione: %@",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 880
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non trovo la musica di questo progetto. Resta nel progetto finché non la ritrovi.",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 960
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non trovo 1 video di questo progetto. Resta nel progetto finché non lo ritrovi.",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 961
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non trovo %lld video di questo progetto. Restano nel progetto finché non li ritrovi.",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 962
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ritrova i file",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 973
+        }
+      },
+      {
+        "comment": "",
+        "key": "OrbitLR si è chiusa all’improvviso. «%@» è com’era alle %@.",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 1017
+        }
+      },
+      {
+        "comment": "",
+        "key": "Verticale 9:16, Full HD",
+        "location": {
+          "startingColumn": 76,
+          "startingLine": 1028
+        }
+      },
+      {
+        "comment": "",
+        "key": "Instagram e Facebook: verticale 9:16, Full HD",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 1029
+        }
+      },
+      {
+        "comment": "",
+        "key": "YouTube Shorts: verticale 9:16, Full HD",
+        "location": {
+          "startingColumn": 76,
+          "startingLine": 1030
+        }
+      },
+      {
+        "comment": "",
+        "key": "Orizzontale 16:9, Full HD",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 1031
+        }
+      },
+      {
+        "comment": "",
+        "key": "Forma originale, HD 720p: leggero da mandare, nitido sul telefono",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 1032
+        }
+      },
+      {
+        "comment": "",
+        "key": "Taglia, dividi, sposta e togli le clip. I bordi d’ottone di una clip si trascinano per accorciarla.",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 1065
+        }
+      },
+      {
+        "comment": "",
+        "key": "Un filtro per tutto il video o solo per la clip scelta, e le regolazioni di luce e colore.",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 1066
+        }
+      },
+      {
+        "comment": "",
+        "key": "Effetti della clip scelta: velocità, zoom lento, gira, sfocatura, dissolvenze.",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 1067
+        }
+      },
+      {
+        "comment": "",
+        "key": "Titoli e scritte: premi «Testo» sull’anteprima (o il tasto T), poi trascinali dove vuoi.",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 1068
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il volume dei tuoi video e la musica.",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 1069
+        }
+      },
+      {
+        "comment": "",
+        "key": "La forma del video e la qualità dell’esportazione.",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 1070
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ripristinare il progetto com’era quando l’hai aperto?",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 1139
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina qui i video",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 1106
+        }
+      },
+      {
+        "comment": "",
+        "key": "oppure clicca per sceglierli · MP4, MOV, M4V · più video vanno in fila · un brano audio diventa la musica",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 1107
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 1536
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi",
+        "location": {
+          "startingColumn": 76,
+          "startingLine": 1536
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ripristina",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 1140
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 1141
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le modifiche fatte da allora spariscono. Puoi riaverle con ⌘Z.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 1143
+        }
+      },
+      {
+        "comment": "",
+        "key": "Salvato alle %@",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1151
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli i file del progetto, o la cartella dove sono adesso",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 1158
+        }
+      },
+      {
+        "comment": "Rifà la modifica annullata (⇧⌘Z)",
+        "key": "edit.redo",
+        "location": {
+          "startingColumn": 84,
+          "startingLine": 1186
+        },
+        "value": "Ripeti"
+      },
+      {
+        "comment": "",
+        "key": "Preparo l’anteprima",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 1180
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla l’ultima modifica (⌘Z)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 1184
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla l’ultima modifica",
+        "location": {
+          "startingColumn": 84,
+          "startingLine": 1184
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ripeti (⇧⌘Z)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 1186
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi altri video in fondo",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 1188
+        }
+      },
+      {
+        "comment": "",
+        "key": "Salva il progetto adesso (⌘S). Lo ritrovi in Progetti",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 1200
+        }
+      },
+      {
+        "comment": "",
+        "key": "Esporta",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 1201
+        }
+      },
+      {
+        "comment": "",
+        "key": "Crea il video finale (⌘E). Le modifiche in sospeso vengono applicate",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 1204
+        }
+      },
+      {
+        "comment": "",
+        "key": "Chiudi il progetto",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 1214
+        }
+      },
+      {
+        "comment": "",
+        "key": "Chiudi il progetto e torna ai Progetti · ⌘Esc",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 1215
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld clip · %@",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 1169
+        }
+      },
+      {
+        "comment": "",
+        "key": " · con musica",
+        "location": {
+          "startingColumn": 173,
+          "startingLine": 1169
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli i file o la cartella dove sono adesso: tornano al loro posto nel progetto",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 1177
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trova i file…",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 1175
+        }
+      },
+      {
+        "comment": "",
+        "key": "Video",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 1187
+        }
+      },
+      {
+        "comment": "",
+        "key": "Salvato",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 1196
+        }
+      },
+      {
+        "comment": "",
+        "key": "Salva progetto",
+        "location": {
+          "startingColumn": 89,
+          "startingLine": 1196
+        }
+      },
+      {
+        "comment": "",
+        "key": "Prima / dopo",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 1252
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tieni premuto per vedere com’era quando hai aperto il progetto",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 1257
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ripristina…",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 1260
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riporta il progetto com’era quando l’hai aperto (chiede conferma, si annulla con ⌘Z)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 1261
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio di questa clip",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 1461
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clip %lld di %lld: vale solo per questo pezzo",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 1462
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volume",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 1467
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volume della clip",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 1469
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tutti i video insieme",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 1473
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volume",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 1477
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volume dell’audio originale",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 1479
+        }
+      },
+      {
+        "comment": "",
+        "key": "Muta questa clip",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 1463
+        }
+      },
+      {
+        "comment": "",
+        "key": "Muti tutti",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 1474
+        }
+      },
+      {
+        "comment": "",
+        "key": "Musica",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 1382
+        }
+      },
+      {
+        "comment": "",
+        "key": "oppure trascina un brano sulla scheda",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 1434
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pronto per",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 1485
+        }
+      },
+      {
+        "comment": "",
+        "key": "Forma",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 1494
+        }
+      },
+      {
+        "comment": "",
+        "key": "Qualità dell’esportazione",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 1507
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld × %lld · circa %@",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 1524
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inquadra le persone",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 1502
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nel video finale l’inquadratura segue le persone con calma (in anteprima resta al centro)",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 1506
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clip %lld di %lld · %@",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 1304
+        }
+      },
+      {
+        "comment": "",
+        "key": "Funzioni",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 1308
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio della clip",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 1338
+        }
+      },
+      {
+        "comment": "",
+        "key": "Transizione prima di questa clip",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 1341
+        }
+      },
+      {
+        "comment": "",
+        "key": "Oppure clicca il pallino tra due clip nella sequenza.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 1342
+        }
+      },
+      {
+        "comment": "",
+        "key": "Altro",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 1345
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ascolta la clip e toglie le pause lunghe: restano solo i pezzi in cui si parla. ⌘Z per tornare indietro",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 1337
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizio qui",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 1310
+        }
+      },
+      {
+        "comment": "",
+        "key": "Taglia la clip da qui in poi",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 1310
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fine qui",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 1311
+        }
+      },
+      {
+        "comment": "",
+        "key": "Taglia la clip fino a qui",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 1311
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dividi",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 1312
+        }
+      },
+      {
+        "comment": "",
+        "key": "Divide la clip nel punto dell’indicatore (S)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 1314
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sposta la clip prima",
+        "location": {
+          "startingColumn": 189,
+          "startingLine": 1317
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sposta la clip dopo",
+        "location": {
+          "startingColumn": 185,
+          "startingLine": 1318
+        }
+      },
+      {
+        "comment": "",
+        "key": "Intera",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 1319
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riporta la clip alla sua durata intera",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 1319
+        }
+      },
+      {
+        "comment": "Sposta la clip prima",
+        "key": "clip.moveEarlier",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 1317
+        },
+        "value": "Prima"
+      },
+      {
+        "comment": "Sposta la clip dopo",
+        "key": "clip.moveLater",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 1318
+        },
+        "value": "Dopo"
+      },
+      {
+        "comment": "",
+        "key": "Velocità",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 1323
+        }
+      },
+      {
+        "comment": "",
+        "key": "Velocità della clip: la voce non cambia tono",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 1332
+        }
+      },
+      {
+        "comment": "",
+        "key": "Velocità",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 1358
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli prima una clip nella sequenza.",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 1357
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli i silenzi",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 1336
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riaccende l’audio di questa clip",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 1449
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spegne l’audio solo di questa clip (la musica resta)",
+        "location": {
+          "startingColumn": 99,
+          "startingLine": 1449
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spegne l’audio dall’indicatore alla fine della clip. Per un tratto in mezzo: dividi (S) e togli l’audio solo da quel pezzo",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 1451
+        }
+      },
+      {
+        "comment": "",
+        "key": "L’audio della clip diventa la traccia audio sotto il video: lo sposti, lo accorci e lo tagli da solo. La clip resta muta",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 1454
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli la clip dal montaggio (⌫ · si può annullare con ⌘Z; il tuo video resta dov’è)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 1349
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 1347
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio, GIF o versione compressa del video originale di questa clip",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 1378
+        }
+      },
+      {
+        "comment": "",
+        "key": "Estrai l’audio della clip (M4A)",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 1369
+        }
+      },
+      {
+        "comment": "",
+        "key": "Estrai l’audio di tutto il video (MP3)",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 1370
+        }
+      },
+      {
+        "comment": "",
+        "key": "GIF della clip",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 1371
+        }
+      },
+      {
+        "comment": "",
+        "key": "Comprimi la clip a 25 MB",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 1372
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli prima una clip nella sequenza.",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 1557
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli prima una clip nella sequenza.",
+        "location": {
+          "startingColumn": 119,
+          "startingLine": 1551
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli prima una clip nella sequenza.",
+        "location": {
+          "startingColumn": 125,
+          "startingLine": 1562
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dal video originale",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 1374
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ripeti la musica",
+        "location": {
+          "startingColumn": 96,
+          "startingLine": 1407
+        }
+      },
+      {
+        "comment": "",
+        "key": "Parte dal",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 1410
+        }
+      },
+      {
+        "comment": "",
+        "key": "Punto della canzone",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 1411
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volume",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 1413
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volume della musica",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 1414
+        }
+      },
+      {
+        "comment": "",
+        "key": "Abbassa quando si parla",
+        "location": {
+          "startingColumn": 88,
+          "startingLine": 1421
+        }
+      },
+      {
+        "comment": "",
+        "key": "L’audio originale è spento",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 1427
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld tratti con voce",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 1429
+        }
+      },
+      {
+        "comment": "",
+        "key": "Finisce col video",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 1404
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sceglie da dove far partire la canzone perché finisca insieme al video",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 1405
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ripeti finché il video finisce",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 1407
+        }
+      },
+      {
+        "comment": "",
+        "key": "Abbassa quando si parla",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 1421
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cambia…",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 1388
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi la musica",
+        "location": {
+          "startingColumn": 115,
+          "startingLine": 1389
+        }
+      },
+      {
+        "comment": "",
+        "key": "Parte qui",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 1393
+        }
+      },
+      {
+        "comment": "",
+        "key": "La musica comincia nel punto dell’indicatore (oppure trascina la barra della musica)",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 1394
+        }
+      },
+      {
+        "comment": "",
+        "key": "Finisce qui",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 1396
+        }
+      },
+      {
+        "comment": "",
+        "key": "La musica finisce nel punto dell’indicatore (oppure trascina il bordo destro della sua barra)",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 1397
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fino alla fine",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 1399
+        }
+      },
+      {
+        "comment": "",
+        "key": "La musica torna ad andare fino alla fine del video",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 1400
+        }
+      },
+      {
+        "comment": "",
+        "key": "Entrata",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 1416
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dissolvenza in entrata",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 1417
+        }
+      },
+      {
+        "comment": "",
+        "key": "Uscita",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 1418
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dissolvenza in uscita",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 1419
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cerco le voci…",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 1424
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli la musica…",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 1433
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riaccendi",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 1447
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spegni",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 1447
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spegni da qui",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 1450
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stacca l’audio",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 1453
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spegni l’audio della clip",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 1464
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riaccendi l’audio della clip",
+        "location": {
+          "startingColumn": 105,
+          "startingLine": 1464
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio originale muto",
+        "location": {
+          "startingColumn": 88,
+          "startingLine": 1475
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio originale attivo",
+        "location": {
+          "startingColumn": 132,
+          "startingLine": 1475
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pronto per %@",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 1489
+        }
+      },
+      {
+        "comment": "",
+        "key": "Originale",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 1496
+        }
+      },
+      {
+        "comment": "",
+        "key": "1:1 Post",
+        "location": {
+          "startingColumn": 114,
+          "startingLine": 1496
+        }
+      },
+      {
+        "comment": "",
+        "key": "4:5 Feed",
+        "location": {
+          "startingColumn": 154,
+          "startingLine": 1496
+        }
+      },
+      {
+        "comment": "",
+        "key": "Formato %@",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 1498
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inquadra le persone",
+        "location": {
+          "startingColumn": 97,
+          "startingLine": 1503
+        }
+      },
+      {
+        "comment": "",
+        "key": "Risoluzione %@",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 1511
+        }
+      },
+      {
+        "comment": "",
+        "key": "Più fluido (60)",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 1517
+        }
+      },
+      {
+        "comment": "",
+        "key": "Normale (30)",
+        "location": {
+          "startingColumn": 97,
+          "startingLine": 1517
+        }
+      },
+      {
+        "comment": "",
+        "key": "Solo se i video sono girati a 60: non si inventano fotogrammi",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 1520
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld fotogrammi al secondo",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 1518
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 1594
+        }
+      },
+      {
+        "comment": "",
+        "key": "PRIMA",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1711
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi un testo qui (T)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 1723
+        }
+      },
+      {
+        "comment": "",
+        "key": "Testo",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 1716
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pausa",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 1752
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riproduci",
+        "location": {
+          "startingColumn": 96,
+          "startingLine": 1752
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ / %@",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 1754
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riproduci / pausa (Spazio)",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 1751
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clicca o trascina per spostarti",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 1940
+        }
+      },
+      {
+        "comment": "",
+        "key": "Meno zoom (⌘−)",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 1905
+        }
+      },
+      {
+        "comment": "",
+        "key": "Più zoom, fino al millisecondo (⌘+, oppure due dita sul trackpad). ⌥← → sposta di un millisecondo",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 1908
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tutto il montaggio nella larghezza",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 1911
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riaccendi l’audio della clip",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 1945
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spegni l’audio della clip",
+        "location": {
+          "startingColumn": 100,
+          "startingLine": 1945
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stacca l’audio",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 1946
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sposta la clip prima",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 1948
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sposta la clip dopo",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 1949
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clip intera",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 1950
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mostra nel Finder",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 1952
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli la clip",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 1954
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ · clic per sceglierla, trascina per spostarla",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 2036
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina per tagliare l’inizio",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 2100
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina per tagliare la fine",
+        "location": {
+          "startingColumn": 100,
+          "startingLine": 2100
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli la clip (⌫) · si può annullare con ⌘Z",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 1996
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli la clip",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 1997
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi una transizione",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 2055
+        }
+      },
+      {
+        "comment": "",
+        "key": "Transizione: %@",
+        "location": {
+          "startingColumn": 93,
+          "startingLine": 2055
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi transizione",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 2056
+        }
+      },
+      {
+        "comment": "",
+        "key": "Transizione %@",
+        "location": {
+          "startingColumn": 103,
+          "startingLine": 2056
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sposta la clip",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 2030
+        }
+      },
+      {
+        "comment": "",
+        "key": "Taglia l’inizio",
+        "location": {
+          "startingColumn": 94,
+          "startingLine": 2097
+        }
+      },
+      {
+        "comment": "",
+        "key": "Taglia la fine",
+        "location": {
+          "startingColumn": 135,
+          "startingLine": 2097
+        }
+      },
+      {
+        "comment": "",
+        "key": "Testi: premi «Testo» sull’anteprima",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 2129
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ · %@–%@ · trascina per spostarlo, i bordi per allungarlo",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 2151
+        }
+      },
+      {
+        "comment": "",
+        "key": "Testo",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 2138
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sposta il testo",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 2215
+        }
+      },
+      {
+        "comment": "",
+        "key": "Modifica il testo",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 2154
+        }
+      },
+      {
+        "comment": "",
+        "key": "Vai all’inizio del testo",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 2155
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi il testo",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 2157
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi il testo",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 2159
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina per decidere dove parte la musica nel video; trascina il bordo destro per farla finire prima",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 2266
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina per far finire la musica prima",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 2297
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sposta la musica",
+        "location": {
+          "startingColumn": 91,
+          "startingLine": 2262
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri le opzioni della musica",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 2269
+        }
+      },
+      {
+        "comment": "",
+        "key": "Musica fino a qui",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 2270
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mostra nel Finder",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 2271
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi la musica",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 2273
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fine della musica",
+        "location": {
+          "startingColumn": 95,
+          "startingLine": 2293
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi musica",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 2303
+        }
+      },
+      {
+        "comment": "",
+        "key": "Forza del filtro",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 2449
+        }
+      },
+      {
+        "comment": "",
+        "key": "Forza del filtro",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 2450
+        }
+      },
+      {
+        "comment": "",
+        "key": "Regolazioni",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 2452
+        }
+      },
+      {
+        "comment": "",
+        "key": "Luminosità",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 2453
+        }
+      },
+      {
+        "comment": "",
+        "key": "Contrasto",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 2454
+        }
+      },
+      {
+        "comment": "",
+        "key": "Saturazione",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 2455
+        }
+      },
+      {
+        "comment": "",
+        "key": "Calore",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 2456
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nitidezza",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 2457
+        }
+      },
+      {
+        "comment": "",
+        "key": "Vignetta",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 2458
+        }
+      },
+      {
+        "comment": "",
+        "key": "Toglie filtro e regolazioni da questa clip (torna quello del video)",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 2465
+        }
+      },
+      {
+        "comment": "",
+        "key": "Toglie filtro e regolazioni da tutto il video",
+        "location": {
+          "startingColumn": 139,
+          "startingLine": 2465
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 2435
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ripristina",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 2459
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tutto il video",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 2436
+        }
+      },
+      {
+        "comment": "",
+        "key": "Solo questa clip",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 2437
+        }
+      },
+      {
+        "comment": "",
+        "key": "Filtro %@",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 2445
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi il filtro",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 2460
+        }
+      },
+      {
+        "comment": "",
+        "key": "Filtro %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 2499
+        }
+      },
+      {
+        "comment": "",
+        "key": "Transizione",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 2521
+        }
+      },
+      {
+        "comment": "",
+        "key": "Se una clip è corta, la transizione si accorcia da sola.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 2535
+        }
+      },
+      {
+        "comment": "",
+        "key": "Applica a tutte le clip",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 2537
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nessuna",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 2523
+        }
+      },
+      {
+        "comment": "",
+        "key": "Durata",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 2528
+        }
+      },
+      {
+        "comment": "",
+        "key": "Durata della transizione",
+        "location": {
+          "startingColumn": 126,
+          "startingLine": 2530
+        }
+      },
+      {
+        "comment": "",
+        "key": "Transizione a tutte",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 2538
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi la transizione",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 2552
+        }
+      },
+      {
+        "comment": "",
+        "key": "Transizione",
+        "location": {
+          "startingColumn": 104,
+          "startingLine": 2552
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli prima una clip nella sequenza.",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 2597
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clip %lld di %lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 2610
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sfocatura",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 2650
+        }
+      },
+      {
+        "comment": "",
+        "key": "No",
+        "location": {
+          "startingColumn": 138,
+          "startingLine": 2650
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sfocatura",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 2651
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli una clip nella sequenza (clic sulla clip) per darle i suoi effetti.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 2671
+        }
+      },
+      {
+        "comment": "",
+        "key": "Su tutto il video",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 2675
+        }
+      },
+      {
+        "comment": "",
+        "key": "Velocità",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 2612
+        }
+      },
+      {
+        "comment": "",
+        "key": "Velocità della clip: la voce non cambia tono",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 2622
+        }
+      },
+      {
+        "comment": "",
+        "key": "Velocità",
+        "location": {
+          "startingColumn": 83,
+          "startingLine": 2616
+        }
+      },
+      {
+        "comment": "",
+        "key": "Zoom lento",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 2625
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 2627
+        }
+      },
+      {
+        "comment": "",
+        "key": "Zoom lento",
+        "location": {
+          "startingColumn": 106,
+          "startingLine": 2627
+        }
+      },
+      {
+        "comment": "",
+        "key": "No",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 2628
+        }
+      },
+      {
+        "comment": "",
+        "key": "Si avvicina piano",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 2629
+        }
+      },
+      {
+        "comment": "",
+        "key": "Si allontana piano",
+        "location": {
+          "startingColumn": 84,
+          "startingLine": 2630
+        }
+      },
+      {
+        "comment": "",
+        "key": "Gira",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 2635
+        }
+      },
+      {
+        "comment": "",
+        "key": "Specchia (destra ↔ sinistra)",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 2640
+        }
+      },
+      {
+        "comment": "",
+        "key": "Capovolgi (sopra ↔ sotto)",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 2644
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ruota di 90° · ora %lld°",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 2648
+        }
+      },
+      {
+        "comment": "",
+        "key": "Capovolgi",
+        "location": {
+          "startingColumn": 98,
+          "startingLine": 2637
+        }
+      },
+      {
+        "comment": "",
+        "key": "Capovolgi",
+        "location": {
+          "startingColumn": 98,
+          "startingLine": 2641
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ruota",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 2645
+        }
+      },
+      {
+        "comment": "",
+        "key": "Entrata",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 2653
+        }
+      },
+      {
+        "comment": "",
+        "key": "No",
+        "location": {
+          "startingColumn": 144,
+          "startingLine": 2653
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dissolvenza in entrata",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 2654
+        }
+      },
+      {
+        "comment": "",
+        "key": "Uscita",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 2655
+        }
+      },
+      {
+        "comment": "",
+        "key": "No",
+        "location": {
+          "startingColumn": 145,
+          "startingLine": 2655
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dissolvenza in uscita",
+        "location": {
+          "startingColumn": 86,
+          "startingLine": 2656
+        }
+      },
+      {
+        "comment": "",
+        "key": "A tutte le clip",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 2659
+        }
+      },
+      {
+        "comment": "",
+        "key": "Copia questi effetti su tutte le clip",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 2665
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ripristina",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 2666
+        }
+      },
+      {
+        "comment": "",
+        "key": "Effetti a tutte le clip",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 2661
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi gli effetti",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 2666
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sfoca o copri a pixel un logo o una scritta in tutto il video",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 2685
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 2687
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nascondi un logo…",
+        "location": {
+          "startingColumn": 97,
+          "startingLine": 2684
+        }
+      },
+      {
+        "comment": "",
+        "key": "Logo nascosto ✓",
+        "location": {
+          "startingColumn": 140,
+          "startingLine": 2684
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi la copertura",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 2687
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nascondi un logo",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 2700
+        }
+      }
+    ]
+  },
+  "version": 1
+}

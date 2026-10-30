@@ -1,0 +1,200 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/SendToPhone.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "AirDrop non è disponibile",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 33
+        }
+      },
+      {
+        "comment": "",
+        "key": "Controlla che Wi‑Fi e Bluetooth siano accesi, oppure usa il codice QR.",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 34
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il Mac non è collegato a una rete Wi-Fi",
+        "location": {
+          "startingColumn": 84,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco a preparare il file",
+        "location": {
+          "startingColumn": 100,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco ad aprire la condivisione",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 123
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco ad aprire la condivisione",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 113
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non trovato",
+        "location": {
+          "startingColumn": 114,
+          "startingLine": 162
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non trovato",
+        "location": {
+          "startingColumn": 110,
+          "startingLine": 156
+        }
+      },
+      {
+        "comment": "",
+        "key": "<!doctype html><html lang=\"it\"><head><meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Suoneria da OrbitLR</title>\n<style>\nbody{font-family:-apple-system,system-ui,sans-serif;background:#F3EDDF;color:#3A3126;margin:0;padding:28px 22px}\nh1{font-size:22px;margin:0 0 4px}.n{color:#7d7366;font-size:14px;margin-bottom:22px;word-break:break-word}\na.b{display:block;text-align:center;background:#5E7F63;color:#fff;text-decoration:none;font-weight:600;\nfont-size:17px;padding:15px;border-radius:14px}\nol{background:#fffaf0;border-radius:14px;padding:16px 16px 16px 36px;margin-top:22px;line-height:1.55;font-size:15px}\n.f{margin-top:18px;font-size:12px;color:#9a8f80}\n</style></head><body>\n<h1>La tua suoneria</h1><div class=\"n\">%@</div>\n<a class=\"b\" href=\"%@\">Scarica la suoneria</a>\n<ol><li>Tocca <b>Scarica</b>: il file va in <b>File → Download</b>.</li>\n<li>Aprilo, tocca <b>Condividi</b> e scegli <b>Usa come suoneria</b> (in fondo all'elenco o in «Altro»).</li>\n<li>La trovi in <b>Impostazioni → Suoni</b>.</li></ol>\n<div class=\"f\">Serve iOS 26 o più recente. Con iOS precedenti: collega l'iPhone al Mac e trascina il file .m4r nel Finder.</div>\n</body></html>",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 190
+        }
+      },
+      {
+        "comment": "",
+        "key": "Manda la suoneria all’iPhone con AirDrop",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 235
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inquadralo con la fotocamera dell’iPhone (stessa rete Wi-Fi)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 240
+        }
+      },
+      {
+        "comment": "",
+        "key": "Manda all’iPhone",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 229
+        }
+      },
+      {
+        "comment": "",
+        "key": "Poi sull’iPhone: apri il file → Condividi → «Usa come suoneria» (iOS 26)",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 230
+        }
+      },
+      {
+        "comment": "",
+        "key": "AirDrop",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 234
+        }
+      },
+      {
+        "comment": "",
+        "key": "Codice QR",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 239
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inquadra con l’iPhone",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 252
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mac e iPhone sulla stessa rete Wi-Fi · resta attivo 10 minuti",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 281
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scaricata sull’iPhone",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 257
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riprova",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 263
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il codice è scaduto.",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 268
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rigenera",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 269
+        }
+      },
+      {
+        "comment": "",
+        "key": "1. Apri la Fotocamera e inquadra il codice",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 276
+        }
+      },
+      {
+        "comment": "",
+        "key": "2. Tocca «Scarica la suoneria»",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 277
+        }
+      },
+      {
+        "comment": "",
+        "key": "3. Apri il file → Condividi → «Usa come suoneria»",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 278
+        }
+      }
+    ]
+  },
+  "version": 1
+}

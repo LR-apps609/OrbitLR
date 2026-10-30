@@ -1,0 +1,128 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/VideoProject.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Dissolvenza",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 87
+        }
+      },
+      {
+        "comment": "",
+        "key": "Al nero",
+        "location": {
+          "startingColumn": 107,
+          "startingLine": 87
+        }
+      },
+      {
+        "comment": "",
+        "key": "Al bianco",
+        "location": {
+          "startingColumn": 161,
+          "startingLine": 87
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scorrimento",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 88
+        }
+      },
+      {
+        "comment": "",
+        "key": "Zoom",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 88
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sfocatura",
+        "location": {
+          "startingColumn": 163,
+          "startingLine": 88
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dissolvenza",
+        "location": {
+          "startingColumn": 103,
+          "startingLine": 90
+        }
+      },
+      {
+        "comment": "",
+        "key": "«%@» non si legge",
+        "location": {
+          "startingColumn": 76,
+          "startingLine": 190
+        }
+      },
+      {
+        "comment": "",
+        "key": "il montaggio è vuoto",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 371
+        }
+      },
+      {
+        "comment": "",
+        "key": "dimensioni del video non valide",
+        "location": {
+          "startingColumn": 90,
+          "startingLine": 322
+        }
+      },
+      {
+        "comment": "",
+        "key": "nessuna clip pronta",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 315
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a preparare il montaggio",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 311
+        }
+      },
+      {
+        "comment": "",
+        "key": "non trovo più «%@»",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 748
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clip %lld di %lld, %@",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 800
+        }
+      },
+      {
+        "comment": "",
+        "key": ", senza audio",
+        "location": {
+          "startingColumn": 115,
+          "startingLine": 800
+        }
+      }
+    ]
+  },
+  "version": 1
+}

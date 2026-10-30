@@ -1,0 +1,56 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/UpdatePackage.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Questo aggiornamento non è firmato da OrbitLR. Per sicurezza non lo installo: scaricalo solo dalla pagina ufficiale.",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 36
+        }
+      },
+      {
+        "comment": "",
+        "key": "La firma di questo aggiornamento non è quella di OrbitLR. Per sicurezza non lo installo.",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 38
+        }
+      },
+      {
+        "comment": "",
+        "key": "Questo file non è un aggiornamento di OrbitLR valido.",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 40
+        }
+      },
+      {
+        "comment": "",
+        "key": "Questo aggiornamento è stato modificato dopo la firma. Per sicurezza non lo installo.",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 42
+        }
+      },
+      {
+        "comment": "",
+        "key": "Questo aggiornamento (%@) non è più nuovo della versione che hai: non serve installarlo.",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "L'app dentro l'aggiornamento non corrisponde a quella firmata. Per sicurezza non la installo.",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 46
+        }
+      }
+    ]
+  },
+  "version": 1
+}

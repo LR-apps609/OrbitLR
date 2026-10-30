@@ -1,0 +1,313 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Presets.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Eliminata «%@».",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 41
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ · metà",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 100
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ · per il web",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 101
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ · %@ px",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 102
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ · stessa qualità",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 104
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ · max %@ MB",
+        "location": {
+          "startingColumn": 121,
+          "startingLine": 104
+        }
+      },
+      {
+        "comment": "",
+        "key": "leggera",
+        "location": {
+          "startingColumn": 91,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "forte",
+        "location": {
+          "startingColumn": 142,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "media",
+        "location": {
+          "startingColumn": 171,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "fedele",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 112
+        }
+      },
+      {
+        "comment": "",
+        "key": "più nitido",
+        "location": {
+          "startingColumn": 120,
+          "startingLine": 112
+        }
+      },
+      {
+        "comment": "",
+        "key": "intensità %lld%%",
+        "location": {
+          "startingColumn": 155,
+          "startingLine": 112
+        }
+      },
+      {
+        "comment": "",
+        "key": "stessa dimensione",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 113
+        }
+      },
+      {
+        "comment": "",
+        "key": "meno rumore",
+        "location": {
+          "startingColumn": 81,
+          "startingLine": 115
+        }
+      },
+      {
+        "comment": "",
+        "key": "sfondo bianco",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 117
+        }
+      },
+      {
+        "comment": "",
+        "key": "ritagliato",
+        "location": {
+          "startingColumn": 124,
+          "startingLine": 117
+        }
+      },
+      {
+        "comment": "",
+        "key": "trasparente",
+        "location": {
+          "startingColumn": 158,
+          "startingLine": 117
+        }
+      },
+      {
+        "comment": "",
+        "key": "b/n",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 120
+        }
+      },
+      {
+        "comment": "",
+        "key": "colori",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 120
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le mie azioni",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 180
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le mie azioni",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 156
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le azioni e le ricette che usi spesso, con le opzioni già scelte. Compaiono nel menu a torta del loro tipo di file.",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 157
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ancora nessuna azione salvata",
+        "location": {
+          "startingColumn": 100,
+          "startingLine": 164
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quando scegli un’azione con delle opzioni (ridimensiona, comprimi, velocità…), spunta «Salva tra le mie azioni». La ritroverai qui e nel menu a torta.",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 165
+        }
+      },
+      {
+        "comment": "",
+        "key": "Assegna dei tasti: selezioni i file nel Finder, premi ⌃⌥ e il numero, e l’azione parte senza aprire il menu.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 173
+        }
+      },
+      {
+        "comment": "",
+        "key": "Personalizza il menu a torta",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 159
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tasti",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 199
+        }
+      },
+      {
+        "comment": "",
+        "key": "Elimina la scorciatoia",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 206
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nome",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 193
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nessuna",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 201
+        }
+      },
+      {
+        "comment": "",
+        "key": "⌃⌥%lld",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 202
+        }
+      },
+      {
+        "comment": "",
+        "key": "Eliminare «%@»?",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 219
+        }
+      },
+      {
+        "comment": "",
+        "key": "La regola «%@» usa questa azione e smetterà di funzionare.",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 221
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld regole automatiche usano questa azione e smetteranno di funzionare.",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 222
+        }
+      },
+      {
+        "comment": "",
+        "key": "Elimina",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 223
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 224
+        }
+      },
+      {
+        "comment": "Pulsante nella riga dopo un'eliminazione: rimette com'era",
+        "key": "undo.toast",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 308
+        },
+        "value": "Annulla"
+      },
+      {
+        "comment": "",
+        "key": "Rimette com’era (anche con ⌘Z)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 313
+        }
+      }
+    ]
+  },
+  "version": 1
+}

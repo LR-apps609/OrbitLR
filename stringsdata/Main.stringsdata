@@ -1,0 +1,64 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Main.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "OrbitLR",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 16
+        }
+      },
+      {
+        "comment": "",
+        "key": "Controlla aggiornamenti…",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nuovo progetto video",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 32
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri…",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 37
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aiuto di OrbitLR",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 48
+        }
+      },
+      {
+        "comment": "",
+        "key": "Segnala un problema…",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 49
+        }
+      },
+      {
+        "comment": "",
+        "key": "Suggerisci un’idea…",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 50
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,56 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Transcriber.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "non ho sentito parole in «%@»",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "serve il permesso «Riconoscimento vocale»: Impostazioni di Sistema → Privacy e sicurezza",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "il riconoscimento non ha risposto in tempo",
+        "location": {
+          "startingColumn": 85,
+          "startingLine": 86
+        }
+      },
+      {
+        "comment": "",
+        "key": "il file non contiene audio",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 49
+        }
+      },
+      {
+        "comment": "",
+        "key": "il Mac non ha ancora la lingua per riconoscere la voce senza internet. Impostazioni di Sistema → Tastiera → Dettatura: attivala con la lingua giusta, attendi lo scaricamento e riprova",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 45
+        }
+      },
+      {
+        "comment": "",
+        "key": "il riconoscimento vocale non è disponibile per questa lingua",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 41
+        }
+      }
+    ]
+  },
+  "version": 1
+}

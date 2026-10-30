@@ -1,0 +1,104 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Silences.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "questa clip non ha audio",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a leggere l'audio",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 45
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a leggere l'audio",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 43
+        }
+      },
+      {
+        "comment": "",
+        "key": "lettura dell'audio interrotta: %@",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 75
+        }
+      },
+      {
+        "comment": "",
+        "key": "lettura dell'audio interrotta",
+        "location": {
+          "startingColumn": 152,
+          "startingLine": 75
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ascolto la clip e cerco le pause…",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 151
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli prima una clip nella sequenza.",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 149
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli i silenzi",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 170
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tolti %@ secondi di pause in %lld pezzi. ⌘Z per tornare indietro.",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 176
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nessuna pausa lunga da togliere in questa clip.",
+        "location": {
+          "startingColumn": 100,
+          "startingLine": 160
+        }
+      },
+      {
+        "comment": "",
+        "key": "In questa clip non ho sentito voci: non tolgo niente.",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 159
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco ad ascoltare questa clip.",
+        "location": {
+          "startingColumn": 101,
+          "startingLine": 155
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,128 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/PieMenu.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%@. Tasto %lld",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 387
+        }
+      },
+      {
+        "comment": "",
+        "key": "NUOVO",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 370
+        }
+      },
+      {
+        "comment": "",
+        "key": "circa ",
+        "location": {
+          "startingColumn": 100,
+          "startingLine": 384
+        }
+      },
+      {
+        "comment": "",
+        "key": "peso previsto %@",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 385
+        }
+      },
+      {
+        "comment": "",
+        "key": "(ora %@)",
+        "location": {
+          "startingColumn": 100,
+          "startingLine": 402
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tasto %lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 406
+        }
+      },
+      {
+        "comment": "",
+        "key": "Altri formati",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 412
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clic qui per tornare",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 413
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nessun risultato",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 445
+        }
+      },
+      {
+        "comment": "",
+        "key": "↩ per scegliere",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 458
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nessun file supportato",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 548
+        }
+      },
+      {
+        "comment": "",
+        "key": "Seleziona il video insieme al file .srt",
+        "location": {
+          "startingColumn": 108,
+          "startingLine": 548
+        }
+      },
+      {
+        "comment": "",
+        "key": "Invio: %@",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 598
+        }
+      },
+      {
+        "comment": "",
+        "key": "Consigliato: %@",
+        "location": {
+          "startingColumn": 84,
+          "startingLine": 599
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli un formato",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 600
+        }
+      }
+    ]
+  },
+  "version": 1
+}

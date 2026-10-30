@@ -1,0 +1,648 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Welcome.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Preparo il motore di conversione",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 24
+        }
+      },
+      {
+        "comment": "",
+        "key": "Carico i suoni",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "Controllo i componenti",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "Imposto le scorciatoie",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 27
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scheda Video",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 285
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nella barra a sinistra apri Video: tagli, formato per Reels e TikTok che segue il soggetto, musica, unione di più video.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 286
+        }
+      },
+      {
+        "comment": "",
+        "key": "Suonerie per iPhone",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 287
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nella scheda Audio scegli «Suoneria iPhone», sposta il riquadro sul pezzo che ti piace e crea il file .m4r.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 288
+        }
+      },
+      {
+        "comment": "",
+        "key": "Testo in voce",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 289
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nella scheda Audio scrivi un testo e OrbitLR lo legge in un file audio. Le voci «Premium» di macOS sono le più naturali.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 290
+        }
+      },
+      {
+        "comment": "",
+        "key": "Anteprima con Spazio",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 291
+        }
+      },
+      {
+        "comment": "",
+        "key": "Con un file aperto nel menu, premi Spazio per vederlo grande, come nel Finder.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 292
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le mie azioni",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 293
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spunta «Salva tra le mie azioni» quando scegli le opzioni, poi assegnale ⌃⌥1…9 nella pagina «Le mie azioni»: selezioni i file nel Finder e parte da sola.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 294
+        }
+      },
+      {
+        "comment": "",
+        "key": "Confronta prima e dopo",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 295
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dopo aver ridotto una foto o un PDF, in Attività premi Confronta e trascina la linea per vedere la differenza, anche ingrandita.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 296
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tasti 1–8",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 297
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nel menu a torta ogni spicchio ha il suo numero. Invio ripete l’ultima scelta per quel tipo di file.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 298
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina il risultato",
+        "location": {
+          "startingColumn": 92,
+          "startingLine": 299
+        }
+      },
+      {
+        "comment": "",
+        "key": "L’icona colorata del file creato si trascina dove vuoi: in Mail, in WhatsApp, in una cartella.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 300
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tipi di file diversi",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 301
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri insieme foto, PDF e audio: compare un piccolo menu per ogni tipo, fino a 6.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 302
+        }
+      },
+      {
+        "comment": "",
+        "key": "Manopole",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 303
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le manopole si girano trascinando, con la rotellina o con le frecce. Un clic passa alla posizione successiva.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 304
+        }
+      },
+      {
+        "comment": "",
+        "key": "Radio di notte",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 305
+        }
+      },
+      {
+        "comment": "",
+        "key": "In Opzioni → Aspetto scegli la modalità scura e il tema: salvia, celeste o terracotta.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 306
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tutti i tasti rapidi",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 307
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il pulsante ⌘ in alto nella finestra mostra sempre l’elenco completo dei tasti rapidi.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 308
+        }
+      },
+      {
+        "comment": "",
+        "key": "Si può sempre annullare",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 309
+        }
+      },
+      {
+        "comment": "",
+        "key": "In Attività, ⋯ → «Elimina i file creati…» li sposta nel Cestino e rimette a posto le rinomine. Nel montaggio c’è ⌘Z.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 310
+        }
+      },
+      {
+        "comment": "",
+        "key": "Anche le cartelle",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 311
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina una cartella intera: OrbitLR prende tutti i file che contiene, divisi per tipo.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 312
+        }
+      },
+      {
+        "comment": "",
+        "key": "Privacy delle foto",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 313
+        }
+      },
+      {
+        "comment": "",
+        "key": "«Rimuovi i metadati» toglie posizione, modello del telefono e data prima di condividere una foto.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 314
+        }
+      },
+      {
+        "comment": "",
+        "key": "OrbitLR",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 367
+        }
+      },
+      {
+        "comment": "",
+        "key": "Versione %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 368
+        }
+      },
+      {
+        "comment": "",
+        "key": "Benvenuto in OrbitLR",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 380
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converti e modifica i tuoi file, in un clic",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 381
+        }
+      },
+      {
+        "comment": "",
+        "key": "Versione %@",
+        "location": {
+          "startingColumn": 125,
+          "startingLine": 381
+        }
+      },
+      {
+        "comment": "",
+        "key": "LO SAPEVI?",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 394
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non mostrare più",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 408
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dalla prossima volta solo l’animazione",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 409
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizia",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 412
+        }
+      },
+      {
+        "comment": "",
+        "key": "Un altro",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 410
+        }
+      },
+      {
+        "comment": "",
+        "key": "COSA C’È DI NUOVO",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 427
+        }
+      },
+      {
+        "comment": "",
+        "key": "OrbitLR %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 428
+        }
+      },
+      {
+        "comment": "",
+        "key": "aggiornata dalla %@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 430
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri «%@»",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 448
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mostra ›",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 446
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizia",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 462
+        }
+      },
+      {
+        "comment": "",
+        "key": "Prova: scegli un formato",
+        "location": {
+          "startingColumn": 94,
+          "startingLine": 483
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ecco una foto di prova. Clicca un formato, come faresti con un tuo file.",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 484
+        }
+      },
+      {
+        "comment": "",
+        "key": "Anche dal Finder",
+        "location": {
+          "startingColumn": 104,
+          "startingLine": 485
+        }
+      },
+      {
+        "comment": "",
+        "key": "Seleziona i file nel Finder e premi ⌥⌘C, oppure clic destro → OrbitLR: lo stesso menu si apre lì dove sei.",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 486
+        }
+      },
+      {
+        "comment": "",
+        "key": "Funziona anche con le cartelle",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 487
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tasti 1–8 per scegliere, Invio ripete l’ultima scelta",
+        "location": {
+          "startingColumn": 100,
+          "startingLine": 487
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spazio mostra l’anteprima del file",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 488
+        }
+      },
+      {
+        "comment": "",
+        "key": "Per modificare, le schede",
+        "location": {
+          "startingColumn": 107,
+          "startingLine": 489
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converti cambia il formato. Immagini, PDF e documenti, Video e Audio fanno tutto il resto: ritagli, suonerie, montaggi.",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 490
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lo spicchio «Modifica» porta il file nella sua scheda",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 491
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nel Cassetto ritrovi i file creati: trascinali su un’altra scheda",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 492
+        }
+      },
+      {
+        "comment": "",
+        "key": "Attività mostra i lavori in corso e quelli fatti",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 493
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizia",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 536
+        }
+      },
+      {
+        "comment": "",
+        "key": "Avanti",
+        "location": {
+          "startingColumn": 95,
+          "startingLine": 536
+        }
+      },
+      {
+        "comment": "",
+        "key": "Indietro",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 534
+        }
+      },
+      {
+        "comment": "",
+        "key": "Salta",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 535
+        }
+      },
+      {
+        "comment": "",
+        "key": "Prova.heic",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 579
+        }
+      },
+      {
+        "comment": "",
+        "key": "2,4 MB",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 580
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fatto: %@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 558
+        }
+      },
+      {
+        "comment": "",
+        "key": "Con un tuo file, il nuovo file\nfinisce accanto all’originale.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 559
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riprova",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 561
+        }
+      },
+      {
+        "comment": "",
+        "key": "Prima di iniziare",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 616
+        }
+      },
+      {
+        "comment": "",
+        "key": "macOS ti chiederà alcuni permessi. Meglio adesso, tutti insieme, che a metà lavoro.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 618
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dopo un aggiornamento macOS chiede di nuovo i permessi. Meglio adesso, tutti insieme, che a metà lavoro.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 619
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quelli con ✕ si possono dare dopo in Impostazioni di Sistema → Privacy e sicurezza.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 649
+        }
+      },
+      {
+        "comment": "",
+        "key": "macOS lo chiede con un avviso in alto a destra: premi «Opzioni» → «Consenti».",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 638
+        }
+      },
+      {
+        "comment": "",
+        "key": "Si può dare dopo",
+        "location": {
+          "startingColumn": 95,
+          "startingLine": 674
+        }
+      },
+      {
+        "comment": "",
+        "key": "Continua",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 657
+        }
+      },
+      {
+        "comment": "",
+        "key": "Concedi i permessi",
+        "location": {
+          "startingColumn": 83,
+          "startingLine": 657
+        }
+      },
+      {
+        "comment": "",
+        "key": "Più tardi",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 655
+        }
+      }
+    ]
+  },
+  "version": 1
+}

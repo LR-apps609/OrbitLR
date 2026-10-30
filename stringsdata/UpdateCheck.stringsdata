@@ -1,0 +1,176 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/UpdateCheck.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "È disponibile OrbitLR %@",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hai la %@. La scarico e la installo? Ci vogliono pochi secondi e OrbitLR si riapre da sola.",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 93
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scarica e installa",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 94
+        }
+      },
+      {
+        "comment": "",
+        "key": "Più tardi",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 95
+        }
+      },
+      {
+        "comment": "",
+        "key": "Salta questa versione",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hai già l’ultima versione",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 81
+        }
+      },
+      {
+        "comment": "",
+        "key": "OrbitLR %@ è la più recente.",
+        "location": {
+          "startingColumn": 106,
+          "startingLine": 81
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco a controllare gli aggiornamenti",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 76
+        }
+      },
+      {
+        "comment": "",
+        "key": "GitHub non ha risposto come previsto. Riprova più tardi.",
+        "location": {
+          "startingColumn": 120,
+          "startingLine": 76
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco a controllare gli aggiornamenti",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 72
+        }
+      },
+      {
+        "comment": "",
+        "key": "Controlla di essere connesso a internet e riprova.",
+        "location": {
+          "startingColumn": 120,
+          "startingLine": 72
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 150
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il download non è riuscito",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 129
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riprova, oppure scarica l’aggiornamento dalla pagina di GitHub e aprilo con un doppio clic.",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 130
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riprova",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 132
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri la pagina",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 133
+        }
+      },
+      {
+        "comment": "",
+        "key": "Chiudi",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 134
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scarico l’aggiornamento… %lld%%",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 168
+        }
+      },
+      {
+        "comment": "",
+        "key": "È uscita OrbitLR %@: un clic la scarica e la installa, e OrbitLR si riapre da sola",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 250
+        }
+      },
+      {
+        "comment": "",
+        "key": "Installa l’aggiornamento %@",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 251
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nuovo aggiornamento: %@",
+        "location": {
+          "startingColumn": 84,
+          "startingLine": 236
+        }
+      }
+    ]
+  },
+  "version": 1
+}

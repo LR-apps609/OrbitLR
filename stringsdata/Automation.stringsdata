@@ -1,0 +1,1137 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Automation.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Regola «%@» eliminata.",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 116
+        }
+      },
+      {
+        "comment": "",
+        "key": "Foto HEIC e WebP in Download → JPG",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 221
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le foto dell’iPhone e quelle scaricate dal web che molti siti non aprono diventano JPG da sole. I JPG vanno in Download/Convertiti; gli originali restano dove sono (salvo che nelle Opzioni tu abbia scelto di cestinarli).",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 222
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cartella «Da comprimere» per i video",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 226
+        }
+      },
+      {
+        "comment": "",
+        "key": "Crea Download/Da comprimere: i video che ci metti diventano più leggeri con la stessa qualità. Ideale per liberare spazio.",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 227
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cartelle automatiche",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 313
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cartelle automatiche",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 266
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quello che arriva in queste cartelle viene elaborato da solo.",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 267
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nessuna cartella automatica",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 296
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ad esempio: tutto quello che metti in «Da comprimere» diventa più leggero, da solo. Scegli una cartella, il tipo di file e cosa farne.",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 297
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le cartelle funzionano finché OrbitLR è aperta, anche solo nella barra dei menu. Per averle sempre attive: Opzioni → «Apri OrbitLR all’accesso».",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 305
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nuova cartella automatica",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 269
+        }
+      },
+      {
+        "comment": "",
+        "key": "PRONTE CON UN CLIC",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 277
+        }
+      },
+      {
+        "comment": "",
+        "key": "Attiva",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 286
+        }
+      },
+      {
+        "comment": "",
+        "key": "Metti in pausa",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 349
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riattiva",
+        "location": {
+          "startingColumn": 94,
+          "startingLine": 349
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 347
+        }
+      },
+      {
+        "comment": "",
+        "key": "Risultati in: %@",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 331
+        }
+      },
+      {
+        "comment": "",
+        "key": "1 file elaborato",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 341
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld file elaborati",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 341
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ultimo: %@",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 344
+        }
+      },
+      {
+        "comment": "Stato di una regola (non il pulsante)",
+        "key": "status.active",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 338
+        },
+        "value": "Attiva"
+      },
+      {
+        "comment": "",
+        "key": "In pausa",
+        "location": {
+          "startingColumn": 170,
+          "startingLine": 338
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri la cartella",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 351
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri i risultati",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 352
+        }
+      },
+      {
+        "comment": "",
+        "key": "Elimina la regola",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 354
+        }
+      },
+      {
+        "comment": "",
+        "key": "Per il web (1600 px, JPG leggero)",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 373
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lato lungo 1280 px",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 374
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lato lungo 1920 px",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 375
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lato lungo 3840 px (4K)",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 376
+        }
+      },
+      {
+        "comment": "",
+        "key": "Metà (50%)",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 377
+        }
+      },
+      {
+        "comment": "",
+        "key": "Uguale",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 379
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stessa qualità, meno peso",
+        "location": {
+          "startingColumn": 100,
+          "startingLine": 379
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sotto 1 MB",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 380
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sotto 500 KB",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 381
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sotto 200 KB (moduli online)",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 382
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sotto 100 KB",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 383
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sotto 50 KB (documenti, visti)",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 384
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sotto 20 KB",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 385
+        }
+      },
+      {
+        "comment": "",
+        "key": "Leggera",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 387
+        }
+      },
+      {
+        "comment": "",
+        "key": "Leggera (qualità di stampa)",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 387
+        }
+      },
+      {
+        "comment": "",
+        "key": "Media",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 388
+        }
+      },
+      {
+        "comment": "",
+        "key": "Media (consigliata)",
+        "location": {
+          "startingColumn": 101,
+          "startingLine": 388
+        }
+      },
+      {
+        "comment": "",
+        "key": "Forte",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 389
+        }
+      },
+      {
+        "comment": "",
+        "key": "Forte (file più piccolo possibile)",
+        "location": {
+          "startingColumn": 101,
+          "startingLine": 389
+        }
+      },
+      {
+        "comment": "",
+        "key": "Uguale",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 392
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stessa qualità, meno peso",
+        "location": {
+          "startingColumn": 100,
+          "startingLine": 392
+        }
+      },
+      {
+        "comment": "",
+        "key": "Discord (sotto 10 MB)",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 393
+        }
+      },
+      {
+        "comment": "",
+        "key": "WhatsApp (sotto 16 MB)",
+        "location": {
+          "startingColumn": 81,
+          "startingLine": 394
+        }
+      },
+      {
+        "comment": "",
+        "key": "Email (allegato sotto 25 MB, anche per Gmail)",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 395
+        }
+      },
+      {
+        "comment": "",
+        "key": "480p (leggero)",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 399
+        }
+      },
+      {
+        "comment": "",
+        "key": "HEVC: stessa risoluzione, file più piccolo",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 401
+        }
+      },
+      {
+        "comment": "",
+        "key": "0,5×",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 403
+        }
+      },
+      {
+        "comment": "",
+        "key": "0,5× (metà)",
+        "location": {
+          "startingColumn": 98,
+          "startingLine": 403
+        }
+      },
+      {
+        "comment": "",
+        "key": "0,75×",
+        "location": {
+          "startingColumn": 168,
+          "startingLine": 403
+        }
+      },
+      {
+        "comment": "",
+        "key": "0,75×",
+        "location": {
+          "startingColumn": 204,
+          "startingLine": 403
+        }
+      },
+      {
+        "comment": "",
+        "key": "1,25×",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 404
+        }
+      },
+      {
+        "comment": "",
+        "key": "1,25×",
+        "location": {
+          "startingColumn": 100,
+          "startingLine": 404
+        }
+      },
+      {
+        "comment": "",
+        "key": "1,5×",
+        "location": {
+          "startingColumn": 162,
+          "startingLine": 404
+        }
+      },
+      {
+        "comment": "",
+        "key": "1,5×",
+        "location": {
+          "startingColumn": 197,
+          "startingLine": 404
+        }
+      },
+      {
+        "comment": "",
+        "key": "2× (doppia)",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 405
+        }
+      },
+      {
+        "comment": "",
+        "key": "90° a sinistra",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 407
+        }
+      },
+      {
+        "comment": "",
+        "key": "90° a destra",
+        "location": {
+          "startingColumn": 81,
+          "startingLine": 408
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trasp.",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 410
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sfondo trasparente (PNG)",
+        "location": {
+          "startingColumn": 107,
+          "startingLine": 410
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ritaglio",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 411
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trasparente e ritagliato sul soggetto (PNG)",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 411
+        }
+      },
+      {
+        "comment": "",
+        "key": "Bianco",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 412
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sfondo bianco (JPG)",
+        "location": {
+          "startingColumn": 101,
+          "startingLine": 412
+        }
+      },
+      {
+        "comment": "",
+        "key": "A colori, JPG",
+        "location": {
+          "startingColumn": 83,
+          "startingLine": 414
+        }
+      },
+      {
+        "comment": "",
+        "key": "JPG b/n",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 415
+        }
+      },
+      {
+        "comment": "",
+        "key": "Bianco e nero, JPG",
+        "location": {
+          "startingColumn": 103,
+          "startingLine": 415
+        }
+      },
+      {
+        "comment": "",
+        "key": "A colori, PDF",
+        "location": {
+          "startingColumn": 83,
+          "startingLine": 416
+        }
+      },
+      {
+        "comment": "",
+        "key": "PDF b/n",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 417
+        }
+      },
+      {
+        "comment": "",
+        "key": "Bianco e nero, PDF",
+        "location": {
+          "startingColumn": 103,
+          "startingLine": 417
+        }
+      },
+      {
+        "comment": "",
+        "key": "2× (il doppio)",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 419
+        }
+      },
+      {
+        "comment": "",
+        "key": "4× (quattro volte)",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 420
+        }
+      },
+      {
+        "comment": "",
+        "key": "9:16 · Reels, TikTok, Storie",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 422
+        }
+      },
+      {
+        "comment": "",
+        "key": "1:1 · Post",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 423
+        }
+      },
+      {
+        "comment": "",
+        "key": "4:5 · Feed verticale",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 424
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stessa dimensione, meno rumore",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 427
+        }
+      },
+      {
+        "comment": "",
+        "key": "2×, più dettagli",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 428
+        }
+      },
+      {
+        "comment": "",
+        "key": "Automatico (consigliato)",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 430
+        }
+      },
+      {
+        "comment": "",
+        "key": "Preciso",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 431
+        }
+      },
+      {
+        "comment": "",
+        "key": "Precisione massima · ricalco lento, fino a qualche minuto",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 431
+        }
+      },
+      {
+        "comment": "",
+        "key": "Estrema",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 432
+        }
+      },
+      {
+        "comment": "",
+        "key": "Estrema · ottimizza tutto il disegno, fino a 5 minuti",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 432
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pacchetto",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 433
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pacchetto logo (ZIP) · SVG, PDF, EPS, PNG e versione a un colore",
+        "location": {
+          "startingColumn": 103,
+          "startingLine": 433
+        }
+      },
+      {
+        "comment": "",
+        "key": "Logo",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 434
+        }
+      },
+      {
+        "comment": "",
+        "key": "Logo e disegni · colori pieni",
+        "location": {
+          "startingColumn": 98,
+          "startingLine": 434
+        }
+      },
+      {
+        "comment": "",
+        "key": "Senza sfondo",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 435
+        }
+      },
+      {
+        "comment": "",
+        "key": "Logo senza sfondo · trasparente",
+        "location": {
+          "startingColumn": 107,
+          "startingLine": 435
+        }
+      },
+      {
+        "comment": "",
+        "key": "Firma",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 436
+        }
+      },
+      {
+        "comment": "",
+        "key": "Firme e scansioni · un colore, trasparente",
+        "location": {
+          "startingColumn": 97,
+          "startingLine": 436
+        }
+      },
+      {
+        "comment": "",
+        "key": "Logo+",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 437
+        }
+      },
+      {
+        "comment": "",
+        "key": "Logo, precisione massima · ricalco lento",
+        "location": {
+          "startingColumn": 100,
+          "startingLine": 437
+        }
+      },
+      {
+        "comment": "",
+        "key": "Firma+",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 438
+        }
+      },
+      {
+        "comment": "",
+        "key": "Firma, precisione massima · ricalco lento",
+        "location": {
+          "startingColumn": 99,
+          "startingLine": 438
+        }
+      },
+      {
+        "comment": "",
+        "key": "Foto",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 439
+        }
+      },
+      {
+        "comment": "",
+        "key": "Foto · effetto illustrazione",
+        "location": {
+          "startingColumn": 99,
+          "startingLine": 439
+        }
+      },
+      {
+        "comment": "",
+        "key": "Foto+",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 440
+        }
+      },
+      {
+        "comment": "",
+        "key": "Foto, più dettaglio · file più grande",
+        "location": {
+          "startingColumn": 103,
+          "startingLine": 440
+        }
+      },
+      {
+        "comment": "",
+        "key": "Foto estrema",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 441
+        }
+      },
+      {
+        "comment": "",
+        "key": "Foto, estrema · la più fedele, fino a 5 minuti",
+        "location": {
+          "startingColumn": 108,
+          "startingLine": 441
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fedele",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 443
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fedele · stessa dimensione",
+        "location": {
+          "startingColumn": 100,
+          "startingLine": 443
+        }
+      },
+      {
+        "comment": "",
+        "key": "F 2×",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 444
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fedele · 2×",
+        "location": {
+          "startingColumn": 99,
+          "startingLine": 444
+        }
+      },
+      {
+        "comment": "",
+        "key": "F 4×",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 445
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fedele · 4×",
+        "location": {
+          "startingColumn": 99,
+          "startingLine": 445
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fedele con un po’ di nitidezza · 2×",
+        "location": {
+          "startingColumn": 83,
+          "startingLine": 446
+        }
+      },
+      {
+        "comment": "",
+        "key": "N 2×",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 447
+        }
+      },
+      {
+        "comment": "",
+        "key": "Più nitido · 2×",
+        "location": {
+          "startingColumn": 101,
+          "startingLine": 447
+        }
+      },
+      {
+        "comment": "",
+        "key": "N 4×",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 448
+        }
+      },
+      {
+        "comment": "",
+        "key": "Più nitido · 4×",
+        "location": {
+          "startingColumn": 101,
+          "startingLine": 448
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quale cartella",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 506
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quali file",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 516
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cosa farne",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 536
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dove mettere i risultati",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 551
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nuova cartella automatica",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 502
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli…",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 511
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nessuna cartella scelta",
+        "location": {
+          "startingColumn": 113,
+          "startingLine": 508
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sorveglia",
+        "location": {
+          "startingColumn": 91,
+          "startingLine": 511
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opzione",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 545
+        }
+      },
+      {
+        "comment": "",
+        "key": "Azione",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 538
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 553
+        }
+      },
+      {
+        "comment": "",
+        "key": "Elabora anche i file già presenti nella cartella",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 566
+        }
+      },
+      {
+        "comment": "",
+        "key": "In una sottocartella «Convertiti»",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 554
+        }
+      },
+      {
+        "comment": "",
+        "key": "In una cartella a scelta",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 555
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nessuna cartella scelta",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 560
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli…",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 563
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli",
+        "location": {
+          "startingColumn": 103,
+          "startingLine": 563
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli cosa fare con i file.",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 595
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli la cartella per i risultati.",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 596
+        }
+      },
+      {
+        "comment": "",
+        "key": "I risultati devono andare in un’altra cartella, non in quella sorvegliata.",
+        "location": {
+          "startingColumn": 81,
+          "startingLine": 597
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quella cartella è già sorvegliata da un’altra regola: i file andrebbero avanti e indietro. Scegline un’altra.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 600
+        }
+      },
+      {
+        "comment": "",
+        "key": "Per questa cartella c’è già una regola per questo tipo di file.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 603
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli la cartella da sorvegliare.",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 594
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 576
+        }
+      },
+      {
+        "comment": "",
+        "key": "Crea",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 577
+        }
+      }
+    ]
+  },
+  "version": 1
+}

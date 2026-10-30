@@ -1,0 +1,256 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/HideMark.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "il modello di IA non è pronto",
+        "location": {
+          "startingColumn": 76,
+          "startingLine": 79
+        }
+      },
+      {
+        "comment": "",
+        "key": "il modello di IA non è pronto",
+        "location": {
+          "startingColumn": 89,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "questo file non ha video",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 95
+        }
+      },
+      {
+        "comment": "",
+        "key": "Buttare la zona disegnata?",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 179
+        }
+      },
+      {
+        "comment": "",
+        "key": "Buttare le %lld zone disegnate?",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 180
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina sull’immagine per coprire il logo o la scritta. Puoi disegnare più zone.",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 224
+        }
+      },
+      {
+        "comment": "",
+        "key": "1 zona · trascina ancora per aggiungerne, ✕ per toglierne una",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 226
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld zone · trascina ancora per aggiungerne, ✕ per toglierne una",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 227
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scorri il video per controllare dove sta il logo nei vari momenti",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 202
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nascondi un logo",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 191
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tutto il montaggio",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 192
+        }
+      },
+      {
+        "comment": "",
+        "key": "Forza",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 214
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 205
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi tutte le zone",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 219
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sfocatura",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 206
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pixel",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 207
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi (IA)",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 208
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scarico il modello… %lld%%",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 386
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ricostruisco…",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 396
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scarica il modello (200 MB)",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 388
+        }
+      },
+      {
+        "comment": "",
+        "key": "Solo la prima volta: poi funziona anche senza internet",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 392
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pronto",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 398
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi tutte le zone",
+        "location": {
+          "startingColumn": 92,
+          "startingLine": 219
+        }
+      },
+      {
+        "comment": "",
+        "key": "Usalo sui tuoi contenuti: la filigrana di foto e video altrui protegge il loro lavoro.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 230
+        }
+      },
+      {
+        "comment": "",
+        "key": "Applica",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 234
+        }
+      },
+      {
+        "comment": "",
+        "key": "Crea il video",
+        "location": {
+          "startingColumn": 104,
+          "startingLine": 234
+        }
+      },
+      {
+        "comment": "",
+        "key": "Crea la foto",
+        "location": {
+          "startingColumn": 141,
+          "startingLine": 234
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 233
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi la zona",
+        "location": {
+          "startingColumn": 72,
+          "startingLine": 291
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi questa zona",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 312
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rimuovi la zona",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 306
+        }
+      }
+    ]
+  },
+  "version": 1
+}

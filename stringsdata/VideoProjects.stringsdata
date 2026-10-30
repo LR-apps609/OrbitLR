@@ -1,0 +1,288 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/VideoProjects.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Progetto senza nome",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 72
+        }
+      },
+      {
+        "comment": "",
+        "key": "Progetto",
+        "location": {
+          "startingColumn": 81,
+          "startingLine": 76
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ copia",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 93
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 180
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina qui i video",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 234
+        }
+      },
+      {
+        "comment": "",
+        "key": "si apre un progetto nuovo · MP4, MOV, M4V · più video vanno in fila",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 235
+        }
+      },
+      {
+        "comment": "",
+        "key": "Incolla il link di un video: si apre in un progetto nuovo",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 223
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizia un nuovo montaggio (⇧⌘N)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 227
+        }
+      },
+      {
+        "comment": "",
+        "key": "Video",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 215
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina qui dei video per iniziare un montaggio.",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 216
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clicca un progetto per riprenderlo da dove eri rimasto.",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 217
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nuovo progetto",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 224
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizia un progetto verticale 9:16 · TikTok, Reels, Shorts",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 240
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rinomina il progetto",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 279
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rinomina",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 283
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 284
+        }
+      },
+      {
+        "comment": "",
+        "key": "Eliminare «%@»?",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 291
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il progetto va nel Cestino, da dove puoi ancora recuperarlo. I tuoi video non vengono toccati.",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 292
+        }
+      },
+      {
+        "comment": "",
+        "key": "Elimina",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 293
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 294
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nuovo verticale 9:16",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 314
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nuovo progetto",
+        "location": {
+          "startingColumn": 95,
+          "startingLine": 314
+        }
+      },
+      {
+        "comment": "",
+        "key": "o trascina qui dei video",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 315
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clicca per riprendere il progetto",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 395
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rinomina, duplica o elimina",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 377
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld clip",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 400
+        }
+      },
+      {
+        "comment": "",
+        "key": " · musica",
+        "location": {
+          "startingColumn": 99,
+          "startingLine": 400
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 368
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rinomina…",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 369
+        }
+      },
+      {
+        "comment": "",
+        "key": "Duplica",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 370
+        }
+      },
+      {
+        "comment": "",
+        "key": "Elimina…",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 372
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 389
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rinomina…",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 390
+        }
+      },
+      {
+        "comment": "",
+        "key": "Duplica",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 391
+        }
+      },
+      {
+        "comment": "",
+        "key": "Elimina…",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 393
+        }
+      }
+    ]
+  },
+  "version": 1
+}

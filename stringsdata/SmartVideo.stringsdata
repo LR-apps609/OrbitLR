@@ -1,0 +1,128 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/SmartVideo.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "non riesco a leggere la durata",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 118
+        }
+      },
+      {
+        "comment": "",
+        "key": "il file non contiene video",
+        "location": {
+          "startingColumn": 122,
+          "startingLine": 116
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a leggere il video",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 227
+        }
+      },
+      {
+        "comment": "",
+        "key": "dimensioni del video non valide",
+        "location": {
+          "startingColumn": 98,
+          "startingLine": 198
+        }
+      },
+      {
+        "comment": "",
+        "key": "questo Mac non sa scrivere questo formato video",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 296
+        }
+      },
+      {
+        "comment": "",
+        "key": "questo Mac non sa scrivere questo formato video",
+        "location": {
+          "startingColumn": 121,
+          "startingLine": 293
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a scrivere il video",
+        "location": {
+          "startingColumn": 114,
+          "startingLine": 311
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a scrivere il video",
+        "location": {
+          "startingColumn": 122,
+          "startingLine": 313
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a leggere il video",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 317
+        }
+      },
+      {
+        "comment": "",
+        "key": "codifica non riuscita",
+        "location": {
+          "startingColumn": 117,
+          "startingLine": 400
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a completare il video",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 407
+        }
+      },
+      {
+        "comment": "",
+        "key": "«%@» pesa già meno di %@: non serve comprimerlo",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 421
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ MB",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 440
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a farlo stare in %@: scegli un peso un po' maggiore",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 481
+        }
+      },
+      {
+        "comment": "",
+        "key": "«%@» è già di %lldp o meno: non serve rimpicciolirlo",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 498
+        }
+      }
+    ]
+  },
+  "version": 1
+}

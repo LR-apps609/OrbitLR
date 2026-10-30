@@ -1,0 +1,368 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Engine.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "In attesa",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 19
+        }
+      },
+      {
+        "comment": "",
+        "key": "meno di un minuto",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 75
+        }
+      },
+      {
+        "comment": "",
+        "key": "circa %lld min",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 77
+        }
+      },
+      {
+        "comment": "",
+        "key": "circa %lld h %lld min",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 79
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld file",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 112
+        }
+      },
+      {
+        "comment": "",
+        "key": "da %@ a %@ · −%lld%%",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 125
+        }
+      },
+      {
+        "comment": "",
+        "key": "da %@ a %@",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 126
+        }
+      },
+      {
+        "comment": "",
+        "key": "Interrotto",
+        "location": {
+          "startingColumn": 96,
+          "startingLine": 265
+        }
+      },
+      {
+        "comment": "",
+        "key": "Avvio…",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 307
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco ad avviare il motore di conversione",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 366
+        }
+      },
+      {
+        "comment": "",
+        "key": "Con i motori di macOS…",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 374
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unisco i file…",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 378
+        }
+      },
+      {
+        "comment": "",
+        "key": "Allineo e unisco gli scatti…",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 397
+        }
+      },
+      {
+        "comment": "",
+        "key": "Manca %@ — vedi Componenti",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 527
+        }
+      },
+      {
+        "comment": "",
+        "key": "Controllo il risultato…",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 435
+        }
+      },
+      {
+        "comment": "",
+        "key": "Interrotto",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 539
+        }
+      },
+      {
+        "comment": "",
+        "key": "Interrotto (alcuni file sono pronti)",
+        "location": {
+          "startingColumn": 100,
+          "startingLine": 539
+        }
+      },
+      {
+        "comment": "",
+        "key": "Completato con macOS · verificato",
+        "location": {
+          "startingColumn": 81,
+          "startingLine": 542
+        }
+      },
+      {
+        "comment": "",
+        "key": "Completato · verificato",
+        "location": {
+          "startingColumn": 139,
+          "startingLine": 542
+        }
+      },
+      {
+        "comment": "",
+        "key": "Completato in parte",
+        "location": {
+          "startingColumn": 188,
+          "startingLine": 542
+        }
+      },
+      {
+        "comment": "",
+        "key": "Con i motori di macOS…",
+        "location": {
+          "startingColumn": 142,
+          "startingLine": 417
+        }
+      },
+      {
+        "comment": "",
+        "key": "Niente da fare",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 545
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riuscito · %@",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 548
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riuscito",
+        "location": {
+          "startingColumn": 117,
+          "startingLine": 548
+        }
+      },
+      {
+        "comment": "",
+        "key": "Creato «%@»",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 702
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld file pronti",
+        "location": {
+          "startingColumn": 171,
+          "startingLine": 702
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld non riusciti",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 705
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riuscito: %@",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 711
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spostare nel Cestino i %lld originali dopo la conversione?",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 591
+        }
+      },
+      {
+        "comment": "",
+        "key": "I file convertiti sono pronti. Se li sposti, gli originali restano nel Cestino finché non lo svuoti.",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 592
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sposta",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 593
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tienili",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 594
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scarico da iCloud…",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 672
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri OrbitLR per i dettagli",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 712
+        }
+      },
+      {
+        "comment": "",
+        "key": "«%@» non è più nella cronologia.",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 748
+        }
+      },
+      {
+        "comment": "",
+        "key": "Installa",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 805
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inserisci la password",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 807
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scarica e riprova",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 808
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riprova con l’altro motore",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 809
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riprova",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 810
+        }
+      },
+      {
+        "comment": "",
+        "key": "Libera spazio",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 811
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli un’altra cartella",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 812
+        }
+      },
+      {
+        "comment": "",
+        "key": "Prova con %lld MB",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 840
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spazio su disco esaurito: libera un po’ di spazio e riprova.",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 842
+        }
+      },
+      {
+        "comment": "",
+        "key": "OrbitLR non può scrivere in quella cartella: spostala altrove o scegli un’altra cartella nelle Opzioni.",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 844
+        }
+      }
+    ]
+  },
+  "version": 1
+}

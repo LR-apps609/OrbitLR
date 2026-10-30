@@ -1,0 +1,24 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/DropShelf.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Ripiano di OrbitLR: rilascia qui i file per aprire la torta",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 202
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rilascia\nper la torta",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 180
+        }
+      }
+    ]
+  },
+  "version": 1
+}

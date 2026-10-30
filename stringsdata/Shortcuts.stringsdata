@@ -1,0 +1,368 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Shortcuts.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Tutti i tasti rapidi di OrbitLR",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 11
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tasti",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 9
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aprire il menu",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 37
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sui file selezionati nel Finder",
+        "location": {
+          "startingColumn": 72,
+          "startingLine": 38
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clic destro",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 39
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nel Finder → OrbitLR (o in Servizi)",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 39
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 40
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nella finestra o sull’icona nel Dock",
+        "location": {
+          "startingColumn": 84,
+          "startingLine": 40
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nel menu a torta",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 42
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sceglie lo spicchio",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 43
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ripete l’ultima scelta (o quella consigliata)",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "Torna indietro o chiude",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 45
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spazio",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 46
+        }
+      },
+      {
+        "comment": "",
+        "key": "Anteprima del file (nella finestra di OrbitLR)",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 46
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi per cercare un’azione, ↑↓ e ↩ per sceglierla",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 47
+        }
+      },
+      {
+        "comment": "",
+        "key": "Manopole",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 49
+        }
+      },
+      {
+        "comment": "",
+        "key": "Posizione precedente / successiva",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 50
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rotellina",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 51
+        }
+      },
+      {
+        "comment": "",
+        "key": "Gira la manopola",
+        "location": {
+          "startingColumn": 85,
+          "startingLine": 51
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clic",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 52
+        }
+      },
+      {
+        "comment": "",
+        "key": "Passa alla posizione successiva",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 52
+        }
+      },
+      {
+        "comment": "",
+        "key": "Montaggio video",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 55
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spazio",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 56
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riproduci / pausa",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 56
+        }
+      },
+      {
+        "comment": "",
+        "key": "Indietro di un secondo · pausa · riproduci",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 57
+        }
+      },
+      {
+        "comment": "",
+        "key": "1/30 di secondo indietro / avanti",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 58
+        }
+      },
+      {
+        "comment": "",
+        "key": "Un secondo indietro / avanti",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 59
+        }
+      },
+      {
+        "comment": "",
+        "key": "Un millisecondo indietro / avanti",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 60
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ingrandisci / rimpicciolisci la sequenza",
+        "location": {
+          "startingColumn": 72,
+          "startingLine": 61
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inizio / fine del montaggio (fn ← / fn →)",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 62
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dividi la clip",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 63
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aggiungi un testo",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 64
+        }
+      },
+      {
+        "comment": "",
+        "key": "Togli la clip scelta",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 65
+        }
+      },
+      {
+        "comment": "",
+        "key": "Salva progetto (si salva anche da solo)",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 66
+        }
+      },
+      {
+        "comment": "",
+        "key": "Esporta",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 67
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nuovo progetto video",
+        "location": {
+          "startingColumn": 72,
+          "startingLine": 68
+        }
+      },
+      {
+        "comment": "",
+        "key": "Finestra",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 70
+        }
+      },
+      {
+        "comment": "",
+        "key": "Questo elenco",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 71
+        }
+      },
+      {
+        "comment": "",
+        "key": "Converti, PDF e documenti, Immagini, Video, Audio",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 72
+        }
+      },
+      {
+        "comment": "",
+        "key": "Attività",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 73
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apri dei file in Converti",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 74
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opzioni",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 75
+        }
+      },
+      {
+        "comment": "",
+        "key": "Le mie azioni",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 79
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nessuna ancora: si assegnano nella pagina «Le mie azioni»",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 80
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tasti rapidi",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 89
+        }
+      }
+    ]
+  },
+  "version": 1
+}

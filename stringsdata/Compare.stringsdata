@@ -1,0 +1,168 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Compare.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Confronta · %@",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 49
+        }
+      },
+      {
+        "comment": "",
+        "key": "Prima",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 102
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dopo",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 104
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spazio risparmiato",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 110
+        }
+      },
+      {
+        "comment": "",
+        "key": "Il risultato pesa più dell’originale",
+        "location": {
+          "startingColumn": 97,
+          "startingLine": 110
+        }
+      },
+      {
+        "comment": "",
+        "key": "−%lld%%",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 107
+        }
+      },
+      {
+        "comment": "",
+        "key": "+%lld%%",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 107
+        }
+      },
+      {
+        "comment": "",
+        "key": "Prima",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 149
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dopo",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 150
+        }
+      },
+      {
+        "comment": "",
+        "key": "File %lld di %lld",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 198
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pagina %lld di %lld",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 201
+        }
+      },
+      {
+        "comment": "",
+        "key": "Due dita sul trackpad (o la rotellina) per spostarti",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 204
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascina la linea per confrontare",
+        "location": {
+          "startingColumn": 123,
+          "startingLine": 204
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ingrandimento",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 206
+        }
+      },
+      {
+        "comment": "",
+        "key": "Adatta",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 207
+        }
+      },
+      {
+        "comment": "",
+        "key": "2×",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 208
+        }
+      },
+      {
+        "comment": "",
+        "key": "4×",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 209
+        }
+      },
+      {
+        "comment": "",
+        "key": "1 pagina",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 273
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld pagine",
+        "location": {
+          "startingColumn": 81,
+          "startingLine": 273
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld × %lld px",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 257
+        }
+      }
+    ]
+  },
+  "version": 1
+}

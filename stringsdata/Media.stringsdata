@@ -1,0 +1,376 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Media.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "il file non contiene video",
+        "location": {
+          "startingColumn": 76,
+          "startingLine": 37
+        }
+      },
+      {
+        "comment": "",
+        "key": "non trovo il file della musica",
+        "location": {
+          "startingColumn": 113,
+          "startingLine": 51
+        }
+      },
+      {
+        "comment": "",
+        "key": "manca la musica da aggiungere",
+        "location": {
+          "startingColumn": 94,
+          "startingLine": 48
+        }
+      },
+      {
+        "comment": "",
+        "key": "azione sconosciuta",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 77
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a preparare il video",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 358
+        }
+      },
+      {
+        "comment": "",
+        "key": "la musica è troppo corta",
+        "location": {
+          "startingColumn": 96,
+          "startingLine": 353
+        }
+      },
+      {
+        "comment": "",
+        "key": "il file della musica non contiene audio",
+        "location": {
+          "startingColumn": 121,
+          "startingLine": 351
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a leggere la durata",
+        "location": {
+          "startingColumn": 92,
+          "startingLine": 349
+        }
+      },
+      {
+        "comment": "",
+        "key": "il file non contiene video",
+        "location": {
+          "startingColumn": 122,
+          "startingLine": 347
+        }
+      },
+      {
+        "comment": "",
+        "key": "«%@» non si legge",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 451
+        }
+      },
+      {
+        "comment": "",
+        "key": "«%@» non contiene audio",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 448
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a preparare l’audio",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 514
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a preparare l’audio",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 511
+        }
+      },
+      {
+        "comment": "",
+        "key": "niente audio da salvare",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 459
+        }
+      },
+      {
+        "comment": "",
+        "key": "il file non contiene testo da leggere",
+        "location": {
+          "startingColumn": 72,
+          "startingLine": 652
+        }
+      },
+      {
+        "comment": "",
+        "key": "servono almeno 2 video",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 94
+        }
+      },
+      {
+        "comment": "",
+        "key": "servono almeno 2 file audio",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 100
+        }
+      },
+      {
+        "comment": "",
+        "key": "azione sconosciuta",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 106
+        }
+      },
+      {
+        "comment": "",
+        "key": "nessun file",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "«%@» non si legge",
+        "location": {
+          "startingColumn": 96,
+          "startingLine": 305
+        }
+      },
+      {
+        "comment": "",
+        "key": "«%@» non contiene video",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 302
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a preparare il video",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 292
+        }
+      },
+      {
+        "comment": "",
+        "key": "questo video non si può esportare",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 399
+        }
+      },
+      {
+        "comment": "",
+        "key": "esportazione non riuscita",
+        "location": {
+          "startingColumn": 82,
+          "startingLine": 428
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a leggere l’audio",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 594
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a scrivere l’audio",
+        "location": {
+          "startingColumn": 118,
+          "startingLine": 516
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco a scrivere il file: c’è spazio sul disco?",
+        "location": {
+          "startingColumn": 118,
+          "startingLine": 547
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco a scrivere il file: c’è spazio sul disco?",
+        "location": {
+          "startingColumn": 107,
+          "startingLine": 550
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a scrivere l’audio",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 571
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a leggere l’audio",
+        "location": {
+          "startingColumn": 118,
+          "startingLine": 596
+        }
+      },
+      {
+        "comment": "",
+        "key": "lettura dell’audio non riuscita",
+        "location": {
+          "startingColumn": 113,
+          "startingLine": 610
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a preparare il video",
+        "location": {
+          "startingColumn": 77,
+          "startingLine": 788
+        }
+      },
+      {
+        "comment": "",
+        "key": "dimensioni del video non valide",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 765
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a leggere il video",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 758
+        }
+      },
+      {
+        "comment": "",
+        "key": "il montaggio non contiene video",
+        "location": {
+          "startingColumn": 75,
+          "startingLine": 737
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a leggere il video",
+        "location": {
+          "startingColumn": 118,
+          "startingLine": 808
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a scrivere il video",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 811
+        }
+      },
+      {
+        "comment": "",
+        "key": "memoria video non disponibile",
+        "location": {
+          "startingColumn": 90,
+          "startingLine": 853
+        }
+      },
+      {
+        "comment": "",
+        "key": "scrittura del video non riuscita",
+        "location": {
+          "startingColumn": 84,
+          "startingLine": 859
+        }
+      },
+      {
+        "comment": "",
+        "key": "lettura del video non riuscita",
+        "location": {
+          "startingColumn": 101,
+          "startingLine": 889
+        }
+      },
+      {
+        "comment": "",
+        "key": "scrittura del video non riuscita",
+        "location": {
+          "startingColumn": 87,
+          "startingLine": 894
+        }
+      },
+      {
+        "comment": "",
+        "key": "Migliorata",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 916
+        }
+      },
+      {
+        "comment": "",
+        "key": "Standard",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 917
+        }
+      },
+      {
+        "comment": "",
+        "key": "la voce non è disponibile: prova un’altra voce",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 988
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a salvare il file audio",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 1057
+        }
+      },
+      {
+        "comment": "",
+        "key": "la voce non ha prodotto audio",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 1042
+        }
+      }
+    ]
+  },
+  "version": 1
+}

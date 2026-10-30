@@ -1,0 +1,160 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Installer.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "ffmpeg (incluso)",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 27
+        }
+      },
+      {
+        "comment": "",
+        "key": "Audio e video",
+        "location": {
+          "startingColumn": 141,
+          "startingLine": 27
+        }
+      },
+      {
+        "comment": "",
+        "key": "MP3, FLAC, OGG, MKV, WEBM, WebP, ICO, velocità, sottotitoli: già dentro OrbitLR",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 28
+        }
+      },
+      {
+        "comment": "",
+        "key": "LibreOffice (facoltativo)",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 29
+        }
+      },
+      {
+        "comment": "",
+        "key": "Documenti, fogli, presentazioni",
+        "location": {
+          "startingColumn": 164,
+          "startingLine": 29
+        }
+      },
+      {
+        "comment": "",
+        "key": "pandoc (facoltativo)",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 31
+        }
+      },
+      {
+        "comment": "",
+        "key": "Testo e web",
+        "location": {
+          "startingColumn": 145,
+          "startingLine": 31
+        }
+      },
+      {
+        "comment": "",
+        "key": "ImageMagick (facoltativo)",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 33
+        }
+      },
+      {
+        "comment": "",
+        "key": "Immagini rare",
+        "location": {
+          "startingColumn": 155,
+          "startingLine": 33
+        }
+      },
+      {
+        "comment": "",
+        "key": "SVG e formati di immagine poco comuni",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 34
+        }
+      },
+      {
+        "comment": "",
+        "key": "Compressione dei PDF (motore classico)",
+        "location": {
+          "startingColumn": 130,
+          "startingLine": 42
+        }
+      },
+      {
+        "comment": "",
+        "key": "Privacy",
+        "location": {
+          "startingColumn": 120,
+          "startingLine": 43
+        }
+      },
+      {
+        "comment": "",
+        "key": "Metadati (motore classico)",
+        "location": {
+          "startingColumn": 159,
+          "startingLine": 43
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascrizione",
+        "location": {
+          "startingColumn": 124,
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trascrizione (motore classico)",
+        "location": {
+          "startingColumn": 168,
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "Avvio dell’installazione…",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 53
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco ad avviare Homebrew",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 106
+        }
+      },
+      {
+        "comment": "",
+        "key": "Installazione completata ✓",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non installati: %@. Dettagli qui sotto.",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 98
+        }
+      }
+    ]
+  },
+  "version": 1
+}

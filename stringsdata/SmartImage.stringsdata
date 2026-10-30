@@ -1,0 +1,144 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/SmartImage.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "«%@» pesa già meno di %@: non serve comprimerla",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 35
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a farla stare in %@ senza rovinarla: scegli un peso un po’ maggiore",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 38
+        }
+      },
+      {
+        "comment": "",
+        "key": "«%@» ha parti trasparenti: per non perderle resta com'è. Per alleggerirla usa «Ridimensiona» o un peso preciso",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 47
+        }
+      },
+      {
+        "comment": "",
+        "key": "«%@» è già compressa al meglio: ricomprimerla la peggiorerebbe senza farla pesare meno",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 57
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a comprimere l’immagine",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 54
+        }
+      },
+      {
+        "comment": "",
+        "key": "dimensioni dell’immagine non valide",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 28
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a leggere l’immagine",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 23
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a togliere i metadati",
+        "location": {
+          "startingColumn": 93,
+          "startingLine": 165
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a togliere i metadati",
+        "location": {
+          "startingColumn": 120,
+          "startingLine": 161
+        }
+      },
+      {
+        "comment": "",
+        "key": "macOS non sa scrivere questo formato",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 143
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a leggere l’immagine",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 137
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a creare il file %@",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 207
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a preparare l’immagine",
+        "location": {
+          "startingColumn": 88,
+          "startingLine": 195
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a preparare l’immagine",
+        "location": {
+          "startingColumn": 146,
+          "startingLine": 193
+        }
+      },
+      {
+        "comment": "",
+        "key": "per questo formato serve ffmpeg",
+        "location": {
+          "startingColumn": 88,
+          "startingLine": 190
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a leggere l’immagine",
+        "location": {
+          "startingColumn": 137,
+          "startingLine": 181
+        }
+      },
+      {
+        "comment": "",
+        "key": "non riesco a leggere l’immagine",
+        "location": {
+          "startingColumn": 117,
+          "startingLine": 174
+        }
+      }
+    ]
+  },
+  "version": 1
+}

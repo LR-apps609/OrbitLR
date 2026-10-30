@@ -1,0 +1,56 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/AppLanguage.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Lingua · Language",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 55
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riaprire OrbitLR adesso?",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 65
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come il Mac",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 56
+        }
+      },
+      {
+        "comment": "",
+        "key": "Riapri",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 66
+        }
+      },
+      {
+        "comment": "",
+        "key": "Più tardi",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 67
+        }
+      },
+      {
+        "comment": "",
+        "key": "La nuova lingua vale dalla prossima apertura.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 69
+        }
+      }
+    ]
+  },
+  "version": 1
+}

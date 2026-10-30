@@ -1,0 +1,112 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Feedback.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Suggerisci un’idea",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 69
+        }
+      },
+      {
+        "comment": "",
+        "key": "Buttare l’idea?",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 58
+        }
+      },
+      {
+        "comment": "",
+        "key": "Continua a scrivere",
+        "location": {
+          "startingColumn": 98,
+          "startingLine": 58
+        }
+      },
+      {
+        "comment": "",
+        "key": "Buttare l’idea?",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "Continua a scrivere",
+        "location": {
+          "startingColumn": 102,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "Non riesco ad aprire l’email. Scrivimi a %@.",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 101
+        }
+      },
+      {
+        "comment": "",
+        "key": "Come ti trovi con OrbitLR?",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 110
+        }
+      },
+      {
+        "comment": "",
+        "key": "Un’idea, una cosa che manca, una che non ti piace:",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 126
+        }
+      },
+      {
+        "comment": "",
+        "key": "Si apre un’email già pronta: contiene solo quello che scrivi e la versione di OrbitLR, niente nomi di file.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 133
+        }
+      },
+      {
+        "comment": "",
+        "key": "Si apre un’email già pronta.",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 146
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scegli una faccina o scrivi prima qualcosa.",
+        "location": {
+          "startingColumn": 106,
+          "startingLine": 146
+        }
+      },
+      {
+        "comment": "",
+        "key": "Annulla",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 142
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scrivi l’email",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 143
+        }
+      }
+    ]
+  },
+  "version": 1
+}

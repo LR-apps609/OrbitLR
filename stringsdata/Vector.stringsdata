@@ -1,0 +1,24 @@
+{
+  "source": "/Users/runner/work/OrbitLR/OrbitLR/Sources/Vector.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Il vettoriale non è riuscito",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "Manca il motore del vettoriale nell’app: reinstalla OrbitLR",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 41
+        }
+      }
+    ]
+  },
+  "version": 1
+}
