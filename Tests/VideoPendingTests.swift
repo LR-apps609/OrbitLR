@@ -78,7 +78,8 @@ final class VideoPendingTests: XCTestCase {
         s.findMissing(in: [moved], undo: nil)
         XCTAssertEqual(s.project.clips.count, 2)
         XCTAssertNil(s.project.missing)
-        XCTAssertEqual(s.project.clips[1].path, newPlace.path, "torna al suo posto, secondo")
+        XCTAssertEqual(URL(fileURLWithPath: s.project.clips[1].path).resolvingSymlinksInPath().path,
+                       newPlace.resolvingSymlinksInPath().path, "torna al suo posto, secondo")
         s.closeProject(nil)
     }
 
