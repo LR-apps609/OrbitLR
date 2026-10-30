@@ -1169,6 +1169,16 @@
         }
       }
     },
+    "1/30 di secondo indietro / avanti": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1/30 of a second back / forward"
+          }
+        }
+      }
+    },
     "1:1 Post": {
       "localizations": {
         "en": {
@@ -2109,6 +2119,16 @@
         }
       }
     },
+    "Anteprima del file (nella finestra di OrbitLR)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File preview (in the OrbitLR window)"
+          }
+        }
+      }
+    },
     "Anteprima del risultato": {
       "localizations": {
         "en": {
@@ -2289,32 +2309,32 @@
         }
       }
     },
-    "Apri Video e premi «Editor» in alto (⇧⌘E), poi «Nuovo progetto» e trascina i tuoi video: si mettono in fila nell’ordine in cui li aggiungi. Se avevi già messo dei video nella scheda, l’editor li prende da solo.": {
+    "Apri Video e premi «Montaggio» in alto (⇧⌘E), poi «Nuovo progetto» (⇧⌘N) e trascina i tuoi video: si mettono in fila nell’ordine in cui li aggiungi. Se avevi già messo dei video nella scheda, il Montaggio li prende da solo.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open Video and click “Editor” at the top (⇧⌘E), then “New Project” and drag in your videos: they line up in the order you add them. If you already put videos in the tab, the editor picks them up on its own."
+            "value": "Open Video and click “Editor” at the top (⇧⌘E), then “New Project” (⇧⌘N) and drag in your videos: they line up in the order you add them. If you already put videos in the tab, the Editor picks them up on its own."
           }
         }
       }
     },
-    "Apri Video e trascina uno o più video: scegli cosa fare (comprimi senza perdere qualità o per Discord, WhatsApp ed email, taglia, cambia grandezza, GIF e altro). L’editor completo serve solo per i montaggi.": {
+    "Apri Video e trascina uno o più video: scegli cosa fare (comprimi senza perdere qualità o per Discord, WhatsApp ed email, taglia, cambia grandezza, GIF e altro). Il Montaggio serve solo per mettere insieme più pezzi.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open Video and drag in one or more videos: choose what to do (compress without losing quality or for Discord, WhatsApp and email, trim, resize, GIF and more). The full editor is only for edits."
+            "value": "Open Video and drag in one or more videos: choose what to do (compress without losing quality or for Discord, WhatsApp and email, trim, resize, GIF and more). The Editor is only for putting several pieces together."
           }
         }
       }
     },
-    "Apri Video, premi «Editor» e clicca la copertina del progetto: riparte da dove eri rimasto. Il progetto si salva da solo mentre lavori.": {
+    "Apri Video, premi «Montaggio» e clicca la copertina del progetto: riparte da dove eri rimasto. Il progetto si salva da solo mentre lavori; se OrbitLR si chiude, alla riapertura torni lì.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open Video, click “Editor” and click the project’s cover: it picks up where you left off. The project saves itself as you work."
+            "value": "Open Video, click “Editor” and click the project’s cover: it picks up where you left off. The project saves itself as you work; if OrbitLR quits, you’re back there when you reopen it."
           }
         }
       }
@@ -2325,6 +2345,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open at login"
+          }
+        }
+      }
+    },
+    "Apri dei file in Converti": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open files in Convert"
           }
         }
       }
@@ -4636,6 +4666,16 @@
         }
       }
     },
+    "Converti, PDF e documenti, Immagini, Video, Audio": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert, PDFs and documents, Images, Video, Audio"
+          }
+        }
+      }
+    },
     "Converti, ridimensiona, togli lo sfondo e altro, su una o tante foto": {
       "localizations": {
         "en": {
@@ -5217,6 +5257,16 @@
         }
       }
     },
+    "Dopo aver ridotto una foto o un PDF, in Attività premi Confronta e trascina la linea per vedere la differenza, anche ingrandita.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After shrinking a photo or a PDF, press Compare in Activity and drag the line to see the difference, even zoomed in."
+          }
+        }
+      }
+    },
     "Dopo la conversione, l’originale": {
       "localizations": {
         "en": {
@@ -5253,16 +5303,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "After a macOS update, permissions are requested again. Better now, all at once, than in the middle of your work."
-          }
-        }
-      }
-    },
-    "Dopo una compressione, in Attività premi Confronta e trascina la linea per vedere la differenza, anche ingrandita.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "After compressing, press Compare in Activity and drag the line to see the difference, even zoomed in."
           }
         }
       }
@@ -7437,6 +7477,16 @@
         }
       }
     },
+    "Ingrandisci / rimpicciolisci la sequenza": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom the timeline in / out"
+          }
+        }
+      }
+    },
     "Inizia": {
       "localizations": {
         "en": {
@@ -9248,6 +9298,16 @@
         }
       }
     },
+    "Nel Montaggio clicca la clip e premi «Togli i silenzi»: OrbitLR ascolta e lascia solo i pezzi in cui si parla, con tagli netti. Se non ti piace, ⌘Z.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In the Editor, click the clip and click “Remove Silences”: OrbitLR listens and keeps only the parts with speech, with clean cuts. If you don’t like it, ⌘Z."
+          }
+        }
+      }
+    },
     "Nel menu a torta": {
       "localizations": {
         "en": {
@@ -9364,16 +9424,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "In the same folder as the original"
-          }
-        }
-      }
-    },
-    "Nell’editor clicca la clip e premi «Togli i silenzi»: OrbitLR ascolta e lascia solo i pezzi in cui si parla, con tagli netti. Se non ti piace, ⌘Z.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "In the editor, click the clip and click “Remove Silences”: OrbitLR listens and keeps only the parts with speech, with clean cuts. If you don’t like it, ⌘Z."
           }
         }
       }
@@ -12930,6 +12980,16 @@
         }
       }
     },
+    "Salva progetto (si salva anche da solo)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save Project (it also saves on its own)"
+          }
+        }
+      }
+    },
     "Salva tra le mie azioni": {
       "localizations": {
         "en": {
@@ -15117,12 +15177,12 @@
         }
       }
     },
-    "Sì: i tasti da 1 a 9 scelgono lo spicchio con quel numero, Invio quello con la stella, Esc chiude. Puoi anche scrivere per cercare un’azione.": {
+    "Sì: i tasti da 1 a 8 scelgono lo spicchio con quel numero, Invio ripete l’ultima scelta (o quella consigliata), Esc chiude. Puoi anche scrivere per cercare un’azione.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Yes: keys 1 to 9 pick the slice with that number, Return picks the one with the star, Esc closes. You can also type to search for an action."
+            "value": "Yes: keys 1 to 8 pick the slice with that number, Return repeats your last choice (or the suggested one), Esc closes. You can also type to search for an action."
           }
         }
       }
@@ -16469,12 +16529,12 @@
         }
       }
     },
-    "Un fotogramma indietro / avanti": {
+    "Un millisecondo indietro / avanti": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "One frame back / forward"
+            "value": "One millisecond back / forward"
           }
         }
       }

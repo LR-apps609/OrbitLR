@@ -293,7 +293,7 @@ struct Tip: Equatable {
         Tip(symbol: "star.circle.fill", title: String(localized: "Le mie azioni"),
             text: String(localized: "Spunta «Salva tra le mie azioni» quando scegli le opzioni, poi assegnale ⌃⌥1…9 nella pagina «Le mie azioni»: selezioni i file nel Finder e parte da sola.")),
         Tip(symbol: "square.split.2x1", title: String(localized: "Confronta prima e dopo"),
-            text: String(localized: "Dopo una compressione, in Attività premi Confronta e trascina la linea per vedere la differenza, anche ingrandita.")),
+            text: String(localized: "Dopo aver ridotto una foto o un PDF, in Attività premi Confronta e trascina la linea per vedere la differenza, anche ingrandita.")),
         Tip(symbol: "keyboard", title: String(localized: "Tasti 1–8"),
             text: String(localized: "Nel menu a torta ogni spicchio ha il suo numero. Invio ripete l’ultima scelta per quel tipo di file.")),
         Tip(symbol: "arrow.up.and.down.and.arrow.left.and.right", title: String(localized: "Trascina il risultato"),
