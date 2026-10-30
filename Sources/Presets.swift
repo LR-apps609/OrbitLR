@@ -33,6 +33,27 @@ final class PresetStore: ObservableObject, @unchecked Sendable {
 
     func delete(_ p: Preset) { presets.removeAll { $0.id == p.id } }
 
+    /// 5.1 · Elimina con «Annulla» e ⌘Z: l'azione torna al suo posto.
+    func deleteUndoably(_ p: Preset) {
+        guard let i = presets.firstIndex(where: { $0.id == p.id }) else { return }
+        let old = presets[i]
+        delete(old)
+        UndoToast.shared.post(String(localized: "Eliminata «\(old.name)»."), at: .shortcuts) { [weak self] in self?.restore(old, at: i) }
+    }
+
+    /// 5.1 · Rimette un'azione eliminata; il tasto torna solo se nel frattempo nessun'altra l'ha preso.
+    func restore(_ p: Preset, at index: Int) {
+        guard !presets.contains(where: { $0.id == p.id }) else { return }
+        var p = p
+        if let k = p.hotkey, presets.contains(where: { $0.hotkey == k }) { p.hotkey = nil }
+        presets.insert(p, at: min(max(0, index), presets.count))
+    }
+
+    /// 5.1 · Le regole automatiche che usano questa azione (senza di lei smetterebbero di funzionare).
+    static func rules(using p: Preset, in rules: [WatchRule]) -> [WatchRule] {
+        rules.filter { $0.actionId == "preset:" + p.id.uuidString }
+    }
+
     func setHotkey(_ n: Int?, for p: Preset) {
         var list = presets
         if let n { for i in list.indices where list[i].hotkey == n { list[i].hotkey = nil } }   // un tasto, un preset
@@ -137,6 +158,7 @@ struct PresetsView: View {
                            color: Theme.brass) {
                     Button { customizing = true } label: { Label("Personalizza il menu a torta", systemImage: "chart.pie") }
                 }
+                UndoToastBar(place: .shortcuts)          // 5.1
                 RecipesSection()
                 if store.presets.isEmpty {
                     EmptyState(symbol: "star.circle", color: Theme.brass, title: String(localized: "Ancora nessuna azione salvata"),
@@ -180,11 +202,144 @@ struct PresetRow: View {
                 ForEach(1...9, id: \.self) { n in Text("⌃⌥\(n)").tag(n) }
             }
             .frame(width: 190)
-            Button(role: .destructive) { store.delete(preset) } label: { Image(systemName: "trash") }
+            Button(role: .destructive) { askDelete() } label: { Image(systemName: "trash") }
                 .help("Elimina la scorciatoia")
         }
         .padding(12)
         .card(radius: 12)
         .onAppear { name = preset.name }
+    }
+
+    /// 5.1 · Se una regola automatica usa questa azione, prima lo dice; poi si elimina con «Annulla».
+    private func askDelete() {
+        let p = preset
+        let users = PresetStore.rules(using: p, in: WatchStore.shared.rules)
+        guard !users.isEmpty else { store.deleteUndoably(p); return }
+        let a = NSAlert()
+        a.messageText = String(localized: "Eliminare «\(p.name)»?")
+        a.informativeText = users.count == 1
+            ? String(localized: "La regola «\(users[0].folderURL.lastPathComponent)» usa questa azione e smetterà di funzionare.")
+            : String(localized: "\(users.count) regole automatiche usano questa azione e smetteranno di funzionare.")
+        a.addButton(withTitle: String(localized: "Elimina"))
+        a.addButton(withTitle: String(localized: "Annulla"))
+        Sheet.confirmDestructive(a) { ok in if ok { PresetStore.shared.deleteUndoably(p) } }
+    }
+}
+
+// MARK: - 5.1 · Al sicuro: eliminazioni annullabili e avvisi distruttivi
+
+/// 5.1 · Dove compare la riga «Annulla»: nel punto in cui hai eliminato.
+enum UndoPlace: Equatable { case shortcuts, automation, history, drawer, pieOrder }
+
+/// 5.1 · Dopo un'eliminazione: una riga «Eliminata «Nome».» con «Annulla» per qualche secondo,
+/// e ⌘Z nella finestra. Ogni elemento si rimette una volta sola, da qualunque delle due strade.
+final class UndoToast: ObservableObject, @unchecked Sendable {
+    static let shared = UndoToast()
+    static let seconds: Double = 6
+
+    struct Item: Identifiable, Equatable {
+        let id = UUID()
+        let place: UndoPlace
+        let text: String
+    }
+
+    /// Il bersaglio di ⌘Z, uno per eliminazione: «Annulla» nella riga toglie anche il suo ⌘Z.
+    private final class Token {}
+
+    @Published private(set) var item: Item? = nil
+    private var restores: [UUID: () -> Void] = [:]
+    private var tokens: [UUID: (Token, UndoManager?)] = [:]
+    private var hide: DispatchWorkItem? = nil
+
+    /// Registra l'eliminazione; `restore` rimette com'era. Senza `undoManager` usa quello della finestra.
+    func post(_ text: String, at place: UndoPlace, undoManager: UndoManager? = nil, restore: @escaping () -> Void) {
+        let it = Item(place: place, text: text)
+        restores[it.id] = restore
+        let token = Token()
+        let um = undoManager ?? Self.windowUndoManager()
+        tokens[it.id] = (token, um)
+        um?.registerUndo(withTarget: token) { [weak self] _ in self?.perform(it.id) }
+        item = it
+        hide?.cancel()
+        let w = DispatchWorkItem { [weak self] in
+            guard let self, self.item?.id == it.id else { return }
+            self.item = nil
+        }
+        hide = w
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.seconds, execute: w)
+    }
+
+    /// «Annulla» nella riga: rimette l'elemento e toglie il ⌘Z che non serve più.
+    func undo(_ id: UUID) {
+        if let pair = tokens[id] { pair.1?.removeAllActions(withTarget: pair.0) }
+        tokens[id] = nil
+        perform(id)
+    }
+
+    /// Si può ancora rimettere? (per i test)
+    func canRestore(_ id: UUID) -> Bool { restores[id] != nil }
+
+    private func perform(_ id: UUID) {
+        guard let r = restores.removeValue(forKey: id) else { return }
+        r()
+        if item?.id == id { item = nil }
+    }
+
+    /// La finestra del foglio aperto (es. «Personalizza il menu a torta»), altrimenti la finestra principale.
+    private static func windowUndoManager() -> UndoManager? {
+        if let k = NSApp?.keyWindow, k.sheetParent != nil { return k.undoManager }
+        return AppState.shared.mainWindow?.undoManager ?? NSApp?.keyWindow?.undoManager
+    }
+}
+
+/// 5.1 · La riga «Eliminata «Nome».  Annulla», nel punto dove è avvenuta l'eliminazione.
+struct UndoToastBar: View {
+    let place: UndoPlace
+    @ObservedObject private var center = UndoToast.shared
+
+    var body: some View {
+        Group {
+            if let it = center.item, it.place == place {
+                HStack(spacing: 10) {
+                    Image(systemName: "arrow.uturn.backward.circle.fill").foregroundStyle(Theme.accent)
+                        .accessibilityHidden(true)
+                    Text(it.text).font(.system(size: 12.5, weight: .semibold)).lineLimit(1).truncationMode(.middle)
+                    Spacer(minLength: 8)
+                    Button(String(localized: "undo.toast", defaultValue: "Annulla", comment: "Pulsante nella riga dopo un'eliminazione: rimette com'era")) {
+                        center.undo(it.id)
+                    }
+                    .buttonStyle(.borderless)
+                    .font(.system(size: 12.5, weight: .bold)).foregroundStyle(Theme.accent)
+                    .help("Rimette com’era (anche con ⌘Z)")
+                }
+                .padding(.horizontal, 12).padding(.vertical, 8)
+                .card(radius: 10)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .animation(Motion.quick, value: center.item)
+    }
+}
+
+extension Sheet {
+    /// 5.1 · Avviso con il primo pulsante distruttivo: «Annulla» (il secondo) è il predefinito, con ↩ ed Esc.
+    static func confirmDestructive(_ a: NSAlert, then: @escaping (Bool) -> Void) {
+        let b = a.buttons
+        let cancel: NSButton? = b.count >= 2 ? b[1] : nil
+        if let cancel {
+            b[0].hasDestructiveAction = true
+            b[0].keyEquivalent = ""
+            cancel.keyEquivalent = "\r"
+        }
+        // Un pulsante ha un solo tasto: Esc su «Annulla» si aggiunge qui, finché l'avviso è aperto
+        let monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { e in
+            guard e.keyCode == 53, let cancel, let w = cancel.window, w.isKeyWindow else { return e }
+            cancel.performClick(nil)
+            return nil
+        }
+        confirm(a) { ok in
+            if let monitor { NSEvent.removeMonitor(monitor) }
+            then(ok)
+        }
     }
 }

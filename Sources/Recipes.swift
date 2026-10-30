@@ -90,6 +90,21 @@ final class RecipeStore: ObservableObject, @unchecked Sendable {
 
     func delete(_ r: Recipe) { recipes.removeAll { $0.id == r.id }; save() }
 
+    /// 5.1 · Elimina con «Annulla» e ⌘Z.
+    func deleteUndoably(_ r: Recipe) {
+        guard let i = recipes.firstIndex(where: { $0.id == r.id }) else { return }
+        let old = recipes[i]
+        delete(old)
+        UndoToast.shared.post(String(localized: "Eliminata «\(old.name)»."), at: .shortcuts) { [weak self] in self?.restore(old, at: i) }
+    }
+
+    /// 5.1 · Rimette una ricetta eliminata al suo posto (una volta sola).
+    func restore(_ r: Recipe, at index: Int) {
+        guard !recipes.contains(where: { $0.id == r.id }) else { return }
+        recipes.insert(r, at: min(max(0, index), recipes.count))
+        save()
+    }
+
     func rename(_ r: Recipe, to name: String) {
         guard let i = recipes.firstIndex(where: { $0.id == r.id }) else { return }
         let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -172,7 +187,7 @@ private struct RecipeRow: View {
             }
             Spacer()
             Text("\(recipe.steps.count) passi").font(.system(size: 12)).foregroundStyle(.secondary)
-            Button(role: .destructive) { RecipeStore.shared.delete(recipe) } label: { Image(systemName: "trash") }
+            Button(role: .destructive) { RecipeStore.shared.deleteUndoably(recipe) } label: { Image(systemName: "trash") }
                 .help("Elimina la ricetta (i file non vengono toccati)")
         }
         .padding(12)

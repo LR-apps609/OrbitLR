@@ -573,22 +573,72 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
     /// Opzione «Dopo la conversione: sposta l'originale nel Cestino».
     /// Solo per le azioni che producono una versione completa del file (mai per «estrai pagine», sottotitoli, ecc.).
     private func trashOriginalsIfWanted(_ job: Job) {
+        let automatic = automaticJobs.remove(job.id) != nil
         guard UserDefaults.standard.string(forKey: "original") == "trash",
               job.state == .done, job.failures.isEmpty, !job.outputs.isEmpty else { return }
+        let list = Self.originalsToTrash(job)
+        guard !list.isEmpty else { return }
+        if list.count <= Self.trashAskLimit { Self.trash(list); return }
+        // 5.1 · Regola automatica: nessuno a cui chiedere, quindi oltre il limite gli originali restano dove sono
+        if automatic {
+            Self.logLine("Regola automatica: \(list.count) originali tenuti (oltre \(Self.trashAskLimit) non vanno nel Cestino da soli)")
+            return
+        }
+        // 5.1 · Tanti originali: si chiede una volta. Siamo sul thread principale e l'avviso non lo blocca:
+        // la risposta arriva dopo, e solo allora (se dici «Sposta») i file vanno nel Cestino.
+        DispatchQueue.main.async {
+            let a = NSAlert()
+            a.messageText = String(localized: "Spostare nel Cestino i \(list.count) originali dopo la conversione?")
+            a.informativeText = String(localized: "I file convertiti sono pronti. Se li sposti, gli originali restano nel Cestino finché non lo svuoti.")
+            a.addButton(withTitle: String(localized: "Sposta"))
+            a.addButton(withTitle: String(localized: "Tienili"))
+            NSApp.activate(ignoringOtherApps: true)
+            Sheet.confirmDestructive(a) { ok in
+                // Si ricontrolla al momento della risposta: solo gli originali che ci sono ancora, con il loro risultato
+                if ok { Self.trash(Self.originalsToTrash(job)) }
+            }
+        }
+    }
+
+    /// 5.1 · Oltre questo numero di originali si chiede prima di cestinarli (le regole automatiche li tengono).
+    static let trashAskLimit = 20
+    /// 5.1 · I lavori partiti da una regola automatica (cartelle sorvegliate).
+    private var automaticJobs = Set<UUID>()
+
+    /// 5.1 · Da chiamare subito dopo `enqueue` per i lavori che partono da soli.
+    func markAutomatic(_ job: Job) { automaticJobs.insert(job.id) }
+
+    /// Gli originali che l'opzione manderebbe nel Cestino: solo se c'è davvero un file creato da ognuno.
+    static func originalsToTrash(_ job: Job) -> [URL] {
         let id = job.action.id
         let replaces = id.hasPrefix("to:") || ["resize", "strip", "pdfcompress", "vcompress", "normalize", "voiceclean"].contains(id)
-        guard replaces, job.notes.isEmpty else { return }       // 4.1.4 · un file saltato («già compresso»…) non si tocca
-        for f in job.mainFiles {
+        guard replaces, job.notes.isEmpty else { return [] }       // 4.1.4 · un file saltato («già compresso»…) non si tocca
+        let fm = FileManager.default
+        return job.mainFiles.filter { f in
             let kind = Catalog.kind(of: f)
             // 4.1.4 · Mai per le conversioni che tengono solo una parte: audio o GIF da un video, immagini da un PDF
-            if kind == .video, ["to:mp3", "to:m4a", "to:wav", "to:gif", "to:aac", "to:flac"].contains(id) { continue }
-            if kind == .pdf, ["to:png", "to:jpg", "to:jpeg", "to:heic", "to:webp", "to:tiff"].contains(id) { continue }
+            if kind == .video, ["to:mp3", "to:m4a", "to:wav", "to:gif", "to:aac", "to:flac"].contains(id) { return false }
+            if kind == .pdf, ["to:png", "to:jpg", "to:jpeg", "to:heic", "to:webp", "to:tiff"].contains(id) { return false }
+            guard fm.fileExists(atPath: f.path) else { return false }
             // Solo se c'è davvero un file creato da questo originale (stesso nome di partenza)
             let stem = f.deletingPathExtension().lastPathComponent
-            let made = job.outputs.contains { o in
-                o.path != f.path && FileManager.default.fileExists(atPath: o.path) && o.deletingPathExtension().lastPathComponent.hasPrefix(stem)
+            return job.outputs.contains { o in
+                o.path != f.path && fm.fileExists(atPath: o.path) && o.deletingPathExtension().lastPathComponent.hasPrefix(stem)
             }
-            if made { try? FileManager.default.trashItem(at: f, resultingItemURL: nil) }
+        }
+    }
+
+    private static func trash(_ files: [URL]) {
+        for f in files { try? FileManager.default.trashItem(at: f, resultingItemURL: nil) }
+    }
+
+    /// 5.1 · Una riga nel registro dell'app (senza nomi di file).
+    private static func logLine(_ text: String) {
+        guard let data = "[\(Date())] Coda: \(text)\n".data(using: .utf8) else { return }
+        if let h = try? FileHandle(forWritingTo: Paths.log) {
+            h.seekToEndOfFile(); h.write(data); try? h.close()
+        } else {
+            try? data.write(to: Paths.log)
         }
     }
 
@@ -687,6 +737,23 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
     /// 2.7.2 · Toglie la voce dalla Cronologia. I file restano dove sono.
     func forget(_ entry: HistoryEntry) {
         history.removeAll { $0.id == entry.id }
+        saveHistory()
+    }
+
+    /// 5.1 · Come «forget», con «Annulla» e ⌘Z: la voce torna al suo posto.
+    func forgetUndoably(_ entry: HistoryEntry) {
+        guard let i = history.firstIndex(where: { $0.id == entry.id }) else { return }
+        let old = history[i]
+        forget(old)
+        UndoToast.shared.post(String(localized: "«\(old.title)» non è più nella cronologia."), at: .history) { [weak self] in
+            self?.restore(old, at: i)
+        }
+    }
+
+    /// 5.1 · Rimette una voce tolta dalla Cronologia (una volta sola).
+    func restore(_ entry: HistoryEntry, at index: Int) {
+        guard !history.contains(where: { $0.id == entry.id }) else { return }
+        history.insert(entry, at: min(max(0, index), history.count))
         saveHistory()
     }
 

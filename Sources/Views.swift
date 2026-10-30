@@ -339,11 +339,12 @@ struct ActivityView: View {
                             a.informativeText = String(localized: "Spariscono tutte le voci dall’elenco. I file creati restano dove sono.")
                             a.addButton(withTitle: String(localized: "Svuota"))
                             a.addButton(withTitle: String(localized: "Annulla"))
-                            Sheet.confirm(a) { ok in if ok { withAnimation(Motion.quick) { store.forgetAll() } } }
+                            Sheet.confirmDestructive(a) { ok in if ok { withAnimation(Motion.quick) { store.forgetAll() } } }   // 5.1 · «Annulla» predefinito
                         } label: { Label("Svuota la cronologia…", systemImage: "trash") }
                         .help("Svuota la cronologia (i file non vengono toccati)")
                     }
                 }
+                UndoToastBar(place: .history)          // 5.1
                 if open.isEmpty && store.history.isEmpty {
                     EmptyState(symbol: "clock", color: SidebarItem.activity.color, title: String(localized: "Ancora nessun lavoro"),
                                text: String(localized: "Qui vedi quello che OrbitLR sta facendo e tutto quello che hai creato, giorno per giorno."))
@@ -570,10 +571,10 @@ struct HistoryRow: View {
                         a.informativeText = String(localized: "Si possono ancora recuperare dal Cestino.")
                         a.addButton(withTitle: String(localized: "Sposta nel Cestino"))
                         a.addButton(withTitle: String(localized: "Annulla"))
-                        Sheet.confirm(a) { ok in if ok { store.undo(entry) } }
+                        Sheet.confirmDestructive(a) { ok in if ok { store.undo(entry) } }   // 5.1 · «Annulla» predefinito
                     }
                 }
-                Button("Togli dalla cronologia") { withAnimation(Motion.quick) { store.forget(entry) } }
+                Button("Togli dalla cronologia") { withAnimation(Motion.quick) { store.forgetUndoably(entry) } }   // 5.1 · con «Annulla»
             } label: {
                 Image(systemName: "ellipsis.circle").foregroundStyle(.secondary)
             }

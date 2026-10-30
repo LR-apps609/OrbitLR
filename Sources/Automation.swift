@@ -99,10 +99,31 @@ final class WatchStore: ObservableObject, @unchecked Sendable {
         scan()
     }
 
-    func remove(_ rule: WatchRule) {
-        rules.removeAll { $0.id == rule.id }
+    /// Toglie la regola; restituisce dov'era e i file già visti, per poterla rimettere (5.1).
+    @discardableResult
+    func remove(_ rule: WatchRule) -> (index: Int, seen: [String: Double]?)? {
+        guard let i = rules.firstIndex(where: { $0.id == rule.id }) else { return nil }
+        let old = seen[rule.id.uuidString]
+        rules.remove(at: i)
         seen[rule.id.uuidString] = nil
         saveSeen()
+        return (i, old)
+    }
+
+    /// 5.1 · Elimina con «Annulla» e ⌘Z.
+    func removeUndoably(_ rule: WatchRule) {
+        guard let r = rules.first(where: { $0.id == rule.id }), let res = remove(r) else { return }
+        UndoToast.shared.post(String(localized: "Regola «\(r.folderURL.lastPathComponent)» eliminata."), at: .automation) { [weak self] in
+            self?.restore(r, at: res.index, seen: res.seen)
+        }
+    }
+
+    /// 5.1 · Rimette la regola con i suoi file già visti: quello che era già stato elaborato non si rielabora.
+    func restore(_ rule: WatchRule, at index: Int, seen old: [String: Double]?) {
+        guard !rules.contains(where: { $0.id == rule.id }) else { return }
+        if let old { seen[rule.id.uuidString] = old; saveSeen() }
+        rules.insert(rule, at: min(max(0, index), rules.count))
+        if rule.enabled { scan() }
     }
 
     func toggle(_ rule: WatchRule) {
@@ -164,7 +185,8 @@ final class WatchStore: ObservableObject, @unchecked Sendable {
         saveSeen()
         let out = rule.outputURL
         try? FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
-        QueueStore.shared.enqueue(files: files, action: action, param: param, dest: out)
+        let job = QueueStore.shared.enqueue(files: files, action: action, param: param, dest: out)
+        QueueStore.shared.markAutomatic(job)          // 5.1 · niente domande, e mai più di 20 originali nel Cestino
         rules[i].processed += files.count
         rules[i].lastRun = Date()
     }
@@ -247,6 +269,7 @@ struct AutomationView: View {
                     Button { creating = true } label: { Label("Nuova cartella automatica", systemImage: "plus") }
                         .buttonStyle(.borderedProminent)
                 }
+                UndoToastBar(place: .automation)          // 5.1
                 // 3.9 · Le più chieste, pronte con un clic (solo quelle non ancora attive)
                 let ready = WatchStore.templates.filter { !store.has($0) }
                 if !ready.isEmpty {
@@ -328,7 +351,7 @@ struct WatchRow: View {
                 Button("Apri la cartella") { NSWorkspace.shared.open(rule.folderURL) }
                 Button("Apri i risultati") { NSWorkspace.shared.open(rule.outputURL) }
                 Divider()
-                Button("Elimina la regola", role: .destructive) { store.remove(rule) }
+                Button("Elimina la regola", role: .destructive) { store.removeUndoably(rule) }
             } label: {
                 Image(systemName: "ellipsis.circle")
             }

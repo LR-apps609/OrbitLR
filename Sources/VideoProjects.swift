@@ -291,7 +291,7 @@ struct VideoProjectsView: View {
         a.informativeText = String(localized: "Il progetto va nel Cestino, da dove puoi ancora recuperarlo. I tuoi video non vengono toccati.")
         a.addButton(withTitle: String(localized: "Elimina"))
         a.addButton(withTitle: String(localized: "Annulla"))
-        Sheet.confirm(a) { ok in if ok { withAnimation(Motion.quick) { s.deleteProject(e.id, undo: undo) } } }
+        Sheet.confirmDestructive(a) { ok in if ok { withAnimation(Motion.quick) { s.deleteProject(e.id, undo: undo) } } }   // 5.1 · «Annulla» predefinito
     }
 }
 

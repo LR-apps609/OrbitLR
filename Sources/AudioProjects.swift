@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import Combine
+import AVFoundation
 
 // ════════════════════════════════════════════════════════════════════
 //  2.8.5 · Progetti audio: ogni file aperto nella scheda Audio diventa un
@@ -18,15 +19,42 @@ struct AudioProject: Codable, Identifiable, Equatable {
     var start: Double
     var end: Double
     var modified = Date()
+    /// 5.1 · Le opzioni della scheda (testo in voce, voce, ritmo, suoneria, velocità). Nei progetti vecchi manca.
+    var options: AudioOptions? = nil
 
     var urls: [URL] { paths.map { URL(fileURLWithPath: $0) } }
     var length: Double { max(0, end - start) }
 }
 
+/// 5.1 · Le scelte della scheda Audio salvate nel progetto. Ogni campo è facoltativo nel file:
+/// quelli che mancano (progetti di versioni diverse) prendono il valore di partenza.
+struct AudioOptions: Codable, Equatable {
+    var ttsText = ""
+    var voiceId = ""
+    var rate = Double(AVSpeechUtteranceDefaultSpeechRate)
+    var ringLength: Double = 30
+    var fade = true
+    var normalize = true
+    var speed = "1.25"
+
+    init() {}
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = AudioOptions()
+        ttsText = try c.decodeIfPresent(String.self, forKey: .ttsText) ?? d.ttsText
+        voiceId = try c.decodeIfPresent(String.self, forKey: .voiceId) ?? d.voiceId
+        rate = try c.decodeIfPresent(Double.self, forKey: .rate) ?? d.rate
+        ringLength = try c.decodeIfPresent(Double.self, forKey: .ringLength) ?? d.ringLength
+        fade = try c.decodeIfPresent(Bool.self, forKey: .fade) ?? d.fade
+        normalize = try c.decodeIfPresent(Bool.self, forKey: .normalize) ?? d.normalize
+        speed = try c.decodeIfPresent(String.self, forKey: .speed) ?? d.speed
+    }
+}
+
 enum AudioProjectLibrary {
     static var folder: URL { Paths.support.appendingPathComponent("Progetti audio", isDirectory: true) }
     static let queue = DispatchQueue(label: "orbitlr.progetti-audio", qos: .utility)
-    static let maxKept = 40
 
     static func url(for id: UUID, in folder: URL) -> URL {
         folder.appendingPathComponent(id.uuidString).appendingPathExtension("json")
@@ -49,12 +77,10 @@ enum AudioProjectLibrary {
         return try? dec.decode(AudioProject.self, from: d)
     }
 
-    /// Dal più recente; i più vecchi oltre `maxKept` vanno nel Cestino da soli.
+    /// Dal più recente. 5.1 · Tutti: nessun progetto va più nel Cestino da solo (prima, oltre 40).
     static func list(in folder: URL) -> [AudioProject] {
         let files = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
-        let all = files.filter { $0.pathExtension == "json" }.compactMap(read).sorted { $0.modified > $1.modified }
-        for old in all.dropFirst(maxKept) { trash(old.id, in: folder) }
-        return Array(all.prefix(maxKept))
+        return files.filter { $0.pathExtension == "json" }.compactMap(read).sorted { $0.modified > $1.modified }
     }
 
     static func trash(_ id: UUID, in folder: URL) {
@@ -107,7 +133,7 @@ extension MediaTabModel {
     func startProject(for url: URL) {
         guard !videoTab, !restoringProject else { return }
         let p = AudioProject(name: AudioProjectLibrary.displayName(for: url), paths: [url.path],
-                             tool: currentTool, start: 0, end: 0)
+                             tool: currentTool, start: 0, end: 0, options: audioOptions)
         currentProject = p.id
         AudioProjectLibrary.save(p, in: projectsFolder)
         refreshProjects()
@@ -120,7 +146,7 @@ extension MediaTabModel {
         let folder = projectsFolder
         let snapshot = AudioProject(id: id, name: audioProjects.first { $0.id == id }?.name ?? AudioProjectLibrary.displayName(for: f),
                                     paths: allFiles.map { $0.path }, tool: currentTool,
-                                    start: trim?.start ?? 0, end: trim?.end ?? 0)
+                                    start: trim?.start ?? 0, end: trim?.end ?? 0, options: audioOptions)
         let w = DispatchWorkItem { AudioProjectLibrary.save(snapshot, in: folder) }
         projectSave = w
         AudioProjectLibrary.queue.asyncAfter(deadline: .now() + 0.6, execute: w)
@@ -135,6 +161,11 @@ extension MediaTabModel {
             return
         }
         restoringProject = true
+        // 5.1 · Tornano anche testo, voce, ritmo e le opzioni (i progetti vecchi tengono quelle di adesso)
+        if let o = p.options {
+            audioOptions = o
+            restoredOptions = o
+        }
         restoredTool = p.tool
         currentTool = p.tool
         let urls = p.urls
@@ -263,6 +294,6 @@ struct AudioProjectsRow: View {
         a.informativeText = String(localized: "Il progetto va nel Cestino. Il file audio non viene toccato.")
         a.addButton(withTitle: String(localized: "Elimina"))
         a.addButton(withTitle: String(localized: "Annulla"))
-        Sheet.confirm(a) { ok in if ok { m.deleteProject(p.id) } }
+        Sheet.confirmDestructive(a) { ok in if ok { m.deleteProject(p.id) } }   // 5.1 · «Annulla» predefinito
     }
 }

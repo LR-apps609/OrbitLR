@@ -106,6 +106,18 @@ final class Drawer: ObservableObject, @unchecked Sendable {
         UserDefaults.standard.set(Array(hidden.suffix(500)), forKey: Self.hiddenKey)
     }
 
+    /// 5.1 · «Togli dal Cassetto» con «Annulla» e ⌘Z (il file non si tocca mai).
+    func hideUndoably(_ url: URL) {
+        hide(url)
+        UndoToast.shared.post(String(localized: "«\(url.lastPathComponent)» non è più nel Cassetto."), at: .drawer) { [weak self] in self?.unhide(url) }
+    }
+
+    /// 5.1 · Rimette nel Cassetto un file tolto.
+    func unhide(_ url: URL) {
+        guard hidden.remove(url.path) != nil else { return }
+        UserDefaults.standard.set(Array(hidden.suffix(500)), forKey: Self.hiddenKey)
+    }
+
     /// Dove ha senso mandare questo file (la prima voce è la più probabile).
     static func targets(for url: URL) -> [DrawerTarget] {
         var isDir: ObjCBool = false
@@ -206,6 +218,7 @@ struct DrawerSidebar: View {
                         .popover(isPresented: $showAll, arrowEdge: .trailing) { DrawerAll(items: items) }
                 }
             }
+            UndoToastBar(place: .drawer)          // 5.1
             if items.isEmpty {
                 Text("I file che crei finiscono qui: trascinali su una scheda o usa «Usa in…».")
                     .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
@@ -243,7 +256,7 @@ struct DrawerRow: View {
                 Button { Drawer.send([url], to: t) } label: { Label(t.title, systemImage: t.symbol) }
             }
             Divider()
-            Button("Togli dal Cassetto") { Drawer.shared.hide(url) }
+            Button("Togli dal Cassetto") { Drawer.shared.hideUndoably(url) }
         }
         .help("\(url.lastPathComponent) · trascinalo su una scheda, oppure «Usa in…» · doppio clic per aprirlo")
     }
@@ -258,6 +271,7 @@ private struct DrawerAll: View {
             Text("Cassetto").font(.headline)
             Text("Gli ultimi file creati con OrbitLR. Trascinali su una scheda, oppure clic destro per mandarli altrove.")
                 .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            UndoToastBar(place: .drawer)          // 5.1
             ScrollView {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 10)], spacing: 10) {
                     ForEach(items, id: \.self) { u in
@@ -274,7 +288,7 @@ private struct DrawerAll: View {
                                 Button { Drawer.send([u], to: t) } label: { Label(t.title, systemImage: t.symbol) }
                             }
                             Divider()
-                            Button("Togli dal Cassetto") { Drawer.shared.hide(u) }
+                            Button("Togli dal Cassetto") { Drawer.shared.hideUndoably(u) }
                         }
                     }
                 }

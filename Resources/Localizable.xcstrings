@@ -808,6 +808,16 @@
         }
       }
     },
+    "%lld regole automatiche usano questa azione e smetteranno di funzionare.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld automatic rules use this action and will stop working."
+          }
+        }
+      }
+    },
     "%lld sottotitoli aggiunti: controllali nella riga «Testi».": {
       "localizations": {
         "en": {
@@ -5548,6 +5558,16 @@
         }
       }
     },
+    "Eliminata «%@».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deleted “%@”."
+          }
+        }
+      }
+    },
     "Elimina…": {
       "localizations": {
         "en": {
@@ -6671,6 +6691,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The files you create end up here: drag them onto a tab or use “Use in…”."
+          }
+        }
+      }
+    },
+    "I file convertiti sono pronti. Se li sposti, gli originali restano nel Cestino finché non lo svuoti.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The converted files are ready. If you move them, the originals stay in the Trash until you empty it."
           }
         }
       }
@@ -7893,6 +7923,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Next time, do all these steps in one click from the pie menu"
+          }
+        }
+      }
+    },
+    "La regola «%@» usa questa azione e smetterà di funzionare.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The rule “%@” uses this action and will stop working."
           }
         }
       }
@@ -10300,6 +10340,16 @@
         }
       }
     },
+    "Ordine di partenza ripristinato.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default order restored."
+          }
+        }
+      }
+    },
     "Organizza": {
       "localizations": {
         "en": {
@@ -11950,6 +12000,16 @@
         }
       }
     },
+    "Regola «%@» eliminata.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deleted rule “%@”."
+          }
+        }
+      }
+    },
     "Regolazioni": {
       "localizations": {
         "en": {
@@ -12236,6 +12296,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Drop Here"
+          }
+        }
+      }
+    },
+    "Rimette com’era (anche con ⌘Z)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puts it back (also with ⌘Z)"
           }
         }
       }
@@ -14431,6 +14501,16 @@
         }
       }
     },
+    "Sposta": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move"
+          }
+        }
+      }
+    },
     "Sposta il riquadro sul pezzo che ti piace (fino a 30 secondi): ottieni la suoneria per iPhone.": {
       "localizations": {
         "en": {
@@ -14559,6 +14639,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Move the file to the Trash?"
+          }
+        }
+      }
+    },
+    "Spostare nel Cestino i %lld originali dopo la conversione?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move the %lld originals to the Trash after converting?"
           }
         }
       }
@@ -15335,6 +15425,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Keep just one part"
+          }
+        }
+      }
+    },
+    "Tienili": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep Them"
           }
         }
       }
@@ -18967,6 +19067,24 @@
         }
       }
     },
+    "undo.toast": {
+      "comment": "Pulsante nella riga dopo un'eliminazione: rimette com'era",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undo"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annulla"
+          }
+        }
+      }
+    },
     "un’immagine": {
       "localizations": {
         "en": {
@@ -19095,6 +19213,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "“%@” can’t be read"
+          }
+        }
+      }
+    },
+    "«%@» non è più nel Cassetto.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” is no longer in the Drawer."
+          }
+        }
+      }
+    },
+    "«%@» non è più nella cronologia.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” is no longer in History."
           }
         }
       }
