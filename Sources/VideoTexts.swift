@@ -282,7 +282,7 @@ struct TextOptions: View {
     /// Un testo nuovo dall'indicatore, per 3 secondi, già scelto e pronto da scrivere.
     static func addText(_ s: VideoProjectStore, undo: UndoManager?) {
         let total = s.project.duration
-        guard total > 0.3 else { NSSound.beep(); return }
+        guard total > 0.3 else { s.refuse(String(localized: "Aggiungi prima un video: il testo va sopra il montaggio.")); return }
         var t = VPText()
         t.start = min(max(0, s.clock.time), max(0, total - 1))
         t.end = min(total, t.start + 3)

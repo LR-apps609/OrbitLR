@@ -1559,6 +1559,16 @@
         }
       }
     },
+    "Aggiungi almeno un video per esportare.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add at least one video to export."
+          }
+        }
+      }
+    },
     "Aggiungi altri video in fondo": {
       "localizations": {
         "en": {
@@ -1629,6 +1639,26 @@
         }
       }
     },
+    "Aggiungi prima almeno un’immagine.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add at least one image first."
+          }
+        }
+      }
+    },
+    "Aggiungi prima un video: il testo va sopra il montaggio.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a video first: the text goes on top of the edit."
+          }
+        }
+      }
+    },
     "Aggiungi transizione": {
       "localizations": {
         "en": {
@@ -1695,6 +1725,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "AirDrop"
+          }
+        }
+      }
+    },
+    "AirDrop non è disponibile": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AirDrop isn’t available"
           }
         }
       }
@@ -2179,6 +2219,16 @@
         }
       }
     },
+    "Apri Impostazioni di Sistema": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open System Settings"
+          }
+        }
+      }
+    },
     "Apri OrbitLR": {
       "localizations": {
         "en": {
@@ -2235,6 +2285,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open Video, click “Editor” and click the project’s cover: it picks up where you left off. The project saves itself as you work."
+          }
+        }
+      }
+    },
+    "Apri all’accesso": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open at login"
           }
         }
       }
@@ -4151,6 +4211,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Check for Updates…"
+          }
+        }
+      }
+    },
+    "Controlla che Wi‑Fi e Bluetooth siano accesi, oppure usa il codice QR.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check that Wi‑Fi and Bluetooth are on, or use the QR code."
+          }
+        }
+      }
+    },
+    "Controlla da sola se c’è una versione nuova (ogni 3 ore)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checks for a new version on its own (every 3 hours)"
           }
         }
       }
@@ -6596,6 +6676,16 @@
         }
       }
     },
+    "Il codice è scaduto": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The code has expired"
+          }
+        }
+      }
+    },
     "Il contenuto non è più disponibile.": {
       "localizations": {
         "en": {
@@ -7537,6 +7627,26 @@
         }
       }
     },
+    "La clip è già la prima.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The clip is already the first one."
+          }
+        }
+      }
+    },
+    "La clip è già l’ultima.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The clip is already the last one."
+          }
+        }
+      }
+    },
     "La fine deve essere dopo l’inizio.": {
       "localizations": {
         "en": {
@@ -7633,6 +7743,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Next time, do all these steps in one click from the pie menu"
+          }
+        }
+      }
+    },
+    "La scorciatoia ⌥⌘C è già usata da un’altra app. Puoi spegnere la nostra in Impostazioni → Avvio, oppure cambiarla nell’altra app.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The ⌥⌘C shortcut is already used by another app. You can turn ours off in Settings → Startup, or change it in the other app."
           }
         }
       }
@@ -8188,6 +8308,16 @@
         }
       }
     },
+    "L’indicatore è troppo vicino al bordo della clip.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The playhead is too close to the edge of the clip."
+          }
+        }
+      }
+    },
     "L’inquadratura segue le persone (o ciò che si muove in primo piano) con calma, senza scatti. Con scene affollate resta al centro.": {
       "localizations": {
         "en": {
@@ -8304,6 +8434,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The vector engine is missing from the app: reinstall OrbitLR"
+          }
+        }
+      }
+    },
+    "Manca un ultimo passo: in Impostazioni di Sistema → Elementi login, attiva OrbitLR.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One last step: in System Settings → Login Items, turn on OrbitLR."
           }
         }
       }
@@ -9148,6 +9288,16 @@
         }
       }
     },
+    "Nessuno di questi file si apre qui.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None of these files open here."
+          }
+        }
+      }
+    },
     "Niente da fare": {
       "localizations": {
         "en": {
@@ -9224,6 +9374,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Action name, e.g. “Instagram”"
+          }
+        }
+      }
+    },
+    "Non c’è ancora niente da riprodurre.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There’s nothing to play yet."
+          }
+        }
+      }
+    },
+    "Non c’è una musica.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There’s no music."
           }
         }
       }
@@ -10630,6 +10800,26 @@
         }
       }
     },
+    "Porta l’indicatore sopra la musica.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move the playhead over the music."
+          }
+        }
+      }
+    },
+    "Porta l’indicatore sopra una clip.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move the playhead over a clip."
+          }
+        }
+      }
+    },
     "Posizione precedente / successiva": {
       "localizations": {
         "en": {
@@ -11790,6 +11980,16 @@
         }
       }
     },
+    "Rigenera": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Make a new one"
+          }
+        }
+      }
+    },
     "Rilascia\nper la torta": {
       "localizations": {
         "en": {
@@ -12740,6 +12940,16 @@
         }
       }
     },
+    "Scegli prima una clip nella sequenza.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick a clip in the timeline first."
+          }
+        }
+      }
+    },
     "Scegli quali, es. 1–3, 5": {
       "localizations": {
         "en": {
@@ -13176,6 +13386,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Select the video together with the .srt file"
+          }
+        }
+      }
+    },
+    "Seleziona prima uno o più file nel Finder, poi premi di nuovo la scorciatoia.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select one or more files in the Finder first, then press the shortcut again."
           }
         }
       }
@@ -14039,6 +14259,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Spoken word style"
+          }
+        }
+      }
+    },
+    "Sto ancora leggendo questa clip: riprova tra un attimo.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I’m still reading this clip: try again in a moment."
           }
         }
       }
@@ -17374,6 +17604,16 @@
         }
       }
     },
+    "macOS non ha accettato la modifica (%@). Puoi farla a mano in Impostazioni di Sistema → Elementi login.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS didn’t accept the change (%@). You can do it by hand in System Settings → Login Items."
+          }
+        }
+      }
+    },
     "macOS non riesce a leggere questo file": {
       "localizations": {
         "en": {
@@ -18631,6 +18871,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "⌃⌥%lld"
+          }
+        }
+      }
+    },
+    "⌥⌘C è già usata da un’altra app: nel Finder potrebbe non funzionare.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌥⌘C is already used by another app: it may not work in the Finder."
           }
         }
       }

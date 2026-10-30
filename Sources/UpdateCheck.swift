@@ -128,9 +128,15 @@ enum UpdateCheck {
             let a = NSAlert()
             a.messageText = String(localized: "Il download non è riuscito")
             a.informativeText = String(localized: "Riprova, oppure scarica l’aggiornamento dalla pagina di GitHub e aprilo con un doppio clic.")
+            // 5.1 · «Riprova» davvero, non solo scritto
+            a.addButton(withTitle: String(localized: "Riprova"))
             a.addButton(withTitle: String(localized: "Apri la pagina"))
             a.addButton(withTitle: String(localized: "Chiudi"))
-            if a.runModal() == .alertFirstButtonReturn { NSWorkspace.shared.open(rel.page) }
+            switch a.runModal() {
+            case .alertFirstButtonReturn: await download(rel)
+            case .alertSecondButtonReturn: NSWorkspace.shared.open(rel.page)
+            default: break
+            }
             return
         }
         Updater.shared.open(dest, confirmed: true, expectedVersion: rel.version)

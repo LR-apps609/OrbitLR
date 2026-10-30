@@ -1,4 +1,5 @@
 import Foundation
+import AppKit
 import ServiceManagement
 
 /// Le impostazioni stanno nello stesso file che usa il motore (Application Support/LRConverter/prefs),
@@ -53,11 +54,32 @@ final class SettingsModel: ObservableObject {
     }
     @Published var launchAtLogin: Bool {
         didSet {
+            guard !revertingLogin, launchAtLogin != oldValue else { return }
             do {
                 if launchAtLogin { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
+                if launchAtLogin && SMAppService.mainApp.status == .requiresApproval {
+                    Self.loginItemAlert(String(localized: "Manca un ultimo passo: in Impostazioni di Sistema → Elementi login, attiva OrbitLR."))
+                }
             } catch {
+                // 5.1 · Prima l'errore restava nel registro e l'interruttore mentiva: ora torna com'era e si dice perché
                 NSLog("OrbitLR: avvio all'accesso non modificato: \(error)")
+                revertingLogin = true
+                launchAtLogin = oldValue
+                revertingLogin = false
+                Self.loginItemAlert(String(localized: "macOS non ha accettato la modifica (\(error.localizedDescription)). Puoi farla a mano in Impostazioni di Sistema → Elementi login."))
             }
+        }
+    }
+    private var revertingLogin = false
+
+    private static func loginItemAlert(_ text: String) {
+        DispatchQueue.main.async {
+            let a = NSAlert()
+            a.messageText = String(localized: "Apri all’accesso")
+            a.informativeText = text
+            a.addButton(withTitle: String(localized: "Apri Impostazioni di Sistema"))
+            a.addButton(withTitle: String(localized: "Chiudi"))
+            if a.runModal() == .alertFirstButtonReturn { SMAppService.openSystemSettingsLoginItems() }
         }
     }
 

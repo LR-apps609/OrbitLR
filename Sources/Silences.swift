@@ -146,7 +146,7 @@ extension VideoProjectStore {
     /// 4.0 · Toglie le pause lunghe dalla clip scelta (o da quella sotto l'indicatore). Si annulla con ⌘Z.
     @MainActor
     func removeSilences(_ undo: UndoManager?) {
-        guard let i = targetIndex, project.clips.indices.contains(i) else { NSSound.beep(); return }
+        guard let i = targetIndex, project.clips.indices.contains(i) else { refuse(String(localized: "Scegli prima una clip nella sequenza.")); return }
         let c = project.clips[i]
         notice = String(localized: "Ascolto la clip e cerco le pause…")
         Task { @MainActor in

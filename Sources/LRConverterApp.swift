@@ -4,6 +4,15 @@ import UserNotifications
 import Carbon
 
 final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
+    /// 5.1 · Un avviso breve quando OrbitLR non è in primo piano (per esempio dalla scorciatoia nel Finder).
+    static func say(_ text: String) {
+        NSSound.beep()
+        let c = UNMutableNotificationContent()
+        c.title = "OrbitLR"
+        c.body = text
+        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: UUID().uuidString, content: c, trigger: nil))
+    }
+
     private let services = ServiceProvider()
     /// Vero se un'altra OrbitLR era già aperta: questa passa i file alla prima e si chiude.
     private var duplicate = false
@@ -61,7 +70,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             // 4.1.5 · Solo dal Finder (la scorciatoia è attiva solo lì)
             guard NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.apple.finder" else { return }
             let files = FinderSelection.current()
-            if files.isEmpty { NSSound.beep() } else { PieController.shared.present(files: files) }
+            if files.isEmpty { AppDelegate.say(String(localized: "Seleziona prima uno o più file nel Finder, poi premi di nuovo la scorciatoia.")) } else { PieController.shared.present(files: files) }
         }
         Hotkey.shared.setEnabled(UserDefaults.standard.object(forKey: "hotkey") as? Bool ?? true)
         Hotkey.shared.presetAction = { n in PresetStore.shared.run(hotkey: n) }

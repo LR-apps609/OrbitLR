@@ -486,8 +486,14 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         seek(clock.time + seconds)
     }
 
+    /// 5.1 · Mai un «bip» muto: si dice sempre perché non si può.
+    func refuse(_ message: String) {
+        notice = message
+        NSSound.beep()
+    }
+
     func play() {
-        guard player.currentItem != nil, previewDuration > 0 else { NSSound.beep(); return }
+        guard player.currentItem != nil, previewDuration > 0 else { refuse(String(localized: "Non c’è ancora niente da riprodurre.")); return }
         if clock.time >= previewDuration - 0.1 { seek(0) }
         player.play()
         clock.playing = true
@@ -526,7 +532,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     // MARK: Comandi sulle clip
 
     func split(_ undo: UndoManager?) {
-        guard let hit = project.clip(at: clock.time) else { NSSound.beep(); return }
+        guard let hit = project.clip(at: clock.time) else { refuse(String(localized: "Porta l’indicatore sopra una clip.")); return }
         let c = project.clips[hit.index]
         let l = hit.local
         guard l - c.inPoint > 0.1, c.outPoint - l > 0.1 else {
@@ -554,23 +560,24 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     }
 
     func trimStartHere(_ undo: UndoManager?) {
-        guard let hit = project.clip(at: clock.time) else { NSSound.beep(); return }
+        guard let hit = project.clip(at: clock.time) else { refuse(String(localized: "Porta l’indicatore sopra una clip.")); return }
         let i = hit.index, c = project.clips[i]
-        guard c.outPoint - hit.local > 0.1 else { NSSound.beep(); return }
+        guard c.outPoint - hit.local > 0.1 else { refuse(String(localized: "L’indicatore è troppo vicino al bordo della clip.")); return }
         let clipStart = project.starts[i]
         change(undo, String(localized: "Taglia l’inizio")) { $0.clips[i].inPoint = hit.local }
         seek(clipStart)
     }
 
     func trimEndHere(_ undo: UndoManager?) {
-        guard let hit = project.clip(at: clock.time) else { NSSound.beep(); return }
+        guard let hit = project.clip(at: clock.time) else { refuse(String(localized: "Porta l’indicatore sopra una clip.")); return }
         let i = hit.index, c = project.clips[i]
-        guard hit.local - c.inPoint > 0.1 else { NSSound.beep(); return }
+        guard hit.local - c.inPoint > 0.1 else { refuse(String(localized: "L’indicatore è troppo vicino al bordo della clip.")); return }
         change(undo, String(localized: "Taglia la fine")) { $0.clips[i].outPoint = hit.local }
     }
 
     func restoreClip(_ undo: UndoManager?) {
-        guard let i = targetIndex, let info = infos[project.clips[i].path] else { NSSound.beep(); return }
+        guard let i = targetIndex else { refuse(String(localized: "Scegli prima una clip nella sequenza.")); return }
+        guard let info = infos[project.clips[i].path] else { refuse(String(localized: "Sto ancora leggendo questa clip: riprova tra un attimo.")); return }
         change(undo, String(localized: "Clip intera")) { p in
             p.clips[i].inPoint = 0
             p.clips[i].outPoint = info.videoDuration
@@ -578,9 +585,9 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     }
 
     func move(_ delta: Int, _ undo: UndoManager?) {
-        guard let i = targetIndex else { NSSound.beep(); return }
+        guard let i = targetIndex else { refuse(String(localized: "Scegli prima una clip nella sequenza.")); return }
         let j = i + delta
-        guard project.clips.indices.contains(j) else { NSSound.beep(); return }
+        guard project.clips.indices.contains(j) else { refuse(delta > 0 ? String(localized: "La clip è già l’ultima.") : String(localized: "La clip è già la prima.")); return }
         let id = project.clips[i].id
         change(undo, String(localized: "Sposta la clip")) { $0.clips.swapAt(i, j) }
         selected = id
@@ -589,14 +596,14 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
 
     /// 2.7.4 · Accende o spegne l'audio della clip scelta.
     func toggleClipAudio(_ undo: UndoManager?) {
-        guard let i = targetIndex else { NSSound.beep(); return }
+        guard let i = targetIndex else { refuse(String(localized: "Scegli prima una clip nella sequenza.")); return }
         let off = !project.clips[i].isMuted
         change(undo, off ? String(localized: "Spegni l’audio della clip") : String(localized: "Riaccendi l’audio della clip")) { $0.clips[i].muted = off ? true : nil }
     }
 
     /// 2.7.4 · Toglie l'audio da qui alla fine della clip (divide nel punto dell'indicatore).
     func muteFromHere(_ undo: UndoManager?) {
-        guard let hit = project.clip(at: clock.time) else { NSSound.beep(); return }
+        guard let hit = project.clip(at: clock.time) else { refuse(String(localized: "Porta l’indicatore sopra una clip.")); return }
         let c = project.clips[hit.index]
         guard hit.local - c.inPoint > 0.1, c.outPoint - hit.local > 0.1 else {
             change(undo, String(localized: "Spegni l’audio della clip")) { $0.clips[hit.index].muted = true }
@@ -614,7 +621,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     }
 
     func deleteClip(_ undo: UndoManager?) {
-        guard let i = targetIndex else { NSSound.beep(); return }
+        guard let i = targetIndex else { refuse(String(localized: "Scegli prima una clip nella sequenza.")); return }
         change(undo, String(localized: "Elimina la clip")) { $0.clips.remove(at: i) }
         selected = nil
     }
@@ -770,7 +777,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
 
     /// 5.0.1 · La musica finisce nel punto dell'indicatore.
     func musicEndHere(_ undo: UndoManager?) {
-        guard let m = project.music, clock.time > m.offset + 0.2 else { NSSound.beep(); return }
+        guard let m = project.music, clock.time > m.offset + 0.2 else { refuse(project.music == nil ? String(localized: "Non c’è una musica.") : String(localized: "Porta l’indicatore sopra la musica.")); return }
         let t = clock.time
         change(undo, String(localized: "Musica fino a qui")) { $0.music?.end = t }
     }
@@ -784,7 +791,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     /// montaggio): si sposta, si accorcia e si taglia da solo, e la clip resta muta. Una traccia sola: se c'è già
     /// una musica, prima si toglie.
     func detachClipAudio(_ undo: UndoManager?) {
-        guard let i = targetIndex, project.clips.indices.contains(i) else { NSSound.beep(); return }
+        guard let i = targetIndex, project.clips.indices.contains(i) else { refuse(String(localized: "Scegli prima una clip nella sequenza.")); return }
         let c = project.clips[i]
         guard project.music == nil else {
             notice = String(localized: "C’è già una musica: c’è posto per una traccia audio sola. Togli la musica e riprova.")
@@ -829,7 +836,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     // MARK: Esportazione
 
     func export() {
-        guard !project.clips.isEmpty else { NSSound.beep(); return }
+        guard !project.clips.isEmpty else { refuse(String(localized: "Aggiungi almeno un video per esportare.")); return }
         guard project.duration > 0.1 else { notice = String(localized: "Il montaggio è vuoto."); NSSound.beep(); return }
         if !analyzing.isEmpty {
             notice = String(localized: "Un attimo: sto ancora trovando le voci nel video per abbassare la musica.")
@@ -1310,7 +1317,7 @@ struct VideoEditorView: View {
 
     /// 5.0.1 · La velocità della clip scelta (la stessa di «Effetti»).
     private func setSpeed(_ v: Double) {
-        guard let i = s.targetIndex else { NSSound.beep(); return }
+        guard let i = s.targetIndex else { s.refuse(String(localized: "Scegli prima una clip nella sequenza.")); return }
         s.change(undo, String(localized: "Velocità")) { p in
             guard p.clips.indices.contains(i) else { return }
             var e = p.clips[i].fx ?? VPEffects()
@@ -1504,18 +1511,18 @@ struct VideoEditorView: View {
     private var targetClip: VPClip? { s.targetIndex.map { s.project.clips[$0] } }
 
     private func quick(_ id: String, param: String) {
-        guard let c = targetClip, let action = Catalog.action(id: id, kind: .video) else { NSSound.beep(); return }
+        guard let c = targetClip, let action = Catalog.action(id: id, kind: .video) else { s.refuse(String(localized: "Scegli prima una clip nella sequenza.")); return }
         s.lastJob = QueueStore.shared.enqueue(files: [c.url], action: action, param: param)
     }
 
     /// 5.0.1 · L'audio del pezzo tenuto nella clip, in un file M4A accanto al video.
     private func extractClipAudio() {
-        guard let c = targetClip else { NSSound.beep(); return }
+        guard let c = targetClip else { s.refuse(String(localized: "Scegli prima una clip nella sequenza.")); return }
         s.lastJob = QueueStore.shared.enqueue(files: [c.url], action: QuickMedia.clipAudio, param: String(format: "%.3f|%.3f", c.inPoint, c.outPoint))
     }
 
     private func quickGIF() {
-        guard let c = targetClip, let action = Catalog.action(id: "gifcut", kind: .video) else { NSSound.beep(); return }
+        guard let c = targetClip, let action = Catalog.action(id: "gifcut", kind: .video) else { s.refuse(String(localized: "Scegli prima una clip nella sequenza.")); return }
         let end = min(c.outPoint, c.inPoint + 15)
         s.lastJob = QueueStore.shared.enqueue(files: [c.url], action: action, param: String(format: "%.3f|%.3f", c.inPoint, end))
     }
@@ -2508,7 +2515,7 @@ private struct EffectOptions: View {
     }
 
     private func change(_ name: String, _ f: @escaping (inout VPEffects) -> Void) {
-        guard let i = index else { NSSound.beep(); return }
+        guard let i = index else { s.refuse(String(localized: "Scegli prima una clip nella sequenza.")); return }
         s.change(undo, name) { p in
             guard p.clips.indices.contains(i) else { return }
             var e = p.clips[i].fx ?? VPEffects()

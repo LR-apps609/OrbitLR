@@ -106,7 +106,10 @@ final class Workspace: ObservableObject, @unchecked Sendable {
         }
         if !append { lastJob = nil }
         rebuildAll()
-        if groups.isEmpty { NSSound.beep() }
+        if groups.isEmpty {
+            if notice == nil { notice = String(localized: "Nessuno di questi file si apre qui.") }
+            NSSound.beep()
+        }
     }
 
     func remove(_ file: URL, from group: FileGroup) {

@@ -55,8 +55,22 @@ final class Hotkey {
         installHandler()
         guard mainRef == nil else { return }
         let id = EventHotKeyID(signature: signature, id: 1)
-        RegisterEventHotKey(UInt32(kVK_ANSI_C), UInt32(cmdKey | optionKey), id, GetApplicationEventTarget(), 0, &mainRef)
+        let st = RegisterEventHotKey(UInt32(kVK_ANSI_C), UInt32(cmdKey | optionKey), id, GetApplicationEventTarget(), 0, &mainRef)
+        // 5.1 · Se un'altra app ha già ⌥⌘C, prima non succedeva niente e basta: ora lo si dice, una volta sola
+        if st == OSStatus(eventHotKeyExistsErr) {
+            mainRef = nil
+            conflict = true
+            if !warned {
+                warned = true
+                AppDelegate.say(String(localized: "La scorciatoia ⌥⌘C è già usata da un’altra app. Puoi spegnere la nostra in Impostazioni → Avvio, oppure cambiarla nell’altra app."))
+            }
+        } else if st == noErr {
+            conflict = false
+        }
     }
+    /// 5.1 · Vero se ⌥⌘C è già presa da un'altra app.
+    private(set) var conflict = false
+    private var warned = false
 
     func unregister() {
         if let r = mainRef { UnregisterEventHotKey(r) }

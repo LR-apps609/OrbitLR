@@ -1015,6 +1015,10 @@ struct SettingsView: View {
                 Section("Avvio") {
                     Toggle("Apri OrbitLR all’accesso al Mac (il menu si apre all’istante)", isOn: $draft.launchAtLogin)
                     Toggle("Scorciatoia ⌥⌘C sui file selezionati nel Finder", isOn: $draft.hotkey)
+                    if draft.hotkey && Hotkey.shared.conflict {
+                        Label("⌥⌘C è già usata da un’altra app: nel Finder potrebbe non funzionare.", systemImage: "exclamationmark.triangle")
+                            .font(.system(size: 11.5)).foregroundStyle(.secondary)
+                    }
                     Toggle("Ripiano: quando trascini dei file, OrbitLR compare sul lato dello schermo", isOn: $dropShelf)
                     if dropShelf {
                         Picker("Lato del ripiano", selection: $dropShelfSide) {
@@ -1022,7 +1026,7 @@ struct SettingsView: View {
                             Text("Sinistra").tag("left")
                         }
                     }
-                    Toggle("Controlla da sola se c’è una versione nuova (una volta al giorno)", isOn: $autoUpdate)
+                    Toggle("Controlla da sola se c’è una versione nuova (ogni 3 ore)", isOn: $autoUpdate)
                     Button("Controlla adesso…") { Task { @MainActor in await UpdateCheck.check(userInitiated: true) } }
                 }
                 // 5.0 · La promessa sulla privacy, scritta con precisione

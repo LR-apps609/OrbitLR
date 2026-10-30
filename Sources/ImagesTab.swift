@@ -129,7 +129,7 @@ final class KindTabModel: ObservableObject, @unchecked Sendable {
 
     func run(_ chosen: Action) {
         let t = targets
-        guard !t.isEmpty else { NSSound.beep(); return }
+        guard !t.isEmpty else { notice = String(localized: "Aggiungi prima almeno un’immagine."); NSSound.beep(); return }
         var a = chosen
         var presetParam: String? = nil
         if let recipe = RecipeStore.shared.recipe(for: chosen) { lastJob = RecipeStore.shared.run(recipe, files: t); return }

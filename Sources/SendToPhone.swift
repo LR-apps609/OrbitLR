@@ -28,7 +28,13 @@ enum SendToPhone {
 
     static func airDrop(_ file: URL) {
         guard let copy = try? shareCopy(of: file),
-              let s = NSSharingService(named: .sendViaAirDrop) else { NSSound.beep(); return }
+              let s = NSSharingService(named: .sendViaAirDrop) else {
+            let a = NSAlert()
+            a.messageText = String(localized: "AirDrop non è disponibile")
+            a.informativeText = String(localized: "Controlla che Wi‑Fi e Bluetooth siano accesi, oppure usa il codice QR.")
+            a.runModal()
+            return
+        }
         s.perform(withItems: [copy])
     }
 
@@ -69,6 +75,9 @@ final class PhoneShare: ObservableObject, @unchecked Sendable {
     @Published private(set) var url: String? = nil
     @Published private(set) var error: String? = nil
     @Published private(set) var downloaded = false
+    /// 5.1 · Dopo 10 minuti il codice scade: si dice, con «Rigenera», invece di una rotella infinita
+    @Published private(set) var expired = false
+    private var original: URL?
     private var listener: NWListener?
     private var file: URL?
     /// 3.5.2 · 128 bit casuali: impossibile da indovinare
@@ -83,6 +92,8 @@ final class PhoneShare: ObservableObject, @unchecked Sendable {
         stop()
         error = nil
         downloaded = false
+        expired = false
+        self.original = original
         guard let copy = try? SendToPhone.shareCopy(of: original) else { error = String(localized: "Non riesco a preparare il file"); return }
         guard let ip = SendToPhone.localAddress() else { error = String(localized: "Il Mac non è collegato a una rete Wi-Fi"); return }
         file = copy
@@ -105,12 +116,17 @@ final class PhoneShare: ObservableObject, @unchecked Sendable {
             }
             l.start(queue: queue)
             listener = l
-            let w = DispatchWorkItem { [weak self] in self?.stop() }
+            let w = DispatchWorkItem { [weak self] in self?.stop(); self?.expired = true }
             stopTimer = w
             DispatchQueue.main.asyncAfter(deadline: .now() + Self.lifetime, execute: w)
         } catch {
             self.error = String(localized: "Non riesco ad aprire la condivisione")
         }
+    }
+
+    /// 5.1 · Un codice nuovo, per lo stesso file.
+    func regenerate() {
+        if let o = original { start(o) }
     }
 
     func stop() {
@@ -242,7 +258,17 @@ struct SendToPhoneStrip: View {
                         .font(.system(size: 12, weight: .semibold))
                 }
             } else if let e = share.error {
-                Label(e, systemImage: "wifi.exclamationmark").foregroundStyle(.secondary).frame(width: 220, height: 220)
+                VStack(spacing: 10) {
+                    Label(e, systemImage: "wifi.exclamationmark").foregroundStyle(.secondary)
+                    Button("Riprova") { share.regenerate() }
+                }
+                .frame(width: 220, height: 220)
+            } else if share.expired {
+                VStack(spacing: 10) {
+                    Label("Il codice è scaduto", systemImage: "clock.badge.xmark").foregroundStyle(.secondary)
+                    Button("Rigenera") { share.regenerate() }.buttonStyle(.borderedProminent)
+                }
+                .frame(width: 220, height: 220)
             } else {
                 ProgressView().frame(width: 220, height: 220)
             }
