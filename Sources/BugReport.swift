@@ -208,6 +208,7 @@ struct BugReportView: View {
                                     Button { screenshots.removeAll { $0 == u } } label: {
                                         Image(systemName: "xmark.circle.fill").font(.system(size: 14))
                                             .foregroundStyle(Theme.ink.opacity(0.7))
+                                            .hitArea()                      // 5.2 · area di clic di almeno 24 pt
                                     }
                                     .buttonStyle(.plain)
                                     .offset(x: 6, y: -6)

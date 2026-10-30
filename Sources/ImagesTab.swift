@@ -379,6 +379,7 @@ private struct ImageTile: View {
                     Button(action: remove) {
                         Image(systemName: "xmark.circle.fill").font(.system(size: 15, weight: .bold))
                             .symbolRenderingMode(.palette).foregroundStyle(Color.white, Color.black.opacity(0.6))
+                            .hitArea()                      // 5.2 · area di clic di almeno 24 pt
                     }
                     .buttonStyle(.plain).padding(5)
                     .help("Togli dalla scheda (il file resta dov’è)")

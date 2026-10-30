@@ -307,6 +307,7 @@ struct HideMarkEditor: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill").font(.system(size: 14, weight: .bold))
                         .symbolRenderingMode(.palette).foregroundStyle(Color.white, Color.black.opacity(0.7))
+                        .hitArea()                      // 5.2 · area di clic di almeno 24 pt
                 }
                 .buttonStyle(.plain).offset(x: 7, y: -7)
                 .help("Rimuovi questa zona")

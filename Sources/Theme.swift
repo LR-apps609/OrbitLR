@@ -1,5 +1,13 @@
 import SwiftUI
+
 import AppKit
+
+extension View {
+    /// 5.2 · Area di clic di almeno 24 × 24 pt, anche quando il disegno resta piccolo.
+    func hitArea(_ side: CGFloat = 24) -> some View {
+        frame(minWidth: side, minHeight: side).contentShape(Rectangle())
+    }
+}
 
 /// Colori e stili condivisi: ogni tipo di file ha il suo colore, usato in menu, coda e cronologia.
 extension Color {

@@ -274,7 +274,7 @@ struct PieView: View {
                     Image(systemName: "xmark")
                         .font(.system(size: max(9, side * 0.022), weight: .bold))
                         .foregroundStyle(Theme.ivory)
-                        .frame(width: max(20, side * 0.05), height: max(20, side * 0.05))
+                        .frame(width: max(24, side * 0.05), height: max(24, side * 0.05))
                         .background(Circle().fill(Theme.ink.opacity(0.75)))
                 }
                 .buttonStyle(.plain)

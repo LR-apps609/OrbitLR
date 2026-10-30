@@ -180,7 +180,7 @@ struct ResultBubbleView: View {
             }
             Spacer(minLength: 0)
             Button(action: close) {
-                Image(systemName: "xmark").font(.system(size: 10, weight: .bold)).frame(width: 20, height: 20)
+                Image(systemName: "xmark").font(.system(size: 10, weight: .bold)).frame(width: 24, height: 24)
                     .background(Circle().fill(Theme.ink.opacity(0.08)))
             }
             .buttonStyle(.plain).accessibilityLabel("Chiudi")

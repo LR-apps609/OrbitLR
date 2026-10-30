@@ -518,6 +518,7 @@ struct FileChip: View {
             Button(action: onRemove) {
                 Image(systemName: "xmark.circle.fill").font(.system(size: 13))
                     .foregroundStyle(hover ? Theme.color(.pdf) : Color.secondary)
+                    .hitArea()                      // 5.2 · area di clic di almeno 24 pt
             }
             .buttonStyle(.plain)
             .help("Togli questo file")

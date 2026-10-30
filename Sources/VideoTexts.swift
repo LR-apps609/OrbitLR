@@ -382,6 +382,7 @@ struct TextOptions: View {
                                 Circle().fill(Color(.sRGB, red: c.rgb.0, green: c.rgb.1, blue: c.rgb.2))
                                     .frame(width: 20, height: 20)
                                     .overlay(Circle().strokeBorder(t.color == c.id ? Theme.brass : Theme.ink.opacity(0.25), lineWidth: t.color == c.id ? 2.5 : 1))
+                                    .hitArea()
                             }
                             .buttonStyle(.plain).help(c.name)
                         }

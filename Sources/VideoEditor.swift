@@ -1982,6 +1982,7 @@ private struct ProjectTimeline: View {
                                     .font(.system(size: 15, weight: .bold))
                                     .symbolRenderingMode(.palette)
                                     .foregroundStyle(Color.white, Color.black.opacity(0.65))
+                                    .hitArea()                      // 5.2 · area di clic di almeno 24 pt
                             }
                             .buttonStyle(.plain)
                             .padding(.top, 3).padding(.trailing, 12)
@@ -2042,6 +2043,7 @@ private struct ProjectTimeline: View {
                 .background(Circle().fill(tr == nil ? Theme.cream : Theme.brass))
                 .overlay(Circle().stroke(Theme.ink.opacity(0.25), lineWidth: 0.5))
                 .shadow(color: .black.opacity(0.2), radius: 1.5, y: 1)
+                .hitArea()                      // 5.2 · il pallino resta di 18, l'area di clic è 24
         }
         .buttonStyle(.plain)
         .help(tr == nil ? String(localized: "Aggiungi una transizione") : String(localized: "Transizione: \(VPTransition.name(tr!.kind))"))
@@ -2058,7 +2060,7 @@ private struct ProjectTimeline: View {
             .frame(width: 10)
             .overlay(Capsule().fill(Color.white.opacity(0.9)).frame(width: 2, height: 18))
             .padding(.vertical, 1)
-            .contentShape(Rectangle().inset(by: -5))
+            .contentShape(Rectangle().inset(by: -7))      // 5.2 · 24 pt di presa
             .onHover { inside in
                 if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() }
             }
@@ -2162,6 +2164,7 @@ private struct ProjectTimeline: View {
     private func edge(_ t: VPText, mode: Int, pps: CGFloat, total: Double) -> some View {
         Rectangle().fill(Color.white.opacity(0.001)).frame(width: 6)
             .overlay(Capsule().fill(Color.white.opacity(0.8)).frame(width: 2, height: 10))
+            .contentShape(Rectangle().inset(by: -9))      // 5.2 · 24 pt di presa sui bordi del testo
             .onHover { inside in if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() } }
             .gesture(DragGesture(minimumDistance: 1).onChanged { v in moveText(t, by: v.translation.width, pps: pps, total: total, mode: mode) }
                 .onEnded { _ in endTextDrag() })
