@@ -92,6 +92,9 @@ jobs:
           grep -E -A8 "^error(\[|:)" test.log | head -60 | while IFS= read -r l; do echo "::error::$l"; done
           exit $st
 
+      - name: Prove dell'interfaccia (senza browser)
+        run: node --test Tools/prova-tempi-windows.mjs
+
       - name: Codificatori di questo computer
         working-directory: Windows
         run: |

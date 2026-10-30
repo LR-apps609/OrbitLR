@@ -577,3 +577,16 @@ textarea.tts:focus { border-color: var(--brass); }
 .group-h.open svg { transform: none; }
 .dl-row .dl-in { flex: 1 1 auto; width: auto; min-width: 60px; }
 .dl-row .dl-go { flex: none; }
+
+/* 1.1 · «Al sicuro»: righe con «Annulla»/«Riprova», menu del clic destro, clip mancanti, tempi scrivibili */
+.toast.act { display: flex; align-items: center; gap: 12px; }
+.toast-btn { border: 0; background: color-mix(in srgb, var(--card) 18%, transparent); color: var(--card); font: inherit; font-weight: 900; padding: 4px 10px; border-radius: 8px; cursor: pointer; }
+.toast-btn:hover { background: color-mix(in srgb, var(--card) 30%, transparent); }
+.pop.ctx { width: 220px; padding: 6px; gap: 2px; }
+.ctx-i { display: flex; align-items: center; gap: 8px; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 700; color: var(--ink); text-align: left; padding: 7px 9px; border-radius: 8px; cursor: pointer; }
+.ctx-i:hover:not([disabled]), .ctx-i:focus-visible { background: var(--bg-2); outline: none; }
+.ctx-i[disabled] { color: var(--quiet); cursor: default; }
+.blk.missing { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--err) 30%, var(--bg-2)) 0 8px, var(--bg-2) 8px 16px); }
+.stage .miss { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: 80%; text-align: center; color: #fff; font-weight: 800; font-size: 13px; text-shadow: 0 1px 2px rgba(0,0,0,.7); pointer-events: none; }
+.trim-row input.t { font: inherit; font-variant-numeric: tabular-nums; font-weight: 800; color: var(--ink); background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 1px 3px; width: 8.5ch; }
+.trim-row input.t:hover, .trim-row input.t:focus { border-color: var(--line-2); background: var(--card); outline: none; }

@@ -2,7 +2,7 @@
 // I tasti I e O mettono inizio e fine mentre si guarda; Spazio avvia e ferma.
 
 import { fileUrl, DEMO } from "./api.js";
-import { fmtTime, h, ico } from "./util.js";
+import { fmtTime, fmtTimeMs, h, ico, parseTime, toast } from "./util.js";
 import { t } from "./i18n.js";
 
 export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange }) {
@@ -25,15 +25,53 @@ export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange 
   const hB = h("div.hd", { role: "slider", tabindex: "0", "aria-label": t("Fine") });
   const ph = h("div.ph");
   const rail = h("div.rail", canvas, sel, ph, hA, hB);
-  const tStart = h("span.t");
-  const tEnd = h("span.t");
+  // 1.1 · Inizio e fine si scrivono, al millesimo («1:02,345»)
+  const tStart = h("input.t", { type: "text", spellcheck: "false", "aria-label": t("Inizio (minuti:secondi,millesimi)"), title: t("Scrivi il tempo, per esempio 1:02,345") });
+  const tEnd = h("input.t", { type: "text", spellcheck: "false", "aria-label": t("Fine (minuti:secondi,millesimi)"), title: t("Scrivi il tempo, per esempio 1:02,345") });
   const tLen = h("span.t");
+  const typed = (inp, which) => {
+    const v = parseTime(inp.value);
+    if (v == null) { toast(t("Scrivi un tempo come 1:02,345.")); draw(); return; }
+    mark(true);
+    which === "a" ? setStart(v) : setEnd(v);
+  };
+  tStart.addEventListener("change", () => typed(tStart, "a"));
+  tEnd.addEventListener("change", () => typed(tEnd, "b"));
+  for (const inp of [tStart, tEnd]) inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); inp.blur(); } if (e.key === "Escape") { e.stopPropagation(); draw(); inp.blur(); } });
+
+  // 1.1 · Ctrl+Z / Ctrl+Y su tutta la selezione (maniglie, «Inizio qui», «Fine qui», tasti, campi)
+  const past = [], future = [];
+  let base = null, lastMark = 0;
+  function mark(force = false) {
+    const now = Date.now();
+    const top = past[past.length - 1];
+    if (!force && now - lastMark < 700 && top) { lastMark = now; return; }
+    lastMark = now;
+    if (!top || top[0] !== start || top[1] !== end) past.push([start, end]);
+    if (past.length > 200) past.shift();
+    future.length = 0;
+  }
+  function undoSel() {
+    while (past.length && past[past.length - 1][0] === start && past[past.length - 1][1] === end) past.pop();
+    if (!past.length) return toast(t("Niente da annullare."));
+    future.push([start, end]);
+    [start, end] = past.pop();
+    lastMark = 0;
+    draw();
+  }
+  function redoSel() {
+    if (!future.length) return toast(t("Niente da rifare."));
+    past.push([start, end]);
+    [start, end] = future.pop();
+    lastMark = 0;
+    draw();
+  }
   const playBtn = h("button.btn", { onclick: () => playSelection() }, ico("play", 14), t("Ascolta il pezzo"));
   const row = h("div.trim-row",
     h("span", t("Da ")), tStart, h("span", t(" a ")), tEnd, h("span", " · "), tLen,
     h("span.grow"),
-    h("button.btn", { onclick: () => setStart(player.currentTime) }, t("Inizio qui")),
-    h("button.btn", { onclick: () => setEnd(player.currentTime) }, t("Fine qui")),
+    h("button.btn", { onclick: () => { mark(true); setStart(player.currentTime); } }, t("Inizio qui")),
+    h("button.btn", { onclick: () => { mark(true); setEnd(player.currentTime); } }, t("Fine qui")),
     playBtn);
   el.append(box, rail, row);
 
@@ -48,8 +86,8 @@ export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange 
     sel.style.width = Math.max(0, pb - pa) + "%";
     hA.style.left = pa + "%";
     hB.style.left = pb + "%";
-    tStart.textContent = fmtTime(start, true);
-    tEnd.textContent = fmtTime(end, true);
+    if (document.activeElement !== tStart) tStart.value = fmtTimeMs(start);
+    if (document.activeElement !== tEnd) tEnd.value = fmtTimeMs(end);
     tLen.textContent = fmtTime(end - start, true);
     hA.setAttribute("aria-valuetext", fmtTime(start));
     hB.setAttribute("aria-valuetext", fmtTime(end));
@@ -93,6 +131,7 @@ export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange 
     handle.addEventListener("pointerdown", (e) => {
       e.preventDefault();
       e.stopPropagation();
+      mark(true);
       handle.setPointerCapture(e.pointerId);
       const move = (ev) => {
         const t = x2t(ev.clientX);
@@ -112,6 +151,7 @@ export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange 
       const step = e.shiftKey ? 1 : 0.1;
       if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
         e.preventDefault();
+        mark();
         const d = e.key === "ArrowLeft" ? -step : step;
         which === "a" ? setStart(start + d) : setEnd(end + d);
       }
@@ -156,9 +196,16 @@ export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange 
 
   let destroyed = false;
   const keys = (e) => {
-    if (!el.isConnected || (e.target instanceof Element && e.target.closest("input, textarea, select, button")) || document.querySelector(".modal-bg")) return;
-    if (e.key === "i" || e.key === "I") setStart(player.currentTime);
-    else if (e.key === "o" || e.key === "O") setEnd(player.currentTime);
+    if (!el.isConnected || document.querySelector(".modal-bg")) return;
+    const k = e.key.toLowerCase();
+    if ((e.ctrlKey || e.metaKey) && !(e.target instanceof Element && e.target.closest("input, textarea, select"))) {
+      if (k === "z" && !e.shiftKey) { e.preventDefault(); undoSel(); }
+      else if (k === "y" || (k === "z" && e.shiftKey)) { e.preventDefault(); redoSel(); }
+      return;
+    }
+    if ((e.target instanceof Element && e.target.closest("input, textarea, select, button")) || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === "i" || e.key === "I") { mark(true); setStart(player.currentTime); }
+    else if (e.key === "o" || e.key === "O") { mark(true); setEnd(player.currentTime); }
     else if (e.key === " ") {
       e.preventDefault();
       player.paused ? player.play().catch(() => {}) : player.pause();
@@ -176,12 +223,15 @@ export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange 
     el,
     get start() { return start; },
     get end() { return end; },
+    /** 1.1 · La selezione è cambiata da quando si è aperta (c'è qualcosa da perdere). */
+    get changed() { const b = base || [0, maxLen ? Math.min(duration, maxLen) : duration]; return Math.abs(start - b[0]) > 0.0005 || Math.abs(end - b[1]) > 0.0005; },
     setPeaks(p) { peaks = p; drawWave(); },
     /** Riprende una selezione salvata (progetti audio). */
     setRange(a, b) {
       start = Math.max(0, Math.min(duration, a));
       end = Math.max(start + 0.1, Math.min(duration, b));
       if (maxLen && end - start > maxLen) end = Math.min(duration, start + maxLen);
+      base = [start, end];
       draw();
     },
     setMaxLen(m) { maxLen = m; if (maxLen && end - start > maxLen) end = Math.min(duration, start + maxLen); draw(); },

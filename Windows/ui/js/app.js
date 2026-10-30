@@ -12,10 +12,10 @@ import { videoTab } from "./video.js";
 import { activityPage, helpPage, report, settingsPage } from "./pages.js";
 import { autoPage } from "./auto.js";
 import { showFeedback } from "./feedback.js";
-import { env, extOf, fmtBytes, h, ico, modal, store, toast } from "./util.js";
+import { actionToast, closeReasons, contextMenu, env, extOf, fmtBytes, h, ico, modal, store, toast } from "./util.js";
 import { t, tr, LANG, isEn } from "./i18n.js";
 
-const VERSION = "1.0.2";
+const VERSION = "1.1.0";
 // Numero della compilazione (lo scrive GitHub quando crea l'installazione)
 const BUILD = 0;
 
@@ -112,7 +112,9 @@ function renderDrawer() {
   let clickTimer;
   drawerList.replaceChildren(...items.map((d) => h("li", { title: t`${d.name}\nClic: mostra nella cartella · Doppio clic: apri`,
     onclick: () => { clearTimeout(clickTimer); clickTimer = setTimeout(() => reveal(d.path), 260); },
-    ondblclick: () => { clearTimeout(clickTimer); openPath(d.path); } },
+    ondblclick: () => { clearTimeout(clickTimer); openPath(d.path); },
+    // 1.1 · Clic destro: le stesse due cose
+    oncontextmenu: (e) => contextMenu(e, [{ label: t("Mostra nella cartella"), icon: "folder-open", onclick: () => reveal(d.path) }, { label: t("Apri"), icon: "external-link", onclick: () => openPath(d.path) }]) },
     ico(iconFor(d.name), 15), h("span.n", d.name), h("span.s", fmtBytes(d.size)))));
 }
 
@@ -175,6 +177,11 @@ async function askUpdate() {
   if (!ok) return;
   // Le novità si mostrano alla prossima apertura, dalla versione nuova
   store.set("newsPending", { version: u.version, notes: notes || "" });
+  installUpdate();
+}
+
+/** Scarica e installa; se non riesce, una riga con «Riprova» che riprova davvero (1.1). */
+async function installUpdate() {
   updateCorner.disabled = true;
   updateLink.disabled = true;
   const show = (p) => { updateCorner.textContent = t`Scarico l’aggiornamento… ${Math.round(p * 100)}%`; };
@@ -187,7 +194,7 @@ async function askUpdate() {
     updateCorner.disabled = false;
     updateLink.disabled = false;
     updateCorner.replaceChildren(ico("circle-arrow-down", 15), t("Nuovo aggiornamento disponibile"));
-    toast(t`L’aggiornamento non è riuscito: ${tr(String(e))}`);
+    actionToast(t`L’aggiornamento non è riuscito: ${tr(String(e))}`, t("Riprova"), () => installUpdate(), 15000);
   }
 }
 
@@ -232,18 +239,45 @@ async function boot() {
     if (!s.ready) toast(t("Il motore video non si è avviato: reinstalla OrbitLR."));
     if (app.current === "settings") app.pages.settings.show();
   });
-  // Chiudere con dei lavori in corso
+  // Chiudere OrbitLR (✕, Alt+F4, «Esci» vicino all'orologio): prima si salva il montaggio; si chiede solo
+  // se ci sono lavori in corso o qualcosa da perdere (1.1: PDF modificati, pannelli con lavoro dentro)
+  let asking = false;
   window.__TAURI__?.event.listen("close-requested", async () => {
-    const n = running().length;
-    const ok = await modal(t("Ci sono lavori in corso"), t`${n === 1 ? t("Un lavoro non è") : t`${n} lavori non sono`} ancora finit${n === 1 ? "o" : "i"}. Se chiudi adesso si interrompono e i file a metà vengono cancellati.`,
-      [{ label: t("Continua a lavorare"), value: false }, { label: t("Interrompi e chiudi"), value: true, primary: true }]);
-    if (ok) invoke("quit_now");
+    invoke("close_seen").catch(() => {});
+    if (asking) return;
+    asking = true;
+    try {
+      window.dispatchEvent(new Event("orbit-flush"));
+      const n = running().length;
+      const reasons = closeReasons();
+      if (!n && !reasons.length) return invoke("quit_now");
+      const text = [n ? t`${n === 1 ? t("Un lavoro non è") : t`${n} lavori non sono`} ancora finit${n === 1 ? "o" : "i"}. Se chiudi adesso si interrompono e i file a metà vengono cancellati.` : "", ...reasons].filter(Boolean).join("\n\n");
+      const ok = await modal(n ? t("Ci sono lavori in corso") : t("Chiudere OrbitLR?"), text,
+        [{ label: t("Continua a lavorare"), value: false, focus: true }, { label: n ? t("Interrompi e chiudi") : t("Chiudi senza salvare"), value: true, danger: true }]);
+      if (ok) invoke("quit_now");
+    } catch {
+      invoke("quit_now");
+    } finally {
+      asking = false;
+    }
   });
+  window.addEventListener("pagehide", () => window.dispatchEvent(new Event("orbit-flush")));
   // «Apri con OrbitLR» mentre l'app è già aperta
   window.__TAURI__?.event.listen("open-files", (e) => handleDrop(e.payload || []));
   // File passati all'avvio (Apri con…); nelle prove automatiche anche scheda e azione
   invoke("startup").then(async (st) => {
     env.store = !!st?.store;
+    // 1.1 · Si era chiusa all'improvviso: si torna nel montaggio aperto, com'era all'ultimo salvataggio
+    if (st?.crashed && store.get("ed.open", null)) {
+      store.set("videoMode", "editor");
+      show("video");
+      app.pages.video.restore?.(true);
+    }
+    // 1.1 · Ctrl+Alt+C già presa da un'altra app: lo si dice (una volta per versione)
+    if (st?.shortcut_taken && store.get("shortcutWarned", "") !== VERSION) {
+      store.set("shortcutWarned", VERSION);
+      setTimeout(() => toast(t("Ctrl+Alt+C è già usata da un’altra app: per aprire in OrbitLR i file di Esplora file usa il tasto destro → «Apri con OrbitLR»."), 9000), 3000);
+    }
     if (!st || !st.files?.length) return;
     if (st.tab) {
       show(st.tab);
@@ -274,6 +308,8 @@ async function boot() {
   }
   setInterval(() => checkUpdate(), 3600e3);
   app.checkUpdate = checkUpdate;
+  // 1.1 · Da adesso la ✕ della finestra chiede alla pagina
+  invoke("ui_ready").catch(() => {});
   setTimeout(() => splash.classList.add("out"), 450);
   setTimeout(() => splash.remove(), 900);
 }

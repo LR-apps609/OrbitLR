@@ -1,3 +1,35 @@
+Novità per Windows 1.1 «Al sicuro»:
+• Montaggio: se OrbitLR si chiude all'improvviso, alla riapertura torni nel progetto, con indicatore, zoom e strumento dove li avevi lasciati, e un avviso dice a che ora era salvato. Anche dopo una chiusura normale, tornando nel Montaggio riprendi da lì
+• Montaggio: i video che non trova più restano nel progetto finché non li ritrovi con «Trova i file…». Un progetto eliminato o svuotato va nel Cestino di Windows, mai cancellato, e «Annulla» lo rimette
+• Montaggio: prima di esportare controlla lo spazio sul disco, mentre esporta dice quanto manca («circa 2 min») e il file prende il nome del progetto. Tornando ai Progetti l'esportazione resta in vista
+• «Interrompi» ferma davvero: un lavoro interrotto all'ultimo momento non lascia file. I sottotitoli automatici finiscono sempre nel progetto da cui sono partiti
+• Editor PDF: chiudendo con modifiche chiede se salvare una copia; Ctrl+Z e Ctrl+Y su testi, firme, oscuramenti e campi; lo stesso PDF non si apre due volte; rifare la firma chiede conferma
+• Chiudere OrbitLR (✕, Alt+F4 o «Esci» vicino all'orologio) chiede prima se c'è un PDF modificato, un taglio o delle zone scelti e non usati, o un'idea non mandata
+• Nascondi un logo, Taglia, le opzioni e Suggerisci: Esc e Annulla chiedono prima di buttare il lavoro. Ctrl+Z anche sulle zone
+• Togliere un'azione, una ricetta, una cartella automatica o una voce della cronologia si annulla (riga con «Annulla», e Ctrl+Z), con un avviso se una cartella automatica usa ancora l'azione tolta. Nelle domande che buttano qualcosa la scelta predefinita è quella che non butta, ed Esc risponde «Annulla»
+• Audio: le opzioni restano nel progetto e i progetti non spariscono più da soli quando il file manca
+• Niente più clic senza risposta: OrbitLR dice cosa manca («Scegli prima una clip nella sequenza.», «L'indicatore è troppo vicino al bordo della clip.»), i pulsanti spenti dicono perché, e Ctrl+Alt+C già usata da un'altra app viene segnalata. Il codice QR per il telefono, quando scade, si rigenera
+• Lavoro non riuscito: nella barra e in Attività c'è «Riprova» (o il pulsante che risolve, come «Installa LibreOffice»). Anche l'aggiornamento che non riesce ha «Riprova»
+• Clic destro e doppio clic su clip, testi, musica, Attività, Cassetto e file delle schede
+• Audio e Taglia: inizio e fine si scrivono al millesimo («1:02,345»), e Ctrl+Z vale per tutta la selezione
+• Corretti i testi dell'Aiuto che non dicevano il vero («Montaggio», «PDF e documenti», l'icona vicino all'orologio); nel Montaggio Alt + ← → ora sposta davvero di un millisecondo, e «Annulla» nella barra del risultato non dà più un errore
+
+What’s new in Windows 1.1 “Safe”:
+• Editor: if OrbitLR quits unexpectedly, when you reopen it you’re back in the project, with the playhead, zoom and tool where you left them, and a notice says what time it was saved. After a normal quit too, going back to the Editor picks up from there
+• Editor: videos it can’t find stay in the project until you find them with “Find Files…”. A deleted or emptied project goes to the Windows Recycle Bin, never deleted, and “Undo” brings it back
+• Editor: before exporting it checks the disk space, while exporting it says how long is left (“about 2 min”) and the file is named after the project. Going back to Projects, the export stays in view
+• “Stop” really stops: a job stopped at the last moment leaves no file. Auto subtitles always end up in the project they started from
+• PDF editor: closing with changes asks whether to save a copy; Ctrl+Z and Ctrl+Y for text, signatures, redactions and fields; the same PDF doesn’t open twice; redoing the signature asks first
+• Quitting OrbitLR (✕, Alt+F4 or “Quit” near the clock) asks first if there’s an edited PDF, a trim or areas chosen and not used, or an idea not sent
+• Hide a Logo, Trim, options and Suggest: Esc and Cancel ask before throwing your work away. Ctrl+Z on the areas too
+• Removing an action, a recipe, a watch folder or a history item can be undone (a line with “Undo”, and Ctrl+Z), with a notice if a watch folder still uses the removed action. In questions that throw something away the default is the one that doesn’t, and Esc answers “Cancel”
+• Audio: options stay in the project, and projects no longer disappear on their own when the file is missing
+• No more clicks without an answer: OrbitLR says what’s missing (“Choose a clip in the timeline first.”, “The playhead is too close to the edge of the clip.”), disabled buttons say why, and Ctrl+Alt+C already used by another app is reported. The QR code for the phone can be generated again when it expires
+• Failed job: the bar and Activity have “Try Again” (or the button that fixes it, like “Install LibreOffice”). A failed update has “Try Again” too
+• Right-click and double-click on clips, text, music, Activity, the Drawer and the files in each section
+• Audio and Trim: start and end can be typed down to the millisecond (“1:02.345”), and Ctrl+Z works for the whole selection
+• Help texts fixed where they weren’t true (“Editor”, “PDFs and documents”, the icon near the clock); in the Editor Alt + ← → now really moves by one millisecond, and “Undo” in the result bar no longer shows an error
+
 Novità per Windows 1.0.2:
 • Montaggio: «Estrai l'audio della clip» salva solo il pezzo tenuto, in un file audio accanto al video
 

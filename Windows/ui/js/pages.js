@@ -2,11 +2,12 @@
 
 import { setTips, tipsOn } from "./welcome.js";
 import { play, setSounds, soundsOn } from "./sounds.js";
-import { askName, describe, presets, removePreset, renamePreset, suggestName } from "./presets.js";
+import { askName, describe, presets, removePreset, renamePreset, restorePreset, suggestName } from "./presets.js";
 import { invoke, openPath, openUrl, pickFolder, reveal } from "./api.js";
 import { actionName } from "./catalog.js";
-import { clearHistory, getHistory, removeFromHistory, running, savedThisMonth, subscribe, cancel } from "./jobs.js";
-import { env, fmtBytes, gainText, h, ico, modal, store } from "./util.js";
+import { clearHistory, getHistory, removeFromHistory, restoreHistory, retry, running, savedThisMonth, subscribe, cancel } from "./jobs.js";
+import { contextMenu, env, fmtBytes, gainText, h, ico, modal, store, toast, undoToast } from "./util.js";
+import { fixButton } from "./resultbar.js";
 import { install as installOffice, isInstalling, officeReady } from "./office.js";
 import { t, tr, LOCALE } from "./i18n.js";
 
@@ -16,7 +17,12 @@ export function activityPage() {
   const subEl = h("div.sub");
   const el = h("div.page",
     h("div.head", h("div", h("h1", t("Attività")), subEl), h("div.grow"),
-      h("button.btn", { onclick: async () => { if (await modal(t("Cancellare la cronologia?"), t("I file creati restano dove sono: si cancella solo questo elenco."), [{ label: t("Annulla"), value: false }, { label: t("Cancella"), value: true, primary: true }])) clearHistory(); } }, ico("trash-2", 15), t("Cancella tutto"))),
+      h("button.btn", { onclick: async () => {
+        if (!getHistory().length) return toast(t("La cronologia è già vuota."));
+        if (!(await modal(t("Cancellare la cronologia?"), t("I file creati restano dove sono: si cancella solo questo elenco."), [{ label: t("Annulla"), value: false, focus: true }, { label: t("Cancella"), value: true, danger: true }]))) return;
+        const old = clearHistory();
+        undoToast(t("Cronologia cancellata."), () => restoreHistory(old.map((item, at) => ({ item, at }))));
+      } }, ico("trash-2", 15), t("Cancella tutto"))),
     h("div.page-scroll", body));
 
   function jobCard(j, live) {
@@ -27,11 +33,26 @@ export function activityPage() {
     const state = live ? h("span", { style: { color: "var(--brass)" } }, `${Math.round(j.progress * 100)}%`)
       : j.state === "cancelled" ? h("span", { style: { color: "var(--quiet)" } }, t("Interrotto"))
       : errs.length && !outs.length ? h("span", { style: { color: "var(--err)" } }, t("Non riuscito")) : null;
-    return h("div.job",
+    // 1.1 · Togliere una voce si annulla; un solo «Riprova» per riga; clic destro e doppio clic
+    const title = tr(j.title) || actionName(j.action);
+    const drop = () => { const r = removeFromHistory(j.id); if (r) undoToast(t`Tolta «${title}» dalla cronologia.`, () => restoreHistory([r])); };
+    const failed = !live && errs.length > 0;
+    const again = failed ? fixButton(j) : null;
+    const first = outs[0];
+    return h("div.job", {
+      ondblclick: (e) => { if (first && !(e.target instanceof Element && e.target.closest("button"))) openPath(first.path); },
+      oncontextmenu: (e) => contextMenu(e, live ? [{ label: t("Interrompi"), onclick: () => cancel(j.id) }] : [
+        first ? { label: t("Mostra nella cartella"), icon: "folder-open", onclick: () => reveal(first.path) } : null,
+        first ? { label: t("Apri"), icon: "external-link", onclick: () => openPath(first.path) } : null,
+        failed && !["protect", "unprotect"].includes(j.action) ? { label: t("Riprova"), icon: "rotate-ccw", onclick: () => retry(j) } : null,
+        { label: t("Togli dalla cronologia"), icon: "x", onclick: drop },
+      ]),
+    },
       h("div.top", ico(live ? "loader-circle" : errs.length && !outs.length ? "circle-x" : "circle-check", 18, live ? "spin" : ""),
-        h("b", tr(j.title) || actionName(j.action)), h("span", { style: { color: "var(--quiet)" } }, j.files.length === 1 ? j.files[0].name : j.files.length ? t`${j.files.length} file` : ""),
+        h("b", title), h("span", { style: { color: "var(--quiet)" } }, j.files.length === 1 ? j.files[0].name : j.files.length ? t`${j.files.length} file` : ""),
         state, h("span.when", when),
-        live ? h("button.btn", { onclick: () => cancel(j.id) }, t("Interrompi")) : h("button.btn.icon.ghost", { "aria-label": t("Togli dalla cronologia"), title: t("Togli dalla cronologia"), onclick: () => removeFromHistory(j.id) }, ico("x", 14))),
+        again,
+        live ? h("button.btn", { onclick: () => cancel(j.id) }, t("Interrompi")) : h("button.btn.icon.ghost", { "aria-label": t("Togli dalla cronologia"), title: t("Togli dalla cronologia"), onclick: drop }, ico("x", 14))),
       live ? h("div.tuner", h("div.fill", { style: { width: Math.max(2, j.progress * 100) + "%" } }), h("div.scale")) : null,
       outs.map((o) => h("div.out", ico("file", 15), h("span.n", { title: o.path }, o.name), o.before ? h("span.g", gainText(o.before, o.size)) : h("span.g", fmtBytes(o.size)),
         h("button.btn", { onclick: () => reveal(o.path) }, t("Mostra")), h("button.btn", { onclick: () => openPath(o.path) }, t("Apri")))),
@@ -104,7 +125,13 @@ export function settingsPage(app) {
           presets().length ? h("p", t("Le trovi in cima agli strumenti della scheda e come spicchi con la stella nella torta.")) : h("p", t("Nessuna ancora: apri uno strumento con delle scelte (per esempio «Comprimi»), scegli e premi «★ Salva come mia azione».")),
           ...presets().map((p) => h("div.preset-row", h("span.n", "★ " + p.name), h("span.s", describe(p)),
             h("button.btn.ghost", { onclick: async () => { const n = await askName(t("Rinomina"), p.name); if (n) { renamePreset(p.id, n); render(); } } }, t("Rinomina")),
-            h("button.btn.ghost", { onclick: () => { removePreset(p.id); render(); } }, t("Togli"))))),
+            h("button.btn.ghost", { onclick: async () => {
+              const back = removePreset(p.id);
+              render();
+              const rules = await invoke("watch_get").catch(() => []);
+              const used = (rules || []).some((r) => r.kind === "mia" && (r.id === ("m" + p.id).slice(0, 40) || (r.action === p.action && r.name === p.name)));
+              undoToast(used ? t`Tolta «${p.name}». Una cartella automatica la usa ancora: continua a lavorare finché non la togli da Cartelle automatiche.` : t`Tolta «${p.name}».`, () => { restorePreset(back); render(); });
+            } }, t("Togli"))))),
         h("div.set", h("h3", t("Aspetto")),
           h("div.opts", [["auto", t("Come Windows")], ["light", t("Chiaro")], ["dark", t("Radio di notte")]].map(([v, l]) =>
             h("button.opt" + (v === theme ? ".on" : ""), { onclick: () => { store.set("theme", v); app.applyTheme(); render(); } }, l))),
@@ -136,7 +163,7 @@ const FAQ = [
   ["Video", t("Come rendo un video più leggero senza perdere qualità?"), t("Video → scegli il video → «Comprimi» → «Stessa qualità, meno peso». OrbitLR usa la scheda video del computer (NVIDIA, Intel o AMD) quando c'è, ed è molto più veloce.")],
   ["Video", t("Devo mandare un video su WhatsApp, Discord o per email"), t("In «Comprimi» scegli WhatsApp, Discord o Email: il video starà sotto quel peso. Prima si tengono qualità e misura; la risoluzione scende solo se serve.")],
   ["Video", t("Posso lavorare film lunghi, di 2 ore o 5 GB?"), t("Sì: tutto avviene sul computer, senza caricare niente. OrbitLR controlla prima che ci sia spazio sul disco. «Taglia» su un film lungo è istantaneo perché non ricodifica.")],
-  ["Video", t("Come faccio un montaggio con testi, filtri e musica?"), t("Video → «Editor» (o Ctrl+Maiusc+E): i video scelti entrano nel montaggio. In basso la sequenza: trascina i bordi per accorciare, S per dividere, il pallino tra due clip per la transizione. A destra Clip, Filtri, Effetti, Testi, Audio e Formato. Si salva da solo; «Esporta» crea il video.")],
+  ["Video", t("Come faccio un montaggio con testi, filtri e musica?"), t("Video → «Montaggio» (o Ctrl+Maiusc+E): i video scelti entrano nel montaggio. In basso la sequenza: trascina i bordi per accorciare, S per dividere, il pallino tra due clip per la transizione. A destra Clip, Filtri, Effetti, Testi, Audio e Formato. Si salva da solo (anche se OrbitLR si chiude) e alla riapertura torni dove eri; «Esporta» crea il video con il nome del progetto.")],
   ["Video", t("Come taglio un video?"), t("Video → scegli il video → «Taglia». Sposta le maniglie (o usa I e O mentre guardi). Senza ricodifica il taglio è istantaneo e senza perdita; con «Taglio preciso» cade esattamente dove vuoi.")],
   ["Video", t("Come faccio un video verticale per Reels o TikTok?"), t("Video → «Formato social» → 9:16. Il video resta intero e i bordi si riempiono con lo stesso video sfocato.")],
   ["Audio", t("Come faccio una suoneria?"), t("Audio → apri la canzone → «Suoneria». Sposta il riquadro sul pezzo (fino a 30 secondi), scegli iPhone o Android e premi «Crea la suoneria».")],
@@ -147,13 +174,13 @@ const FAQ = [
   ["Immagini", t("Come tolgo la posizione GPS dalle foto?"), t("Immagini → «Rimuovi i metadati». Via posizione, fotocamera e date, senza perdere qualità; l'orientamento resta, così la foto non si gira.")],
   ["Immagini", t("Le foto HEIC dell'iPhone si aprono?"), t("Sì: trascinale e convertile in JPG con un clic. Se una non si apre, sull'iPhone scegli Impostazioni → Fotocamera → Formati → «Più compatibile».")],
   ["Audio", t("Come trascrivo un audio o un video?"), t("Audio (o Video) → «Trascrivi»: ottieni il testo (.txt) e i sottotitoli (.srt). Tutto sul computer; solo la prima volta si scarica il modello della voce (circa 190 MB). La lingua si sceglie in Opzioni.")],
-  ["Video", t("Come aggiungo i sottotitoli automatici?"), t("Nell'editor apri «Testi» e premi «Sottotitoli automatici»: OrbitLR ascolta le clip e scrive le frasi in basso, al momento giusto, con la parola detta che si accende. Poi li correggi come gli altri testi; Ctrl+Z li toglie tutti.")],
+  ["Video", t("Come aggiungo i sottotitoli automatici?"), t("Nel Montaggio apri «Testi» e premi «Sottotitoli automatici»: OrbitLR ascolta le clip e scrive le frasi in basso, al momento giusto, con la parola detta che si accende. Poi li correggi come gli altri testi; Ctrl+Z li toglie tutti.")],
   ["PDF e documenti", t("Come rendo un PDF più leggero per l'email?"), t("PDF e documenti → trascina il PDF → «Comprimi» → «Schermo ed email». Le foto dentro vengono ricompresse; testo, link e moduli restano come sono. Se il PDF è già leggero, OrbitLR te lo dice e non crea copie inutili.")],
   ["Generale", t("Posso far convertire o comprimere i file da soli?"), t("Sì: «Cartelle automatiche». Attiva per esempio «Foto HEIC e WebP in JPG» sulla cartella Download: ogni foto HEIC scaricata diventa JPG da sola. Per i video c'è la cartella «Da comprimere». Funziona con OrbitLR aperta, anche ridotta a icona.")],
   ["PDF e documenti", t("Come converto Word, Excel o PowerPoint in PDF?"), t("Trascina il documento in Converti e scegli PDF (o DOCX, XLSX, CSV…). La prima volta OrbitLR ti propone di installare LibreOffice, gratuito: lo usa in silenzio, senza aprire finestre. Macro e collegamenti esterni dei documenti restano spenti.")],
   ["PDF e documenti", t("Come unisco più PDF?"), t("PDF e documenti → trascina i PDF → «Unisci». L'ordine è quello dell'elenco.")],
   ["Generale", t("Windows dice «Windows ha protetto il PC»"), t("Succede con le app nuove senza la firma a pagamento di Microsoft. Clicca «Ulteriori informazioni» e poi «Esegui comunque». Si fa una volta sola.")],
-  ["Converti", t("Si può usare direttamente da Esplora file?"), t("Sì, in due modi: tasto destro su un file → «Apri con OrbitLR», oppure seleziona i file in Esplora file e premi Ctrl+Alt+C: OrbitLR si apre con la torta pronta. L'icona vicino all'orologio riapre OrbitLR con un clic.")],
+  ["Converti", t("Si può usare direttamente da Esplora file?"), t("Sì, in due modi: tasto destro su un file → «Apri con OrbitLR», oppure seleziona i file in Esplora file e premi Ctrl+Alt+C: OrbitLR si apre con la torta pronta. Mentre OrbitLR è aperta, l’icona vicino all’orologio la riporta in primo piano.")],
   ["Converti", t("Come annullo una conversione?"), t("Nella barra del risultato, in basso, premi «Annulla»: il file appena creato va nel Cestino e l'originale resta dov'era.")],
   ["Converti", t("Posso convertire tanti file insieme?"), t("Sì: trascina più file o una cartella intera. Con tipi diversi compare una torta per tipo; ogni file nuovo va accanto al suo originale.")],
   ["Converti", t("Posso scegliere senza mouse?"), t("Sì: ogni spicchio ha un numero, premi il tasto. Invio ripete l'ultima scelta per quel tipo di file, Esc toglie i file.")],
@@ -164,9 +191,9 @@ const FAQ = [
   ["Audio", t("Come scarico una canzone o un video da un link?"), t("In Audio (o Video) incolla il link nella barra in alto a destra e premi Invio: funziona con migliaia di siti. Il file va in Download ed entra subito nella scheda. I siti protetti (Netflix, Spotify…) non si scaricano.")],
   ["Audio", t("Come prendo l'audio da un video?"), t("Trascina il video in Converti e scegli MP3 (o M4A, WAV). Il video non si tocca.")],
   ["Audio", t("Come trasformo un testo in voce?"), t("Audio → «Testo in voce»: scrivi o incolla il testo, scegli la voce e premi «Crea il file audio». Il file MP3 va in Download. Altre voci: Impostazioni di Windows → Ora e lingua → Voce.")],
-  ["PDF e documenti", t("Come metto una password a un PDF?"), t("File → il PDF → «Proteggi con password»: scrivi la password due volte. Cifratura AES-256. Se la dimentichi non si recupera. Per toglierla: «Togli la password».")],
-  ["PDF e documenti", t("Come cambio l'ordine delle pagine di un PDF?"), t("File → il PDF → «Riordina le pagine» e scrivi il nuovo ordine, per esempio 3, 1, 2: le pagine che non scrivi restano dopo. «Ruota le pagine» le gira di 90° o le capovolge.")],
-  ["Generale", t("Come rinomino tanti file insieme?"), t("Scegli i file in Immagini, Video o File → «Rinomina tutti»: scrivi il nome (per esempio Vacanze) e diventano Vacanze 001, Vacanze 002… in ordine di nome. Non si creano copie.")],
+  ["PDF e documenti", t("Come metto una password a un PDF?"), t("PDF e documenti → il PDF → «Proteggi con password»: scrivi la password due volte. Cifratura AES-256. Se la dimentichi non si recupera. Per toglierla: «Togli la password».")],
+  ["PDF e documenti", t("Come cambio l'ordine delle pagine di un PDF?"), t("PDF e documenti → il PDF → «Riordina le pagine» e scrivi il nuovo ordine, per esempio 3, 1, 2: le pagine che non scrivi restano dopo. «Ruota le pagine» le gira di 90° o le capovolge.")],
+  ["Generale", t("Come rinomino tanti file insieme?"), t("Scegli i file in Immagini, Video o PDF e documenti → «Rinomina tutti»: scrivi il nome (per esempio Vacanze) e diventano Vacanze 001, Vacanze 002… in ordine di nome. Non si creano copie.")],
   ["Generale", t("Come aggiorno OrbitLR?"), t("Da sola: quando c'è una versione nuova compare in alto a destra «Nuovo aggiornamento disponibile». Un clic, e OrbitLR scarica, controlla la firma, si aggiorna e si riapre.")],
   ["Generale", t("Un lavoro non è riuscito: cosa faccio?"), t("Leggi il messaggio nella barra in basso: dice cosa è successo e cosa fare. Se non basta, premi «Segnala»: si apre un'email già pronta, senza nomi di file.")],
   ["Generale", t("Come metto OrbitLR in inglese?"), t("Opzioni → «Lingua · Language» → English. Di base OrbitLR segue la lingua di Windows.")],
@@ -182,7 +209,7 @@ export function helpPage(app) {
   function render() {
     const q = norm(input.value.trim());
     // Dal Microsoft Store: niente avviso di Windows, e il tasto destro passa da «Apri con»
-    const faq = env.store ? FAQ.filter((f) => f !== FAQ_SMARTSCREEN).map((f) => (f === FAQ_EXPLORER ? [f[0], f[1], t("Sì, in due modi: tasto destro su un file → «Apri con» → OrbitLR, oppure seleziona i file in Esplora file e premi Ctrl+Alt+C: OrbitLR si apre con la torta pronta. L'icona vicino all'orologio riapre OrbitLR con un clic.")] : f)) : FAQ;
+    const faq = env.store ? FAQ.filter((f) => f !== FAQ_SMARTSCREEN).map((f) => (f === FAQ_EXPLORER ? [f[0], f[1], t("Sì, in due modi: tasto destro su un file → «Apri con» → OrbitLR, oppure seleziona i file in Esplora file e premi Ctrl+Alt+C: OrbitLR si apre con la torta pronta. Mentre OrbitLR è aperta, l’icona vicino all’orologio la riporta in primo piano.")] : f)) : FAQ;
     const items = faq.filter(([s, a, b]) => !q || norm(t(s) + " " + a + " " + b).includes(q));
     list.replaceChildren(...(items.length ? items.map(([s, a, b]) => h("details.faq", h("summary", ico("chevron-right", 16), a, h("span", { style: { marginLeft: "auto", fontSize: "11px", color: "var(--brass)", fontWeight: 900, textTransform: "uppercase" } }, t(s))), h("p", b)))
       : [h("p", { style: { color: "var(--quiet)" } }, t("Nessuna risposta: prova un'altra parola, oppure «Segnala» e scrivici."))]));
@@ -209,5 +236,7 @@ export async function report(app) {
     `Codificatori: ${(eng.h264 || []).join(", ") || "nessuno"}`,
     `Sistema: ${navigator.userAgent.match(/Windows NT [\d.]+/)?.[0] || navigator.platform}`,
   ].join("\n");
-  openUrl(`mailto:ledion.proaccs@gmail.com?subject=${encodeURIComponent("OrbitLR per Windows: un problema")}&body=${encodeURIComponent(body)}`);
+  // 1.1 · Se il programma di posta non si apre, lo si dice
+  openUrl(`mailto:ledion.proaccs@gmail.com?subject=${encodeURIComponent("OrbitLR per Windows: un problema")}&body=${encodeURIComponent(body)}`)
+    ?.catch?.(() => toast(t("Non riesco ad aprire il programma di posta: scrivi a ledion.proaccs@gmail.com."), 8000));
 }

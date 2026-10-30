@@ -8,7 +8,7 @@ import { play } from "./sounds.js";
 const STEPS = () => [
   { icon: "circle-arrow-down", title: t("Trascina un file, scegli uno spicchio"), text: t("Lascia cadere foto, video, audio o PDF nella scheda Converti: intorno al file si apre la torta con quello che puoi farne. Il file nuovo finisce accanto all'originale.") },
   { icon: "layers", title: t("Una scheda per ogni tipo di file"), text: t("Immagini, Video, Audio e PDF hanno tutti gli strumenti: comprimi, taglia, togli lo sfondo, firma un PDF, crea una suoneria. Tutto sul computer, niente viene caricato.") },
-  { icon: "external-link", title: t("OrbitLR è sempre a portata di mano"), text: env.store ? t("In Esplora file: tasto destro → «Apri con» → OrbitLR, oppure seleziona i file e premi Ctrl+Alt+C. Chiudendo la finestra resta l'icona vicino all'orologio.") : t("In Esplora file: tasto destro → «Apri con OrbitLR», oppure seleziona i file e premi Ctrl+Alt+C. Chiudendo la finestra resta l'icona vicino all'orologio.") },
+  { icon: "external-link", title: t("OrbitLR è sempre a portata di mano"), text: env.store ? t("In Esplora file: tasto destro → «Apri con» → OrbitLR, oppure seleziona i file e premi Ctrl+Alt+C. Mentre OrbitLR è aperta, l’icona vicino all’orologio la riporta in primo piano.") : t("In Esplora file: tasto destro → «Apri con OrbitLR», oppure seleziona i file e premi Ctrl+Alt+C. Mentre OrbitLR è aperta, l’icona vicino all’orologio la riporta in primo piano.") },
 ];
 
 const TIPS = () => [

@@ -67,18 +67,19 @@ export function audioPage(app) {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
       if (!file || !trim) return;
-      const item = { path: file.path, name: file.name, tool, start: +trim.start.toFixed(3), end: +trim.end.toFixed(3), others: others.map((o) => o.path), at: Date.now() };
-      store.set("audio.projects", [item, ...recent().filter((p) => p.path !== item.path)].slice(0, 12));
+      // 1.1 · Anche le opzioni (durata e formato della suoneria, dissolvenza, velocità, formato) restano nel progetto
+      const o = { ringLen: opts.ringLen, fade: opts.fade, normalize: opts.normalize, ringFmt: opts.ringFmt, speed: opts.speed, to: opts.to };
+      const item = { path: file.path, name: file.name, tool, start: +trim.start.toFixed(3), end: +trim.end.toFixed(3), others: others.map((o) => o.path), opts: o, at: Date.now() };
+      // Nessuna pulizia automatica: si tengono fino a 50 progetti (in «Riprendi» si vedono gli ultimi 6)
+      store.set("audio.projects", [item, ...recent().filter((p) => p.path !== item.path)].slice(0, 50));
     }, 400);
   }
   async function resume(p) {
     const ok = await invoke("files_exist", { paths: [p.path, ...(p.others || [])] }).catch(() => []);
-    if (!ok[0]) {
-      store.set("audio.projects", recent().filter((x) => x.path !== p.path));
-      render();
-      return toast(t("Il file non c'è più: forse è stato spostato o cancellato."));
-    }
+    // 1.1 · Il progetto resta in «Riprendi»: se il file torna al suo posto, si riprende
+    if (!ok[0]) return toast(t("Il file non c'è più: forse è stato spostato o cancellato. Rimettilo dov'era e riprova."), 6000);
     tool = p.tool || tool;
+    if (p.opts) Object.assign(opts, p.opts);
     await add([p.path, ...(p.others || []).filter((_, i) => ok[i + 1])]);
     if (trim && p.end > p.start) trim.setRange(p.start, p.end);
   }
@@ -134,8 +135,8 @@ export function audioPage(app) {
         chips([[20, t("20 secondi")], [30, t("30 secondi")]], opts.ringLen, (v) => { opts.ringLen = v; store.set("audio.ringLen", v); trim?.setMaxLen(v); }),
         h("div", { style: { fontSize: "12.5px", color: "var(--quiet)" } }, t("Per")),
         chips([["m4r", "iPhone (.m4r)"], ["mp3", "Android (.mp3)"]], opts.ringFmt, (v) => { opts.ringFmt = v; store.set("audio.ringFmt", v); }),
-        h("label.check", h("input", { type: "checkbox", checked: opts.fade || null, onchange: (e) => (opts.fade = e.target.checked) }), t("Dissolvenza all'inizio e alla fine")),
-        h("label.check", h("input", { type: "checkbox", checked: opts.normalize || null, onchange: (e) => (opts.normalize = e.target.checked) }), t("Volume uniforme")),
+        h("label.check", h("input", { type: "checkbox", checked: opts.fade || null, onchange: (e) => { opts.fade = e.target.checked; remember(); } }), t("Dissolvenza all'inizio e alla fine")),
+        h("label.check", h("input", { type: "checkbox", checked: opts.normalize || null, onchange: (e) => { opts.normalize = e.target.checked; remember(); } }), t("Volume uniforme")),
         h("p", { style: { margin: 0, fontSize: "12.5px", color: "var(--quiet)" } }, t("Su iPhone: apri il file .m4r con iTunes o l'app Dispositivi Apple e trascinalo nelle Suonerie. Su Android: copialo nella cartella «Ringtones».")));
     } else if (tool === "speed") {
       box.push(chips([["0.5", t("0,5×")], ["0.75", t("0,75×")], ["1.25", t("1,25×")], ["1.5", t("1,5×")], ["2", "2×"]], opts.speed, (v) => (opts.speed = v)));
@@ -206,8 +207,10 @@ export function audioPage(app) {
     const grid = h("div.tool-grid", shown.map((x) => h("button.tg" + (x.id === tool ? ".on" : ""), { onclick: () => { tool = x.id; remember(); render(); }, "aria-pressed": x.id === tool ? "true" : "false" }, ico(x.icon, 20), x.short)));
     const side = h("div.side-card",
       h("div.scroll", grid, ...options()),
-      h("div.act", h("button.btn.primary.big", { onclick: start, disabled: (!file && !tl.noFile) || (tool === "merge" && !others.length) || null }, tl.go)));
+      h("div.act", h("button.btn.primary.big", { onclick: start, disabled: (!file && !tl.noFile) || (tool === "merge" && !others.length) || null,
+        title: !file && !tl.noFile ? t("Apri prima un file audio.") : tool === "merge" && !others.length ? t("Aggiungi almeno un altro file da unire.") : null }, tl.go)));
     el.replaceChildren(head, h("div.audio-wrap", leftSide, side), bar.el);
+    remember();
   }
 
   render();

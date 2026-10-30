@@ -113,6 +113,7 @@ pub fn remove_background(tools: Option<&Tools>, data_dir: &Path, src: &Path, mod
     }
     let rgb = photo.img.to_rgb8();
     let mask = subject_mask(&model, &rgb)?;
+    cancel.check()?;
     progress(0.92);
     // Nessun soggetto: meglio dirlo che consegnare un PNG vuoto
     let strong = mask.pixels().filter(|p| p[0] > 128).count() as f64;

@@ -2,7 +2,7 @@
 // Il controllo lo fa il motore (ogni 3 secondi, con OrbitLR aperta); qui si scelgono cartelle e opzioni.
 
 import { invoke, pickFolder, reveal } from "./api.js";
-import { h, ico, toast } from "./util.js";
+import { h, ico, toast, undoToast } from "./util.js";
 import { presets, suggestName } from "./presets.js";
 import { t, tr, tc } from "./i18n.js";
 
@@ -59,6 +59,13 @@ export function autoPage() {
     render();
   }
 
+  /** 1.1 · Togliere una cartella automatica si annulla («Annulla» per 6 secondi, o Ctrl+Z). */
+  async function drop(match, name) {
+    const before = rules.slice();
+    await save(rules.filter((x) => !match(x)));
+    undoToast(t`Tolta «${name}».`, () => save(before));
+  }
+
   function card(k) {
     const r = rules.find((x) => x.kind === k.kind);
     const set = (patch) => save(rules.map((x) => (x.kind === k.kind ? { ...x, ...patch } : x)));
@@ -86,7 +93,7 @@ export function autoPage() {
       body.push(h("div.out", ico("folder-input", 15), h("span.n", { title: r.path }, r.path),
         h("button.btn", { onclick: () => reveal(r.path) }, t("Mostra")),
         h("button.btn", { onclick: async () => { const p = await pickFolder(); if (p) set({ path: p }); } }, t("Cambia")),
-        h("button.btn.icon.ghost", { "aria-label": t("Togli"), title: t("Togli questa cartella automatica"), onclick: () => save(rules.filter((x) => x.kind !== k.kind)) }, ico("x", 14))));
+        h("button.btn.icon.ghost", { "aria-label": t("Togli"), title: t("Togli questa cartella automatica"), onclick: () => drop((x) => x.kind === k.kind, k.title) }, ico("x", 14))));
       if (k.options) {
         body.push(h("div.opts", k.options.map(([v, l]) => h("button.opt" + ((r.param || k.options[0][0]) === v ? ".on" : ""), { onclick: () => set({ param: v }) }, l))));
       }
@@ -102,7 +109,7 @@ export function autoPage() {
       h("p", t`${suggestName(r.action, r.param)} · i risultati vanno nella sottocartella «Convertiti».`),
       h("div.out", ico("folder-input", 15), h("span.n", { title: r.path }, r.path),
         h("button.btn", { onclick: () => reveal(r.path) }, t("Mostra")),
-        h("button.btn.icon.ghost", { "aria-label": t("Togli"), title: t("Togli questa cartella automatica"), onclick: () => save(rules.filter((x) => x.id !== r.id)) }, ico("x", 14))));
+        h("button.btn.icon.ghost", { "aria-label": t("Togli"), title: t("Togli questa cartella automatica"), onclick: () => drop((x) => x.id === r.id, r.name || r.action) }, ico("x", 14))));
   }
 
   function mineSection() {

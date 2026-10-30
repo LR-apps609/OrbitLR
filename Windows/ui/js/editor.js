@@ -3,11 +3,11 @@
 
 import { DEMO, fileUrl, invoke, pickFiles, setDemoPick } from "./api.js";
 import { dec, t, tr, tc, LOCALE } from "./i18n.js";
-import { run } from "./jobs.js";
+import { outDir, run } from "./jobs.js";
 import { PRESETS, emptyLook, feMatrix, isIdentity, resolve } from "./look.js";
 import { resultBar } from "./resultbar.js";
 import { ANIMS, COLORS, STYLES, drawText, exportOverlay, newText, stateAt } from "./textdraw.js";
-import { baseName, fmtTime, h, ico, modal, store, toast } from "./util.js";
+import { baseName, contextMenu, dirName, fmtBytes, fmtTime, h, ico, modal, store, toast, undoToast } from "./util.js";
 import { levelSeg } from "./levels.js";
 
 const TRANSITIONS = [["fade", t("Dissolvenza")], ["black", t("Al nero")], ["white", t("Al bianco")], ["slide", t("Scorrimento")], ["zoom", t("Zoom")], ["blur", t("Sfocatura")]];
@@ -35,25 +35,67 @@ export function editorPage(app, onBack) {
   let pps = 60; // pixel per secondo nella sequenza
   const rects = new Map(); // id del testo → riquadro disegnato nell'anteprima
   const bar = resultBar("editor");
+  // 1.1 · I file del progetto che non si trovano più: le clip restano (segnaposto) finché non si ritrovano
+  const missing = new Set();
+  // 1.1 · L'ultimo stato con qualcosa dentro: se il progetto si svuota, questo va nel Cestino
+  let lastFull = null;
+  const isEmpty = (d) => !(d?.clips?.length) && !(d?.texts?.length) && !d?.music;
 
   // ── Libreria dei progetti
   let saveWarned = false;
   function saveLibrary() {
     return store.set("projects", library);
   }
-  let saveTimer;
+  let saveTimer = null;
   function scheduleSave() {
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      if (!current) return;
-      current.data = p;
-      current.name = p.name;
-      current.updated = Date.now();
-      if (!saveLibrary() && !saveWarned) {
-        saveWarned = true;
-        toast(t("Non riesco a salvare il progetto: troppi progetti grandi. Eliminane qualcuno da «Progetti»."));
-      }
-    }, 400);
+    saveTimer = setTimeout(writeNow, 400);
+  }
+  function writeNow() {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    if (!current || !p) return;
+    current.data = p;
+    current.name = p.name;
+    current.updated = Date.now();
+    if (!isEmpty(p)) lastFull = JSON.stringify(p);
+    if (!saveLibrary() && !saveWarned) {
+      saveWarned = true;
+      toast(t("Non riesco a salvare il progetto: troppi progetti grandi. Eliminane qualcuno da «Progetti»."));
+    }
+    saveView();
+  }
+  // 1.1 · Chiudendo OrbitLR il salvataggio in attesa si fa subito
+  window.addEventListener("orbit-flush", () => { if (saveTimer) writeNow(); else saveView(true); });
+
+  // 1.1 · Dove eri: progetto, indicatore, zoom e strumento (per riaprirlo uguale)
+  let viewTimer = null;
+  function saveView(now = false) {
+    clearTimeout(viewTimer);
+    const put = () => { if (current && p) store.set("ed.open", { id: current.id, time: +time.toFixed(3), pps: Math.round(pps * 100) / 100, tool }); };
+    if (now) put();
+    else viewTimer = setTimeout(put, 600);
+  }
+
+  /** 1.1 · Toglie un progetto dalla libreria: prima una copia nel Cestino di Windows, poi «Annulla» per 6 secondi. */
+  async function removeProject(item, msg, data = item.data) {
+    try {
+      if (!DEMO) await invoke("trash_project", { name: item.name || "", json: JSON.stringify({ ...item, data }) });
+    } catch (e) {
+      toast(t`Non riesco a metterlo nel Cestino, quindi resta tra i Progetti: ${tr(String(e))}`, 7000);
+      return false;
+    }
+    const at = library.indexOf(item);
+    library = library.filter((x) => x !== item);
+    saveLibrary();
+    if (store.get("ed.open", null)?.id === item.id) store.set("ed.open", null);
+    undoToast(msg, () => {
+      item.data = data;
+      library.splice(Math.max(0, Math.min(at, library.length)), 0, item);
+      saveLibrary();
+      if (!current) showProjects();
+    });
+    return true;
   }
 
   /** 1.0.1 · «Salva progetto»: subito, con la conferma. */
@@ -68,8 +110,19 @@ export function editorPage(app, onBack) {
 
   function showProjects() {
     stop();
+    // 1.1 · Uscendo: si salva; un progetto svuotato va nel Cestino (mai cancellato), uno mai usato sparisce
+    if (current && p) {
+      writeNow();
+      const item = current;
+      if (isEmpty(p)) {
+        if (lastFull) removeProject(item, t`«${item.name}» è vuoto: l’ho messo nel Cestino.`, JSON.parse(lastFull)).then(() => { if (!current) showProjects(); });
+        else { library = library.filter((x) => x !== item); saveLibrary(); }
+      }
+    }
+    if (current && p) store.set("ed.open", null);
     current = null;
     p = null;
+    missing.clear();
     const grid = h("div.grid", { style: { padding: "4px 0 24px" } },
       h("div.tile", { role: "button", tabindex: "0", onclick: () => openProject(null) },
         h("div.th", { style: { background: "color-mix(in srgb, var(--sage) 18%, var(--bg-2))", color: "var(--sage-deep)" } }, ico("plus", 40)),
@@ -78,35 +131,38 @@ export function editorPage(app, onBack) {
         const d = item.data;
         const dur = (d.clips || []).reduce((a, c) => a + clipLen(c), 0);
         const cover = d.clips?.[0] && thumbs[d.clips[0].path];
-        const tile = h("div.tile", { role: "button", tabindex: "0", onclick: () => openProject(item) },
+        const tile = h("div.tile", { role: "button", tabindex: "0", onclick: () => openProject(item),
+          oncontextmenu: (e) => contextMenu(e, [{ label: t("Apri"), icon: "film", onclick: () => openProject(item) }, { label: t("Elimina"), icon: "trash-2", onclick: () => tile.querySelector(".rm").click() }]) },
           h("div.th", cover ? h("img", { src: cover, alt: "" }) : ico("film", 34)),
           h("span.dur", fmtTime(dur)),
           h("div.nm", item.name), h("div.mt", new Date(item.updated).toLocaleDateString(LOCALE, { day: "numeric", month: "short" })),
           h("button.rm", { title: t("Elimina"), "aria-label": t`Elimina ${item.name}`, onclick: async (e) => {
             e.stopPropagation();
-            if (await modal(t`Eliminare «${item.name}»?`, t("I video non si toccano: si elimina solo il progetto."), [{ label: t("Annulla"), value: false }, { label: t("Elimina"), value: true, primary: true }])) {
-              library = library.filter((x) => x !== item);
-              saveLibrary();
-              showProjects();
+            if (await modal(t`Eliminare «${item.name}»?`, t("Il progetto va nel Cestino di Windows; i video non si toccano."), [{ label: t("Annulla"), value: false, focus: true }, { label: t("Elimina"), value: true, danger: true }])) {
+              if (await removeProject(item, t`Eliminato «${item.name}».`)) showProjects();
             }
           } }, ico("x", 13)));
-        if (d.clips?.[0] && !thumbs[d.clips[0].path]) loadThumb(d.clips[0].path).then(() => { if (!current) showProjects(); });
+        // (una miniatura che non viene si chiede una volta sola: prima si ridisegnava all'infinito)
+        if (d.clips?.[0] && !(d.clips[0].path in thumbs)) loadThumb(d.clips[0].path).then((th) => { if (th && !current) showProjects(); });
         return tile;
       }));
     el.replaceChildren(
       h("div.head", h("div", h("h1", t("Progetti")), h("div.sub", t("Montaggi con tagli, filtri, testi e musica: si salvano da soli"))), h("div.grow"),
         levelSeg("video", "editor", () => onBack(), () => {})),
-      h("div.page-scroll", grid));
+      h("div.page-scroll", grid),
+      // 1.1 · L'esportazione in corso resta in vista anche fuori dal progetto
+      bar.el);
   }
 
   async function loadThumb(path) {
-    if (thumbs[path]) return thumbs[path];
+    if (path in thumbs) return thumbs[path];
+    thumbs[path] = "";
     const t = await invoke("thumbnail", { path, side: 240 }).catch(() => null);
-    if (t) thumbs[path] = t;
+    thumbs[path] = t || "";
     return t;
   }
 
-  async function openProject(item, paths = []) {
+  async function openProject(item, paths = [], view = null) {
     if (!item) {
       item = { id: uid(), name: "", updated: Date.now(), data: newProject(library.length + 1) };
       library.push(item);
@@ -118,23 +174,61 @@ export function editorPage(app, onBack) {
     redo = [];
     time = 0;
     sel = { kind: "clip", index: 0 };
-    // I file del progetto: esistono ancora?
+    missing.clear();
+    lastFull = isEmpty(item.data) ? null : JSON.stringify(item.data);
+    // 1.1 · Si riapre com'era: indicatore, zoom e strumento
+    if (view) {
+      if (view.pps > 0) pps = Math.max(PPS_MIN, Math.min(PPS_MAX, view.pps));
+      if (TOOLS.some(([id]) => id === view.tool)) tool = view.tool;
+    }
+    // I file del progetto: esistono ancora? (1.1: quelli che mancano restano nel progetto)
     const paths0 = [...new Set([...(p.clips || []).map((c) => c.path), p.music?.path].filter(Boolean))];
     if (paths0.length) {
       const probed = await invoke("probe_files", { paths: paths0 });
-      const lost = [];
       for (const r of probed) {
         if (r.ok) infos[r.info.path] = r.info;
-        else lost.push(r.path);
+        else missing.add(r.path);
       }
-      if (lost.length) {
-        p.clips = p.clips.filter((c) => !lost.includes(c.path));
-        if (p.music && lost.includes(p.music.path)) p.music = null;
-        toast(t`Non trovo più ${lost.length === 1 ? t("un file") : t`${lost.length} file`} del progetto: spostato o cancellato.`);
-      }
+      if (missing.size) toast(missing.size === 1 ? t("Non trovo un file del progetto: resta nella sequenza finché non lo ritrovi con «Trova i file…».") : t`Non trovo ${missing.size} file del progetto: restano nella sequenza finché non li ritrovi con «Trova i file…».`, 7000);
     }
+    if (view?.time > 0) time = Math.min(view.time, total());
+    saveView(true);
     buildEditor();
     if (paths.length) addClips(paths);
+  }
+
+  /** 1.1 · «Trova i file…»: scegli i file spostati (o uno solo: gli altri si cercano nella stessa cartella). */
+  async function findFiles() {
+    if (!missing.size) return toast(t("Tutti i file del progetto ci sono."));
+    setDemoPick("video");
+    const picked = await pickFiles([{ name: t("Video, foto e musica"), extensions: ["mp4", "mov", "m4v", "mkv", "webm", "avi", "wmv", "mts", "m2ts", "3gp", "jpg", "jpeg", "png", "heic", "webp", "mp3", "m4a", "wav", "flac", "ogg", "opus", "aac"] }]);
+    if (!picked.length) return;
+    const lost = [...missing];
+    const key = (x) => baseName(x).toLowerCase();
+    const map = new Map();
+    for (const f of picked) map.set(key(f), f);
+    // Gli altri file mancanti: nella cartella di quelli scelti, con lo stesso nome
+    const dirs = [...new Set(picked.map(dirName))];
+    const guesses = lost.filter((x) => !map.has(key(x))).flatMap((x) => dirs.map((d) => ({ from: x, to: `${d}\\${baseName(x)}` })));
+    if (guesses.length) {
+      const ok = await invoke("files_exist", { paths: guesses.map((g) => g.to) }).catch(() => []);
+      guesses.forEach((g, i) => { if (ok[i] && !map.has(key(g.from))) map.set(key(g.from), g.to); });
+    }
+    // Un file solo mancante e un file solo scelto, con un nome diverso: è quello
+    if (lost.length === 1 && picked.length === 1 && !map.has(key(lost[0]))) map.set(key(lost[0]), picked[0]);
+    const relink = new Map(lost.filter((x) => map.has(key(x))).map((x) => [x, map.get(key(x))]));
+    if (!relink.size) return toast(t("Tra i file scelti non c’è nessuno di quelli che mancano: scegli i file con lo stesso nome."), 6000);
+    const probed = await invoke("probe_files", { paths: [...new Set(relink.values())] });
+    const good = new Set();
+    for (const r of probed) if (r.ok) { infos[r.info.path] = r.info; good.add(r.info.path); }
+    change((pp) => {
+      for (const c of pp.clips) if (relink.has(c.path) && good.has(relink.get(c.path))) c.path = relink.get(c.path);
+      if (pp.music && relink.has(pp.music.path) && good.has(relink.get(pp.music.path))) pp.music.path = relink.get(pp.music.path);
+    });
+    let found = 0;
+    for (const [from, to] of relink) if (good.has(to)) { missing.delete(from); found++; loadThumb(to).then(renderTimeline); }
+    buildEditor();
+    toast(missing.size ? t`Ritrovati ${found}; ne mancano ancora ${missing.size}.` : t("Ritrovati tutti i file del progetto."), 5000);
   }
 
   // ── Modifiche con annulla
@@ -150,13 +244,13 @@ export function editorPage(app, onBack) {
     renderAll();
   }
   function doUndo() {
-    if (!undo.length) return;
+    if (!undo.length) return toast(t("Niente da annullare."));
     redo.push(JSON.stringify(p));
     p = JSON.parse(undo.pop());
     afterChange();
   }
   function doRedo() {
-    if (!redo.length) return;
+    if (!redo.length) return toast(t("Niente da rifare."));
     undo.push(JSON.stringify(p));
     p = JSON.parse(redo.pop());
     afterChange();
@@ -205,7 +299,8 @@ export function editorPage(app, onBack) {
   svgDefs.style.position = "absolute";
   const still = h("img.pv.still", { alt: "", hidden: true });
   const canvasBox = h("div.canvas", vA, vB, still, veil, vig, overlay);
-  const stage = h("div.stage", canvasBox, svgDefs);
+  const missNote = h("div.miss", { hidden: true });
+  const stage = h("div.stage", canvasBox, svgDefs, missNote);
   let active = vA, spare = vB, activeIndex = -1;
 
   function canvasSize() {
@@ -274,6 +369,10 @@ export function editorPage(app, onBack) {
 
   function loadInto(v, c) {
     if (DEMO) return;
+    if (missing.has(c.path)) {
+      if (v.dataset.path) { v.dataset.path = ""; v.removeAttribute("src"); v.load(); }
+      return;
+    }
     const src = fileUrl(c.path);
     if (v.dataset.path !== c.path) {
       v.dataset.path = c.path;
@@ -302,9 +401,12 @@ export function editorPage(app, onBack) {
       seek = true;
     }
     const isImage = infos[c.path]?.kind === "image";
-    still.hidden = !isImage;
+    const lost = missing.has(c.path);
+    missNote.hidden = !lost;
+    if (lost) missNote.textContent = t`Non trovo «${baseName(c.path)}»: premi «Trova i file…» in alto.`;
+    still.hidden = !isImage || lost;
     if (isImage && !DEMO && still.dataset.path !== c.path) { still.dataset.path = c.path; still.src = fileUrl(c.path); }
-    active.style.opacity = isImage ? 0 : 1;
+    active.style.opacity = isImage || lost ? 0 : 1;
     spare.style.opacity = 0;
     still.style.objectFit = !p.aspect || p.aspect === "orig" ? "contain" : "cover";
     const speed = c.fx?.speed || 1;
@@ -411,7 +513,7 @@ export function editorPage(app, onBack) {
     raf = requestAnimationFrame(loop);
   }
   function play() {
-    if (!p.clips.length) return;
+    if (!p.clips.length) return toast(t("Aggiungi prima un video."));
     if (time >= total() - 0.05) time = 0;
     playing = true;
     showAt(time, true);
@@ -436,6 +538,7 @@ export function editorPage(app, onBack) {
       active.play().catch(() => {});
     } else showAt(time, true);
     updatePlayhead();
+    saveView();
   }
 
   // ── Struttura dell'editor
@@ -444,7 +547,7 @@ export function editorPage(app, onBack) {
     nameInput = h("input.name", { value: p.name, "aria-label": t("Nome del progetto"), onchange: () => change((pp) => (pp.name = nameInput.value.trim() || pp.name)) });
     playBtn = h("button.btn.icon", { "aria-label": t("Riproduci"), title: t("Riproduci (Spazio)"), onclick: () => (playing ? stop() : play()) }, ico("play", 18));
     timeLabel = h("span.tlabel");
-    toolbar = h("div.ed-tools", TOOLS.map(([id, label, icn]) => h("button" + (tool === id ? ".on" : ""), { "data-tool": id, onclick: () => { tool = id; renderInspector(); renderToolbar(); } }, ico(icn, 17), label)));
+    toolbar = h("div.ed-tools", TOOLS.map(([id, label, icn]) => h("button" + (tool === id ? ".on" : ""), { "data-tool": id, onclick: () => { tool = id; renderInspector(); renderToolbar(); saveView(); } }, ico(icn, 17), label)));
     inspector = h("div.inspector");
     timelineEl = h("div.timeline");
     const top = h("div.ed-top",
@@ -453,6 +556,7 @@ export function editorPage(app, onBack) {
       h("div.grow"),
       h("button.btn.icon", { title: t("Annulla (Ctrl+Z)"), "aria-label": tc("undo", "Annulla"), onclick: doUndo }, ico("undo-2", 16)),
       h("button.btn.icon", { title: t("Rifai (Ctrl+Y)"), "aria-label": t("Rifai"), onclick: doRedo, style: { transform: "scaleX(-1)" } }, ico("undo-2", 16)),
+      missing.size ? h("button.btn.brass", { title: t("Alcuni file del progetto sono stati spostati o rinominati: scegli dove sono adesso"), onclick: findFiles }, ico("search", 15), t("Trova i file…")) : null,
       h("button.btn", { onclick: pickClips }, ico("plus", 15), t("Aggiungi video")),
       // 1.0.1 · Salva subito (oltre al salvataggio automatico)
       h("button.btn", { title: t("Salva il progetto adesso (Ctrl+S). Lo ritrovi in Progetti"), onclick: saveNow }, ico("save", 15), t("Salva progetto")),
@@ -508,12 +612,14 @@ export function editorPage(app, onBack) {
     p.clips.forEach((c, i) => {
       const w = Math.max(14, clipLen(c) * pps);
       const th = thumbs[c.path];
-      const blk = h("div.blk" + (sel.kind === "clip" && sel.index === i ? ".on" : ""), {
-        style: { left: x + "px", width: w - 2 + "px", backgroundImage: th ? `url(${th})` : "none" },
-        title: `${baseName(c.path)} · ${fmtTime(clipLen(c), true)}`,
+      const lost = missing.has(c.path);
+      const blk = h("div.blk" + (sel.kind === "clip" && sel.index === i ? ".on" : "") + (lost ? ".missing" : ""), {
+        style: { left: x + "px", width: w - 2 + "px", backgroundImage: th && !lost ? `url(${th})` : "none" },
+        title: lost ? t`Non trovo «${baseName(c.path)}»: «Trova i file…» in alto` : `${baseName(c.path)} · ${fmtTime(clipLen(c), true)}`,
         onpointerdown: (e) => dragClip(e, i),
+        oncontextmenu: (e) => clipMenu(e, i),
       },
-      h("span.lbl", (c.fx?.speed && c.fx.speed !== 1 ? `${dec(String(c.fx.speed).replace(".", ","))}× · ` : "") + baseName(c.path)),
+      h("span.lbl", (lost ? t("File mancante") + " · " : "") + (c.fx?.speed && c.fx.speed !== 1 ? `${dec(String(c.fx.speed).replace(".", ","))}× · ` : "") + baseName(c.path)),
       c.muted ? h("span.badge-ic", ico("volume-x", 12)) : null,
       (c.look && !isIdentity(c.look)) ? h("span.badge-ic.l", ico("sparkles", 12)) : null,
       h("div.edge.l", { onpointerdown: (e) => trimClip(e, i, "in") }),
@@ -531,6 +637,7 @@ export function editorPage(app, onBack) {
       p.texts.map((t, k) => h("div.tblk" + (sel.kind === "text" && sel.index === k ? ".on" : ""), {
         style: { left: 12 + t.start * pps + "px", width: Math.max(12, (t.end - t.start) * pps) + "px" },
         onpointerdown: (e) => dragText(e, k),
+        oncontextmenu: (e) => textMenu(e, k),
       }, h("span.lbl", t.text), h("div.edge.l", { onpointerdown: (e) => trimText(e, k, "start") }), h("div.edge.r", { onpointerdown: (e) => trimText(e, k, "end") }))));
     // 1.0.1 · La barra della musica: trasparente con l'onda dentro, si trascina, il bordo destro decide dove finisce
     let musicRow;
@@ -539,7 +646,7 @@ export function editorPage(app, onBack) {
       const mEnd = musicStop(m);
       const wave = h("canvas.mwave");
       const blk = h("div.mblk.wave", { style: { left: 12 + (m.offset || 0) * pps + "px", width: Math.max(20, (mEnd - (m.offset || 0)) * pps) + "px" },
-        onpointerdown: (e) => dragMusic(e) },
+        onpointerdown: (e) => dragMusic(e), oncontextmenu: (e) => musicMenu(e) },
         wave, ico("music", 12), h("span.lbl", baseName(m.path)), h("div.edge.r", { onpointerdown: (e) => trimMusicEnd(e) }));
       musicRow = h("div.row.music", { style: { width: width + "px" } }, blk);
       requestAnimationFrame(() => drawMusicWave(wave, m));
@@ -556,7 +663,7 @@ export function editorPage(app, onBack) {
       inner.onpointerup = () => { inner.onpointermove = null; };
     });
     // 1.0.1 · Zoom fino al millisecondo: cursore logaritmico, da 8 a 4000 pixel al secondo
-    const zoom = h("input", { type: "range", min: 0, max: 1000, value: Math.round(ppsToZoom(pps)), "aria-label": t("Zoom della sequenza"), title: t("Zoom della sequenza: Ctrl + rotella, oppure + e −"), oninput: (e) => zoomTo(zoomToPps(Number(e.target.value))) });
+    const zoom = h("input", { type: "range", min: 0, max: 1000, value: Math.round(ppsToZoom(pps)), "aria-label": t("Zoom della sequenza"), title: t("Zoom della sequenza: Ctrl + rotella, oppure + e −"), oninput: (e) => { zoomTo(zoomToPps(Number(e.target.value))); saveView(); } });
     const scroller = h("div.tl-scroll", inner);
     const prevScroll = timelineEl.querySelector(".tl-scroll")?.scrollLeft || 0;
     timelineEl.replaceChildren(h("div.tl-side", h("span", ico("film", 14)), h("span", ico("file-text", 14)), h("span", ico("music", 14)), h("div.zoom", ico("search", 13), zoom)), scroller);
@@ -572,13 +679,14 @@ export function editorPage(app, onBack) {
         e.preventDefault();
         const r = scroller.getBoundingClientRect();
         zoomTo(pps * (e.deltaY < 0 ? 1.18 : 0.85), (scroller.scrollLeft + e.clientX - r.left - 12) / pps, e.clientX - r.left);
+        saveView();
       }
     }, { passive: false });
     updatePlayhead();
   }
 
   function dragClip(e, i) {
-    if (e.target.classList.contains("edge")) return;
+    if (e.button !== 0 || e.target.classList.contains("edge")) return;
     e.preventDefault();
     sel = { kind: "clip", index: i };
     tool = tool === "text" ? "clip" : tool;
@@ -595,6 +703,8 @@ export function editorPage(app, onBack) {
       blk.onpointermove = null;
       blk.onpointerup = null;
       if (!moved) {
+        // 1.1 · Doppio clic: apre «Clip» per questa clip
+        if (isDouble("clip" + i)) { tool = "clip"; renderInspector(); renderToolbar(); }
         seekTo(starts()[i] + 0.001 + Math.max(0, (ev.clientX - blk.getBoundingClientRect().left) / pps));
         renderTimeline();
         renderInspector();
@@ -632,7 +742,7 @@ export function editorPage(app, onBack) {
   }
 
   function dragText(e, k) {
-    if (e.target.classList.contains("edge")) return;
+    if (e.button !== 0 || e.target.classList.contains("edge")) return;
     e.preventDefault();
     sel = { kind: "text", index: k };
     tool = "text";
@@ -645,8 +755,65 @@ export function editorPage(app, onBack) {
       t.end = t.start + len;
       renderTimeline();
     }, () => {
-      if (JSON.stringify(p) !== before) { undo.push(before); redo = []; afterChange(); } else { seekTo(t.start + 0.05); renderAll(); }
+      if (JSON.stringify(p) !== before) { undo.push(before); redo = []; afterChange(); } else {
+        seekTo(t.start + 0.05);
+        renderAll();
+        // 1.1 · Doppio clic: si scrive subito nel testo
+        if (isDouble("text" + k)) setTimeout(() => inspector.querySelector("textarea")?.select(), 30);
+      }
     });
+  }
+
+  // 1.1 · Doppio clic e clic destro su clip, testi e musica (con le azioni che ci sono già)
+  let lastTap = { id: "", at: 0 };
+  function isDouble(id) {
+    const now = Date.now();
+    const dbl = lastTap.id === id && now - lastTap.at < 450;
+    lastTap = dbl ? { id: "", at: 0 } : { id, at: now };
+    return dbl;
+  }
+  function clipMenu(e, i) {
+    sel = { kind: "clip", index: i };
+    renderTimeline();
+    const c = p.clips[i];
+    const s0 = starts()[i];
+    const inside = time > s0 + 0.1 && time < s0 + clipLen(c) - 0.1;
+    contextMenu(e, [
+      { label: t("Dividi qui"), icon: "scissors", disabled: !inside, title: inside ? null : t("Porta l’indicatore sopra questa clip."), onclick: splitHere },
+      { label: t("Duplica"), onclick: () => change((pp) => pp.clips.splice(i + 1, 0, { ...JSON.parse(JSON.stringify(c)), id: uid(), transition: null })) },
+      { label: c.muted ? t("Riattiva l'audio") : t("Togli l'audio"), icon: c.muted ? "volume-2" : "volume-x", onclick: () => change((pp) => (pp.clips[i].muted = !pp.clips[i].muted)) },
+      { label: t("Stacca l’audio"), icon: "audio-waveform", onclick: () => detachAudio(i) },
+      { label: t("Effetti"), icon: "wand-sparkles", onclick: () => { tool = "fx"; renderInspector(); renderToolbar(); } },
+      missing.has(c.path) ? { label: t("Trova i file…"), icon: "search", onclick: findFiles } : null,
+      { label: t("Elimina"), icon: "trash-2", onclick: () => { sel = { kind: "clip", index: i }; deleteSelected(); } },
+    ]);
+  }
+  function textMenu(e, k) {
+    sel = { kind: "text", index: k };
+    tool = "text";
+    renderTimeline(); renderInspector(); renderToolbar();
+    const setT = (fn) => change((pp) => fn(pp.texts[k]));
+    contextMenu(e, [
+      { label: t("Modifica il testo"), icon: "type", onclick: () => setTimeout(() => inspector.querySelector("textarea")?.select(), 30) },
+      { label: t("Inizia qui"), onclick: () => setT((x) => { x.start = Math.min(time, x.end - 0.3); }) },
+      { label: t("Finisci qui"), onclick: () => setT((x) => { x.end = Math.max(time, x.start + 0.3); }) },
+      { label: t("Elimina"), icon: "trash-2", onclick: () => { sel = { kind: "text", index: k }; deleteSelected(); } },
+    ]);
+  }
+  function musicMenu(e) {
+    tool = "audio"; renderToolbar(); renderInspector();
+    contextMenu(e, [
+      { label: t("Parte qui"), onclick: () => change((pp) => { pp.music.offset = time; if (pp.music.end != null && pp.music.end < time + 0.2) pp.music.end = null; }) },
+      { label: t("Finisce qui"), onclick: () => musicEndHere() },
+      { label: t("Cambia"), icon: "music", onclick: pickMusic },
+      { label: t("Togli"), icon: "trash-2", onclick: () => change((pp) => (pp.music = null)) },
+    ]);
+  }
+  function musicEndHere() {
+    const m = p.music;
+    if (!m) return;
+    if (time <= (m.offset || 0) + 0.2) return toast(t("Porta l’indicatore dopo l’inizio della musica."));
+    change((pp) => (pp.music.end = time));
   }
 
   function trimText(e, k, side) {
@@ -715,11 +882,12 @@ export function editorPage(app, onBack) {
     }
   }
   function dragMusic(e) {
-    if (e.target.classList.contains("edge")) return;
+    if (e.button !== 0 || e.target.classList.contains("edge")) return;
     e.preventDefault();
     tool = "audio"; renderToolbar(); renderInspector();
     const m = p.music, before = JSON.stringify(p);
     const x0 = e.clientX, o0 = m.offset || 0, e0 = m.end;
+    if (isDouble("music")) setTimeout(() => inspector.querySelector(".group")?.scrollIntoView?.({ block: "nearest" }), 30);
     capture(e, (ev) => {
       const o = Math.max(0, Math.min(Math.max(0, total() - 0.5), o0 + (ev.clientX - x0) / pps));
       m.offset = o;
@@ -813,12 +981,14 @@ export function editorPage(app, onBack) {
   }
 
   function splitHere() {
+    if (!p.clips.length) return toast(t("Aggiungi prima un video."));
+    if (time >= total() - 0.05) return toast(t("Porta l’indicatore sopra una clip."));
     const at = clipAt(time);
-    if (!at) return;
+    if (!at) return toast(t("Porta l’indicatore sopra una clip."));
     const c = p.clips[at.i];
     const speed = c.fx?.speed || 1;
     const cut = c.in + at.local * speed;
-    if (cut - c.in < 0.1 || c.out - cut < 0.1) return toast(t("Sposta l'indicatore un po' dentro la clip per dividerla."));
+    if (cut - c.in < 0.1 || c.out - cut < 0.1) return toast(t("L’indicatore è troppo vicino al bordo della clip."));
     change((pp) => {
       const a = pp.clips[at.i];
       const b = JSON.parse(JSON.stringify(a));
@@ -877,13 +1047,13 @@ export function editorPage(app, onBack) {
 
   function deleteSelected() {
     if (sel.kind === "text") {
-      if (!p.texts[sel.index]) return;
+      if (!p.texts[sel.index]) return toast(t("Scegli prima un testo nella riga «Testi»."));
       const k = sel.index;
       sel = { kind: "clip", index: 0 };
       change((pp) => pp.texts.splice(k, 1));
       return;
     }
-    if (!p.clips[sel.index]) return;
+    if (!p.clips[sel.index]) return toast(t("Scegli prima una clip nella sequenza."));
     const k = sel.index;
     sel = { kind: "clip", index: Math.max(0, Math.min(k, p.clips.length - 2)) };
     change((pp) => {
@@ -963,8 +1133,8 @@ export function editorPage(app, onBack) {
             h("button.btn", { title: t("L’audio della clip diventa la traccia audio sotto il video: lo sposti, lo accorci e lo tagli da solo. La clip resta muta"), onclick: () => detachAudio(ci) }, ico("audio-waveform", 14), t("Stacca l’audio")),
             // 1.0.1 · Solo il pezzo tenuto nella clip, in un file audio accanto al video
             h("button.btn", { title: t("Solo il pezzo tenuto nella clip"), onclick: () => run("cut", [{ path: c.path, name: baseName(c.path), size: infos[c.path]?.size || 0 }], { start: +c.in.toFixed(3), end: +c.out.toFixed(3), audio: true }, "editor") }, ico("music", 14), t("Estrai l’audio della clip")),
-            h("button.btn", { disabled: ci === 0 || null, onclick: () => change((pp) => { const [x] = pp.clips.splice(ci, 1); pp.clips.splice(ci - 1, 0, x); sel.index = ci - 1; }) }, t("◀ Sposta")),
-            h("button.btn", { disabled: ci === p.clips.length - 1 || null, onclick: () => change((pp) => { const [x] = pp.clips.splice(ci, 1); pp.clips.splice(ci + 1, 0, x); sel.index = ci + 1; }) }, t("Sposta ▶")),
+            h("button.btn", { disabled: ci === 0 || null, title: ci === 0 ? t("È già la prima clip.") : null, onclick: () => change((pp) => { const [x] = pp.clips.splice(ci, 1); pp.clips.splice(ci - 1, 0, x); sel.index = ci - 1; }) }, t("◀ Sposta")),
+            h("button.btn", { disabled: ci === p.clips.length - 1 || null, title: ci === p.clips.length - 1 ? t("È già l’ultima clip.") : null, onclick: () => change((pp) => { const [x] = pp.clips.splice(ci, 1); pp.clips.splice(ci + 1, 0, x); sel.index = ci + 1; }) }, t("Sposta ▶")),
             h("button.btn", { onclick: () => { sel = { kind: "clip", index: ci }; deleteSelected(); } }, ico("trash-2", 14), t("Elimina"))),
           h("div.group", t("Velocità")),
           chips(SPEEDS.map((s) => [s, dec(String(s).replace(".", ",") + "×")]), c.fx?.speed || 1,
@@ -1072,7 +1242,7 @@ export function editorPage(app, onBack) {
           slider(t("Dissolvenza finale"), m.fadeOut ?? 2, 0, 5, 0.5, (v) => (p.music.fadeOut = v), (v) => dec(String(v).replace(".", ",") + " s")),
           h("div.btns",
             h("button.btn", { onclick: () => setM((x) => { x.offset = time; if (x.end != null && x.end < time + 0.2) x.end = null; }) }, t("Parte qui")),
-            h("button.btn", { title: t("La musica finisce nel punto dell’indicatore (oppure trascina il bordo destro della sua barra)"), onclick: () => { if (time > (m.offset || 0) + 0.2) setM((x) => (x.end = time)); } }, t("Finisce qui")),
+            h("button.btn", { title: t("La musica finisce nel punto dell’indicatore (oppure trascina il bordo destro della sua barra)"), onclick: musicEndHere }, t("Finisce qui")),
             m.end != null ? h("button.btn", { onclick: () => setM((x) => (x.end = null)) }, t("Fino alla fine")) : null,
             h("button.btn", { onclick: pickMusic }, t("Cambia")),
             h("button.btn", { onclick: () => change((pp) => (pp.music = null)) }, ico("trash-2", 14), t("Togli"))));
@@ -1151,7 +1321,6 @@ export function editorPage(app, onBack) {
       for (which = 0; which < paths.length; which++) {
         subsStatus.textContent = t("Preparo…");
         const segs = await invoke("transcribe_words", { path: paths[which], lang, id: subsJob });
-        if (current !== startedOn || !p) throw new Error("annullato");
         byPath[paths[which]] = segs.flatMap((s) => (s.words?.length ? s.words : s.text.split(/\s+/).map((t, k, all) => ({ text: t, start: s.start + ((s.end - s.start) * k) / all.length, end: s.start + ((s.end - s.start) * (k + 1)) / all.length }))));
       }
     } catch (e) {
@@ -1165,10 +1334,13 @@ export function editorPage(app, onBack) {
     }
     un();
     subsJob = null;
-    if (current !== startedOn || !p) return;
-    const st = starts();
+    // 1.1 · Le righe vanno sempre nel progetto da cui sei partito, anche se nel frattempo ne hai aperto un altro
+    const here = current === startedOn && p;
+    const proj = here ? p : startedOn.data;
+    let acc = 0;
+    const st = (proj.clips || []).map((c) => { const s0 = acc; acc += clipLen(c); return s0; });
     const made = [];
-    p.clips.forEach((c, i) => {
+    (proj.clips || []).forEach((c, i) => {
       const words = byPath[c.path];
       if (!words || c.muted) return;
       const speed = c.fx?.speed || 1;
@@ -1184,6 +1356,16 @@ export function editorPage(app, onBack) {
       }
     });
     subsBusy = false;
+    if (!here) {
+      subsStatus.textContent = "";
+      if (!made.length) return toast(t`Non ho sentito parole nelle clip di «${startedOn.name}».`);
+      if (!library.includes(startedOn)) return toast(t`I sottotitoli erano per «${startedOn.name}», che non c’è più tra i Progetti.`, 6000);
+      startedOn.data = { ...proj, texts: [...(proj.texts || []), ...made] };
+      startedOn.updated = Date.now();
+      saveLibrary();
+      if (!current) showProjects();
+      return toast(t`Sottotitoli pronti: ${made.length} righe aggiunte a «${startedOn.name}».`, 6000);
+    }
     subsStatus.textContent = made.length ? t`Fatto: ${made.length} righe di sottotitoli. Correggile come gli altri testi; Ctrl+Z le toglie tutte.` : t("Non ho sentito parole nelle clip.");
     if (made.length) change((pp) => pp.texts.push(...made));
     else renderInspector();
@@ -1202,8 +1384,16 @@ export function editorPage(app, onBack) {
   // ── Esportazione
   async function exportVideo() {
     if (!p.clips.length) return toast(t("Aggiungi almeno un video."));
+    const lost = [...new Set(p.clips.map((c) => c.path).concat(p.music ? [p.music.path] : []).filter((x) => missing.has(x)))];
+    if (lost.length) return toast(lost.length === 1 ? t("Manca un file del progetto: premi «Trova i file…» in alto.") : t`Mancano ${lost.length} file del progetto: premi «Trova i file…» in alto.`, 6000);
+    if (bar.job?.state === "running" && bar.job.action === "vproject") return toast(t("Sto già esportando questo montaggio: aspetta che finisca o premi «Interrompi»."));
     stop();
     const [W, H] = canvasSize();
+    // 1.1 · Prima di partire: c'è posto sul disco?
+    if (!DEMO) {
+      const room = await invoke("export_room", { dir: outDir() || dirName(p.clips[0].path), width: W, height: H, fps: p.fps || 30, seconds: total() }).catch(() => null);
+      if (room && !room.ok && room.free != null) return toast(t`Servono circa ${fmtBytes(room.need)}, sul disco ce ne sono ${fmtBytes(room.free)}.`, 8000);
+    }
     const overlays = [];
     try {
       for (const t of p.texts) {
@@ -1250,6 +1440,8 @@ export function editorPage(app, onBack) {
     if ((e.ctrlKey || e.metaKey) && (k === "z" || k === "Z")) { e.preventDefault(); e.shiftKey ? doRedo() : doUndo(); return; }
     if ((e.ctrlKey || e.metaKey) && (k === "y" || k === "Y")) { e.preventDefault(); doRedo(); return; }
     if ((e.ctrlKey || e.metaKey) && (k === "s" || k === "S")) { e.preventDefault(); saveNow(); return; }
+    // 1.1 · Alt + ← → di un millisecondo (prima non arrivava mai qui)
+    if (e.altKey && !e.ctrlKey && !e.metaKey && (k === "ArrowLeft" || k === "ArrowRight")) { e.preventDefault(); seekTo(time + (k === "ArrowLeft" ? -0.001 : 0.001)); return; }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (k === " " && !(e.target instanceof Element && e.target.closest("button"))) { e.preventDefault(); playing ? stop() : play(); }
     else if (k === "s" || k === "S") splitHere();
@@ -1259,22 +1451,40 @@ export function editorPage(app, onBack) {
     else if (k === "k" || k === "K") stop();
     else if (k === "l" || k === "L") play();
     // 1.0.1 · ← → un fotogramma, Maiusc un secondo, Alt un millisecondo; + e − lo zoom della sequenza
-    else if (k === "ArrowLeft") { e.preventDefault(); seekTo(time - (e.altKey ? 0.001 : e.shiftKey ? 1 : 1 / (p.fps || 30))); }
-    else if (k === "ArrowRight") { e.preventDefault(); seekTo(time + (e.altKey ? 0.001 : e.shiftKey ? 1 : 1 / (p.fps || 30))); }
-    else if (k === "+" || k === "=") { e.preventDefault(); zoomTo(pps * 1.6, time); }
-    else if (k === "-" || k === "_") { e.preventDefault(); zoomTo(pps / 1.6, time); }
+    else if (k === "ArrowLeft") { e.preventDefault(); seekTo(time - (e.shiftKey ? 1 : 1 / (p.fps || 30))); }
+    else if (k === "ArrowRight") { e.preventDefault(); seekTo(time + (e.shiftKey ? 1 : 1 / (p.fps || 30))); }
+    else if (k === "+" || k === "=") { e.preventDefault(); zoomTo(pps * 1.6, time); saveView(); }
+    else if (k === "-" || k === "_") { e.preventDefault(); zoomTo(pps / 1.6, time); saveView(); }
     else if (k === "Home") seekTo(0);
     else if (k === "End") seekTo(total());
   }
   document.addEventListener("keydown", onKey);
   new ResizeObserver(() => { if (p) { layoutStage(); showAt(time, false); } }).observe(stage);
 
+  let restoring = null, crashWarned = false;
   showProjects();
   return {
     el,
     /** Apre l'editor con questi video (nuovo progetto) */
     openWith(paths) { openProject(null, paths); },
     add(paths) { if (p) addClips(paths); else openProject(null, paths); },
-    leave() { stop(); },
+    leave() { stop(); writeNow(); },
+    /** 1.1 · Riapre il progetto lasciato aperto (ed.open). Dopo una chiusura improvvisa lo dice. */
+    restore(crashed) {
+      restoring = restoring || (async () => {
+        const v = store.get("ed.open", null);
+        const item = v && library.find((x) => x.id === v.id);
+        if (!item) return null;
+        if (!p) await openProject(item, [], v);
+        return item;
+      })();
+      restoring.then((item) => {
+        if (crashed && item && !crashWarned) {
+          crashWarned = true;
+          const when = new Date(item.updated).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" });
+          toast(t`OrbitLR si è chiusa all’improvviso. «${item.name}» è com’era alle ${when}.`, 9000);
+        }
+      }).finally(() => { restoring = null; });
+    },
   };
 }

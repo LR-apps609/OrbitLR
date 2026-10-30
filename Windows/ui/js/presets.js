@@ -43,8 +43,20 @@ export function addPreset(kind, action, param, name) {
   return p;
 }
 
+/** Toglie un'azione o una ricetta; restituisce cosa e dove era (per «Annulla», 1.1). */
 export function removePreset(id) {
-  save(presets().filter((p) => p.id !== id));
+  const list = presets();
+  const at = list.findIndex((p) => p.id === id);
+  save(list.filter((p) => p.id !== id));
+  return at >= 0 ? { item: list[at], at } : null;
+}
+
+/** 1.1 · Rimette un'azione tolta, al suo posto. */
+export function restorePreset(back) {
+  if (!back) return;
+  const list = presets().filter((p) => p.id !== back.item.id);
+  list.splice(Math.min(back.at, list.length), 0, back.item);
+  save(list);
 }
 
 export function renamePreset(id, name) {

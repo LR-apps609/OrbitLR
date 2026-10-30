@@ -2,18 +2,33 @@
 // Le modifiche restano qui finché non premi «Salva»: allora esce un PDF nuovo e l'originale non si tocca.
 
 import { fileUrl, invoke } from "./api.js";
-import { t } from "./i18n.js";
+import { t, tc, tr } from "./i18n.js";
 import { run } from "./jobs.js";
-import { h, ico, modal, toast } from "./util.js";
+import { guardClose, h, ico, modal, toast } from "./util.js";
+
+// 1.1 · Lo stesso PDF non si apre due volte
+const openNow = new Set();
 
 export async function openPdfEditor(file) {
+  if (openNow.has(file.path)) return toast(t("Questo PDF è già aperto nell’editor."));
+  openNow.add(file.path);
+  try {
+    await openEditor(file);
+  } catch (e) {
+    openNow.delete(file.path);
+    toast(tr(String(e)));
+  }
+}
+
+async function openEditor(file) {
   let info;
   try {
     info = await invoke("pdf_info", { path: file.path });
   } catch (e) {
-    return toast(String(e));
+    openNow.delete(file.path);
+    return toast(tr(String(e)));
   }
-  if (!info || !info.pages?.length) return toast(t("Questo PDF non si apre nell'editor."));
+  if (!info || !info.pages?.length) { openNow.delete(file.path); return toast(t("Questo PDF non si apre nell'editor.")); }
 
   const marks = { texts: [], images: [], redactions: [] }; // coordinate in punti, dall'alto a sinistra
   const fields = Object.fromEntries((info.fields || []).map((f) => [f.name, f.value]));
@@ -36,6 +51,43 @@ export async function openPdfEditor(file) {
   const bg = h("div.pe-bg", { role: "dialog", "aria-modal": "true", "aria-label": t("Editor PDF") });
 
   const count = () => marks.texts.length + marks.images.length + marks.redactions.length + changedFields.size;
+
+  // 1.1 · Ctrl+Z / Ctrl+Y su aggiunte, spostamenti, eliminazioni, testi e campi
+  const snapshot = () => JSON.stringify({ marks: { texts: marks.texts.map(({ fresh, ...m }) => m), images: marks.images, redactions: marks.redactions }, fields, changed: [...changedFields] });
+  let committed = snapshot();
+  let past = [], future = [];
+  function commit() {
+    const now = snapshot();
+    if (now === committed) return;
+    past.push(committed);
+    if (past.length > 200) past.shift();
+    future = [];
+    committed = now;
+  }
+  function apply(state) {
+    const st = JSON.parse(state);
+    for (const k of ["texts", "images", "redactions"]) marks[k].splice(0, marks[k].length, ...st.marks[k]);
+    for (const k of Object.keys(fields)) delete fields[k];
+    Object.assign(fields, st.fields);
+    changedFields.clear();
+    st.changed.forEach((k) => changedFields.add(k));
+    selected = null;
+    draw();
+  }
+  function undo() {
+    commit();
+    if (!past.length) return toast(t("Niente da annullare."));
+    future.push(committed);
+    committed = past.pop();
+    apply(committed);
+  }
+  function redo() {
+    commit();
+    if (!future.length) return toast(t("Niente da rifare."));
+    past.push(committed);
+    committed = future.pop();
+    apply(committed);
+  }
   const scale = () => sheet.clientWidth / info.pages[page - 1].width;
 
   async function loadPage() {
@@ -59,13 +111,13 @@ export async function openPdfEditor(file) {
     marks.redactions.forEach((r, i) => {
       if (r.page !== page) return;
       kids.push(h("div.pe-red", { style: { left: px(r.x), top: px(r.y), width: px(r.w), height: px(r.h) } },
-        h("button.pe-x", { "aria-label": t("Togli"), onpointerdown: (e) => e.stopPropagation(), onclick: () => { marks.redactions.splice(i, 1); draw(); } }, ico("x", 11))));
+        h("button.pe-x", { "aria-label": t("Togli"), onpointerdown: (e) => e.stopPropagation(), onclick: () => { marks.redactions.splice(i, 1); commit(); draw(); } }, ico("x", 11))));
     });
     marks.images.forEach((m, i) => {
       if (m.page !== page) return;
       const el = h("div.pe-img-mark" + (selected === m ? ".on" : ""), { style: { left: px(m.x), top: px(m.y), width: px(m.w), height: px(m.h) } },
         h("img", { src: "data:image/png;base64," + m.png, alt: t("Firma"), draggable: "false" }),
-        h("button.pe-x", { "aria-label": t("Togli"), onpointerdown: (e) => e.stopPropagation(), onclick: () => { marks.images.splice(i, 1); draw(); } }, ico("x", 11)),
+        h("button.pe-x", { "aria-label": t("Togli"), onpointerdown: (e) => e.stopPropagation(), onclick: () => { marks.images.splice(i, 1); commit(); draw(); } }, ico("x", 11)),
         h("span.pe-grip", { title: t("Trascina per cambiare misura"), onpointerdown: (e) => resizeImage(e, m) }));
       el.addEventListener("pointerdown", (e) => moveMark(e, m));
       kids.push(el);
@@ -76,9 +128,12 @@ export async function openPdfEditor(file) {
       ta.value = m.text;
       const fit = () => { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; ta.style.width = Math.max(40, ...ta.value.split("\n").map((l) => l.length * m.size * s * 0.56)) + 8 + "px"; };
       ta.addEventListener("input", () => { m.text = ta.value; fit(); });
-      ta.addEventListener("blur", () => { if (!m.text.trim()) { marks.texts.splice(marks.texts.indexOf(m), 1); draw(); } });
+      ta.addEventListener("blur", () => {
+        if (!m.text.trim() && marks.texts.includes(m)) { marks.texts.splice(marks.texts.indexOf(m), 1); commit(); draw(); }
+        else commit();
+      });
       const box = h("div.pe-text-mark", { style: { left: px(m.x), top: px(m.y) } }, ta,
-        h("button.pe-x", { "aria-label": t("Togli"), onpointerdown: (e) => e.stopPropagation(), onclick: () => { marks.texts.splice(i, 1); draw(); } }, ico("x", 11)),
+        h("button.pe-x", { "aria-label": t("Togli"), onpointerdown: (e) => e.stopPropagation(), onclick: () => { marks.texts.splice(i, 1); commit(); draw(); } }, ico("x", 11)),
         h("span.pe-move", { title: t("Trascina per spostare"), onpointerdown: (e) => moveMark(e, m) }, ico("move", 11)));
       kids.push(box);
       if (m.fresh) { m.fresh = false; freshBox = ta; }
@@ -109,7 +164,7 @@ export async function openPdfEditor(file) {
       const node = e.target.closest(".pe-img-mark, .pe-text-mark");
       if (node) { node.style.left = m.x * s + "px"; node.style.top = m.y * s + "px"; }
     };
-    const onUp = () => { window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", onUp); };
+    const onUp = () => { window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", onUp); commit(); };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
   }
@@ -124,7 +179,7 @@ export async function openPdfEditor(file) {
       m.h = m.w * ratio;
       draw();
     };
-    const onUp = () => { window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", onUp); };
+    const onUp = () => { window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", onUp); commit(); };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
   }
@@ -140,6 +195,7 @@ export async function openPdfEditor(file) {
       if (!signature) return drawSignature();
       const w = 150, hgt = w * signature.ratio;
       marks.images.push({ page, x: p0.x - w / 2, y: p0.y - hgt / 2, w, h: hgt, png: signature.png });
+      commit();
       draw();
     } else if (mode === "redact") {
       const r = { page, x: p0.x, y: p0.y, w: 0, h: 0 };
@@ -154,6 +210,7 @@ export async function openPdfEditor(file) {
       layer.onpointerup = () => {
         layer.onpointermove = null;
         if (r.w < 3 || r.h < 3) marks.redactions.splice(marks.redactions.indexOf(r), 1);
+        commit();
         draw();
       };
     }
@@ -203,8 +260,8 @@ export async function openPdfEditor(file) {
         : t("Trascina sopra quello che vuoi nascondere. Le pagine oscurate diventano un'immagine: il testo sotto sparisce davvero.");
     const flist = (info.fields || []).map((f) => {
       const input = f.kind === "check"
-        ? h("input", { type: "checkbox", checked: fields[f.name] && fields[f.name] !== "Off" ? true : null, onchange: (e) => { fields[f.name] = e.target.checked ? "Yes" : "Off"; changedFields.add(f.name); updateCount(); } })
-        : h("input.pe-field", { type: "text", value: fields[f.name] || "", oninput: (e) => { fields[f.name] = e.target.value; changedFields.add(f.name); updateCount(); } });
+        ? h("input", { type: "checkbox", checked: fields[f.name] && fields[f.name] !== "Off" ? true : null, onchange: (e) => { fields[f.name] = e.target.checked ? "Yes" : "Off"; changedFields.add(f.name); commit(); updateCount(); } })
+        : h("input.pe-field", { type: "text", value: fields[f.name] || "", oninput: (e) => { fields[f.name] = e.target.value; changedFields.add(f.name); updateCount(); }, onchange: () => commit() });
       return h("label.pe-frow", h("span", f.name.split(".").pop()), input);
     });
     side.replaceChildren(
@@ -213,7 +270,10 @@ export async function openPdfEditor(file) {
         ...[["text", "type", t("Scrivi")], ["sign", "pen-line", t("Firma")], ["redact", "square", t("Oscura")]].map(([id, icon, label]) =>
           h("button.pe-mode" + (mode === id ? ".on" : ""), { onclick: () => setMode(id) }, ico(icon, 16), label))),
       h("p.hint", tip),
-      mode === "sign" && signature ? h("button.btn", { onclick: drawSignature }, t("Rifai la firma")) : null,
+      mode === "sign" && signature ? h("button.btn", { onclick: async () => {
+        // 1.1 · Cambiare la firma chiede prima (quelle già sulle pagine restano)
+        if (await modal(t("Sostituire la firma?"), t("Disegni una firma nuova; quelle già messe sulle pagine restano come sono."), [{ label: t("Annulla"), value: false, focus: true }, { label: t("Sostituisci"), value: true, danger: true }])) drawSignature();
+      } }, t("Rifai la firma")) : null,
       flist.length ? h("div.group", t`Campi del modulo (${flist.length})`) : null,
       flist.length ? h("div.pe-fields", ...flist) : null,
       h("div.grow"),
@@ -237,18 +297,31 @@ export async function openPdfEditor(file) {
     run("pdfedit", [file], edits, "pdf");
   }
 
+  let closing = false;
   async function close(force = false) {
+    if (closing) return;
+    // 1.1 · Con modifiche: «Salvare una copia con le modifiche prima di chiudere?»
     if (!force && count()) {
-      const ok = await modal(t("Chiudere senza salvare?"), t("Le modifiche fatte qui andranno perse."), [{ label: t("Resta"), value: false }, { label: t("Chiudi"), value: true, primary: true }]);
-      if (!ok) return;
+      closing = true;
+      const v = await modal(t("Salvare una copia con le modifiche prima di chiudere?"), t("L’originale non si tocca: le modifiche vanno in un PDF nuovo accanto."),
+        [{ label: t("Salva una copia"), value: "save", primary: true, focus: true }, { label: t("Non salvare"), value: "discard", danger: true }, { label: t("Annulla"), value: null }]);
+      closing = false;
+      if (v === "save") return save();
+      if (v !== "discard") return;
     }
     document.removeEventListener("keydown", onKey);
     window.removeEventListener("resize", draw);
+    unguard();
+    openNow.delete(file.path);
     bg.remove();
   }
+  const unguard = guardClose(() => (count() ? t`Il PDF «${file.name}» ha modifiche non salvate nell’editor.` : null));
 
   function onKey(e) {
+    if (document.querySelector(".modal-bg")) return;
     if (e.target instanceof Element && e.target.closest("textarea, input")) return;
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !e.shiftKey) { e.preventDefault(); undo(); return; }
+    if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === "y" || (e.shiftKey && e.key.toLowerCase() === "z"))) { e.preventDefault(); redo(); return; }
     if (e.key === "Escape") close();
     if (e.key === "ArrowRight" && page < info.pages.length) { page++; loadPage(); }
     if (e.key === "ArrowLeft" && page > 1) { page--; loadPage(); }
@@ -262,6 +335,8 @@ export async function openPdfEditor(file) {
         h("button.btn.icon", { "aria-label": t("Pagina precedente"), disabled: page <= 1 || null, onclick: () => { page--; render(); loadPage(); } }, ico("chevron-left", 16)),
         pageLabel,
         h("button.btn.icon", { "aria-label": t("Pagina successiva"), disabled: page >= info.pages.length || null, onclick: () => { page++; render(); loadPage(); } }, ico("chevron-right", 16)),
+        h("button.btn.icon", { "aria-label": tc("undo", "Annulla"), title: t("Annulla (Ctrl+Z)"), onclick: undo }, ico("undo-2", 16)),
+        h("button.btn.icon", { "aria-label": t("Rifai"), title: t("Rifai (Ctrl+Y)"), onclick: redo, style: { transform: "scaleX(-1)" } }, ico("undo-2", 16)),
         h("button.btn", { onclick: () => close() }, t("Chiudi")),
         h("button.btn.primary", { onclick: save }, ico("check", 15), t("Salva un PDF nuovo"))),
       h("div.pe-body", stage, side)));

@@ -404,6 +404,38 @@ pub fn build(p: &Project, infos: &[FileInfo], w: u32, h: u32) -> Result<(Vec<OsS
     Ok((a, total))
 }
 
+/// I bit al secondo del video esportato (la qualità scelta dal montaggio).
+fn bitrate_for(w: u32, h: u32, fps: f64) -> u64 {
+    let fps = if fps > 0.0 { fps.clamp(10.0, 60.0) } else { 30.0 };
+    (w as f64 * h as f64 * fps * 0.11).max(1_500_000.0) as u64
+}
+
+/// 1.1 · Quanto pesa, circa, il video esportato: lo stesso conto che si fa prima di partire.
+pub fn export_bytes(w: u32, h: u32, fps: f64, seconds: f64) -> u64 {
+    (bitrate_for(w, h, fps) as f64 * seconds.max(0.0) / 8.0) as u64
+}
+
+/// 1.1 · Il nome del file esportato: quello del progetto («Gita al lago.mp4»), oppure «Montaggio».
+pub fn export_name(p: &Project) -> String {
+    let n = p.name.trim();
+    if n.is_empty() { crate::names::tag("Montaggio") } else { names::safe_name(n) }
+}
+
+/// 1.1 · Un progetto che si toglie non si perde: una copia (JSON) in `dir`, da mandare nel Cestino di Windows.
+/// Il nome è quello del progetto, mai uguale a un file che c'è già.
+pub fn trash_copy(dir: &Path, name: &str, json: &str) -> Result<PathBuf> {
+    if json.len() > 50_000_000 {
+        return Err(EngineError::new("progetto troppo grande"));
+    }
+    serde_json::from_str::<serde_json::Value>(json).map_err(|_| EngineError::new("progetto non valido"))?;
+    std::fs::create_dir_all(dir)?;
+    let base = if name.trim().is_empty() { "Progetto".to_string() } else { name.trim().to_string() };
+    let p = names::unique(dir, &format!("{base} (progetto OrbitLR)"), "json");
+    names::track_placeholder(&p, false);
+    std::fs::write(&p, json.as_bytes())?;
+    Ok(p)
+}
+
 /// Esporta il montaggio in un MP4 nella cartella `dir`.
 pub fn export(tools: &Tools, p: &Project, dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<PathBuf> {
     if p.clips.is_empty() {
@@ -446,10 +478,9 @@ pub fn export(tools: &Tools, p: &Project, dir: &Path, cancel: &Cancel, progress:
         return Err(EngineError::new("il montaggio è vuoto"));
     }
     let fps = if p.fps > 0.0 { p.fps.clamp(10.0, 60.0) } else { 30.0 };
-    let bitrate = (w as f64 * h as f64 * fps * 0.11).max(1_500_000.0) as u64;
-    video::ensure_space(dir, (bitrate as f64 * total / 8.0) as u64)?;
-    let name = if p.name.trim().is_empty() { crate::names::tag("Montaggio") } else { p.name.trim().to_string() };
-    let of = names::OutFile::new(dir, &name, "mp4")?;
+    let bitrate = bitrate_for(w, h, fps);
+    video::ensure_space(dir, export_bytes(w, h, fps, total))?;
+    let of = names::OutFile::new(dir, &export_name(p), "mp4")?;
     let mut last = EngineError::new("nessun codificatore video disponibile");
     for enc in video::candidates(tools, Codec::H264) {
         let mut a = base.clone();
@@ -496,6 +527,50 @@ mod tests {
         assert!((total - 6.0).abs() < 1e-9);
         let g = a.iter().map(|x| x.to_string_lossy().to_string()).find(|x| x.contains("xfade")).unwrap();
         assert!(g.contains("xfade=transition=fade:duration=0.800:offset=3.600"), "{g}");
+    }
+
+    #[test]
+    fn nome_e_peso_dell_esportazione() {
+        let mut p = Project { name: "  Gita al lago ".into(), ..Default::default() };
+        assert_eq!(export_name(&p), "Gita al lago", "il file prende il nome del progetto");
+        p.name = "Vacanze: 2026/Mare?".into();
+        assert_eq!(export_name(&p), "Vacanze- 2026-Mare-", "niente caratteri vietati da Windows");
+        p.name = "   ".into();
+        assert!(!export_name(&p).trim().is_empty());
+        // 1080p a 30 fotogrammi: circa 6,8 Mbit/s → un minuto ≈ 51 MB
+        let b = export_bytes(1920, 1080, 30.0, 60.0);
+        assert!((50_000_000..53_000_000).contains(&b), "{b}");
+        // Mai sotto 1,5 Mbit/s, anche per video piccoli
+        assert_eq!(export_bytes(320, 240, 30.0, 8.0), 1_500_000);
+        assert_eq!(export_bytes(1920, 1080, 30.0, 0.0), 0);
+    }
+
+    #[test]
+    fn spazio_sul_disco() {
+        let need = 1_000_000_000u64;
+        assert_eq!(crate::video::room_needed(need), 1_200_000_000);
+        assert!(!crate::video::has_room(800_000_000, need), "800 MB non bastano per 1 GB");
+        assert!(!crate::video::has_room(1_220_000_000, need), "serve anche il margine per Windows");
+        assert!(crate::video::has_room(1_300_000_000, need));
+        let dir = std::env::temp_dir().join(format!("orbit-spazio-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let e = crate::video::ensure_space(&dir, u64::MAX / 4).unwrap_err();
+        assert!(e.0.starts_with("sul disco servono circa"), "{}", e.0);
+        assert!(crate::video::ensure_space(&dir, 1000).is_ok());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn progetto_tolto_va_nel_cestino_come_copia() {
+        let dir = std::env::temp_dir().join(format!("orbit-cestino-{}", std::process::id()));
+        let json = r#"{"name":"Gita","clips":[{"path":"C:\\a.mp4","in":0,"out":3}]}"#;
+        let a = trash_copy(&dir, "Gita", json).unwrap();
+        let b = trash_copy(&dir, "Gita", json).unwrap();
+        assert_ne!(a, b, "due copie, mai una sopra l'altra");
+        assert_eq!(std::fs::read_to_string(&a).unwrap(), json, "la copia è il progetto intero");
+        assert!(a.file_name().unwrap().to_string_lossy().starts_with("Gita (progetto OrbitLR)"));
+        assert!(trash_copy(&dir, "Rotto", "non è json").is_err());
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

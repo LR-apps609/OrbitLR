@@ -92,6 +92,8 @@ pub fn vectorize(tools: Option<&Tools>, data_dir: Option<&Path>, src: &Path, par
     }
     cancel.check()?;
     let out = vettore::vectorize(&img, up.as_ref(), &o, &mut |p| progress(base + (1.0 - base) * p), &|| cancel.is_cancelled()).map_err(|e| if cancel.is_cancelled() { EngineError::cancelled() } else { EngineError::new(e) })?;
+    // 1.1 · «Interrompi» durante l'ultima pulizia delle forme: niente file
+    cancel.check()?;
     if param == "pack" {
         let stem = names::stem(src);
         let root = format!("{stem} ({})", names::tag("pacchetto logo"));

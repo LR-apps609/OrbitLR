@@ -172,7 +172,7 @@ pub fn track_temp(p: &Path, add: bool) {
 }
 
 /// Annota un nome riservato (file vuoto): al riavvio si toglie se è rimasto vuoto.
-fn track_placeholder(p: &Path, add: bool) {
+pub fn track_placeholder(p: &Path, add: bool) {
     track_line(format!("R|{}", p.to_string_lossy()), add);
 }
 

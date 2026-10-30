@@ -1,7 +1,7 @@
 // Schede Immagini, Video e File: i file a sinistra, a destra «Cosa vuoi fare?».
 // Un clic su uno strumento senza scelte lo fa partire subito; con le scelte apre il riquadro sotto.
 
-import { invoke, pickFiles, setDemoPick } from "./api.js";
+import { invoke, pickFiles, reveal, setDemoPick } from "./api.js";
 import { AI_LOGO, CONVERT, GROUPS, KINDS, TOOLS, fmtIcon } from "./catalog.js";
 import { run } from "./jobs.js";
 import { imageEstimate, knobPanel, videoEstimate } from "./params.js";
@@ -12,9 +12,9 @@ import { downloaderBar } from "./downloader.js";
 import { openPdfEditor } from "./pdfeditor.js";
 import { addPreset, askName, presets, runSteps, suggestName } from "./presets.js";
 import { subscribe } from "./jobs.js";
-import { fmtBytes, fmtTime, h, ico, store, toast } from "./util.js";
+import { askDiscard, contextMenu, fmtBytes, fmtTime, guardClose, h, ico, store, toast } from "./util.js";
 import { t, tr, tc } from "./i18n.js";
-import { SIMPLE, getLevel, levelSeg } from "./levels.js";
+import { SIMPLE, getLevel, levelSeg, setLevel } from "./levels.js";
 
 const COPY = {
   image: { title: t("Immagini"), one: tc("one", "foto"), many: tc("many", "foto"), empty: t("Trascina qui le foto"), emptySub: t("JPG, PNG, HEIC dell'iPhone, WebP, AVIF e altre"), filters: [{ name: t("Immagini"), extensions: ["jpg", "jpeg", "png", "heic", "heif", "webp", "avif", "gif", "bmp", "tif", "tiff", "ico", "jfif"] }] },
@@ -28,6 +28,7 @@ export function mediaPage(kind, app, opts = {}) {
   let selected = new Set();
   let openTool = null;
   let trim = null;
+  let trimFile = null; // il file su cui è aperto Taglia / Nascondi un logo
 
   const bar = resultBar(kind);
   // Video: il video scaricato da un link arriva nell'elenco, pronto da tagliare, comprimere o montare
@@ -62,7 +63,8 @@ export function mediaPage(kind, app, opts = {}) {
       files.push({ path: p.info.path, name: p.info.name, size: p.info.size, info: p.info, thumb: null });
     }
     if (skipped) toast(t`${skipped} file non ${kind === "image" ? t("sono foto") : kind === "video" ? t("sono video") : t("sono PDF")}: li trovi nella scheda giusta.`);
-    closeTrim();
+    // 1.1 · Un taglio o delle zone già scelti non si buttano perché sono arrivati altri file
+    if (!panelLoss()) closeTrim();
     render();
     if (kind !== "pdf") queueThumbs();
   }
@@ -91,12 +93,44 @@ export function mediaPage(kind, app, opts = {}) {
     if (p.length) add(p);
   }
 
-  function clearAll() {
+  async function clearAll() {
+    if (!(await mayLeavePanel())) return;
     files = [];
     selected.clear();
     closeTrim();
     render();
   }
+
+  // ── 1.1 · Un pannello con del lavoro dentro non si butta senza chiedere
+  /** Cosa si perderebbe chiudendo il pannello aperto (null: niente). */
+  function panelLoss() {
+    if (trim && trimFile) {
+      if (TOOLS[openTool]?.params === "zones") return trim.count ? t`le zone disegnate su «${trimFile.name}»` : null;
+      return trim.changed ? t`la parte scelta di «${trimFile.name}»` : null;
+    }
+    const panel = right.querySelector(".params");
+    if (openTool && panel && [...panel.querySelectorAll("input[type=text], input[type=password]")].some((i) => i.value !== i.defaultValue)) return t("quello che hai scritto nelle opzioni");
+    return null;
+  }
+  async function mayLeavePanel() {
+    const loss = panelLoss();
+    if (!loss) return true;
+    const zonesOpen = trim && TOOLS[openTool]?.params === "zones";
+    return askDiscard(zonesOpen ? t("Buttare le zone disegnate?") : trim ? t("Buttare la parte scelta?") : t("Buttare le opzioni scritte?"), t`Si perde ${loss}.`);
+  }
+  async function closePanel() {
+    if (!(await mayLeavePanel())) return;
+    closeTrim();
+    openTool = null;
+    render();
+  }
+  guardClose(() => { const loss = panelLoss(); return loss ? t`${c.title}: si perde ${loss}.` : null; });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || !el.isConnected || document.querySelector(".modal-bg, .pe-bg") || !(trim || openTool)) return;
+    if (e.target instanceof Element && e.target.closest("textarea")) return;
+    e.preventDefault();
+    closePanel();
+  });
 
   function renderHead() {
     const total = files.reduce((a, f) => a + f.size, 0);
@@ -104,7 +138,7 @@ export function mediaPage(kind, app, opts = {}) {
       h("div", h("h1", c.title), h("div.sub", files.length ? `${files.length} ${files.length === 1 ? c.one : c.many} · ${fmtBytes(total)}${selected.size ? t` · ${selected.size} scelti` : ""}` : t("Niente ancora"))),
       h("div.grow"),
       dl,
-      levelSeg(kind, level, (v) => { level = v; openTool = null; closeTrim(); render(); },
+      levelSeg(kind, level, async (v) => { if (!(await mayLeavePanel())) { setLevel(kind, level); return render(); } level = v; openTool = null; closeTrim(); render(); },
         kind === "video" && opts.onEditor ? () => opts.onEditor(targets().map((f) => f.path)) : kind === "pdf" ? () => clickTool("pdfedit") : null),
       files.length ? h("button.btn", { onclick: pick }, ico("plus", 16), t("Aggiungi…")) : null,
       files.length ? h("button.btn.icon", { title: t("Togli tutto"), "aria-label": t("Togli tutto"), onclick: clearAll }, ico("x", 16)) : null].filter(Boolean));
@@ -129,10 +163,23 @@ export function mediaPage(kind, app, opts = {}) {
         kind === "video" && f.info.duration ? h("span.dur", fmtTime(f.info.duration)) : null,
         h("div.nm", { title: f.name }, f.name),
         h("div.mt", meta(f)),
-        h("button.rm", { title: t("Togli"), "aria-label": t`Togli ${f.name}`, onclick: (e) => { e.stopPropagation(); files = files.filter((x) => x !== f); selected.delete(f.path); closeTrim(); render(); } }, ico("x", 13)));
+        h("button.rm", { title: t("Togli"), "aria-label": t`Togli ${f.name}`, onclick: (e) => { e.stopPropagation(); removeFile(f); } }, ico("x", 13)));
+      // 1.1 · Clic destro: le azioni che ci sono già
+      tile.addEventListener("contextmenu", (e) => contextMenu(e, [
+        { label: t("Mostra nella cartella"), icon: "folder-open", onclick: () => reveal(f.path) },
+        { label: t("Togli"), icon: "x", onclick: () => removeFile(f) },
+      ]));
       return tile;
     }));
     left.replaceChildren(head, trim ? h("div.page-scroll", trim.el) : grid, bar.el);
+  }
+
+  async function removeFile(f) {
+    if (trimFile === f && !(await mayLeavePanel())) return;
+    files = files.filter((x) => x !== f);
+    selected.delete(f.path);
+    if (trimFile === f || !trim) closeTrim();
+    render();
   }
 
   function meta(f) {
@@ -192,20 +239,20 @@ export function mediaPage(kind, app, opts = {}) {
     if (level === "simple") return renderSimple();
     if (CONVERT[kind].length) {
       right.append(h("div.group", t("Converti in")),
-        h("div.fmt-grid", CONVERT[kind].map((f) => h("button.fmt", { onclick: () => go("to:" + f), disabled: !files.length || null, title: t`Converti in ${f.toUpperCase()}` }, f.toUpperCase()))));
+        h("div.fmt-grid", CONVERT[kind].map((f) => h("button.fmt", { onclick: () => go("to:" + f), disabled: !files.length || null, title: files.length ? t`Converti in ${f.toUpperCase()}` : t("Aggiungi prima dei file.") }, f.toUpperCase()))));
     }
     const groups = GROUPS[kind] || [];
     const current = openGroup ?? groups[0]?.[0];
     for (const [g, ids] of groups) {
       const isOpen = current === g;
-      right.append(h("button.group-h" + (isOpen ? ".open" : ""), { type: "button", "aria-expanded": isOpen ? "true" : "false", onclick: () => { openGroup = isOpen ? "" : g; openTool = null; closeTrim(); render(); } },
+      right.append(h("button.group-h" + (isOpen ? ".open" : ""), { type: "button", "aria-expanded": isOpen ? "true" : "false", onclick: async () => { if (!(await mayLeavePanel())) return; openGroup = isOpen ? "" : g; openTool = null; closeTrim(); render(); } },
         h("span", g), h("span.n", String(ids.length)), ico("chevron-down", 15)));
       if (!isOpen) continue;
       for (const id of ids) {
         const tool = TOOLS[id];
         const actionId = tool.id || id;
         const tooFew = tool.min && n < tool.min;
-        right.append(h("button.tool" + (openTool === id ? ".on" : ""), { disabled: !files.length || null, onclick: () => clickTool(id) },
+        right.append(h("button.tool" + (openTool === id ? ".on" : ""), { disabled: !files.length || null, title: files.length ? null : t("Aggiungi prima dei file."), onclick: () => clickTool(id) },
           h("span.ic", ico(tool.icon, 18)),
           h("span.txt", h("b", tool.title), h("span", tooFew ? t`Scegli almeno ${tool.min} file` : tool.hint))));
         // Taglio e zone hanno il loro riquadro (aggiunto da openTrim / openZones)
@@ -218,7 +265,7 @@ export function mediaPage(kind, app, opts = {}) {
   function renderSimple() {
     const ids = (SIMPLE[kind] || []).filter((id) => id === "convert" ? CONVERT[kind].length : id.startsWith("to:") ? CONVERT[kind].includes(id.slice(3)) : TOOLS[id]);
     const tile = (id, icon, title, hint, onclick) =>
-      h("button.tool.big" + (openTool === id ? ".on" : ""), { type: "button", disabled: !files.length || null, onclick },
+      h("button.tool.big" + (openTool === id ? ".on" : ""), { type: "button", disabled: !files.length || null, title: files.length ? null : t("Aggiungi prima dei file."), onclick },
         h("span.ic", ico(icon, 20)), h("span.txt", h("b", title), h("span", hint)));
     const tiles = ids.map((id) => {
       if (id === "convert") return tile("convert", "arrow-left-right", t("Cambia formato"), CONVERT[kind].slice(0, 4).map((x) => x.toUpperCase()).join(", "), () => { openTool = openTool === "convert" ? null : "convert"; renderTools(); });
@@ -235,7 +282,7 @@ export function mediaPage(kind, app, opts = {}) {
     const total = (GROUPS[kind] || []).reduce((a, [, x]) => a + x.length, 0) + (CONVERT[kind].length ? 1 : 0);
     const more = Math.max(0, total - tiles.length);
     right.append(h("div.simple-grid", tiles), slot,
-      more ? h("button.more", { type: "button", onclick: () => { level = "complete"; store.set("level." + kind, "complete"); openTool = null; closeTrim(); render(); } },
+      more ? h("button.more", { type: "button", onclick: async () => { if (!(await mayLeavePanel())) return; level = "complete"; store.set("level." + kind, "complete"); openTool = null; closeTrim(); render(); } },
         more === 1 ? t("1 altra funzione in Completo") : t`Altre ${more} funzioni in Completo`, ico("arrow-right", 14)) : null);
   }
 
@@ -292,12 +339,14 @@ export function mediaPage(kind, app, opts = {}) {
     return knobPanel(tool.params, (v) => go(actionId, v), extra);
   }
 
-  function openTrim(id) {
+  async function openTrim(id) {
     const tg = targets();
     const f = tg.length === 1 ? tg[0] : selected.size === 0 && files.length === 1 ? files[0] : null;
     if (!f) return toast(t`Scegli un video (clic sulla miniatura) e poi «${TOOLS[id].title}».`);
+    if (!(await mayLeavePanel())) return;
     closeTrim();
     const isGif = id === "gifcut";
+    trimFile = f;
     trim = createTrim({ path: f.path, duration: Math.max(0.1, f.info.duration), media: "video", maxLen: isGif ? 15 : 0 });
     openTool = id;
     const precise = h("input", { type: "checkbox" });
@@ -309,16 +358,18 @@ export function mediaPage(kind, app, opts = {}) {
         if (!isGif) p.precise = precise.checked;
         run(isGif ? "gifcut" : "cut", [f], p, kind);
       } }, isGif ? t("Crea la GIF") : t("Taglia")),
-      h("button.btn.ghost", { onclick: () => { closeTrim(); render(); } }, t("Annulla")));
+      h("button.btn.ghost", { onclick: closePanel }, t("Annulla")));
     render();
     placePanel(panel);
   }
 
-  function openZones(id) {
+  async function openZones(id) {
     const tg = targets();
     const f = tg.length === 1 ? tg[0] : selected.size === 0 && files.length === 1 ? files[0] : null;
     if (!f) return toast(t`Scegli ${kind === "image" ? t("una foto") : t("un video")} (clic sulla miniatura) e poi «Nascondi un logo».`);
+    if (!(await mayLeavePanel())) return;
     closeTrim();
+    trimFile = f;
     trim = createZones({ path: f.path });
     openTool = id;
     let mode = "blur", strength = 0.7;
@@ -342,7 +393,7 @@ export function mediaPage(kind, app, opts = {}) {
         if (!zones.length) return toast(t("Disegna almeno una zona sul logo."));
         run("hidemark", [f], { zones, mode, strength }, kind);
       } }, t("Nascondi")),
-      h("button.btn.ghost", { onclick: () => { closeTrim(); render(); } }, t("Annulla")));
+      h("button.btn.ghost", { onclick: closePanel }, t("Annulla")));
     render();
     placePanel(panel);
   }
@@ -350,6 +401,7 @@ export function mediaPage(kind, app, opts = {}) {
   function closeTrim() {
     if (trim) trim.destroy();
     trim = null;
+    trimFile = null;
     if (openTool && ["trim", "zones"].includes(TOOLS[openTool]?.params)) openTool = null;
   }
 

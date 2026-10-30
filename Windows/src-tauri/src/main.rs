@@ -8,6 +8,7 @@ use serde::Serialize;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use tauri::{Emitter, Manager, State};
 
@@ -27,6 +28,33 @@ struct AppState {
     /// Cartelle automatiche e il file dove si salvano
     rules: Mutex<Vec<orbit_engine::watch::Rule>>,
     rules_file: PathBuf,
+    /// 1.1 · La finestra è pronta: chiudendo, chiede lei (lavori in corso, PDF modificati, pannelli aperti)
+    ui_ready: AtomicBool,
+    /// 1.1 · Ctrl+Alt+C è già usata da un'altra app
+    shortcut_taken: AtomicBool,
+    /// 1.1 · L'ultima volta OrbitLR non si è chiusa da sola (il segno «in uso» era rimasto)
+    crashed: bool,
+    /// 1.1 · Quando si è chiesto alla pagina di chiudere e lei non ha ancora risposto «visto»
+    /// (se la pagina è bloccata, alla seconda ✕ dopo 3 secondi OrbitLR si chiude lo stesso)
+    close_pending: Mutex<Option<std::time::Instant>>,
+}
+
+/// 1.1 · Chiedere alla pagina di chiudere: true se l'ha già chiesto e la pagina non risponde (allora si chiude e basta).
+fn ask_page_to_close(app: &tauri::AppHandle, st: &AppState) -> bool {
+    let mut pending = st.close_pending.lock().unwrap();
+    if let Some(t) = *pending {
+        if t.elapsed() > std::time::Duration::from_secs(3) {
+            return true;
+        }
+    }
+    *pending = Some(std::time::Instant::now());
+    let _ = app.emit("close-requested", ());
+    false
+}
+
+/// 1.1 · Il segno «OrbitLR è aperta»: si toglie quando si chiude bene. Se all'avvio c'è ancora, si era chiusa all'improvviso.
+fn running_mark(data_dir: &Path) -> PathBuf {
+    data_dir.join("in-uso")
 }
 
 /// Aspetta un posto libero per una miniatura; lo restituisce quando si esce.
@@ -321,6 +349,12 @@ fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action
                     }))
                     .unwrap_or_else(|_| Err(orbit_engine::EngineError::new("errore imprevisto: segnalalo con «Segnala», per favore")));
                     match r {
+                        Ok(outs) if cancel.is_cancelled() => {
+                            for p in &outs {
+                                let _ = std::fs::remove_file(p);
+                            }
+                            break;
+                        }
                         Ok(outs) => {
                             ok += 1;
                             let outs: Vec<actions::Output> = outs.iter().map(|p| actions::Output::of(p)).collect();
@@ -361,6 +395,13 @@ fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action
                 let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run_action(&ctx, &action, g, &param, &cancel, &mut progress)))
                     .unwrap_or_else(|_| Err(orbit_engine::EngineError::new("errore imprevisto: segnalalo con «Segnala», per favore")));
                 match r {
+                    // 1.1 · «Interrompi» premuto mentre finiva: il file appena fatto non resta
+                    Ok(outs) if cancel.is_cancelled() && action != "rename" => {
+                        for o in &outs {
+                            let _ = std::fs::remove_file(&o.path);
+                        }
+                        break;
+                    }
                     Ok(outs) => {
                         ok += 1;
                         // «Rinomina tutti» non crea file: sono gli originali (mai nel Cestino con «Annulla»)
@@ -770,6 +811,49 @@ async fn transcribe_words(app: tauri::AppHandle, state: State<'_, Shared>, path:
     Ok(segs)
 }
 
+/// 1.1 · La finestra è pronta: da adesso chiudere OrbitLR passa da lei, che chiede se c'è qualcosa da perdere.
+#[tauri::command]
+fn ui_ready(state: State<'_, Shared>) {
+    state.ui_ready.store(true, Ordering::SeqCst);
+}
+
+/// 1.1 · La pagina ha ricevuto la richiesta di chiusura (e chiede lei, se serve).
+#[tauri::command]
+fn close_seen(state: State<'_, Shared>) {
+    *state.close_pending.lock().unwrap() = None;
+}
+
+#[derive(Serialize)]
+struct Room {
+    need: u64,
+    free: Option<u64>,
+    ok: bool,
+}
+
+/// 1.1 · Prima di esportare il montaggio: quanto serve (con il margine) e quanto c'è sul disco di `dir`.
+#[tauri::command]
+fn export_room(dir: String, width: u32, height: u32, fps: f64, seconds: f64) -> Room {
+    let bytes = orbit_engine::editor::export_bytes(width.clamp(2, 8192), height.clamp(2, 8192), fps, seconds.clamp(0.0, 86_400.0));
+    let free = Path::new(&dir).is_absolute().then(|| fs4_free(Path::new(&dir))).flatten();
+    let ok = free.map(|f| orbit_engine::video::has_room(f, bytes)).unwrap_or(true);
+    Room { need: orbit_engine::video::room_needed(bytes), free, ok }
+}
+
+fn fs4_free(dir: &Path) -> Option<u64> {
+    orbit_engine::video::free_space(dir)
+}
+
+/// 1.1 · Un progetto del montaggio tolto dai Progetti: una copia va nel Cestino di Windows, così si può sempre recuperare.
+#[tauri::command]
+fn trash_project(app: tauri::AppHandle, name: String, json: String) -> Result<(), String> {
+    let dir = app.path().app_cache_dir().map_err(|e| e.to_string())?.join("progetti-tolti");
+    let p = orbit_engine::editor::trash_copy(&dir, &name, &json).map_err(|e| e.0)?;
+    trash::delete(&p).map_err(|e| {
+        let _ = std::fs::remove_file(&p);
+        format!("non riesco a metterlo nel Cestino: {e}")
+    })
+}
+
 /// Esiste ancora? (per la cronologia)
 #[tauri::command]
 fn files_exist(paths: Vec<String>) -> Vec<bool> {
@@ -785,6 +869,10 @@ struct Startup {
     param: Option<String>,
     /// Installata dal Microsoft Store (pacchetto MSIX): gli aggiornamenti li fa lo Store
     store: bool,
+    /// 1.1 · L'ultima volta OrbitLR si è chiusa all'improvviso
+    crashed: bool,
+    /// 1.1 · Ctrl+Alt+C è già usata da un'altra app
+    shortcut_taken: bool,
 }
 
 /// L'app gira come pacchetto MSIX (Microsoft Store)?
@@ -804,13 +892,21 @@ fn is_store() -> bool {
 /// I file con cui è stata aperta l'app («Apri con OrbitLR» da Esplora file) e, nelle prove automatiche,
 /// cosa fare con loro.
 #[tauri::command]
-fn startup() -> Startup {
+fn startup(state: State<'_, Shared>) -> Startup {
     let mut files: Vec<String> = std::env::args().skip(1).filter(|a| !a.starts_with('-') && Path::new(a).exists()).collect();
     if let Ok(list) = std::env::var("ORBIT_PROVA_FILE") {
         files.extend(list.split(';').filter(|p| Path::new(p).is_file()).map(String::from));
     }
     let var = |k: &str| std::env::var(k).ok().filter(|v| !v.is_empty());
-    Startup { files, tab: var("ORBIT_PROVA_SCHEDA"), action: var("ORBIT_PROVA_AZIONE"), param: var("ORBIT_PROVA_PARAMETRO"), store: is_store() }
+    Startup {
+        files,
+        tab: var("ORBIT_PROVA_SCHEDA"),
+        action: var("ORBIT_PROVA_AZIONE"),
+        param: var("ORBIT_PROVA_PARAMETRO"),
+        store: is_store(),
+        crashed: state.crashed,
+        shortcut_taken: state.shortcut_taken.load(Ordering::SeqCst),
+    }
 }
 
 #[derive(Serialize)]
@@ -989,7 +1085,16 @@ fn main() {
             let data_dir = app.path().app_local_data_dir().unwrap_or_else(|_| std::env::temp_dir().join("OrbitLR"));
             let rules_file = app.path().app_config_dir().unwrap_or_else(|_| data_dir.clone()).join("cartelle.json");
             let rules = orbit_engine::watch::load(&rules_file);
+            // 1.1 · Si era chiusa all'improvviso? (il segno «in uso» non si toglie se OrbitLR non si chiude da sola)
+            let _ = std::fs::create_dir_all(&data_dir);
+            let mark = running_mark(&data_dir);
+            let crashed = mark.is_file();
+            let _ = std::fs::write(&mark, std::process::id().to_string());
             let shared = Arc::new(AppState {
+                ui_ready: AtomicBool::new(false),
+                close_pending: Mutex::new(None),
+                shortcut_taken: AtomicBool::new(false),
+                crashed,
                 rules: Mutex::new(rules),
                 rules_file,
                 voice_exe,
@@ -1013,7 +1118,15 @@ fn main() {
                 let mut tray = TrayIconBuilder::with_id("orbitlr").tooltip("OrbitLR").menu(&menu).show_menu_on_left_click(false)
                     .on_menu_event(|app, ev| match ev.id().as_ref() {
                         "apri" => show_main(app),
-                        "esci" => app.exit(0),
+                        // 1.1 · «Esci» chiede come la ✕ della finestra, se c'è qualcosa da perdere
+                        "esci" => {
+                            let st = app.state::<Shared>();
+                            if st.ui_ready.load(Ordering::SeqCst) && !ask_page_to_close(app, &st) {
+                                show_main(app);
+                            } else {
+                                app.exit(0);
+                            }
+                        }
                         _ => {}
                     })
                     .on_tray_icon_event(|tray, ev| {
@@ -1065,8 +1178,10 @@ fn main() {
                         })
                         .build(),
                 )?;
-                // Se un'altra app usa già la combinazione, OrbitLR funziona lo stesso
-                let _ = app.global_shortcut().register(combo);
+                // Se un'altra app usa già la combinazione, OrbitLR funziona lo stesso (e lo dice, 1.1)
+                if app.global_shortcut().register(combo).is_err() {
+                    shared.shortcut_taken.store(true, Ordering::SeqCst);
+                }
             }
             // Cartelle automatiche: un controllo ogni 3 secondi, un file alla volta
             let handle = app.handle().clone();
@@ -1089,17 +1204,33 @@ fn main() {
             Ok(())
         })
         .on_window_event(|window, event| {
-            // Chiudendo la finestra con dei lavori in corso: prima si chiede
+            // Chiudendo la finestra: decide la pagina (lavori in corso, PDF modificati, pannelli aperti, montaggio da salvare).
+            // Prima che la pagina sia pronta, si chiede solo per i lavori in corso.
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                if window.label() != "main" {
+                    return;
+                }
                 let st = window.state::<Shared>();
-                let busy = !st.jobs.lock().unwrap().is_empty();
-                if busy {
+                if st.ui_ready.load(Ordering::SeqCst) {
+                    api.prevent_close();
+                    if ask_page_to_close(window.app_handle(), &st) {
+                        window.app_handle().exit(0);
+                    }
+                } else if !st.jobs.lock().unwrap().is_empty() {
                     api.prevent_close();
                     let _ = window.emit("close-requested", ());
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install, update_check, update_install, undo_result, allow_made, set_lang, pdf_info, pdf_page, silences, phone_share, phone_stop, shelf_show, shelf_expand, shelf_drop])
-        .run(tauri::generate_context!())
-        .expect("OrbitLR non è riuscita ad avviarsi");
+        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install, update_check, update_install, undo_result, allow_made, set_lang, pdf_info, pdf_page, silences, phone_share, phone_stop, shelf_show, shelf_expand, shelf_drop, ui_ready, close_seen, export_room, trash_project])
+        .build(tauri::generate_context!())
+        .expect("OrbitLR non è riuscita ad avviarsi")
+        .run(|app, ev| {
+            // 1.1 · Chiusa bene: via il segno «in uso»
+            if let tauri::RunEvent::Exit = ev {
+                if let Some(st) = app.try_state::<Shared>() {
+                    let _ = std::fs::remove_file(running_mark(&st.data_dir));
+                }
+            }
+        });
 }

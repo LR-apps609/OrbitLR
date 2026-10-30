@@ -51,15 +51,35 @@ export function markUndone(id) {
 export function getDrawer() {
   return drawer;
 }
+/** Cancella la cronologia; restituisce quella di prima (per «Annulla», 1.1). */
 export function clearHistory() {
+  const old = history;
   history = [];
   store.set("history", history);
   notify(null);
+  return old;
 }
+/** Toglie una voce; restituisce la voce e dov'era (per «Annulla», 1.1). */
 export function removeFromHistory(id) {
+  const at = history.findIndex((j) => j.id === id);
+  const item = history[at];
   history = history.filter((j) => j.id !== id);
   store.set("history", history);
   notify(null);
+  return item ? { item, at } : null;
+}
+/** 1.1 · Rimette voci tolte dalla cronologia. */
+export function restoreHistory(list) {
+  const known = new Set(history.map((j) => j.id));
+  const back = list.filter((x) => !known.has(x.item.id)).sort((a, b) => a.at - b.at);
+  for (const { item, at } of back) history.splice(Math.min(at, history.length), 0, item);
+  store.set("history", history);
+  notify(null);
+}
+
+/** 1.1 · «Riprova»: lo stesso lavoro, con gli stessi file e le stesse scelte. */
+export function retry(job) {
+  return run(job.action, job.files, job.param, job.origin === "auto" ? "activity" : job.origin);
 }
 
 /** Dove salvare secondo le Opzioni (null = accanto all'originale). */

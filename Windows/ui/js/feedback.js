@@ -2,7 +2,7 @@
 // scrivi e la versione di OrbitLR, niente nomi di file). Dopo 10 lavori riusciti OrbitLR lo chiede una volta sola.
 
 import { openUrl } from "./api.js";
-import { h, store } from "./util.js";
+import { askDiscard, guardClose, h, store, toast } from "./util.js";
 import { t } from "./i18n.js";
 
 const RECIPIENT = "ledion.proaccs@gmail.com";
@@ -28,15 +28,25 @@ export function showFeedback(version, face = null) {
   const check = () => (send.disabled = !chosen && !ta.value.trim());
   ta.addEventListener("input", check);
   const bg = h("div.modal-bg");
-  const close = () => bg.remove();
-  send.addEventListener("click", () => { openUrl(mailFor(chosen, ta.value, version)); close(); });
+  // 1.1 · Esc, Annulla o un clic fuori: se hai scritto o scelto qualcosa, prima si chiede
+  let unguard = () => {};
+  const close = () => { bg.remove(); unguard(); document.removeEventListener("keydown", esc, true); };
+  const hasWork = () => !!(chosen || ta.value.trim());
+  const ask = async () => { if (!hasWork() || (await askDiscard(t("Buttare l’idea?"), t("Quello che hai scritto non si ritrova.")))) close(); };
+  const esc = (e) => { if (e.key === "Escape" && bg.isConnected && [...document.querySelectorAll(".modal-bg")].pop() === bg) { e.preventDefault(); e.stopImmediatePropagation(); ask(); } };
+  document.addEventListener("keydown", esc, true);
+  unguard = guardClose(() => (hasWork() ? t("«Suggerisci un’idea» ha un testo non ancora mandato.") : null));
+  send.addEventListener("click", () => {
+    // L'email non si apre (nessun programma di posta)? Lo si dice, e il testo resta qui
+    openUrl(mailFor(chosen, ta.value, version)).then(close, () => toast(t`Non riesco ad aprire il programma di posta: copia il testo e mandalo a ${RECIPIENT}.`, 8000));
+  });
   draw();
   check();
   bg.append(h("div.modal.fb", { role: "dialog", "aria-modal": "true", "aria-label": t("Suggerisci un’idea") },
     h("h3", t("Come ti trovi con OrbitLR?")), faces, ta,
     h("p.fb-note", t("Si apre un’email già pronta: contiene solo quello che scrivi e la versione di OrbitLR, niente nomi di file.")),
-    h("div.row", h("button.btn", { type: "button", onclick: close }, t("Annulla")), send)));
-  bg.addEventListener("click", (e) => e.target === bg && close());
+    h("div.row", h("button.btn", { type: "button", onclick: ask }, t("Annulla")), send)));
+  bg.addEventListener("click", (e) => e.target === bg && ask());
   document.body.append(bg);
   ta.focus();
 }

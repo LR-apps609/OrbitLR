@@ -1,10 +1,11 @@
 // La barra in basso: avanzamento con la scala della radio, poi il risultato con quanto si è guadagnato.
 
-import { cancel, getHistory, subscribe } from "./jobs.js";
+import { cancel, getHistory, markUndone, retry, subscribe } from "./jobs.js";
 import { addRecipe, askName, chainOf } from "./presets.js";
 import { actionName, kindOfExt } from "./catalog.js";
 import { invoke, openPath, reveal } from "./api.js";
 import { openCompare } from "./compare.js";
+import { install as installOffice } from "./office.js";
 import { askFeedbackOnce } from "./feedback.js";
 import { fmtBytes, gainText, h, ico, toast } from "./util.js";
 import { t, tr, tc, isEn } from "./i18n.js";
@@ -24,14 +25,17 @@ export function resultBar(origin) {
     if (job.state === "running") {
       const pct = Math.round(job.progress * 100);
       const n = job.files.length;
+      // 1.1 · Esportando il montaggio: anche quanto manca («Esporto… 42% · circa 2 min»)
+      const left = job.action === "vproject" ? timeLeft(job) : "";
+      const what = job.stopping ? t("Interrompo…") : job.action === "vproject" ? (pct > 0 ? t`Esporto… ${pct}%` : t("Preparo…")) + (left ? " · " + left : "") : pct > 0 ? `${pct}%` : t("Preparo…");
       el.append(
         h("div.resultbar", { role: "status" },
           h("div.ic.run", ico("loader-circle", 20, "spin")),
           h("div.tx",
             h("b", n > 1 ? t`${job.title} · ${n} file` : n === 1 ? `${job.title} · ${job.files[0].name}` : job.title),
-            h("span", pct > 0 ? `${pct}%` : t("Preparo…")),
+            h("span", what),
             h("div.tuner", h("div.fill", { style: { width: Math.max(2, pct) + "%" } }), h("div.scale"))),
-          h("button.btn", { onclick: () => cancel(job.id) }, t("Interrompi"))));
+          h("button.btn", { disabled: job.stopping || null, onclick: () => { job.stopping = true; cancel(job.id); render(job); } }, t("Interrompi"))));
       return;
     }
     const outs = job.results.flatMap((r) => r.outputs);
@@ -43,8 +47,9 @@ export function resultBar(origin) {
     }
     if (!outs.length) {
       const e = tr(errs[0]?.error) || t("qualcosa è andato storto");
+      // 1.1 · Il pulsante che risolve, oppure «Riprova»
       el.append(h("div.resultbar", h("div.ic.err", ico("triangle-alert", 20)),
-        h("div.tx", h("b", t("Non riuscito")), h("span", capital(e))), closeBtn()));
+        h("div.tx", h("b", t("Non riuscito")), h("span", capital(e))), fixButton(job), closeBtn()));
       return;
     }
     if (job.undone) {
@@ -126,18 +131,62 @@ async function sendToPhone(file) {
     return toast(tr(String(e)));
   }
   const qr = h("div.qr");
-  qr.innerHTML = r.svg; // SVG creato dal motore di OrbitLR
+  const urlEl = h("p.fb-note", { style: { userSelect: "text" } });
+  const expired = h("div", { hidden: true, style: { display: "grid", gap: "8px", justifyItems: "center" } });
+  let timer;
+  const showCode = (res) => {
+    qr.innerHTML = res.svg; // SVG creato dal motore di OrbitLR
+    qr.hidden = false;
+    urlEl.textContent = res.url;
+    urlEl.hidden = false;
+    expired.hidden = true;
+    clearTimeout(timer);
+    // 1.1 · Dopo 15 minuti il collegamento non vale più: lo si dice, con «Rigenera»
+    timer = setTimeout(() => {
+      invoke("phone_stop").catch(() => {});
+      qr.hidden = true;
+      urlEl.hidden = true;
+      expired.hidden = false;
+    }, 15 * 60e3 - 5000);
+  };
+  expired.append(h("p", { style: { margin: 0, fontWeight: 800 } }, t("Il codice è scaduto.")),
+    h("button.btn.primary", { type: "button", onclick: async () => {
+      try { showCode(await invoke("phone_share", { path: file.path, en: isEn })); } catch (e) { toast(tr(String(e))); }
+    } }, ico("rotate-ccw", 15), t("Rigenera")));
+  showCode(r);
   const bg = h("div.modal-bg");
-  const close = () => { invoke("phone_stop").catch(() => {}); bg.remove(); };
+  const close = () => { clearTimeout(timer); invoke("phone_stop").catch(() => {}); bg.remove(); };
   bg.append(h("div.modal.phone", { role: "dialog", "aria-modal": "true" },
     h("h3", t("Manda al telefono")),
     h("p", t`Inquadra il codice con la fotocamera del telefono e tocca «Scarica». Il telefono deve essere sulla stessa rete Wi-Fi del computer.`),
     qr,
-    h("p.fb-note", { style: { userSelect: "text" } }, r.url),
+    expired,
+    urlEl,
     h("p.fb-note", t("Il collegamento vale 15 minuti e funziona solo in casa: niente passa da internet. Se Windows chiede il permesso per la rete, scegli «Reti private».")),
     h("div.row", h("button.btn.primary", { onclick: close }, t("Fatto")))));
   bg.addEventListener("click", (e) => e.target === bg && close());
   document.body.append(bg);
+}
+
+/** «circa 2 min», «meno di un minuto»: dal ritmo fin qui (dopo qualche secondo, quando è affidabile). */
+function timeLeft(job) {
+  const p = job.progress || 0;
+  const spent = (Date.now() - job.started) / 1000;
+  if (p < 0.03 || spent < 4) return "";
+  const rest = (spent / p) * (1 - p);
+  if (rest < 50) return t("meno di un minuto");
+  return t`circa ${Math.round(rest / 60)} min`;
+}
+
+/** Dopo un errore: il pulsante che risolve (se si sa quale), altrimenti «Riprova». */
+export function fixButton(job) {
+  const err = String(job.results.find((r) => r.error)?.error || "");
+  if (/LibreOffice/i.test(err) && window.orbit) return h("button.btn.brass", { onclick: async () => { if (await installOffice(window.orbit)) retry(job); } }, t("Installa LibreOffice"));
+  // Il file non c'è più: riprovare non servirebbe
+  if (/non trovo|spostato o cancellato/i.test(err)) return null;
+  // Senza password salvata non si può rifare da qui
+  if (["protect", "unprotect"].includes(job.action)) return null;
+  return h("button.btn.brass", { onclick: () => retry(job) }, ico("rotate-ccw", 15), t("Riprova"));
 }
 
 function capital(s) {

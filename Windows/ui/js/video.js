@@ -18,6 +18,8 @@ export function videoTab(app) {
     if (m !== "editor") tools.refresh?.();
     el.replaceChildren((m === "editor" ? editor : tools).el);
     if (m === "editor" && paths?.length) editor.openWith(paths);
+    // 1.1 · Tornando nel Montaggio si riapre il progetto lasciato aperto (con indicatore, zoom e strumento)
+    else if (m === "editor") editor.restore(false);
   }
   document.addEventListener("keydown", (e) => {
     if (!el.isConnected || !(e.ctrlKey && e.shiftKey) || (e.key !== "E" && e.key !== "e")) return;
@@ -32,5 +34,10 @@ export function videoTab(app) {
       return mode === "editor" ? editor.add(paths) : tools.add(paths);
     },
     show() {},
+    /** 1.1 · Dopo una chiusura improvvisa: di nuovo nel progetto aperto, con l'avviso. */
+    restore(crashed) {
+      if (mode !== "editor") switchTo("editor");
+      editor.restore(crashed);
+    },
   };
 }

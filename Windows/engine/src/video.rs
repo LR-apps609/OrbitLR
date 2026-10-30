@@ -217,10 +217,25 @@ fn encode(
     Err(last_err)
 }
 
+/// Lo spazio da chiedere per un file di `bytes`: un quinto in più, perché la stima non è mai esatta.
+pub fn room_needed(bytes: u64) -> u64 {
+    bytes + bytes / 5
+}
+
+/// Lo spazio libero sul disco di `dir` (None se non si sa).
+pub fn free_space(dir: &Path) -> Option<u64> {
+    fs4::available_space(dir).ok()
+}
+
+/// C'è posto? Oltre al file (con il suo margine) restano almeno 50 MB liberi per Windows.
+pub fn has_room(free: u64, bytes: u64) -> bool {
+    free >= room_needed(bytes) + 50_000_000
+}
+
 /// Controlla prima che ci sia spazio (con un margine).
 pub fn ensure_space(dir: &Path, bytes: u64) -> Result<()> {
     if let Ok(free) = fs4::available_space(dir) {
-        if free < bytes + bytes / 5 + 50_000_000 {
+        if !has_room(free, bytes) {
             return Err(EngineError::new(format!(
                 "sul disco servono circa {} liberi, ce ne sono {}",
                 crate::actions::fmt_bytes(bytes + bytes / 5),
