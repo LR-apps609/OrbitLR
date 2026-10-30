@@ -1,0 +1,66 @@
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+                if job?.cancelRequested == true || state.failed { reader.cancelReading(); video.markAsFinished(); videoDone.finish(); return }
+/Users/runner/work/OrbitLR/OrbitLR/Sources/VideoTransitions.swift:51:9: warning: sendability of function types in property 'sourcePixelBufferAttributes' does not match requirement in protocol 'AVVideoCompositing'; this is an error in the Swift 6 language mode
+/Users/runner/work/OrbitLR/OrbitLR/Sources/VideoTransitions.swift:52:9: warning: sendability of function types in property 'requiredPixelBufferAttributesForRenderContext' does not match requirement in protocol 'AVVideoCompositing'; this is an error in the Swift 6 language mode
+/Users/runner/work/OrbitLR/OrbitLR/Sources/VideoTransitions.swift:51:9: warning: sendability of function types in property 'sourcePixelBufferAttributes' does not match requirement in protocol 'AVVideoCompositing'; this is an error in the Swift 6 language mode
+/Users/runner/work/OrbitLR/OrbitLR/Sources/VideoTransitions.swift:52:9: warning: sendability of function types in property 'requiredPixelBufferAttributesForRenderContext' does not match requirement in protocol 'AVVideoCompositing'; this is an error in the Swift 6 language mode
+Test Case '-[OrbitLRTests.ScreenshotTests test00_FinestraIntera]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test00_FinestraIntera]' passed (12.737 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test01_ConversioneVuota]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test01_ConversioneVuota]' passed (2.742 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test02_ConversioneFoto]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test02_ConversioneFoto]' passed (5.406 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test03_ConversioneDueTipi]' started.
+2026-10-30 01:21:04.876929+0000 xctest[8557:29249] fopen failed for data file: errno = 2 (No such file or directory)
+2026-10-30 01:21:05.022496+0000 xctest[8557:29249] fopen failed for data file: errno = 2 (No such file or directory)
+Test Case '-[OrbitLRTests.ScreenshotTests test03_ConversioneDueTipi]' passed (6.967 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test04_Immagini]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test04_Immagini]' passed (9.758 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test06_File]' started.
+CoreGraphics PDF has logged an error. Set environment variable "CG_PDF_VERBOSE" to learn more.
+Test Case '-[OrbitLRTests.ScreenshotTests test06_File]' passed (8.490 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test08_VideoProgetti]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test08_VideoProgetti]' passed (5.245 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test09_VideoStrumentiVeloci]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test09_VideoStrumentiVeloci]' passed (8.915 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test10_VideoMontaggio]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test10_VideoMontaggio]' passed (37.520 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test11_Audio]' started.
+2026-10-30 01:22:55.731848+0000 xctest[8557:31568] [catalog] Query for com.apple.MobileAsset.VoiceServicesVocalizerVoice failed: 2
+2026-10-30 01:22:55.733113+0000 xctest[8557:31568] [asset] #FactoryInstall Unable to query results, error: 5
+2026-10-30 01:22:55.842273+0000 xctest[8557:31568] [catalog] Query for com.apple.MobileAsset.VoiceServices.GryphonVoice failed: 2
+2026-10-30 01:22:55.854543+0000 xctest[8557:31568] [catalog] Query for com.apple.MobileAsset.VoiceServicesVocalizerVoice failed: 2
+Test Case '-[OrbitLRTests.ScreenshotTests test11_Audio]' passed (48.963 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test13_Attivita]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test13_Attivita]' passed (2.731 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test15_Aiuto]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test15_Aiuto]' passed (2.950 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test16_Opzioni]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test16_Opzioni]' passed (2.864 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test16b_Scorciatoie]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test16b_Scorciatoie]' passed (2.555 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test16c_MenuInAlto]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test16c_MenuInAlto]' passed (2.480 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test17_Avvio]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test17_Avvio]' passed (11.184 seconds).
+Test Case '-[OrbitLRTests.ScreenshotTests test18_Finestrelle]' started.
+Test Case '-[OrbitLRTests.ScreenshotTests test18_Finestrelle]' passed (10.210 seconds).
