@@ -167,7 +167,7 @@ extension VideoProjectStore {
                 return p
             }
             let clipStart = project.starts[now]
-            change(undo, String(localized: "Togli i silenzi")) {
+            change(undo, String(localized: "Rimuovi i silenzi")) {
                 $0.clips.replaceSubrange(now...now, with: pieces)
                 // Testi e sottotitoli seguono i tagli
                 if let tx = $0.texts { $0.texts = Silences.remap(tx, clipStart: clipStart, clip: c, parts: parts) }

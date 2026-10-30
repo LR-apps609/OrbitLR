@@ -4024,22 +4024,12 @@
         }
       }
     },
-    "Compila e firma": {
+    "Compila, firma, oscura": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fill & Sign"
-          }
-        }
-      }
-    },
-    "Compila e firma · %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fill & Sign · %@"
+            "value": "Fill in, sign, redact"
           }
         }
       }
@@ -5217,22 +5207,22 @@
         }
       }
     },
-    "Dissolvenza in entrata": {
+    "Dissolvenza della clip": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fade In"
+            "value": "Clip Fade"
           }
         }
       }
     },
-    "Dissolvenza in uscita": {
+    "Dissolvenza della musica": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fade Out"
+            "value": "Music Fade"
           }
         }
       }
@@ -5512,7 +5502,17 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "PDF editor"
+            "value": "PDF Editor"
+          }
+        }
+      }
+    },
+    "Editor PDF · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PDF Editor · %@"
           }
         }
       }
@@ -5584,6 +5584,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Delete Created Files…"
+          }
+        }
+      }
+    },
+    "Elimina il risultato": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete Result"
           }
         }
       }
@@ -6178,16 +6188,6 @@
         }
       }
     },
-    "Fine qui": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "End Here"
-          }
-        }
-      }
-    },
     "Finestra": {
       "localizations": {
         "en": {
@@ -6204,16 +6204,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "End with Video"
-          }
-        }
-      }
-    },
-    "Finisce qui": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ends here"
           }
         }
       }
@@ -7287,6 +7277,16 @@
         }
       }
     },
+    "Immagini, PDF e documenti": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Images, PDFs and documents"
+          }
+        }
+      }
+    },
     "Impostazioni di Sistema → Accessibilità → Contenuti letti → Voce di sistema → Gestisci voci": {
       "localizations": {
         "en": {
@@ -7627,16 +7627,6 @@
         }
       }
     },
-    "Inizio qui": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start Here"
-          }
-        }
-      }
-    },
     "Inquadra con l’iPhone": {
       "localizations": {
         "en": {
@@ -7663,16 +7653,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Scan it with the iPhone camera (same Wi-Fi network)"
-          }
-        }
-      }
-    },
-    "Inserisci la password": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enter your password"
           }
         }
       }
@@ -7783,16 +7763,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Strength 0 = Faithful: cleans up and sharpens without inventing anything. The higher you go, the punchier the result, but the model rebuilds textures that weren’t in the photo. Between 1 and 99, both models are used (twice the time)."
-          }
-        }
-      }
-    },
-    "Intera": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Full Length"
           }
         }
       }
@@ -9058,16 +9028,6 @@
         }
       }
     },
-    "Moduli, firma, data e testo": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Forms, signature, date and text"
-          }
-        }
-      }
-    },
     "Montaggio": {
       "localizations": {
         "en": {
@@ -9124,16 +9084,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Show in Finder"
-          }
-        }
-      }
-    },
-    "Mostra nella cartella": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Show in Folder"
           }
         }
       }
@@ -9198,22 +9148,22 @@
         }
       }
     },
-    "Muta questa clip": {
+    "Muta la clip": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mute this clip"
+            "value": "Mute Clip"
           }
         }
       }
     },
-    "Muti tutti": {
+    "Muta tutti i video": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mute all"
+            "value": "Mute All Videos"
           }
         }
       }
@@ -9388,7 +9338,7 @@
         }
       }
     },
-    "Nel Montaggio clicca la clip e premi «Togli i silenzi»: OrbitLR ascolta e lascia solo i pezzi in cui si parla, con tagli netti. Se non ti piace, ⌘Z.": {
+    "Nel Montaggio clicca la clip e premi «Rimuovi i silenzi»: OrbitLR ascolta e lascia solo i pezzi in cui si parla, con tagli netti. Se non ti piace, ⌘Z.": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -10816,16 +10766,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Starts at"
-          }
-        }
-      }
-    },
-    "Parte qui": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start Here"
           }
         }
       }
@@ -12320,16 +12260,6 @@
         }
       }
     },
-    "Riaccendi l’audio della clip": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unmute Clip"
-          }
-        }
-      }
-    },
     "Riapri": {
       "localizations": {
         "en": {
@@ -12356,6 +12286,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Resume"
+          }
+        }
+      }
+    },
+    "Riattiva l’audio": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unmute"
           }
         }
       }
@@ -12570,42 +12510,12 @@
         }
       }
     },
-    "Rimuovi il testo": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Remove Text"
-          }
-        }
-      }
-    },
     "Rimuovi la copertura": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Remove Cover"
-          }
-        }
-      }
-    },
-    "Rimuovi la musica": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Remove Music"
-          }
-        }
-      }
-    },
-    "Rimuovi la password": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Remove Password"
           }
         }
       }
@@ -12656,16 +12566,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Remove this area"
-          }
-        }
-      }
-    },
-    "Rimuovi questo testo": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Remove this text"
           }
         }
       }
@@ -14040,16 +13940,6 @@
         }
       }
     },
-    "Segnala un bug": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Report a Bug"
-          }
-        }
-      }
-    },
     "Segnala un problema": {
       "localizations": {
         "en": {
@@ -14250,12 +14140,12 @@
         }
       }
     },
-    "Sfoca o copri un logo, una data o una filigrana": {
+    "Sfoca o copri un logo, una data o una scritta": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Blur or cover a logo, a date, or a watermark"
+            "value": "Blur or cover a logo, a date or some writing"
           }
         }
       }
@@ -14817,16 +14707,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mute Audio from Here"
-          }
-        }
-      }
-    },
-    "Spegni l’audio della clip": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mute Clip Audio"
           }
         }
       }
@@ -15909,22 +15789,22 @@
         }
       }
     },
-    "Togli i silenzi": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Remove Silences"
-          }
-        }
-      }
-    },
     "Togli il file": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Remove the file"
+          }
+        }
+      }
+    },
+    "Togli il testo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove Text"
           }
         }
       }
@@ -15969,6 +15849,16 @@
         }
       }
     },
+    "Togli la musica": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove Music"
+          }
+        }
+      }
+    },
     "Togli questi %lld file": {
       "localizations": {
         "en": {
@@ -15997,6 +15887,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Remove this file"
+          }
+        }
+      }
+    },
+    "Togli questo testo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove this text"
           }
         }
       }
@@ -17595,24 +17495,6 @@
         }
       }
     },
-    "bubble.undo": {
-      "comment": "Disfa il lavoro appena fatto (non «Cancel»)",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Undo"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Annulla"
-          }
-        }
-      }
-    },
     "bug.other": {
       "extractionState": "manual",
       "localizations": {
@@ -18045,12 +17927,12 @@
         }
       }
     },
-    "il PDF è protetto da password: toglila prima con «Togli la password»": {
+    "il PDF è protetto da password: toglila prima con «Rimuovi la password…»": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "the PDF is password-protected: remove it first with “Remove Password”"
+            "value": "the PDF is password-protected: remove it first with “Remove Password…”"
           }
         }
       }
@@ -19246,6 +19128,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "this video can’t be trimmed"
+          }
+        }
+      }
+    },
+    "revert.confirm": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revert"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ripristina"
           }
         }
       }

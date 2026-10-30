@@ -267,8 +267,8 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
         f()
         commitSelection(from: b, undo: undoTarget, name: name)
     }
-    func markIn() { undoable(String(localized: "Inizio qui")) { setStart(playhead) } }
-    func markOut() { undoable(String(localized: "Fine qui")) { setEnd(playhead) } }
+    func markIn() { undoable(String(localized: "Inizia qui")) { setStart(playhead) } }
+    func markOut() { undoable(String(localized: "Finisci qui")) { setEnd(playhead) } }
 
     /// 2.8.4 · ⌘Z sulla selezione: si registra una volta, alla fine del trascinamento.
     func commitSelection(from before: (Double, Double), undo: UndoManager?, name: String = String(localized: "Cambia la selezione")) {
@@ -470,8 +470,8 @@ struct TrimEditorView: View {
                 .tint(tint)
                 Toggle("Ripeti", isOn: $m.loop).toggleStyle(.checkbox)
                 Spacer()
-                Button("Inizio qui") { m.markIn() }.keyboardShortcut("i", modifiers: []).help("Tasto I")
-                Button("Fine qui") { m.markOut() }.keyboardShortcut("o", modifiers: []).help("Tasto O")
+                Button("Inizia qui") { m.markIn() }.keyboardShortcut("i", modifiers: []).help("Tasto I")
+                Button("Finisci qui") { m.markOut() }.keyboardShortcut("o", modifiers: []).help("Tasto O")
             }
 
             HStack(spacing: 18) {

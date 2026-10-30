@@ -23,7 +23,7 @@ enum SmartPDF {
 
     static func compress(_ src: URL, level: String, dir: URL) throws -> URL {
         guard let doc = PDFDocument(url: src) else { throw NativeError(String(localized: "PDF danneggiato o non valido")) }
-        if doc.isLocked { throw NativeError(String(localized: "il PDF è protetto da password: toglila prima con «Togli la password»")) }
+        if doc.isLocked { throw NativeError(String(localized: "il PDF è protetto da password: toglila prima con «Rimuovi la password…»")) }
         let base = src.deletingPathExtension().lastPathComponent
         let out = Destination.unique(dir, base: "\(base) (\(FileTag.t("compresso")))", ext: "pdf")
         let before = Job.size(of: src)

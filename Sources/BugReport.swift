@@ -12,7 +12,7 @@ enum BugReport {
     /// Chi riceve le segnalazioni.
     static let recipient = "ledion.proaccs@gmail.com"
 
-    static let categories = ["Conversione", "Grafica", "Aggiornamento", "Siri e Comandi Rapidi",
+    static let categories = ["Converti", "Grafica", "Aggiornamento", "Siri e Comandi Rapidi",
                              "Cartelle automatiche", "Condividi", "Lentezza", "Altro"]
 
     static var version: String {
@@ -153,7 +153,7 @@ struct BugReportView: View {
             HStack(spacing: 10) {
                 Image(systemName: "ladybug.fill").font(.system(size: 22)).foregroundStyle(Theme.color(.pdf))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Segnala un bug").font(.system(size: 17, weight: .bold))
+                    Text("Segnala un problema").font(.system(size: 17, weight: .bold))
                     Text("Raccontami cosa è successo: più dettagli, più in fretta si sistema.")
                         .font(.system(size: 12)).foregroundStyle(.secondary)
                 }

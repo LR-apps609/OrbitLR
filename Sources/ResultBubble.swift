@@ -132,13 +132,13 @@ struct ResultBubbleView: View {
                         Text(g).font(.system(size: 11.5, weight: .semibold)).foregroundStyle(Theme.green)
                     }
                     HStack(spacing: 8) {
-                        Button("Mostra nella cartella") { NSWorkspace.shared.activateFileViewerSelecting(job.outputs); close() }
+                        Button("Mostra nel Finder") { NSWorkspace.shared.activateFileViewerSelecting(job.outputs); close() }
                             .buttonStyle(.borderedProminent).tint(Theme.accent)
                         if job.outputs.count == 1 {
                             Button("Apri") { NSWorkspace.shared.open(job.outputs[0]); close() }
                         }
                         if canUndo {
-                            Button(String(localized: "bubble.undo", defaultValue: "Annulla", comment: "Disfa il lavoro appena fatto (non «Cancel»)")) { undo() }
+                            Button(String(localized: "Elimina il risultato")) { undo() }
                                 .help("Manda nel Cestino il file appena creato")
                         }
                     }

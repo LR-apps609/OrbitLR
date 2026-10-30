@@ -882,9 +882,9 @@ private struct AudioWave: View {
                 if selection {
                     SelectionTimeFields(trim: trim)        // 5.1 · tempi scrivibili al millesimo
                     Spacer()
-                    Button("Inizio qui") { trim.markIn() }.keyboardShortcut("i", modifiers: []).controlSize(.small)
+                    Button("Inizia qui") { trim.markIn() }.keyboardShortcut("i", modifiers: []).controlSize(.small)
                         .help("La selezione comincia dove stai ascoltando (I)")
-                    Button("Fine qui") { trim.markOut() }.keyboardShortcut("o", modifiers: []).controlSize(.small)
+                    Button("Finisci qui") { trim.markOut() }.keyboardShortcut("o", modifiers: []).controlSize(.small)
                         .help("La selezione finisce dove stai ascoltando (O)")
                 } else {
                     Text("Su tutto il file").font(.system(size: 12.5, weight: .semibold)).foregroundStyle(.secondary)

@@ -804,7 +804,7 @@ enum Fix: Equatable {
         switch self {
         case .install: return String(localized: "Installa")
         case .retryParam(let l, _): return l
-        case .unlock: return String(localized: "Inserisci la password")
+        case .unlock: return String(localized: "Rimuovi la password…")
         case .icloud: return String(localized: "Scarica e riprova")
         case .classic: return String(localized: "Riprova con l’altro motore")
         case .retry: return String(localized: "Riprova")

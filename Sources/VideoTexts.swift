@@ -397,7 +397,7 @@ struct TextOptions: View {
                         .help("Il testo finisce nel punto dell’indicatore")
                     Spacer()
                     Button(role: .destructive) { remove() } label: { Image(systemName: "trash") }
-                        .help("Rimuovi questo testo").accessibilityLabel("Rimuovi il testo")
+                        .help("Togli questo testo").accessibilityLabel("Togli il testo")
                 }
                 .controlSize(.small)
                 Text("Per spostarlo, trascinalo sull’anteprima. Nella sequenza, sotto le clip, trascini il blocco o i suoi bordi.")
@@ -437,7 +437,7 @@ struct TextOptions: View {
 
     private func remove() {
         guard let id = s.selectedText else { return }
-        s.change(undo, String(localized: "Rimuovi il testo")) { p in
+        s.change(undo, String(localized: "Togli il testo")) { p in
             p.texts?.removeAll { $0.id == id }
             if p.texts?.isEmpty == true { p.texts = nil }
         }

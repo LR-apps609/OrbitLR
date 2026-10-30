@@ -600,7 +600,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     func toggleClipAudio(_ undo: UndoManager?) {
         guard let i = targetIndex else { refuse(String(localized: "Scegli prima una clip nella sequenza.")); return }
         let off = !project.clips[i].isMuted
-        change(undo, off ? String(localized: "Spegni l’audio della clip") : String(localized: "Riaccendi l’audio della clip")) { $0.clips[i].muted = off ? true : nil }
+        change(undo, off ? String(localized: "Muta la clip") : String(localized: "Riattiva l’audio")) { $0.clips[i].muted = off ? true : nil }
     }
 
     /// 2.7.4 · Toglie l'audio da qui alla fine della clip (divide nel punto dell'indicatore).
@@ -608,7 +608,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         guard let hit = project.clip(at: clock.time) else { refuse(String(localized: "Porta l’indicatore sopra una clip.")); return }
         let c = project.clips[hit.index]
         guard hit.local - c.inPoint > 0.1, c.outPoint - hit.local > 0.1 else {
-            change(undo, String(localized: "Spegni l’audio della clip")) { $0.clips[hit.index].muted = true }
+            change(undo, String(localized: "Muta la clip")) { $0.clips[hit.index].muted = true }
             return
         }
         change(undo, String(localized: "Spegni l’audio da qui")) { p in
@@ -854,7 +854,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     }
 
     func removeMusic(_ undo: UndoManager?) {
-        change(undo, String(localized: "Rimuovi la musica")) { $0.music = nil }
+        change(undo, String(localized: "Togli la musica")) { $0.music = nil }
     }
 
     // MARK: Esportazione
@@ -1137,7 +1137,7 @@ struct VideoEditorView: View {
         .onChange(of: s.lastTool) { _, v in if let t = VideoEditTool(rawValue: v), t != tool { tool = t } }
         .background(EditorKeys(s: s))
         .confirmationDialog("Ripristinare il progetto com’era quando l’hai aperto?", isPresented: $askRevert) {
-            Button("Ripristina", role: .destructive) { s.revertToOpened(undo) }
+            Button(String(localized: "revert.confirm", defaultValue: "Ripristina", comment: "Conferma: riporta il progetto com’era all’apertura"), role: .destructive) { s.revertToOpened(undo) }
             Button("Annulla", role: .cancel) {}
         } message: {
             Text("Le modifiche fatte da allora spariscono. Puoi riaverle con ⌘Z.")
@@ -1307,8 +1307,8 @@ struct VideoEditorView: View {
             // 5.0.1 · «Funzioni»: tagli, spostamenti e la velocità della clip, nello stesso posto
             SectionLabel(text: String(localized: "Funzioni"))
             HStack(spacing: 6) {
-                Button("Inizio qui") { s.trimStartHere(undo) }.help("Taglia la clip da qui in poi")
-                Button("Fine qui") { s.trimEndHere(undo) }.help("Taglia la clip fino a qui")
+                Button("Inizia qui") { s.trimStartHere(undo) }.help("Taglia la clip da qui in poi")
+                Button("Finisci qui") { s.trimEndHere(undo) }.help("Taglia la clip fino a qui")
                 Button("Dividi") { s.split(undo) }
                     .keyboardShortcut(s.typing ? nil : KeyboardShortcut("s", modifiers: []))
                     .help("Divide la clip nel punto dell’indicatore (S)")
@@ -1316,7 +1316,7 @@ struct VideoEditorView: View {
             HStack(spacing: 6) {
                 Button { s.move(-1, undo) } label: { Label(String(localized: "clip.moveEarlier", defaultValue: "Prima", comment: "Sposta la clip prima"), systemImage: "arrow.left") }.help("Sposta la clip prima")
                 Button { s.move(1, undo) } label: { Label(String(localized: "clip.moveLater", defaultValue: "Dopo", comment: "Sposta la clip dopo"), systemImage: "arrow.right") }.help("Sposta la clip dopo")
-                Button("Intera") { s.restoreClip(undo) }.help("Riporta la clip alla sua durata intera")
+                Button("Ripristina") { s.restoreClip(undo) }.help("Riporta la clip alla sua durata intera")
             }
             if let i = s.targetIndex, s.project.clips.indices.contains(i) {
                 HStack(spacing: 6) {
@@ -1333,7 +1333,7 @@ struct VideoEditorView: View {
                 }
             }
             // 4.0 · Le pause lunghe spariscono da sole (tagli netti, come nei video dei social)
-            Button { s.removeSilences(undo) } label: { Label("Togli i silenzi", systemImage: "waveform.badge.minus") }
+            Button { s.removeSilences(undo) } label: { Label("Rimuovi i silenzi", systemImage: "waveform.badge.minus") }
                 .help("Ascolta la clip e toglie le pause lunghe: restano solo i pezzi in cui si parla. ⌘Z per tornare indietro")
             SectionLabel(text: String(localized: "Audio della clip"))
             HStack(spacing: 6) { clipAudioButtons }
@@ -1386,14 +1386,14 @@ struct VideoEditorView: View {
                     Text(m.name).font(.system(size: 12, weight: .semibold)).lineLimit(1).truncationMode(.middle)
                     Spacer(minLength: 4)
                     Button("Cambia…") { choose(audio: true) }
-                    Button(role: .destructive) { s.removeMusic(undo) } label: { Image(systemName: "trash") }.help("Rimuovi la musica")
+                    Button(role: .destructive) { s.removeMusic(undo) } label: { Image(systemName: "trash") }.help("Togli la musica")
                 }
                 .controlSize(.small)
                 HStack(spacing: 6) {
-                    Button("Parte qui") { s.musicStartHere(undo) }
+                    Button("Inizia qui") { s.musicStartHere(undo) }
                         .help("La musica comincia nel punto dell’indicatore (oppure trascina la barra della musica)")
                     // 5.0.1 · La fine della musica
-                    Button("Finisce qui") { s.musicEndHere(undo) }
+                    Button("Finisci qui") { s.musicEndHere(undo) }
                         .help("La musica finisce nel punto dell’indicatore (oppure trascina il bordo destro della sua barra)")
                     if m.end != nil {
                         Button("Fino alla fine") { s.musicToEnd(undo) }
@@ -1414,9 +1414,9 @@ struct VideoEditorView: View {
                            width: 260, s: s, undo: undo, name: String(localized: "Volume della musica")) { p, v in p.music?.volume = v }
                 HStack(spacing: 12) {
                     EditSlider(title: String(localized: "Entrata"), value: m.fadeIn, range: 0...5, text: Fmt.secs(m.fadeIn),
-                               width: 124, s: s, undo: undo, name: String(localized: "Dissolvenza in entrata")) { p, v in p.music?.fadeIn = v }
+                               width: 124, s: s, undo: undo, name: String(localized: "Dissolvenza della musica")) { p, v in p.music?.fadeIn = v }
                     EditSlider(title: String(localized: "Uscita"), value: m.fadeOut, range: 0...5, text: Fmt.secs(m.fadeOut),
-                               width: 124, s: s, undo: undo, name: String(localized: "Dissolvenza in uscita")) { p, v in p.music?.fadeOut = v }
+                               width: 124, s: s, undo: undo, name: String(localized: "Dissolvenza della musica")) { p, v in p.music?.fadeOut = v }
                 }
                 Toggle("Abbassa quando si parla", isOn: bind(\.duck, String(localized: "Abbassa quando si parla"))).toggleStyle(.checkbox)
                     .font(.system(size: 12))
@@ -1460,8 +1460,8 @@ struct VideoEditorView: View {
             let c = s.project.clips[i]
             SectionLabel(text: String(localized: "Audio di questa clip"))
             Text("Clip \(i + 1) di \(s.project.clips.count): vale solo per questo pezzo").font(.system(size: 11.5)).foregroundStyle(.secondary)
-            Toggle("Muta questa clip", isOn: Binding(get: { c.isMuted }, set: { v in
-                s.change(undo, v ? String(localized: "Spegni l’audio della clip") : String(localized: "Riaccendi l’audio della clip")) { $0.clips[i].muted = v ? true : nil }
+            Toggle("Muta la clip", isOn: Binding(get: { c.isMuted }, set: { v in
+                s.change(undo, v ? String(localized: "Muta la clip") : String(localized: "Riattiva l’audio")) { $0.clips[i].muted = v ? true : nil }
             }))
             .toggleStyle(.checkbox)
             EditSlider(title: String(localized: "Volume"), value: c.clipVolume, range: 0...1,
@@ -1471,7 +1471,7 @@ struct VideoEditorView: View {
             Divider()
         }
         SectionLabel(text: String(localized: "Tutti i video insieme"))
-        Toggle("Muti tutti", isOn: Binding(get: { s.project.originalMuted },
+        Toggle("Muta tutti i video", isOn: Binding(get: { s.project.originalMuted },
                                       set: { v in s.change(undo, v ? String(localized: "Audio originale muto") : String(localized: "Audio originale attivo")) { $0.originalMuted = v } }))
             .toggleStyle(.checkbox)
         EditSlider(title: String(localized: "Volume"), value: s.project.originalVolume, range: 0...1,
@@ -1942,7 +1942,7 @@ private struct ProjectTimeline: View {
 
     @ViewBuilder private func clipMenu(_ c: VPClip) -> some View {
         let pick = { s.selected = c.id }
-        Button(c.isMuted ? String(localized: "Riaccendi l’audio della clip") : String(localized: "Spegni l’audio della clip")) { pick(); s.toggleClipAudio(undo) }
+        Button(c.isMuted ? String(localized: "Riattiva l’audio") : String(localized: "Muta la clip")) { pick(); s.toggleClipAudio(undo) }
         Button("Stacca l’audio") { pick(); s.detachClipAudio(undo) }
         Divider()
         Button("Sposta la clip prima") { pick(); s.move(-1, undo) }
@@ -2154,9 +2154,9 @@ private struct ProjectTimeline: View {
                     Button("Modifica il testo") { s.selectedText = t.id; openTexts(); s.seek(t.start + 0.05) }
                     Button("Vai all’inizio del testo") { s.seek(t.start) }
                     Divider()
-                    Button("Rimuovi il testo") {
+                    Button("Togli il testo") {
                         let id = t.id
-                        s.change(undo, String(localized: "Rimuovi il testo")) { p in
+                        s.change(undo, String(localized: "Togli il testo")) { p in
                             p.texts?.removeAll { $0.id == id }
                             if p.texts?.isEmpty == true { p.texts = nil }
                         }
@@ -2270,7 +2270,7 @@ private struct ProjectTimeline: View {
                     Button("Musica fino a qui") { s.musicEndHere(undo) }
                     Button("Mostra nel Finder") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: m.path)]) }
                     Divider()
-                    Button("Rimuovi la musica") { s.removeMusic(undo) }
+                    Button("Togli la musica") { s.removeMusic(undo) }
                 }
                 // 5.0.1 · Il bordo destro: dove finisce la musica
                 Rectangle().fill(color)
@@ -2651,9 +2651,9 @@ private struct EffectOptions: View {
                            width: 260, s: s, undo: undo, name: String(localized: "Sfocatura")) { p, v in Self.edit(&p, i) { $0.blur = v } }
                 HStack(spacing: 12) {
                     EditSlider(title: String(localized: "Entrata"), value: fx.fadeIn, range: 0...2, text: fx.fadeIn < 0.05 ? String(localized: "No") : Fmt.secs(fx.fadeIn),
-                               width: 124, s: s, undo: undo, name: String(localized: "Dissolvenza in entrata")) { p, v in Self.edit(&p, i) { $0.fadeIn = v < 0.05 ? 0 : v } }
+                               width: 124, s: s, undo: undo, name: String(localized: "Dissolvenza della clip")) { p, v in Self.edit(&p, i) { $0.fadeIn = v < 0.05 ? 0 : v } }
                     EditSlider(title: String(localized: "Uscita"), value: fx.fadeOut, range: 0...2, text: fx.fadeOut < 0.05 ? String(localized: "No") : Fmt.secs(fx.fadeOut),
-                               width: 124, s: s, undo: undo, name: String(localized: "Dissolvenza in uscita")) { p, v in Self.edit(&p, i) { $0.fadeOut = v < 0.05 ? 0 : v } }
+                               width: 124, s: s, undo: undo, name: String(localized: "Dissolvenza della clip")) { p, v in Self.edit(&p, i) { $0.fadeOut = v < 0.05 ? 0 : v } }
                 }
                 HStack(spacing: 6) {
                     Button("A tutte le clip") {

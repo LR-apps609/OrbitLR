@@ -400,7 +400,7 @@ final class PDFEditorModel: ObservableObject, @unchecked Sendable {
     private func finishSave(_ out: URL?) {
         saving = false
         guard let out else { message = String(localized: "Non sono riuscito a salvare il PDF."); return }
-        QueueStore.shared.record(title: source.lastPathComponent, action: outputSuffix == "oscurato" ? String(localized: "Oscura") : String(localized: "Compila e firma"),
+        QueueStore.shared.record(title: source.lastPathComponent, action: outputSuffix == "oscurato" ? String(localized: "Oscura") : String(localized: "Editor PDF"),
                                  outputs: [out], kind: .pdf, before: Job.size(of: source))
         NSWorkspace.shared.activateFileViewerSelecting([out])
         saved = true                        // 5.1 · salvato: si chiude senza domande
@@ -690,7 +690,7 @@ final class PDFEditorController: @unchecked Sendable {
         let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1040, height: 780),
                          styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: false)
         let fileName = url.lastPathComponent
-        w.title = tool == .redact ? String(localized: "Oscura · \(fileName)") : String(localized: "Compila e firma · \(fileName)")
+        w.title = tool == .redact ? String(localized: "Oscura · \(fileName)") : String(localized: "Editor PDF · \(fileName)")
         w.contentView = NSHostingView(rootView: PDFEditorView(model: model))
         w.contentMinSize = NSSize(width: 760, height: 520)
         w.isReleasedWhenClosed = false

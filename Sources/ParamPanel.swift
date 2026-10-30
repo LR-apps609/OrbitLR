@@ -284,7 +284,7 @@ struct ParamView: View {
         case .rotate: return String(localized: "Ruota")
         case .reorder: return String(localized: "Riordina")
         case .password: return String(localized: "Proteggi")
-        case .unlock: return String(localized: "Sblocca")
+        case .unlock: return String(localized: "Rimuovi la password…")
         case .rename: return String(localized: "Rinomina")
         case .removebg: return String(localized: "Rimuovi lo sfondo")
         case .straighten: return String(localized: "Raddrizza")

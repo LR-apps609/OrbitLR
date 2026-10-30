@@ -445,7 +445,7 @@ struct WelcomeView: View {
                                     ctl.finish()
                                 } label: { Text("Mostra ›").font(.system(size: 11.5, weight: .semibold)) }
                                 .buttonStyle(.borderless).foregroundStyle(Theme.accent)
-                                .help("Apri «\(place.rawValue)»")
+                                .help("Apri «\(place.title)»")
                             }
                         }
                     }
