@@ -60,7 +60,7 @@ struct FAQ: Identifiable, Equatable {
         FAQ(id: "vapply", section: "Video", question: String(localized: "Devo salvare il progetto?"),
             answer: String(localized: "No: il progetto si salva da solo mentre lavori, e sotto il nome vedi «Salvato alle…». ⌘Z torna indietro. «Ripristina…» lo riporta a com’era quando l’hai aperto; tieni premuto «Prima / dopo» per confrontare.")),
         FAQ(id: "vmute", section: "Video", question: String(localized: "Come tolgo l’audio da un pezzo del video?"),
-            answer: String(localized: "In «Clip» porta la linea dove deve finire l’audio e premi «Spegni da qui». Per una clip intera usa «Spegni»; per un tratto in mezzo, dividi prima con S.")),
+            answer: String(localized: "In «Audio» porta la linea dove deve finire l’audio e premi «Muta da qui». Per una clip intera usa «Muta la clip»; per un tratto in mezzo, dividi prima con S.")),
         FAQ(id: "vduck", section: "Video", question: String(localized: "Come faccio abbassare la musica quando qualcuno parla?"),
             answer: String(localized: "In «Audio» attiva «Abbassa quando si parla»: OrbitLR trova le voci e abbassa la musica solo in quei momenti.")),
         FAQ(id: "vformat", section: "Video", question: String(localized: "Come faccio un video verticale per Reels o TikTok?"),

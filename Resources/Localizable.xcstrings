@@ -2719,6 +2719,16 @@
         }
       }
     },
+    "Audio della clip: in «Audio». Transizione: clicca il pallino tra due clip.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clip audio: in “Audio”. Transition: click the dot between two clips."
+          }
+        }
+      }
+    },
     "Audio di qualità, per Apple": {
       "localizations": {
         "en": {
@@ -7377,12 +7387,12 @@
         }
       }
     },
-    "In «Clip» porta la linea dove deve finire l’audio e premi «Spegni da qui». Per una clip intera usa «Spegni»; per un tratto in mezzo, dividi prima con S.": {
+    "In «Audio» porta la linea dove deve finire l’audio e premi «Muta da qui». Per una clip intera usa «Muta la clip»; per un tratto in mezzo, dividi prima con S.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "In “Clip”, move the line to where the audio should end and click “Mute From Here”. For a whole clip use “Mute”; for a section in the middle, split it first with S."
+            "value": "In “Audio”, move the line to where the audio should end and click “Mute from Here”. For a whole clip use “Mute Clip”; for a stretch in the middle, split first with S."
           }
         }
       }
@@ -9124,6 +9134,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Music to the end"
+          }
+        }
+      }
+    },
+    "Muta da qui": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mute from Here"
           }
         }
       }
@@ -14667,16 +14687,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mute"
-          }
-        }
-      }
-    },
-    "Spegni da qui": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mute From Here"
           }
         }
       }

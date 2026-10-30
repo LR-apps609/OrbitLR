@@ -1335,13 +1335,9 @@ struct VideoEditorView: View {
             // 4.0 · Le pause lunghe spariscono da sole (tagli netti, come nei video dei social)
             Button { s.removeSilences(undo) } label: { Label("Rimuovi i silenzi", systemImage: "waveform.badge.minus") }
                 .help("Ascolta la clip e toglie le pause lunghe: restano solo i pezzi in cui si parla. ⌘Z per tornare indietro")
-            SectionLabel(text: String(localized: "Audio della clip"))
-            HStack(spacing: 6) { clipAudioButtons }
-            if let i = s.targetIndex, i > 0, s.project.clips.indices.contains(i) {
-                SectionLabel(text: String(localized: "Transizione prima di questa clip"))
-                Text("Oppure clicca il pallino tra due clip nella sequenza.").font(.system(size: 11.5)).foregroundStyle(.secondary)
-                TransitionOptions(s: s, clipID: s.project.clips[i].id, tint: tint, undo: undo, compact: true)
-            }
+            // 5.2 · Un posto per comando: l'audio della clip sta in «Audio», la transizione nel pallino tra le clip
+            Text("Audio della clip: in «Audio». Transizione: clicca il pallino tra due clip.")
+                .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             SectionLabel(text: String(localized: "Altro"))
             HStack(spacing: 6) {
                 Button(role: .destructive) { s.deleteClip(undo) } label: { Label("Togli", systemImage: "trash") }
@@ -1442,12 +1438,7 @@ struct VideoEditorView: View {
 
     /// 2.7.4 · L'audio della singola clip: spento tutto, o da un punto in poi.
     @ViewBuilder private var clipAudioButtons: some View {
-        let muted = s.targetIndex.map { s.project.clips[$0].isMuted } ?? false
-        Button { s.toggleClipAudio(undo) } label: {
-            Label(muted ? String(localized: "Riaccendi") : String(localized: "Spegni"), systemImage: muted ? "speaker.wave.2" : "speaker.slash")
-        }
-        .help(muted ? String(localized: "Riaccende l’audio di questa clip") : String(localized: "Spegne l’audio solo di questa clip (la musica resta)"))
-        Button { s.muteFromHere(undo) } label: { Label("Spegni da qui", systemImage: "speaker.slash.circle") }
+        Button { s.muteFromHere(undo) } label: { Label("Muta da qui", systemImage: "speaker.slash.circle") }
             .help("Spegne l’audio dall’indicatore alla fine della clip. Per un tratto in mezzo: dividi (S) e togli l’audio solo da quel pezzo")
         // 5.0.1 · L'audio della clip diventa una traccia sua, da spostare e tagliare
         Button { s.detachClipAudio(undo) } label: { Label("Stacca l’audio", systemImage: "waveform.badge.plus") }
@@ -1468,6 +1459,7 @@ struct VideoEditorView: View {
                        text: "\(Int((c.clipVolume * 100).rounded()))%", width: 260, s: s, undo: undo,
                        name: String(localized: "Volume della clip")) { p, v in if p.clips.indices.contains(i) { p.clips[i].volume = v >= 0.995 ? nil : v } }
                 .disabled(c.isMuted)
+            HStack(spacing: 6) { clipAudioButtons }          // 5.2 · qui, non più anche in «Clip»
             Divider()
         }
         SectionLabel(text: String(localized: "Tutti i video insieme"))
@@ -2608,19 +2600,7 @@ private struct EffectOptions: View {
         VStack(alignment: .leading, spacing: 10) {
             if let i = index, s.project.clips.indices.contains(i) {
                 Text("Clip \(i + 1) di \(s.project.clips.count)").font(.system(size: 12.5, weight: .semibold))
-                HStack {
-                    Text("Velocità").font(.system(size: 12))
-                    Spacer()
-                    Menu {
-                        ForEach(VPEffects.speeds, id: \.self) { v in
-                            Button(Self.speedLabel(v)) { change(String(localized: "Velocità")) { $0.speed = v } }
-                        }
-                    } label: {
-                        Label(Self.speedLabel(fx.speed), systemImage: "speedometer")
-                    }
-                    .menuStyle(.button).fixedSize()
-                    .help("Velocità della clip: la voce non cambia tono")
-                }
+                // 5.2 · La velocità sta in «Clip»
                 HStack {
                     Text("Zoom lento").font(.system(size: 12))
                     Spacer()
