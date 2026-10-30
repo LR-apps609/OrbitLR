@@ -334,7 +334,7 @@ struct WorkspaceView: View {
                 Spacer()
                 Button { ws.togglePreview() } label: { Label("Anteprima", systemImage: "eye") }
                     .help("Anteprima del file (Spazio)")
-                Button { choose(append: true) } label: { Label("Aggiungi file…", systemImage: "plus") }
+                Button { choose(append: true) } label: { Label("Aggiungi…", systemImage: "plus") }
                 Button { ws.clear() } label: { Label("Togli tutto", systemImage: "xmark") }
                     .help("Togli i file dalla scheda (restano dove sono)")
             }

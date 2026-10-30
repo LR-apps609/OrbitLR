@@ -257,7 +257,7 @@ struct JobStrip: View {
                 }
             }
             if job.state == .running || job.state == .waiting {
-                Button { QueueStore.shared.cancel(job) } label: { Image(systemName: "xmark") }
+                Button("Interrompi") { QueueStore.shared.cancel(job) }
                     .buttonStyle(.borderless).help("Interrompi")
                     .accessibilityLabel("Interrompi")
             } else if job.state == .done, !job.outputs.isEmpty {
@@ -589,7 +589,7 @@ struct AudioTabView: View {
                 DownloaderBar(video: false) { t in linkText = t; showLink = true }
             }
             if m.file != nil && tool != .tts {
-                Button("Apri un altro…") { m.choose(append: false) }
+                Button("Apri…") { m.choose(append: false) }
                     .help("Apri un altro file audio (questo resta tra i progetti)")
                 Button { m.close() } label: {
                     Image(systemName: "xmark").font(.system(size: 12, weight: .bold))

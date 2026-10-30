@@ -1639,16 +1639,6 @@
         }
       }
     },
-    "Aggiungi file…": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add Files…"
-          }
-        }
-      }
-    },
     "Aggiungi i sottotitoli": {
       "localizations": {
         "en": {
@@ -2505,16 +2495,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open another audio file (this one stays in your projects)"
-          }
-        }
-      }
-    },
-    "Apri un altro…": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open Another…"
           }
         }
       }
