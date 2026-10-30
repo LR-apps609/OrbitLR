@@ -233,6 +233,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     /// 3.5 · ⌘Q con dei lavori in corso: si chiede, mai interruzioni silenziose (tranne durante un aggiornamento).
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        // 5.1 · ⌘Q non butta più firme e testi aggiunti a un PDF
+        if !Updater.shared.busy && PDFEditorController.hasUnsavedChanges {
+            let a = NSAlert()
+            a.messageText = String(localized: "Un PDF ha modifiche non salvate")
+            a.informativeText = String(localized: "Se esci adesso, firme, testi e oscuramenti che hai aggiunto vanno persi.")
+            a.addButton(withTitle: String(localized: "Rivedi"))
+            let quit = a.addButton(withTitle: String(localized: "Esci senza salvare"))
+            quit.hasDestructiveAction = true
+            NSApp.activate()
+            if a.runModal() == .alertFirstButtonReturn {
+                PDFEditorController.reviewUnsaved()
+                return .terminateCancel
+            }
+        }
         let running = QueueStore.shared.runningJobs.count + QueueStore.shared.jobs.filter { $0.state == .waiting }.count
         guard running > 0, !Updater.shared.busy else { return .terminateNow }
         let a = NSAlert()

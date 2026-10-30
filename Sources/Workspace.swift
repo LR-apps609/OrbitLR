@@ -37,7 +37,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
     /// 5.1 · Dal menu Vista (⌘1–5) e Aiuto: porta davanti la finestra e apre la scheda.
     func show(_ item: SidebarItem) {
         mainWindow?.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
         selection = item
     }
 

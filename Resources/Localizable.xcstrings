@@ -5589,6 +5589,16 @@
         }
       }
     },
+    "Esci senza salvare": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit Without Saving"
+          }
+        }
+      }
+    },
     "Esempi: 2 · 1-3 · 1,4,7-9 · 5- (dalla 5 alla fine)": {
       "localizations": {
         "en": {
@@ -10008,6 +10018,16 @@
         }
       }
     },
+    "Nuovo progetto video": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Video Project"
+          }
+        }
+      }
+    },
     "Nuovo verticale 9:16": {
       "localizations": {
         "en": {
@@ -12700,6 +12720,16 @@
         }
       }
     },
+    "Rivedi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review"
+          }
+        }
+      }
+    },
     "Rotellina": {
       "localizations": {
         "en": {
@@ -13556,6 +13586,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "If you quit now, they’ll stop. Files already done are kept."
+          }
+        }
+      }
+    },
+    "Se esci adesso, firme, testi e oscuramenti che hai aggiunto vanno persi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If you quit now, the signatures, text and redactions you added will be lost."
           }
         }
       }
@@ -16215,6 +16255,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Last run: %@"
+          }
+        }
+      }
+    },
+    "Un PDF ha modifiche non salvate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A PDF has unsaved changes"
           }
         }
       }

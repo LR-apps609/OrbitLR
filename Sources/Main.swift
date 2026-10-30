@@ -29,6 +29,11 @@ struct OrbitLRApp: App {
             }
             // 5.1 · Un menu vero: File, Vista e Aiuto, come in ogni app del Mac
             CommandGroup(replacing: .newItem) {
+                Button("Nuovo progetto video") {
+                    app.show(.video)
+                    VideoProjectStore.shared.newProject(nil)
+                    app.videoMode = .montage
+                }.keyboardShortcut("n", modifiers: [.command, .shift])
                 Button("Apri…") { app.openFiles() }.keyboardShortcut("o")
             }
             CommandGroup(before: .sidebar) {
