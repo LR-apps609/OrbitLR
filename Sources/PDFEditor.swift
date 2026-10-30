@@ -9,13 +9,25 @@ import PDFKit
 
 /// La firma disegnata una volta e ricordata (PNG trasparente nella cartella di OrbitLR).
 enum SignatureStore {
-    static var url: URL { Paths.support.appendingPathComponent("firma.png") }
+    /// 5.1 · La cartella si può cambiare solo nei test (mai toccare la firma vera).
+    static var folder: URL = Paths.support
+    static var url: URL { folder.appendingPathComponent("firma.png") }
+    /// 5.1 · La firma di prima, tenuta a parte quando la cambi.
+    static var previousURL: URL { folder.appendingPathComponent("firma-precedente.png") }
     static func load() -> NSImage? { NSImage(contentsOf: url) }
+    static func data() -> Data? { try? Data(contentsOf: url) }
+    static func png(_ img: NSImage) -> Data? {
+        guard let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff) else { return nil }
+        return rep.representation(using: .png, properties: [:])
+    }
     static func save(_ img: NSImage) {
-        guard let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
-              let png = rep.representation(using: .png, properties: [:]) else { return }
-        try? FileManager.default.createDirectory(at: Paths.support, withIntermediateDirectories: true)
-        try? png.write(to: url, options: .atomic)
+        if let d = png(img) { write(d) }
+    }
+    /// 5.1 · Scrive la firma (nil = la toglie). Quella che c'era resta in firma-precedente.png.
+    static func write(_ d: Data?) {
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        if let old = data() { try? old.write(to: previousURL, options: .atomic) }
+        if let d { try? d.write(to: url, options: .atomic) } else { try? FileManager.default.removeItem(at: url) }
     }
 }
 
@@ -62,7 +74,7 @@ enum EditorTool: String, CaseIterable, Identifiable {
     }
     var hint: String {
         switch self {
-        case .select: return String(localized: "Scrivi nei campi del modulo. Trascina firme e testi per spostarli; ⌫ per eliminarli.")
+        case .select: return String(localized: "Scrivi nei campi del modulo. Trascina firme e testi per spostarli, l’angolo in basso a destra per ridimensionare; ⌫ elimina, ⌘Z annulla.")
         case .signature: return String(localized: "Clicca sulla pagina dove vuoi la firma.")
         case .date: return String(localized: "Clicca dove vuoi la data di oggi.")
         case .text: return String(localized: "Scrivi il testo qui sopra, poi clicca sulla pagina.")
@@ -88,29 +100,144 @@ final class PDFEditorModel: ObservableObject, @unchecked Sendable {
     private(set) var added: [ObjectIdentifier: PDFAnnotation] = [:]
     var redactions: [PDFAnnotation] = []
     weak var view: PDFView?
+    /// Chiude la finestra senza domande (dopo il salvataggio).
     var close: () -> Void = {}
+    /// 5.1 · «Annulla» ed Esc: chiude, ma chiede prima se ci sono modifiche.
+    var requestClose: () -> Void = {}
+    /// 5.1 · ⌘Z / ⇧⌘Z: la finestra lo usa come suo UndoManager (vedi PDFEditorWindowGuard).
+    let undo = UndoManager()
+    /// 5.1 · Chiede se sostituire la firma salvata (nei test si risponde da soli).
+    var confirmReplaceSignature: () -> Bool = {
+        EditorAlert.confirm(String(localized: "Sostituire la firma salvata?"),
+                            info: String(localized: "Potrai tornare a quella vecchia con ⌘Z."),
+                            ok: String(localized: "Sostituisci"), cancel: String(localized: "Annulla"))
+    }
+    /// 5.1 · I valori dei campi del modulo all'apertura, per capire se li hai cambiati.
+    private var formBaseline: [(PDFAnnotation, String)] = []
+    private var saved = false
 
     init(source: URL, document: PDFDocument, tool: EditorTool) {
         self.source = source
         self.document = document
         self.tool = tool
+        formBaseline = Self.formFields(document).map { ($0, Self.formValue($0)) }
     }
 
     func isMine(_ a: PDFAnnotation) -> Bool { added[ObjectIdentifier(a)] != nil }
 
-    private func add(_ a: PDFAnnotation, to page: PDFPage) {
-        page.addAnnotation(a)
-        added[ObjectIdentifier(a)] = a
-        view?.annotationsChanged(on: page)
+    // MARK: 5.1 · Modifiche e annulla
+
+    /// Ci sono firme, testi, oscuramenti o campi compilati non ancora salvati.
+    var hasChanges: Bool {
+        if saved { return false }
+        return !added.isEmpty || formBaseline.contains { Self.formValue($0.0) != $0.1 }
     }
 
-    func remove(_ a: PDFAnnotation) {
-        guard let page = a.page else { return }
+    static func formFields(_ doc: PDFDocument) -> [PDFAnnotation] {
+        var out: [PDFAnnotation] = []
+        for i in 0..<doc.pageCount {
+            guard let page = doc.page(at: i) else { continue }
+            // PDFKit scrive il tipo senza «/» («Widget»): si accettano tutte e due le forme
+            out += page.annotations.filter { ($0.type ?? "").replacingOccurrences(of: "/", with: "") == "Widget" }
+        }
+        return out
+    }
+
+    static func formValue(_ a: PDFAnnotation) -> String {
+        "\(a.widgetStringValue ?? "")|\(a.buttonWidgetState.rawValue)"
+    }
+
+    /// Un gesto = un solo ⌘Z.
+    private func step(_ body: () -> Void) {
+        undo.beginUndoGrouping()
+        body()
+        undo.endUndoGrouping()
+    }
+
+    private func attach(_ a: PDFAnnotation, to page: PDFPage, redaction: Bool, register: Bool = true) {
+        page.addAnnotation(a)
+        added[ObjectIdentifier(a)] = a
+        if redaction, !redactions.contains(where: { $0 === a }) { redactions.append(a) }
+        saved = false
+        view?.annotationsChanged(on: page)
+        if register { undo.registerUndo(withTarget: self) { $0.detach(a, from: page, redaction: redaction) } }
+    }
+
+    private func detach(_ a: PDFAnnotation, from page: PDFPage, redaction: Bool, register: Bool = true) {
         page.removeAnnotation(a)
         added[ObjectIdentifier(a)] = nil
         redactions.removeAll { $0 === a }
         if selected === a { selected = nil }
+        saved = false
         view?.annotationsChanged(on: page)
+        if register { undo.registerUndo(withTarget: self) { $0.attach(a, to: page, redaction: redaction) } }
+    }
+
+    private func isRedaction(_ a: PDFAnnotation) -> Bool { redactions.contains { $0 === a } }
+
+    private func add(_ a: PDFAnnotation, to page: PDFPage) {
+        step { attach(a, to: page, redaction: false) }
+    }
+
+    /// Elimina un elemento aggiunto qui (si riprende con ⌘Z).
+    func remove(_ a: PDFAnnotation) {
+        guard let page = a.page, isMine(a) else { return }
+        let r = isRedaction(a)
+        step { detach(a, from: page, redaction: r) }
+    }
+
+    private func setBounds(_ a: PDFAnnotation, _ r: CGRect) {
+        let now = a.bounds
+        a.bounds = r
+        saved = false
+        if let page = a.page { view?.annotationsChanged(on: page) }
+        undo.registerUndo(withTarget: self) { $0.setBounds(a, now) }
+    }
+
+    /// Fine di uno spostamento o di un ridimensionamento: un solo annulla per tutto il trascinamento.
+    func commitBounds(_ a: PDFAnnotation, from old: CGRect) {
+        guard a.bounds != old, isMine(a) else { return }
+        saved = false
+        step { undo.registerUndo(withTarget: self) { $0.setBounds(a, old) } }
+    }
+
+    /// Si possono ridimensionare firme e oscuramenti (i testi si spostano soltanto).
+    func canResize(_ a: PDFAnnotation) -> Bool { isMine(a) && (a is ImageStampAnnotation || isRedaction(a)) }
+
+    /// L'elemento con l'angolo in basso a destra sotto il puntatore (entro `tolerance` punti della pagina).
+    func resizeHandle(on page: PDFPage, at p: CGPoint, tolerance: CGFloat) -> PDFAnnotation? {
+        page.annotations.reversed().first { a in
+            canResize(a) && hypot(p.x - a.bounds.maxX, p.y - a.bounds.minY) <= tolerance
+        }
+    }
+
+    /// Il rettangolo tirato dall'angolo in basso a destra: quello in alto a sinistra resta fermo.
+    static func resized(_ r: CGRect, to p: CGPoint, keepRatio: Bool, minSide: CGFloat = 8) -> CGRect {
+        let w = max(minSide, p.x - r.minX)
+        var h = max(minSide, r.maxY - p.y)
+        if keepRatio, r.width > 0 { h = max(minSide, w * r.height / r.width) }
+        return CGRect(x: r.minX, y: r.maxY - h, width: w, height: h)
+    }
+
+    // MARK: 5.1 · Firma salvata, con annulla
+
+    /// Usa la firma appena disegnata. false = hai scelto «Annulla» (il disegno resta nel riquadro).
+    func useSignature(_ img: NSImage) -> Bool {
+        guard let png = SignatureStore.png(img) else { return true }
+        if SignatureStore.data() != nil {
+            guard confirmReplaceSignature() else { return false }
+            step { setSignatureData(png) }
+        } else {
+            SignatureStore.write(png)          // la prima firma: niente da ripristinare
+        }
+        tool = .signature
+        return true
+    }
+
+    private func setSignatureData(_ d: Data?) {
+        let before = SignatureStore.data()
+        SignatureStore.write(d)
+        undo.registerUndo(withTarget: self) { $0.setSignatureData(before) }
     }
 
     // MARK: Firma, data, testo
@@ -152,17 +279,37 @@ final class PDFEditorModel: ObservableObject, @unchecked Sendable {
 
     // MARK: Oscuramento
 
-    @discardableResult
-    func addRedaction(on page: PDFPage, rect: CGRect) -> PDFAnnotation {
+    private static func redactionBox(_ rect: CGRect) -> PDFAnnotation {
         let a = PDFAnnotation(bounds: rect, forType: .square, withProperties: nil)
         a.color = .black
         a.interiorColor = .black
         let border = PDFBorder()
         border.lineWidth = 0
         a.border = border
-        add(a, to: page)
-        redactions.append(a)
         return a
+    }
+
+    @discardableResult
+    func addRedaction(on page: PDFPage, rect: CGRect) -> PDFAnnotation {
+        let a = Self.redactionBox(rect)
+        step { attach(a, to: page, redaction: true) }
+        return a
+    }
+
+    /// 5.1 · Il rettangolo che stai trascinando: entra nell'annulla solo quando lasci il mouse.
+    func beginDraftRedaction(on page: PDFPage, at p: CGPoint) -> PDFAnnotation {
+        let a = Self.redactionBox(CGRect(origin: p, size: CGSize(width: 1, height: 1)))
+        attach(a, to: page, redaction: true, register: false)
+        return a
+    }
+
+    func finishDraftRedaction(_ a: PDFAnnotation) {
+        guard let page = a.page else { return }
+        if a.bounds.width < 4 || a.bounds.height < 4 {
+            detach(a, from: page, redaction: true, register: false)   // un clic senza trascinare non lascia rettangoli minuscoli
+        } else {
+            step { undo.registerUndo(withTarget: self) { $0.detach(a, from: page, redaction: true) } }
+        }
     }
 
     /// «Trova e oscura»: ogni volta che compare la parola (o il numero) cercata.
@@ -170,10 +317,12 @@ final class PDFEditorModel: ObservableObject, @unchecked Sendable {
         let t = term.trimmingCharacters(in: .whitespaces)
         guard !t.isEmpty else { return }
         var n = 0
-        for sel in document.findString(t, withOptions: [.caseInsensitive]) {
-            for page in sel.pages {
-                addRedaction(on: page, rect: sel.bounds(for: page).insetBy(dx: -1.5, dy: -1.5))
-                n += 1
+        step {          // 5.1 · tutti i punti trovati si tolgono con un solo ⌘Z
+            for sel in document.findString(t, withOptions: [.caseInsensitive]) {
+                for page in sel.pages {
+                    addRedaction(on: page, rect: sel.bounds(for: page).insetBy(dx: -1.5, dy: -1.5))
+                    n += 1
+                }
             }
         }
         message = n == 0 ? String(localized: "«\(t)» non compare nel documento.") : String(localized: "Oscurati \(n) punti con «\(t)».")
@@ -196,13 +345,15 @@ final class PDFEditorModel: ObservableObject, @unchecked Sendable {
     func redactPattern(_ p: Pattern) {
         guard let re = try? NSRegularExpression(pattern: p.regex, options: [.caseInsensitive]) else { return }
         var n = 0
-        for i in 0..<document.pageCount {
-            guard let page = document.page(at: i), let text = page.string else { continue }
-            let ns = text as NSString
-            for m in re.matches(in: text, range: NSRange(location: 0, length: ns.length)) {
-                guard let sel = page.selection(for: m.range) else { continue }
-                addRedaction(on: page, rect: sel.bounds(for: page).insetBy(dx: -1.5, dy: -1.5))
-                n += 1
+        step {          // 5.1 · un solo ⌘Z per tutta la ricerca
+            for i in 0..<document.pageCount {
+                guard let page = document.page(at: i), let text = page.string else { continue }
+                let ns = text as NSString
+                for m in re.matches(in: text, range: NSRange(location: 0, length: ns.length)) {
+                    guard let sel = page.selection(for: m.range) else { continue }
+                    addRedaction(on: page, rect: sel.bounds(for: page).insetBy(dx: -1.5, dy: -1.5))
+                    n += 1
+                }
             }
         }
         let name = String(localized: String.LocalizationValue(p.rawValue)).lowercased()
@@ -221,6 +372,7 @@ final class PDFEditorModel: ObservableObject, @unchecked Sendable {
     /// le pagine con parti oscurate diventano immagini (il testo sotto il nero sparisce davvero),
     /// le altre restano vettoriali con campi e firme fissati sulla pagina.
     func save() {
+        guard !saving else { return }       // 5.1 · mai due salvataggi insieme
         let dir = Destination.dir(for: source)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let out = Destination.unique(dir, base: source.deletingPathExtension().lastPathComponent + " (\(FileTag.t(outputSuffix)))", ext: "pdf")
@@ -251,6 +403,7 @@ final class PDFEditorModel: ObservableObject, @unchecked Sendable {
         QueueStore.shared.record(title: source.lastPathComponent, action: outputSuffix == "oscurato" ? String(localized: "Oscura") : String(localized: "Compila e firma"),
                                  outputs: [out], kind: .pdf, before: Job.size(of: source))
         NSWorkspace.shared.activateFileViewerSelecting([out])
+        saved = true                        // 5.1 · salvato: si chiude senza domande
         close()
     }
 
@@ -286,7 +439,15 @@ enum Interactive {
     static func handles(_ id: String) -> Bool { id == "pdfedit" || id == "redact" }
 
     static func open(_ action: Action, files: [URL]) {
-        guard let pdf = files.first(where: { Catalog.kind(of: $0) == .pdf }) else { NSSound.beep(); return }
+        guard let pdf = files.first(where: { Catalog.kind(of: $0) == .pdf }) else {
+            // 5.1 · non solo un «bip»: si dice cosa fare
+            NSApp.activate()
+            let a = NSAlert()
+            a.messageText = String(localized: "Scegli prima un PDF.")
+            a.informativeText = String(localized: "Seleziona un file PDF, poi riprova.")
+            a.runModal()
+            return
+        }
         PDFEditorController.shared.open(pdf, tool: action.id == "redact" ? .redact : .select)
     }
 }
@@ -295,11 +456,13 @@ enum Interactive {
 
 final class EditorPDFView: PDFView {
     weak var model: PDFEditorModel?
-    private var dragging: PDFAnnotation?
-    private var dragStart: CGPoint = .zero
-    private var originStart: CGPoint = .zero
-    private var redactStart: CGPoint = .zero
-    private var redactPage: PDFPage?
+    /// 5.1 · Cosa sta facendo il trascinamento (l'annulla si registra solo al rilascio).
+    private enum Drag {
+        case move(PDFAnnotation, from: CGRect, start: CGPoint)
+        case resize(PDFAnnotation, from: CGRect)
+        case draw(PDFAnnotation, start: CGPoint)
+    }
+    private var drag: Drag?
 
     override var acceptsFirstResponder: Bool { true }
 
@@ -315,11 +478,13 @@ final class EditorPDFView: PDFView {
         window?.makeFirstResponder(self)
         switch m.tool {
         case .select:
-            if let a = page.annotation(at: pp), m.isMine(a) {
+            // 5.1 · l'angolo in basso a destra di firme e oscuramenti li ridimensiona
+            if let a = m.resizeHandle(on: page, at: pp, tolerance: 10 / max(scaleFactor, 0.1)) {
                 m.selected = a
-                dragging = a
-                dragStart = pp
-                originStart = a.bounds.origin
+                drag = .resize(a, from: a.bounds)
+            } else if let a = page.annotation(at: pp), m.isMine(a) {
+                m.selected = a
+                drag = .move(a, from: a.bounds, start: pp)
             } else {
                 m.selected = nil
                 super.mouseDown(with: e)        // campi del modulo, selezione del testo
@@ -331,38 +496,57 @@ final class EditorPDFView: PDFView {
         case .text:
             m.placeText(m.freeText, on: page, at: pp)
         case .redact:
-            redactStart = pp
-            redactPage = page
-            dragging = m.addRedaction(on: page, rect: CGRect(origin: pp, size: CGSize(width: 1, height: 1)))
+            drag = .draw(m.beginDraftRedaction(on: page, at: pp), start: pp)
         }
     }
 
     override func mouseDragged(with e: NSEvent) {
-        guard let m = model, let a = dragging, let page = a.page else { super.mouseDragged(with: e); return }
+        guard let d = drag else { super.mouseDragged(with: e); return }
+        let a: PDFAnnotation
+        switch d {
+        case .move(let x, _, _), .resize(let x, _), .draw(let x, _): a = x
+        }
+        guard let page = a.page else { return }
         let p = convert(convert(e.locationInWindow, from: nil), to: page)
-        if m.tool == .redact {
-            a.bounds = CGRect(x: min(redactStart.x, p.x), y: min(redactStart.y, p.y),
-                              width: abs(p.x - redactStart.x), height: abs(p.y - redactStart.y))
-        } else {
-            var b = a.bounds
-            b.origin = CGPoint(x: originStart.x + p.x - dragStart.x, y: originStart.y + p.y - dragStart.y)
+        switch d {
+        case .move(_, let from, let start):
+            var b = from
+            b.origin = CGPoint(x: from.origin.x + p.x - start.x, y: from.origin.y + p.y - start.y)
             a.bounds = b
+        case .resize(_, let from):
+            a.bounds = PDFEditorModel.resized(from, to: p, keepRatio: a is ImageStampAnnotation)
+        case .draw(_, let start):
+            a.bounds = CGRect(x: min(start.x, p.x), y: min(start.y, p.y),
+                              width: abs(p.x - start.x), height: abs(p.y - start.y))
         }
         annotationsChanged(on: page)
     }
 
     override func mouseUp(with e: NSEvent) {
-        if let m = model, m.tool == .redact, let a = dragging, a.bounds.width < 4 || a.bounds.height < 4 {
-            m.remove(a)                         // un clic senza trascinare non lascia rettangoli minuscoli
+        if let m = model, let d = drag {
+            switch d {
+            case .move(let a, let from, _): m.commitBounds(a, from: from)
+            case .resize(let a, let from): m.commitBounds(a, from: from)
+            case .draw(let a, _): m.finishDraftRedaction(a)
+            }
         }
-        dragging = nil
-        redactPage = nil
+        drag = nil
         super.mouseUp(with: e)
     }
 
     override func keyDown(with e: NSEvent) {
         if let m = model, let a = m.selected, e.keyCode == 51 || e.keyCode == 117 {   // ⌫ o canc
             m.remove(a)
+            return
+        }
+        // 5.1 · ⌘Z / ⇧⌘Z anche se il menu Modifica non li prende
+        let flags = e.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        if let m = model, flags.contains(.command), e.charactersIgnoringModifiers?.lowercased() == "z" {
+            if flags.contains(.shift) {
+                if m.undo.canRedo { m.undo.redo() } else { NSSound.beep() }
+            } else {
+                if m.undo.canUndo { m.undo.undo() } else { NSSound.beep() }
+            }
             return
         }
         super.keyDown(with: e)
@@ -389,11 +573,105 @@ struct PDFKitView: NSViewRepresentable {
 
 // MARK: - Finestra
 
+/// 5.1 · Avvisi dell'Editor PDF (come gli altri del file: NSAlert).
+enum EditorAlert {
+    /// true = il primo pulsante (↩); il secondo risponde a Esc.
+    static func confirm(_ title: String, info: String? = nil, ok: String, cancel: String, destructive: Bool = false) -> Bool {
+        let a = NSAlert()
+        a.messageText = title
+        if let info { a.informativeText = info }
+        let okButton = a.addButton(withTitle: ok)
+        okButton.hasDestructiveAction = destructive
+        a.addButton(withTitle: cancel).keyEquivalent = "\u{1b}"
+        return a.runModal() == .alertFirstButtonReturn
+    }
+}
+
+/// 5.1 · Delegato della finestra: chiede prima di buttare le modifiche e dà alla finestra l'annulla del modello.
+@MainActor
+final class PDFEditorWindowGuard: NSObject, NSWindowDelegate {
+    let model: PDFEditorModel
+
+    init(model: PDFEditorModel) {
+        self.model = model
+    }
+
+    func windowWillReturnUndoManager(_ window: NSWindow) -> UndoManager? { model.undo }
+
+    /// ✕ e ⌘W.
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        if model.saving { return false }            // il salvataggio chiude da solo quando ha finito
+        guard model.hasChanges else { return true }
+        ask(sender)
+        return false
+    }
+
+    /// «Annulla» ed Esc nella finestra.
+    func requestClose(_ w: NSWindow) {
+        if windowShouldClose(w) { w.close() }
+    }
+
+    private func ask(_ w: NSWindow) {
+        guard w.attachedSheet == nil else { return }
+        let a = NSAlert()
+        a.messageText = String(localized: "Salvare una copia con le modifiche prima di chiudere?")
+        a.informativeText = String(localized: "Se non la salvi, firme, testi e oscuramenti che hai aggiunto vanno persi.")
+        a.addButton(withTitle: String(localized: "Salva una copia…"))                       // ↩
+        a.addButton(withTitle: String(localized: "Annulla")).keyEquivalent = "\u{1b}"       // Esc
+        let dont = a.addButton(withTitle: String(localized: "Non salvare"))
+        dont.hasDestructiveAction = true
+        dont.keyEquivalent = "d"
+        dont.keyEquivalentModifierMask = [.command]
+        a.beginSheetModal(for: w) { [weak self, weak w] r in
+            guard let self, let w else { return }
+            switch r {
+            case .alertFirstButtonReturn: self.model.save()      // se va bene, chiude da solo
+            case .alertThirdButtonReturn: w.close()
+            default: break
+            }
+        }
+    }
+}
+
 final class PDFEditorController: @unchecked Sendable {
     static let shared = PDFEditorController()
-    private var windows: [NSWindow] = []
+    private struct Entry {
+        let window: NSWindow
+        let model: PDFEditorModel
+        let guardian: PDFEditorWindowGuard       // il delegato è «weak»: lo tiene vivo questa lista
+    }
+    private var entries: [Entry] = []
+
+    /// 5.1 · Almeno una finestra dell'Editor PDF ha modifiche non salvate (per ⌘Q).
+    static var hasUnsavedChanges: Bool { shared.entries.contains { $0.model.hasChanges } }
+
+    /// 5.1 · Porta davanti la prima finestra con modifiche non salvate.
+    static func reviewUnsaved() {
+        guard let e = shared.entries.first(where: { $0.model.hasChanges }) else { return }
+        shared.bringFront(e.window)
+    }
+
+    /// 5.1 · Lo stesso file anche se scritto in modo diverso (.., link simbolici).
+    static func sameFile(_ a: URL, _ b: URL) -> Bool {
+        if a.standardizedFileURL.resolvingSymlinksInPath().path == b.standardizedFileURL.resolvingSymlinksInPath().path { return true }
+        let key: Set<URLResourceKey> = [.fileResourceIdentifierKey]
+        guard let x = try? a.resourceValues(forKeys: key).fileResourceIdentifier,
+              let y = try? b.resourceValues(forKeys: key).fileResourceIdentifier else { return false }
+        return x.isEqual(y)
+    }
+
+    private func bringFront(_ w: NSWindow) {
+        NSApp.activate()
+        if w.isMiniaturized { w.deminiaturize(nil) }
+        w.makeKeyAndOrderFront(nil)
+    }
 
     func open(_ url: URL, tool: EditorTool) {
+        // 5.1 · già aperto: si riporta davanti quella finestra, niente doppioni
+        if let e = entries.first(where: { Self.sameFile($0.model.source, url) }) {
+            bringFront(e.window)
+            return
+        }
         guard let doc = PDFDocument(url: url) else {
             let a = NSAlert()
             a.messageText = String(localized: "Non riesco ad aprire questo PDF.")
@@ -401,10 +679,11 @@ final class PDFEditorController: @unchecked Sendable {
             return
         }
         if doc.isLocked {
-            let a = NSAlert()
-            a.messageText = String(localized: "Il PDF è protetto da password.")
-            a.informativeText = String(localized: "Toglila prima con «Rimuovi la password», poi riprova.")
-            a.runModal()
+            // 5.1 · non solo un avviso: si può togliere la password da qui
+            let remove = EditorAlert.confirm(String(localized: "Questo PDF è protetto da una password."),
+                                             info: String(localized: "Ne faccio una copia senza password: poi apri quella."),
+                                             ok: String(localized: "Rimuovi la password…"), cancel: String(localized: "Annulla"))
+            if remove { Self.unprotect(url) }
             return
         }
         let model = PDFEditorModel(source: url, document: doc, tool: tool)
@@ -416,13 +695,29 @@ final class PDFEditorController: @unchecked Sendable {
         w.contentMinSize = NSSize(width: 760, height: 520)
         w.isReleasedWhenClosed = false
         w.center()
+        // NSWindowDelegate rende il delegato @MainActor: qui si è già sul main thread
+        let guardian = MainActor.assumeIsolated { PDFEditorWindowGuard(model: model) }
+        w.delegate = guardian
         model.close = { [weak w] in w?.close() }
-        WindowClose.once(w) { [weak self] in
-            self?.windows.removeAll { $0 === w }
+        model.requestClose = { [weak w, weak guardian] in
+            guard let w, let guardian else { return }
+            MainActor.assumeIsolated { guardian.requestClose(w) }
         }
-        windows.append(w)
+        WindowClose.once(w) { [weak self] in
+            self?.entries.removeAll { $0.window === w }
+            model.undo.removeAllActions()            // 5.1 · l'annulla non tiene vivo il documento chiuso
+        }
+        entries.append(Entry(window: w, model: model, guardian: guardian))
         NSApp.activate()
         w.makeKeyAndOrderFront(nil)
+    }
+
+    /// 5.1 · L'azione «Rimuovi la password» in Coda, come dal menu: prima chiede la password.
+    private static func unprotect(_ url: URL) {
+        guard let a = Catalog.action(id: "unprotect", kind: .pdf) else { return }
+        ParamController.shared.ask(.unlock, action: a, files: [url], at: NSEvent.mouseLocation) { v in
+            if let v { QueueStore.shared.enqueue(files: [url], action: a, param: v) }
+        }
     }
 }
 
@@ -445,7 +740,8 @@ struct PDFEditorView: View {
         .foregroundStyle(Theme.ink)
         .sheet(isPresented: $model.showSignaturePad) {
             SignaturePad { img in
-                if let img { SignatureStore.save(img); model.tool = .signature }
+                // 5.1 · se sostituisci la firma salvata si chiede, e la vecchia torna con ⌘Z
+                if let img, !model.useSignature(img) { return }      // «Annulla»: il disegno resta
                 model.showSignaturePad = false
             }
         }
@@ -511,7 +807,7 @@ struct PDFEditorView: View {
             }
             Spacer()
             if model.saving { ProgressView().controlSize(.small) }
-            Button("Annulla") { model.close() }.keyboardShortcut(.cancelAction)
+            Button("Annulla") { model.requestClose() }.keyboardShortcut(.cancelAction)   // 5.1 · chiede se ci sono modifiche
             Button { model.save() } label: { Label("Salva una copia", systemImage: "square.and.arrow.down") }
                 .keyboardShortcut("s", modifiers: .command)
                 .buttonStyle(.borderedProminent).tint(Theme.accent)
@@ -552,7 +848,7 @@ struct SignaturePad: View {
             HStack {
                 Button("Cancella") { strokes = []; current = [] }
                 Spacer()
-                Button("Annulla") { done(nil) }.keyboardShortcut(.cancelAction)
+                Button("Annulla") { cancel() }.keyboardShortcut(.cancelAction)
                 Button("Usa questa firma") { done(render()) }
                     .keyboardShortcut(.defaultAction)
                     .buttonStyle(.borderedProminent).tint(Theme.accent)
@@ -561,6 +857,15 @@ struct SignaturePad: View {
         }
         .padding(22)
         .background(Theme.cream)
+    }
+
+    /// 5.1 · Con un disegno iniziato, Esc e «Annulla» chiedono prima di buttarlo.
+    private func cancel() {
+        if strokes.isEmpty && current.isEmpty { done(nil); return }
+        let discard = EditorAlert.confirm(String(localized: "Buttare la firma disegnata?"),
+                                          ok: String(localized: "Butta"), cancel: String(localized: "Continua a disegnare"),
+                                          destructive: true)
+        if discard { done(nil) }
     }
 
     private func path(_ pts: [CGPoint]) -> Path {
