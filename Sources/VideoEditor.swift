@@ -999,12 +999,23 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     }
 
     /// All'avvio: il progetto che era aperto (anche dopo un crash) torna aperto, nel Montaggio.
+    /// 5.1 · Falso mentre l'app è aperta, vero dopo un'uscita normale: al riavvio si sa se si era chiusa all'improvviso.
+    static let cleanExitKey = "video.cleanExit"
+
     func restoreLastOpen() {
+        let d = UserDefaults.standard
+        let crashed = d.object(forKey: Self.cleanExitKey) != nil && !d.bool(forKey: Self.cleanExitKey)
+        d.set(false, forKey: Self.cleanExitKey)
         guard currentID == nil, folder == VideoProjectLibrary.folder,
-              let s = UserDefaults.standard.string(forKey: Self.openKey), let id = UUID(uuidString: s),
+              let s = d.string(forKey: Self.openKey), let id = UUID(uuidString: s),
               FileManager.default.fileExists(atPath: VideoProjectLibrary.url(for: id, in: folder).path) else { return }
         openProject(id, undo: nil)
         AppState.shared.videoMode = .montage
+        if crashed, let at = savedAt {
+            let name = VideoProjectLibrary.displayName(project)
+            let time = at.formatted(date: .omitted, time: .shortened)
+            notice = String(localized: "OrbitLR si è chiusa all’improvviso. «\(name)» è com’era alle \(time).")
+        }
     }
 }
 

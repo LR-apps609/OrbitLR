@@ -10380,6 +10380,16 @@
         }
       }
     },
+    "OrbitLR si è chiusa all’improvviso. «%@» è com’era alle %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrbitLR quit unexpectedly. “%1$@” is as it was at %2$@."
+          }
+        }
+      }
+    },
     "OrbitLR sulla selezione del Finder": {
       "localizations": {
         "en": {

@@ -11,6 +11,8 @@ final class ParamController: @unchecked Sendable {
     private var waiting: [(ParamKind, Action, [URL], NSPoint, (String?) -> Void)] = []
     /// 5.1 · Il ✕ del pannello chiede alla vista prima di chiudere (il delegato della finestra è debole: lo teniamo qui)
     private var closeGuard: CloseGuard?
+    /// 5.1 · Per ⌘Q: il pannello aperto (Taglia, Nascondi un logo, opzioni) può chiedere prima di buttare.
+    var openGuard: CloseGuard? { panel == nil ? nil : closeGuard }
 
     func ask(_ kind: ParamKind, action: Action, files: [URL], at point: NSPoint, done: @escaping (String?) -> Void) {
         if panel != nil {

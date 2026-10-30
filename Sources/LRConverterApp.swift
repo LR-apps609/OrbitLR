@@ -233,6 +233,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     /// 3.5 · ⌘Q con dei lavori in corso: si chiede, mai interruzioni silenziose (tranne durante un aggiornamento).
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        // 5.1 · ⌘Q con un pannello aperto (Taglia, Nascondi un logo, opzioni): chiede come il suo ✕
+        if !Updater.shared.busy, let g = ParamController.shared.openGuard, let ask = g.ask, !ask() {
+            return .terminateCancel
+        }
         // 5.1 · ⌘Q non butta più firme e testi aggiunti a un PDF
         if !Updater.shared.busy && PDFEditorController.hasUnsavedChanges {
             let a = NSAlert()
@@ -281,6 +285,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     func applicationWillTerminate(_ notification: Notification) {
         let s = VideoProjectStore.shared
         if s.currentID != nil { s.applyChanges(); s.rememberView() }
+        UserDefaults.standard.set(true, forKey: VideoProjectStore.cleanExitKey)     // 5.1 · uscita normale
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
