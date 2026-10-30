@@ -2842,6 +2842,16 @@
         }
       }
     },
+    "Butta": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard"
+          }
+        }
+      }
+    },
     "Butta le modifiche non applicate e torna all’ultima versione applicata": {
       "localizations": {
         "en": {
@@ -2858,6 +2868,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Throws away unsaved changes and goes back to the last saved version (asks first)"
+          }
+        }
+      }
+    },
+    "Buttare la firma disegnata?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard the signature you drew?"
           }
         }
       }
@@ -4091,6 +4111,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Continue"
+          }
+        }
+      }
+    },
+    "Continua a disegnare": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep Drawing"
           }
         }
       }
@@ -8848,6 +8878,16 @@
         }
       }
     },
+    "Ne faccio una copia senza password: poi apri quella.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I’ll make a copy without the password. Then open that one."
+          }
+        }
+      }
+    },
     "Nel Cassetto ritrovi i file creati: trascinali su un’altra scheda": {
       "localizations": {
         "en": {
@@ -9514,6 +9554,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Failed: %@"
+          }
+        }
+      }
+    },
+    "Non salvare": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Don’t Save"
           }
         }
       }
@@ -10700,6 +10750,16 @@
         }
       }
     },
+    "Potrai tornare a quella vecchia con ⌘Z.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can bring back the old one with ⌘Z."
+          }
+        }
+      }
+    },
     "Precisa (scarica 1,6 GB, meglio per l’italiano)": {
       "localizations": {
         "en": {
@@ -11330,6 +11390,16 @@
         }
       }
     },
+    "Questo PDF è protetto da una password.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This PDF is password-protected."
+          }
+        }
+      }
+    },
     "Questo aggiornamento (%@) non è più nuovo della versione che hai: non serve installarlo.": {
       "localizations": {
         "en": {
@@ -11920,6 +11990,16 @@
         }
       }
     },
+    "Rimuovi la password…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove Password…"
+          }
+        }
+      }
+    },
     "Rimuovi la transizione": {
       "localizations": {
         "en": {
@@ -12430,6 +12510,26 @@
         }
       }
     },
+    "Salva una copia…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save a Copy…"
+          }
+        }
+      }
+    },
+    "Salvare una copia con le modifiche prima di chiudere?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save a copy with your changes before closing?"
+          }
+        }
+      }
+    },
     "Salvato": {
       "localizations": {
         "en": {
@@ -12740,6 +12840,16 @@
         }
       }
     },
+    "Scegli prima un PDF.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a PDF first."
+          }
+        }
+      }
+    },
     "Scegli quali, es. 1–3, 5": {
       "localizations": {
         "en": {
@@ -12940,6 +13050,16 @@
         }
       }
     },
+    "Scrivi nei campi del modulo. Trascina firme e testi per spostarli, l’angolo in basso a destra per ridimensionare; ⌫ elimina, ⌘Z annulla.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type in the form fields. Drag signatures and texts to move them, the bottom-right corner to resize; ⌫ deletes, ⌘Z undoes."
+          }
+        }
+      }
+    },
     "Scrivi nei campi del modulo. Trascina firme e testi per spostarli; ⌫ per eliminarli.": {
       "localizations": {
         "en": {
@@ -13090,6 +13210,16 @@
         }
       }
     },
+    "Se non la salvi, firme, testi e oscuramenti che hai aggiunto vanno persi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If you don’t, the signatures, texts and redactions you added are lost."
+          }
+        }
+      }
+    },
     "Se una clip è corta, la transizione si accorcia da sola.": {
       "localizations": {
         "en": {
@@ -13176,6 +13306,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Select the video together with the .srt file"
+          }
+        }
+      }
+    },
+    "Seleziona un file PDF, poi riprova.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select a PDF file, then try again."
           }
         }
       }
@@ -13587,6 +13727,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Watch"
+          }
+        }
+      }
+    },
+    "Sostituire la firma salvata?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replace your saved signature?"
+          }
+        }
+      }
+    },
+    "Sostituisci": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replace"
           }
         }
       }
