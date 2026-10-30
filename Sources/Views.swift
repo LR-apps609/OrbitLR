@@ -421,7 +421,7 @@ struct JobCard: View {
                 Text(job.title).font(.system(size: 13, weight: .semibold)).lineLimit(1).truncationMode(.middle)
                 Text(job.action.title).font(.system(size: 12.5)).foregroundStyle(.secondary)
             }
-            .frame(minWidth: 170, maxWidth: .infinity, alignment: .leading)
+            .frame(minWidth: 110, maxWidth: .infinity, alignment: .leading)
             VStack(alignment: .leading, spacing: 6) {
                 if job.state == .running || job.state == .waiting {
                     TunerBar(value: job.shownProgress, tint: Theme.color(job.kind), height: 22)
@@ -434,12 +434,13 @@ struct JobCard: View {
                         .foregroundStyle(statusColor).lineLimit(2)
                 }
             }
-            .frame(width: 250, alignment: .leading)
+            // 5.1 · A 880 × 620 la riga non sta più stretta: le colonne cedono un po' invece di tagliare
+            .frame(minWidth: 150, idealWidth: 250, maxWidth: 250, alignment: .leading)
             VStack(alignment: .leading, spacing: 4) {
                 Text(job.sizeText).font(.system(size: 12.5, design: .rounded)).foregroundStyle(.secondary)
                 SavedBadge(job: job)
             }
-            .frame(width: 140, alignment: .leading)
+            .frame(minWidth: 80, idealWidth: 140, maxWidth: 140, alignment: .leading)
             HStack(spacing: 6) {
                 if let fix = Fix.best(for: job) {
                     Button { store.apply(fix, to: job) } label: { Label(fix.label, systemImage: fix.symbol) }
@@ -455,9 +456,11 @@ struct JobCard: View {
                     }
                     .help("Confronta: originale e risultato, con la linea da trascinare")
                 }
-                actionButton
+                // 5.1 · Un solo «Riprova»: se c'è già il pulsante che risolve, non se ne aggiunge un altro
+                if !((job.state == .failed || job.state == .cancelled) && Fix.best(for: job) != nil) { actionButton }
             }
             .frame(minWidth: 96, alignment: .trailing)
+            .fixedSize()
         }
         .padding(14)
         .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(hover ? Theme.cardHover : Theme.card))
