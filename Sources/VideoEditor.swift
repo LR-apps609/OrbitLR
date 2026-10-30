@@ -2164,7 +2164,7 @@ private struct ProjectTimeline: View {
     private func edge(_ t: VPText, mode: Int, pps: CGFloat, total: Double) -> some View {
         Rectangle().fill(Color.white.opacity(0.001)).frame(width: 6)
             .overlay(Capsule().fill(Color.white.opacity(0.8)).frame(width: 2, height: 10))
-            .contentShape(Rectangle().inset(by: -9))      // 5.2 · 24 pt di presa sui bordi del testo
+            .contentShape(Rectangle().inset(by: -4))      // 5.2 · 14 pt di presa sui bordi (di più coprirebbe i testi corti)
             .onHover { inside in if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() } }
             .gesture(DragGesture(minimumDistance: 1).onChanged { v in moveText(t, by: v.translation.width, pps: pps, total: total, mode: mode) }
                 .onEnded { _ in endTextDrag() })
