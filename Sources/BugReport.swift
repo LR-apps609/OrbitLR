@@ -93,22 +93,60 @@ enum BugReport {
     }
 }
 
+/// 5.1 · Il testo scritto in «Segnala un bug» e in «Suggerisci un’idea» resta come bozza: lo ritrovi riaprendo.
+/// Si cancella dopo l'invio, o se scegli tu «Butta».
+enum ReportDraft {
+    static let bugKey = "draft.bugReport"
+    static let ideaKey = "draft.idea"
+
+    static func load(_ key: String, in d: UserDefaults = .standard) -> String { d.string(forKey: key) ?? "" }
+
+    static func save(_ text: String, key: String, in d: UserDefaults = .standard) {
+        if isBlank(text) { d.removeObject(forKey: key) } else { d.set(text, forKey: key) }
+    }
+
+    static func clear(_ key: String, in d: UserDefaults = .standard) { d.removeObject(forKey: key) }
+
+    static func isBlank(_ text: String) -> Bool { text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
+    /// Chiudere butterebbe del lavoro? Testo scritto o almeno uno screenshot.
+    static func hasWork(text: String, attachments: Int = 0) -> Bool { !isBlank(text) || attachments > 0 }
+}
+
 struct BugReportView: View {
     let done: () -> Void
 
     @AppStorage("bugEmail") private var email = ""
     @State private var category = BugReport.categories[0]
-    @State private var text = ""
+    @State private var text = ReportDraft.load(ReportDraft.bugKey)      // 5.1 · la bozza dell'ultima volta
     @State private var screenshots: [URL] = []
     @State private var includeTech = true
     @State private var message: String? = nil
     @State private var capturing = false
+    @State private var saved = false        // 5.1 · salvata sulla Scrivania: chiudere non perde niente
 
     private var emailOK: Bool {
         let e = email.trimmingCharacters(in: .whitespaces)
         return e.isEmpty || (e.contains("@") && e.contains(".") && !e.contains(" "))
     }
     private var canSend: Bool { !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && emailOK }
+
+    /// 5.1 · Perché «Prepara l’email» è spento (o cosa fa, se è acceso).
+    private var sendHelp: String {
+        if ReportDraft.isBlank(text) { return String(localized: "Scrivi prima cosa è successo.") }
+        if !emailOK { return String(localized: "Controlla l’indirizzo email.") }
+        return String(localized: "Si apre Mail con tutto già allegato.")
+    }
+
+    /// 5.1 · Esc e «Annulla»: con testo o screenshot si chiede prima di buttarli.
+    private func cancel() {
+        if !saved && ReportDraft.hasWork(text: text, attachments: screenshots.count) {
+            guard DiscardAsk.confirm(String(localized: "Buttare la segnalazione?"),
+                                     keep: String(localized: "Continua a scrivere")) else { return }
+        }
+        ReportDraft.clear(ReportDraft.bugKey)
+        done()
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -203,16 +241,19 @@ struct BugReportView: View {
             HStack {
                 Text("Versione \(BugReport.version)").font(.system(size: 11)).foregroundStyle(.tertiary)
                 Spacer()
-                Button("Annulla") { done() }.keyboardShortcut(.cancelAction)
+                Button("Annulla") { cancel() }.keyboardShortcut(.cancelAction)
                 Button { send() } label: { Label("Prepara l’email", systemImage: "paperplane.fill") }
                     .keyboardShortcut(.defaultAction)
                     .buttonStyle(.borderedProminent).tint(Theme.accent)
                     .disabled(!canSend)
+                    .help(sendHelp)
             }
         }
         .padding(22)
         .frame(width: 560)
         .background(Theme.cream)
+        .onChange(of: text) { _, v in ReportDraft.save(v, key: ReportDraft.bugKey); saved = false }
+        .onChange(of: screenshots) { _, _ in saved = false }
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
             loadURLs(providers) { urls in
                 screenshots += urls.filter { Catalog.kind(of: $0) == .img && !screenshots.contains($0) }
@@ -285,6 +326,7 @@ struct BugReportView: View {
             mail.recipients = [BugReport.recipient]
             mail.subject = subject
             mail.perform(withItems: items)
+            ReportDraft.clear(ReportDraft.bugKey)       // 5.1 · inviata: la bozza non serve più
             done()
             return
         }
@@ -300,6 +342,8 @@ struct BugReportView: View {
         try? note.write(to: folder.appendingPathComponent("Segnalazione.txt"), atomically: true, encoding: .utf8)
         for a in attachments { try? fm.copyItem(at: a, to: folder.appendingPathComponent(a.lastPathComponent)) }
         NSWorkspace.shared.activateFileViewerSelecting([folder])
+        ReportDraft.clear(ReportDraft.bugKey)           // 5.1 · è al sicuro sulla Scrivania
+        saved = true
         message = String(localized: "Mail non è configurata: ho salvato la segnalazione sulla Scrivania. Inviala a \(BugReport.recipient).")
     }
 }

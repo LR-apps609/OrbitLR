@@ -1629,6 +1629,16 @@
         }
       }
     },
+    "Aggiungi la zona": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Area"
+          }
+        }
+      }
+    },
     "Aggiungi musica": {
       "localizations": {
         "en": {
@@ -2902,6 +2912,16 @@
         }
       }
     },
+    "Butta": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard"
+          }
+        }
+      }
+    },
     "Butta le modifiche non applicate e torna all’ultima versione applicata": {
       "localizations": {
         "en": {
@@ -2918,6 +2938,56 @@
           "stringUnit": {
             "state": "translated",
             "value": "Throws away unsaved changes and goes back to the last saved version (asks first)"
+          }
+        }
+      }
+    },
+    "Buttare la segnalazione?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard this report?"
+          }
+        }
+      }
+    },
+    "Buttare la zona disegnata?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard the area you drew?"
+          }
+        }
+      }
+    },
+    "Buttare le %lld zone disegnate?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard the %lld areas you drew?"
+          }
+        }
+      }
+    },
+    "Buttare le scelte fatte?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard your choices?"
+          }
+        }
+      }
+    },
+    "Buttare l’idea?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard this idea?"
           }
         }
       }
@@ -4171,6 +4241,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Keep Editing"
+          }
+        }
+      }
+    },
+    "Continua a scrivere": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep Writing"
           }
         }
       }
@@ -9608,6 +9688,16 @@
         }
       }
     },
+    "Non riesco ad aprire l’email. Scrivimi a %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn’t open an email. Write to me at %@."
+          }
+        }
+      }
+    },
     "Non riesco ad aprire l’immagine": {
       "localizations": {
         "en": {
@@ -12130,6 +12220,16 @@
         }
       }
     },
+    "Rimuovi la zona": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove Area"
+          }
+        }
+      }
+    },
     "Rimuovi lo sfondo": {
       "localizations": {
         "en": {
@@ -12980,6 +13080,16 @@
         }
       }
     },
+    "Scegli una faccina o scrivi prima qualcosa.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick a face or write something first."
+          }
+        }
+      }
+    },
     "Scegli un’altra cartella": {
       "localizations": {
         "en": {
@@ -13196,6 +13306,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Type to search for an action, ↑↓ and ↩ to choose it"
+          }
+        }
+      }
+    },
+    "Scrivi prima cosa è successo.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Describe what happened first."
           }
         }
       }
@@ -13576,6 +13696,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Slowly zooms out"
+          }
+        }
+      }
+    },
+    "Si apre Mail con tutto già allegato.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail opens with everything attached."
+          }
+        }
+      }
+    },
+    "Si apre un’email già pronta.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An email opens, ready to send."
           }
         }
       }
@@ -16968,6 +17108,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "invalid image dimensions"
+          }
+        }
+      }
+    },
+    "discard.keepEditing": {
+      "comment": "Avviso: resta nella finestra senza buttare niente",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep Editing"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continua"
           }
         }
       }

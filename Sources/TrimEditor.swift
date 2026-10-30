@@ -22,6 +22,15 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
     var onLoaded: (() -> Void)?
     /// Durata massima della selezione (es. 30 s per le suonerie), nil = libera.
     var maxLength: Double? = nil
+    /// 5.1 · La selezione appena pronto il file (anche il ritornello proposto): da qui in poi sono scelte tue.
+    private(set) var baseline: (Double, Double)? = nil
+
+    /// 5.1 · Hai spostato inizio o fine rispetto a com'era all'apertura?
+    static func changed(start: Double, end: Double, baseline: (Double, Double)?) -> Bool {
+        guard let b = baseline else { return false }
+        return abs(start - b.0) > 0.001 || abs(end - b.1) > 0.001
+    }
+    var hasChanges: Bool { Self.changed(start: start, end: end, baseline: baseline) }
 
     // 3.8 · Zoom: in larghezza (tempo, fino al millesimo di secondo) e in altezza (onda più alta)
     /// 1 = tutto il file; 4 = si vede un quarto del file.
@@ -99,6 +108,7 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
         loading = false
         onLoaded?()
         onLoaded = nil
+        baseline = (start, end)
     }
 
     // MARK: Comandi
@@ -392,11 +402,12 @@ struct TrimEditorView: View {
     let tint: Color
     let fileName: String
     let onDone: (String?) -> Void
+    private let closeGuard: CloseGuard?
 
     @State private var startText = ""
     @State private var endText = ""
 
-    init(url: URL, mode: ParamKind, onDone: @escaping (String?) -> Void) {
+    init(url: URL, mode: ParamKind, onDone: @escaping (String?) -> Void, closeGuard: CloseGuard? = nil) {
         let kind = Catalog.kind(of: url)
         // 4.1.4 · Il modello nasce una volta sola (StateObject lo crea alla prima apparizione): prima ogni
         // ridisegno della finestra ne creava uno nuovo, con un'altra lettura completa del file
@@ -405,6 +416,13 @@ struct TrimEditorView: View {
         self.tint = Theme.color(kind)
         self.fileName = url.lastPathComponent
         self.onDone = onDone
+        self.closeGuard = closeGuard
+    }
+
+    /// 5.1 · `true` = si può chiudere: selezione intatta, oppure hai scelto «Butta».
+    private func mayDiscard() -> Bool {
+        guard m.hasChanges else { return true }
+        return DiscardAsk.confirm(String(localized: "Buttare le scelte fatte?"))
     }
 
     var body: some View {
@@ -467,7 +485,7 @@ struct TrimEditorView: View {
 
             HStack {
                 Spacer()
-                Button("Annulla") { m.pause(); onDone(nil) }.keyboardShortcut(.cancelAction)
+                Button("Annulla") { if mayDiscard() { m.pause(); onDone(nil) } }.keyboardShortcut(.cancelAction)
                 Button(mode == .gifcut ? String(localized: "Crea la GIF") : (mode == .ringtone ? String(localized: "Crea la suoneria") : String(localized: "Taglia"))) {
                     m.pause()
                     onDone(String(format: "%.3f|%.3f", m.start, m.end) + (mode == .ringtone ? "|1|1" : ""))
@@ -480,7 +498,10 @@ struct TrimEditorView: View {
         }
         .padding(22)
         .frame(width: 760)
-        .onAppear { startText = formatTime(m.start); endText = formatTime(m.end) }
+        .onAppear {
+            startText = formatTime(m.start); endText = formatTime(m.end)
+            closeGuard?.ask = { mayDiscard() }
+        }
         .onChange(of: m.start) { _, v in startText = formatTime(v) }
         .onChange(of: m.end) { _, v in endText = formatTime(v) }
         .onDisappear { m.pause() }
