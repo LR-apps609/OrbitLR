@@ -102,6 +102,8 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     @Published private(set) var musicPeaks: [Float] = []
     /// 5.0.1 · Zoom della sequenza (1 = tutto il montaggio nella larghezza): fino al millisecondo
     @Published var timelineZoom: Double = 1
+    /// 5.1 · Lo strumento aperto a destra (Clip, Testi, Audio…): torna com'era riaprendo il progetto
+    @Published var lastTool: String = VideoEditTool.clip.rawValue
     private var musicPeaksPath: String? = nil
     static let musicPeaksRate = 50.0
     func loadMusicPeaks() {
@@ -660,13 +662,33 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         saved = p
         opened = p
         savedAt = (try? VideoProjectLibrary.url(for: id, in: folder).resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
+        // 5.1 · Si torna dov'eri: indicatore, zoom e strumento di questo progetto
+        if let v = Self.viewState(id) {
+            clock.time = min(max(0, v.time), max(0, p.duration - 0.05))
+            timelineZoom = max(1, v.zoom)
+            lastTool = v.tool
+        }
         ensureLoaded()
         ensureSpeech()
         scheduleRebuild()
     }
 
+    /// 5.1 · Dove eri in un progetto (non fa parte del progetto: spostare l'indicatore non è una modifica).
+    struct ViewState: Codable { var time: Double; var zoom: Double; var tool: String }
+    private static func viewKey(_ id: UUID) -> String { "video.view.\(id.uuidString)" }
+    static func viewState(_ id: UUID) -> ViewState? {
+        guard let d = UserDefaults.standard.data(forKey: viewKey(id)) else { return nil }
+        return try? JSONDecoder().decode(ViewState.self, from: d)
+    }
+    /// Si chiama chiudendo il progetto e uscendo dall'app.
+    func rememberView() {
+        guard let id = currentID, let d = try? JSONEncoder().encode(ViewState(time: clock.time, zoom: timelineZoom, tool: lastTool)) else { return }
+        UserDefaults.standard.set(d, forKey: Self.viewKey(id))
+    }
+
     /// 2.7.3 · Chiude il progetto (resta salvato) e torna alla schermata Progetti.
     func closeProject(_ undo: UndoManager?) {
+        rememberView()
         pause()
         rebuildTask?.cancel()
         saveWork?.cancel()
@@ -687,6 +709,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         opened = project
         savedAt = nil
         timelineZoom = 1                                  // 5.1 · lo zoom è del progetto, non passa al prossimo
+        lastTool = VideoEditTool.clip.rawValue
         selected = nil
         selectedText = nil
         notice = nil
@@ -1043,9 +1066,9 @@ struct VideoEditorView: View {
     @Environment(\.undoManager) private var undo
     @State private var tool: VideoEditTool = .clip
 
-    init(s: VideoProjectStore, startTool: VideoEditTool = .clip) {
+    init(s: VideoProjectStore, startTool: VideoEditTool? = nil) {
         self.s = s
-        _tool = State(initialValue: startTool)
+        _tool = State(initialValue: startTool ?? VideoEditTool(rawValue: s.lastTool) ?? .clip)
     }
     @State private var targeted = false
     /// 5.1 · «Ripristina…» chiede conferma (e si annulla con ⌘Z)
@@ -1099,6 +1122,8 @@ struct VideoEditorView: View {
             return true
         }
         .onDisappear { s.pause() }
+        .onChange(of: tool) { _, t in s.lastTool = t.rawValue }
+        .onChange(of: s.lastTool) { _, v in if let t = VideoEditTool(rawValue: v), t != tool { tool = t } }
         .background(EditorKeys(s: s))
         .confirmationDialog("Ripristinare il progetto com’era quando l’hai aperto?", isPresented: $askRevert) {
             Button("Ripristina", role: .destructive) { s.revertToOpened(undo) }

@@ -280,7 +280,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     /// Il progetto resta segnato come aperto: al prossimo avvio torna dov'eri.
     func applicationWillTerminate(_ notification: Notification) {
         let s = VideoProjectStore.shared
-        if s.currentID != nil { s.applyChanges() }
+        if s.currentID != nil { s.applyChanges(); s.rememberView() }
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
