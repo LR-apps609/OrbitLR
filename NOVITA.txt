@@ -1,3 +1,21 @@
+Novità della 5.1 «Al sicuro»:
+• Montaggio: il progetto si salva da solo mentre lavori (in alto «Salvato alle 14:32»). Niente più «Applica» e «Scarta»: «Ripristina…» lo riporta com’era quando l’hai aperto, e anche questo si annulla con ⌘Z
+• Montaggio: se OrbitLR si chiude, alla riapertura torni nel progetto, con l’indicatore, lo zoom e lo strumento dove li avevi lasciati
+• Montaggio: i video che non trova più restano nel progetto finché non li ritrovi con «Trova i file…»; un progetto svuotato va nel Cestino, mai cancellato
+• Montaggio: l’esportazione prende il nome del progetto, controlla prima lo spazio sul disco e dice quanto manca («circa 2 min»). Chiudendo il progetto mentre esporta, la striscia resta
+• «Interrompi» ferma davvero il Vettoriale, «Migliora con l’IA», lo scaricamento del modello per togliere i loghi e i sottotitoli automatici (che ora mostrano la percentuale)
+• Editor PDF: chiudendo con modifiche chiede se salvare una copia; ⌘Z e ⇧⌘Z su firme, testi e oscuramenti; lo stesso PDF non si apre due volte; cambiare la firma salvata chiede conferma
+• ⌘Q chiede prima di buttare un PDF modificato o un pannello aperto (Taglia, Nascondi un logo, opzioni)
+• Nascondi un logo, Taglia, le opzioni, Segnala e Suggerisci: Esc e ✕ chiedono prima di buttare il lavoro; Segnala tiene la bozza
+• Eliminare un’azione, una ricetta, una regola, una voce della cronologia o un file del Cassetto si annulla (riga con «Annulla» e ⌘Z). Gli avvisi che buttano qualcosa hanno «Annulla» come scelta predefinita
+• Più di 20 originali da spostare nel Cestino: prima lo chiede. Le opzioni di Audio restano nel progetto e i progetti audio non vanno più nel Cestino da soli
+• Niente più «bip» senza spiegazione: OrbitLR dice cosa manca. Anche per «Apri all’accesso», per la scorciatoia ⌥⌘C già usata da un’altra app e per il codice QR scaduto (con «Rigenera»)
+• Lavoro non riuscito: nella nuvoletta c’è il pulsante che risolve, oppure «Riprova». Anche il download di un aggiornamento ha «Riprova»
+• Menu in alto: Archivio (Nuovo progetto video ⇧⌘N, Apri… ⌘O), Vista (sezioni con ⌘1–5, Attività ⌘0), Aiuto (Aiuto di OrbitLR, Segnala un problema…)
+• Clic destro e doppio clic su clip, testi, musica, Attività, Cronologia e Cassetto
+• Audio e Taglia: inizio e fine si scrivono al millesimo, e ⌘Z vale per tutta la selezione
+• Testi dell’Aiuto e scorciatoie corretti dove non dicevano il vero
+
 Novità della 5.0.2 «Sonoma»:
 • Su macOS 14 (Sonoma) la barra a sinistra non resta più «schiacciata» con le voci tagliate: si ridisegna appena la finestra è al suo posto e quando cambia larghezza
 • Le miniature dei video compaiono anche quando Quick Look non le dà (succedeva su alcuni Mac con macOS 14)

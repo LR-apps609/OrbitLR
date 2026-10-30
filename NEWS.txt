@@ -1,3 +1,21 @@
+What’s new in 5.1 “Safe”:
+• Editor: the project saves itself as you work (“Saved at 2:32 PM” at the top). No more “Apply” and “Discard”: “Revert…” takes it back to how it was when you opened it, and that can be undone with ⌘Z too
+• Editor: if OrbitLR quits, when you reopen it you’re back in the project, with the playhead, zoom and tool where you left them
+• Editor: videos it can’t find stay in the project until you find them with “Find Files…”; an emptied project goes to the Trash, never deleted
+• Editor: the export is named after the project, checks the disk space first and says how long is left (“about 2 min”). If you close the project while exporting, the strip stays
+• “Stop” really stops Vector, “Enhance with AI”, the download of the logo-removal model and automatic subtitles (which now show a percentage)
+• PDF Editor: closing with changes asks whether to save a copy; ⌘Z and ⇧⌘Z for signatures, text and redactions; the same PDF doesn’t open twice; replacing the saved signature asks first
+• ⌘Q asks before throwing away an edited PDF or an open panel (Trim, Hide a Logo, options)
+• Hide a Logo, Trim, options, Report and Suggest: Esc and ✕ ask before throwing your work away; Report keeps a draft
+• Deleting an action, a recipe, a rule, a history item or a Drawer file can be undone (a line with “Undo”, and ⌘Z). Alerts that throw something away have “Cancel” as the default
+• More than 20 originals to move to the Trash: it asks first. Audio options stay in the project and audio projects no longer go to the Trash on their own
+• No more beeps without explanation: OrbitLR says what’s missing. Also for “Open at login”, for the ⌥⌘C shortcut already used by another app and for an expired QR code (with “Generate Again”)
+• Failed job: the bubble has the button that fixes it, or “Try Again”. Downloading an update has “Try Again” too
+• Menu bar: File (New Video Project ⇧⌘N, Open… ⌘O), View (sections with ⌘1–5, Activity ⌘0), Help (OrbitLR Help, Report a Problem…)
+• Right-click and double-click on clips, text, music, Activity, History and the Drawer
+• Audio and Trim: start and end can be typed down to the millisecond, and ⌘Z works for the whole selection
+• Help texts and shortcuts fixed where they weren’t true
+
 What’s new in 5.0.2 “Sonoma”:
 • On macOS 14 (Sonoma) the sidebar no longer stays “squeezed” with cut-off items: it redraws once the window is in place and when its width changes
 • Video thumbnails show up even when Quick Look doesn’t provide them (it happened on some Macs with macOS 14)
