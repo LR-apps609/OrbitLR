@@ -703,7 +703,7 @@ struct ComponentsView: View {
                             .disabled(testing)
                         if !installer.missing.isEmpty && installer.brewPath != nil {
                             Button("Installa tutti i mancanti") { installer.install(installer.missing, id: "all") }
-                                .primaryButton(Theme.green).disabled(installer.running != nil)
+                                .mainButton(Theme.green).disabled(installer.running != nil)
                                 .help(installer.running != nil ? String(localized: "Aspetta: sto già installando un programma.") : "")
                         }
                     }
@@ -832,7 +832,7 @@ struct ComponentsView: View {
 extension View {
     /// 3.0 · Il pulsante principale della schermata (uno solo): pieno se `on`, normale altrimenti.
     @ViewBuilder func primaryButton(_ on: Bool = true) -> some View {
-        if on { self.primaryButton() } else { self.buttonStyle(.bordered) }
+        if on { self.mainButton() } else { self.buttonStyle(.bordered) }
     }
 }
 

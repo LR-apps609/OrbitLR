@@ -284,7 +284,7 @@ struct AutomationView: View {
                                 }
                                 Spacer()
                                 Button("Attiva") { t.prepare?(); withAnimation(Motion.quick) { store.add(t.rule(), includeExisting: false) } }
-                                    .primaryButton(SidebarItem.automation.color)
+                                    .mainButton(SidebarItem.automation.color)
                             }
                             .padding(12)
                             .card(radius: 12)

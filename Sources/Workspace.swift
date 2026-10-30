@@ -570,7 +570,7 @@ struct JobStatusBar: View {
             }
             if job.state == .done && !job.outputs.isEmpty {
                 UseInMenu(url: job.outputs[0])          // 3.0 · il passo successivo, in un clic
-                Button("Mostra nel Finder") { store.reveal(job.outputs.map { $0.path }) }.primaryButton(Theme.green)
+                Button("Mostra nel Finder") { store.reveal(job.outputs.map { $0.path }) }.mainButton(Theme.green)
             } else if job.state == .running {
                 Button("Interrompi") { store.cancel(job) }
             }

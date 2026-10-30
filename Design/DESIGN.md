@@ -38,7 +38,7 @@ Il clic destro ripete i comandi della cosa cliccata, non ne aggiunge.
 
 | Ruolo | In codice | Regola |
 | --- | --- | --- |
-| Principale | `.primaryButton()` | Uno per schermata; colore della sezione o `Theme.accent` |
+| Principale | `.primaryButton()` (o `.mainButton(colore)`) | Uno per schermata; colore della sezione o `Theme.accent` |
 | Risolve un errore | `.fixButton()` | Ottone; accanto all’errore |
 | Secondario | stile di sistema | Testo chiaro, mai solo icona se c’è spazio |
 | Distruttivo | `role: .destructive` | Mai predefinito; negli avvisi «Annulla» è predefinito (`Sheet.confirmDestructive`) |

@@ -236,7 +236,7 @@ struct ParamView: View {
             HStack {
                 Spacer()
                 Button("Annulla") { if mayDiscard() { onDone(nil) } }.keyboardShortcut(.cancelAction)
-                Button(confirmTitle) { confirm() }.keyboardShortcut(.defaultAction).primaryButton(tint)
+                Button(confirmTitle) { confirm() }.keyboardShortcut(.defaultAction).mainButton(tint)
             }
         }
         .padding(20)

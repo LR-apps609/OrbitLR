@@ -14,7 +14,7 @@ enum Radius {
 extension View {
     /// 5.2 · Ruoli dei pulsanti: uno per ruolo, sempre lo stesso aspetto.
     /// Azione principale della schermata (una sola).
-    func primaryButton(_ tint: Color = Theme.accent) -> some View { buttonStyle(.borderedProminent).tint(tint) }
+    func mainButton(_ tint: Color = Theme.accent) -> some View { buttonStyle(.borderedProminent).tint(tint) }
     /// Il pulsante che risolve un errore («Libera spazio», «Scegli un’altra cartella»…).
     func fixButton() -> some View { buttonStyle(.borderedProminent).tint(Theme.brass) }
 
