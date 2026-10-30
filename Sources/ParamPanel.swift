@@ -9,6 +9,8 @@ final class ParamController: @unchecked Sendable {
     /// 4.1.4 · Una richiesta arrivata mentre un pannello è aperto (per esempio la password di un PDF in coda)
     /// aspetta il suo turno invece di annullare quella aperta.
     private var waiting: [(ParamKind, Action, [URL], NSPoint, (String?) -> Void)] = []
+    /// 5.1 · Il ✕ del pannello chiede alla vista prima di chiudere (il delegato della finestra è debole: lo teniamo qui)
+    private var closeGuard: CloseGuard?
 
     func ask(_ kind: ParamKind, action: Action, files: [URL], at point: NSPoint, done: @escaping (String?) -> Void) {
         if panel != nil {
@@ -18,13 +20,15 @@ final class ParamController: @unchecked Sendable {
         callback = done
         let isTrim = kind == .cut || kind == .gifcut || kind == .ringtone
         let view: AnyView
+        let guardian = CloseGuard()
+        closeGuard = guardian
         if kind == .hidemark, let url = files.first {
-            view = AnyView(HideMarkEditor(url: url, onDone: { [weak self] v in self?.close(v) }))
+            view = AnyView(HideMarkEditor(url: url, onDone: { [weak self] v in self?.close(v) }, closeGuard: guardian))
         } else if isTrim, let url = files.first(where: { Catalog.kind(of: $0) != .sub }) {
-            view = AnyView(TrimEditorView(url: url, mode: kind, onDone: { [weak self] v in self?.close(v) }))
+            view = AnyView(TrimEditorView(url: url, mode: kind, onDone: { [weak self] v in self?.close(v) }, closeGuard: guardian))
         } else {
             view = AnyView(ParamView(kind: kind, action: action, files: files,
-                                     onDone: { [weak self] v in self?.close(v) }))
+                                     onDone: { [weak self] v in self?.close(v) }, closeGuard: guardian))
         }
         let host = NSHostingView(rootView: view.background(Theme.cream))
         host.frame.size = host.fittingSize
@@ -44,9 +48,11 @@ final class ParamController: @unchecked Sendable {
         p.setFrameOrigin(origin)
         if isTrim || kind == .hidemark { p.center() }
         p.isReleasedWhenClosed = false
+        p.delegate = guardian
         WindowClose.once(p) { [weak self, weak p] in
             guard let self, let p, self.panel === p else { return }
             self.panel = nil
+            self.closeGuard = nil
             let cb = self.callback
             self.callback = nil
             cb?(nil)
@@ -62,6 +68,7 @@ final class ParamController: @unchecked Sendable {
         callback = nil
         let p = panel
         panel = nil
+        closeGuard = nil
         // 4.1.4 · Chiusa davvero (non solo nascosta): la finestra e quello che contiene (anche il lettore del taglio) se ne vanno
         p?.close()
         cb?(value)
@@ -73,6 +80,45 @@ final class ParamController: @unchecked Sendable {
         let (k, a, f, pt, d) = waiting.removeFirst()
         DispatchQueue.main.async { self.ask(k, action: a, files: f, at: pt, done: d) }
     }
+}
+
+// MARK: - 5.1 · «Buttare …?» prima di chiudere con del lavoro dentro
+
+/// Avviso con «Continua» predefinito (Invio ed Esc) e «Butta» in rosso, mai predefinito.
+/// `true` = l'hai scelto tu: si butta.
+enum DiscardAsk {
+    static var keepEditing: String {
+        String(localized: "discard.keepEditing", defaultValue: "Continua", comment: "Avviso: resta nella finestra senza buttare niente")
+    }
+
+    static func confirm(_ title: String, keep: String = DiscardAsk.keepEditing) -> Bool {
+        let a = NSAlert()
+        a.alertStyle = .warning
+        a.messageText = title
+        let k = a.addButton(withTitle: keep)          // il primo: predefinito, risponde a Invio
+        k.keyEquivalent = "\r"
+        let d = a.addButton(withTitle: String(localized: "Butta"))
+        d.keyEquivalent = ""
+        d.hasDestructiveAction = true
+        // 5.1 · Esc = Continua (macOS lo dà da solo solo a un pulsante che si chiama «Cancel»)
+        let esc = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { e in
+            guard e.keyCode == 53, e.window === a.window else { return e }
+            k.performClick(nil)
+            return nil
+        }
+        defer { if let esc { NSEvent.removeMonitor(esc) } }
+        return a.runModal() == .alertSecondButtonReturn
+    }
+}
+
+/// 5.1 · Il ✕ della finestra chiede prima alla vista (che risponde con `DiscardAsk`). Senza domanda si chiude.
+final class CloseGuard: NSObject {
+    var ask: (() -> Bool)?
+}
+
+// 5.1 · Conformità in un'estensione: CloseGuard() resta creabile anche dove il thread principale non è dichiarato
+extension CloseGuard: NSWindowDelegate {
+    func windowShouldClose(_ sender: NSWindow) -> Bool { ask?() ?? true }
 }
 
 /// "45", "1:30", "1:02:30,5" → secondi
@@ -94,6 +140,7 @@ struct ParamView: View {
     let action: Action
     let files: [URL]
     let onDone: (String?) -> Void
+    var closeGuard: CloseGuard? = nil
 
     @State var resize = "1920"
     @State var level = "medium"
@@ -119,6 +166,25 @@ struct ParamView: View {
     @State var presetName = ""
     @State var follow = true        // Formato social: segui il soggetto
     @State var videoSeconds: Double? = nil   // 2.7.5 · per il peso previsto di Comprimi e Formato social
+    @State var baseline: [String]? = nil     // 5.1 · le scelte com'erano all'apertura
+
+    /// 5.1 · Tutte le scelte del pannello, per capire se hai cambiato qualcosa.
+    private var snapshot: [String] {
+        [resize, level, mb, customMB, start, end, pages, vres, speed, degrees, order, password, password2,
+         baseName, startNumber, String(digits), String(savePreset), choice, aiSize, aiStrength, presetName, String(follow)]
+    }
+
+    /// 5.1 · Ci sono modifiche? Prima che il pannello sia pronto (baseline nil) no.
+    static func changed(_ now: [String], from base: [String]?) -> Bool {
+        guard let base else { return false }
+        return now != base
+    }
+
+    /// 5.1 · `true` = si può chiudere (niente cambiato, oppure hai scelto «Butta»).
+    private func mayDiscard() -> Bool {
+        guard Self.changed(snapshot, from: baseline) else { return true }
+        return DiscardAsk.confirm(String(localized: "Buttare le scelte fatte?"))
+    }
 
     private var presetable: Bool { [.resize, .icompress, .pdfcompress, .vcompress, .vresize, .speed, .rotate, .removebg, .straighten, .upscale, .aienhance, .stack, .social, .vector].contains(kind) }
 
@@ -128,7 +194,7 @@ struct ParamView: View {
     var body: some View {
         // 2.9.4 · Nascondi filigrana: si disegna sull'immagine, ha il suo riquadro
         if kind == .hidemark, let url = files.first {
-            HideMarkEditor(url: url, onDone: onDone)
+            HideMarkEditor(url: url, onDone: onDone, closeGuard: closeGuard)
         } else {
             standard
         }
@@ -167,7 +233,7 @@ struct ParamView: View {
             }
             HStack {
                 Spacer()
-                Button("Annulla") { onDone(nil) }.keyboardShortcut(.cancelAction)
+                Button("Annulla") { if mayDiscard() { onDone(nil) } }.keyboardShortcut(.cancelAction)
                 Button(confirmTitle) { confirm() }.keyboardShortcut(.defaultAction).buttonStyle(.borderedProminent).tint(tint)
             }
         }
@@ -178,6 +244,9 @@ struct ParamView: View {
             if kind == .gifcut { end = "0:05" }
             if kind == .rename { baseName = Self.suggestedBase(files) }
             if [.removebg, .straighten, .upscale, .stack, .social, .vector].contains(kind) { choice = ParamChoices.defaultValue(for: kind) }
+            closeGuard?.ask = { mayDiscard() }
+            // 5.1 · Le scelte di partenza, dopo che i valori iniziali si sono assestati
+            DispatchQueue.main.async { if baseline == nil { baseline = snapshot } }
         }
     }
 

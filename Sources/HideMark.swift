@@ -111,6 +111,11 @@ enum HideMark {
         try await Media.export(asset, videoComposition: vc, audioMix: nil, out: out, job: job, progress: progress)
     }
 
+    /// 5.1 · Chiudere butterebbe del lavoro? Sì se ci sono zone e non sono quelle con cui si è aperto.
+    static func needsDiscardAsk(_ rects: [CGRect], initial: [CGRect]) -> Bool {
+        !rects.isEmpty && rects != initial
+    }
+
     /// Il primo fotogramma utile (o quello all'istante t) per disegnare le zone.
     static func frame(of url: URL, at t: Double, maxSide: CGFloat = 1100) async -> CGImage? {
         let g = AVAssetImageGenerator(asset: AVURLAsset(url: url))
@@ -124,6 +129,17 @@ enum HideMark {
 
 // MARK: - Il riquadro per disegnare le zone
 
+/// 5.1 · ⌘Z sulle zone: ogni passo rimette l'elenco di prima, intero (il passo inverso diventa il ripristino).
+final class ZoneUndo {
+    var apply: (([CGRect], String) -> Void)?
+
+    func register(_ old: [CGRect], name: String, on um: UndoManager?) {
+        guard let um else { return }
+        um.registerUndo(withTarget: self) { box in box.apply?(old, name) }
+        um.setActionName(name)
+    }
+}
+
 struct HideMarkEditor: View {
     let url: URL
     let onDone: (String?) -> Void
@@ -132,6 +148,7 @@ struct HideMarkEditor: View {
     var montageDuration: Double = 0
     var initial: HideMark.Spec? = nil
     var allowAI = true
+    var closeGuard: CloseGuard? = nil
 
     @State private var spec = HideMark.Spec()
     @State private var source: CGImage? = nil
@@ -143,6 +160,25 @@ struct HideMarkEditor: View {
     @ObservedObject private var models = ModelStore.shared
     @State private var aiBusy = false
     @State private var aiTask: Task<Void, Never>? = nil
+    @Environment(\.undoManager) private var undoManager
+    @State private var zoneUndo = ZoneUndo()
+
+    /// 5.1 · Cambia le zone e lo segna per ⌘Z: un passo per gesto.
+    private func setRects(_ new: [CGRect], name: String) {
+        let old = spec.rects
+        guard old != new else { return }
+        spec.rects = new
+        selected = nil
+        zoneUndo.register(old, name: name, on: undoManager)
+    }
+
+    /// 5.1 · `true` = si può chiudere: niente zone nuove, oppure hai scelto «Butta».
+    private func mayDiscard() -> Bool {
+        guard HideMark.needsDiscardAsk(spec.rects, initial: initial?.rects ?? []) else { return true }
+        let n = spec.rects.count
+        return DiscardAsk.confirm(n == 1 ? String(localized: "Buttare la zona disegnata?")
+                                         : String(localized: "Buttare le \(n) zone disegnate?"))
+    }
 
     private var isVideo: Bool { frameSource != nil || Catalog.kind(of: url) == .video }
     private let box = CGSize(width: 620, height: 400)
@@ -180,7 +216,7 @@ struct HideMarkEditor: View {
                 }
                 Spacer()
                 if !spec.rects.isEmpty {
-                    Button("Rimuovi tutte le zone") { spec.rects = []; selected = nil }
+                    Button("Rimuovi tutte le zone") { setRects([], name: String(localized: "Rimuovi tutte le zone")) }
                         .controlSize(.small)
                 }
             }
@@ -194,7 +230,7 @@ struct HideMarkEditor: View {
                 Text("Usalo sui tuoi contenuti: la filigrana di foto e video altrui protegge il loro lavoro.")
                     .font(.system(size: 10.5)).foregroundStyle(.tertiary)
                 Spacer()
-                Button("Annulla") { onDone(nil) }.keyboardShortcut(.cancelAction)
+                Button("Annulla") { if mayDiscard() { onDone(nil) } }.keyboardShortcut(.cancelAction)
                 Button(frameSource != nil ? String(localized: "Applica") : isVideo ? String(localized: "Crea il video") : String(localized: "Crea la foto")) { onDone(HideMark.encode(spec)) }
                     .keyboardShortcut(.defaultAction)
                     .buttonStyle(.borderedProminent).tint(Theme.accent)
@@ -216,6 +252,12 @@ struct HideMarkEditor: View {
             loadFrame()
         }
         .onChange(of: spec) { _, _ in render() }
+        .onAppear {
+            zoneUndo.apply = { rects, name in setRects(rects, name: name) }
+            closeGuard?.ask = { mayDiscard() }
+        }
+        // 5.1 · Chiuso il riquadro, i suoi passi non restano nel ⌘Z di chi l'ha aperto (es. il Montaggio)
+        .onDisappear { undoManager?.removeAllActions(withTarget: zoneUndo) }
     }
 
     /// L'immagine con le zone, adattata al riquadro.
@@ -245,7 +287,10 @@ struct HideMarkEditor: View {
             .onEnded { v in
                 let r = norm(v.startLocation, v.location, size)
                 draft = nil
-                if r.width > 0.01 && r.height > 0.01 { spec.rects.append(r); selected = spec.rects.count - 1 }
+                if r.width > 0.01 && r.height > 0.01 {
+                    setRects(spec.rects + [r], name: String(localized: "Aggiungi la zona"))
+                    selected = spec.rects.count - 1
+                }
             })
         .frame(maxWidth: .infinity)
     }
@@ -254,7 +299,12 @@ struct HideMarkEditor: View {
         Rectangle().strokeBorder(Theme.brass, lineWidth: 2)
             .frame(width: r.width * size.width, height: r.height * size.height)
             .overlay(alignment: .topTrailing) {
-                Button { spec.rects.remove(at: i); selected = nil } label: {
+                Button {
+                    guard spec.rects.indices.contains(i) else { return }
+                    var rs = spec.rects
+                    rs.remove(at: i)
+                    setRects(rs, name: String(localized: "Rimuovi la zona"))
+                } label: {
                     Image(systemName: "xmark.circle.fill").font(.system(size: 14, weight: .bold))
                         .symbolRenderingMode(.palette).foregroundStyle(Color.white, Color.black.opacity(0.7))
                 }

@@ -48,9 +48,17 @@ enum Feedback {
 }
 
 @MainActor
-final class FeedbackWindow {
+final class FeedbackWindow: NSObject, NSWindowDelegate {
     static let shared = FeedbackWindow()
     private var window: NSWindow?
+
+    /// 5.1 · Il ✕ della finestra: con del testo scritto si chiede prima (il testo è già nella bozza).
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        guard ReportDraft.hasWork(text: ReportDraft.load(ReportDraft.ideaKey)) else { return true }
+        guard DiscardAsk.confirm(String(localized: "Buttare l’idea?"), keep: String(localized: "Continua a scrivere")) else { return false }
+        ReportDraft.clear(ReportDraft.ideaKey)
+        return true
+    }
 
     func show(face: String?) {
         let view = FeedbackView(face: face) { [weak self] in self?.window?.close() }
@@ -61,6 +69,7 @@ final class FeedbackWindow {
             w.title = String(localized: "Suggerisci un’idea")
             w.styleMask = [.titled, .closable]
             w.isReleasedWhenClosed = false
+            w.delegate = self
             w.center()
             window = w
         }
@@ -72,7 +81,29 @@ final class FeedbackWindow {
 struct FeedbackView: View {
     @State var face: String?
     let close: () -> Void
-    @State private var text = ""
+    @State private var text = ReportDraft.load(ReportDraft.ideaKey)     // 5.1 · la bozza dell'ultima volta
+    @State private var message: String? = nil
+
+    private var canSend: Bool { face != nil || !ReportDraft.isBlank(text) }
+
+    /// 5.1 · Esc e «Annulla»: con del testo si chiede prima di buttarlo.
+    private func cancel() {
+        if ReportDraft.hasWork(text: text) {
+            guard DiscardAsk.confirm(String(localized: "Buttare l’idea?"), keep: String(localized: "Continua a scrivere")) else { return }
+        }
+        ReportDraft.clear(ReportDraft.ideaKey)
+        close()
+    }
+
+    /// 5.1 · Se l'email non si apre, lo dici e la finestra resta aperta con il testo.
+    private func send() {
+        guard let u = Feedback.mail(face: face, text: text), NSWorkspace.shared.open(u) else {
+            message = String(localized: "Non riesco ad aprire l’email. Scrivimi a \(BugReport.recipient).")
+            return
+        }
+        ReportDraft.clear(ReportDraft.ideaKey)
+        close()
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -98,17 +129,21 @@ struct FeedbackView: View {
                 .frame(height: 110)
                 .padding(6)
                 .background(RoundedRectangle(cornerRadius: 8).fill(Theme.ink.opacity(0.05)))
+                .onChange(of: text) { _, v in ReportDraft.save(v, key: ReportDraft.ideaKey) }
             Text("Si apre un’email già pronta: contiene solo quello che scrivi e la versione di OrbitLR, niente nomi di file.")
                 .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            if let message {
+                Label(message, systemImage: "exclamationmark.triangle.fill").font(.system(size: 12))
+                    .foregroundStyle(Theme.color(.pdf)).textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             HStack {
                 Spacer()
-                Button("Annulla") { close() }
-                Button("Scrivi l’email") {
-                    if let u = Feedback.mail(face: face, text: text) { NSWorkspace.shared.open(u) }
-                    close()
-                }
+                Button("Annulla") { cancel() }.keyboardShortcut(.cancelAction)
+                Button("Scrivi l’email") { send() }
                 .buttonStyle(.borderedProminent).tint(Theme.accent)
-                .disabled(face == nil && text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(!canSend)
+                .help(canSend ? String(localized: "Si apre un’email già pronta.") : String(localized: "Scegli una faccina o scrivi prima qualcosa."))
                 .keyboardShortcut(.defaultAction)
             }
         }
