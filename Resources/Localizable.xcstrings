@@ -1659,6 +1659,16 @@
         }
       }
     },
+    "Aggiungi prima un file.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a file first."
+          }
+        }
+      }
+    },
     "Aggiungi prima un video: il testo va sopra il montaggio.": {
       "localizations": {
         "en": {
@@ -2515,6 +2525,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Listening to the clips…"
+          }
+        }
+      }
+    },
+    "Aspetta: sto già installando un programma.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wait: I’m already installing a program."
           }
         }
       }

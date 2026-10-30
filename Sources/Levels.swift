@@ -167,6 +167,7 @@ struct SimplePanel: View {
         .background(Theme.card.opacity(0.5))
         .disabled(m.files.isEmpty)
         .opacity(m.files.isEmpty ? 0.55 : 1)
+        .help(m.files.isEmpty ? String(localized: "Aggiungi prima un file.") : "")
     }
 
     @ViewBuilder private func tile(_ it: SimpleItem) -> some View {

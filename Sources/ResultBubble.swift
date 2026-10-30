@@ -160,6 +160,16 @@ struct ResultBubbleView: View {
                 case .failed:
                     Text("Non riuscito").font(.system(size: 13, weight: .bold))
                     Text(job.failures.first ?? String(localized: "Apri OrbitLR per i dettagli")).font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(2)
+                    // 5.1 · Il pulsante che risolve, oppure Riprova: mai solo il titolo e la ✕
+                    HStack(spacing: 6) {
+                        if let fix = Fix.best(for: job) {
+                            Button { QueueStore.shared.apply(fix, to: job); close() } label: { Label(fix.label, systemImage: fix.symbol) }
+                                .buttonStyle(.borderedProminent).tint(Theme.brass)
+                        } else {
+                            Button("Riprova") { QueueStore.shared.retry(job); close() }
+                        }
+                    }
+                    .controlSize(.small)
                 case .cancelled:
                     Text("Interrotto").font(.system(size: 13, weight: .bold))
                 default:

@@ -666,6 +666,7 @@ struct ComponentsView: View {
                         if !installer.missing.isEmpty && installer.brewPath != nil {
                             Button("Installa tutti i mancanti") { installer.install(installer.missing, id: "all") }
                                 .buttonStyle(.borderedProminent).tint(Theme.green).disabled(installer.running != nil)
+                                .help(installer.running != nil ? String(localized: "Aspetta: sto già installando un programma.") : "")
                         }
                     }
 
@@ -758,7 +759,10 @@ struct ComponentsView: View {
             Spacer()
             if !ok && installer.brewPath != nil {
                 if installer.running == c.id { ProgressView().controlSize(.small) }
-                else { Button("Installa") { installer.install([c], id: c.id) }.disabled(installer.running != nil) }
+                else {
+                    Button("Installa") { installer.install([c], id: c.id) }.disabled(installer.running != nil)
+                        .help(installer.running != nil ? String(localized: "Aspetta: sto già installando un programma.") : "")
+                }
             }
         }
         .padding(14)
