@@ -1,3 +1,11 @@
+What’s new in 5.2 “System”:
+• One word for each thing, the same everywhere: “Remove Silences”, “Start Here” and “End Here”, “Show in Finder”, “PDF Editor”, “Remove Password…”, “Remove” (leaves the project, the file stays), “Mute Clip” and “Unmute”, “Reset”
+• Editor: every command in one place. Clip audio (mute, volume, “Mute from Here”, “Detach Audio”) is in “Audio”; speed in “Clip”; the transition in the dot between two clips
+• Small buttons and symbols are easier to click (at least 24 points), even where the drawing stays small; buttons with only a symbol say what they do, VoiceOver included
+• Timeline labels a bit larger; “Simple · Complete” a bit taller
+• The end-of-job bubble: “Delete Result” instead of an ambiguous “Cancel”
+• Correct section names everywhere (Convert, PDFs and documents) in Help, Welcome and Report
+
 What’s new in 5.1.1 “No Freezes”:
 • Video and Audio Downloader: it no longer freezes. “Stop” stops right away, even if the site doesn’t respond; after two minutes without a response it stops by itself and says so. Google Drive, Dropbox, iCloud and WeTransfer links can’t be downloaded from here: it says so right away instead of waiting
 • Report a Problem: the report is always saved on the Desktop too, with macOS crash reports. If Mail isn’t set up, it no longer silently does nothing
