@@ -208,8 +208,23 @@ pub fn ensure(data_dir: &Path, force: bool, cancel: &Cancel, progress: &mut dyn 
 }
 
 /// Scarica dal link dentro `folder`. Restituisce il file creato.
+/// 1.1.1 · Link che non si scaricano da qui: si dice subito cosa fare.
+pub fn unsupported_reason(link: &str) -> Option<&'static str> {
+    let host = link.split("://").nth(1).unwrap_or("").split(['/', '?', '#']).next().unwrap_or("").to_lowercase();
+    let host = host.rsplit('@').next().unwrap_or("").split(':').next().unwrap_or("").to_string();
+    let cloud = ["drive.google.com", "docs.google.com", "dropbox.com", "icloud.com", "onedrive.live.com", "1drv.ms", "wetransfer.com"];
+    if cloud.iter().any(|c| host == *c || host.ends_with(&format!(".{c}"))) {
+        return Some("i file su Drive, Dropbox, iCloud o WeTransfer non si scaricano da qui: aprili nel browser, scaricali e trascinali in OrbitLR");
+    }
+    None
+}
+
 pub fn download(exe: &Path, tools: Option<&Tools>, link: &str, mode: Mode, folder: &Path, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<PathBuf> {
     let link = link_from(link).ok_or_else(|| EngineError::new("questo non sembra un link: copialo intero, con https://"))?;
+    // 1.1.1 · Drive, Dropbox, iCloud, WeTransfer: pagine di accesso o di conferma, non video. Lo si dice subito.
+    if let Some(why) = unsupported_reason(&link) {
+        return Err(EngineError::new(why));
+    }
     let work = std::env::temp_dir().join(format!("orbitlr-link-{}-{}", std::process::id(), std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or(0)));
     std::fs::create_dir_all(&work)?;
     struct Rm(PathBuf);
@@ -255,14 +270,22 @@ pub fn download(exe: &Path, tools: Option<&Tools>, link: &str, mode: Mode, folde
     // Audio: scarica, poi converte; video: due pezzi (immagine e suono), poi unisce
     let mut pass = 0usize;
     let mut last_p = 0.0f64;
+    let mut last_output = std::time::Instant::now();
     loop {
         if cancel.is_cancelled() {
             let _ = child.kill();
             let _ = child.wait();
             return Err(EngineError::cancelled());
         }
+        // 1.1.1 · Due minuti senza una riga dal motore: il sito non risponde (prima si aspettava per sempre)
+        if last_output.elapsed() > std::time::Duration::from_secs(120) {
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err(EngineError::new("il sito non risponde da due minuti: ho interrotto. Riprova più tardi."));
+        }
         match rx.recv_timeout(std::time::Duration::from_millis(200)) {
             Ok(line) => {
+                last_output = std::time::Instant::now();
                 if let Some(p) = percent(&line) {
                     if p + 0.2 < last_p {
                         pass += 1;
@@ -317,6 +340,9 @@ mod tests {
 
     #[test]
     fn impronte_e_percentuali() {
+        assert!(unsupported_reason("https://drive.google.com/file/d/abc/view").is_some());
+        assert!(unsupported_reason("https://www.dropbox.com/s/x/v.mp4").is_some());
+        assert!(unsupported_reason("https://www.youtube.com/watch?v=x").is_none());
         let sums = "aaaa  yt-dlp\nabcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789  yt-dlp.exe\n";
         assert_eq!(expected_hash(sums, "yt-dlp.exe").as_deref(), Some("abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"));
         assert!(expected_hash(sums, "yt-dlp").is_none());

@@ -1,3 +1,9 @@
+Novità per Windows 1.1.1:
+• Video e Audio Downloader: dopo due minuti senza risposta dal sito si ferma da solo e lo dice. I link di Google Drive, Dropbox, iCloud e WeTransfer non si scaricano da qui: lo dice subito, invece di restare in attesa
+
+What’s new in Windows 1.1.1:
+• Video and Audio Downloader: after two minutes without a response from the site it stops by itself and says so. Google Drive, Dropbox, iCloud and WeTransfer links can’t be downloaded from here: it says so right away instead of waiting
+
 Novità per Windows 1.1 «Al sicuro»:
 • Montaggio: se OrbitLR si chiude all'improvviso, alla riapertura torni nel progetto, con indicatore, zoom e strumento dove li avevi lasciati, e un avviso dice a che ora era salvato. Anche dopo una chiusura normale, tornando nel Montaggio riprendi da lì
 • Montaggio: i video che non trova più restano nel progetto finché non li ritrovi con «Trova i file…». Un progetto eliminato o svuotato va nel Cestino di Windows, mai cancellato, e «Annulla» lo rimette
