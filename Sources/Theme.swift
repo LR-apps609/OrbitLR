@@ -14,9 +14,9 @@ enum Radius {
 extension View {
     /// 5.2 · Ruoli dei pulsanti: uno per ruolo, sempre lo stesso aspetto.
     /// Azione principale della schermata (una sola).
-    func mainButton(_ tint: Color = Theme.accent) -> some View { buttonStyle(.borderedProminent).tint(tint) }
+    func mainButton(_ tint: Color = Theme.accent) -> some View { buttonStyle(.borderedProminent).tint(tint).foregroundStyle(Theme.onAccent) }
     /// Il pulsante che risolve un errore («Libera spazio», «Scegli un’altra cartella»…).
-    func fixButton() -> some View { buttonStyle(.borderedProminent).tint(Theme.brass) }
+    func fixButton() -> some View { buttonStyle(.borderedProminent).tint(Theme.brass).foregroundStyle(Theme.onAccent) }
 
     /// 5.2 · Area di clic di almeno 24 × 24 pt, anche quando il disegno resta piccolo.
     func hitArea(_ side: CGFloat = 24) -> some View {
@@ -117,6 +117,8 @@ enum Theme {
     static let ink = Color(light: 0x1C251F, dark: 0xE8ECE1)          // testo (13,5:1 e 14,8:1)
     static let ink2 = Color(light: 0x4E584B, dark: 0xAEB8AB)         // testo secondario (6,4:1 e 8,7:1)
     static let danger = Color(light: 0xB3261E, dark: 0xF2877D)       // errori
+    /// 6.0 · Il testo sui pulsanti principali: bianco sul verde di giorno, notte sull'oro di notte (9,3:1)
+    static let onAccent = Color(light: 0xFFFFFF, dark: 0x0F1A16)
 
     // Nomi usati nel resto dell'app
     static let accent = sageDeep
