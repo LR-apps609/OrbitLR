@@ -1,4 +1,4 @@
-// Scegliere un pezzo: anteprima (video o audio), una barra con due maniglie, «Inizio qui» e «Fine qui».
+// Scegliere un pezzo: anteprima (video o audio), una barra con due maniglie, «Inizia qui» e «Finisci qui».
 // I tasti I e O mettono inizio e fine mentre si guarda; Spazio avvia e ferma.
 
 import { fileUrl, DEMO } from "./api.js";
@@ -39,7 +39,7 @@ export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange 
   tEnd.addEventListener("change", () => typed(tEnd, "b"));
   for (const inp of [tStart, tEnd]) inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); inp.blur(); } if (e.key === "Escape") { e.stopPropagation(); draw(); inp.blur(); } });
 
-  // 1.1 · Ctrl+Z / Ctrl+Y su tutta la selezione (maniglie, «Inizio qui», «Fine qui», tasti, campi)
+  // 1.1 · Ctrl+Z / Ctrl+Y su tutta la selezione (maniglie, «Inizia qui», «Finisci qui», tasti, campi)
   const past = [], future = [];
   let base = null, lastMark = 0;
   function mark(force = false) {
@@ -70,8 +70,8 @@ export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange 
   const row = h("div.trim-row",
     h("span", t("Da ")), tStart, h("span", t(" a ")), tEnd, h("span", " · "), tLen,
     h("span.grow"),
-    h("button.btn", { onclick: () => { mark(true); setStart(player.currentTime); } }, t("Inizio qui")),
-    h("button.btn", { onclick: () => { mark(true); setEnd(player.currentTime); } }, t("Fine qui")),
+    h("button.btn", { onclick: () => { mark(true); setStart(player.currentTime); } }, t("Inizia qui")),
+    h("button.btn", { onclick: () => { mark(true); setEnd(player.currentTime); } }, t("Finisci qui")),
     playBtn);
   el.append(box, rail, row);
 

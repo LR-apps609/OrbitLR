@@ -16,7 +16,7 @@ const TIPS = () => [
   [t("Le mie azioni"), t("Quando scegli le opzioni premi «★ Salva come mia azione»: la ritrovi in cima agli strumenti e nella torta.")],
   [t("Ricette"), t("Dopo due passi di fila (per esempio comprimi e poi converti), salvali dalla barra del risultato: la prossima volta basta un clic.")],
   [t("Confronta prima e dopo"), t("Dopo una compressione premi «Confronta» e trascina la linea per vedere la differenza.")],
-  [t("Annulla"), t("Il file creato non ti piace? «Annulla» lo manda nel Cestino; l'originale resta com'era.")],
+  [t("Elimina il risultato"), t("Il file creato non ti piace? «Elimina il risultato» lo manda nel Cestino di Windows; l'originale resta com'era.")],
   [t("Al telefono"), t("Dalla barra del risultato, «Al telefono» mostra un codice QR: inquadralo e il file arriva sul telefono, sulla stessa Wi-Fi.")],
   [t("Cartelle automatiche"), t("Scegli una cartella e cosa fare: ogni file che ci arriva viene sistemato da solo.")],
   [t("Video Downloader"), t("Nelle schede Video e Audio incolla un link: OrbitLR scarica il video o solo l'audio.")],

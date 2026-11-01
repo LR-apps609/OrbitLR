@@ -93,7 +93,7 @@ jobs:
           exit $st
 
       - name: Prove dell'interfaccia (senza browser)
-        run: node --test Tools/prova-tempi-windows.mjs
+        run: node --test Tools/prova-tempi-windows.mjs Tools/prova-parole-windows.mjs
 
       - name: Codificatori di questo computer
         working-directory: Windows

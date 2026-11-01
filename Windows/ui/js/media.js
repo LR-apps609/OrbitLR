@@ -208,7 +208,7 @@ export function mediaPage(kind, app, opts = {}) {
     if (tool.params === "zones") return openZones(id);
     if (tool.params === "pdfedit") {
       const one = tg.length === 1 ? tg[0] : files.length === 1 ? files[0] : null;
-      return one ? openPdfEditor(one) : toast(t("Scegli un PDF solo (clic sulla miniatura) e poi «Compila, firma e oscura»."));
+      return one ? openPdfEditor(one) : toast(t("Scegli un PDF solo (clic sulla miniatura) e poi «Editor PDF»."));
     }
     openTool = openTool === id ? null : id;
     renderTools();
@@ -318,7 +318,7 @@ export function mediaPage(kind, app, opts = {}) {
         go(actionId, { password: a });
       };
       return h("div.params", h("p.hint", lock ? t("Serve per aprire il PDF (cifratura AES-256). Se la dimentichi non si recupera: scrivila da qualche parte.") : t("La password con cui si apre il PDF: esce una copia senza password.")),
-        h("div.field", p1), p2 ? h("div.field", p2) : null, h("button.btn.primary.big", { onclick: start }, lock ? t("Proteggi") : t("Sblocca")));
+        h("div.field", p1), p2 ? h("div.field", p2) : null, h("button.btn.primary.big", { onclick: start }, lock ? t("Proteggi") : t("Rimuovi la password")));
     }
     if (tool.params === "pages") {
       const input = h("input", { type: "text", placeholder: t("es. 1-3, 5") });

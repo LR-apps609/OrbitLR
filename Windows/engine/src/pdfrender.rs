@@ -31,7 +31,7 @@ fn render_pages(src: &Path, cancel: &Cancel, only: Option<u32>, each: &mut dyn F
     let file = StorageFile::GetFileFromPathAsync(&HSTRING::from(src.as_os_str())).map_err(fail)?.join().map_err(fail)?;
     let doc = PdfDocument::LoadFromFileAsync(&file).map_err(fail)?.join().map_err(|e| {
         if e.message().to_lowercase().contains("password") {
-            EngineError::new("il PDF è protetto da password: toglila prima con «Togli la password»")
+            EngineError::new("il PDF è protetto da password: toglila prima con «Rimuovi la password…»")
         } else {
             fail(e)
         }
@@ -120,7 +120,7 @@ fn flatten_white(img: &image::DynamicImage) -> image::RgbImage {
 pub fn embedded_text(src: &Path) -> Result<String> {
     let doc = lopdf::Document::load(src).map_err(|_| EngineError::new("non è un PDF valido"))?;
     if doc.is_encrypted() {
-        return Err(EngineError::new("il PDF è protetto da password: toglila prima con «Togli la password»"));
+        return Err(EngineError::new("il PDF è protetto da password: toglila prima con «Rimuovi la password…»"));
     }
     let pages: Vec<u32> = doc.get_pages().keys().copied().collect();
     let mut out = String::new();

@@ -521,7 +521,7 @@ async fn office_install() -> Result<bool, String> {
     .map_err(|e| e.to_string())?
 }
 
-/// Montaggio, «Togli i silenzi»: le pause lunghe di un file (inizio, fine) in secondi.
+/// Montaggio, «Rimuovi i silenzi»: le pause lunghe di un file (inizio, fine) in secondi.
 #[tauri::command]
 async fn silences(state: State<'_, Shared>, path: String) -> Result<Vec<(f64, f64)>, String> {
     let f = checked_file(&path)?;

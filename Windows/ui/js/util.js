@@ -24,6 +24,12 @@ export function h(tag, attrs, ...kids) {
     if (kid == null || kid === false) continue;
     el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
   }
+  // 1.2 · Un pulsante solo icona ha sempre il suggerimento (title) e il nome per l'accessibilità (aria-label)
+  if (name === "button" && !el.textContent.trim()) {
+    const lab = el.getAttribute("aria-label"), tip = el.getAttribute("title");
+    if (lab && !tip) el.setAttribute("title", lab);
+    else if (tip && !lab) el.setAttribute("aria-label", tip);
+  }
   return el;
 }
 
@@ -135,7 +141,7 @@ export function modal(title, text, buttons) {
       document.removeEventListener("keydown", esc, true);
       resolve(v);
     };
-    const els = buttons.map((b) => h("button.btn" + (b.primary ? ".primary" : ""), { type: "button", onclick: () => close(b.value) }, b.label));
+    const els = buttons.map((b) => h("button.btn" + (b.primary ? ".primary" : "") + (b.danger ? ".danger" : ""), { type: "button", onclick: () => close(b.value) }, b.label));
     const row = h("div.row", els);
     bg.append(h("div.modal", { role: "dialog", "aria-modal": "true" }, h("h3", title), text ? h("p", text) : null, row));
     bg.addEventListener("click", (e) => e.target === bg && close(null));

@@ -73,17 +73,17 @@ export const TOOLS = {
   subextract: { title: t("Estrai i sottotitoli"), hint: t("In un file .srt, da aprire o modificare"), icon: "file-text", isNew: true },
   subembed: { title: t("Aggiungi i sottotitoli"), hint: t("Da un file .srt con lo stesso nome, accanto al video: si accendono nel lettore"), icon: "captions", isNew: true },
   vstrip: { title: t("Rimuovi i metadati"), hint: t("Posizione, data e telefono: via, senza ricodificare"), icon: "eye-off", id: "strip", isNew: true },
-  mute: { title: t("Togli l'audio"), hint: t("Istantaneo: il video non si tocca"), icon: "volume-x" },
+  mute: { title: t("Rimuovi l’audio"), hint: t("Istantaneo: il video non si tocca"), icon: "volume-x" },
   vrotate: { title: t("Ruota"), hint: t("Senza ricodificare: istantaneo"), icon: "rotate-cw", params: "rotate", id: "rotate" },
   // PDF
   pdfcompress: { title: t("Comprimi"), hint: t("Riduci il peso, per mandarlo via email: testo e link restano come sono"), icon: "minimize-2", params: "pdfcompress", isNew: true },
   pdfmerge: { title: t("Unisci"), hint: t("Più PDF in uno, nell'ordine dell'elenco"), icon: "combine", min: 2 },
   split: { title: t("Dividi in pagine"), hint: t("Un PDF per ogni pagina"), icon: "split" },
   extract: { title: t("Estrai alcune pagine"), hint: t("Scegli quali, per esempio 1-3, 5"), icon: "file-output", params: "pages" },
-  pdfedit: { title: t("Compila, firma e oscura"), hint: t("Scrivi sul PDF, metti la firma, compila i moduli, nascondi i dati"), icon: "file-pen", params: "pdfedit", isNew: true },
+  pdfedit: { title: t("Editor PDF"), hint: t("Scrivi sul PDF, metti la firma, compila i moduli, nascondi i dati"), icon: "file-pen", params: "pdfedit", isNew: true },
   pdftext: { title: t("Estrai il testo"), hint: t("In un file di testo; dai PDF scansionati lo legge dalle pagine"), icon: "file-text", isNew: true },
   protect: { title: t("Proteggi con password"), hint: t("Serve la password per aprirlo (AES-256)"), icon: "lock", params: "password", isNew: true },
-  unprotect: { title: t("Togli la password"), hint: t("Se la conosci: una copia che si apre senza"), icon: "lock-open", params: "password", isNew: true },
+  unprotect: { title: t("Rimuovi la password…"), hint: t("Se la conosci: una copia che si apre senza"), icon: "lock-open", params: "password", isNew: true },
   prot: { title: t("Ruota le pagine"), hint: t("Tutte le pagine di 90° o capovolte"), icon: "rotate-cw", params: "rotate", id: "rotate", isNew: true },
   rename: { title: t("Rinomina tutti"), hint: t("Per esempio Vacanze 001, Vacanze 002…"), icon: "text-cursor-input", params: "rename", min: 1, isNew: true },
   reorder: { title: t("Riordina le pagine"), hint: t("Scrivi il nuovo ordine, per esempio 3, 1, 2"), icon: "list-ordered", params: "order", isNew: true },
@@ -264,10 +264,10 @@ export function kindOfExt(ext) {
 
 export const ACTION_NAMES = {
   vcompress: t("Comprimi"), icompress: t("Comprimi"), vresize: t("Cambia la grandezza"), social: t("Formato social"), cut: t("Taglia"), gifcut: t("GIF da un pezzo"),
-  speed: t("Cambia la velocità"), vmerge: t("Unisci i video"), amerge: t("Unisci"), normalize: t("Volume uniforme"), voiceclean: t("Voce più pulita"), mute: t("Togli l'audio"),
-  rotate: t("Ruota"), hidemark: t("Nascondi un logo"), ocr: t("Estrai il testo"), pdftext: t("Estrai il testo"), pdfedit: t("Compila, firma e oscura"), subextract: t("Estrai i sottotitoli"), subembed: t("Aggiungi i sottotitoli"), resize: t("Ridimensiona"), strip: t("Rimuovi i metadati"), merge: t("Unisci in un PDF"), pdfmerge: t("Unisci i PDF"), split: t("Dividi in pagine"),
-  extract: t("Estrai pagine"), pdfcompress: t("Comprimi il PDF"), vproject: t("Esporta il montaggio"), ringtone: t("Suoneria"), silence: t("Togli i silenzi"), whatsapp: t("Vocale per WhatsApp"), tts: t("Testo in voce"), transcribe: t("Trascrivi"),
-  removebg: t("Rimuovi lo sfondo"), aienhance: t("Migliora con l'IA"), upscale: t("Ingrandisci"), vector: t("Vettoriale (SVG)"), link: t("Scarica da un link"), protect: t("Proteggi con password"), unprotect: t("Togli la password"), reorder: t("Riordina le pagine"), rename: t("Rinomina tutti"), straighten: t("Raddrizza un documento"), stack: t("Unisci più scatti"),
+  speed: t("Cambia la velocità"), vmerge: t("Unisci i video"), amerge: t("Unisci"), normalize: t("Volume uniforme"), voiceclean: t("Voce più pulita"), mute: t("Rimuovi l’audio"),
+  rotate: t("Ruota"), hidemark: t("Nascondi un logo"), ocr: t("Estrai il testo"), pdftext: t("Estrai il testo"), pdfedit: t("Editor PDF"), subextract: t("Estrai i sottotitoli"), subembed: t("Aggiungi i sottotitoli"), resize: t("Ridimensiona"), strip: t("Rimuovi i metadati"), merge: t("Unisci in un PDF"), pdfmerge: t("Unisci i PDF"), split: t("Dividi in pagine"),
+  extract: t("Estrai pagine"), pdfcompress: t("Comprimi il PDF"), vproject: t("Esporta il montaggio"), ringtone: t("Suoneria"), silence: t("Rimuovi i silenzi"), whatsapp: t("Vocale per WhatsApp"), tts: t("Testo in voce"), transcribe: t("Trascrivi"),
+  removebg: t("Rimuovi lo sfondo"), aienhance: t("Migliora con l'IA"), upscale: t("Ingrandisci"), vector: t("Vettoriale (SVG)"), link: t("Scarica da un link"), protect: t("Proteggi con password"), unprotect: t("Rimuovi la password…"), reorder: t("Riordina le pagine"), rename: t("Rinomina tutti"), straighten: t("Raddrizza un documento"), stack: t("Unisci più scatti"),
 };
 
 export function actionName(id) {

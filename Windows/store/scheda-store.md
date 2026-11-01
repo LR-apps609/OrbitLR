@@ -43,7 +43,7 @@ VIDEO
 • Comprimi per WhatsApp, Discord o email mantenendo la qualità
 • Taglia, monta con testi, filtri e musica, sottotitoli automatici
 • Formato social 9:16 per Reels e TikTok, con l'inquadratura che segue le persone
-• Togli i silenzi, estrai l'audio, scarica un video da un link
+• Rimuovi i silenzi, estrai l'audio, scarica un video da un link
 
 AUDIO
 • Converti in MP3, M4A, WAV, FLAC

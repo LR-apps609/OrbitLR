@@ -53,7 +53,7 @@ export function resultBar(origin) {
       return;
     }
     if (job.undone) {
-      el.append(h("div.resultbar", h("div.ic.ok", ico("rotate-ccw", 20)), h("div.tx", h("b", tc("undo", "Annullato")), h("span", t("Il file creato è nel Cestino; l’originale è dov’era."))), closeBtn()));
+      el.append(h("div.resultbar", h("div.ic.ok", ico("rotate-ccw", 20)), h("div.tx", h("b", t("Risultato eliminato")), h("span", t("Il file creato è nel Cestino; l’originale è dov’era."))), closeBtn()));
       hideTimer = setTimeout(() => render(null), 4000);
       return;
     }
@@ -80,7 +80,7 @@ export function resultBar(origin) {
         outs.length === 1 ? h("button.btn", { onclick: () => openPath(first.path) }, ico("external-link", 16), t("Apri")) : null,
         outs.length === 1 ? h("button.btn", { title: t("Inquadra il codice con il telefono, sulla stessa rete Wi-Fi"), onclick: () => sendToPhone(first) }, ico("smartphone", 16), t("Al telefono")) : null,
         canCompare ? h("button.btn", { title: t("Originale e risultato, con la linea da trascinare"), onclick: () => openCompare({ path: src.sourcePath, size: src.sourceSize }, first) }, ico("columns-2", 16), t("Confronta")) : null,
-        ["link", "rename"].includes(job.action) ? null : h("button.btn.ghost", { title: t("Manda nel Cestino i file appena creati"), onclick: () => undo(job, outs) }, ico("rotate-ccw", 16), tc("undo", "Annulla")),
+        ["link", "rename"].includes(job.action) ? null : h("button.btn.ghost.danger", { title: t("Manda nel Cestino di Windows i file appena creati; l’originale resta com’era"), onclick: () => undo(job, outs) }, ico("trash-2", 16), t("Elimina il risultato")),
         closeBtn()));
     if (job.state === "done") askFeedbackOnce(el.firstChild);
     // Più passi di fila sullo stesso file: si possono salvare come ricetta
@@ -181,12 +181,12 @@ function timeLeft(job) {
 /** Dopo un errore: il pulsante che risolve (se si sa quale), altrimenti «Riprova». */
 export function fixButton(job) {
   const err = String(job.results.find((r) => r.error)?.error || "");
-  if (/LibreOffice/i.test(err) && window.orbit) return h("button.btn.brass", { onclick: async () => { if (await installOffice(window.orbit)) retry(job); } }, t("Installa LibreOffice"));
+  if (/LibreOffice/i.test(err) && window.orbit) return h("button.btn.fix", { onclick: async () => { if (await installOffice(window.orbit)) retry(job); } }, t("Installa LibreOffice"));
   // Il file non c'è più: riprovare non servirebbe
   if (/non trovo|spostato o cancellato/i.test(err)) return null;
   // Senza password salvata non si può rifare da qui
   if (["protect", "unprotect"].includes(job.action)) return null;
-  return h("button.btn.brass", { onclick: () => retry(job) }, ico("rotate-ccw", 15), t("Riprova"));
+  return h("button.btn.fix", { onclick: () => retry(job) }, ico("rotate-ccw", 15), t("Riprova"));
 }
 
 function capital(s) {

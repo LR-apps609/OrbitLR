@@ -556,7 +556,7 @@ export function editorPage(app, onBack) {
       h("div.grow"),
       h("button.btn.icon", { title: t("Annulla (Ctrl+Z)"), "aria-label": tc("undo", "Annulla"), onclick: doUndo }, ico("undo-2", 16)),
       h("button.btn.icon", { title: t("Rifai (Ctrl+Y)"), "aria-label": t("Rifai"), onclick: doRedo, style: { transform: "scaleX(-1)" } }, ico("undo-2", 16)),
-      missing.size ? h("button.btn.brass", { title: t("Alcuni file del progetto sono stati spostati o rinominati: scegli dove sono adesso"), onclick: findFiles }, ico("search", 15), t("Trova i file…")) : null,
+      missing.size ? h("button.btn.fix", { title: t("Alcuni file del progetto sono stati spostati o rinominati: scegli dove sono adesso"), onclick: findFiles }, ico("search", 15), t("Trova i file…")) : null,
       h("button.btn", { onclick: pickClips }, ico("plus", 15), t("Aggiungi video")),
       // 1.0.1 · Salva subito (oltre al salvataggio automatico)
       h("button.btn", { title: t("Salva il progetto adesso (Ctrl+S). Lo ritrovi in Progetti"), onclick: saveNow }, ico("save", 15), t("Salva progetto")),
@@ -781,11 +781,11 @@ export function editorPage(app, onBack) {
     contextMenu(e, [
       { label: t("Dividi qui"), icon: "scissors", disabled: !inside, title: inside ? null : t("Porta l’indicatore sopra questa clip."), onclick: splitHere },
       { label: t("Duplica"), onclick: () => change((pp) => pp.clips.splice(i + 1, 0, { ...JSON.parse(JSON.stringify(c)), id: uid(), transition: null })) },
-      { label: c.muted ? t("Riattiva l'audio") : t("Togli l'audio"), icon: c.muted ? "volume-2" : "volume-x", onclick: () => change((pp) => (pp.clips[i].muted = !pp.clips[i].muted)) },
+      { label: c.muted ? t("Riattiva l’audio") : t("Muta la clip"), icon: c.muted ? "volume-2" : "volume-x", onclick: () => change((pp) => (pp.clips[i].muted = !pp.clips[i].muted)) },
       { label: t("Stacca l’audio"), icon: "audio-waveform", onclick: () => detachAudio(i) },
       { label: t("Effetti"), icon: "wand-sparkles", onclick: () => { tool = "fx"; renderInspector(); renderToolbar(); } },
       missing.has(c.path) ? { label: t("Trova i file…"), icon: "search", onclick: findFiles } : null,
-      { label: t("Elimina"), icon: "trash-2", onclick: () => { sel = { kind: "clip", index: i }; deleteSelected(); } },
+      { label: t("Togli la clip"), icon: "trash-2", onclick: () => { sel = { kind: "clip", index: i }; deleteSelected(); } },
     ]);
   }
   function textMenu(e, k) {
@@ -797,16 +797,16 @@ export function editorPage(app, onBack) {
       { label: t("Modifica il testo"), icon: "type", onclick: () => setTimeout(() => inspector.querySelector("textarea")?.select(), 30) },
       { label: t("Inizia qui"), onclick: () => setT((x) => { x.start = Math.min(time, x.end - 0.3); }) },
       { label: t("Finisci qui"), onclick: () => setT((x) => { x.end = Math.max(time, x.start + 0.3); }) },
-      { label: t("Elimina"), icon: "trash-2", onclick: () => { sel = { kind: "text", index: k }; deleteSelected(); } },
+      { label: t("Togli il testo"), icon: "trash-2", onclick: () => { sel = { kind: "text", index: k }; deleteSelected(); } },
     ]);
   }
   function musicMenu(e) {
     tool = "audio"; renderToolbar(); renderInspector();
     contextMenu(e, [
-      { label: t("Parte qui"), onclick: () => change((pp) => { pp.music.offset = time; if (pp.music.end != null && pp.music.end < time + 0.2) pp.music.end = null; }) },
-      { label: t("Finisce qui"), onclick: () => musicEndHere() },
+      { label: t("Inizia qui"), onclick: () => change((pp) => { pp.music.offset = time; if (pp.music.end != null && pp.music.end < time + 0.2) pp.music.end = null; }) },
+      { label: t("Finisci qui"), onclick: () => musicEndHere() },
       { label: t("Cambia"), icon: "music", onclick: pickMusic },
-      { label: t("Togli"), icon: "trash-2", onclick: () => change((pp) => (pp.music = null)) },
+      { label: t("Togli la musica"), icon: "trash-2", onclick: () => change((pp) => (pp.music = null)) },
     ]);
   }
   function musicEndHere() {
@@ -1003,7 +1003,7 @@ export function editorPage(app, onBack) {
     });
   }
 
-  // «Togli i silenzi»: la clip si divide e le pause lunghe spariscono (tagli netti, come nei video dei social)
+  // «Rimuovi i silenzi»: la clip si divide e le pause lunghe spariscono (tagli netti, come nei video dei social)
   async function removeSilences(ci) {
     const c = p.clips[ci];
     if (!c) return;
@@ -1124,22 +1124,21 @@ export function editorPage(app, onBack) {
       else {
         box.push(h("div.group", t`Clip ${ci + 1} di ${p.clips.length}`), h("p.hint", t`${baseName(c.path)} · da ${fmtTime(c.in, true)} a ${fmtTime(c.out, true)} · ${fmtTime(clipLen(c), true)}`),
           // 1.0.1 · «Funzioni»: tagli, spostamenti e la velocità della clip, nello stesso posto (come sul Mac 5.0.1)
+          // 1.2 · Un posto per comando: l'audio della clip sta in «Audio», la transizione nel pallino tra le clip
           h("div.group", t("Funzioni")),
           h("div.btns",
             h("button.btn", { onclick: splitHere }, ico("scissors", 14), t("Dividi qui")),
-            h("button.btn", { title: t("Toglie le pause lunghe: utile per i video in cui parli"), onclick: () => removeSilences(ci) }, ico("audio-waveform", 14), t("Togli i silenzi")),
+            h("button.btn", { title: t("Toglie le pause lunghe: utile per i video in cui parli"), onclick: () => removeSilences(ci) }, ico("audio-waveform", 14), t("Rimuovi i silenzi")),
             h("button.btn", { onclick: () => change((pp) => pp.clips.splice(ci + 1, 0, { ...JSON.parse(JSON.stringify(c)), id: uid(), transition: null })) }, t("Duplica")),
-            h("button.btn", { onclick: () => change((pp) => (pp.clips[ci].muted = !pp.clips[ci].muted)) }, ico(c.muted ? "volume-2" : "volume-x", 14), c.muted ? t("Riattiva l'audio") : t("Togli l'audio")),
-            h("button.btn", { title: t("L’audio della clip diventa la traccia audio sotto il video: lo sposti, lo accorci e lo tagli da solo. La clip resta muta"), onclick: () => detachAudio(ci) }, ico("audio-waveform", 14), t("Stacca l’audio")),
-            // 1.0.1 · Solo il pezzo tenuto nella clip, in un file audio accanto al video
-            h("button.btn", { title: t("Solo il pezzo tenuto nella clip"), onclick: () => run("cut", [{ path: c.path, name: baseName(c.path), size: infos[c.path]?.size || 0 }], { start: +c.in.toFixed(3), end: +c.out.toFixed(3), audio: true }, "editor") }, ico("music", 14), t("Estrai l’audio della clip")),
             h("button.btn", { disabled: ci === 0 || null, title: ci === 0 ? t("È già la prima clip.") : null, onclick: () => change((pp) => { const [x] = pp.clips.splice(ci, 1); pp.clips.splice(ci - 1, 0, x); sel.index = ci - 1; }) }, t("◀ Sposta")),
             h("button.btn", { disabled: ci === p.clips.length - 1 || null, title: ci === p.clips.length - 1 ? t("È già l’ultima clip.") : null, onclick: () => change((pp) => { const [x] = pp.clips.splice(ci, 1); pp.clips.splice(ci + 1, 0, x); sel.index = ci + 1; }) }, t("Sposta ▶")),
-            h("button.btn", { onclick: () => { sel = { kind: "clip", index: ci }; deleteSelected(); } }, ico("trash-2", 14), t("Elimina"))),
+            h("button.btn", { title: t("Esce dal progetto; il file resta dov’è (Canc)"), onclick: () => { sel = { kind: "clip", index: ci }; deleteSelected(); } }, ico("trash-2", 14), t("Togli la clip"))),
           h("div.group", t("Velocità")),
           chips(SPEEDS.map((s) => [s, dec(String(s).replace(".", ",") + "×")]), c.fx?.speed || 1,
             (v) => change((pp) => { const f = (pp.clips[ci].fx = pp.clips[ci].fx || {}); f.speed = v; })),
-          h("p.hint", t("Trascina i bordi della clip nella sequenza per accorciarla; trascinala per spostarla. Tasti: S divide, Canc elimina, Ctrl+Z annulla.")));
+          h("p.hint", t("La voce mantiene il suo tono.")),
+          h("p.hint", t("Audio della clip: in «Audio». Transizione: clicca il pallino tra due clip.")),
+          h("p.hint", t("Trascina i bordi della clip nella sequenza per accorciarla; trascinala per spostarla. Tasti: S divide, Canc toglie, Ctrl+Z annulla.")));
       }
     } else if (tool === "look") {
       const scopeAll = store.get("ed.lookAll", false);
@@ -1174,9 +1173,8 @@ export function editorPage(app, onBack) {
       else {
         const fx = c.fx || {};
         const setFx = (fn) => change((pp) => { const f = (pp.clips[ci].fx = pp.clips[ci].fx || {}); fn(f); });
-        box.push(h("div.group", t("Velocità")), chips(SPEEDS.map((s) => [s, dec(String(s).replace(".", ",") + "×")]), fx.speed || 1, (v) => setFx((f) => (f.speed = v))),
-          h("p.hint", t("La voce mantiene il suo tono.")),
-          h("div.group", t("Zoom lento")), chips([["none", t("Nessuno")], ["in", t("Avvicina")], ["out", t("Allontana")]], fx.zoom || "none", (v) => setFx((f) => (f.zoom = v))),
+        // 1.2 · La velocità sta solo in «Clip»
+        box.push(h("div.group", t("Zoom lento")), chips([["none", t("Nessuno")], ["in", t("Avvicina")], ["out", t("Allontana")]], fx.zoom || "none", (v) => setFx((f) => (f.zoom = v))),
           h("div.group", t("Capovolgi e ruota")),
           h("div.btns",
             h("button.btn" + (fx.flipH ? ".brass" : ""), { onclick: () => setFx((f) => (f.flipH = !f.flipH)) }, t("Specchia")),
@@ -1184,8 +1182,9 @@ export function editorPage(app, onBack) {
             h("button.btn", { onclick: () => setFx((f) => (f.rotate = ((f.rotate || 0) + 90) % 360)) }, ico("rotate-cw", 14), t`Ruota${fx.rotate ? ` (${fx.rotate}°)` : ""}`)),
           h("div.group", t("Altro")),
           slider(t("Sfocatura"), fx.blur || 0, 0, 1, 0.05, (v) => { (p.clips[ci].fx = p.clips[ci].fx || {}).blur = v; }, (v) => Math.round(v * 100)),
-          slider(t("Dissolvenza in entrata"), fx.fadeIn || 0, 0, 3, 0.1, (v) => { (p.clips[ci].fx = p.clips[ci].fx || {}).fadeIn = v; }, (v) => dec(String(v.toFixed(1)).replace(".", ",") + " s")),
-          slider(t("Dissolvenza in uscita"), fx.fadeOut || 0, 0, 3, 0.1, (v) => { (p.clips[ci].fx = p.clips[ci].fx || {}).fadeOut = v; }, (v) => dec(String(v.toFixed(1)).replace(".", ",") + " s")),
+          h("div.group", t("Dissolvenza della clip")),
+          slider(t("Entrata"), fx.fadeIn || 0, 0, 3, 0.1, (v) => { (p.clips[ci].fx = p.clips[ci].fx || {}).fadeIn = v; }, (v) => dec(String(v.toFixed(1)).replace(".", ",") + " s")),
+          slider(t("Uscita"), fx.fadeOut || 0, 0, 3, 0.1, (v) => { (p.clips[ci].fx = p.clips[ci].fx || {}).fadeOut = v; }, (v) => dec(String(v.toFixed(1)).replace(".", ",") + " s")),
           h("button.btn", { onclick: () => change((pp) => pp.clips.forEach((cc) => (cc.fx = JSON.parse(JSON.stringify(fx))))) }, t("Applica a tutte le clip")));
       }
     } else if (tool === "text") {
@@ -1212,7 +1211,7 @@ export function editorPage(app, onBack) {
           h("div.btns",
             h("button.btn", { onclick: () => setT((x) => { x.start = Math.min(time, x.end - 0.3); }) }, t("Inizia qui")),
             h("button.btn", { onclick: () => setT((x) => { x.end = Math.max(time, x.start + 0.3); }) }, t("Finisci qui")),
-            h("button.btn", { onclick: () => { deleteSelected(); } }, ico("trash-2", 14), t("Elimina"))));
+            h("button.btn", { title: t("Esce dal progetto (Canc)"), onclick: () => { deleteSelected(); } }, ico("trash-2", 14), t("Togli il testo"))));
       } else if (p.texts.length) {
         box.push(h("div.group", t("Testi")), p.texts.map((t, k) => h("button.tool", { onclick: () => { sel = { kind: "text", index: k }; seekTo(t.start + 0.05); renderAll(); } },
           h("span.ic", ico("file-text", 16)), h("span.txt", h("b", t.text.slice(0, 40)), h("span", `${fmtTime(t.start)} – ${fmtTime(t.end)}`)))));
@@ -1222,11 +1221,16 @@ export function editorPage(app, onBack) {
       if (c) {
         box.push(h("div.group", t("Audio di questa clip")),
           h("p.hint", t`Clip ${ci + 1} di ${p.clips.length}: vale solo per questo pezzo`),
-          h("label.check", h("input", { type: "checkbox", checked: c.muted || null, onchange: (e) => change((pp) => (pp.clips[ci].muted = e.target.checked)) }), t("Muta questa clip")),
-          slider(t("Volume della clip"), c.volume ?? 1, 0, 2, 0.05, (v) => (p.clips[ci].volume = v), (v) => Math.round(v * 100) + "%"));
+          h("label.check", h("input", { type: "checkbox", checked: c.muted || null, onchange: (e) => change((pp) => (pp.clips[ci].muted = e.target.checked)) }), t("Muta la clip")),
+          slider(t("Volume della clip"), c.volume ?? 1, 0, 2, 0.05, (v) => (p.clips[ci].volume = v), (v) => Math.round(v * 100) + "%"),
+          // 1.2 · Da «Clip»: Stacca l'audio ed Estrai l'audio stanno qui, con il resto dell'audio della clip
+          h("div.btns",
+            h("button.btn", { title: t("L’audio della clip diventa la traccia audio sotto il video: lo sposti, lo accorci e lo tagli da solo. La clip resta muta"), onclick: () => detachAudio(ci) }, ico("audio-waveform", 14), t("Stacca l’audio")),
+            // 1.0.1 · Solo il pezzo tenuto nella clip, in un file audio accanto al video
+            h("button.btn", { title: t("Solo il pezzo tenuto nella clip"), onclick: () => run("cut", [{ path: c.path, name: baseName(c.path), size: infos[c.path]?.size || 0 }], { start: +c.in.toFixed(3), end: +c.out.toFixed(3), audio: true }, "editor") }, ico("music", 14), t("Estrai l’audio della clip"))));
       }
       box.push(h("div.group", t("Tutti i video insieme")),
-        h("label.check", h("input", { type: "checkbox", checked: p.originalMuted || null, onchange: (e) => change((pp) => (pp.originalMuted = e.target.checked)) }), t("Muti tutti")),
+        h("label.check", h("input", { type: "checkbox", checked: p.originalMuted || null, onchange: (e) => change((pp) => (pp.originalMuted = e.target.checked)) }), t("Muta tutti i video")),
         slider(t("Volume"), p.originalVolume ?? 1, 0, 2, 0.05, (v) => (p.originalVolume = v), (v) => Math.round(v * 100) + "%"));
       box.push(h("div.group", t("Musica")));
       if (!p.music) {
@@ -1238,14 +1242,15 @@ export function editorPage(app, onBack) {
           slider(t("Volume"), m.volume ?? 0.8, 0, 1.5, 0.05, (v) => (p.music.volume = v), (v) => Math.round(v * 100) + "%"),
           h("label.check", h("input", { type: "checkbox", checked: m.duck !== false || null, onchange: (e) => setM((x) => (x.duck = e.target.checked)) }), t("Abbassa la musica quando si parla")),
           h("label.check", h("input", { type: "checkbox", checked: m.looped || null, onchange: (e) => setM((x) => (x.looped = e.target.checked)) }), t("Ricomincia finché il video non finisce")),
-          slider(t("Dissolvenza iniziale"), m.fadeIn ?? 1, 0, 5, 0.5, (v) => (p.music.fadeIn = v), (v) => dec(String(v).replace(".", ",") + " s")),
-          slider(t("Dissolvenza finale"), m.fadeOut ?? 2, 0, 5, 0.5, (v) => (p.music.fadeOut = v), (v) => dec(String(v).replace(".", ",") + " s")),
+          h("div.group", t("Dissolvenza della musica")),
+          slider(t("Entrata"), m.fadeIn ?? 1, 0, 5, 0.5, (v) => (p.music.fadeIn = v), (v) => dec(String(v).replace(".", ",") + " s")),
+          slider(t("Uscita"), m.fadeOut ?? 2, 0, 5, 0.5, (v) => (p.music.fadeOut = v), (v) => dec(String(v).replace(".", ",") + " s")),
           h("div.btns",
-            h("button.btn", { onclick: () => setM((x) => { x.offset = time; if (x.end != null && x.end < time + 0.2) x.end = null; }) }, t("Parte qui")),
-            h("button.btn", { title: t("La musica finisce nel punto dell’indicatore (oppure trascina il bordo destro della sua barra)"), onclick: musicEndHere }, t("Finisce qui")),
+            h("button.btn", { onclick: () => setM((x) => { x.offset = time; if (x.end != null && x.end < time + 0.2) x.end = null; }) }, t("Inizia qui")),
+            h("button.btn", { title: t("La musica finisce nel punto dell’indicatore (oppure trascina il bordo destro della sua barra)"), onclick: musicEndHere }, t("Finisci qui")),
             m.end != null ? h("button.btn", { onclick: () => setM((x) => (x.end = null)) }, t("Fino alla fine")) : null,
             h("button.btn", { onclick: pickMusic }, t("Cambia")),
-            h("button.btn", { onclick: () => change((pp) => (pp.music = null)) }, ico("trash-2", 14), t("Togli"))));
+            h("button.btn", { title: t("Esce dal progetto; il file resta dov’è"), onclick: () => change((pp) => (pp.music = null)) }, ico("trash-2", 14), t("Togli la musica"))));
       }
     } else if (tool === "format") {
       const [w, hh] = canvasSize();

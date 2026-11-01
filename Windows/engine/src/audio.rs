@@ -156,7 +156,7 @@ pub fn level(tools: &Tools, src: &Path, info: &FileInfo, clean: bool, dir: &Path
     of.commit()
 }
 
-/// Togli i silenzi: le pause più lunghe di 0,7 secondi diventano corte (restano 0,25 s di respiro).
+/// Rimuovi i silenzi: le pause più lunghe di 0,7 secondi diventano corte (restano 0,25 s di respiro).
 pub fn remove_silence(tools: &Tools, src: &Path, info: &FileInfo, dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<PathBuf> {
     if !info.has_audio {
         return Err(EngineError::new("il file non contiene audio"));
@@ -311,7 +311,7 @@ pub fn waveform(tools: &Tools, src: &Path, duration: f64, points: usize) -> Resu
     Ok(peaks)
 }
 
-/// Le pause (più lunghe di `min_len` secondi) in un file, per «Togli i silenzi» nel montaggio: (inizio, fine).
+/// Le pause (più lunghe di `min_len` secondi) in un file, per «Rimuovi i silenzi» nel montaggio: (inizio, fine).
 pub fn silences(tools: &Tools, src: &Path, info: &FileInfo, min_len: f64) -> Result<Vec<(f64, f64)>> {
     if !info.has_audio {
         return Err(EngineError::new("il file non contiene audio"));

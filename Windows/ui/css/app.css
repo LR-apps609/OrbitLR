@@ -133,6 +133,12 @@ input, textarea, select, button { font: inherit; color: inherit; }
 .btn.primary { background: var(--sage-deep); border-color: var(--sage-deep); color: var(--on-primary); }
 .btn.primary:hover { filter: brightness(1.06); }
 .btn.brass { background: var(--brass); border-color: var(--brass); color: #fff; }
+/* 1.2 · Un ruolo, un aspetto (Design/DESIGN.md): .btn.primary principale (uno per schermata; .btn.brass è il principale
+   del Montaggio, colore della sezione) · .btn.fix risolve un errore, ottone, accanto all'errore · .btn secondario ·
+   .btn.danger distruttivo, mai predefinito · .btn.icon solo icona, sempre con title e aria-label */
+.btn.fix { background: var(--brass); border-color: var(--brass); color: #fff; }
+.btn.danger { color: var(--err); }
+.btn.danger:hover { border-color: var(--err); }
 .btn.big { padding: 11px 18px; font-size: 15px; border-radius: 12px; width: 100%; }
 .btn.ghost { background: transparent; border-color: transparent; }
 .btn.ghost:hover { background: var(--bg-2); }
@@ -201,7 +207,7 @@ input, textarea, select, button { font: inherit; color: inherit; }
 .tile .th img { width: 100%; height: 100%; object-fit: cover; }
 .tile .nm { font-size: 12.5px; margin-top: 6px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tile .mt { font-size: 11px; color: var(--quiet); text-align: center; }
-.tile .rm { position: absolute; top: 2px; right: 2px; width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--ink-2); color: var(--card); display: none; place-items: center; cursor: pointer; }
+.tile .rm { position: absolute; top: 2px; right: 2px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: var(--ink-2); color: var(--card); display: none; place-items: center; cursor: pointer; }
 .tile:hover .rm { display: grid; }
 .tile .dur { position: absolute; right: 12px; top: calc(6px + 6px); background: rgba(0,0,0,.6); color: #fff; font-size: 11px; padding: 1px 6px; border-radius: 6px; }
 .empty { flex: 1; display: grid; place-items: center; padding: 24px; }
@@ -253,6 +259,8 @@ input, textarea, select, button { font: inherit; color: inherit; }
 .rail .sel { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--brass) 30%, transparent); border-top: 3px solid var(--brass); border-bottom: 3px solid var(--brass); }
 .rail .hd { position: absolute; top: 0; bottom: 0; width: 14px; margin-left: -7px; background: var(--brass); border-radius: 6px; cursor: ew-resize; display: grid; place-items: center; }
 .rail .hd::after { content: ""; width: 2px; height: 18px; background: #fff; border-radius: 2px; }
+/* 1.2 · La maniglia si disegna da 14 px ma si prende su 24 px */
+.rail .hd::before { content: ""; position: absolute; top: 0; bottom: 0; left: -5px; right: -5px; }
 .rail .ph { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); pointer-events: none; }
 .trim-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--quiet); }
 .trim-row .t { font-variant-numeric: tabular-nums; font-weight: 800; color: var(--ink); }
@@ -387,10 +395,16 @@ textarea.tts:focus { border-color: var(--brass); }
 .blk .lbl, .tblk .lbl, .mblk .lbl { position: absolute; left: 8px; right: 8px; bottom: 4px; font-size: 11px; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 .blk .badge-ic { position: absolute; top: 4px; left: 5px; color: #fff; filter: drop-shadow(0 1px 1px rgba(0,0,0,.6)); }
 .blk .badge-ic.l { left: auto; right: 6px; }
-.edge { position: absolute; top: 0; bottom: 0; width: 9px; cursor: ew-resize; z-index: 3; }
-.edge.l { left: 0; border-radius: 8px 0 0 8px; }
-.edge.r { right: 0; border-radius: 0 8px 8px 0; }
-.blk.on .edge, .tblk.on .edge { background: var(--brass); }
+/* 1.2 · Maniglie: si prendono su 24 px (14 px sui testi, per non coprire quelli corti), il disegno resta una striscia di 9 px */
+.edge { position: absolute; top: 0; bottom: 0; width: min(24px, 30%); cursor: ew-resize; z-index: 3; --stripe: transparent; }
+.tblk .edge { width: min(14px, 30%); }
+.edge.l { left: 0; border-radius: 8px 0 0 8px; background: linear-gradient(to right, var(--stripe) 0 9px, transparent 9px); }
+.edge.r { right: 0; border-radius: 0 8px 8px 0; background: linear-gradient(to left, var(--stripe) 0 9px, transparent 9px); }
+.blk.on .edge, .tblk.on .edge { --stripe: var(--brass); }
+/* 1.2 · Il pallino si disegna da 20 px ma si prende su 26 px */
+.tdot::after, .zx::after, .pe-x::after, .pe-move::after, .pe-grip::after { content: ""; position: absolute; inset: -3px; border-radius: 50%; }
+.pe-x::after, .pe-move::after, .pe-grip::after { inset: -4px; }
+.tdot::after { inset: -5px; }
 .tdot { position: absolute; top: 18px; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--panel); background: var(--card); color: var(--ink-2); display: grid; place-items: center; z-index: 4; cursor: pointer; padding: 0; box-shadow: var(--shadow); }
 .tdot.on { background: var(--brass); color: #fff; }
 .tblk { position: absolute; top: 0; height: 28px; border-radius: 8px; background: #9C95C9; cursor: grab; touch-action: none; overflow: hidden; }
@@ -402,7 +416,7 @@ textarea.tts:focus { border-color: var(--brass); }
 .mblk.wave .lbl { color: var(--ink, #222); text-shadow: none; position: relative; z-index: 1; font-size: 10.5px; }
 .mblk.wave svg { position: relative; z-index: 1; }
 .mblk .mwave { position: absolute; inset: 0; width: 100%; height: 100%; color: rgba(217,164,65,.85); pointer-events: none; }
-.mblk .edge.r { background: #D9A441; width: 7px; }
+.mblk .edge.r { --stripe: #D9A441; background: linear-gradient(to left, var(--stripe) 0 7px, transparent 7px); }
 .row .hint { position: absolute; top: 18px; color: var(--quiet); font-size: 12.5px; }
 .playhead { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--terra); pointer-events: none; z-index: 6; }
 .playhead::before { content: ""; position: absolute; top: 0; left: -5px; border: 6px solid transparent; border-top-color: var(--terra); }
@@ -426,7 +440,7 @@ textarea.tts:focus { border-color: var(--brass); }
 .resultbar { flex-wrap: wrap; }
 .resultbar .tx { flex: 1 1 220px; }
 .head { flex-wrap: wrap; row-gap: 8px; }
-.seg button { white-space: nowrap; }
+.seg button { white-space: nowrap; min-height: 24px; }
 @media (max-width: 1180px) {
   .app { grid-template-columns: 204px minmax(0, 1fr); }
   .split { grid-template-columns: minmax(0, 1fr) 300px; }
@@ -439,7 +453,7 @@ textarea.tts:focus { border-color: var(--brass); }
   .grid { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); padding: 4px 18px 20px; }
   .head { padding: 16px 18px 10px; }
   .resultbar { margin: 0 18px 14px; }
-  .ed-tools button { font-size: 10px; }
+  .ed-tools button { font-size: 10.5px; }
 }
 
 /* Audio e Video Downloader (come sul Mac): in alto a destra, ben visibile, con il campo per il link */

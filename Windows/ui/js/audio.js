@@ -15,7 +15,7 @@ const TOOLS = [
   { id: "normalize", title: t("Volume uniforme"), short: t("Volume"), icon: "volume-2", hint: t("Rende il volume uniforme: né troppo basso né distorto. Per vocali, lezioni e podcast."), go: t("Rendi uniforme il volume") },
   { id: "voiceclean", title: t("Voce più pulita"), short: t("Pulisci"), icon: "mic", hint: t("Attenua il ronzio e il fruscio di fondo e rende il volume uniforme. La voce resta naturale."), go: t("Pulisci la voce") },
   { id: "speed", title: t("Velocità"), short: t("Velocità"), icon: "gauge", hint: t("Più lento o più veloce, su tutto il file. La voce mantiene il suo tono."), go: t("Cambia la velocità") },
-  { id: "silence", title: t("Togli i silenzi"), short: t("Silenzi"), icon: "audio-waveform", hint: t("Toglie le pause lunghe, su tutto il file. Ottimo per lezioni e registrazioni."), go: t("Togli i silenzi") },
+  { id: "silence", title: t("Rimuovi i silenzi"), short: t("Silenzi"), icon: "audio-waveform", hint: t("Toglie le pause lunghe, su tutto il file. Ottimo per lezioni e registrazioni."), go: t("Rimuovi i silenzi") },
   { id: "whatsapp", title: t("Per WhatsApp"), short: "WhatsApp", icon: "smartphone", hint: t("Un vocale leggero con la voce chiara, che parte subito anche con poca rete."), go: t("Crea il vocale") },
   { id: "merge", title: t("Unisci"), short: t("Unisci"), icon: "combine", hint: t("Più file audio in uno solo, nell'ordine dell'elenco."), go: t("Unisci") },
   { id: "transcribe", title: t("Trascrivi"), short: t("Trascrivi"), icon: "file-text", hint: t("Le parole diventano testo (.txt) e sottotitoli (.srt), sul computer. La prima volta scarica il modello della voce (circa 190 MB), poi funziona senza internet."), go: t("Trascrivi") },
@@ -163,7 +163,7 @@ export function audioPage(app) {
         h("b", { style: { color: "var(--brass)", width: "18px" } }, String(i + 1)),
         h("span", { style: { flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, f.name),
         i > 0 ? h("button.btn.icon.ghost", { "aria-label": t("Togli"), onclick: () => { others = others.filter((o) => o !== f); render(); } }, ico("x", 14)) : null))),
-        h("button.btn", { onclick: async () => { setDemoPick("audio"); const p = await pickFiles([{ name: t("Audio"), extensions: ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aac", "wma"] }]); if (p.length) add(p); } }, ico("plus", 14), t("Aggiungi file")));
+        h("button.btn", { onclick: async () => { setDemoPick("audio"); const p = await pickFiles([{ name: t("Audio"), extensions: ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aac", "wma"] }]); if (p.length) add(p); } }, ico("plus", 14), t("Aggiungi…")));
     }
     return box;
   }
@@ -178,7 +178,7 @@ export function audioPage(app) {
       levelSeg("audio", level, (v) => { level = v; if (v === "simple" && !SIMPLE.audio.includes(tool) && tool !== "tts") tool = "ringtone"; render(); }, null),
       h("div.grow"),
       dl,
-      file ? h("button.btn", { onclick: pick }, t("Apri un altro…")) : null,
+      file ? h("button.btn", { onclick: pick }, t("Apri…")) : null,
       file ? h("button.btn.icon", { "aria-label": t("Chiudi il file"), onclick: () => { trim?.destroy(); trim = null; file = null; others = []; render(); } }, ico("x", 16)) : null);
     let leftSide;
     if (tool === "tts") {

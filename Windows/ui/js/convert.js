@@ -1,4 +1,4 @@
-// Conversione: trascina un file, si apre la torta con i formati. Lo spicchio «Modifica» porta il file
+// Converti: trascina un file, si apre la torta con i formati. Lo spicchio «Modifica» porta il file
 // nella sua scheda. Con tipi diversi insieme, una torta piccola per tipo. Tasti 1–9; Invio = ultima scelta.
 
 import { play } from "./sounds.js";
@@ -146,7 +146,7 @@ export function convertPage(app) {
     const close = h("button.btn", { onclick: () => { files = []; moreFor = null; bar.clear(); render(); } }, ico("x", 15), t("Togli tutto"));
     stage.replaceChildren(
       h("div.pie-stage", pies),
-      h("div.pie-top", h("button.btn", { onclick: pick }, ico("plus", 15), t("Aggiungi file…")), close),
+      h("div.pie-top", h("button.btn", { onclick: pick }, ico("plus", 15), t("Aggiungi…")), close),
       h("div.pie-hint", h("span", ico("arrow-left-right", 14), t("Clic su un formato")), h("span", t("1–9 · Invio = ultima scelta")), h("span", t("Esc per togliere"))));
     app.dropTarget = null;
   }

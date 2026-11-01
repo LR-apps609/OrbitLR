@@ -15,7 +15,7 @@ import { showFeedback } from "./feedback.js";
 import { actionToast, closeReasons, contextMenu, env, extOf, fmtBytes, h, ico, modal, store, toast } from "./util.js";
 import { t, tr, LANG, isEn } from "./i18n.js";
 
-const VERSION = "1.1.1";
+const VERSION = "1.2.0";
 // Numero della compilazione (lo scrive GitHub quando crea l'installazione)
 const BUILD = 0;
 
@@ -90,7 +90,7 @@ function sidebar() {
   const foot = h("div.foot",
     (navButtons.settings = h("button", { onclick: () => show("settings") }, ico("settings", 17), t("Opzioni"))),
     (navButtons.help = h("button", { onclick: () => show("help") }, ico("circle-help", 17), t("Aiuto"))),
-    h("button", { onclick: () => report(app) }, ico("bug", 17), t("Segnala")),
+    h("button", { title: t("Segnala un problema: si apre un’email già pronta"), "aria-label": t("Segnala un problema"), onclick: () => report(app) }, ico("bug", 17), t("Segnala")),
     h("button", { title: t("Un’idea, una cosa che manca: mi arriva per email"), onclick: () => showFeedback(VERSION) }, ico("lightbulb", 17), t("Idea")));
   return h("aside.side",
     h("div.brand", h("img", { src: "img/icona.png", alt: "" }), h("div", h("b", "OrbitLR"), h("small", t("per Windows")))),

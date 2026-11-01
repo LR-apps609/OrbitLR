@@ -1,3 +1,19 @@
+Novità per Windows 1.2 «Sistema»:
+• Una parola per cosa, in tutta l'app: «Rimuovi i silenzi», «Inizia qui» e «Finisci qui» (clip, testi, musica, Audio e Taglia), «Editor PDF», «Rimuovi la password…», «Muta la clip», «Riattiva l’audio», «Muta tutti i video». «Togli la clip», «Togli il testo» e «Togli la musica» li fanno uscire dal progetto: il file resta dov'è
+• Barra del risultato: «Elimina il risultato» al posto di «Annulla», perché manda nel Cestino di Windows. «Aggiungi…» e «Apri…» ovunque
+• Montaggio, un posto per comando: la velocità solo in «Clip»; muto, volume, «Stacca l’audio» ed «Estrai l’audio della clip» solo in «Audio»; la transizione nel pallino tra le clip. Le dissolvenze hanno il loro nome: «Dissolvenza della clip» in Effetti, «Dissolvenza della musica» in Audio
+• Più facile da prendere: pallino della transizione, maniglie delle clip e della musica, ✕ piccole e interruttore Semplice · Completo hanno un'area di clic di almeno 24 pixel, anche dove il disegno è più piccolo
+• Ogni pulsante con la sola icona dice cosa fa (suggerimento e lettore dello schermo); i pulsanti hanno un aspetto per ruolo (principale, risolve un errore, secondario, distruttivo)
+• L'Aiuto usa le parole nuove
+
+What’s new in Windows 1.2 “System”:
+• One word for each thing, across the app: “Remove Silences”, “Start Here” and “End Here” (clips, text, music, Audio and Trim), “PDF Editor”, “Remove Password…”, “Mute Clip”, “Unmute”, “Mute All Videos”. “Remove Clip”, “Remove Text” and “Remove Music” take them out of the project: the file stays where it is
+• Result bar: “Delete Result” instead of “Undo”, because it sends the file to the Windows Recycle Bin. “Add…” and “Open…” everywhere
+• Editor, one place for each command: speed only in “Clip”; mute, volume, “Detach audio” and “Extract the clip’s audio” only in “Audio”; the transition in the dot between clips. Fades have their own names: “Clip Fade” in Effects, “Music Fade” in Audio
+• Easier to hit: the transition dot, clip and music handles, small ✕ buttons and the Simple · Complete switch have a click area of at least 24 pixels, even where the drawing is smaller
+• Every icon-only button says what it does (tooltip and screen reader); buttons have one look per role (main, fixes an error, secondary, destructive)
+• Help uses the new words
+
 Novità per Windows 1.1.1:
 • Video e Audio Downloader: dopo due minuti senza risposta dal sito si ferma da solo e lo dice. I link di Google Drive, Dropbox, iCloud e WeTransfer non si scaricano da qui: lo dice subito, invece di restare in attesa
 
