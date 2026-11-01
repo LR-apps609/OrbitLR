@@ -60,6 +60,8 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 struct MainWindow: View {
     @EnvironmentObject var store: QueueStore
     @EnvironmentObject var app: AppState
+    /// 6.0 · L'aspetto dell'app (fuori dalla barra laterale, che è sempre «di notte»)
+    @Environment(\.colorScheme) private var appScheme
     @AppStorage("palette") private var palette = "sage"
     @AppStorage("sidebarAdvanced") private var advancedOpen = false
     /// 3.4.2 · Le schede già aperte almeno una volta (restano vive)
@@ -181,7 +183,7 @@ struct MainWindow: View {
                 .padding(12)
             }
             // 6.0 · Barra laterale verde foresta anche in chiaro, come il fondo dell'icona: testi chiari, oro per la scelta
-            .background(Theme.forest)
+            .background(appScheme == .dark ? Color(hex: 0x0A1813) : Color(hex: 0x16302A))   // foresta, fissa
             .environment(\.colorScheme, .dark)
             .tint(Theme.gold)
             .id(sidebarID)
