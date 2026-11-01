@@ -114,7 +114,7 @@ jobs:
           test -f "$APP/Contents/Resources/NEWS.txt"
           ls "$APP/Contents/Resources/en.lproj"
           N=$(plutil -p "$APP/Contents/Resources/en.lproj/Localizable.strings" | grep -c "=>")
-          plutil -p "$APP/Contents/Resources/en.lproj/Localizable.strings" | grep -q "Show in Folder"
+          plutil -p "$APP/Contents/Resources/en.lproj/Localizable.strings" | grep -q "Show in Finder"
           plutil -p "$APP/Contents/Resources/en.lproj/InfoPlist.strings" | grep -q "NSDesktopFolderUsageDescription"
           echo "::notice::Inglese dentro l'app: $N testi"
           test -x "$APP/Contents/Resources/Motori/ffmpeg"
