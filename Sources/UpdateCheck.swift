@@ -96,7 +96,7 @@ enum UpdateCheck {
         a.addButton(withTitle: String(localized: "Salta questa versione"))
         NSApp.activate()
         switch a.runModal() {
-        case .alertFirstButtonReturn: await download(rel)
+        case .alertFirstButtonReturn: UpdateBadge.shared.available = rel; await install(rel)   // 5.1.1 · con la percentuale sul pulsante
         case .alertThirdButtonReturn: UserDefaults.standard.set(rel.version, forKey: skipKey)
         default: break
         }
@@ -105,7 +105,13 @@ enum UpdateCheck {
     /// 4.1.2 · Dal pulsante «Aggiornamento disponibile»: scarica e installa subito (il clic è già la conferma).
     @MainActor
     static func install(_ rel: Release) async {
-        guard !UpdateBadge.shared.installing else { return }
+        AppLog.write("Aggiornamento", "clic su installa \(rel.version) (da \(current))")
+        guard !UpdateBadge.shared.installing else { AppLog.write("Aggiornamento", "già in corso"); return }
+        // 5.1.1 · Un aggiornamento precedente rimasto a metà (senza finestra) non blocca più il nuovo
+        if Updater.shared.busy && !Updater.shared.hasWindow {
+            AppLog.write("Aggiornamento", "stato «occupato» rimasto da prima, lo azzero")
+            Updater.shared.busy = false
+        }
         UpdateBadge.shared.progress = 0
         UpdateBadge.shared.installing = true
         await download(rel)
@@ -121,10 +127,13 @@ enum UpdateCheck {
         let dest = dir.appendingPathComponent("OrbitLR.\(rel.version).orbitlr")
         do {
             // 4.5.1 · Con la percentuale, come su Windows: il pulsante in alto dice a che punto è il download
+            AppLog.write("Aggiornamento", "scarico \(rel.version)")
             try await DownloadWithProgress.run(rel.asset, to: dest) { p in
                 Task { @MainActor in UpdateBadge.shared.progress = p }
             }
+            AppLog.write("Aggiornamento", "scaricato, \((try? dest.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) byte")
         } catch {
+            AppLog.write("Aggiornamento", "download non riuscito: \(error.localizedDescription)")
             let a = NSAlert()
             a.messageText = String(localized: "Il download non è riuscito")
             a.informativeText = String(localized: "Riprova, oppure scarica l’aggiornamento dalla pagina di GitHub e aprilo con un doppio clic.")

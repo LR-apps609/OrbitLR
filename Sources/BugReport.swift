@@ -49,6 +49,27 @@ enum BugReport {
     }
 
     /// 3.5.2 · Niente nomi di file, nomi utente o percorsi personali nelle informazioni tecniche.
+    /// 5.1.1 · Gli ultimi due rapporti di macOS sugli arresti improvvisi di OrbitLR, senza il percorso della cartella Inizio.
+    static func crashReports() -> [URL] {
+        let dir = Paths.home.appendingPathComponent("Library/Logs/DiagnosticReports")
+        let fm = FileManager.default
+        let all = ((try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.contentModificationDateKey])) ?? [])
+            .filter { let n = $0.lastPathComponent; return (n.hasPrefix("OrbitLR") || n.hasPrefix("LRConverter")) && ($0.pathExtension == "ips" || $0.pathExtension == "crash" || $0.pathExtension == "hang") }
+            .sorted { (a, b) in
+                let da = (try? a.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+                let db = (try? b.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+                return da > db
+            }
+        var out: [URL] = []
+        for u in all.prefix(2) {
+            guard let t = try? String(contentsOf: u, encoding: .utf8) else { continue }
+            let dest = fm.temporaryDirectory.appendingPathComponent(u.lastPathComponent + ".txt")
+            try? anonymize(t, names: []).write(to: dest, atomically: true, encoding: .utf8)
+            out.append(dest)
+        }
+        return out
+    }
+
     static func anonymize(_ text: String, names: [URL], home: String = Paths.home.path) -> String {
         var t = text
         // I nomi dei file usati di recente diventano «file.estensione»
@@ -320,18 +341,11 @@ struct BugReportView: View {
             attachments.append(tech)
         }
 
-        var items: [Any] = [body]
-        items.append(contentsOf: attachments.map { $0 as Any })
-        if let mail = NSSharingService(named: .composeEmail), mail.canPerform(withItems: items) {
-            mail.recipients = [BugReport.recipient]
-            mail.subject = subject
-            mail.perform(withItems: items)
-            ReportDraft.clear(ReportDraft.bugKey)       // 5.1 · inviata: la bozza non serve più
-            done()
-            return
-        }
+        // 5.1.1 · Anche i rapporti di macOS sugli arresti improvvisi (gli ultimi due), senza il nome della cartella Inizio
+        if includeTech { attachments += BugReport.crashReports() }
 
-        // Senza Mail: una cartella sulla Scrivania con tutto dentro
+        // 5.1.1 · Sempre una copia sulla Scrivania: se Mail non è configurata (succede spesso con Gmail nel browser),
+        // prima non succedeva niente e la segnalazione andava persa
         let fm = FileManager.default
         let desk = fm.urls(for: .desktopDirectory, in: .userDomainMask).first ?? Paths.home
         let f = DateFormatter()
@@ -341,9 +355,34 @@ struct BugReportView: View {
         let note = "A: \(BugReport.recipient)\nOggetto: \(subject)\n\n\(body)\n"
         try? note.write(to: folder.appendingPathComponent("Segnalazione.txt"), atomically: true, encoding: .utf8)
         for a in attachments { try? fm.copyItem(at: a, to: folder.appendingPathComponent(a.lastPathComponent)) }
-        NSWorkspace.shared.activateFileViewerSelecting([folder])
         ReportDraft.clear(ReportDraft.bugKey)           // 5.1 · è al sicuro sulla Scrivania
+
+        var items: [Any] = [body]
+        items.append(contentsOf: attachments.map { $0 as Any })
+        let mailReady = Self.mailIsConfigured
+        if mailReady, let mail = NSSharingService(named: .composeEmail), mail.canPerform(withItems: items) {
+            mail.recipients = [BugReport.recipient]
+            mail.subject = subject
+            mail.perform(withItems: items)
+            saved = true
+            message = String(localized: "Ho preparato l’email in Mail e ne ho salvato una copia sulla Scrivania. Se l’email non parte, manda la cartella «Segnalazione OrbitLR» a \(BugReport.recipient).")
+            return
+        }
+        NSWorkspace.shared.activateFileViewerSelecting([folder])
         saved = true
         message = String(localized: "Mail non è configurata: ho salvato la segnalazione sulla Scrivania. Inviala a \(BugReport.recipient).")
+    }
+
+    /// 5.1.1 · Mail ha almeno un account? (Se no, «Componi» apre solo la configurazione di Mail.)
+    static var mailIsConfigured: Bool {
+        guard let mailApp = NSWorkspace.shared.urlForApplication(toOpen: URL(string: "mailto:a@b.c")!),
+              mailApp.lastPathComponent == "Mail.app" else { return true }     // un altro programma di posta: ci si fida
+        let accounts = Paths.home.appendingPathComponent("Library/Mail")
+        // Senza permesso di lettura (macOS protegge quella cartella) non si sa: si prova comunque con Mail
+        guard let items = try? FileManager.default.contentsOfDirectory(atPath: accounts.path) else {
+            return !FileManager.default.fileExists(atPath: accounts.path) ? false : true
+        }
+        // Mail crea le cartelle «V…» solo quando c'è almeno un account
+        return items.contains { $0.hasPrefix("V") }
     }
 }

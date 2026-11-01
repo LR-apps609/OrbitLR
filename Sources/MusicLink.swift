@@ -34,6 +34,17 @@ enum MusicLink {
         return u
     }
 
+    /// 5.1.1 · Link che non si scaricano da qui (Google Drive, Dropbox, iCloud): pagine di accesso o di conferma,
+    /// non video. Prima il motore restava in attesa per sempre; ora lo si dice subito.
+    static func unsupportedReason(_ u: URL) -> String? {
+        let h = (u.host ?? "").lowercased()
+        if h.hasSuffix("drive.google.com") || h.hasSuffix("docs.google.com") || h.hasSuffix("dropbox.com")
+            || h.hasSuffix("icloud.com") || h.hasSuffix("onedrive.live.com") || h.hasSuffix("1drv.ms") || h.hasSuffix("wetransfer.com") {
+            return String(localized: "I file su Drive, Dropbox, iCloud o WeTransfer non si scaricano da qui: aprili nel browser, scaricali e trascinali in OrbitLR.")
+        }
+        return nil
+    }
+
     static var installed: Bool { FileManager.default.isExecutableFile(atPath: exe.path) }
 
     static var needsRefresh: Bool {
@@ -144,6 +155,7 @@ enum MusicLink {
         let handle: @Sendable (FileHandle, Bool) -> Void = { h, isErr in
             let d = h.availableData
             guard !d.isEmpty else { return }
+            collected.touch()
             // 4.1.4 · Righe intere: un blocco letto può fermarsi a metà riga
             for line in collected.feed(d, isErr: isErr) {
                 if let v = percent(in: line) { Task { @MainActor in job.progress = v } }
@@ -163,17 +175,26 @@ enum MusicLink {
         let start = Date()
         while p.isRunning {
             try await Task.sleep(nanoseconds: 200_000_000)
+            // 5.1.1 · «Interrompi» ferma subito, anche se il motore non risponde
+            if await job.cancelled { Self.stop(p); throw CancellationError() }
+            // 5.1.1 · Due minuti senza una riga dal motore: il sito non risponde (prima si aspettava per sempre)
+            if Date().timeIntervalSince(collected.lastOutput ?? start) > 120 {
+                Self.stop(p)
+                throw Failure(message: String(localized: "Il sito non risponde da due minuti: ho interrotto. Riprova più tardi."))
+            }
             if Date().timeIntervalSince(start) > 900 {
-                p.terminate()
-                p.waitUntilExit()
+                Self.stop(p)
                 throw Failure(message: String(localized: "Ci mette troppo: riprova più tardi."))
             }
         }
-        // 4.1.4 · Quello che è rimasto nei tubi dopo la fine (l'ultima riga è proprio il file scaricato)
+        // 4.1.4 · Quello che è rimasto nei tubi dopo la fine (l'ultima riga è proprio il file scaricato).
+        // 5.1.1 · Senza leggere «fino alla fine»: se un programma figlio teneva aperto il tubo, si restava bloccati per sempre.
+        try? await Task.sleep(nanoseconds: 400_000_000)
         out.fileHandleForReading.readabilityHandler = nil
         err.fileHandleForReading.readabilityHandler = nil
         for (h, isErr) in [(out.fileHandleForReading, false), (err.fileHandleForReading, true)] {
-            for line in collected.feed(h.readDataToEndOfFile(), isErr: isErr, flush: true) { collected.add(line, isErr: isErr) }
+            for line in collected.feed(Data(), isErr: isErr, flush: true) { collected.add(line, isErr: isErr) }
+            try? h.close()
         }
         if await job.cancelled { throw CancellationError() }
         guard p.terminationStatus == 0 else {
@@ -198,6 +219,19 @@ enum MusicLink {
         return dest
     }
 
+    /// 5.1.1 · Ferma il motore e i programmi che ha avviato (ffmpeg), senza aspettare all'infinito.
+    static func stop(_ p: Process) {
+        guard p.isRunning else { return }
+        let pid = p.processIdentifier
+        p.terminate()
+        // I figli (ffmpeg) che il motore ha avviato
+        let k = Process()
+        k.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
+        k.arguments = ["-TERM", "-P", String(pid)]
+        try? k.run()
+        DispatchQueue.global().asyncAfter(deadline: .now() + 2) { if p.isRunning { kill(pid, SIGKILL) } }
+    }
+
     static func uniqueURL(in folder: URL, name: String) -> URL {
         let base = (name as NSString).deletingPathExtension, ext = (name as NSString).pathExtension
         var u = folder.appendingPathComponent(name)
@@ -214,6 +248,10 @@ enum MusicLink {
         private var out: [String] = []
         private var err = ""
         private var partial: [Bool: Data] = [:]
+        private var last: Date? = nil
+        /// 5.1.1 · L'ultima volta che il motore ha scritto qualcosa
+        var lastOutput: Date? { lock.lock(); defer { lock.unlock() }; return last }
+        func touch() { lock.lock(); last = Date(); lock.unlock() }
 
         /// I nuovi dati di un tubo → le righe complete (il pezzo finale senza «a capo» aspetta il prossimo blocco).
         func feed(_ d: Data, isErr: Bool, flush: Bool = false) -> [String] {
@@ -250,7 +288,10 @@ final class LinkJob: ObservableObject {
 
     func cancel() {
         cancelled = true
-        process?.terminate()
+        if let p = process { MusicLink.stop(p) }
+        // 5.1.1 · La finestra torna libera subito, anche se il motore ci mette a fermarsi
+        running = false
+        status = ""
     }
 }
 
@@ -324,6 +365,7 @@ struct LinkSheet: View {
 
     private func start() {
         guard let link else { return }
+        if let why = MusicLink.unsupportedReason(link) { job.error = why; return }
         job.error = nil
         job.running = true
         job.cancelled = false
