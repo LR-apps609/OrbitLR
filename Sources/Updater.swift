@@ -52,6 +52,9 @@ final class Updater: ObservableObject, @unchecked Sendable {
 
     /// `confirmed`: l'utente ha già detto sì (da «Controlla aggiornamenti»), niente seconda domanda.
     /// `expectedVersion`: la versione annunciata da GitHub, che deve coincidere con quella firmata.
+    /// 5.1.1 · C'è la schedina dell'aggiornamento sullo schermo?
+    var hasWindow: Bool { window != nil }
+
     func open(_ file: URL, confirmed: Bool = false, expectedVersion: String? = nil) {
         guard !busy else { window?.makeKeyAndOrderFront(nil); return }
         // Da subito «occupato»: se l'app si è appena aperta per questo aggiornamento, la finestra principale non compare
@@ -69,6 +72,7 @@ final class Updater: ObservableObject, @unchecked Sendable {
         switch result {
         case .success(let r): ready = r
         case .failure(let e):
+            AppLog.write("Aggiornamento", "pacchetto rifiutato: \((e as? UpdatePackage.Failure)?.message ?? e.localizedDescription)")
             busy = false
             LaunchGate.release()
             alert((e as? UpdatePackage.Failure)?.message ?? UpdatePackage.Failure.badManifest.message)

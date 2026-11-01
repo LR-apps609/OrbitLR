@@ -1,3 +1,8 @@
+What’s new in 5.1.1 “No Freezes”:
+• Video and Audio Downloader: it no longer freezes. “Stop” stops right away, even if the site doesn’t respond; after two minutes without a response it stops by itself and says so. Google Drive, Dropbox, iCloud and WeTransfer links can’t be downloaded from here: it says so right away instead of waiting
+• Report a Problem: the report is always saved on the Desktop too, with macOS crash reports. If Mail isn’t set up, it no longer silently does nothing
+• Updates: “Download and Install” shows the percentage on the button at the top; an update left half-done no longer blocks the next one; every step goes into the log, to find out what’s wrong
+
 What’s new in 5.1 “Safe”:
 • Editor: the project saves itself as you work (“Saved at 2:32 PM” at the top). No more “Apply” and “Discard”: “Revert…” takes it back to how it was when you opened it, and that can be undone with ⌘Z too
 • Editor: if OrbitLR quits, when you reopen it you’re back in the project, with the playhead, zoom and tool where you left them

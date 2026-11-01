@@ -56,3 +56,16 @@ enum Paths {
         return nil
     }
 }
+
+/// 5.1.1 · Una riga nel registro dell'app (va nelle segnalazioni, che tolgono i nomi dei file).
+enum AppLog {
+    static func write(_ area: String, _ text: String) {
+        let line = "[\(Date())] \(area): \(text)\n"
+        guard let data = line.data(using: .utf8) else { return }
+        if let h = try? FileHandle(forWritingTo: Paths.log) {
+            h.seekToEndOfFile(); h.write(data); try? h.close()
+        } else {
+            try? data.write(to: Paths.log)
+        }
+    }
+}

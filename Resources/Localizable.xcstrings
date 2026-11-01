@@ -6765,6 +6765,16 @@
         }
       }
     },
+    "Ho preparato l’email in Mail e ne ho salvato una copia sulla Scrivania. Se l’email non parte, manda la cartella «Segnalazione OrbitLR» a %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I prepared the email in Mail and saved a copy on the Desktop. If the email doesn’t go out, send the “OrbitLR Report” folder to %@."
+          }
+        }
+      }
+    },
     "Ho sbagliato una modifica nel montaggio": {
       "localizations": {
         "en": {
@@ -6801,6 +6811,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The converted files are ready. If you move them, the originals stay in the Trash until you empty it."
+          }
+        }
+      }
+    },
+    "I file su Drive, Dropbox, iCloud o WeTransfer non si scaricano da qui: aprili nel browser, scaricali e trascinali in OrbitLR.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Files on Drive, Dropbox, iCloud or WeTransfer can’t be downloaded from here: open them in the browser, download them and drag them into OrbitLR."
           }
         }
       }
@@ -7152,6 +7172,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The site refused the request. Try again in a bit: meanwhile I’m updating the engine."
+          }
+        }
+      }
+    },
+    "Il sito non risponde da due minuti: ho interrotto. Riprova più tardi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The site hasn’t responded for two minutes, so I stopped. Try again later."
           }
         }
       }

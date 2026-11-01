@@ -1,3 +1,8 @@
+Novità della 5.1.1 «Niente blocchi»:
+• Video e Audio Downloader: non si blocca più. «Interrompi» ferma subito, anche se il sito non risponde; dopo due minuti senza risposta si ferma da solo e lo dice. I link di Google Drive, Dropbox, iCloud e WeTransfer non si scaricano da qui: lo dice subito, invece di restare in attesa
+• Segnala un problema: la segnalazione si salva sempre anche sulla Scrivania, con i rapporti di macOS sugli arresti improvvisi. Se Mail non è configurata non succede più che non parta niente
+• Aggiornamenti: «Scarica e installa» mostra la percentuale sul pulsante in alto; un aggiornamento rimasto a metà non blocca più il successivo; ogni passo finisce nel registro, per capire cosa non va
+
 Novità della 5.1 «Al sicuro»:
 • Montaggio: il progetto si salva da solo mentre lavori (in alto «Salvato alle 14:32»). Niente più «Applica» e «Scarta»: «Ripristina…» lo riporta com’era quando l’hai aperto, e anche questo si annulla con ⌘Z
 • Montaggio: se OrbitLR si chiude, alla riapertura torni nel progetto, con l’indicatore, lo zoom e lo strumento dove li avevi lasciati
