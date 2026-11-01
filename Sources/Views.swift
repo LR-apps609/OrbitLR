@@ -180,7 +180,10 @@ struct MainWindow: View {
                 }
                 .padding(12)
             }
-            .background(LinearGradient(colors: [Theme.sageLight, Theme.sage.opacity(0.85)], startPoint: .top, endPoint: .bottom))
+            // 6.0 · Barra laterale verde foresta anche in chiaro, come il fondo dell'icona: testi chiari, oro per la scelta
+            .background(Theme.forest)
+            .environment(\.colorScheme, .dark)
+            .tint(Theme.gold)
             .id(sidebarID)
             .background(GeometryReader { g in Color.clear.preference(key: SidebarWidthKey.self, value: g.size.width) })
             .onPreferenceChange(SidebarWidthKey.self) { w in
@@ -1041,13 +1044,9 @@ struct SettingsView: View {
                     Picker("Chiaro o scuro", selection: $draft.appearance) {
                         Text("Come il Mac").tag("auto")
                         Text("Chiaro").tag("light")
-                        Text("Scuro · radio di notte").tag("dark")
+                        Text("Scuro").tag("dark")
                     }
-                    Picker("Colori", selection: $draft.palette) {
-                        ForEach(Palette.allCases) { p in
-                            Text(p.name).tag(p.rawValue)
-                        }
-                    }
+                    // 6.0 · Un solo volto «Notte e oro», come l'icona e il sito: niente più scelta dei colori
                     Toggle("Suoni discreti (clic, scatto, fine lavoro)", isOn: $draft.sounds)
                     Picker("Come scegli le opzioni", selection: $draft.controlStyle) {
                         Text("Da un elenco").tag("list")

@@ -13920,6 +13920,16 @@
         }
       }
     },
+    "Scuro": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dark"
+          }
+        }
+      }
+    },
     "Scuro · radio di notte": {
       "localizations": {
         "en": {

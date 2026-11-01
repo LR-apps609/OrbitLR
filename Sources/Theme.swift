@@ -102,24 +102,30 @@ enum Appearance {
 enum Theme {
     // Base
     // Corpo della radio, pulsanti e selezioni: cambiano con il tema (salvia, celeste, terracotta)
-    static let sage = Color(themed: (0xA9C5A0, 0x3C5243), sky: (0xA9C8DA, 0x34505F), terracotta: (0xDDA98F, 0x5C3B2F))
-    static let sageLight = Color(themed: (0xC9DCC2, 0x4A6351), sky: (0xCCE0EB, 0x415F6E), terracotta: (0xEFD0C0, 0x6E483A))
-    static let sageDeep = Color(themed: (0x557E5F, 0x8FBE98), sky: (0x4B7C98, 0x8EC2DC), terracotta: (0xB35F3E, 0xE59C79))
-    static let cream = Color(themed: (0xF3EDDF, 0x1E221F), sky: (0xF3EFE4, 0x1C2125), terracotta: (0xF4ECDF, 0x241E1C)) // sfondo
-    static let parchment = Color(light: 0xE6D8B8, dark: 0x4A4333)   // griglia dell'altoparlante
-    static let parchmentDeep = Color(light: 0xDCCCA6, dark: 0x3B3528)
-    static let ivory = Color(themed: (0xFBF8F0, 0x2C302C), sky: (0xFBF9F3, 0x2A2F33), terracotta: (0xFCF8F1, 0x322B28)) // manopole e schede
-    static let brass = Color(light: 0xB8925A, dark: 0xD6AA62)       // finiture in ottone
-    static let ink = Color(light: 0x3A3126, dark: 0xECE4D2)         // testo
+    // 6.0 «Notte e oro» · la lingua dell'icona e del sito: foresta, carta chiara, oro come firma.
+    // Un solo tema (i tre colori della radio d'epoca sono finiti con la 5.x). Contrasti AA in chiaro e scuro.
+    static let forest = Color(light: 0x16302A, dark: 0x0A1813)       // barra laterale, anche in chiaro
+    static let gold = Color(hex: 0xE2B562)                             // l'oro: solo su foresta o su notte
+    static let sage = forest
+    static let sageLight = Color(light: 0x1F4A3C, dark: 0x13261F)
+    static let sageDeep = Color(light: 0x1F4A3C, dark: 0xE2B562)     // primario: verde scuro di giorno, oro di notte
+    static let cream = Color(light: 0xF1EEDF, dark: 0x0F1A16)        // carta (fondo)
+    static let parchment = Color(light: 0xE6E2CF, dark: 0x1C2C26)
+    static let parchmentDeep = Color(light: 0xD9D4BC, dark: 0x22352E)
+    static let ivory = Color(light: 0xFAF8EF, dark: 0x17241F)        // superficie (schede)
+    static let brass = Color(light: 0x8A5E10, dark: 0xE2B562)        // oro leggibile: scuro sulla carta, chiaro di notte
+    static let ink = Color(light: 0x1C251F, dark: 0xE8ECE1)          // testo (13,5:1 e 14,8:1)
+    static let ink2 = Color(light: 0x4E584B, dark: 0xAEB8AB)         // testo secondario (6,4:1 e 8,7:1)
+    static let danger = Color(light: 0xB3261E, dark: 0xF2877D)       // errori
 
     // Nomi usati nel resto dell'app
     static let accent = sageDeep
     static let orange = brass
-    static let green = Color(light: 0x5E9A55, dark: 0x82BE76)
+    static let green = Color(light: 0x2E7D4F, dark: 0x82BE76)
     static let background = cream
     static let card = ivory
-    static let cardHover = Color(themed: (0xF6F0E2, 0x343933), sky: (0xF4F1E8, 0x32383D), terracotta: (0xF7EEE2, 0x3B3330))
-    static let stroke = Color(light: 0x3A3126, dark: 0xECE4D2, lightOpacity: 0.11, darkOpacity: 0.12)
+    static let cardHover = Color(light: 0xF4F1E4, dark: 0x1D2C26)
+    static let stroke = Color(light: 0x1C251F, dark: 0xE8ECE1, lightOpacity: 0.12, darkOpacity: 0.12)
     /// Ombre: inchiostro di giorno, nero di notte (un'ombra chiara sembrerebbe un alone).
     static let shadow = Color(light: 0x3A3126, dark: 0x000000)
 
