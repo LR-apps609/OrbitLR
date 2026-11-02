@@ -1,3 +1,10 @@
+Novità della 6.0 «Notte e oro»:
+• Il volto nuovo di OrbitLR, lo stesso dell’icona e del sito: la barra laterale è verde foresta anche in chiaro, si lavora su carta chiara e l’oro è la firma (la sezione scelta, lo spicchio sotto il puntatore, il pulsante principale di sera)
+• Un solo aspetto per tutti: chiaro, scuro o automatico. I tre colori della radio (salvia, celeste, terracotta) non ci sono più
+• Colori dei tipi di file nuovi, uguali sul sito: il PDF è blu ovunque. Gli errori hanno un loro rosso
+• La torta: spicchi color salvia, quello sotto il puntatore verde foresta con il testo d’oro (d’oro di sera)
+• Angoli più morbidi (6 · 12 · 16), titoli più decisi, etichette e testi con contrasto sufficiente in chiaro e in scuro
+
 Novità della 5.2 «Sistema»:
 • Una parola per ogni cosa, uguale ovunque: «Rimuovi i silenzi», «Inizia qui» e «Finisci qui», «Mostra nel Finder», «Editor PDF», «Rimuovi la password…», «Togli» (esce dal progetto, il file resta), «Muta la clip» e «Riattiva l’audio», «Ripristina»
 • Montaggio: ogni comando in un posto solo. L’audio della clip (muta, volume, «Muta da qui», «Stacca l’audio») è in «Audio»; la velocità in «Clip»; la transizione nel pallino tra due clip
