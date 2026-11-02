@@ -93,6 +93,8 @@ enum Vector {
         if job?.cancelRequested == true { throw NativeError("annullato") }
         try p.run()
         job?.process = p                                   // 5.1 · così «Interrompi» lo chiude
+        // 6.0.1 · «Interrompi» premuto proprio mentre il motore partiva: lo si chiude subito, non a lavoro finito
+        if job?.cancelRequested == true { p.terminate() }
         p.waitUntilExit()
         job?.process = nil
         err.fileHandleForReading.readabilityHandler = nil
