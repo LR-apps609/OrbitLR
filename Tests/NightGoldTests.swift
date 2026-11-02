@@ -1,5 +1,6 @@
 import XCTest
 import AppKit
+import SwiftUI
 
 /// 6.0 «Notte e oro»: i colori della direzione B, con contrasto AA (4,5:1) per i testi.
 final class NightGoldTests: XCTestCase {
