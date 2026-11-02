@@ -72,4 +72,23 @@ final class SpeedTests: XCTestCase {
             XCTAssertEqual(FAQ.search(q).map { $0.id }, expected, "Aiuto: «\(q)»")
         }
     }
+
+    /// Le stime in parallelo danno gli stessi numeri di quelle una dopo l'altra, nello stesso ordine.
+    func testStimeInParalleloUguali() async throws {
+        let photos = try (0..<3).map { try Fixtures.photo(name: "stima-\($0)-\(UUID().uuidString).jpg", width: 900, height: 600) }
+        let acts = Catalog.pieActions(for: .img, exts: ["jpg"], mergeable: 1, count: 3)
+        let e = await SizeEstimate.estimates(actions: acts, files: photos, kind: .img)
+        for t in ["png", "heic", "jpg"] where acts.contains(where: { $0.id == "to:" + t }) {
+            let seq = photos.compactMap { SizeEstimate.imageBytes($0, to: t) }.reduce(Int64(0), +)
+            if seq > 0 { XCTAssertEqual(e["to:" + t], seq, t) }
+        }
+        let r = await SizeEstimate.parallel(["a", "b", "c", "d", "e"], limit: 2) { s in s == "c" ? nil : Int64(s.unicodeScalars.first!.value) }
+        XCTAssertEqual(r.map { $0.0 }, ["a", "b", "d", "e"], "ordine conservato, i falliti fuori")
+        XCTAssertGreaterThanOrEqual(SizeEstimate.parallelLimit, 1)
+        XCTAssertLessThanOrEqual(SizeEstimate.parallelLimit, 3)
+        let w = try Fixtures.wav(Fixtures.tone(seconds: 2), name: "durata-\(UUID().uuidString).wav")
+        let d1 = await SizeEstimate.duration(w), d2 = await SizeEstimate.duration(w)
+        XCTAssertEqual(d1, 2, accuracy: 0.05)
+        XCTAssertEqual(d1, d2)
+    }
 }

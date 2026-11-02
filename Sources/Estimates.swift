@@ -36,25 +36,24 @@ enum SizeEstimate {
             let sample = Array(files.prefix(big ? 1 : (files.count <= 4 ? 4 : 3)))
             let sampleBytes = sample.reduce(Int64(0)) { $0 + Job.size(of: $1) }
             let totalBytes = files.reduce(Int64(0)) { $0 + Job.size(of: $1) }
-            for id in targets {
-                if Task.isCancelled { return out }
+            // 6.0.1 · I formati si stimano insieme (al massimo metà dei core): stessi numeri, prima sugli spicchi
+            let one: @Sendable (String) -> Int64? = { id in
                 let t = String(id.dropFirst(3))
                 var sum: Int64 = 0
-                var ok = true
                 for f in sample {
-                    if Task.isCancelled { return out }
-                    guard NativeEngine.imageIn.contains(Catalog.norm(f.pathExtension)), let b = imageBytes(f, to: t) else { ok = false; break }
+                    if Task.isCancelled { return nil }
+                    guard NativeEngine.imageIn.contains(Catalog.norm(f.pathExtension)), let b = imageBytes(f, to: t) else { return nil }
                     sum += b
                 }
-                guard ok, sum > 0 else { continue }
-                out[id] = sample.count == files.count || sampleBytes == 0 ? sum : Int64(Double(sum) * Double(totalBytes) / Double(sampleBytes))
+                guard sum > 0 else { return nil }
+                return sample.count == files.count || sampleBytes == 0 ? sum : Int64(Double(sum) * Double(totalBytes) / Double(sampleBytes))
             }
+            for (id, b) in await parallel(targets, limit: parallelLimit, one) { out[id] = b }
+            if Task.isCancelled { return out }
         case .audio, .video:
-            var seconds = 0.0
-            for f in files.prefix(50) {
-                let d = (try? await AVURLAsset(url: f).load(.duration).seconds) ?? 0
-                if d.isFinite { seconds += max(0, d) }
-            }
+            // 6.0.1 · Durate lette insieme (4 alla volta) e ricordate: riaprire la torta non le rilegge
+            let durations = await parallelAsync(files.prefix(50).map { $0 }, limit: 4) { f in await duration(f) }
+            let seconds = durations.reduce(0.0) { $0 + $1.1 }
             guard seconds > 0 else { return [:] }
             for id in ids {
                 let key = id.hasPrefix("to:") ? String(id.dropFirst(3)) : id
@@ -66,6 +65,49 @@ enum SizeEstimate {
             break
         }
         return out
+    }
+
+    /// 6.0.1 · Quanti lavori di stima insieme: metà dei core, almeno 1, al massimo 3 (i formati sono 3).
+    static var parallelLimit: Int { max(1, min(3, ProcessInfo.processInfo.activeProcessorCount / 2)) }
+
+    /// Esegue `work` su ogni elemento, al massimo `limit` insieme; i risultati tornano nell'ordine degli elementi.
+    static func parallel(_ items: [String], limit: Int, _ work: @escaping @Sendable (String) -> Int64?) async -> [(String, Int64)] {
+        await withTaskGroup(of: (Int, Int64?).self) { g in
+            var next = 0, done: [(Int, Int64?)] = []
+            func add() { let i = next; next += 1; g.addTask { (i, work(items[i])) } }
+            while next < min(limit, items.count) { add() }
+            while let r = await g.next() {
+                done.append(r)
+                if next < items.count && !Task.isCancelled { add() }
+            }
+            return done.sorted { $0.0 < $1.0 }.compactMap { r in r.1.map { (items[r.0], $0) } }
+        }
+    }
+
+    static func parallelAsync(_ items: [URL], limit: Int, _ work: @escaping @Sendable (URL) async -> Double) async -> [(URL, Double)] {
+        await withTaskGroup(of: (Int, Double).self) { g in
+            var next = 0, done: [(Int, Double)] = []
+            func add() { let i = next; next += 1; g.addTask { (i, await work(items[i])) } }
+            while next < min(limit, items.count) { add() }
+            while let r = await g.next() {
+                done.append(r)
+                if next < items.count && !Task.isCancelled { add() }
+            }
+            return done.sorted { $0.0 < $1.0 }.map { (items[$0.0], $0.1) }
+        }
+    }
+
+    nonisolated(unsafe) private static var durationCache: [String: Double] = [:]
+    /// Durata di un audio o video (secondi, 0 se non si legge), ricordata per file e data di modifica.
+    static func duration(_ f: URL) async -> Double {
+        let date = (try? f.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate?.timeIntervalSince1970) ?? 0
+        let key = "\(f.path)|\(date)"
+        lock.lock(); let hit = durationCache[key]; lock.unlock()
+        if let hit { return hit }
+        let d = (try? await AVURLAsset(url: f).load(.duration).seconds) ?? 0
+        let v = d.isFinite ? max(0, d) : 0
+        lock.lock(); if durationCache.count > 500 { durationCache.removeAll() }; durationCache[key] = v; lock.unlock()
+        return v
     }
 
     /// Converte davvero l'immagine in una cartella temporanea e ne misura il peso.
