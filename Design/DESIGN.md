@@ -49,7 +49,8 @@ Un pulsante spento dice perché nel suggerimento.
 ## Misure
 
 - Area di clic: almeno 24 × 24 pt (`.hitArea()`), anche se il disegno è più piccolo.
-- Arrotondamenti: `Radius.xs` 5 · `Radius.s` 7 · `Radius.m` 9 · `Radius.l` 12 · `Radius.xl` 14.
+- Arrotondamenti (6.0): 6 · 12 · 16 e capsula — `Radius.xs`/`s` 6, `Radius.m`/`l` 12, `Radius.xl` 16.
+- Colori (6.0 «Notte e oro»): foresta `#16302A` (barra laterale, anche in chiaro), carta `#F1EEDF`, superficie `#FAF8EF`, oro `#E2B562` solo su foresta o di notte; in chiaro il testo oro è `#8A5E10`. Primario: verde `#1F4A3C` di giorno, oro di notte.
 - Colori: solo da `Theme` (mai esadecimali nelle viste). Ogni tipo di file ha il suo colore (`Theme.color(kind)`).
 - Testi: minimo 11 pt; le etichette della sequenza 10,5 pt.
 

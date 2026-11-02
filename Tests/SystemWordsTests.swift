@@ -43,6 +43,6 @@ final class SystemWordsTests: XCTestCase {
     }
 
     func testFiveRadii() {
-        XCTAssertEqual([Radius.xs, Radius.s, Radius.m, Radius.l, Radius.xl], [5, 7, 9, 12, 14])
+        XCTAssertEqual([Radius.xs, Radius.s, Radius.m, Radius.l, Radius.xl], [6, 6, 12, 12, 16])
     }
 }

@@ -4,11 +4,12 @@ import AppKit
 
 /// 5.2 · Gli arrotondamenti dell'app: cinque misure, non più quindici. Le regole sono in Design/DESIGN.md.
 enum Radius {
-    static let xs: CGFloat = 5      // etichette, piccole barre
-    static let s: CGFloat = 7       // campi, miniature piccole
-    static let m: CGFloat = 9       // pulsanti, righe, riquadri interni
+    // 6.0 · «Notte e oro»: 6 · 12 · 16 e capsula, un po' più morbidi
+    static let xs: CGFloat = 6      // etichette, piccole barre
+    static let s: CGFloat = 6       // campi, miniature piccole
+    static let m: CGFloat = 12      // pulsanti, righe, riquadri interni
     static let l: CGFloat = 12      // schede e strisce
-    static let xl: CGFloat = 14     // carte grandi e anteprime
+    static let xl: CGFloat = 16     // carte grandi e anteprime
 }
 
 extension View {
@@ -119,6 +120,11 @@ enum Theme {
     static let danger = Color(light: 0xB3261E, dark: 0xF2877D)       // errori
     /// 6.0 · Il testo sui pulsanti principali: bianco sul verde di giorno, notte sull'oro di notte (9,3:1)
     static let onAccent = Color(light: 0xFFFFFF, dark: 0x0F1A16)
+    /// 6.0 · L'indicatore della sequenza
+    static let playhead = Color(light: 0x16302A, dark: 0xE2B562)
+    /// 6.0 · L'opzione scelta di un interruttore (Semplice · Completo · Editor)
+    static let segOn = Color(light: 0x16302A, dark: 0xE2B562)
+    static let segOnText = Color(light: 0xF1F2E8, dark: 0x13201A)
 
     // Nomi usati nel resto dell'app
     static let accent = sageDeep

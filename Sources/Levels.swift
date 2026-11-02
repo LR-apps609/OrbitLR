@@ -83,9 +83,9 @@ struct LevelPicker: View {
         return Button { level = v } label: {
             Text(title)
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(on ? Theme.background : Theme.ink.opacity(0.75))
+                .foregroundStyle(on ? Theme.segOnText : Theme.ink.opacity(0.75))
                 .padding(.horizontal, 9).padding(.vertical, 5)       // 5.2 · 24 pt di altezza
-                .background(Capsule().fill(on ? Theme.ink : .clear))
+                .background(Capsule().fill(on ? Theme.segOn : .clear))
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)

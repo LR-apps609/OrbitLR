@@ -1785,7 +1785,7 @@ private struct PlayheadLine: View {
     let pps: CGFloat
     let size: CGSize
     var body: some View {
-        Rectangle().fill(Theme.ink)
+        Rectangle().fill(Theme.playhead)          // 6.0 · foresta di giorno, oro di notte
             .frame(width: 2, height: size.height)
             .offset(x: min(max(0, CGFloat(clock.time) * pps - 1), max(0, size.width - 2)))
     }

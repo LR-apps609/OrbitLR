@@ -851,7 +851,7 @@ struct PageHeader<Actions: View>: View {
         HStack(alignment: .center, spacing: 14) {
             TitleAccent(color: color)
             VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.system(size: 26, weight: .bold, design: .rounded))
+                Text(title).font(.system(size: 22, weight: .heavy, design: .rounded))
                 Text(subtitle).font(.system(size: 12.5)).foregroundStyle(.secondary)
                     .lineLimit(2)
             }
