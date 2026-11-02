@@ -44,9 +44,12 @@ final class SpeedTests: XCTestCase {
         ws.removeGroup(other)
         XCTAssertEqual(img.pie.subtitle, "segno", "il gruppo rimasto non è stato ricalcolato")
         img.pie.subtitle = subtitle
-        img.files.append(photo)
-        ws.remove(photo, from: img)
-        XCTAssertEqual(img.builtFiles, img.files)
+        let photo2 = try Fixtures.photo(name: "secondo-\(UUID().uuidString).jpg")
+        ws.load([photo2], append: true)
+        let img2 = try XCTUnwrap(ws.groups.first { $0.kind == .img })
+        XCTAssertEqual(img2.builtFiles, [photo, photo2], "file aggiunto: il gruppo si ricalcola")
+        ws.remove(photo2, from: img2)
+        XCTAssertEqual(img2.builtFiles, [photo], "file tolto: il gruppo si ricalcola")
     }
 
     /// La ricerca nella torta e nell'Aiuto dà gli stessi risultati di prima (ora calcolati una volta per tasto).
