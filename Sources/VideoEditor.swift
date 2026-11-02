@@ -1623,8 +1623,9 @@ struct ToolTab: View {
                 Text(title).font(.system(size: 11.5, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.85)
             }
             .frame(maxWidth: .infinity).frame(height: 46)
-            .foregroundStyle(selected ? Color.white : Theme.ink)
-            .background(RoundedRectangle(cornerRadius: Radius.m).fill(selected ? tint : Theme.ink.opacity(0.05)))
+            // 6.0 · Lo strumento scelto come l'interruttore: foresta di giorno, oro di notte
+            .foregroundStyle(selected ? Theme.segOnText : Theme.ink)
+            .background(RoundedRectangle(cornerRadius: Radius.m).fill(selected ? Theme.segOn : Theme.ink.opacity(0.05)))
             .overlay(alignment: .topTrailing) {
                 if used && !selected { Circle().fill(Theme.brass).frame(width: 6, height: 6).padding(5) }
             }
