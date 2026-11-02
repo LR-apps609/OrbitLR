@@ -162,6 +162,12 @@ jobs:
           done
           # Il test che stava girando quando si è fermato (partito ma mai finito)
           awk '/Test Case .* started/ {cur=$0} /Test Case .* (passed|failed|skipped)/ {cur=""} /Restarting after unexpected exit/ {if (cur!="") print "::error::Interrotto (si è chiuso o ha superato il tempo): " cur; cur=""}' test.log | sort -u | head -n 5
+          # 6.0.1 · Se un test si chiude di colpo o va oltre il tempo, le righe prima della ripartenza (per capire perché)
+          if grep -q "Restarting after unexpected exit" test.log; then
+            echo "::group::Righe prima della ripartenza"
+            grep -n -B 40 "Restarting after unexpected exit" test.log | grep -vE "Test Case .* passed" | tail -n 60
+            echo "::endgroup::"
+          fi
           passed=$(grep -cE "Test Case .* passed" test.log || true)
           failed=$(grep -cE "Test Case .* failed" test.log || true)
           echo "::notice::Test superati: $passed · falliti: $failed"
