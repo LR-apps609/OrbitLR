@@ -68,7 +68,7 @@ export function renamePreset(id, name) {
 /** Una finestrella con un campo di testo; risolve con il testo o null. */
 export function askName(title, value, hint) {
   return new Promise((resolve) => {
-    const input = h("input", { type: "text", value, maxlength: "40", "aria-label": t("Nome"), style: { width: "100%", boxSizing: "border-box", padding: "8px 10px", borderRadius: "10px", border: "1px solid var(--line-2)", background: "var(--card)", color: "var(--ink)", font: "inherit" } });
+    const input = h("input", { type: "text", value, maxlength: "40", "aria-label": t("Nome"), style: { width: "100%", boxSizing: "border-box", padding: "8px 10px", borderRadius: "12px", border: "1px solid var(--line-2)", background: "var(--card)", color: "var(--ink)", font: "inherit" } });
     const bg = h("div.modal-bg");
     const close = (v) => { bg.remove(); resolve(v); };
     const ok = h("button.btn.primary", { type: "button", onclick: () => close(input.value.trim() || null) }, t("Salva"));

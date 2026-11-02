@@ -1,3 +1,21 @@
+Novità per Windows 2.0 «Notte e oro»:
+• Un volto nuovo, lo stesso dell'app per Mac 6.0: verde foresta, carta chiara e oro. La barra laterale è foresta anche di giorno e la sezione scelta si accende d'oro
+• Pulsante principale verde di giorno e oro di notte; l'interruttore Semplice · Completo e lo strumento scelto nel Montaggio usano gli stessi colori
+• La torta di Converti: spicchi salvia chiari, quello sotto il puntatore diventa foresta con la scritta oro (di notte oro con la scritta scura). Nel Montaggio l'indicatore è foresta, di notte oro
+• Ogni tipo di file ha il suo colore, chiaro e scuro: il PDF ora è blu, così il rosso resta solo agli errori
+• Angoli più morbidi e regolari, titoli più decisi
+• Ogni testo si legge bene: contrasto di almeno 4,5:1 di giorno e di notte
+• Un solo tema: in Opzioni → Aspetto scegli Chiaro, Scuro o Come Windows. Niente cambia nelle funzioni
+
+What’s new in Windows 2.0 “Night and Gold”:
+• A new look, the same as the Mac app 6.0: forest green, light paper and gold. The sidebar is forest green even by day, and the selected section lights up in gold
+• Main button green by day and gold at night; the Simple · Complete switch and the selected tool in the Editor use the same colors
+• The Convert pie: light sage slices; the one under the pointer turns forest green with gold text (gold with dark text at night). In the Editor the playhead is forest green, gold at night
+• Every file type has its own color, light and dark: PDF is now blue, so red is used only for errors
+• Softer, more regular corners and bolder titles
+• Every text is easy to read: contrast of at least 4.5:1 by day and at night
+• One theme: in Settings → Appearance choose Light, Dark or Same as Windows. None of the features change
+
 Novità per Windows 1.2 «Sistema»:
 • Una parola per cosa, in tutta l'app: «Rimuovi i silenzi», «Inizia qui» e «Finisci qui» (clip, testi, musica, Audio e Taglia), «Editor PDF», «Rimuovi la password…», «Muta la clip», «Riattiva l’audio», «Muta tutti i video». «Togli la clip», «Togli il testo» e «Togli la musica» li fanno uscire dal progetto: il file resta dov'è
 • Barra del risultato: «Elimina il risultato» al posto di «Annulla», perché manda nel Cestino di Windows. «Aggiungi…» e «Apri…» ovunque

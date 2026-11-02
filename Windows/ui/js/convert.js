@@ -135,7 +135,7 @@ export function convertPage(app) {
           logoRing(),
           h("h2", t("Trascina un file. Scegli cosa farne.")),
           h("p", t("oppure clicca per sceglierlo · funziona anche con più file e con le cartelle")),
-          h("div.chips", ["pdf", "image", "video", "audio", "doc"].map((k) => h("span.chip-k", { style: { background: KINDS[k].color + "22", color: KINDS[k].color } }, ico(KINDS[k].icon, 13), KINDS[k].label)))));
+          h("div.chips", ["pdf", "image", "video", "audio", "doc"].map((k) => h("span.chip-k", { style: { background: `color-mix(in srgb, ${KINDS[k].color} 13%, transparent)` } }, h("span", { style: { color: KINDS[k].color, display: "inline-flex" } }, ico(KINDS[k].icon, 13)), KINDS[k].label)))));
       stage.replaceChildren(dz);
       app.dropTarget = dz;
       return;
@@ -181,7 +181,8 @@ export function convertPage(app) {
 
 /** Il quadrante colorato con il + al centro (come sull'app per Mac). */
 export function logoRing() {
-  const colors = ["#8FB489", "#E3B866", "#9C95C9", "#4F9E99", "#C76B4F", "#8E6AB3", "#D9973A", "#6F8FC6"];
+  // 2.0 · Gli spicchi con i colori dei tipi «Notte e oro»
+  const colors = ["var(--k-img)", "var(--gold)", "var(--k-video)", "var(--k-pdf)", "var(--k-slide)", "var(--k-sheet)", "var(--k-audio)", "var(--k-doc)"];
   const ns = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(ns, "svg");
   svg.setAttribute("viewBox", "-80 -80 160 160");
@@ -197,7 +198,7 @@ export function logoRing() {
     const p = document.createElementNS(ns, "path");
     const pt = (r, a) => `${(Math.cos(a) * r).toFixed(2)} ${(Math.sin(a) * r).toFixed(2)}`;
     p.setAttribute("d", `M ${pt(r1, a0)} A ${r1} ${r1} 0 0 1 ${pt(r1, a1)} L ${pt(r0, a1)} A ${r0} ${r0} 0 0 0 ${pt(r0, a0)} Z`);
-    p.setAttribute("fill", c);
+    p.style.fill = c;
     svg.append(p);
   });
   const mid = document.createElementNS(ns, "circle");

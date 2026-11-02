@@ -22,7 +22,7 @@ const TIPS = () => [
   [t("Video Downloader"), t("Nelle schede Video e Audio incolla un link: OrbitLR scarica il video o solo l'audio.")],
   [t("Da logo a vettoriale"), t("Trascina un logo o una firma e scegli lo spicchio SVG: diventa nitido a qualunque misura, con i colori puliti.")],
   [t("Togli un logo"), t("In Immagini, «Nascondi un logo» → «Togli con l'IA»: lo sfondo dietro viene ricostruito, sul computer.")],
-  [t("Radio di notte"), t("In Opzioni → Aspetto scegli la modalità scura; lì spegni anche i suoni.")],
+  [t("Di notte"), t("In Opzioni → Aspetto scegli la modalità scura; lì spegni anche i suoni.")],
 ];
 
 export const tipsOn = () => store.get("tips", true) !== false;

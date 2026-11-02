@@ -146,7 +146,7 @@ export function audioPage(app) {
         voices = [];
         invoke("voices").then((v) => { voices = v || []; render(); }).catch(() => {});
       }
-      const sel = h("select", { style: { width: "100%", padding: "7px", borderRadius: "10px", border: "1px solid var(--line-2)", background: "var(--card)", fontWeight: 700 } },
+      const sel = h("select", { style: { width: "100%", padding: "7px", borderRadius: "12px", border: "1px solid var(--line-2)", background: "var(--card)", fontWeight: 700 } },
         h("option", { value: "" }, t("La voce predefinita di Windows")),
         voices.map((v) => h("option", { value: v.name, selected: v.name === opts.voice || null }, `${v.name.replace(/^Microsoft /, "").replace(/ Desktop$/, "")} · ${v.culture}`)));
       sel.addEventListener("change", () => (opts.voice = sel.value));

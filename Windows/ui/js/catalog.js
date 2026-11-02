@@ -3,12 +3,13 @@
 import { t, tc } from "./i18n.js";
 
 export const KINDS = {
-  image: { label: t("Immagini"), icon: "image", color: "#3F8F86" },
-  video: { label: t("Video"), icon: "film", color: "#7E5FA8" },
-  audio: { label: t("Audio"), icon: "audio-lines", color: "#C38A2E" },
-  pdf: { label: "PDF", icon: "file-text", color: "#C2553F" },
-  doc: { label: t("Documenti"), icon: "file-text", color: "#4F74B3" },
-  other: { label: tc("kind", "Altro"), icon: "file", color: "#77796B" },
+  // 2.0 · I colori dei tipi sono token di app.css (chiaro e scuro, come sul Mac 6.0): il PDF è blu, il rosso resta agli errori
+  image: { label: t("Immagini"), icon: "image", color: "var(--k-img)" },
+  video: { label: t("Video"), icon: "film", color: "var(--k-video)" },
+  audio: { label: t("Audio"), icon: "audio-lines", color: "var(--k-audio)" },
+  pdf: { label: "PDF", icon: "file-text", color: "var(--k-pdf)" },
+  doc: { label: t("Documenti"), icon: "file-text", color: "var(--k-doc)" },
+  other: { label: tc("kind", "Altro"), icon: "file", color: "var(--k-other)" },
 };
 
 export const IMAGE_EXTS = ["jpg", "jpeg", "png", "heic", "heif", "webp", "avif", "gif", "bmp", "tif", "tiff", "ico", "jfif"];

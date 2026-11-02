@@ -133,7 +133,7 @@ export function settingsPage(app) {
               undoToast(used ? t`Tolta «${p.name}». Una cartella automatica la usa ancora: continua a lavorare finché non la togli da Cartelle automatiche.` : t`Tolta «${p.name}».`, () => { restorePreset(back); render(); });
             } }, t("Togli"))))),
         h("div.set", h("h3", t("Aspetto")),
-          h("div.opts", [["auto", t("Come Windows")], ["light", t("Chiaro")], ["dark", t("Radio di notte")]].map(([v, l]) =>
+          h("div.opts", [["auto", t("Come Windows")], ["light", t("Chiaro")], ["dark", t("Scuro")]].map(([v, l]) =>
             h("button.opt" + (v === theme ? ".on" : ""), { onclick: () => { store.set("theme", v); app.applyTheme(); render(); } }, l))),
           h("div.opts", { style: { marginTop: "8px" } }, [[true, t("Suoni accesi")], [false, t("Senza suoni")]].map(([v, l]) =>
             h("button.opt" + (v === soundsOn() ? ".on" : ""), { onclick: () => { setSounds(v); if (v) play("select"); render(); } }, l))),

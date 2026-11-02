@@ -103,7 +103,7 @@ export function createTrim({ path, duration, media, peaks, maxLen = 0, onChange 
     const g = canvas.getContext("2d");
     g.scale(dpr, dpr);
     const css = getComputedStyle(document.documentElement);
-    g.fillStyle = css.getPropertyValue("--sage-2").trim() || "#8FB489";
+    g.fillStyle = css.getPropertyValue("--k-audio").trim() || "#8F620E";
     if (peaks?.length) {
       const n = peaks.length, w = r.width / n, mid = r.height / 2;
       for (let i = 0; i < n; i++) {
