@@ -63,9 +63,14 @@ enum UpdateCheck {
         }
     }
 
+    /// 6.0.1 · Un controllo alla volta: due clic su «Controlla aggiornamenti» non fanno due richieste né due avvisi.
+    @MainActor static private(set) var checking = false
+
     @MainActor
     static func check(userInitiated: Bool) async {
-        guard !Updater.shared.busy else { return }
+        guard !Updater.shared.busy, !checking else { return }
+        checking = true
+        defer { checking = false }
         UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: lastKey)
         let rel: Release?
         do { rel = try await latest() } catch {

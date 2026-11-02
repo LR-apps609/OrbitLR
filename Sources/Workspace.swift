@@ -59,6 +59,8 @@ final class FileGroup: ObservableObject, Identifiable {
     let kind: Kind
     @Published var files: [URL]
     let pie = PieModel()
+    /// 6.0.1 · I file per cui stime, peso e miniatura sono già pronti (si rifanno solo se cambiano).
+    var builtFiles: [URL]? = nil
     init(kind: Kind, files: [URL]) { self.kind = kind; self.files = files }
 }
 
@@ -169,24 +171,40 @@ final class Workspace: ObservableObject, @unchecked Sendable {
         let exts = Set(gr.files.map { Catalog.norm($0.pathExtension) })
         let base = Catalog.pieActions(for: gr.kind, exts: exts, mergeable: mergeable, count: gr.files.count)
         pie.setup(actions: RecipeStore.shared.merged(PresetStore.shared.merged(base, kind: gr.kind), kind: gr.kind))
-        pie.loadEstimates(files: gr.files, kind: gr.kind)
+        // 6.0.1 · Togliendo un file da un altro gruppo cambiano solo gli spicchi (es. «Unisci»):
+        // stime, peso e miniatura di questo gruppo restano quelli di prima.
+        let unchanged = gr.builtFiles == gr.files && !pie.estimates.isEmpty
+        if !unchanged { pie.loadEstimates(files: gr.files, kind: gr.kind) }
         pie.tint = Theme.color(gr.kind)
         pie.suggestedId = Catalog.suggested(for: gr.kind, exts: exts)
         pie.lastId = UserDefaults.standard.string(forKey: "last_" + gr.kind.rawValue)
         pie.fileName = gr.files[0].lastPathComponent
-        let bytes = gr.files.reduce(Int64(0)) { $0 + Job.size(of: $1) }
-        let size = Fmt.bytes(bytes)
-        pie.subtitle = gr.files.count > 1 ? String(localized: "e altri \(gr.files.count - 1) · \(size)") : size
-        pie.icon = NSWorkspace.shared.icon(forFile: gr.files[0].path)
+        if gr.builtFiles != gr.files {
+            let bytes = gr.files.reduce(Int64(0)) { $0 + Job.size(of: $1) }
+            let size = Fmt.bytes(bytes)
+            pie.subtitle = gr.files.count > 1 ? String(localized: "e altri \(gr.files.count - 1) · \(size)") : size
+            pie.icon = NSWorkspace.shared.icon(forFile: gr.files[0].path)
+            loadThumbnail(gr.files[0], into: pie)
+            gr.builtFiles = gr.files
+        }
         pie.onClose = {}
         pie.onPick = { [weak self, weak gr] a in
             guard let self, let gr else { return }
             self.picked(a, in: gr)
         }
-        loadThumbnail(gr.files[0], into: pie)
+    }
+
+    /// 6.0.1 · Doppio clic sulla torta della finestra: la stessa scelta entro mezzo secondo vale una volta sola.
+    private var lastPick: (group: UUID, action: String, at: Date)? = nil
+    static let repeatWindow: TimeInterval = 0.5
+    func isRepeatPick(_ actionId: String, group: UUID, now: Date = Date()) -> Bool {
+        defer { lastPick = (group, actionId, now) }
+        guard let l = lastPick else { return false }
+        return l.group == group && l.action == actionId && now.timeIntervalSince(l.at) < Self.repeatWindow
     }
 
     private func picked(_ chosen: Action, in gr: FileGroup) {
+        if isRepeatPick(chosen.id, group: gr.id) { return }
         gr.pie.estimateTask?.cancel()          // 2.7.1 · si sceglie: la stima si ferma e lascia la macchina alla conversione
         var a = chosen
         var presetParam: String? = nil
