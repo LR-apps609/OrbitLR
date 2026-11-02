@@ -166,16 +166,25 @@ jobs:
           failed=$(grep -cE "Test Case .* failed" test.log || true)
           echo "::notice::Test superati: $passed · falliti: $failed"
           # 3.4.1 · I tempi misurati dai test di velocità, visibili nel riepilogo
-          grep -oE "TEMPO: .*" test.log | sort -u | head -n 30 | while read -r l; do echo "::notice::$l"; done
+          grep -oE "TEMPO: .*" test.log | grep -v MEDIANA | sort -u | head -n 30 | while read -r l; do echo "::notice::$l"; done
           echo "## Test automatici" >> $GITHUB_STEP_SUMMARY
           echo "Superati: $passed · Falliti: $failed" >> $GITHUB_STEP_SUMMARY
+          # 6.0.1 · Mediane per il confronto prima/dopo, nel riepilogo e in un file a parte
+          grep -oE "TEMPO: MEDIANA .*" test.log | sed 's/TEMPO: MEDIANA //' | sort -u > tempi.txt || true
+          if [ -s tempi.txt ]; then
+            echo "## Tempi (mediana)" >> $GITHUB_STEP_SUMMARY
+            sed 's/^/- /' tempi.txt >> $GITHUB_STEP_SUMMARY
+            while read -r l; do echo "::notice::MEDIANA $l"; done < tempi.txt
+          fi
           exit $status
 
       - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: registro-test
-          path: test.log
+          path: |
+            test.log
+            tempi.txt
 
       - name: Pacchetto .orbitlr
         run: |

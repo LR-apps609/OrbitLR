@@ -105,4 +105,64 @@ final class PerfTests: XCTestCase {
             XCTAssertNotNil(ThumbCache.shared.cached(for: photo, side: 120), "dopo la prima volta è in memoria")
         }
     }
+
+    // MARK: 6.0.1 · Misure ripetibili (mediana di 5) e processore a riposo
+
+    private func median(_ v: [Double]) -> Double { let s = v.sorted(); return s[s.count / 2] }
+
+    /// Ritorno su ogni scheda già aperta: 5 giri, si stampa la mediana (per il confronto prima/dopo in CI).
+    func testMedianeDelCambioDiScheda() {
+        let app = AppState.shared
+        let h = host(MainWindow())
+        h.view.layoutSubtreeIfNeeded()
+        let tabs = SidebarItem.tabs + [.activity, .workspace]
+        for tab in tabs { app.selection = tab; h.view.layoutSubtreeIfNeeded() }
+        var t: [SidebarItem: [Double]] = [:]
+        for _ in 0..<5 {
+            for tab in tabs {
+                let t0 = CACurrentMediaTime()
+                app.selection = tab
+                h.view.layoutSubtreeIfNeeded()
+                RunLoop.main.run(until: Date().addingTimeInterval(0.01))
+                h.view.layoutSubtreeIfNeeded()
+                t[tab, default: []].append(CACurrentMediaTime() - t0 - 0.01)
+            }
+        }
+        for tab in tabs { print("TEMPO: MEDIANA scheda \(tab.rawValue) ritorno \(ms(median(t[tab] ?? [0])))") }
+        app.selection = .workspace
+    }
+
+    /// Torta già pronta: mediana di 5.
+    func testMedianaDellaTorta() throws {
+        let photo = try Fixtures.photo(name: "torta-mediana.jpg")
+        var times: [Double] = []
+        for _ in 0..<6 {
+            let t0 = CACurrentMediaTime()
+            let m = PieModel()
+            m.setup(actions: Catalog.pieActions(for: .img, exts: ["jpg"], mergeable: 1, count: 1))
+            m.fileName = photo.lastPathComponent
+            let h = host(PieView(model: m, side: 520), size: CGSize(width: 520, height: 520))
+            h.view.layoutSubtreeIfNeeded()
+            times.append(CACurrentMediaTime() - t0)
+        }
+        print("TEMPO: MEDIANA torta già pronta \(ms(median(Array(times.dropFirst()))))")
+    }
+
+    /// Processore a riposo: finestra montata, 5 secondi senza fare niente.
+    /// Il processo di prova ha anche i suoi thread: la soglia è larga, il numero vero si legge nel riepilogo.
+    func testProcessoreARiposo() {
+        let h = host(MainWindow())
+        h.view.layoutSubtreeIfNeeded()
+        RunLoop.main.run(until: Date().addingTimeInterval(1))
+        func cpu() -> Double {
+            var u = rusage(); getrusage(RUSAGE_SELF, &u)
+            return Double(u.ru_utime.tv_sec + u.ru_stime.tv_sec) + Double(u.ru_utime.tv_usec + u.ru_stime.tv_usec) / 1_000_000
+        }
+        let c0 = cpu(), w0 = CACurrentMediaTime()
+        RunLoop.main.run(until: Date().addingTimeInterval(5))
+        let share = (cpu() - c0) / (CACurrentMediaTime() - w0)
+        print("TEMPO: MEDIANA processore a riposo \(String(format: "%.1f", share * 100))%")
+        XCTAssertLessThan(share, 0.10, "a riposo OrbitLR usa troppo processore (\(Int(share * 100))%)")
+        _ = h
+    }
 }
