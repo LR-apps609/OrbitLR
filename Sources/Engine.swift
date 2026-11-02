@@ -528,8 +528,13 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         default:
             break
         }
-        objectWillChange.send()
+        // 6.0.1 · Le righe di avanzamento («P») cambiano solo il lavoro, che le sue viste osservano già:
+        // non ridisegnano più la finestra intera, Attività e il menu a ogni riga del motore.
+        if Self.lineChangesQueue(tag) { objectWillChange.send() }
     }
+
+    /// Quali righe del motore cambiano qualcosa che si vede fuori dalla scheda del lavoro.
+    static func lineChangesQueue(_ tag: String) -> Bool { tag != "P" }
 
     private func finish(_ job: Job, code: Int32) {
         guard job.state == .running || job.state == .waiting else { return }

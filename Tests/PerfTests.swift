@@ -165,4 +165,10 @@ final class PerfTests: XCTestCase {
         XCTAssertLessThan(share, 0.10, "a riposo OrbitLR usa troppo processore (\(Int(share * 100))%)")
         _ = h
     }
+
+    /// Le righe di avanzamento del motore non ridisegnano la coda intera.
+    func testAvanzamentoNonRidisegnaLaCoda() {
+        XCTAssertFalse(QueueStore.lineChangesQueue("P"))
+        for t in ["OUT", "OK", "NOTE", "FAIL", "MISSING"] { XCTAssertTrue(QueueStore.lineChangesQueue(t), t) }
+    }
 }
