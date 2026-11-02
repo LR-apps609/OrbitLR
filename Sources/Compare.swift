@@ -105,7 +105,7 @@ struct CompareView: View {
             Spacer()
             if b > 0 {
                 Text(pct <= 0 ? "−\(abs(pct))%" : "+\(pct)%")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(.system(size: 22, weight: .heavy, design: .rounded))
                     .foregroundStyle(pct < 0 ? Theme.green : Theme.brass)
                     .help(pct < 0 ? String(localized: "Spazio risparmiato") : String(localized: "Il risultato pesa più dell’originale"))
             }

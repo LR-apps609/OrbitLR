@@ -364,7 +364,7 @@ struct WelcomeView: View {
             Spacer(minLength: 0)
             BrandAnimation(size: CGSize(width: 320, height: 180))
             VStack(spacing: 4) {
-                Text("OrbitLR").font(.system(size: 22, weight: .bold, design: .rounded))
+                Text("OrbitLR").font(.system(size: 22, weight: .heavy, design: .rounded))
                 Text("Versione \(version)").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Theme.brass)
             }
             Spacer(minLength: 0)
@@ -377,7 +377,7 @@ struct WelcomeView: View {
             Spacer(minLength: 0)
             BrandAnimation(size: CGSize(width: 320, height: 180))
             VStack(spacing: 4) {
-                Text(ctl.firstLaunch ? String(localized: "Benvenuto in OrbitLR") : "OrbitLR").font(.system(size: 22, weight: .bold, design: .rounded))
+                Text(ctl.firstLaunch ? String(localized: "Benvenuto in OrbitLR") : "OrbitLR").font(.system(size: 22, weight: .heavy, design: .rounded))
                 Text(ctl.firstLaunch ? String(localized: "Converti e modifica i tuoi file, in un clic") : String(localized: "Versione \(version)"))
                     .font(.system(size: 12.5, weight: .semibold, design: .rounded)).foregroundStyle(Theme.brass)
             }

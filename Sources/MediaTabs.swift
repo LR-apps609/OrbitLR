@@ -567,14 +567,14 @@ struct AudioTabView: View {
             VStack(alignment: .leading, spacing: 2) {
                 if tool == .tts {
                     // 3.0 · In «Testo in voce» non c'è un file aperto: niente nome di file
-                    Text("Testo in voce").font(.system(size: 22, weight: .bold, design: .rounded))
+                    Text("Testo in voce").font(.system(size: 22, weight: .heavy, design: .rounded))
                     Text("Scrivi un testo: diventa un file audio").font(.system(size: 12.5)).foregroundStyle(.secondary)
                 } else if let f = m.file {
                     Text(f.deletingPathExtension().lastPathComponent).font(.system(size: 15, weight: .bold)).lineLimit(1).truncationMode(.middle)
                     Text(([Catalog.norm(f.pathExtension).uppercased()] + [m.info]).filter { !$0.isEmpty }.joined(separator: " · "))
                         .font(.system(size: 12.5)).foregroundStyle(.secondary).lineLimit(1)
                 } else {
-                    Text("Audio").font(.system(size: 22, weight: .bold, design: .rounded))
+                    Text("Audio").font(.system(size: 22, weight: .heavy, design: .rounded))
                     Text("Suonerie, tagli, volume, voce e altro").font(.system(size: 12.5)).foregroundStyle(.secondary)
                 }
             }

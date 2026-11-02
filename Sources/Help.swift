@@ -123,7 +123,7 @@ struct HelpView: View {
             HStack(alignment: .center, spacing: 14) {
                 TitleAccent(color: Theme.brass)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Aiuto").font(.system(size: 22, weight: .bold, design: .rounded))
+                    Text("Aiuto").font(.system(size: 22, weight: .heavy, design: .rounded))
                     Text("Le domande più frequenti. Scrivi una parola per cercare.")
                         .font(.system(size: 12.5)).foregroundStyle(.secondary)
                 }

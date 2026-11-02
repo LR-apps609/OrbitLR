@@ -212,7 +212,7 @@ struct VideoProjectsView: View {
             HStack(alignment: .center, spacing: 14) {
                 TitleAccent(color: Theme.color(.video))
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Video").font(.system(size: 22, weight: .bold, design: .rounded))
+                    Text("Video").font(.system(size: 22, weight: .heavy, design: .rounded))
                     Text(s.library.isEmpty ? String(localized: "Trascina qui dei video per iniziare un montaggio.")
                                            : String(localized: "Clicca un progetto per riprenderlo da dove eri rimasto."))
                         .font(.system(size: 12.5)).foregroundStyle(.secondary)

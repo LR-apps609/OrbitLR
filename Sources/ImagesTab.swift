@@ -281,7 +281,7 @@ struct KindTabView: View {
         HStack(spacing: 10) {
             TitleAccent(color: Theme.color(style.kind)).padding(.trailing, 4)
             VStack(alignment: .leading, spacing: 2) {
-                Text(style.title).font(.system(size: 22, weight: .bold, design: .rounded))
+                Text(style.title).font(.system(size: 22, weight: .heavy, design: .rounded))
                 Text(subtitle).font(.system(size: 12.5)).foregroundStyle(.secondary)
                     .help(m.files.isEmpty ? "" : (fem ? String(localized: "Clic su una foto per sceglierla, ⌘-clic per sceglierne più di una") : String(localized: "Clic su un file per sceglierlo, ⌘-clic per sceglierne più di uno")))
                 // 5.0 · L'interruttore sotto il titolo: la riga resta libera per il Downloader e i pulsanti
