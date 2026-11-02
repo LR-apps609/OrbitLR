@@ -517,7 +517,7 @@ struct FileChip: View {
             Text(url.lastPathComponent).font(.system(size: 11)).lineLimit(1).truncationMode(.middle).frame(maxWidth: 160)
             Button(action: onRemove) {
                 Image(systemName: "xmark.circle.fill").font(.system(size: 13))
-                    .foregroundStyle(hover ? Theme.color(.pdf) : Color.secondary)
+                    .foregroundStyle(hover ? Theme.danger : Color.secondary)
                     .hitArea()                      // 5.2 · area di clic di almeno 24 pt
             }
             .buttonStyle(.plain)

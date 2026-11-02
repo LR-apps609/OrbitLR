@@ -372,7 +372,7 @@ struct RadioIllustration: View {
                         }
                     }
                     .padding(.leading, 5)
-                    Capsule().fill(Theme.color(.pdf)).frame(width: 2, height: 16)
+                    Capsule().fill(Theme.danger).frame(width: 2, height: 16)
                         .offset(x: sweep ? 58 : 8)
                 }
                 .frame(width: 68, height: 18)

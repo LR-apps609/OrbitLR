@@ -370,7 +370,7 @@ struct PieView: View {
                 Text("NUOVO").font(.system(size: max(7, petal * 0.085), weight: .heavy, design: .rounded))
                     .foregroundStyle(Color.white)
                     .padding(.horizontal, 5).padding(.vertical, 1.5)
-                    .background(Capsule().fill(Theme.color(.pdf)))
+                    .background(Capsule().fill(Theme.danger))
                     .offset(y: -petal * 0.08)
             }
         }

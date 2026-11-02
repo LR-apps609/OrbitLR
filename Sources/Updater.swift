@@ -378,7 +378,7 @@ struct UpdateView: View {
 
             if let e = updater.error {
                 ScrollView {
-                    Text(e).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.color(.pdf))
+                    Text(e).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.danger)
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }

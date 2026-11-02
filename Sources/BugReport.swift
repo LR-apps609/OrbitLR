@@ -172,7 +172,7 @@ struct BugReportView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
-                Image(systemName: "ladybug.fill").font(.system(size: 22)).foregroundStyle(Theme.color(.pdf))
+                Image(systemName: "ladybug.fill").font(.system(size: 22)).foregroundStyle(Theme.danger)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Segnala un problema").font(.system(size: 17, weight: .bold))
                     Text("Raccontami cosa è successo: più dettagli, più in fretta si sistema.")
@@ -184,7 +184,7 @@ struct BugReportView: View {
                 TextField("nome@esempio.it", text: $email)
                     .textFieldStyle(.roundedBorder)
                 if !emailOK {
-                    Text("Controlla l’indirizzo email.").font(.system(size: 11)).foregroundStyle(Theme.color(.pdf))
+                    Text("Controlla l’indirizzo email.").font(.system(size: 11)).foregroundStyle(Theme.danger)
                 }
             }
 

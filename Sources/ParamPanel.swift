@@ -231,7 +231,7 @@ struct ParamView: View {
                 .background(RoundedRectangle(cornerRadius: Radius.m).fill(Theme.parchment.opacity(0.4)))
             }
             if !error.isEmpty {
-                Label(error, systemImage: "exclamationmark.triangle.fill").font(.system(size: 12)).foregroundStyle(Theme.color(.pdf))
+                Label(error, systemImage: "exclamationmark.triangle.fill").font(.system(size: 12)).foregroundStyle(Theme.danger)
             }
             HStack {
                 Spacer()

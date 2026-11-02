@@ -134,7 +134,7 @@ struct FeedbackView: View {
                 .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             if let message {
                 Label(message, systemImage: "exclamationmark.triangle.fill").font(.system(size: 12))
-                    .foregroundStyle(Theme.color(.pdf)).textSelection(.enabled)
+                    .foregroundStyle(Theme.danger).textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
             }
             HStack {

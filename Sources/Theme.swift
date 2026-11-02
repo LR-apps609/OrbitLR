@@ -139,13 +139,14 @@ enum Theme {
 
     static func color(_ k: Kind?) -> Color {
         switch k {
-        case .pdf?:   return Color(hex: 0xC8654F)   // terracotta
-        case .img?:   return Color(hex: 0x4E9A92)   // verde acqua
-        case .audio?: return Color(hex: 0xC99134)   // senape
-        case .video?: return Color(hex: 0x8A6BA6)   // prugna
-        case .doc?:   return Color(hex: 0x5B7FAA)   // azzurro polvere
-        case .sheet?: return Color(hex: 0x6E9A52)   // oliva
-        case .slide?: return Color(hex: 0xD29F45)   // ambra
+        // 6.0 · I colori dei tipi «Notte e oro» (chiaro / scuro), uguali sul sito: il PDF è blu ovunque
+        case .pdf?:   return Color(light: 0x2F64B0, dark: 0x7FA8EE)
+        case .img?:   return Color(light: 0x1F7A70, dark: 0x5CC4B8)
+        case .audio?: return Color(light: 0x8F620E, dark: 0xE0B055)
+        case .video?: return Color(light: 0x6E4FA0, dark: 0xB39AE6)
+        case .doc?:   return Color(light: 0x56637F, dark: 0xA3B0CC)
+        case .sheet?: return Color(light: 0x3F7A2E, dark: 0x8CC26E)
+        case .slide?: return Color(light: 0xA5571A, dark: 0xF0A065)
         case .text?:  return Color(hex: 0x7B83A8)   // ardesia
         default:      return accent
         }
