@@ -4,6 +4,11 @@ import AVKit
 
 // MARK: - Modello: riproduzione, forma d'onda, selezione
 
+/// 6.0.1 · La posizione della testina di Audio e Taglia, osservata solo da chi la disegna.
+final class TrimClock: ObservableObject {
+    @Published var time: Double = 0
+}
+
 final class TrimModel: ObservableObject, @unchecked Sendable {
     let url: URL
     let isVideo: Bool
@@ -12,7 +17,13 @@ final class TrimModel: ObservableObject, @unchecked Sendable {
     @Published var duration: Double = 0
     @Published var start: Double = 0
     @Published var end: Double = 0
-    @Published var playhead: Double = 0
+    /// 6.0.1 · La posizione cambia 33 volte al secondo: vive in un orologio a parte (come `PlayClock` del Montaggio),
+    /// così durante l'ascolto si ridisegna solo la testina, non l'onda, i pulsanti e la scheda.
+    let clock = TrimClock()
+    var playhead: Double {
+        get { clock.time }
+        set { clock.time = newValue }
+    }
     @Published var playing = false
     @Published var loop = false
     @Published var peaks: [Float] = []
@@ -599,7 +610,6 @@ struct TrimTimeline: View {
             let toT = { (x: CGFloat) -> Double in v0 + Double(x / max(w, 1)) * span }
             let xs0 = toX(m.start)
             let xe0 = toX(m.end)
-            let xp = toX(m.playhead)
             let ruler: CGFloat = showRuler ? 16 : 0
             let peaks = m.levels.isEmpty ? m.peaks : m.visiblePeaks(count: bars(w))
             let rms = m.visibleRMS(count: peaks.count)
@@ -688,11 +698,8 @@ struct TrimTimeline: View {
                         .frame(width: max(4, ce - cs), height: h).offset(x: cs).allowsHitTesting(false)
                 }
 
-                // Testina
-                if xp >= -1 && xp <= w + 1 {
-                    Rectangle().fill(Theme.ink).frame(width: 2, height: h + 10).offset(x: xp - 1, y: -5)
-                        .shadow(color: Theme.ivory, radius: 1).allowsHitTesting(false)
-                }
+                // Testina (6.0.1 · osserva solo l'orologio)
+                TrimPlayheadLine(clock: m.clock, v0: v0, span: span, w: w, h: h)
 
                 // 4.1.1 · Il tempo sotto il puntatore
                 if showRuler, let hx = hoverX, hx >= 0, hx <= w {
@@ -864,5 +871,18 @@ struct SelectionTimeFields: View {
         .onAppear { startText = formatTimeMs(trim.start); endText = formatTimeMs(trim.end) }
         .onChange(of: trim.start) { _, v in startText = formatTimeMs(v) }
         .onChange(of: trim.end) { _, v in endText = formatTimeMs(v) }
+    }
+}
+
+/// 6.0.1 · La testina dell'onda: si ridisegna da sola mentre il resto della timeline resta fermo.
+struct TrimPlayheadLine: View {
+    @ObservedObject var clock: TrimClock
+    let v0: Double, span: Double, w: CGFloat, h: CGFloat
+    var body: some View {
+        let xp = CGFloat((clock.time - v0) / max(span, 0.001)) * w
+        if xp >= -1 && xp <= w + 1 {
+            Rectangle().fill(Theme.ink).frame(width: 2, height: h + 10).offset(x: xp - 1, y: -5)
+                .shadow(color: Theme.ivory, radius: 1).allowsHitTesting(false)
+        }
     }
 }
