@@ -101,10 +101,14 @@ struct FAQ: Identifiable, Equatable {
         let words = fold(query).split(separator: " ").map(String.init).filter { !$0.isEmpty }
         guard !words.isEmpty else { return list }
         return list.filter { f in
-            let text = fold(f.question + " " + f.answer + " " + f.section)
+            let text = folded[f.id] ?? fold(f.question + " " + f.answer + " " + f.section)
             return words.allSatisfy { text.contains($0) }
         }
     }
+
+    /// 6.0.1 · Domande e risposte già preparate per la ricerca (una volta sola, non a ogni tasto).
+    static let folded: [String: String] = Dictionary(all.map { ($0.id, fold($0.question + " " + $0.answer + " " + $0.section)) },
+                                                     uniquingKeysWith: { a, _ in a })
 
     static func fold(_ s: String) -> String {
         s.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "it_IT"))
@@ -119,6 +123,7 @@ struct HelpView: View {
     private var results: [FAQ] { FAQ.search(query) }
 
     var body: some View {
+        let results = self.results           // 6.0.1 · una ricerca per ridisegno, non una per sezione
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center, spacing: 14) {
                 TitleAccent(color: Theme.brass)

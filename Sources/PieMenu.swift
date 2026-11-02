@@ -32,6 +32,8 @@ final class PieModel: ObservableObject, @unchecked Sendable {
 
     func setup(actions: [Action]) {
         all = actions
+        resultsCache = nil
+        searchTexts = [:]
         pages = []
         var rest = actions
         while !rest.isEmpty {
@@ -80,15 +82,35 @@ final class PieModel: ObservableObject, @unchecked Sendable {
     }
 
     /// Le azioni che corrispondono a ciò che si è scritto (titolo, testo breve o descrizione, senza accenti).
+    /// 6.0.1 · Calcolate una volta per tasto (prima: una volta per spicchio a ogni ridisegno), con i testi già preparati.
     var results: [Action] {
+        if let c = resultsCache, c.query == query, c.count == all.count { return c.list }
         let q = Self.fold(query.trimmingCharacters(in: .whitespaces))
-        guard !q.isEmpty else { return [] }
-        let words = q.split(separator: " ").map(String.init)
-        return all.filter { a in
-            guard a.id != Action.more.id else { return false }
-            let text = Self.fold(a.title + " " + a.short + " " + a.hint + " " + a.id.replacingOccurrences(of: "to:", with: ""))
-            return words.allSatisfy { text.contains($0) }
+        let list: [Action]
+        if q.isEmpty { list = [] } else {
+            let words = q.split(separator: " ").map(String.init)
+            list = all.filter { a in
+                guard a.id != Action.more.id else { return false }
+                return words.allSatisfy { searchText(a).contains($0) }
+            }
         }
+        resultsCache = (query, all.count, list, Set(list.map { $0.id }))
+        return list
+    }
+
+    /// Se un'azione è tra i risultati (per gli spicchi spenti mentre si cerca).
+    func isResult(_ id: String) -> Bool {
+        _ = results
+        return resultsCache?.ids.contains(id) ?? false
+    }
+
+    private var resultsCache: (query: String, count: Int, list: [Action], ids: Set<String>)? = nil
+    private var searchTexts: [String: String] = [:]
+    private func searchText(_ a: Action) -> String {
+        if let t = searchTexts[a.id] { return t }
+        let t = Self.fold(a.title + " " + a.short + " " + a.hint + " " + a.id.replacingOccurrences(of: "to:", with: ""))
+        searchTexts[a.id] = t
+        return t
     }
 
     static func fold(_ s: String) -> String {
@@ -337,7 +359,7 @@ struct PieView: View {
         let suggested = a.id == model.suggestedId
         let isNew: Bool = a.id == Action.more.id ? model.newInMore : NewBadges.isNew(a.id)
         // Durante la ricerca restano accesi solo gli spicchi che corrispondono
-        let dimmed: Bool = !model.query.isEmpty && !model.results.contains { $0.id == a.id }
+        let dimmed: Bool = !model.query.isEmpty && !model.isResult(a.id)
         return VStack(spacing: 4) {
             Image(systemName: a.symbol).font(.system(size: petal * 0.27, weight: .semibold))
             Text(a.short).font(.system(size: max(10, petal * 0.145), weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7)

@@ -48,4 +48,28 @@ final class SpeedTests: XCTestCase {
         ws.remove(photo, from: img)
         XCTAssertEqual(img.builtFiles, img.files)
     }
+
+    /// La ricerca nella torta e nell'Aiuto dà gli stessi risultati di prima (ora calcolati una volta per tasto).
+    func testRicercheUguali() {
+        let m = PieModel()
+        let acts = Catalog.pieActions(for: .img, exts: ["jpg"], mergeable: 1, count: 1)
+        m.setup(actions: acts)
+        func naive(_ q: String) -> [String] {
+            let words = PieModel.fold(q.trimmingCharacters(in: .whitespaces)).split(separator: " ").map(String.init)
+            guard !words.isEmpty else { return [] }
+            return acts.filter { a in
+                a.id != Action.more.id && words.allSatisfy { PieModel.fold(a.title + " " + a.short + " " + a.hint + " " + a.id.replacingOccurrences(of: "to:", with: "")).contains($0) }
+            }.map { $0.id }
+        }
+        for q in ["", "png", "PNG", "ridim", "qualita", "zzz", "pdf j"] {
+            m.query = q
+            XCTAssertEqual(m.results.map { $0.id }, naive(q), "torta: «\(q)»")
+            for a in acts where a.id != Action.more.id { XCTAssertEqual(m.isResult(a.id), naive(q).contains(a.id)) }
+        }
+        for q in ["", "aggiorn", "ANNULLA", "zzz"] {
+            let words = FAQ.fold(q).split(separator: " ").map(String.init)
+            let expected = words.isEmpty ? FAQ.all.map { $0.id } : FAQ.all.filter { f in words.allSatisfy { FAQ.fold(f.question + " " + f.answer + " " + f.section).contains($0) } }.map { $0.id }
+            XCTAssertEqual(FAQ.search(q).map { $0.id }, expected, "Aiuto: «\(q)»")
+        }
+    }
 }
