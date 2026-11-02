@@ -185,7 +185,7 @@ struct MainWindow: View {
             // 6.0 · Barra laterale verde foresta anche in chiaro, come il fondo dell'icona: testi chiari, oro per la scelta
             .background(appScheme == .dark ? Color(hex: 0x0A1813) : Color(hex: 0x16302A))   // foresta, fissa
             .environment(\.colorScheme, .dark)
-            .tint(Theme.gold)
+            .tint(appScheme == .dark ? Color(hex: 0x1F3E35) : Color(hex: 0x21423A))   // 6.0 · scelta: verde più chiaro, testo d'oro
             .id(sidebarID)
             .background(GeometryReader { g in Color.clear.preference(key: SidebarWidthKey.self, value: g.size.width) })
             .onPreferenceChange(SidebarWidthKey.self) { w in
@@ -274,10 +274,13 @@ struct MainWindow: View {
 
     @ViewBuilder private func sidebarRow(_ item: SidebarItem) -> some View {
         HStack(spacing: 6) {
+            // 6.0 · La sezione scelta si accende d'oro, come il cerchio del logo
+            let on = app.selection == item
             Label {
-                Text(item.title)
+                Text(item.title).foregroundStyle(on ? Theme.gold : Color(hex: 0xF1F2E8))
+                    .fontWeight(on ? .semibold : .regular)
             } icon: {
-                Image(systemName: item.symbol).foregroundStyle(item.color)
+                Image(systemName: item.symbol).foregroundStyle(on ? Theme.gold : item.color)
             }
         }
         .badge(item == .activity ? store.runningJobs.count : 0)
