@@ -345,15 +345,16 @@ struct PieView: View {
             if let b = model.estimates[a.id], petal >= 56 {
                 Text(SizeEstimate.label(b)).font(.system(size: max(8, petal * 0.105), weight: .medium, design: .rounded))
                     .monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
-                    .foregroundStyle(on ? Color.white.opacity(0.9) : estimateColor(b))
+                    .foregroundStyle(on ? Theme.sliceHotText.opacity(0.9) : estimateColor(b))
                     .transition(.opacity)
             }
         }
         .animation(.easeOut(duration: 0.25), value: model.estimates[a.id])
-        .foregroundStyle(on ? Color.white : Theme.ink)
+        .foregroundStyle(on ? Theme.sliceHotText : Theme.ink)
         .frame(width: petal, height: petal)
         .background(
-            Circle().fill(on ? AnyShapeStyle(model.tint.gradient) : AnyShapeStyle(Theme.ivory))
+            // 6.0 · «Notte e oro»: lo spicchio sotto il puntatore è foresta con il testo d'oro (oro di notte)
+            Circle().fill(on ? AnyShapeStyle(Theme.sliceHot) : AnyShapeStyle(Theme.slice))
                 .shadow(color: Theme.shadow.opacity(on ? 0 : 0.12), radius: 3, y: 2)
         )
         .overlay(Circle().strokeBorder(suggested ? model.tint : Theme.ink.opacity(0.14), lineWidth: suggested ? 2 : 1))
@@ -376,7 +377,7 @@ struct PieView: View {
         }
         .opacity(dimmed ? 0.3 : 1)
         .scaleEffect(on ? 1.15 : 1)
-        .shadow(color: on ? model.tint.opacity(0.6) : .clear, radius: 16, y: 6)
+        .shadow(color: on ? Theme.sliceHot.opacity(0.45) : .clear, radius: 16, y: 6)
         .animation(.spring(response: 0.22, dampingFraction: 0.7), value: on)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(a.title)

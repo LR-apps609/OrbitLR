@@ -125,6 +125,10 @@ enum Theme {
     /// 6.0 · L'opzione scelta di un interruttore (Semplice · Completo · Editor)
     static let segOn = Color(light: 0x16302A, dark: 0xE2B562)
     static let segOnText = Color(light: 0xF1F2E8, dark: 0x13201A)
+    /// 6.0 · Gli spicchi della torta: salvia chiara a riposo, foresta (oro di notte) sotto il puntatore
+    static let slice = Color(light: 0xD4E3D7, dark: 0x21423A)
+    static let sliceHot = Color(light: 0x16302A, dark: 0xE2B562)
+    static let sliceHotText = Color(light: 0xE2B562, dark: 0x13201A)
 
     // Nomi usati nel resto dell'app
     static let accent = sageDeep
