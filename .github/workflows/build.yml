@@ -263,7 +263,7 @@ jobs:
           - mac: macos-26
             nome: tahoe-apple
     runs-on: ${{ matrix.mac }}
-    timeout-minutes: 25
+    timeout-minutes: 45
     permissions:
       contents: write
     steps:
@@ -288,7 +288,16 @@ jobs:
           system_profiler SPDisplaysDataType | grep -E "Resolution|Retina" || true
           open /Applications/OrbitLR.app
           sleep 20
-          pgrep -x OrbitLR >/dev/null || { echo "::error::${{ matrix.nome }}: OrbitLR non è partita"; exit 1; }
+          if ! pgrep -x OrbitLR >/dev/null; then
+            echo "::error::${{ matrix.nome }}: OrbitLR non è partita (o si è chiusa)"
+            ls -la ~/Library/Logs/DiagnosticReports/ | grep -i orbit || echo "nessun rapporto di arresto"
+            for f in ~/Library/Logs/DiagnosticReports/OrbitLR*; do [ -f "$f" ] && head -n 60 "$f"; done
+            cat ~/Library/Application\ Support/OrbitLR/*.log 2>/dev/null | tail -n 40 || true
+            log show --last 2m --style compact --predicate 'process == "OrbitLR" OR eventMessage CONTAINS "OrbitLR"' 2>/dev/null | tail -n 60 || true
+            echo "--- avvio diretto, 15 secondi ---"
+            ( /Applications/OrbitLR.app/Contents/MacOS/OrbitLR > /tmp/diretto.txt 2>&1 & ); sleep 15; tail -n 40 /tmp/diretto.txt
+            pgrep -x OrbitLR >/dev/null || exit 1
+          fi
       - name: Foto della finestra
         run: |
           OUT="$RUNNER_TEMP/foto/${{ matrix.nome }}"; mkdir -p "$OUT"
@@ -296,7 +305,16 @@ jobs:
           ID=${W%% *}
           if [ -n "$ID" ]; then screencapture -x -o -l"$ID" "$OUT/finestra.png"; fi
           screencapture -x "$OUT/schermo.png" || true
-          { sw_vers; uname -m; echo "finestra: $W"; } > "$OUT/mac.txt"
+          # Finestra bassa, come su un portatile da 13": si riapre con la misura salvata più piccola
+          osascript -e 'quit app "OrbitLR"' || pkill -x OrbitLR || true; sleep 3
+          for k in "NSWindow Frame main" "NSWindow Frame SwiftUI.main" "NSWindow Frame OrbitLR"; do
+            defaults write it.ledion.OrbitLR "$k" "60 60 1100 600 0 0 1440 900"
+          done
+          open /Applications/OrbitLR.app; sleep 15
+          W2=$(swift Tools/finestra.swift || true); echo "Finestra bassa: $W2"; echo "finestra bassa: $W2" >> "$OUT/mac.txt"
+          ID2=${W2%% *}
+          if [ -n "$ID2" ]; then screencapture -x -o -l"$ID2" "$OUT/finestra-bassa.png"; fi
+          { sw_vers; uname -m; echo "finestra: $W"; } >> "$OUT/mac.txt"
           ls -la "$OUT"
           [ -s "$OUT/finestra.png" ] || echo "::warning::${{ matrix.nome }}: niente foto della finestra"
       - name: Motore del Downloader

@@ -150,6 +150,10 @@ struct MainWindow: View {
                 }
                 .listStyle(.sidebar)
                 .scrollContentBackground(.hidden)
+                // 6.0.2 · La lista si accorcia quando manca spazio (finestra bassa, schermo da portatile): prima la colonna
+                // diventava più alta della finestra e macOS la spingeva in su, sotto i pallini, tagliando logo e prime voci
+                .frame(minHeight: 0, maxHeight: .infinity)
+                .layoutPriority(-1)
 
                 VStack(alignment: .leading, spacing: 10) {
                     // 3.0 · Il Cassetto al posto di «Risparmiati questo mese» (la cifra resta in Cronologia)
@@ -181,7 +185,9 @@ struct MainWindow: View {
                     .accessibilityLabel("OrbitLR versione \(UpdateCheck.current), controlla aggiornamenti")
                 }
                 .padding(12)
+                .fixedSize(horizontal: false, vertical: true)
             }
+            .frame(minHeight: 0, maxHeight: .infinity, alignment: .top)
             // 6.0 · Barra laterale verde foresta anche in chiaro, come il fondo dell'icona: testi chiari, oro per la scelta
             .background(appScheme == .dark ? Color(hex: 0x0A1813) : Color(hex: 0x16302A))   // foresta, fissa
             .environment(\.colorScheme, .dark)
