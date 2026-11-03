@@ -260,9 +260,13 @@ jobs:
             nome: sequoia-apple
           - mac: macos-15-intel
             nome: sequoia-intel
+            # Il Mac Intel di GitHub è virtuale e senza scheda grafica Metal: le app SwiftUI lì non si aprono.
+            # Si prova lo stesso (il motore del Downloader sì), ma un errore qui non conta
+            prova: true
           - mac: macos-26
             nome: tahoe-apple
     runs-on: ${{ matrix.mac }}
+    continue-on-error: ${{ matrix.prova == true }}
     timeout-minutes: 45
     permissions:
       contents: write
@@ -276,6 +280,7 @@ jobs:
       - name: Apro OrbitLR come un utente nuovo
         run: |
           sw_vers; uname -m
+          mkdir -p "$RUNNER_TEMP/foto/${{ matrix.nome }}"
           mkdir -p dist && tar -C dist -xf pacchetto.tar
           ditto dist/OrbitLR/Prebuilt/OrbitLR.app /Applications/OrbitLR.app
           xattr -dr com.apple.quarantine /Applications/OrbitLR.app || true
@@ -333,7 +338,7 @@ jobs:
           git config user.name "OrbitLR"; git config user.email "actions@users.noreply.github.com"
           git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
           for i in 1 2 3 4 5; do
-            git fetch -q origin foto-dispositivi 2>/dev/null && git reset -q --soft origin/foto-dispositivi 2>/dev/null || true
+            git fetch -q origin foto-dispositivi 2>/dev/null && git reset -q origin/foto-dispositivi 2>/dev/null || true
             git add "${{ matrix.nome }}" && git commit -q -m "${{ matrix.nome }} · ${GITHUB_SHA::7}" || true
             git push -q origin HEAD:foto-dispositivi && break
             sleep $((RANDOM % 10 + 3))

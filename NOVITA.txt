@@ -1,3 +1,8 @@
+Novità della 6.0.2 «Sonoma»:
+• Su MacBook e finestre basse la barra a sinistra non finisce più sotto i pallini della finestra: logo, schede e Cassetto restano sempre visibili (si accorcia la lista)
+• Downloader: quando YouTube chiede di confermare che non sei un robot, lo dice chiaramente (prima parlava di contenuto privato). L’errore vero finisce in «Segnala», così si capisce cosa è successo
+• Miniature: se macOS non risponde entro 5 secondi, la miniatura la fa OrbitLR da sola invece di restare vuota
+
 Novità della 6.0.1 «Più leggera»:
 • Le righe di avanzamento non ridisegnano più tutta la finestra: la coda resta fluida anche con tanti lavori in corso
 • In Audio e Taglia, durante l’ascolto si muove solo la testina: l’onda non si ridisegna più a ogni istante

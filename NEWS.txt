@@ -1,3 +1,8 @@
+What’s new in 6.0.2 “Sonoma”:
+• On MacBooks and short windows the left sidebar no longer slides under the window buttons: logo, tabs and Drawer always stay visible (the list gets shorter)
+• Downloader: when YouTube asks to confirm you’re not a robot, it says so clearly (before it talked about private content). The real error goes into “Report”, so it’s clear what happened
+• Thumbnails: if macOS doesn’t answer within 5 seconds, OrbitLR makes the thumbnail itself instead of leaving it empty
+
 What’s new in 6.0.1 “Lighter”:
 • Progress lines no longer redraw the whole window: the queue stays smooth even with many jobs running
 • In Audio and Trim, only the playhead moves while listening: the waveform is no longer redrawn every moment
