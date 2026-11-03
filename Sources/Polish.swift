@@ -68,7 +68,18 @@ final class ThumbCache: @unchecked Sendable {
             }
             let req = QLThumbnailGenerator.Request(fileAt: url, size: CGSize(width: side, height: side),
                                                    scale: 2, representationTypes: .thumbnail)
+            // 6.0.2 · Quick Look a volte non risponde mai (visto sui Mac di prova): dopo 5 secondi si fa la miniatura da sé.
+            // Una sola risposta, qualunque arrivi prima.
+            let once = Once()
+            self.disk.asyncAfter(deadline: .now() + 5) { [weak self] in
+                guard once.claim() else { return }
+                let img = Self.fallback(url, side: side)
+                if let img, let self { self.cache.setObject(img, forKey: k as NSString); self.latest.setObject(img, forKey: quick) }
+                else { self?.latest.removeObject(forKey: quick) }
+                DispatchQueue.main.async { done(img) }
+            }
             QLThumbnailGenerator.shared.generateBestRepresentation(for: req) { [weak self] rep, _ in
+                guard once.claim() else { return }
                 // 5.0.2 · Se Quick Look non dà la miniatura (su alcuni Mac con macOS 14, per i video), la si fa da sé
                 let img = rep?.nsImage ?? Self.fallback(url, side: side)
                 if img == nil { self?.latest.removeObject(forKey: quick) }
@@ -87,6 +98,13 @@ final class ThumbCache: @unchecked Sendable {
                 DispatchQueue.main.async { done(img) }
             }
         }
+    }
+
+    /// 6.0.2 · Vale solo la prima risposta (Quick Look o il tempo scaduto).
+    final class Once: @unchecked Sendable {
+        private let lock = NSLock()
+        private var done = false
+        func claim() -> Bool { lock.lock(); defer { lock.unlock() }; if done { return false }; done = true; return true }
     }
 
     /// 5.0.2 · Miniatura senza Quick Look: un fotogramma per i video, ImageIO per le foto.
