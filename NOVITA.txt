@@ -1,3 +1,11 @@
+Novità della 6.0.1 «Più leggera»:
+• Le righe di avanzamento non ridisegnano più tutta la finestra: la coda resta fluida anche con tanti lavori in corso
+• In Audio e Taglia, durante l’ascolto si muove solo la testina: l’onda non si ridisegna più a ogni istante
+• Niente lavori doppi: un doppio clic sulla torta avvia l’azione una volta sola, il controllo degli aggiornamenti non parte due volte, togliere un gruppo non ricalcola gli altri
+• La ricerca nella torta e nell’Aiuto si calcola una volta sola per ogni tasto premuto
+• Le stime dei formati si calcolano in parallelo e la durata di audio e video si ricorda: la torta è pronta prima con tanti file
+• «Interrompi» ferma il Vettoriale anche nell’istante esatto in cui parte
+
 Novità della 6.0 «Notte e oro»:
 • Il volto nuovo di OrbitLR, lo stesso dell’icona e del sito: la barra laterale è verde foresta anche in chiaro, si lavora su carta chiara e l’oro è la firma (la sezione scelta, lo spicchio sotto il puntatore, il pulsante principale di sera)
 • Un solo aspetto per tutti: chiaro, scuro o automatico. I tre colori della radio (salvia, celeste, terracotta) non ci sono più

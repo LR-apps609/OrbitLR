@@ -1,3 +1,11 @@
+What’s new in 6.0.1 “Lighter”:
+• Progress lines no longer redraw the whole window: the queue stays smooth even with many jobs running
+• In Audio and Trim, only the playhead moves while listening: the waveform is no longer redrawn every moment
+• No double work: a double click on the pie starts the action only once, the update check doesn’t run twice, removing a group doesn’t recalculate the others
+• Search in the pie and in Help is computed only once per key press
+• Format estimates are computed in parallel and audio and video durations are remembered: the pie is ready sooner with many files
+• “Stop” stops Vector even at the exact moment it starts
+
 What’s new in 6.0 “Night and Gold”:
 • OrbitLR’s new face, the same as the icon and the website: the sidebar is forest green even in light mode, you work on light paper and gold is the signature (the chosen section, the slice under the pointer, the main button at night)
 • One look for everyone: light, dark or automatic. The three radio colors (sage, sky, terracotta) are gone
