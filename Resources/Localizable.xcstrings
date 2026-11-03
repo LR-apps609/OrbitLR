@@ -17421,6 +17421,16 @@
         }
       }
     },
+    "YouTube chiede di confermare che non sei un robot: succede con alcune connessioni. Riprova tra un po’ o da un’altra rete (per esempio l’hotspot del telefono).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YouTube is asking to confirm you’re not a robot: this happens on some connections. Try again in a while or from another network (for example your phone’s hotspot)."
+          }
+        }
+      }
+    },
     "Zoom": {
       "localizations": {
         "en": {

@@ -90,6 +90,7 @@ enum MusicLink {
                 try FileManager.default.moveItem(at: staged, to: exe)        // la prima volta non c'è niente da sostituire
             }
         } catch {
+            AppLog.write("Downloader", "motore non scaricato (\(hadOne ? "rinnovo" : "prima volta")): \(error.localizedDescription)")
             if hadOne { return }            // il rinnovo può aspettare: si usa quello che c'è
             throw (error as? Failure) ?? Failure(message: String(localized: "serve internet per scaricare il motore la prima volta"))
         }
@@ -107,6 +108,10 @@ enum MusicLink {
         // Netflix, Disney+, Prime Video, Spotify…: contenuti cifrati, non si scaricano (e non si aggira la protezione)
         if s.contains("drm") { return String(localized: "Questo sito protegge i suoi contenuti (DRM): non si possono scaricare.") }
         if s.contains("unsupported url") { return String(localized: "Da questo link non so prendere l’audio. Prova con il link diretto della canzone.") }
+        // 6.0.2 · YouTube a volte chiede di confermare che non sei un robot: dipende dalla rete, non dal video
+        if s.contains("not a bot") || s.contains("confirm you") {
+            return String(localized: "YouTube chiede di confermare che non sei un robot: succede con alcune connessioni. Riprova tra un po’ o da un’altra rete (per esempio l’hotspot del telefono).")
+        }
         if s.contains("private") || s.contains("sign in") || s.contains("login") || s.contains("members") {
             return String(localized: "Il contenuto è privato o richiede l’accesso: non si può scaricare.")
         }
@@ -200,6 +205,8 @@ enum MusicLink {
         guard p.terminationStatus == 0 else {
             let e = collected.errors
             if e.contains("403") || e.contains("429") { try? FileManager.default.setAttributes([.modificationDate: Date.distantPast], ofItemAtPath: exe.path) }
+            // 6.0.2 · L'errore vero nel registro (finisce in «Segnala»): prima si perdeva e non si capiva cosa fosse successo
+            AppLog.write("Downloader", "non riuscito (\(p.terminationStatus)) da \(link.host ?? "?"), modo \(mode.rawValue), Mac \(Self.arch): " + logLines(e))
             throw Failure(message: friendly(e))
         }
         // Il file: quello stampato da yt-dlp, altrimenti l'unico nella cartella di lavoro
@@ -217,6 +224,21 @@ enum MusicLink {
         let dest = uniqueURL(in: folder, name: name)
         try FileManager.default.moveItem(at: made, to: dest)
         return dest
+    }
+
+    /// 6.0.2 · Le ultime righe d'errore del motore, senza link (niente indirizzi nelle segnalazioni).
+    static func logLines(_ e: String) -> String {
+        let lines = e.split(whereSeparator: \.isNewline).map(String.init).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        return lines.suffix(6).map { $0.replacingOccurrences(of: #"https?://\S+"#, with: "<link>", options: .regularExpression) }
+            .joined(separator: " | ")
+    }
+
+    static var arch: String {
+        #if arch(arm64)
+        return "Apple Silicon"
+        #else
+        return "Intel"
+        #endif
     }
 
     /// 5.1.1 · Ferma il motore e i programmi che ha avviato (ffmpeg), senza aspettare all'infinito.

@@ -25,6 +25,9 @@ final class MusicLinkTests: XCTestCase {
         XCTAssertNil(MusicLink.percent(in: "[info] qualcosa"))
         XCTAssertTrue(MusicLink.friendly("ERROR: Unsupported URL: https://x.it").contains("non so prendere"))
         XCTAssertTrue(MusicLink.friendly("ERROR: Private video. Sign in").contains("privato"))
+        // 6.0.2 · Il controllo «non sei un robot» di YouTube non è un video privato
+        XCTAssertTrue(MusicLink.friendly("ERROR: [youtube] abc: Sign in to confirm you’re not a bot. Use --cookies").contains("robot"))
+        XCTAssertFalse(MusicLink.logLines("ERROR: x https://www.youtube.com/watch?v=abc\nboh").contains("youtube.com"), "niente link nel registro")
         XCTAssertTrue(MusicLink.friendly("HTTP Error 403: Forbidden").contains("rifiutato"))
         XCTAssertTrue(MusicLink.friendly("ERROR: [Netflix] This video is DRM protected").contains("DRM"), "Netflix e simili: un messaggio chiaro")
     }
