@@ -5,7 +5,7 @@ name: Compila OrbitLR
 
 on:
   push:
-    branches-ignore: [foto, foto-richiesta, motori, modello-lama]
+    branches-ignore: [foto, foto-richiesta, foto-dispositivi, motori, modello-lama]
     # Il sito (web/) si pubblica da solo con «sito.yml»: non serve ricompilare l'app
     paths-ignore: ['web/**', '.github/workflows/sito.yml']
   pull_request:
@@ -246,7 +246,7 @@ jobs:
 
   # 6.0.2 · La stessa app aperta davvero su più Mac di GitHub insieme (macOS 14, 15, 26; Apple Silicon e Intel).
   # Fotografa la finestra vera (con barra del titolo e pallini) e controlla il motore del Downloader.
-  # Le foto finiscono sul ramo «dispositivi», una cartella per Mac. Non blocca la pubblicazione (per ora).
+  # Le foto finiscono sul ramo «foto-dispositivi», una cartella per Mac. Non blocca la pubblicazione (per ora).
   dispositivi:
     needs: build
     if: github.event_name != 'pull_request'
@@ -307,17 +307,17 @@ jobs:
           # YouTube su un Mac di GitHub: spesso chiede di confermare che non sei un robot (lo si annota, non è un errore dell'app)
           ( /tmp/yt-dlp --simulate --no-warnings --print title "https://www.youtube.com/watch?v=jNQXAC9IVRw" > "$OUT/youtube.txt" 2>&1 ) || true
           cat "$OUT/youtube.txt" | tail -n 5
-      - name: Sul ramo «dispositivi»
+      - name: Sul ramo «foto-dispositivi»
         if: always()
         run: |
           cd "$RUNNER_TEMP/foto" || exit 0
-          git init -q -b dispositivi
+          git init -q -b foto-dispositivi
           git config user.name "OrbitLR"; git config user.email "actions@users.noreply.github.com"
           git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
           for i in 1 2 3 4 5; do
-            git fetch -q origin dispositivi 2>/dev/null && git reset -q --soft origin/dispositivi 2>/dev/null || true
+            git fetch -q origin foto-dispositivi 2>/dev/null && git reset -q --soft origin/foto-dispositivi 2>/dev/null || true
             git add "${{ matrix.nome }}" && git commit -q -m "${{ matrix.nome }} · ${GITHUB_SHA::7}" || true
-            git push -q origin HEAD:dispositivi && break
+            git push -q origin HEAD:foto-dispositivi && break
             sleep $((RANDOM % 10 + 3))
           done
 
