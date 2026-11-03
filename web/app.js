@@ -72,6 +72,7 @@ function showTab(name, { to = null, push = true } = {}){
     requestAnimationFrame(() => {
       FX.filter(f => VIEWS[name].contains(f.layer)).forEach((f, i) => i < 2 ? layoutFx(f) : idle().then(() => layoutFx(f)));
       M.p = -1; manifestoUpdate(); heroDefaults(); kickFx(); idle().then(cloudSize);
+      if (name === 'app') quizSample();
     });
   }
   if (to) requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById(to)?.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth' })));
@@ -1272,5 +1273,7 @@ history.replaceState({ tab: TAB }, '', TAB === 'app' ? (location.hash && locatio
 applyLang();
 drawGhost();
 // la sfida parte con la foto d'esempio, finché non ne carichi una tua
-idle().then(async () => { const f = await toFile(drawScene(1600, 1200, 0), 'sample.png', 'image/png'); if (!QS.src) setQuizSource(await createImageBitmap(f), f); });
+// (prestazioni) solo alla prima apertura della scheda Applicazione, non all'avvio del Converter
+function quizSample(){ if (quizSample.done) return; quizSample.done = true;
+  idle().then(async () => { if (QS.src) return; const f = await toFile(drawScene(1600, 1200, 0), 'sample.png', 'image/png'); if (!QS.src) setQuizSource(await createImageBitmap(f), f); }); }
 })();
