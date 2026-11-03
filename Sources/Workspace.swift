@@ -245,10 +245,12 @@ final class Workspace: ObservableObject, @unchecked Sendable {
         preview = preview == nil ? groups.first?.files.first : nil
     }
 
-    /// 6.0.1 · Dalla cache delle miniature (memoria e disco): riaprendo lo stesso file non si rifà.
     private func loadThumbnail(_ url: URL, into pie: PieModel) {
-        ThumbCache.shared.image(for: url, side: 240) { img in
-            if let img { pie.icon = img }
+        let req = QLThumbnailGenerator.Request(fileAt: url, size: CGSize(width: 240, height: 240), scale: 2,
+                                               representationTypes: .thumbnail)
+        QLThumbnailGenerator.shared.generateBestRepresentation(for: req) { rep, _ in
+            guard let img = rep?.nsImage else { return }
+            DispatchQueue.main.async { pie.icon = img }
         }
     }
 }

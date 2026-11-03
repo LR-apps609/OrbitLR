@@ -23,15 +23,6 @@ final class ThumbCache: @unchecked Sendable {
     static let shared = ThumbCache()
     private let cache = NSCache<NSString, NSImage>()
     private let disk = DispatchQueue(label: "orbitlr.miniature", qos: .utility, attributes: .concurrent)
-    /// 6.0.1 · Al massimo 4 miniature lette o create insieme: con 100 riquadri niente esplosione di thread.
-    private let work: OperationQueue = {
-        let q = OperationQueue()
-        q.name = "orbitlr.miniature.lavoro"
-        q.maxConcurrentOperationCount = 4
-        q.qualityOfService = .utility
-        return q
-    }()
-    static let maxTogether = 4
     static var folder: URL { Paths.home.appendingPathComponent("Library/Caches/OrbitLR/Miniature", isDirectory: true) }
 
     /// L'ultima miniatura per file e misura, senza guardare la data del file: si legge dal thread principale
@@ -59,7 +50,7 @@ final class ThumbCache: @unchecked Sendable {
         let quick = "\(url.path)|\(Int(side))" as NSString
         let t0 = CACurrentMediaTime()
         // 3.5 · Tutto quello che tocca il disco (data del file, file sul disco) avviene in sottofondo
-        work.addOperation { [weak self] in
+        disk.async { [weak self] in
             guard let self else { return }
             guard FileManager.default.fileExists(atPath: url.path) else {
                 self.latest.removeObject(forKey: quick)          // file sparito: niente miniatura vecchia al prossimo disegno
