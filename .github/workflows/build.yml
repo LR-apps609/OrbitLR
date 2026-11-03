@@ -244,6 +244,83 @@ jobs:
           name: registro-compilazione
           path: build.log
 
+  # 6.0.2 · La stessa app aperta davvero su più Mac di GitHub insieme (macOS 14, 15, 26; Apple Silicon e Intel).
+  # Fotografa la finestra vera (con barra del titolo e pallini) e controlla il motore del Downloader.
+  # Le foto finiscono sul ramo «dispositivi», una cartella per Mac. Non blocca la pubblicazione (per ora).
+  dispositivi:
+    needs: build
+    if: github.event_name != 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mac: macos-14
+            nome: sonoma-apple
+          - mac: macos-15
+            nome: sequoia-apple
+          - mac: macos-15-intel
+            nome: sequoia-intel
+          - mac: macos-26
+            nome: tahoe-apple
+    runs-on: ${{ matrix.mac }}
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v5
+        with:
+          name: pacchetto
+      - name: Apro OrbitLR come un utente nuovo
+        run: |
+          sw_vers; uname -m
+          mkdir -p dist && tar -C dist -xf pacchetto.tar
+          ditto dist/OrbitLR/Prebuilt/OrbitLR.app /Applications/OrbitLR.app
+          xattr -dr com.apple.quarantine /Applications/OrbitLR.app || true
+          D=it.ledion.OrbitLR
+          V=$(cat version.txt)
+          defaults write $D welcomeDone -bool true
+          defaults write $D launchScreen -bool false
+          defaults write $D tips -bool false
+          defaults write $D lastLaunchVersion -string "$V"
+          system_profiler SPDisplaysDataType | grep -E "Resolution|Retina" || true
+          open /Applications/OrbitLR.app
+          sleep 20
+          pgrep -x OrbitLR >/dev/null || { echo "::error::${{ matrix.nome }}: OrbitLR non è partita"; exit 1; }
+      - name: Foto della finestra
+        run: |
+          OUT="$RUNNER_TEMP/foto/${{ matrix.nome }}"; mkdir -p "$OUT"
+          W=$(swift Tools/finestra.swift || true); echo "Finestra: $W"
+          ID=${W%% *}
+          if [ -n "$ID" ]; then screencapture -x -o -l"$ID" "$OUT/finestra.png"; fi
+          screencapture -x "$OUT/schermo.png" || true
+          { sw_vers; uname -m; echo "finestra: $W"; } > "$OUT/mac.txt"
+          ls -la "$OUT"
+          [ -s "$OUT/finestra.png" ] || echo "::warning::${{ matrix.nome }}: niente foto della finestra"
+      - name: Motore del Downloader
+        run: |
+          OUT="$RUNNER_TEMP/foto/${{ matrix.nome }}"
+          curl -fsSL -o /tmp/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos && chmod +x /tmp/yt-dlp
+          ( /tmp/yt-dlp --version 2>&1 | tee "$OUT/motore.txt" ) || echo "::error::${{ matrix.nome }}: il motore del Downloader non parte"
+          # YouTube su un Mac di GitHub: spesso chiede di confermare che non sei un robot (lo si annota, non è un errore dell'app)
+          ( /tmp/yt-dlp --simulate --no-warnings --print title "https://www.youtube.com/watch?v=jNQXAC9IVRw" > "$OUT/youtube.txt" 2>&1 ) || true
+          cat "$OUT/youtube.txt" | tail -n 5
+      - name: Sul ramo «dispositivi»
+        if: always()
+        run: |
+          cd "$RUNNER_TEMP/foto" || exit 0
+          git init -q -b dispositivi
+          git config user.name "OrbitLR"; git config user.email "actions@users.noreply.github.com"
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          for i in 1 2 3 4 5; do
+            git fetch -q origin dispositivi 2>/dev/null && git reset -q --soft origin/dispositivi 2>/dev/null || true
+            git add "${{ matrix.nome }}" && git commit -q -m "${{ matrix.nome }} · ${GITHUB_SHA::7}" || true
+            git push -q origin HEAD:dispositivi && break
+            sleep $((RANDOM % 10 + 3))
+          done
+
   # 3.5.2 · Solo questo lavoro vede la chiave di firma e può pubblicare. Gira solo sul ramo principale.
   release:
     needs: build
