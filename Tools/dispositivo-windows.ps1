@@ -41,6 +41,29 @@ public static class W {
     public short dmLogPixels; public int dmBitsPerPel, dmPelsWidth, dmPelsHeight, dmDisplayFlags, dmDisplayFrequency;
     public int dmICMMethod, dmICMIntent, dmMediaType, dmDitherType, dmReserved1, dmReserved2, dmPanningWidth, dmPanningHeight;
   }
+  public delegate bool EnumProc(IntPtr h, IntPtr l);
+  [DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc f, IntPtr l);
+  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+  [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern int GetWindowText(IntPtr h, System.Text.StringBuilder s, int n);
+  [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
+  /// La finestra principale di OrbitLR (titolo «OrbitLR»; non la linguetta sul bordo)
+  public static IntPtr Main(uint pid) {
+    IntPtr found = IntPtr.Zero;
+    EnumWindows((h, l) => { uint p; GetWindowThreadProcessId(h, out p); if (p != pid || !IsWindowVisible(h)) return true;
+      var sb = new System.Text.StringBuilder(256); GetWindowText(h, sb, 256); if (sb.ToString() == "OrbitLR") { found = h; return false; } return true; }, IntPtr.Zero);
+    return found;
+  }
+  public static string Modes() {
+    var seen = new System.Collections.Generic.List<string>(); var dm = new DEVMODE(); dm.dmSize = (short)Marshal.SizeOf(typeof(DEVMODE));
+    for (int i = 0; EnumDisplaySettings(null, i, ref dm); i++) { var m = dm.dmPelsWidth + "x" + dm.dmPelsHeight; if (!seen.Contains(m)) seen.Add(m); }
+    return string.Join(" ", seen) + " (DEVMODE " + Marshal.SizeOf(typeof(DEVMODE)) + " byte)";
+  }
+  public static int SetRes(int w, int h) {
+    var dm = new DEVMODE(); dm.dmSize = (short)Marshal.SizeOf(typeof(DEVMODE));
+    if (!EnumDisplaySettings(null, -1, ref dm)) return -100;
+    dm.dmPelsWidth = w; dm.dmPelsHeight = h; dm.dmFields = 0x80000 | 0x100000;
+    return ChangeDisplaySettingsEx(null, ref dm, IntPtr.Zero, 0, IntPtr.Zero);
+  }
   public static MONITORINFO Primary() { var p = new POINT(); var mi = new MONITORINFO(); mi.cbSize = Marshal.SizeOf(mi); GetMonitorInfo(MonitorFromPoint(p, 1), ref mi); return mi; }
 }
 "@
@@ -73,9 +96,9 @@ $script:Exe = $null
 
 # La finestra principale di OrbitLR: posizione e misura vere, dentro l'area utile o no
 function Finestra([string]$etichetta) {
-  $p = Get-Process orbitlr -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
-  if (-not $p) { return "$etichetta · nessuna finestra" }
-  $h = $p.MainWindowHandle
+  $h = [IntPtr]::Zero
+  foreach ($p in Get-Process orbitlr -ErrorAction SilentlyContinue) { $h = [W]::Main([uint32]$p.Id); if ($h -ne [IntPtr]::Zero) { break } }
+  if ($h -eq [IntPtr]::Zero) { return "$etichetta · nessuna finestra «OrbitLR»" }
   $r = New-Object W+RECT
   [W]::DwmGetWindowAttribute($h, 9, [ref]$r, 16) | Out-Null
   $mi = New-Object W+MONITORINFO; $mi.cbSize = [Runtime.InteropServices.Marshal]::SizeOf($mi)
@@ -108,7 +131,7 @@ function Prova([string]$nome, [hashtable]$vars = @{}, [int]$attesa = 25, [script
     if (-not (Get-Process -Id $app.Id -ErrorAction SilentlyContinue)) { break }
   }
   $p = Get-Process -Id $app.Id -ErrorAction SilentlyContinue
-  if ($p -and $p.MainWindowHandle -ne 0) { [W]::SetForegroundWindow($p.MainWindowHandle) | Out-Null; Start-Sleep -Milliseconds 600 }
+  if ($p) { $mh = [W]::Main([uint32]$p.Id); if ($mh -ne [IntPtr]::Zero) { [W]::SetForegroundWindow($mh) | Out-Null; Start-Sleep -Milliseconds 600 } }
   Foto $nome
   $sec = [math]::Round(((Get-Date) - $t0).TotalSeconds)
   $vivo = if ($p) { "VIVA dopo $sec s (memoria $([math]::Round($p.WorkingSet64 / 1MB)) MB, WebView2 $((Get-Process msedgewebview2 -ErrorAction SilentlyContinue).Count) processi)" } else { "CHIUSA da sola (codice $($app.ExitCode)) dopo $sec s" }
@@ -172,7 +195,7 @@ New-Item -ItemType Directory -Force -Path $tmpAcc | Out-Null
 if (-not (Test-Path "$casa\Gita al lago è.mp4")) { & $ff -hide_banner -loglevel error -y -f lavfi -i "testsrc2=size=1280x720:rate=30:duration=8" -f lavfi -i "sine=frequency=440:duration=8" -c:v mpeg4 -q:v 3 -c:a aac -shortest "$casa\Gita al lago è.mp4" 2>&1 | Out-Null }
 & $ff -hide_banner -loglevel error -y -f lavfi -i "color=c=white:s=600x400" -vf "drawbox=x=60:y=50:w=480:h=300:color=0x1E5078:t=fill,drawbox=x=225:y=125:w=150:h=150:color=0xF0B432:t=fill" -frames:v 1 "$casa\Logo piccolo è.png" 2>&1 | Out-Null
 Log "file di prova: $((Get-ChildItem $casa | ForEach-Object { "$($_.Name) $($_.Length)" }) -join ' · ')"
-$accenti = @{ TEMP = $tmpAcc; TMP = $tmpAcc }
+$accenti = @{ TEMP = $tmpAcc; TMP = $tmpAcc; WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--lang=it" }
 
 # ── 1. Primo avvio in italiano: benvenuto, prove dei codificatori, nessun clic (come chi aspetta)
 Prova "1-primo-avvio-it" $accenti 60 | Out-Null
@@ -193,37 +216,33 @@ Set-Culture it-IT
 
 # ── 5. Scala della pagina con WebView2 (solo il contenuto, non la finestra)
 foreach ($f in "1.25", "1.5", "1.75", "2") {
-  Prova "5-webview2-scala-$f" @{ WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--force-device-scale-factor=$f" } 18 | Out-Null
+  Prova "5-webview2-scala-$f" @{ WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--lang=it --force-device-scale-factor=$f" } 18 | Out-Null
 }
 
 # ── 6. Risoluzioni dello schermo (se la scheda video del computer di prova le accetta)
-$modi = @(); $dm = New-Object W+DEVMODE; $dm.dmSize = [Runtime.InteropServices.Marshal]::SizeOf($dm)
-for ($i = 0; [W]::EnumDisplaySettings($null, $i, [ref]$dm); $i++) { $modi += "$($dm.dmPelsWidth)x$($dm.dmPelsHeight)" }
-$modi = $modi | Select-Object -Unique
-Note "risoluzioni possibili: $($modi -join ' ')"
-$orig = New-Object W+DEVMODE; $orig.dmSize = [Runtime.InteropServices.Marshal]::SizeOf($orig); [W]::EnumDisplaySettings($null, -1, [ref]$orig) | Out-Null
-foreach ($res in "1920x1080", "1366x768", "2560x1440") {
-  $w, $h = $res.Split("x") | ForEach-Object { [int]$_ }
-  $d = New-Object W+DEVMODE; $d.dmSize = [Runtime.InteropServices.Marshal]::SizeOf($d); [W]::EnumDisplaySettings($null, -1, [ref]$d) | Out-Null
-  $d.dmPelsWidth = $w; $d.dmPelsHeight = $h; $d.dmFields = 0x80000 -bor 0x100000
-  $r = [W]::ChangeDisplaySettingsEx($null, [ref]$d, [IntPtr]::Zero, 0, [IntPtr]::Zero)
+Note "risoluzioni possibili: $([W]::Modes())"
+$cmd = Get-Command Set-DisplayResolution -ErrorAction SilentlyContinue
+Note "Set-DisplayResolution: $(if ($cmd) { 'c''è' } else { 'non c''è' })"
+$prima = [W]::Primary(); $pw = $prima.rcMonitor.R - $prima.rcMonitor.L; $ph = $prima.rcMonitor.B - $prima.rcMonitor.T
+foreach ($res in "1920x1080", "1366x768", "1280x720", "1280x1024") {
+  $w, $hh = $res.Split("x") | ForEach-Object { [int]$_ }
+  $r = [W]::SetRes($w, $hh)
+  if ($r -ne 0 -and $cmd) { try { Set-DisplayResolution -Width $w -Height $hh -Force -ErrorAction Stop; $r = 0 } catch { $r = "Set-DisplayResolution: $_" } }
   Start-Sleep -Seconds 3
   Note "risoluzione ${res}: $(if ($r -eq 0) { 'cambiata' } else { "non accettata (codice $r)" }) · $(Schermo)"
-  if ($r -ne 0) { continue }
-  Prova "6-risoluzione-$res" @{} 15 | Out-Null
-  # ── 7. Scala di Windows (125–200%) senza uscire: SPI_SETLOGICALDPIOVERRIDE, relativa alla scala consigliata
-  $base = 0; [W]::SpiGet(0x9E, 0, [ref]$base, 0) | Out-Null
-  foreach ($passo in 1, 2, 3, 4) {
-    $okSet = [W]::SpiSet(0x9F, $passo, [IntPtr]::Zero, 1)
-    Start-Sleep -Seconds 3
-    $sc = [math]::Round([W]::GetDpiForSystem() / 96 * 100)
-    Note "scala $res passo +${passo}: SystemParametersInfo $okSet · $(Schermo)"
-    Prova "7-scala-$res-passo$passo" @{} 15 | Out-Null
-  }
-  [W]::SpiSet(0x9F, $base, [IntPtr]::Zero, 1) | Out-Null
-  Start-Sleep -Seconds 2
+  if ($r -eq 0) { Prova "6-risoluzione-$res" @{ WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--lang=it" } 15 | Out-Null }
 }
-[W]::ChangeDisplaySettingsEx($null, [ref]$orig, [IntPtr]::Zero, 0, [IntPtr]::Zero) | Out-Null
+[W]::SetRes($pw, $ph) | Out-Null
+# ── 7. Scala di Windows (125–200%) senza uscire: SPI_SETLOGICALDPIOVERRIDE, relativa alla scala consigliata
+$base = 0; [W]::SpiGet(0x9E, 0, [ref]$base, 0) | Out-Null
+Note "scala: passo attuale $base rispetto a quella consigliata"
+foreach ($passo in 1, 2, 3, 4) {
+  $okSet = [W]::SpiSet(0x9F, $passo, [IntPtr]::Zero, 1)
+  Start-Sleep -Seconds 3
+  Note "scala passo +${passo}: SystemParametersInfo $okSet · $(Schermo)"
+  Prova "7-scala-passo$passo" @{ WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--lang=it" } 15 | Out-Null
+}
+[W]::SpiSet(0x9F, $base, [IntPtr]::Zero, 1) | Out-Null
 Ferma
 
 # ── Registri: cartelle dell'app, rapporti di arresto di WebView2, errori di Windows
