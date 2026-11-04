@@ -17,6 +17,8 @@ struct HangDetector {
     private(set) var sentAt: Double? = nil
     private var reported = false
 
+    init(limit: Double) { self.limit = limit }
+
     enum Event: Equatable { case none, hang(Double), recovered(Double) }
 
     /// Un giro del guardiano. `sendPing` vero: bisogna bussare al thread principale.

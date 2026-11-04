@@ -578,8 +578,8 @@ final class PieController: @unchecked Sendable {
     /// Le cartelle diventano l'elenco dei file che contengono (i pacchetti Pages/Numbers/Keynote restano interi).
     /// 6.0.3 · In sottofondo, con al massimo `timeout` secondi di attesa: una cartella enorme o in iCloud
     /// non ancora scaricata non blocca più la torta. Se il tempo finisce si tengono i file trovati fin lì.
-    static func expand(_ urls: [URL], timeout: Double = expandTimeout,
-                       walk: @escaping (URL, (URL) -> Void, () -> Bool) -> Void = walkFolder) -> [URL] {
+    static func expand(_ urls: [URL], timeout: Double = PieController.expandTimeout,
+                       walk: @escaping (URL, (URL) -> Void, () -> Bool) -> Void = PieController.walkFolder) -> [URL] {
         let packages = Self.packages
         let r = MainActivity.during("elenco dei file delle cartelle") {
             BoundedWalk<URL>.collect(timeout: timeout) { emit, stopped in
