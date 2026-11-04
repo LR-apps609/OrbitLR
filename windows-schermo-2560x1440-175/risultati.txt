@@ -1,0 +1,22 @@
+2560x1440@175 massima 1462×742 (scala 1.75): ok · pulsanti laterali 11
+2560x1440@175 iniziale 1200×742 (scala 1.75): ok · pulsanti laterali 11
+2560x1440@175 oggi 1200×800 (visibili 742) (scala 1.75): PROBLEMI 19 · pulsanti laterali 11
+   convert: fuori dalla finestra: «Segnala un problema» (12,712 103×50; finestra 1200×742)
+   convert: fuori dalla finestra: «Idea» (121,712 103×50; finestra 1200×742)
+   image: fuori dalla finestra: «Segnala un problema» (12,712 103×50; finestra 1200×742)
+   image: fuori dalla finestra: «Idea» (121,712 103×50; finestra 1200×742)
+   video: fuori dalla finestra: «Segnala un problema» (12,712 103×50; finestra 1200×742)
+   video: fuori dalla finestra: «Idea» (121,712 103×50; finestra 1200×742)
+   audio: fuori dalla finestra: «Segnala un problema» (12,712 103×50; finestra 1200×742)
+   audio: fuori dalla finestra: «Idea» (121,712 103×50; finestra 1200×742)
+   audio: fuori dalla finestra: «Crea la suoneria» (867,719 294×46; finestra 1200×742)
+   pdf: fuori dalla finestra: «Segnala un problema» (12,712 103×50; finestra 1200×742)
+   pdf: fuori dalla finestra: «Idea» (121,712 103×50; finestra 1200×742)
+   activity: fuori dalla finestra: «Segnala un problema» (12,712 103×50; finestra 1200×742)
+   activity: fuori dalla finestra: «Idea» (121,712 103×50; finestra 1200×742)
+   auto: fuori dalla finestra: «Segnala un problema» (12,712 103×50; finestra 1200×742)
+   auto: fuori dalla finestra: «Idea» (121,712 103×50; finestra 1200×742)
+   settings: fuori dalla finestra: «Segnala un problema» (12,712 103×50; finestra 1200×742)
+   settings: fuori dalla finestra: «Idea» (121,712 103×50; finestra 1200×742)
+   help: fuori dalla finestra: «Segnala un problema» (12,712 103×50; finestra 1200×742)
+   help: fuori dalla finestra: «Idea» (121,712 103×50; finestra 1200×742)
