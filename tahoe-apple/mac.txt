@@ -1,4 +1,4 @@
-finestra bassa: 46 1024 672
+finestra bassa: 45 1024 672
 ProductName:		macOS
 ProductVersion:		26.6.2
 BuildVersion:		25G83
