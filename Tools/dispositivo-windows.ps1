@@ -112,7 +112,7 @@ function Prova([string]$nome, [hashtable]$vars = @{}, [int]$attesa = 25, [script
   Foto $nome
   $sec = [math]::Round(((Get-Date) - $t0).TotalSeconds)
   $vivo = if ($p) { "VIVA dopo $sec s (memoria $([math]::Round($p.WorkingSet64 / 1MB)) MB, WebView2 $((Get-Process msedgewebview2 -ErrorAction SilentlyContinue).Count) processi)" } else { "CHIUSA da sola (codice $($app.ExitCode)) dopo $sec s" }
-  Note "$nome: $vivo · $(Finestra 'finestra')$(if ($finito) { if ($fatto) { ' · LAVORO RIUSCITO' } else { ' · LAVORO NON FINITO' } })"
+  Note "${nome}: $vivo · $(Finestra 'finestra')$(if ($finito) { if ($fatto) { ' · LAVORO RIUSCITO' } else { ' · LAVORO NON FINITO' } })"
   return $fatto
 }
 
@@ -208,7 +208,7 @@ foreach ($res in "1920x1080", "1366x768", "2560x1440") {
   $d.dmPelsWidth = $w; $d.dmPelsHeight = $h; $d.dmFields = 0x80000 -bor 0x100000
   $r = [W]::ChangeDisplaySettingsEx($null, [ref]$d, [IntPtr]::Zero, 0, [IntPtr]::Zero)
   Start-Sleep -Seconds 3
-  Note "risoluzione $res: $(if ($r -eq 0) { 'cambiata' } else { "non accettata (codice $r)" }) · $(Schermo)"
+  Note "risoluzione ${res}: $(if ($r -eq 0) { 'cambiata' } else { "non accettata (codice $r)" }) · $(Schermo)"
   if ($r -ne 0) { continue }
   Prova "6-risoluzione-$res" @{} 15 | Out-Null
   # ── 7. Scala di Windows (125–200%) senza uscire: SPI_SETLOGICALDPIOVERRIDE, relativa alla scala consigliata
@@ -217,7 +217,7 @@ foreach ($res in "1920x1080", "1366x768", "2560x1440") {
     $okSet = [W]::SpiSet(0x9F, $passo, [IntPtr]::Zero, 1)
     Start-Sleep -Seconds 3
     $sc = [math]::Round([W]::GetDpiForSystem() / 96 * 100)
-    Note "scala $res passo +$passo: SystemParametersInfo $okSet · $(Schermo)"
+    Note "scala $res passo +${passo}: SystemParametersInfo $okSet · $(Schermo)"
     Prova "7-scala-$res-passo$passo" @{} 15 | Out-Null
   }
   [W]::SpiSet(0x9F, $base, [IntPtr]::Zero, 1) | Out-Null
