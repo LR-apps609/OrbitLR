@@ -16,6 +16,7 @@
         "height": 800,
         "minWidth": 940,
         "minHeight": 620,
+        "preventOverflow": true,
         "center": true,
         "dragDropEnabled": true,
         "visible": true

@@ -933,6 +933,27 @@ fn places(app: tauri::AppHandle) -> Places {
     }
 }
 
+/// 2.0.1 · La finestra entra nello schermo. Tauri la riduce già all'area utile quando la crea («preventOverflow»),
+/// ma non sotto il minimo 940×620: su uno schermo ancora più basso (per esempio 1920×1080 al 175%) qui scende
+/// anche il minimo, così la barra del titolo e il fondo della finestra restano sopra la barra delle applicazioni.
+fn fit_main_window(app: &tauri::App) {
+    let Some(w) = app.get_webview_window("main") else { return };
+    let Some(c) = app.config().app.windows.iter().find(|c| c.label == "main") else { return };
+    let Ok(Some(m)) = w.current_monitor().or_else(|_| w.primary_monitor()) else { return };
+    let (Ok(outer), Ok(inner)) = (w.outer_size(), w.inner_size()) else { return };
+    let sf = m.scale_factor();
+    let wa = m.work_area();
+    let deco = (outer.width.saturating_sub(inner.width) as f64 / sf, outer.height.saturating_sub(inner.height) as f64 / sf);
+    let min = (c.min_width.unwrap_or(c.width), c.min_height.unwrap_or(c.height));
+    let f = orbit_engine::finestra::fit((c.width, c.height), min, (wa.size.width as f64 / sf, wa.size.height as f64 / sf), deco);
+    // Di solito non serve far niente (ci ha già pensato Tauri): si tocca la finestra solo se lo schermo è più piccolo del minimo
+    if f.min_width < min.0 || f.min_height < min.1 {
+        let _ = w.set_min_size(Some(tauri::LogicalSize::new(f.min_width, f.min_height)));
+        let _ = w.set_size(tauri::LogicalSize::new(f.width, f.height));
+        let _ = w.set_position(tauri::PhysicalPosition::new(wa.position.x, wa.position.y));
+    }
+}
+
 /// Porta in primo piano la finestra di OrbitLR.
 fn show_main(app: &tauri::AppHandle) {
     if let Some(w) = app.get_webview_window("main") {
@@ -1107,6 +1128,7 @@ fn main() {
                 made: Mutex::new(std::collections::HashSet::new()),
             });
             app.manage(shared.clone());
+            fit_main_window(app);
             // Icona vicino all'orologio: un clic apre OrbitLR
             {
                 use tauri::menu::{Menu, MenuItem};

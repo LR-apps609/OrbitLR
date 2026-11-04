@@ -11,6 +11,7 @@ pub mod audio;
 pub mod download;
 pub mod editor;
 pub mod error;
+pub mod finestra;
 pub mod heif;
 pub mod hide;
 pub mod images;
