@@ -1,0 +1,40 @@
+05:22:33 Zone.Identifier: [ZoneTransfer] | ZoneId=3 | HostUrl=https://github.com/LR-apps609/OrbitLR/releases/
+05:22:39 installo senza amministratore (runas /trustlevel:0x20000)
+05:22:56 file di prova: Gita al lago è.mp4 10117167 · Logo piccolo è.png 1696
+05:22:58 ── 1-primo-avvio-it
+05:23:06 1-primo-avvio-it · figli a 6 s: msedgewebview2.exe×1
+05:24:03 ── 2-video-accenti
+05:24:09 2-video-accenti · figli a 6 s: msedgewebview2.exe×1
+05:24:13 file creati: Gita al lago è (compressed).mp4 · Gita al lago è.mp4 · Logo piccolo è.png
+05:24:15 ── 3-vettoriale-piccolo
+05:24:21 3-vettoriale-piccolo · figli a 6 s: msedgewebview2.exe×1
+05:24:25 vettoriale: SVG creato · motore IA ancora acceso: False · modelli: 9 file
+05:24:27 ── 4-inglese
+05:24:33 4-inglese · figli a 6 s: msedgewebview2.exe×1
+05:24:51 ── 5-webview2-scala-1.25
+05:24:57 5-webview2-scala-1.25 · figli a 6 s: msedgewebview2.exe×1
+05:25:11 ── 5-webview2-scala-1.5
+05:25:17 5-webview2-scala-1.5 · figli a 6 s: msedgewebview2.exe×1
+05:25:32 ── 5-webview2-scala-1.75
+05:25:38 5-webview2-scala-1.75 · figli a 6 s: msedgewebview2.exe×1
+05:25:53 ── 5-webview2-scala-2
+05:25:59 5-webview2-scala-2 · figli a 6 s: msedgewebview2.exe×1
+05:26:23 1-primo-avvio-it-6s.png 177043
+05:26:23 1-primo-avvio-it.png 177043
+05:26:23 2-video-accenti-6s.png 177043
+05:26:23 2-video-accenti.png 177043
+05:26:23 3-vettoriale-piccolo-6s.png 177043
+05:26:23 3-vettoriale-piccolo.png 177043
+05:26:23 4-inglese-6s.png 177043
+05:26:23 4-inglese.png 177043
+05:26:23 5-webview2-scala-1.25-6s.png 177043
+05:26:23 5-webview2-scala-1.25.png 177043
+05:26:23 5-webview2-scala-1.5-6s.png 177043
+05:26:23 5-webview2-scala-1.5.png 177043
+05:26:23 5-webview2-scala-1.75-6s.png 177043
+05:26:23 5-webview2-scala-1.75.png 177043
+05:26:23 5-webview2-scala-2-6s.png 177043
+05:26:23 5-webview2-scala-2.png 177043
+05:26:23 cartelle-app.txt 9993
+05:26:23 diario.txt 1265
+05:26:23 windows.txt 2674
