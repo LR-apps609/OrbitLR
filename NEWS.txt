@@ -3,6 +3,7 @@ What’s new in 6.0.3 “Reports”:
 • The report says everything needed to understand the problem: Mac, chip, macOS, memory, free space, screens, language, engines, what you were doing and the last lines of the log
 • In reports and in “Report” the user name disappears from every path (/Users/***/), even when it has a space
 • A huge folder, a network folder or one in iCloud not yet downloaded no longer freezes the pie: OrbitLR takes the files found in a few seconds and says so
+• ⌥⌘C in Finder: if Finder is busy (for example with iCloud) OrbitLR waits at most 10 seconds, instead of staying frozen for up to 2 minutes
 • “Report” also attaches macOS reports about freezes, not only crashes
 
 What’s new in 6.0.2 “Sonoma”:

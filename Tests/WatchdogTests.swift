@@ -224,6 +224,14 @@ final class SlowFolderTests: XCTestCase {
         XCTAssertFalse(r.complete)
     }
 
+    /// ⌥⌘C: se il Finder è occupato si aspetta al massimo 10 secondi, non i 2 minuti di macOS. Lo script resta valido.
+    func testSelezioneDelFinderConTempoMassimo() throws {
+        XCTAssertTrue(FinderSelection.source.contains("with timeout of 10 seconds"), FinderSelection.source)
+        var err: NSDictionary?
+        let script = try XCTUnwrap(NSAppleScript(source: FinderSelection.source))
+        XCTAssertTrue(script.compileAndReturnError(&err), "lo script non si compila: \(String(describing: err))")
+    }
+
     /// Il peso di una cartella si conta come prima.
     func testPesoCartella() throws {
         let fm = FileManager.default

@@ -3,6 +3,7 @@ Novità della 6.0.3 «Rapporti»:
 • Il rapporto dice tutto quello che serve per capire il problema: Mac, chip, macOS, memoria, spazio libero, schermi, lingua, motori, cosa stavi facendo e le ultime righe del registro
 • Nei rapporti e in «Segnala» il nome dell’utente sparisce da tutti i percorsi (/Users/***/), anche quando ha uno spazio
 • Una cartella enorme, di rete o in iCloud non ancora scaricata non blocca più la torta: OrbitLR prende i file trovati in pochi secondi e lo dice
+• ⌥⌘C nel Finder: se il Finder è occupato (per esempio con iCloud) OrbitLR aspetta al massimo 10 secondi, invece di restare bloccata fino a 2 minuti
 • «Segnala» allega anche i rapporti di macOS sui blocchi, non solo sugli arresti
 
 Novità della 6.0.2 «Sonoma»:
