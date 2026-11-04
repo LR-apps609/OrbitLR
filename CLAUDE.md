@@ -1,6 +1,6 @@
 # OrbitLR · Regole per Claude
 
-**Documento della verità:** https://claude.ai/artifact/Y9uxHgm8GWCBWQeijfcTJk
+**Documento della verità:** https://claude.ai/artifact/KYFuWzpnZeppErrJ8J9CEh (pagina privata con le schede; i dati sono nel suo database)
 
 - Il documento è l'unica fonte di verità su stato, decisioni, link e cronologia. Se un altro file o pagina dice altro, vale il documento. Se il codice dice altro, verifica e correggi uno dei due.
 - All'inizio di ogni lavoro: leggi «Inizia qui» e «Diario», confronta il Diario con gli ultimi commit e aggiungi quello che manca.
