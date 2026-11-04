@@ -1,3 +1,11 @@
+Novità per Windows 2.0.1:
+• La finestra entra sempre nello schermo: su portatili e schermi con la scala di Windows al 125%, 150%, 175% o 200% si apriva più alta dello spazio libero e Opzioni, Aiuto e Segnala finivano sotto la barra delle applicazioni
+• Un lavoro su video o audio non resta più «in corso» per sempre: se il motore video non risponde per 5 minuti (per esempio per il driver della scheda video) si ferma e lo dice
+
+What’s new in Windows 2.0.1:
+• The window always fits on the screen: on laptops and displays with Windows scaling at 125%, 150%, 175% or 200% it opened taller than the free space, and Settings, Help and Report ended up under the taskbar
+• A video or audio job no longer stays “in progress” forever: if the video engine doesn’t respond for 5 minutes (for example because of the graphics driver) it stops and says so
+
 Novità per Windows 2.0 «Notte e oro»:
 • Un volto nuovo, lo stesso dell'app per Mac 6.0: verde foresta, carta chiara e oro. La barra laterale è foresta anche di giorno e la sezione scelta si accende d'oro
 • Pulsante principale verde di giorno e oro di notte; l'interruttore Semplice · Completo e lo strumento scelto nel Montaggio usano gli stessi colori
