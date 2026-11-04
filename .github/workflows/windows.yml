@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   # (prove-windows: gruppo nuovo, il vecchio è bloccato da una corsa rimasta «in coda»)
-  group: windows-${{ github.ref }}${{ github.ref == 'refs/heads/prove-windows' && '-3' || '' }}
+  group: windows-${{ github.ref }}${{ github.ref == 'refs/heads/prove-windows' && '-4' || '' }}
   cancel-in-progress: true
 
 jobs:
@@ -347,7 +347,7 @@ jobs:
       - name: Installa, apri, fotografa
         shell: pwsh
         run: |
-          $out = "$env:RUNNER_TEMP\foto\${{ matrix.nome }}"
+          $out = "$env:RUNNER_TEMP\foto\${{ matrix.nome }}${{ needs.build.result != 'success' && '-pubblicata' || '' }}"
           pwsh -File Tools/dispositivo-windows.ps1 -Nome "${{ matrix.nome }} · installazione ${{ steps.setup.outputs.fonte }}" -Setup OrbitLR-Setup.exe -Out $out
           Get-Content "$out\windows.txt" | ForEach-Object { Write-Output "::notice::$_" }
       - name: Sul ramo «foto-dispositivi»
@@ -360,7 +360,7 @@ jobs:
           git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
           for i in 1 2 3 4 5 6 7 8; do
             git fetch -q origin foto-dispositivi 2>/dev/null && git reset -q origin/foto-dispositivi 2>/dev/null || true
-            git add "${{ matrix.nome }}" && git commit -q -m "${{ matrix.nome }} · ${GITHUB_SHA::7}" || true
+            git add "${{ matrix.nome }}"* && git commit -q -m "${{ matrix.nome }} · ${GITHUB_SHA::7}" || true
             git push -q origin HEAD:foto-dispositivi && break
             sleep $((RANDOM % 15 + 3))
           done

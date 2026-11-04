@@ -234,15 +234,24 @@ foreach ($res in "1920x1080", "1366x768", "1280x720", "1280x1024") {
 }
 [W]::SetRes($pw, $ph) | Out-Null
 # ── 7. Scala di Windows (125–200%) senza uscire: SPI_SETLOGICALDPIOVERRIDE, relativa alla scala consigliata
-$base = 0; [W]::SpiGet(0x9E, 0, [ref]$base, 0) | Out-Null
-Note "scala: passo attuale $base rispetto a quella consigliata"
-foreach ($passo in 1, 2, 3, 4) {
-  $okSet = [W]::SpiSet(0x9F, $passo, [IntPtr]::Zero, 1)
-  Start-Sleep -Seconds 3
-  Note "scala passo +${passo}: SystemParametersInfo $okSet · $(Schermo)"
-  Prova "7-scala-passo$passo" @{ WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--lang=it" } 15 | Out-Null
+function Scale([string]$dove) {
+  $base = 0; [W]::SpiGet(0x9E, 0, [ref]$base, 0) | Out-Null
+  Note "scala ($dove): passo attuale $base rispetto a quella consigliata"
+  foreach ($passo in 1, 2, 3, 4) {
+    $okSet = [W]::SpiSet(0x9F, $passo, [IntPtr]::Zero, 1)
+    Start-Sleep -Seconds 3
+    Note "scala $dove passo +${passo}: SystemParametersInfo $okSet · $(Schermo)"
+    Prova "7-scala-$dove-passo$passo" @{ WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--lang=it" } 15 | Out-Null
+  }
+  [W]::SpiSet(0x9F, $base, [IntPtr]::Zero, 1) | Out-Null
+  Start-Sleep -Seconds 2
 }
-[W]::SpiSet(0x9F, $base, [IntPtr]::Zero, 1) | Out-Null
+Scale "1024x768"
+foreach ($res in "1920x1080", "1366x768") {
+  $w, $hh = $res.Split("x") | ForEach-Object { [int]$_ }
+  if ([W]::SetRes($w, $hh) -eq 0) { Start-Sleep -Seconds 3; Scale $res }
+}
+[W]::SetRes($pw, $ph) | Out-Null
 Ferma
 
 # ── Registri: cartelle dell'app, rapporti di arresto di WebView2, errori di Windows
