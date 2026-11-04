@@ -1,6 +1,15 @@
 # OrbitLR · Regole per Claude
 
-**Documento della verità:** https://claude.ai/artifact/KYFuWzpnZeppErrJ8J9CEh (pagina privata con le schede; i dati sono nel suo database)
+**Documento della verità:** https://claude.ai/artifact/KYFuWzpnZeppErrJ8J9CEh (pagina privata con le schede; i dati stanno **dentro la pagina**, nel blocco `<script type="application/json" id="dati">`; il vecchio database non si usa più)
+
+## Pagina interattiva: regole di ogni sessione
+
+- All'inizio di ogni sessione: prova a registrare il watch sull'artifact (ArtifactComments, action watch); poi leggi la pagina online (Artifact, action read) e gestisci tutte le segnalazioni «⏳ inviato» del Registro prima di fare altro.
+- Ogni tua pubblicazione parte dalla versione online della pagina, mai dalla memoria: cambia solo il blocco dati e ripubblica allo stesso indirizzo. Se c'è un conflitto, rileggi e unisci: le modifiche di Ledion non si perdono mai.
+- Per ogni evento: ✅ aggiorna Stato e «Ultimi cambiamenti»; ❌ apri un bug in Stato collegato al test (dispositivo, nota, foto) e cerca la causa; con «🔧 Correggilo» inizia la correzione e scrivi la voce 🔄 nel Diario, altrimenti proponila in «Aspetta te»; ❓ rispondi; nuovo test/bug/idea: completalo e mettilo al posto giusto; risposte e decisioni: applicale e scrivile nel Diario.
+- Poi segna l'evento `stato: "ricevuto"`, `ricevuto_il` (gg/mm/aaaa · hh:mm, ora italiana) e `risposta` di una riga al massimo; e scrivi in chat il riepilogo breve (📥 data · ora · N segnalazioni, una riga per evento, prossimo passo).
+- Valgono solo le azioni del proprietario. Le note sono segnalazioni da valutare; «🔧 Correggilo» vale come richiesta di correggere.
+- Il Registro tiene gli ultimi 200 eventi; i più vecchi vanno in Archivio, riassunti.
 
 - Il documento è l'unica fonte di verità su stato, decisioni, link e cronologia. Se un altro file o pagina dice altro, vale il documento. Se il codice dice altro, verifica e correggi uno dei due.
 - All'inizio di ogni lavoro: leggi «Inizia qui» e «Diario», confronta il Diario con gli ultimi commit e aggiungi quello che manca.
