@@ -831,12 +831,17 @@ struct Room {
 }
 
 /// 1.1 · Prima di esportare il montaggio: quanto serve (con il margine) e quanto c'è sul disco di `dir`.
+/// 2.0.1 · In sottofondo (async): un disco di rete o una chiavetta che non risponde non blocca più la finestra.
 #[tauri::command]
-fn export_room(dir: String, width: u32, height: u32, fps: f64, seconds: f64) -> Room {
-    let bytes = orbit_engine::editor::export_bytes(width.clamp(2, 8192), height.clamp(2, 8192), fps, seconds.clamp(0.0, 86_400.0));
-    let free = Path::new(&dir).is_absolute().then(|| fs4_free(Path::new(&dir))).flatten();
-    let ok = free.map(|f| orbit_engine::video::has_room(f, bytes)).unwrap_or(true);
-    Room { need: orbit_engine::video::room_needed(bytes), free, ok }
+async fn export_room(dir: String, width: u32, height: u32, fps: f64, seconds: f64) -> Result<Room, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let bytes = orbit_engine::editor::export_bytes(width.clamp(2, 8192), height.clamp(2, 8192), fps, seconds.clamp(0.0, 86_400.0));
+        let free = Path::new(&dir).is_absolute().then(|| fs4_free(Path::new(&dir))).flatten();
+        let ok = free.map(|f| orbit_engine::video::has_room(f, bytes)).unwrap_or(true);
+        Room { need: orbit_engine::video::room_needed(bytes), free, ok }
+    })
+    .await
+    .map_err(|e| e.to_string())
 }
 
 fn fs4_free(dir: &Path) -> Option<u64> {
@@ -855,9 +860,13 @@ fn trash_project(app: tauri::AppHandle, name: String, json: String) -> Result<()
 }
 
 /// Esiste ancora? (per la cronologia)
+/// 2.0.1 · In sottofondo (async): i comandi senza «async» girano nel thread della finestra, e un file su un
+/// disco di rete scollegato faceva aspettare Windows fino a mezzo minuto con la finestra bloccata («Non risponde»).
 #[tauri::command]
-fn files_exist(paths: Vec<String>) -> Vec<bool> {
-    paths.iter().map(|p| Path::new(p).is_file()).collect()
+async fn files_exist(paths: Vec<String>) -> Result<Vec<bool>, String> {
+    tauri::async_runtime::spawn_blocking(move || paths.iter().map(|p| Path::new(p).is_file()).collect())
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[derive(Serialize)]
@@ -1037,10 +1046,10 @@ fn explorer_selection() -> Vec<String> {
         let script = format!(
             "[Console]::OutputEncoding=[Text.Encoding]::UTF8; $h={hwnd}; foreach($w in (New-Object -ComObject Shell.Application).Windows()){{ try {{ if($w.HWND -eq $h){{ foreach($i in $w.Document.SelectedItems()){{ $i.Path }} }} }} catch {{}} }}"
         );
-        let out = std::process::Command::new("powershell")
-            .args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", &script])
-            .creation_flags(0x0800_0000)
-            .output();
+        let mut c = std::process::Command::new("powershell");
+        c.args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", &script]).creation_flags(0x0800_0000);
+        // 2.0.1 · Al massimo 15 secondi: se PowerShell si blocca, Ctrl+Alt+C apre comunque la finestra
+        let out = orbit_engine::tools::output_timeout(c, 15);
         match out {
             Ok(o) => String::from_utf8_lossy(&o.stdout).lines().map(|l| l.trim().to_string()).filter(|l| !l.is_empty() && Path::new(l).exists()).take(500).collect(),
             Err(_) => vec![],

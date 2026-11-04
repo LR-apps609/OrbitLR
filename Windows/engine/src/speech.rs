@@ -31,7 +31,10 @@ pub fn voices() -> Result<Vec<Voice>> {
     let script = "[Console]::OutputEncoding=[Text.Encoding]::UTF8; Add-Type -AssemblyName System.Speech; \
         $s=New-Object System.Speech.Synthesis.SpeechSynthesizer; \
         $s.GetInstalledVoices() | Where-Object { $_.Enabled } | ForEach-Object { $_.VoiceInfo.Name + '|' + $_.VoiceInfo.Culture.Name + '|' + $_.VoiceInfo.Gender }";
-    let out = powershell().arg(script).output().map_err(|e| EngineError::new(format!("non riesco a leggere le voci di Windows: {e}")))?;
+    // 2.0.1 · Al massimo 30 secondi (prima senza limite: l'elenco delle voci poteva restare vuoto per sempre)
+    let mut c = powershell();
+    c.arg(script);
+    let out = crate::tools::output_timeout(c, 30).map_err(|e| EngineError::new(format!("non riesco a leggere le voci di Windows: {e}")))?;
     let text = String::from_utf8_lossy(&out.stdout);
     let mut v: Vec<Voice> = text
         .lines()
