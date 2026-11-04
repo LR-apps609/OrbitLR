@@ -5,7 +5,7 @@ name: OrbitLR per Windows
 
 on:
   push:
-    branches: [windows, windows-prova]
+    branches: [windows, windows-prova, prove-windows]
   workflow_dispatch:
 
 permissions:
@@ -17,6 +17,8 @@ concurrency:
 
 jobs:
   build:
+    # Sul ramo delle prove («prove-windows») si compila solo quando il messaggio contiene [build]
+    if: github.ref != 'refs/heads/prove-windows' || contains(github.event.head_commit.message, '[build]')
     runs-on: windows-latest
     timeout-minutes: 90
     defaults:
@@ -256,6 +258,108 @@ jobs:
             foto-store.png
             certificazione.xml
           retention-days: 14
+
+  # Prove: l'interfaccia alle misure vere degli schermi di Windows 11 (barra delle applicazioni 48, barra del titolo 32).
+  # Gira su Linux con Chromium; fallisce se un pulsante principale o una scheda esce dalla finestra o ha il testo tagliato.
+  schermi:
+    if: github.ref == 'refs/heads/prove-windows'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        schermo: ["1920x1080@100", "1920x1080@125", "1920x1080@150", "1366x768@100", "2560x1440@100", "2560x1440@125", "2560x1440@150", "2560x1440@175", "2560x1440@200"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Playwright e Chromium
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.56.0
+          npx playwright install --with-deps chromium
+      - name: Foto e controllo
+        run: |
+          N=$(echo "${{ matrix.schermo }}" | tr '@' '-')
+          echo "NOME=windows-schermo-$N" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/foto/windows-schermo-$N"
+          node Tools/prova-schermi-windows.mjs "$RUNNER_TEMP/foto/windows-schermo-$N" "${{ matrix.schermo }}"
+      - name: Sul ramo «foto-dispositivi»
+        if: always()
+        run: |
+          cd "$RUNNER_TEMP/foto" || exit 0
+          git init -q -b foto-dispositivi
+          git config user.name "OrbitLR"; git config user.email "actions@users.noreply.github.com"
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          for i in 1 2 3 4 5 6 7 8; do
+            git fetch -q origin foto-dispositivi 2>/dev/null && git reset -q origin/foto-dispositivi 2>/dev/null || true
+            git add "$NOME" && git commit -q -m "$NOME · ${GITHUB_SHA::7}" || true
+            git push -q origin HEAD:foto-dispositivi && break
+            sleep $((RANDOM % 15 + 3))
+          done
+
+  # Prove: OrbitLR installata e aperta davvero su Windows Server 2025 e Windows 11 ARM, come una persona nuova
+  # (installazione da internet, senza amministratore, cartelle con accenti, italiano e inglese, scale e risoluzioni).
+  # Usa l'installazione appena compilata se c'è ([build] nel messaggio), altrimenti quella pubblicata (quella che hanno gli utenti).
+  dispositivi:
+    needs: build
+    if: always() && github.ref == 'refs/heads/prove-windows'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2025
+            nome: windows-2025-x64
+          - os: windows-11-arm
+            nome: windows-11-arm
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: L'installazione
+        id: setup
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ("${{ needs.build.result }}" -eq "success") { Write-Output "fonte=compilata" >> $env:GITHUB_OUTPUT } else {
+            gh release download windows-anteprima -p "OrbitLR-Windows-*-Setup.exe" -R "$env:GITHUB_REPOSITORY"
+            $f = Get-ChildItem OrbitLR-Windows-*-Setup.exe | Select-Object -First 1
+            Move-Item $f.FullName OrbitLR-Setup.exe
+            Write-Output "fonte=pubblicata ($($f.Name))" >> $env:GITHUB_OUTPUT
+          }
+      - uses: actions/download-artifact@v4
+        if: needs.build.result == 'success'
+        with:
+          name: windows
+      - name: Installa, apri, fotografa
+        shell: pwsh
+        run: |
+          $out = "$env:RUNNER_TEMP\foto\${{ matrix.nome }}"
+          pwsh -File Tools/dispositivo-windows.ps1 -Nome "${{ matrix.nome }} · installazione ${{ steps.setup.outputs.fonte }}" -Setup OrbitLR-Setup.exe -Out $out
+          Get-Content "$out\windows.txt" | ForEach-Object { Write-Output "::notice::$_" }
+      - name: Sul ramo «foto-dispositivi»
+        if: always()
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/foto" || exit 0
+          git init -q -b foto-dispositivi
+          git config user.name "OrbitLR"; git config user.email "actions@users.noreply.github.com"
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          for i in 1 2 3 4 5 6 7 8; do
+            git fetch -q origin foto-dispositivi 2>/dev/null && git reset -q origin/foto-dispositivi 2>/dev/null || true
+            git add "${{ matrix.nome }}" && git commit -q -m "${{ matrix.nome }} · ${GITHUB_SHA::7}" || true
+            git push -q origin HEAD:foto-dispositivi && break
+            sleep $((RANDOM % 15 + 3))
+          done
 
   release:
     needs: build
