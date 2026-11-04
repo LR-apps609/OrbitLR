@@ -12,7 +12,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: windows-${{ github.ref }}
+  # (prove-windows: gruppo nuovo, il vecchio è bloccato da una corsa rimasta «in coda»)
+  group: windows-${{ github.ref }}${{ github.ref == 'refs/heads/prove-windows' && '-2' || '' }}
   cancel-in-progress: true
 
 jobs:
