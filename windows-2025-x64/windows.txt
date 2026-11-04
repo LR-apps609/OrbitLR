@@ -1,4 +1,4 @@
-macchina: windows-2025-x64 · installazione pubblicata (OrbitLR-Windows-2.0.0-Setup.exe)
+macchina: windows-2025-x64 · installazione compilata
 sistema: Microsoft Windows Server 2025 Datacenter 10.0.26100 build 26100 · architettura AMD64 (64-bit)
 processore: AMD EPYC 7763 64-Core Processor                 · 4 thread · memoria 16 GB
 scheda video: Microsoft Hyper-V Video
@@ -7,17 +7,32 @@ lingua: cultura en-US · interfaccia en-US · utente runneradmin · amministrato
 WebView2: 156.0.4314.50
 installazione: senza amministratore (runas /trustlevel) · 16 s · C:\Users\runneradmin\AppData\Local\OrbitLR\orbitlr.exe
 registrata per l'utente: OrbitLR 2.0.0 · clic destro «Apri con OrbitLR»: True
-1-primo-avvio-it: VIVA dopo 63 s (memoria 33 MB, WebView2 8 processi) · finestra · finestra 1006,275 18x170 px (18x170 logici) · area utile 0,0-1024,720 · scala 100% · ENTRA
-2-video-accenti: VIVA dopo 10 s (memoria 34 MB, WebView2 8 processi) · finestra · finestra 1006,275 18x170 px (18x170 logici) · area utile 0,0-1024,720 · scala 100% · ENTRA · LAVORO RIUSCITO
-3-vettoriale-piccolo: VIVA dopo 10 s (memoria 37 MB, WebView2 8 processi) · finestra · finestra 1006,275 18x170 px (18x170 logici) · area utile 0,0-1024,720 · scala 100% · ENTRA · LAVORO RIUSCITO
-4-inglese: VIVA dopo 22 s (memoria 33 MB, WebView2 8 processi) · finestra · finestra 1006,275 18x170 px (18x170 logici) · area utile 0,0-1024,720 · scala 100% · ENTRA
-5-webview2-scala-1.25: VIVA dopo 19 s (memoria 33 MB, WebView2 8 processi) · finestra · finestra 1006,275 18x170 px (18x170 logici) · area utile 0,0-1024,720 · scala 100% · ENTRA
-5-webview2-scala-1.5: VIVA dopo 19 s (memoria 33 MB, WebView2 8 processi) · finestra · finestra 1006,275 18x170 px (18x170 logici) · area utile 0,0-1024,720 · scala 100% · ENTRA
-5-webview2-scala-1.75: VIVA dopo 19 s (memoria 33 MB, WebView2 8 processi) · finestra · finestra 1006,275 18x170 px (18x170 logici) · area utile 0,0-1024,720 · scala 100% · ENTRA
-5-webview2-scala-2: VIVA dopo 19 s (memoria 33 MB, WebView2 8 processi) · finestra · finestra 1006,275 18x170 px (18x170 logici) · area utile 0,0-1024,720 · scala 100% · ENTRA
-risoluzioni possibili: 
-risoluzione 1920x1080: non accettata (codice -5) · schermo 1024x768 · area utile 1024x720 (in alto 0) · scala di sistema 100%
-risoluzione 1366x768: non accettata (codice -5) · schermo 1024x768 · area utile 1024x720 (in alto 0) · scala di sistema 100%
-risoluzione 2560x1440: non accettata (codice -5) · schermo 1024x768 · area utile 1024x720 (in alto 0) · scala di sistema 100%
+1-primo-avvio-it: VIVA dopo 62 s (memoria 36 MB, WebView2 8 processi) · finestra · finestra -1,0 1026x721 px (1026x721 logici) · area utile 0,0-1024,720 · scala 100% · ENTRA
+2-video-accenti: VIVA dopo 10 s (memoria 34 MB, WebView2 8 processi) · finestra · finestra -1,0 1026x721 px (1026x721 logici) · area utile 0,0-1024,720 · scala 100% · ENTRA · LAVORO RIUSCITO
+3-vettoriale-piccolo: VIVA dopo 10 s (memoria 36 MB, WebView2 8 processi) · finestra · finestra -1,0 1026x721 px (1026x721 logici) · area utile 0,0-1024,720 · scala 100% · ENTRA · LAVORO RIUSCITO
+4-inglese: VIVA dopo 22 s (memoria 33 MB, WebView2 8 processi) · finestra · finestra -1,0 1026x721 px (1026x721 logici) · area utile 0,0-1024,720 · scala 100% · ENTRA
+5-webview2-scala-1.25: VIVA dopo 19 s (memoria 33 MB, WebView2 8 processi) · finestra · finestra -1,0 1026x721 px (1026x721 logici) · area utile 0,0-1024,720 · scala 100% · ENTRA
+5-webview2-scala-1.5: VIVA dopo 19 s (memoria 33 MB, WebView2 8 processi) · finestra · finestra -1,0 1026x721 px (1026x721 logici) · area utile 0,0-1024,720 · scala 100% · ENTRA
+5-webview2-scala-1.75: VIVA dopo 19 s (memoria 33 MB, WebView2 8 processi) · finestra · finestra -1,0 1026x721 px (1026x721 logici) · area utile 0,0-1024,720 · scala 100% · ENTRA
+5-webview2-scala-2: VIVA dopo 19 s (memoria 33 MB, WebView2 8 processi) · finestra · finestra -1,0 1026x721 px (1026x721 logici) · area utile 0,0-1024,720 · scala 100% · ENTRA
+risoluzioni possibili: 640x480 800x600 1024x768 1152x864 1280x720 1280x800 1280x1024 1366x768 1440x900 1600x900 1600x1200 1680x1050 1920x1080 (DEVMODE 220 byte)
+Set-DisplayResolution: c'è
+risoluzione 1920x1080: cambiata · schermo 1920x1080 · area utile 1920x1032 (in alto 0) · scala di sistema 100%
+6-risoluzione-1920x1080: VIVA dopo 16 s (memoria 34 MB, WebView2 8 processi) · finestra · finestra 359,100 1202x832 px (1202x832 logici) · area utile 0,0-1920,1032 · scala 100% · ENTRA
+risoluzione 1366x768: cambiata · schermo 1366x768 · area utile 1366x720 (in alto 0) · scala di sistema 100%
+6-risoluzione-1366x768: VIVA dopo 16 s (memoria 33 MB, WebView2 8 processi) · finestra · finestra 82,0 1202x721 px (1202x721 logici) · area utile 0,0-1366,720 · scala 100% · ENTRA
+risoluzione 1280x720: cambiata · schermo 1280x720 · area utile 1280x672 (in alto 0) · scala di sistema 100%
+6-risoluzione-1280x720: VIVA dopo 16 s (memoria 33 MB, WebView2 8 processi) · finestra · finestra 39,0 1202x673 px (1202x673 logici) · area utile 0,0-1280,672 · scala 100% · ENTRA
+risoluzione 1280x1024: cambiata · schermo 1280x1024 · area utile 1280x976 (in alto 0) · scala di sistema 100%
+6-risoluzione-1280x1024: VIVA dopo 16 s (memoria 34 MB, WebView2 8 processi) · finestra · finestra 39,72 1202x832 px (1202x832 logici) · area utile 0,0-1280,976 · scala 100% · ENTRA
+scala: passo attuale 0 rispetto a quella consigliata
+scala passo +1: SystemParametersInfo True · schermo 1024x768 · area utile 1024x708 (in alto 0) · scala di sistema 100%
+7-scala-passo1: VIVA dopo 16 s (memoria 33 MB, WebView2 8 processi) · finestra · finestra 8,0 1008x700 px (806x560 logici) · area utile 0,0-1024,708 · scala 125% · ENTRA
+scala passo +2: SystemParametersInfo True · schermo 1024x768 · area utile 1024x708 (in alto 0) · scala di sistema 100%
+7-scala-passo2: VIVA dopo 16 s (memoria 33 MB, WebView2 8 processi) · finestra · finestra 8,0 1008x700 px (806x560 logici) · area utile 0,0-1024,708 · scala 125% · ENTRA
+scala passo +3: SystemParametersInfo True · schermo 1024x768 · area utile 1024x708 (in alto 0) · scala di sistema 100%
+7-scala-passo3: VIVA dopo 16 s (memoria 33 MB, WebView2 8 processi) · finestra · finestra 8,0 1008x700 px (806x560 logici) · area utile 0,0-1024,708 · scala 125% · ENTRA
+scala passo +4: SystemParametersInfo True · schermo 1024x768 · area utile 1024x708 (in alto 0) · scala di sistema 100%
+7-scala-passo4: VIVA dopo 16 s (memoria 33 MB, WebView2 8 processi) · finestra · finestra 8,0 1008x700 px (806x560 logici) · area utile 0,0-1024,708 · scala 125% · ENTRA
 rapporti di arresto WebView2: 0
 errori di Windows su OrbitLR/WebView2: 0
