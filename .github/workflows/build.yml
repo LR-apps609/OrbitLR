@@ -311,47 +311,51 @@ jobs:
       # 6.0.3 · Come un utente vero: lo zip scaricato da Safari, l'app trascinata in Applicazioni, doppio clic.
       # Niente preferenze scritte prima, quarantena lasciata. Si annota cosa succede (Gatekeeper, processo, spctl).
       - name: Primo avvio vero (scaricata da Internet)
+        timeout-minutes: 12
         run: |
           set +e
+          t() { perl -e 'alarm shift; exec @ARGV' "$@"; }      # ogni comando ha un tempo massimo: niente attese infinite
           OUT="$RUNNER_TEMP/foto/$NOME"; P="$OUT/primo-avvio/risultato.txt"; : > "$P"
-          echo "Gatekeeper prima: $(spctl --status 2>&1)" >> "$P"
-          sudo spctl --global-enable >/dev/null 2>&1 || sudo spctl --master-enable >/dev/null 2>&1
-          echo "Gatekeeper dopo averlo acceso: $(spctl --status 2>&1)" >> "$P"
+          say() { echo "$*" | tee -a "$P"; }
+          say "Gatekeeper prima: $(t 20 spctl --status 2>&1)"
+          t 30 sudo -n spctl --global-enable >/dev/null 2>&1 || t 30 sudo -n spctl --master-enable >/dev/null 2>&1
+          say "Gatekeeper dopo averlo acceso: $(t 20 spctl --status 2>&1)"
           rm -rf ~/Downloads/prova && mkdir -p ~/Downloads/prova
           ditto -x -k dist/OrbitLR/Firmato/app.zip ~/Downloads/prova
           xattr -w com.apple.quarantine "0081;$(printf %x $(date +%s));Safari;" ~/Downloads/prova/OrbitLR.app
+          pgrep -x OrbitLR >/dev/null && pkill -x OrbitLR
           sudo rm -rf /Applications/OrbitLR.app
           mv ~/Downloads/prova/OrbitLR.app /Applications/OrbitLR.app
-          echo "--- quarantena sull'app: $(xattr -p com.apple.quarantine /Applications/OrbitLR.app 2>&1)" >> "$P"
-          echo "--- spctl --assess -vv" >> "$P"; spctl --assess -vv --type execute /Applications/OrbitLR.app >> "$P" 2>&1; echo "(uscita $?)" >> "$P"
-          echo "--- codesign -dv" >> "$P"; codesign -dv /Applications/OrbitLR.app 2>&1 | grep -E "Signature|TeamIdentifier|flags" >> "$P"
+          say "--- quarantena sull'app: $(xattr -p com.apple.quarantine /Applications/OrbitLR.app 2>&1)"
+          say "--- spctl --assess -vv"; t 60 spctl --assess -vv --type execute /Applications/OrbitLR.app 2>&1 | tee -a "$P"
+          say "--- codesign -dv"; codesign -dv /Applications/OrbitLR.app 2>&1 | grep -E "Signature|TeamIdentifier|flags" | tee -a "$P"
           if command -v syspolicy_check >/dev/null; then
-            echo "--- syspolicy_check distribution" >> "$P"; syspolicy_check distribution /Applications/OrbitLR.app >> "$P" 2>&1; echo "(uscita $?)" >> "$P"
-          else echo "--- syspolicy_check: non c'è su questo macOS" >> "$P"; fi
-          open /Applications/OrbitLR.app; echo "--- open: uscita $?" >> "$P"
+            say "--- syspolicy_check distribution"; t 120 syspolicy_check distribution /Applications/OrbitLR.app 2>&1 | tail -n 30 | tee -a "$P"
+          else say "--- syspolicy_check: non c'è su questo macOS"; fi
+          t 20 open /Applications/OrbitLR.app; say "--- open: uscita $?"
           sleep 15
-          if pgrep -x OrbitLR >/dev/null; then echo "processo vivo dopo 15 s: sì" >> "$P"; ALIVE=si; else echo "processo vivo dopo 15 s: no" >> "$P"; ALIVE=no; fi
-          screencapture -x "$OUT/primo-avvio/schermo-gatekeeper.png"
-          echo "--- finestre sullo schermo" >> "$P"; /tmp/finestra --elenco | grep -vE "^(Window Server|Dock|Control Center|Centro di Controllo|SystemUIServer|Spotlight|TextInputMenuAgent)" >> "$P"
-          echo "--- registro di sistema (Gatekeeper)" >> "$P"
-          log show --last 2m --style compact --predicate 'process == "syspolicyd" OR process == "CoreServicesUIAgent"' 2>/dev/null | grep -iE "orbitlr|gatekeeper|notari|malware|assess" | tail -n 25 >> "$P"
+          if pgrep -x OrbitLR >/dev/null; then say "processo vivo dopo 15 s: sì"; ALIVE=si; else say "processo vivo dopo 15 s: no"; ALIVE=no; fi
+          t 20 screencapture -x "$OUT/primo-avvio/schermo-gatekeeper.png"
+          say "--- finestre sullo schermo"; t 20 /tmp/finestra --elenco | grep -vE "^(Window Server|Dock|Control Center|Centro di Controllo|SystemUIServer|Spotlight|TextInputMenuAgent)" | tee -a "$P"
+          say "--- registro di sistema (Gatekeeper)"
+          t 90 log show --last 2m --style compact --predicate 'process == "syspolicyd" OR process == "CoreServicesUIAgent"' 2>/dev/null | grep -iE "orbitlr|gatekeeper|notari|malware|assess" | tail -n 25 | tee -a "$P"
           echo "gatekeeper_vivo=$ALIVE" > "$OUT/primo-avvio/esito.txt"
           if [ "$ALIVE" = no ]; then
             # Come «Apri comunque» nelle Impostazioni: si toglie la quarantena e si riapre
             killall CoreServicesUIAgent 2>/dev/null; sleep 2
             xattr -dr com.apple.quarantine /Applications/OrbitLR.app
-            open /Applications/OrbitLR.app; sleep 15
-            echo "--- dopo aver tolto la quarantena: processo vivo $(pgrep -x OrbitLR >/dev/null && echo sì || echo no)" >> "$P"
+            t 20 open /Applications/OrbitLR.app; sleep 15
+            say "--- dopo aver tolto la quarantena: processo vivo $(pgrep -x OrbitLR >/dev/null && echo sì || echo no)"
           fi
-          screencapture -x "$OUT/primo-avvio/benvenuto-schermo.png"
-          W=$(/tmp/finestra --tutte); echo "--- finestra di benvenuto: ${W:-nessuna}" >> "$P"
-          [ -n "$W" ] && screencapture -x -o -l"${W%% *}" "$OUT/primo-avvio/benvenuto.png"
-          cat "$P"
-          osascript -e 'quit app "OrbitLR"' 2>/dev/null; sleep 3; pkill -x OrbitLR; sleep 1
+          t 20 screencapture -x "$OUT/primo-avvio/benvenuto-schermo.png"
+          W=$(t 20 /tmp/finestra --tutte); say "--- finestra di benvenuto: ${W:-nessuna}"
+          [ -n "$W" ] && t 20 screencapture -x -o -l"${W%% *}" "$OUT/primo-avvio/benvenuto.png"
+          pgrep -x OrbitLR >/dev/null && t 15 osascript -e 'quit app "OrbitLR"'; sleep 3; pkill -x OrbitLR; sleep 1
           xattr -dr com.apple.quarantine /Applications/OrbitLR.app
           exit 0
 
       - name: Apro OrbitLR come un utente che la usa già
+        timeout-minutes: 6
         run: |
           D=it.ledion.OrbitLR
           V=$(cat version.txt)
@@ -373,14 +377,16 @@ jobs:
           fi
           echo "partita=si" > "$RUNNER_TEMP/foto/$NOME/partita.txt"
       - name: Foto della finestra (normale, bassa, minima, Dock a sinistra)
+        timeout-minutes: 12
         run: |
+          t() { perl -e 'alarm shift; exec @ARGV' "$@"; }
           OUT="$RUNNER_TEMP/foto/$NOME"; mkdir -p "$OUT"
           D=it.ledion.OrbitLR
           shot() {   # $1 = nome della foto; fotografa la finestra di OrbitLR e annota la misura
             local W; W=$(/tmp/finestra || true); echo "$1: ${W:-nessuna finestra}" | tee -a "$OUT/mac.txt"
             [ -n "$W" ] && screencapture -x -o -l"${W%% *}" "$OUT/$1.png"
           }
-          reopen() { osascript -e 'quit app "OrbitLR"' || pkill -x OrbitLR || true; sleep 3; open /Applications/OrbitLR.app; sleep 15; }
+          reopen() { t 20 osascript -e 'quit app "OrbitLR"' || pkill -x OrbitLR || true; sleep 3; pkill -x OrbitLR; open /Applications/OrbitLR.app; sleep 15; }
           frame() { for k in "NSWindow Frame main" "NSWindow Frame SwiftUI.main" "NSWindow Frame OrbitLR"; do defaults write $D "$k" "$1"; done; }
           shot finestra
           screencapture -x "$OUT/schermo.png" || true
@@ -395,7 +401,7 @@ jobs:
           screencapture -x "$OUT/schermo-dock-sinistra.png" || true
           defaults write com.apple.dock orientation bottom; killall Dock || true
           # 6.0.3 · L'avviso dopo un problema: si finge una chiusura di colpo (il file «in-corso» resta) e si riapre
-          osascript -e 'quit app "OrbitLR"' || pkill -x OrbitLR || true; sleep 3
+          t 20 osascript -e 'quit app "OrbitLR"' || pkill -x OrbitLR || true; sleep 3; pkill -x OrbitLR
           S="$HOME/Library/Application Support/LRConverter"; mkdir -p "$S"
           printf 'avviata: prova · OrbitLR prova · avvio normale\nstava facendo: scheda: Conversione\n' > "$S/in-corso.txt"
           open /Applications/OrbitLR.app; sleep 15
@@ -406,6 +412,7 @@ jobs:
           ls -la "$OUT"
           [ -s "$OUT/finestra.png" ] || echo "::warning::$NOME: niente foto della finestra"
       - name: Motore del Downloader
+        timeout-minutes: 5
         run: |
           OUT="$RUNNER_TEMP/foto/$NOME"
           curl -fsSL -o /tmp/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos && chmod +x /tmp/yt-dlp
