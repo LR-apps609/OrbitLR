@@ -1,0 +1,111 @@
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\modelli 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\in-uso 4
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\AutoLaunchProtocolsComponent 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\CertificateRevocation 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\component_crx_cache 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Crashpad 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\extensions_crx_cache 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\GPUPersistentCache 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\GrShaderCache 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\hyphen-data 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\MEIPreload 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\OriginTrials 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\PKIMetadata 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\ShaderCache 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Subresource Filter 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Trust Protection Lists 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\TrustTokenKeyCommitments 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\WidevineCdm 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Last Version 13
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Local State 10051
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Variations 85
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\VariationsRuntimeSeedV2 331
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\VariationsSafeSeedV2 11
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\VariationsSeedV2 1402
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\component_crx_cache\metadata.json 13
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Crashpad\attachments 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Crashpad\reports 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Crashpad\metadata 0
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Crashpad\settings.dat 288
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Crashpad\throttle_store.dat 20
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\AutofillAiModelCache 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\AutofillStrikeDatabase 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\blob_storage 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\BudgetDatabase 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\ClientCertificates 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\commerce_subscription_db 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\DawnGraphiteCache 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\DawnWebGPUCache 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\discount_infos_db 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\discounts_db 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\EdgeSessions 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Extension Rules 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Extension Scripts 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Extension State 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Feature Engagement Tracker 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\JumpListIconsRecentWorkspacesV2 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Local Storage 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Network 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\optimization_guide_hint_cache_store 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\parcel_tracking_db 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\PersistentOriginTrials 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Session Storage 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Sessions 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Sessions_Encrypted 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Shared Dictionary 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\shared_proto_db 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Site Characteristics Database 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Sync Data 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\BookmarkMergedSurfaceOrdering 6
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\declarative_performance_observer.db 32768
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\declarative_performance_observer.db-journal 0
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\DIPS 36864
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\DIPS-wal 65952
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\ExtensionActivityEdge 32768
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\ExtensionActivityEdge-journal 0
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Favicons 20480
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Favicons-journal 0
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\favorites_diagnostic.log 25649
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\History 249856
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\History-journal 0
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\LOCK 0
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\LOG 0
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\LOG.old 0
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Login Data 43008
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Login Data For Account 43008
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Login Data For Account-journal 0
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Login Data-journal 0
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Network Action Predictor 53248
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Network Action Predictor-journal 0
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Preferences 10496
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\README 182
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Secure Preferences 9856
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\ServerCertificate 20480
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\ServerCertificate-journal 0
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\settings_diagnostic.log 159660
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Top Sites 20480
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Top Sites-journal 0
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Vpn Tokens 28672
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Vpn Tokens-journal 0
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Web Data 221184
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Web Data-journal 0
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\extensions_crx_cache\metadata.json 13
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\GPUPersistentCache\DawnGraphiteCache 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\GrShaderCache\data_0 8192
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\GrShaderCache\data_1 270336
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\GrShaderCache\data_2 8192
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\GrShaderCache\data_3 8192
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\GrShaderCache\index 262512
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\ShaderCache\data_0 8192
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\ShaderCache\data_1 270336
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\ShaderCache\data_2 8192
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\ShaderCache\data_3 8192
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\ShaderCache\index 262512
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Subresource Filter\Unindexed Rules 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\modelli\realesrgan 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\modelli\realesrgan\models 1
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\modelli\realesrgan\pronto.txt 2
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\modelli\realesrgan\realesrgan-ncnn-vulkan.exe 6161408
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\modelli\realesrgan\vcomp140.dll 182704
