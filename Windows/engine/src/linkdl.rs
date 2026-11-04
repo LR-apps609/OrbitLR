@@ -207,6 +207,17 @@ pub fn ensure(data_dir: &Path, force: bool, cancel: &Cancel, progress: &mut dyn 
     }
 }
 
+/// 2.0.1 · Quanto si aspetta il motore in silenzio dopo questa riga. Mentre scarica scrive di continuo:
+/// due minuti zitto vuol dire che il sito non risponde. Dopo «[Merger]», «[ExtractAudio]», «[Fixup…]» o
+/// «[VideoConvertor]» invece lavora ffmpeg sul file intero (un'ora di audio da convertire, un film da unire
+/// su un disco lento) e non scrive niente finché non ha finito: prima lo si fermava a metà dicendo
+/// «il sito non risponde».
+pub fn quiet_limit(last_line: &str) -> std::time::Duration {
+    let l = last_line.trim_start();
+    let post = ["[Merger]", "[ExtractAudio]", "[VideoConvertor]", "[VideoRemuxer]", "[Fixup", "[EmbedThumbnail]", "[Metadata]", "[MoveFiles]"];
+    std::time::Duration::from_secs(if post.iter().any(|p| l.starts_with(p)) { 1800 } else { 120 })
+}
+
 /// Scarica dal link dentro `folder`. Restituisce il file creato.
 /// 1.1.1 · Link che non si scaricano da qui: si dice subito cosa fare.
 pub fn unsupported_reason(link: &str) -> Option<&'static str> {
@@ -271,6 +282,7 @@ pub fn download(exe: &Path, tools: Option<&Tools>, link: &str, mode: Mode, folde
     let mut pass = 0usize;
     let mut last_p = 0.0f64;
     let mut last_output = std::time::Instant::now();
+    let mut last_line = String::new();
     loop {
         if cancel.is_cancelled() {
             let _ = child.kill();
@@ -278,7 +290,8 @@ pub fn download(exe: &Path, tools: Option<&Tools>, link: &str, mode: Mode, folde
             return Err(EngineError::cancelled());
         }
         // 1.1.1 · Due minuti senza una riga dal motore: il sito non risponde (prima si aspettava per sempre)
-        if last_output.elapsed() > std::time::Duration::from_secs(120) {
+        // 2.0.1 · Ma dopo lo scaricamento ffmpeg unisce o converte senza scrivere niente: lì si aspetta di più
+        if last_output.elapsed() > quiet_limit(&last_line) {
             let _ = child.kill();
             let _ = child.wait();
             return Err(EngineError::new("il sito non risponde da due minuti: ho interrotto. Riprova più tardi."));
@@ -286,6 +299,7 @@ pub fn download(exe: &Path, tools: Option<&Tools>, link: &str, mode: Mode, folde
         match rx.recv_timeout(std::time::Duration::from_millis(200)) {
             Ok(line) => {
                 last_output = std::time::Instant::now();
+                last_line.clone_from(&line);
                 if let Some(p) = percent(&line) {
                     if p + 0.2 < last_p {
                         pass += 1;
@@ -328,6 +342,16 @@ pub fn download(exe: &Path, tools: Option<&Tools>, link: &str, mode: Mode, folde
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn dopo_lo_scaricamento_si_aspetta_ffmpeg() {
+        assert_eq!(quiet_limit("[download]  45.3% of 10.00MiB at 1.00MiB/s ETA 00:05").as_secs(), 120);
+        assert_eq!(quiet_limit("").as_secs(), 120);
+        assert_eq!(quiet_limit("[youtube] abc: Downloading webpage").as_secs(), 120);
+        assert!(quiet_limit("[Merger] Merging formats into \"C:\\Temp\\video.mp4\"").as_secs() >= 1800);
+        assert!(quiet_limit("[ExtractAudio] Destination: canzone.m4a").as_secs() >= 1800);
+        assert!(quiet_limit("[FixupM3u8] Fixing MPEG-TS in MP4 container").as_secs() >= 1800);
+    }
 
     #[test]
     fn link_validi() {

@@ -2,11 +2,13 @@ Novità per Windows 2.0.1:
 • La finestra entra sempre nello schermo: su portatili e schermi con la scala di Windows al 125%, 150%, 175% o 200% si apriva più alta dello spazio libero e Opzioni, Aiuto e Segnala finivano sotto la barra delle applicazioni
 • Un lavoro su video o audio non resta più «in corso» per sempre: se il motore video non risponde per 5 minuti (per esempio per il driver della scheda video) si ferma e lo dice
 • La finestra non si blocca più («Non risponde») quando un file della cronologia o la cartella di esportazione è su un disco di rete o una chiavetta scollegati; Ctrl+Alt+C e l'elenco delle voci non restano più in attesa per sempre
+• Video e Audio Downloader: un video lungo da unire o un audio lungo da convertire dopo lo scaricamento non viene più fermato a metà con «il sito non risponde»
 
 What’s new in Windows 2.0.1:
 • The window always fits on the screen: on laptops and displays with Windows scaling at 125%, 150%, 175% or 200% it opened taller than the free space, and Settings, Help and Report ended up under the taskbar
 • A video or audio job no longer stays “in progress” forever: if the video engine doesn’t respond for 5 minutes (for example because of the graphics driver) it stops and says so
 • The window no longer freezes (“Not responding”) when a file in the history or the export folder is on a disconnected network drive or USB stick; Ctrl+Alt+C and the list of voices no longer wait forever
+• Video and Audio Downloader: a long video being joined or a long audio being converted after the download is no longer stopped halfway with “the site isn’t responding”
 
 Novità per Windows 2.0 «Notte e oro»:
 • Un volto nuovo, lo stesso dell'app per Mac 6.0: verde foresta, carta chiara e oro. La barra laterale è foresta anche di giorno e la sezione scelta si accende d'oro
