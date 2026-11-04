@@ -1,0 +1,27 @@
+Gatekeeper prima: assessments enabled
+Gatekeeper dopo averlo acceso: assessments enabled
+--- quarantena sull'app: 0081;6aeb3a32;Safari;
+--- spctl --assess -vv
+/Applications/OrbitLR.app: rejected
+(uscita 3)
+--- codesign -dv
+CodeDirectory v=20500 size=129330 flags=0x10002(adhoc,runtime) hashes=4031+7 location=embedded
+Signature=adhoc
+TeamIdentifier=not set
+--- syspolicy_check distribution
+App has failed one or more pre-distribution checks.
+---------------------------------------------------------------
+Notary Ticket Missing
+    File: OrbitLR.app 
+    Severity: Fatal 
+    Full Error: A Notarization ticket is not stapled to this application. 
+    Type: Distribution Error 
+
+Internal Xprotect Error
+    Severity: Fatal 
+    Full Error: One or more files in your application triggered an Xprotect 
+        error. 
+    Type: Distribution Error 
+
+---------------------------------------------------------------
+(uscita 70)
