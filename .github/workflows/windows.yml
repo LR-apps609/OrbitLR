@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   # (prove-windows: gruppo nuovo, il vecchio è bloccato da una corsa rimasta «in coda»)
-  group: windows-${{ github.ref }}${{ github.ref == 'refs/heads/prove-windows' && '-2' || '' }}
+  group: windows-${{ github.ref }}${{ github.ref == 'refs/heads/prove-windows' && '-3' || '' }}
   cancel-in-progress: true
 
 jobs:
@@ -264,7 +264,8 @@ jobs:
   # Gira su Linux con Chromium; fallisce se un pulsante principale o una scheda esce dalla finestra o ha il testo tagliato.
   schermi:
     if: github.ref == 'refs/heads/prove-windows'
-    runs-on: ubuntu-latest
+    # (ubuntu-latest è già 26.04: Playwright 1.56 lì non ha Chromium)
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
       contents: write
@@ -310,7 +311,7 @@ jobs:
   # Usa l'installazione appena compilata se c'è ([build] nel messaggio), altrimenti quella pubblicata (quella che hanno gli utenti).
   dispositivi:
     needs: build
-    if: always() && github.ref == 'refs/heads/prove-windows'
+    if: always() && github.ref == 'refs/heads/prove-windows' && !contains(github.event.head_commit.message, '[solo-schermi]')
     strategy:
       fail-fast: false
       matrix:
