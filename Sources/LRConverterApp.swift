@@ -48,6 +48,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             AppDelegate.handle(urls)
         }
 
+        // 6.0.3 · Il guardiano: blocchi della finestra, lavori fermi, chiusure di colpo (prima della schedina, che cambia la versione)
+        Watchdog.shared.launch(previousVersion: UserDefaults.standard.string(forKey: "lastLaunchVersion"),
+                               firstLaunch: WelcomeController.isFirstLaunch)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { ProblemReport.askIfNeeded() }
         Paths.installScript()
         WatchStore.shared.start()            // cartelle automatiche
         DropShelf.shared.start()             // 3.9.1 · il ripiano al bordo dello schermo quando trascini dei file
@@ -283,6 +287,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     /// 5.1 · Uscendo dall'app il progetto è già salvato; si scrive l'ultimo secondo, se manca.
     /// Il progetto resta segnato come aperto: al prossimo avvio torna dov'eri.
     func applicationWillTerminate(_ notification: Notification) {
+        if !duplicate { Watchdog.shared.cleanExit() }      // 6.0.3 · la copia doppia non tocca il guardiano della prima
         let s = VideoProjectStore.shared
         if s.currentID != nil { s.applyChanges(); s.rememberView() }
         UserDefaults.standard.set(true, forKey: VideoProjectStore.cleanExitKey)     // 5.1 · uscita normale

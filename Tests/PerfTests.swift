@@ -151,6 +151,10 @@ final class PerfTests: XCTestCase {
     /// Processore a riposo: finestra montata, 5 secondi senza fare niente.
     /// Il processo di prova ha anche i suoi thread: la soglia è larga, il numero vero si legge nel riepilogo.
     func testProcessoreARiposo() {
+        // 6.0.3 · Con il guardiano acceso, come nell'app vera
+        let guardiano = Watchdog(dir: FileManager.default.temporaryDirectory.appendingPathComponent("riposo-\(UUID().uuidString)"), log: { _, _ in })
+        guardiano.start()
+        defer { guardiano.stop() }
         let h = host(MainWindow())
         h.view.layoutSubtreeIfNeeded()
         RunLoop.main.run(until: Date().addingTimeInterval(1))

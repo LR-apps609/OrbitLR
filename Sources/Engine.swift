@@ -142,14 +142,20 @@ final class Job: ObservableObject, Identifiable, @unchecked Sendable {
         if !isDir.boolValue {
             return (try? fm.attributesOfItem(atPath: url.path)[.size] as? NSNumber)?.int64Value ?? 0
         }
-        var total: Int64 = 0
-        if let en = fm.enumerator(at: url, includingPropertiesForKeys: [.fileSizeKey]) {
-            for case let f as URL in en {
-                total += Int64((try? f.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
+        // 6.0.3 · Il peso di una cartella si conta in sottofondo, al massimo 2 secondi (poi vale quanto contato)
+        let r = MainActivity.during("peso di una cartella") {
+            BoundedWalk<Int64>.collect(timeout: folderSizeTimeout) { emit, stopped in
+                guard let en = FileManager.default.enumerator(at: url, includingPropertiesForKeys: [.fileSizeKey]) else { return }
+                for case let f as URL in en {
+                    if stopped() { return }
+                    emit(Int64((try? f.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0))
+                }
             }
         }
-        return total
+        return r.items.reduce(0, +)
     }
+
+    static var folderSizeTimeout: Double = 2
 }
 
 /// Quanto ci mette questo Mac: secondi per MB, per ogni azione e tipo di file, imparati dai lavori finiti.
@@ -554,6 +560,7 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
         }
         job.progress = job.state == .done ? 1 : job.progress
         if job.state == .done, job.failures.isEmpty { Estimator.learn(from: job) }
+        Watchdog.shared.noteFinished(job)          // 6.0.3 · motori usati e ultimo errore, per il rapporto
         if !job.outputs.isEmpty {
             history.insert(HistoryEntry(date: Date(), title: job.title, action: job.action.title,
                                         outputs: job.outputs.map { $0.path }, kind: job.kind?.rawValue,

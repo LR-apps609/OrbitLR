@@ -119,6 +119,10 @@ final class Workspace: ObservableObject, @unchecked Sendable {
         if skippedFiles > 0 { msg.append(String(localized: "al massimo \(Self.maxPerKind) file dello stesso tipo")) }
         let kept = msg.joined(separator: String(localized: " e "))
         notice = msg.isEmpty ? nil : String(localized: "Ho tenuto \(kept): gli altri non sono stati aggiunti.")
+        // 6.0.3 · Cartella troppo lenta da leggere (enorme, di rete o in iCloud): lo si dice, invece di bloccarsi
+        if PieController.lastExpandIncomplete {
+            notice = String(localized: "La cartella è molto grande o non ancora scaricata da iCloud: ho preso i file trovati in pochi secondi.")
+        }
 
         groups = order.compactMap { k in
             guard let f = byKind[k], !f.isEmpty else { return nil }

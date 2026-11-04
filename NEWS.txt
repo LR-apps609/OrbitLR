@@ -1,3 +1,10 @@
+What’s new in 6.0.3 “Reports”:
+• If something goes wrong (the window stops responding for a few seconds, a job gets stuck, OrbitLR closes suddenly), at the next launch OrbitLR asks whether to save the report on the Desktop: a text file to send via WhatsApp or email, without using “Report”
+• The report says everything needed to understand the problem: Mac, chip, macOS, memory, free space, screens, language, engines, what you were doing and the last lines of the log
+• In reports and in “Report” the user name disappears from every path (/Users/***/), even when it has a space
+• A huge folder, a network folder or one in iCloud not yet downloaded no longer freezes the pie: OrbitLR takes the files found in a few seconds and says so
+• “Report” also attaches macOS reports about freezes, not only crashes
+
 What’s new in 6.0.2 “Sonoma”:
 • On MacBooks and short windows the left sidebar no longer slides under the window buttons: logo, tabs and Drawer always stay visible (the list gets shorter)
 • Downloader: when YouTube asks to confirm you’re not a robot, it says so clearly (before it talked about private content). The real error goes into “Report”, so it’s clear what happened

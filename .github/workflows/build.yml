@@ -128,6 +128,16 @@ jobs:
           # Deve girare sia sui Mac Apple Silicon sia sugli Intel
           ARCHS=$(lipo -archs "$APP/Contents/MacOS/OrbitLR"); echo "Architetture: $ARCHS"
           echo "$ARCHS" | grep -q arm64 && echo "$ARCHS" | grep -q x86_64
+          # 6.0.3 · Ogni programma dentro l'app (MacOS, Motori, PlugIns) deve avere sia Apple Silicon sia Intel
+          bad=0; n=0
+          while IFS= read -r -d '' f; do
+            file -b "$f" | grep -q "Mach-O" || continue
+            n=$((n+1)); a=$(lipo -archs "$f" 2>/dev/null)
+            if echo "$a" | grep -q arm64 && echo "$a" | grep -q x86_64; then echo "ok  $a  ${f#$APP/}"
+            else echo "::error::Non va su tutti i Mac: ${f#$APP/} ha solo «$a»"; bad=1; fi
+          done < <(find "$APP/Contents/MacOS" "$APP/Contents/Resources/Motori" "$APP/Contents/PlugIns" "$APP/Contents/Frameworks" -type f -print0 2>/dev/null)
+          echo "::notice::Programmi dentro l'app controllati (Apple Silicon e Intel): $n"
+          [ $bad = 0 ] || exit 1
           codesign --verify --deep "$APP"
           du -sh "$APP"
 
@@ -244,9 +254,11 @@ jobs:
           name: registro-compilazione
           path: build.log
 
-  # 6.0.2 · La stessa app aperta davvero su più Mac di GitHub insieme (macOS 14, 15, 26; Apple Silicon e Intel).
+  # 6.0.2 · La stessa app aperta davvero su più Mac di GitHub insieme (macOS 14, 15, 26, 27; Apple Silicon e Intel).
   # Fotografa la finestra vera (con barra del titolo e pallini) e controlla il motore del Downloader.
-  # Le foto finiscono sul ramo «foto-dispositivi», una cartella per Mac. Non blocca la pubblicazione (per ora).
+  # 6.0.3 · Anche il «primo avvio vero» (app scaricata, con la quarantena come da Safari: cosa mostra Gatekeeper),
+  # la finestra più piccola possibile e il Dock sul lato. Le foto finiscono sul ramo «foto-dispositivi», una cartella per Mac.
+  # Non blocca la pubblicazione (per ora).
   dispositivi:
     needs: build
     if: github.event_name != 'pull_request'
@@ -254,8 +266,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # macOS 14: GitHub l'ha ritirato il 2 novembre 2026; si prova finché c'è, un errore qui non conta
           - mac: macos-14
             nome: sonoma-apple
+            prova: true
           - mac: macos-15
             nome: sequoia-apple
           - mac: macos-15-intel
@@ -265,11 +279,20 @@ jobs:
             prova: true
           - mac: macos-26
             nome: tahoe-apple
+          - mac: macos-26-intel
+            nome: tahoe-intel
+            prova: true
+          # macOS 27 (anteprima): l'immagine si chiama «xcode-27», non «macos-27». Un errore qui non conta
+          - mac: xcode-27
+            nome: macos27-apple
+            prova: true
     runs-on: ${{ matrix.mac }}
     continue-on-error: ${{ matrix.prova == true }}
     timeout-minutes: 45
     permissions:
       contents: write
+    env:
+      NOME: ${{ matrix.nome }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -277,59 +300,134 @@ jobs:
       - uses: actions/download-artifact@v5
         with:
           name: pacchetto
-      - name: Apro OrbitLR come un utente nuovo
+      - name: Il Mac
         run: |
-          sw_vers; uname -m
-          mkdir -p "$RUNNER_TEMP/foto/${{ matrix.nome }}"
+          OUT="$RUNNER_TEMP/foto/$NOME"; rm -rf "$OUT"; mkdir -p "$OUT/primo-avvio"
           mkdir -p dist && tar -C dist -xf pacchetto.tar
-          ditto dist/OrbitLR/Prebuilt/OrbitLR.app /Applications/OrbitLR.app
-          xattr -dr com.apple.quarantine /Applications/OrbitLR.app || true
+          { sw_vers; uname -m; sysctl -n machdep.cpu.brand_string; sysctl -n hw.model; echo "commit: ${GITHUB_SHA::7}"; } | tee "$OUT/mac.txt"
+          system_profiler SPDisplaysDataType | grep -E "Chipset|Resolution|Retina|UI Looks" | tee -a "$OUT/mac.txt" || true
+          swiftc -O -o /tmp/finestra Tools/finestra.swift || echo "::warning::$NOME: finestra.swift non compila"
+
+      # 6.0.3 · Come un utente vero: lo zip scaricato da Safari, l'app trascinata in Applicazioni, doppio clic.
+      # Niente preferenze scritte prima, quarantena lasciata. Si annota cosa succede (Gatekeeper, processo, spctl).
+      - name: Primo avvio vero (scaricata da Internet)
+        run: |
+          set +e
+          OUT="$RUNNER_TEMP/foto/$NOME"; P="$OUT/primo-avvio/risultato.txt"; : > "$P"
+          echo "Gatekeeper prima: $(spctl --status 2>&1)" >> "$P"
+          sudo spctl --global-enable >/dev/null 2>&1 || sudo spctl --master-enable >/dev/null 2>&1
+          echo "Gatekeeper dopo averlo acceso: $(spctl --status 2>&1)" >> "$P"
+          rm -rf ~/Downloads/prova && mkdir -p ~/Downloads/prova
+          ditto -x -k dist/OrbitLR/Firmato/app.zip ~/Downloads/prova
+          xattr -w com.apple.quarantine "0081;$(printf %x $(date +%s));Safari;" ~/Downloads/prova/OrbitLR.app
+          sudo rm -rf /Applications/OrbitLR.app
+          mv ~/Downloads/prova/OrbitLR.app /Applications/OrbitLR.app
+          echo "--- quarantena sull'app: $(xattr -p com.apple.quarantine /Applications/OrbitLR.app 2>&1)" >> "$P"
+          echo "--- spctl --assess -vv" >> "$P"; spctl --assess -vv --type execute /Applications/OrbitLR.app >> "$P" 2>&1; echo "(uscita $?)" >> "$P"
+          echo "--- codesign -dv" >> "$P"; codesign -dv /Applications/OrbitLR.app 2>&1 | grep -E "Signature|TeamIdentifier|flags" >> "$P"
+          if command -v syspolicy_check >/dev/null; then
+            echo "--- syspolicy_check distribution" >> "$P"; syspolicy_check distribution /Applications/OrbitLR.app >> "$P" 2>&1; echo "(uscita $?)" >> "$P"
+          else echo "--- syspolicy_check: non c'è su questo macOS" >> "$P"; fi
+          open /Applications/OrbitLR.app; echo "--- open: uscita $?" >> "$P"
+          sleep 15
+          if pgrep -x OrbitLR >/dev/null; then echo "processo vivo dopo 15 s: sì" >> "$P"; ALIVE=si; else echo "processo vivo dopo 15 s: no" >> "$P"; ALIVE=no; fi
+          screencapture -x "$OUT/primo-avvio/schermo-gatekeeper.png"
+          echo "--- finestre sullo schermo" >> "$P"; /tmp/finestra --elenco | grep -vE "^(Window Server|Dock|Control Center|Centro di Controllo|SystemUIServer|Spotlight|TextInputMenuAgent)" >> "$P"
+          echo "--- registro di sistema (Gatekeeper)" >> "$P"
+          log show --last 2m --style compact --predicate 'process == "syspolicyd" OR process == "CoreServicesUIAgent"' 2>/dev/null | grep -iE "orbitlr|gatekeeper|notari|malware|assess" | tail -n 25 >> "$P"
+          echo "gatekeeper_vivo=$ALIVE" > "$OUT/primo-avvio/esito.txt"
+          if [ "$ALIVE" = no ]; then
+            # Come «Apri comunque» nelle Impostazioni: si toglie la quarantena e si riapre
+            killall CoreServicesUIAgent 2>/dev/null; sleep 2
+            xattr -dr com.apple.quarantine /Applications/OrbitLR.app
+            open /Applications/OrbitLR.app; sleep 15
+            echo "--- dopo aver tolto la quarantena: processo vivo $(pgrep -x OrbitLR >/dev/null && echo sì || echo no)" >> "$P"
+          fi
+          screencapture -x "$OUT/primo-avvio/benvenuto-schermo.png"
+          W=$(/tmp/finestra --tutte); echo "--- finestra di benvenuto: ${W:-nessuna}" >> "$P"
+          [ -n "$W" ] && screencapture -x -o -l"${W%% *}" "$OUT/primo-avvio/benvenuto.png"
+          cat "$P"
+          osascript -e 'quit app "OrbitLR"' 2>/dev/null; sleep 3; pkill -x OrbitLR; sleep 1
+          xattr -dr com.apple.quarantine /Applications/OrbitLR.app
+          exit 0
+
+      - name: Apro OrbitLR come un utente che la usa già
+        run: |
           D=it.ledion.OrbitLR
           V=$(cat version.txt)
           defaults write $D welcomeDone -bool true
           defaults write $D launchScreen -bool false
           defaults write $D tips -bool false
           defaults write $D lastLaunchVersion -string "$V"
-          system_profiler SPDisplaysDataType | grep -E "Resolution|Retina" || true
           open /Applications/OrbitLR.app
           sleep 20
           if ! pgrep -x OrbitLR >/dev/null; then
-            echo "::error::${{ matrix.nome }}: OrbitLR non è partita (o si è chiusa)"
+            echo "::error::$NOME: OrbitLR non è partita (o si è chiusa)"
             ls -la ~/Library/Logs/DiagnosticReports/ | grep -i orbit || echo "nessun rapporto di arresto"
             for f in ~/Library/Logs/DiagnosticReports/OrbitLR*; do [ -f "$f" ] && head -n 60 "$f"; done
-            cat ~/Library/Application\ Support/OrbitLR/*.log 2>/dev/null | tail -n 40 || true
+            tail -n 40 ~/Library/Logs/LRConverter.log 2>/dev/null || true
             log show --last 2m --style compact --predicate 'process == "OrbitLR" OR eventMessage CONTAINS "OrbitLR"' 2>/dev/null | tail -n 60 || true
             echo "--- avvio diretto, 15 secondi ---"
             ( /Applications/OrbitLR.app/Contents/MacOS/OrbitLR > /tmp/diretto.txt 2>&1 & ); sleep 15; tail -n 40 /tmp/diretto.txt
             pgrep -x OrbitLR >/dev/null || exit 1
           fi
-      - name: Foto della finestra
+          echo "partita=si" > "$RUNNER_TEMP/foto/$NOME/partita.txt"
+      - name: Foto della finestra (normale, bassa, minima, Dock a sinistra)
         run: |
-          OUT="$RUNNER_TEMP/foto/${{ matrix.nome }}"; mkdir -p "$OUT"
-          W=$(swift Tools/finestra.swift || true); echo "Finestra: $W"
-          ID=${W%% *}
-          if [ -n "$ID" ]; then screencapture -x -o -l"$ID" "$OUT/finestra.png"; fi
+          OUT="$RUNNER_TEMP/foto/$NOME"; mkdir -p "$OUT"
+          D=it.ledion.OrbitLR
+          shot() {   # $1 = nome della foto; fotografa la finestra di OrbitLR e annota la misura
+            local W; W=$(/tmp/finestra || true); echo "$1: ${W:-nessuna finestra}" | tee -a "$OUT/mac.txt"
+            [ -n "$W" ] && screencapture -x -o -l"${W%% *}" "$OUT/$1.png"
+          }
+          reopen() { osascript -e 'quit app "OrbitLR"' || pkill -x OrbitLR || true; sleep 3; open /Applications/OrbitLR.app; sleep 15; }
+          frame() { for k in "NSWindow Frame main" "NSWindow Frame SwiftUI.main" "NSWindow Frame OrbitLR"; do defaults write $D "$k" "$1"; done; }
+          shot finestra
           screencapture -x "$OUT/schermo.png" || true
           # Finestra bassa, come su un portatile da 13": si riapre con la misura salvata più piccola
+          frame "60 60 1100 600 0 0 1440 900"; reopen; shot finestra-bassa
+          # 6.0.3 · La finestra più piccola possibile (minimo nel codice: 880×620): si chiede più piccola, macOS la porta al minimo
+          frame "60 60 600 400 0 0 1440 900"; reopen; shot finestra-minima
+          # 6.0.3 · Dock sul lato sinistro, misura di partenza
+          for k in "NSWindow Frame main" "NSWindow Frame SwiftUI.main" "NSWindow Frame OrbitLR"; do defaults delete $D "$k" 2>/dev/null || true; done
+          defaults write com.apple.dock orientation left; killall Dock; sleep 4
+          reopen; shot finestra-dock-sinistra
+          screencapture -x "$OUT/schermo-dock-sinistra.png" || true
+          defaults write com.apple.dock orientation bottom; killall Dock || true
+          # 6.0.3 · L'avviso dopo un problema: si finge una chiusura di colpo (il file «in-corso» resta) e si riapre
           osascript -e 'quit app "OrbitLR"' || pkill -x OrbitLR || true; sleep 3
-          for k in "NSWindow Frame main" "NSWindow Frame SwiftUI.main" "NSWindow Frame OrbitLR"; do
-            defaults write it.ledion.OrbitLR "$k" "60 60 1100 600 0 0 1440 900"
-          done
+          S="$HOME/Library/Application Support/LRConverter"; mkdir -p "$S"
+          printf 'avviata: prova · OrbitLR prova · avvio normale\nstava facendo: scheda: Conversione\n' > "$S/in-corso.txt"
           open /Applications/OrbitLR.app; sleep 15
-          W2=$(swift Tools/finestra.swift || true); echo "Finestra bassa: $W2"; echo "finestra bassa: $W2" >> "$OUT/mac.txt"
-          ID2=${W2%% *}
-          if [ -n "$ID2" ]; then screencapture -x -o -l"$ID2" "$OUT/finestra-bassa.png"; fi
-          { sw_vers; uname -m; echo "finestra: $W"; } >> "$OUT/mac.txt"
+          screencapture -x "$OUT/avviso-rapporto.png" || true
+          /tmp/finestra --elenco | grep -i orbit | tee -a "$OUT/mac.txt"
+          [ -f "$S/problema.txt" ] && { echo "--- problema registrato:"; cat "$S/problema.txt"; } | tee -a "$OUT/mac.txt"
+          pkill -x OrbitLR || true
           ls -la "$OUT"
-          [ -s "$OUT/finestra.png" ] || echo "::warning::${{ matrix.nome }}: niente foto della finestra"
+          [ -s "$OUT/finestra.png" ] || echo "::warning::$NOME: niente foto della finestra"
       - name: Motore del Downloader
         run: |
-          OUT="$RUNNER_TEMP/foto/${{ matrix.nome }}"
+          OUT="$RUNNER_TEMP/foto/$NOME"
           curl -fsSL -o /tmp/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos && chmod +x /tmp/yt-dlp
-          ( /tmp/yt-dlp --version 2>&1 | tee "$OUT/motore.txt" ) || echo "::error::${{ matrix.nome }}: il motore del Downloader non parte"
+          ( /tmp/yt-dlp --version 2>&1 | tee "$OUT/motore.txt" ) || echo "::error::$NOME: il motore del Downloader non parte"
           # YouTube su un Mac di GitHub: spesso chiede di confermare che non sei un robot (lo si annota, non è un errore dell'app)
           ( /tmp/yt-dlp --simulate --no-warnings --print title "https://www.youtube.com/watch?v=jNQXAC9IVRw" > "$OUT/youtube.txt" 2>&1 ) || true
           cat "$OUT/youtube.txt" | tail -n 5
+      - name: Riga del riepilogo
+        if: always()
+        run: |
+          OUT="$RUNNER_TEMP/foto/$NOME"; mkdir -p "$OUT"
+          B="https://github.com/${GITHUB_REPOSITORY}/blob/foto-dispositivi/$NOME"
+          OS=$(sw_vers -productVersion); CHIP=$(uname -m)
+          PARTITA=$([ -f "$OUT/partita.txt" ] && echo sì || echo no)
+          GK=$(grep -o "gatekeeper_vivo=.*" "$OUT/primo-avvio/esito.txt" 2>/dev/null | cut -d= -f2)
+          GK=$([ "$GK" = si ] && echo "si apre" || ([ "$GK" = no ] && echo "bloccata" || echo "?"))
+          L=""
+          for f in finestra finestra-bassa finestra-minima finestra-dock-sinistra avviso-rapporto primo-avvio/schermo-gatekeeper primo-avvio/benvenuto; do
+            [ -s "$OUT/$f.png" ] && L="$L [${f#primo-avvio/}]($B/$f.png)"
+          done
+          echo "| $NOME | $OS | $CHIP | $PARTITA | $GK | ${L:- nessuna foto} | ${GITHUB_SHA::7} |" > "$OUT/riga.md"
+          { echo "| Mac | macOS | chip | partita | primo avvio da download | foto | commit |"; echo "|---|---|---|---|---|---|---|"; cat "$OUT/riga.md"; } >> $GITHUB_STEP_SUMMARY
       - name: Sul ramo «foto-dispositivi»
         if: always()
         run: |
@@ -339,10 +437,30 @@ jobs:
           git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
           for i in 1 2 3 4 5; do
             git fetch -q origin foto-dispositivi 2>/dev/null && git reset -q origin/foto-dispositivi 2>/dev/null || true
-            git add "${{ matrix.nome }}" && git commit -q -m "${{ matrix.nome }} · ${GITHUB_SHA::7}" || true
+            git add -A "$NOME" && git commit -q -m "$NOME · ${GITHUB_SHA::7}" || true
             git push -q origin HEAD:foto-dispositivi && break
             sleep $((RANDOM % 10 + 3))
           done
+
+  # 6.0.3 · Una tabella sola con tutti i Mac (dalle righe scritte sul ramo «foto-dispositivi»)
+  riepilogo-dispositivi:
+    needs: dispositivi
+    if: always() && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Tabella
+        run: |
+          git clone -q --depth 1 -b foto-dispositivi "https://github.com/${GITHUB_REPOSITORY}.git" foto || exit 0
+          {
+            echo "## Prova sui dispositivi"
+            echo "| Mac | macOS | chip | partita | primo avvio da download | foto | commit |"
+            echo "|---|---|---|---|---|---|---|"
+            for f in foto/*/riga.md; do
+              if grep -q "${GITHUB_SHA::7}" "$f"; then cat "$f"; else echo "$(sed 's/ |$/ (vecchia) |/' "$f")"; fi
+            done
+          } >> $GITHUB_STEP_SUMMARY
+          cat $GITHUB_STEP_SUMMARY
 
   # 3.5.2 · Solo questo lavoro vede la chiave di firma e può pubblicare. Gira solo sul ramo principale.
   release:

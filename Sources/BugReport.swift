@@ -51,23 +51,28 @@ enum BugReport {
     /// 3.5.2 · Niente nomi di file, nomi utente o percorsi personali nelle informazioni tecniche.
     /// 5.1.1 · Gli ultimi due rapporti di macOS sugli arresti improvvisi di OrbitLR, senza il percorso della cartella Inizio.
     static func crashReports() -> [URL] {
-        let dir = Paths.home.appendingPathComponent("Library/Logs/DiagnosticReports")
         let fm = FileManager.default
-        let all = ((try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.contentModificationDateKey])) ?? [])
-            .filter { let n = $0.lastPathComponent; return (n.hasPrefix("OrbitLR") || n.hasPrefix("LRConverter")) && ($0.pathExtension == "ips" || $0.pathExtension == "crash" || $0.pathExtension == "hang") }
-            .sorted { (a, b) in
-                let da = (try? a.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
-                let db = (try? b.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
-                return da > db
-            }
         var out: [URL] = []
-        for u in all.prefix(2) {
+        for u in systemReportURLs().prefix(2) {
             guard let t = try? String(contentsOf: u, encoding: .utf8) else { continue }
             let dest = fm.temporaryDirectory.appendingPathComponent(u.lastPathComponent + ".txt")
             try? anonymize(t, names: []).write(to: dest, atomically: true, encoding: .utf8)
             out.append(dest)
         }
         return out
+    }
+
+    /// 6.0.3 · I rapporti di macOS su OrbitLR, dal più recente: arresti (.ips, .crash) e blocchi (.hang, .spin).
+    /// Anche quelli che macOS scrive in /Library/Logs (i blocchi chiusi a forza finiscono lì).
+    static func systemReportURLs() -> [URL] {
+        let fm = FileManager.default
+        let dirs = [Paths.home.appendingPathComponent("Library/Logs/DiagnosticReports"),
+                    URL(fileURLWithPath: "/Library/Logs/DiagnosticReports")]
+        let all = dirs.flatMap { (try? fm.contentsOfDirectory(at: $0, includingPropertiesForKeys: [.contentModificationDateKey])) ?? [] }
+            .filter { let n = $0.lastPathComponent
+                return (n.hasPrefix("OrbitLR") || n.hasPrefix("LRConverter")) && ["ips", "crash", "hang", "spin"].contains($0.pathExtension) }
+        func date(_ u: URL) -> Date { (try? u.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast }
+        return all.sorted { date($0) > date($1) }
     }
 
     static func anonymize(_ text: String, names: [URL], home: String = Paths.home.path) -> String {
@@ -80,24 +85,24 @@ enum BugReport {
             let stem = u.deletingPathExtension().lastPathComponent
             if stem.count > 3 { t = t.replacingOccurrences(of: stem, with: "file") }
         }
-        t = t.replacingOccurrences(of: home, with: "~")
+        // 6.0.3 · Il nome dell'utente sparisce da ogni percorso: «/Users/***/…» (anche con spazi nel nome)
+        t = Redact.userPaths(t, home: home)
         // Qualsiasi altro nome di file rimasto (es. dal registro di sessioni passate) diventa «file.estensione»
         if let re = try? NSRegularExpression(pattern: "[^/\\s'\"«»()]+\\.([A-Za-z][A-Za-z0-9]{1,4})\\b") {
             t = re.stringByReplacingMatches(in: t, range: NSRange(t.startIndex..., in: t), withTemplate: "file.$1")
         }
-        // Qualsiasi altro «/Users/nome/…» rimasto
-        if let re = try? NSRegularExpression(pattern: "/Users/[^/\\s]+") {
-            t = re.stringByReplacingMatches(in: t, range: NSRange(t.startIndex..., in: t), withTemplate: "/Users/…")
-        }
+        // Qualsiasi altro «/Users/nome/…» rimasto (per esempio dentro un nome di file appena tolto)
+        t = Redact.userPaths(t, home: home)
         return t
     }
 
     private static func report(comps: String, jobs: String, log: String, model: String) -> String {
         return """
-        OrbitLR \(version)
-        macOS \(ProcessInfo.processInfo.operatingSystemVersionString)
-        Mac: \(model) · \(ProcessInfo.processInfo.processorCount) core
-        Componenti: \(comps)
+        \(SystemInfo.lines().joined(separator: "\n"))
+
+        Ultimo problema visto dal guardiano (6.0.3):
+        \(Watchdog.shared.lastProblem ?? Watchdog.shared.pending ?? "(nessuno)")
+        Ultimo errore: \(Watchdog.lastError() ?? "(nessuno)")
 
         Ultimi lavori:
         \(jobs.isEmpty ? "(nessuno)" : jobs)
