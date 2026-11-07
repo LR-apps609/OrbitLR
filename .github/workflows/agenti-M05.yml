@@ -26,17 +26,29 @@ jobs:
       - name: Scarico le versioni pubblicate
         run: |
           mkdir -p "$RUNNER_TEMP/rel"
-          for v in 5.0 5.0.2 5.1 5.1.1 6.0.2; do
+          for v in 5.0 5.1.1 6.0.2; do
             curl -fsSL --retry 3 -o "$RUNNER_TEMP/rel/OrbitLR.$v.orbitlr" "https://github.com/LR-apps609/OrbitLR/releases/download/v$v/OrbitLR.$v.orbitlr" &
           done
           wait; ls -la "$RUNNER_TEMP/rel"
+      - name: Pacchetto 6.0.3 (se pronto)
+        continue-on-error: true
+        uses: actions/download-artifact@v5
+        with:
+          name: pacchetto
+          run-id: 42407890132
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/p603
+      - name: Estraggo 6.0.3
+        continue-on-error: true
+        run: |
+          mkdir -p "$RUNNER_TEMP/rel/603" && tar -C "$RUNNER_TEMP/rel/603" -xf "$RUNNER_TEMP/p603/pacchetto.tar" && find "$RUNNER_TEMP/rel/603" -maxdepth 3 | head
       - name: Sequenze
         shell: zsh {0}
         timeout-minutes: 38
         env:
           SEQ: ${{ github.event.inputs.sequenze }}
         run: |
-          S=${SEQ:-"info file:5.0:6.0.2:aperta file:5.0:6.0.2:chiusa menu:5.0:6.0.2 nostrumenti:5.0:6.0.2 primo:5.0 primo:6.0.2 file:5.0.2:6.0.2:aperta file:5.1:6.0.2:aperta file:5.1.1:6.0.2:aperta menu:5.1.1:6.0.2 doppio:5.0:6.0.2 statico"}
+          S=${SEQ:-"info arch:5.0 arch:6.0.2 arch:6.0.3 file:5.1.1:6.0.2:aperta file:5.0:6.0.2:aperta nostrumenti:5.1.1:6.0.2 licenza:5.1.1:6.0.2 menu:5.1.1:6.0.2 menu:5.0:6.0.2 file:5.0:6.0.2:chiusa primo:6.0.2 statico"}
           zsh Tests/Agenti/M05/prova.sh "$RUNNER_TEMP/rel" "$RUNNER_TEMP/out/${{ matrix.mac }}" ${=S} || true
           echo "======== RISULTATI"; cat "$RUNNER_TEMP/out/${{ matrix.mac }}/risultati.txt"
       - name: Carico registri e foto
