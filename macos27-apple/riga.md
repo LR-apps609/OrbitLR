@@ -1,0 +1,1 @@
+| macos27-apple | 27.0.1 | arm64 | sì | si apre |  [finestra](https://github.com/LR-apps609/OrbitLR/blob/foto-dispositivi/macos27-apple/finestra.png) [schermo-gatekeeper](https://github.com/LR-apps609/OrbitLR/blob/foto-dispositivi/macos27-apple/primo-avvio/schermo-gatekeeper.png) | 93e6936 |
