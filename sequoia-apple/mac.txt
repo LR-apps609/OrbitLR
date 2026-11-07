@@ -1,0 +1,8 @@
+ProductName:		macOS
+ProductVersion:		15.8.2
+BuildVersion:		24H232
+arm64
+Apple M1 (Virtual)
+VirtualMac2,1
+commit: 93e6936
+finestra: 31 1024 684

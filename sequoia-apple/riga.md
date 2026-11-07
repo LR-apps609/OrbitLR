@@ -1,0 +1,1 @@
+| sequoia-apple | 15.8.2 | arm64 | sì | si apre |  [finestra](https://github.com/LR-apps609/OrbitLR/blob/foto-dispositivi/sequoia-apple/finestra.png) [schermo-gatekeeper](https://github.com/LR-apps609/OrbitLR/blob/foto-dispositivi/sequoia-apple/primo-avvio/schermo-gatekeeper.png) | 93e6936 |
