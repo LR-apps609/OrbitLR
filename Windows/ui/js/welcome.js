@@ -36,7 +36,8 @@ function welcome(done) {
   const card = h("div.modal.welcome", { role: "dialog", "aria-modal": "true", "aria-label": t("Benvenuto in OrbitLR") });
   const draw = () => {
     const s = steps[i];
-    card.replaceChildren(
+    // (replaceChildren scriverebbe «null» per i pezzi che non ci sono: si tolgono prima)
+    card.replaceChildren(...[
       h("div.w-mark", h("img", { src: "img/icona.png", alt: "", width: 56, height: 56, onerror: (e) => e.target.remove() })),
       h("span.w-step", `${i + 1} / ${steps.length}`),
       h("div.w-ico", ico(s.icon, 30)),
@@ -46,7 +47,7 @@ function welcome(done) {
       h("div.w-dots", steps.map((_, k) => h("i" + (k === i ? ".on" : "")))),
       h("div.w-btns",
         i > 0 ? h("button.btn.ghost", { onclick: () => { i--; draw(); } }, t("Indietro")) : h("button.btn.ghost", { onclick: close }, t("Salta")),
-        h("button.btn.primary", { onclick: () => { play("select"); if (i < steps.length - 1) { i++; draw(); } else close(); } }, i < steps.length - 1 ? t("Avanti") : t("Cominciamo"))));
+        h("button.btn.primary", { onclick: () => { play("select"); if (i < steps.length - 1) { i++; draw(); } else close(); } }, i < steps.length - 1 ? t("Avanti") : t("Cominciamo")))].filter(Boolean));
     card.querySelector(".btn.primary")?.focus();
   };
   function close() {

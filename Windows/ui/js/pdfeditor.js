@@ -9,25 +9,27 @@ import { guardClose, h, ico, modal, toast } from "./util.js";
 // 1.1 · Lo stesso PDF non si apre due volte
 const openNow = new Set();
 
-export async function openPdfEditor(file) {
+/** `stillHere()`: la scheda da cui lo si apre è ancora quella a schermo? (se no, a lettura finita non si apre) */
+export async function openPdfEditor(file, stillHere = () => true) {
   if (openNow.has(file.path)) return toast(t("Questo PDF è già aperto nell’editor."));
   openNow.add(file.path);
   try {
-    await openEditor(file);
+    await openEditor(file, stillHere);
   } catch (e) {
     openNow.delete(file.path);
     toast(tr(String(e)));
   }
 }
 
-async function openEditor(file) {
+async function openEditor(file, stillHere) {
   let info;
   try {
     info = await invoke("pdf_info", { path: file.path });
   } catch (e) {
     openNow.delete(file.path);
-    return toast(tr(String(e)));
+    return stillHere() ? toast(tr(String(e))) : undefined;
   }
+  if (!stillHere()) { openNow.delete(file.path); return; }
   if (!info || !info.pages?.length) { openNow.delete(file.path); return toast(t("Questo PDF non si apre nell'editor.")); }
 
   const marks = { texts: [], images: [], redactions: [] }; // coordinate in punti, dall'alto a sinistra
@@ -264,7 +266,8 @@ async function openEditor(file) {
         : h("input.pe-field", { type: "text", value: fields[f.name] || "", oninput: (e) => { fields[f.name] = e.target.value; changedFields.add(f.name); updateCount(); }, onchange: () => commit() });
       return h("label.pe-frow", h("span", f.name.split(".").pop()), input);
     });
-    side.replaceChildren(
+    // (replaceChildren scriverebbe «null» per i pezzi che non ci sono: si tolgono prima)
+    side.replaceChildren(...[
       h("div.group", t("Cosa vuoi fare")),
       h("div.pe-modes",
         ...[["text", "type", t("Scrivi")], ["sign", "pen-line", t("Firma")], ["redact", "square", t("Oscura")]].map(([id, icon, label]) =>
@@ -277,7 +280,7 @@ async function openEditor(file) {
       flist.length ? h("div.group", t`Campi del modulo (${flist.length})`) : null,
       flist.length ? h("div.pe-fields", ...flist) : null,
       h("div.grow"),
-      countEl);
+      countEl].filter(Boolean));
     updateCount();
   }
 
