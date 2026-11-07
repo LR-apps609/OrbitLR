@@ -81,65 +81,46 @@ jobs:
           Copy-Item motori-impronte.txt $r\
           & .\motori\voce\whisper-cli.exe --help 2>&1 | Select-Object -First 5 | Tee-Object -Append "$r\ambiente.txt"
 
-      - name: Gruppo A · normale, lettere non latine, OneDrive, rete
+      - name: Gruppo A · GIF e AAC rimisurati (normale e lettere non latine)
         if: matrix.gruppo == 'A'
-        timeout-minutes: 30
+        timeout-minutes: 10
         continue-on-error: true
         shell: pwsh
         env:
           ORBIT_MOTORI: ${{ github.workspace }}\motori
-          ORBIT_WHISPER: ${{ github.workspace }}\motori\voce\whisper-cli.exe
-          ORBIT_WHISPER_MODEL: ${{ github.workspace }}\modello-voce\ggml-small-q5_1.bin
-          W05_TAG: A
-          W05_LOCS: ascii,unicode,onedrive,unc
+          W05_TAG: A2
+          W05_LOCS: ascii,unicode,long
+          W05_ONLY: "v to:gif;gifcut 0-1,5;a to:aac"
         run: |
           $env:W05_WORK = "$env:RUNNER_TEMP\w05"; $env:W05_REPORT = "$env:RUNNER_TEMP\w05\report"
           & .\Tests\Agenti\W05\harness\target\release\w05.exe suite
 
-      - name: Gruppo B1 · percorso lungo (LongPathsEnabled=0, come su un PC normale)
-        if: matrix.gruppo == 'B'
-        timeout-minutes: 14
+      - name: Gruppo A · uscita in cartella non latina, rete che non risponde
+        if: matrix.gruppo == 'A'
+        timeout-minutes: 15
         continue-on-error: true
         shell: pwsh
         env:
           ORBIT_MOTORI: ${{ github.workspace }}\motori
           ORBIT_WHISPER: ${{ github.workspace }}\motori\voce\whisper-cli.exe
           ORBIT_WHISPER_MODEL: ${{ github.workspace }}\modello-voce\ggml-small-q5_1.bin
-          W05_TAG: B1-lungo-lpe0
-          W05_LOCS: long
+          W05_TAG: A3
+          W05_LOCS: unc_dead,out_unicode
         run: |
-          Set-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem LongPathsEnabled 0 -Type DWord
-          "LongPathsEnabled ora: " + (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem).LongPathsEnabled
           $env:W05_WORK = "$env:RUNNER_TEMP\w05"; $env:W05_REPORT = "$env:RUNNER_TEMP\w05\report"
           & .\Tests\Agenti\W05\harness\target\release\w05.exe suite
 
-      - name: Gruppo B2 · percorso lungo (LongPathsEnabled=1)
+      - name: Gruppo B · trascrizione con nomi utente diversi (TEMP e modello sotto C:\Users\<nome>)
         if: matrix.gruppo == 'B'
-        timeout-minutes: 14
+        timeout-minutes: 20
         continue-on-error: true
         shell: pwsh
         env:
           ORBIT_MOTORI: ${{ github.workspace }}\motori
           ORBIT_WHISPER: ${{ github.workspace }}\motori\voce\whisper-cli.exe
           ORBIT_WHISPER_MODEL: ${{ github.workspace }}\modello-voce\ggml-small-q5_1.bin
-          W05_TAG: B2-lungo-lpe1
-          W05_LOCS: long
-        run: |
-          Set-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem LongPathsEnabled 1 -Type DWord
-          $env:W05_WORK = "$env:RUNNER_TEMP\w05"; $env:W05_REPORT = "$env:RUNNER_TEMP\w05\report"
-          & .\Tests\Agenti\W05\harness\target\release\w05.exe suite
-
-      - name: Gruppo B3 · sola lettura, TEMP e modello con lettere non latine, rete con lettere non latine
-        if: matrix.gruppo == 'B'
-        timeout-minutes: 16
-        continue-on-error: true
-        shell: pwsh
-        env:
-          ORBIT_MOTORI: ${{ github.workspace }}\motori
-          ORBIT_WHISPER: ${{ github.workspace }}\motori\voce\whisper-cli.exe
-          ORBIT_WHISPER_MODEL: ${{ github.workspace }}\modello-voce\ggml-small-q5_1.bin
-          W05_TAG: B3
-          W05_LOCS: ro_out,ro_in,temp_unicode,model_unicode,unc_unicode
+          W05_TAG: B4
+          W05_LOCS: whisper_temp_ascii,whisper_temp_it,whisper_temp_pl,whisper_temp_ru,whisper_temp_zh,whisper_temp_ar,whisper_temp_emoji,whisper_model_it,whisper_model_pl,whisper_model_ru,whisper_model_zh
         run: |
           $env:W05_WORK = "$env:RUNNER_TEMP\w05"; $env:W05_REPORT = "$env:RUNNER_TEMP\w05\report"
           & .\Tests\Agenti\W05\harness\target\release\w05.exe suite

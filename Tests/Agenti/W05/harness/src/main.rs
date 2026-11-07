@@ -289,6 +289,15 @@ fn snapshot(dir: &Path) -> Vec<(String, u64)> {
     v
 }
 
+/// La durata vera: si decodifica tutto e si legge l'ultimo «time=» di ffmpeg.
+fn decoded_dur(t: &Tools, p: &Path) -> f64 {
+    let o = t.ffmpeg_cmd().args(["-hide_banner", "-stats", "-i"]).arg(p).args(["-f", "null", "-"]).output();
+    let err = o.map(|o| String::from_utf8_lossy(&o.stderr).to_string()).unwrap_or_default();
+    let last = err.rsplit("time=").next().unwrap_or("").split_whitespace().next().unwrap_or("");
+    let parts: Vec<f64> = last.split(':').filter_map(|x| x.parse().ok()).collect();
+    if parts.len() == 3 { parts[0] * 3600.0 + parts[1] * 60.0 + parts[2] } else { -1.0 }
+}
+
 fn env_path(k: &str) -> Option<PathBuf> {
     std::env::var_os(k).filter(|v| !v.is_empty()).map(PathBuf::from)
 }
@@ -299,7 +308,7 @@ fn suite() {
     let report = env_path("W05_REPORT").unwrap_or_else(|| work.join("report"));
     let tag = std::env::var("W05_TAG").unwrap_or_else(|_| "base".into());
     let want: Vec<String> = std::env::var("W05_LOCS").unwrap_or_else(|_| "ascii,unicode,onedrive,long,unc,ro_out,ro_in,temp_unicode,model_unicode".into()).split(',').map(|x| x.trim().to_string()).collect();
-    let only: Vec<String> = std::env::var("W05_ONLY").unwrap_or_default().split(',').filter(|x| !x.is_empty()).map(|x| x.to_string()).collect();
+    let only: Vec<String> = std::env::var("W05_ONLY").unwrap_or_default().split(';').filter(|x| !x.is_empty()).map(|x| x.to_string()).collect();
     let exe = env_path("ORBIT_WHISPER");
     let model = env_path("ORBIT_WHISPER_MODEL");
     std::fs::create_dir_all(&report).unwrap();
@@ -384,8 +393,64 @@ fn suite() {
                 l.subset = true;
                 locs.push(l);
             }
+            "out_unicode" => {
+                // file in una cartella normale, risultati in una cartella scelta con lettere non latine
+                let mut l = base("out_unicode", work.join("ascii_out"), "");
+                l.out_dir = Some(hostile.join("Uscita Вывод 输出 🎉"));
+                l.subset = true;
+                locs.push(l);
+            }
+            x if x.starts_with("whisper_") => {
+                // whisper_<temp|model>_<nome utente>: TEMP o modello sotto C:\Users\<nome>\AppData\Local
+                let mut it = x.splitn(3, '_').skip(1);
+                let what = it.next().unwrap_or("temp").to_string();
+                let who = match it.next().unwrap_or("") {
+                    "pl" => "Łukasz Wójcik",
+                    "it" => "Ëlira Città",
+                    "ru" => "Иван Петров",
+                    "zh" => "王小明",
+                    "ar" => "محمد",
+                    "emoji" => "Anna 🌸",
+                    _ => "ascii",
+                };
+                let mut l = base(x, work.join("ascii_w"), "");
+                let local = work.join("Users").join(who).join("AppData").join("Local");
+                if what == "temp" {
+                    let t = local.join("Temp");
+                    std::fs::create_dir_all(&t).unwrap();
+                    l.temp = Some(t);
+                } else {
+                    l.data_dir = Some(local.join("OrbitLR"));
+                }
+                l.subset = true;
+                locs.push(l);
+            }
             _ => {}
         }
+    }
+
+    // Una cartella di rete che non risponde (indirizzo di prova che non esiste): quanto aspetta, cosa dice?
+    if want.iter().any(|w| w == "unc_dead") {
+        let spec_path = specs.join(format!("{tag}-dead.json"));
+        let res_path = specs.join(format!("{tag}-dead.result.json"));
+        let spec = json!({"mode": "action", "action": "vcompress", "files": [r"\\192.0.2.1\condivisa\Video\clip.mp4"], "param": "best", "out_dir": null, "data_dir": null, "result": s(&res_path)});
+        std::fs::write(&spec_path, serde_json::to_vec(&spec).unwrap()).unwrap();
+        let t0 = Instant::now();
+        let mut child = std::process::Command::new(std::env::current_exe().unwrap()).arg("one").arg(&spec_path).spawn().unwrap();
+        let mut hang = false;
+        loop {
+            if child.try_wait().unwrap().is_some() {
+                break;
+            }
+            if t0.elapsed() > LIMIT {
+                hang = true;
+                let _ = child.kill();
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(100));
+        }
+        let res: Value = std::fs::read(&res_path).ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or(json!({}));
+        println!("| unc_dead | vcompress su \\\\192.0.2.1 | {} | {:.1} s | messaggio: {} |", if hang { "BLOCCATO" } else { "FINITO" }, t0.elapsed().as_secs_f64(), res["error"].as_str().unwrap_or("?"));
     }
 
     let jobs = jobs();
@@ -429,7 +494,7 @@ fn suite() {
             if loc.subset && !job.core {
                 continue;
             }
-            if loc.name == "model_unicode" && job.mode != "transcribe" {
+            if (loc.data_dir.is_some() || loc.name.starts_with("whisper_")) && job.mode != "transcribe" {
                 continue;
             }
             if !only.is_empty() && !only.iter().any(|o| o == job.label) {
@@ -558,7 +623,16 @@ fn suite() {
                         }
                     } else if ext != "png" {
                         match probe(Some(&t), &copy) {
-                            Ok(i) => {
+                            Ok(mut i) => {
+                                // una GIF è un'immagine per il motore: «video» = ha delle misure
+                                if ext == "gif" {
+                                    i.has_video = i.width > 0;
+                                }
+                                // .aac (ADTS): ffprobe stima la durata dal bitrate; si misura decodificando
+                                if ext == "aac" {
+                                    c["dur_ffprobe"] = json!(i.duration);
+                                    i.duration = decoded_dur(&t, &copy);
+                                }
                                 c["dur"] = json!(i.duration);
                                 c["audio"] = json!(i.has_audio);
                                 c["video"] = json!(i.has_video);
