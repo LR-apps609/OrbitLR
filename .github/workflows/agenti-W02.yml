@@ -1,0 +1,47 @@
+name: agenti-W02
+on:
+  push:
+    branches: ['agenti/W02']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  prova:
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        os: [windows-11-arm, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Scarica OrbitLR per Windows 2.0 (pubblicata)
+        shell: pwsh
+        run: |
+          $u = "https://github.com/LR-apps609/OrbitLR/releases/download/windows-anteprima/OrbitLR-Windows-2.0.0-Setup.exe"
+          $t = Get-Date
+          Invoke-WebRequest $u -OutFile OrbitLR-Windows-2.0.0-Setup.exe
+          Write-Output "::notice::scaricata in $([math]::Round(((Get-Date)-$t).TotalSeconds,1)) s · $((Get-Item OrbitLR-Windows-2.0.0-Setup.exe).Length) byte · SHA256 $((Get-FileHash OrbitLR-Windows-2.0.0-Setup.exe).Hash)"
+          node --version
+      - name: Prova W02
+        shell: pwsh
+        timeout-minutes: 35
+        run: pwsh -File Tests/Agenti/W02/w02.ps1 -Setup OrbitLR-Windows-2.0.0-Setup.exe -Out "out-${{ matrix.os }}"
+      - name: Riassunto
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path "out-${{ matrix.os }}\risultati.json") { Get-Content "out-${{ matrix.os }}\risultati.json" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: w02-${{ matrix.os }}
+          path: out-${{ matrix.os }}
+          retention-days: 7
