@@ -269,7 +269,8 @@ input, textarea, select, button { font: inherit; color: inherit; }
 .est { font-size: 12.5px; color: var(--ok); font-weight: 800; }
 
 /* ── Taglio: anteprima e maniglie */
-.trim { display: grid; gap: 10px; }
+/* 2.0.1 · Una colonna che non supera il contenitore: le righe sotto vanno a capo invece di allargare la forma d'onda */
+.trim { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); min-width: 0; }
 .player { position: relative; border-radius: 16px; overflow: hidden; background: #111; aspect-ratio: 16/9; max-height: 52vh; display: grid; place-items: center; }
 .player video { width: 100%; height: 100%; object-fit: contain; }
 .player .nopreview { color: #ccc; font-size: 13px; text-align: center; padding: 20px; }
@@ -281,13 +282,13 @@ input, textarea, select, button { font: inherit; color: inherit; }
 /* 1.2 · La maniglia si disegna da 14 px ma si prende su 24 px */
 .rail .hd::before { content: ""; position: absolute; top: 0; bottom: 0; left: -5px; right: -5px; }
 .rail .ph { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--playhead); pointer-events: none; }
-.trim-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--quiet); }
+.trim-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; row-gap: 6px; font-size: 12.5px; color: var(--quiet); min-width: 0; }
 .trim-row .t { font-variant-numeric: tabular-nums; font-weight: 800; color: var(--ink); }
 .trim-row .grow { flex: 1; }
 
 /* ── Audio */
 .audio-wrap { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; padding: 4px 26px 22px; }
-.wave-card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 14px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.wave-card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 14px; display: flex; flex-direction: column; gap: 10px; min-height: 0; min-width: 0; }
 .wave-card .trim { flex: 1; min-height: 0; grid-template-rows: minmax(160px, 1fr) auto; }
 .wave-card .rail { height: auto; min-height: 160px; }
 .tool-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }

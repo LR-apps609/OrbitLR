@@ -87,7 +87,9 @@ for (const spec of wanted) {
   // «oggi» (2.0.0): la finestra resta 1200×800 anche se lo schermo è più basso; si vede solo la parte sopra la barra delle applicazioni
   const windows = [["massima", availW, availH, availH], ["iniziale", Math.min(1200, availW), Math.min(800, availH), Math.min(800, availH)], ["oggi", Math.min(1200, availW), 800, Math.min(800, availH)],
     // 2.0.1 · Finestra bassa (ridimensionata a mano o mezzo schermo): la barra laterale scorre, Opzioni e Aiuto si raggiungono
-    ["bassa", Math.min(1200, availW), 480, 480]];
+    ["bassa", Math.min(1200, availW), 480, 480],
+    // 2.0.1 · Finestra stretta (1024×768 o mezzo schermo): niente che si sovrappone (Audio)
+    ["stretta", Math.min(1024, availW), Math.min(700, availH), Math.min(700, availH)]];
   for (const [kind, vw, vh, visible] of windows) {
     const ctx = await b.newContext({ viewport: { width: vw, height: vh }, deviceScaleFactor: s, locale: "it-IT" });
     await ctx.addInitScript((v) => { window.__visibleH = v; }, visible);
@@ -109,6 +111,16 @@ for (const spec of wanted) {
       await pg.waitForTimeout(350);
       for (const m of await pg.$$(".modal-bg")) await m.evaluate((n) => n.remove());
       const bad = await pg.evaluate(check, kind === "bassa");
+      // 2.0.1 · Audio con un file (dati di prova): la forma d'onda resta dentro la sua scheda e non copre le opzioni
+      if (tabs[i] === "audio" && kind !== "bassa") {
+        await pg.click(".empty .box", { force: true, timeout: 3000 }).catch(() => {});
+        await pg.waitForTimeout(800);
+        const o = await pg.evaluate(() => {
+          const c = document.querySelector(".wave-card")?.getBoundingClientRect(), r = document.querySelector(".wave-card .rail")?.getBoundingClientRect();
+          return c && r ? { card: Math.round(c.right), rail: Math.round(r.right) } : null;
+        });
+        if (o && o.rail > o.card + 1) bad.push(`forma d'onda fuori dalla scheda: ${o.rail} > ${o.card}`);
+      }
       bad.forEach((x) => probs.push(`${tabs[i]}: ${x}`));
       if (i < 5 || bad.length) await pg.screenshot({ path: `${out}/${W}x${H}-${S}-${kind}-${tabs[i]}.png`, clip: { x: 0, y: 0, width: vw, height: visible } });
     }
