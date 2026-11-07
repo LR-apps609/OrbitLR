@@ -3,12 +3,26 @@ Novità per Windows 2.0.1:
 • Un lavoro su video o audio non resta più «in corso» per sempre: se il motore video non risponde per 5 minuti (per esempio per il driver della scheda video) si ferma e lo dice
 • La finestra non si blocca più («Non risponde») quando un file della cronologia o la cartella di esportazione è su un disco di rete o una chiavetta scollegati; Ctrl+Alt+C e l'elenco delle voci non restano più in attesa per sempre
 • Video e Audio Downloader: un video lungo da unire o un audio lungo da convertire dopo lo scaricamento non viene più fermato a metà con «il sito non risponde»
+• «Aggiorna adesso» funziona: prima OrbitLR si chiudeva ma l'installazione non partiva e l'app non si riapriva. Mentre scarica puoi premere «Interrompi»; se l'aggiornamento non riesce, OrbitLR si riapre e lo dice, con «Riprova» in alto a destra
+• Niente più attese senza parole: «Rimuovi lo sfondo», «Migliora» e «Ingrandisci» dicono cosa stanno scaricando o facendo e da quanto; la prima apertura mostra subito OrbitLR mentre Windows la prepara; i file che sono solo su OneDrive si scaricano con una riga che lo dice e «Interrompi»
+• Trascrivi funziona anche con lettere non latine nel percorso o nel nome utente di Windows (cirillico, cinese, emoji)
+• Con la finestra bassa la barra laterale scorre: il Cassetto non copre più Opzioni e Aiuto
+• Cartelle automatiche: se la cartella sparisce per un attimo (disco di rete, chiavetta, sincronizzazione) i file già fatti non vengono rifatti
+• La finestra resta pronta anche mentre parte un lavoro, si salvano le Cartelle automatiche o si manda un file al telefono
+• Per chi installa adesso: la linguetta sul bordo dello schermo è spenta (si accende in Opzioni → Aspetto) e «Lo sapevi?» compare solo nei primi 3 giorni. Chi usava già OrbitLR tiene le sue scelte
 
 What’s new in Windows 2.0.1:
 • The window always fits on the screen: on laptops and displays with Windows scaling at 125%, 150%, 175% or 200% it opened taller than the free space, and Settings, Help and Report ended up under the taskbar
 • A video or audio job no longer stays “in progress” forever: if the video engine doesn’t respond for 5 minutes (for example because of the graphics driver) it stops and says so
 • The window no longer freezes (“Not responding”) when a file in the history or the export folder is on a disconnected network drive or USB stick; Ctrl+Alt+C and the list of voices no longer wait forever
 • Video and Audio Downloader: a long video being joined or a long audio being converted after the download is no longer stopped halfway with “the site isn’t responding”
+• “Update Now” works: before, OrbitLR closed but the installation didn’t start and the app didn’t reopen. While it downloads you can press “Stop”; if the update fails, OrbitLR reopens and says so, with “Try Again” at the top right
+• No more silent waits: “Remove Background”, “Enhance” and “Upscale” say what they are downloading or doing and for how long; the first opening shows OrbitLR right away while Windows gets it ready; files that are only on OneDrive are downloaded with a line that says so and “Stop”
+• Transcribe also works with non-Latin letters in the path or in the Windows user name (Cyrillic, Chinese, emoji)
+• When the window is short the sidebar scrolls: the Drawer no longer covers Settings and Help
+• Watch folders: if the folder disappears for a moment (network drive, USB stick, syncing), files already done aren’t done again
+• The window stays responsive while a job starts, watch folders are saved or a file is sent to the phone
+• For new installs: the tab on the edge of the screen is off (turn it on in Settings → Appearance) and “Did you know?” only appears during the first 3 days. Existing users keep their settings
 
 Novità per Windows 2.0 «Notte e oro»:
 • Un volto nuovo, lo stesso dell'app per Mac 6.0: verde foresta, carta chiara e oro. La barra laterale è foresta anche di giorno e la sezione scelta si accende d'oro
