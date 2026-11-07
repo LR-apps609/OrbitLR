@@ -1,1 +1,1 @@
-| tahoe-intel | 26.6.1 | x86_64 | no | ? |  nessuna foto | 0ceb2fe |
+| tahoe-intel | 26.6.1 | x86_64 | sì | si apre |  [schermo-gatekeeper](https://github.com/LR-apps609/OrbitLR/blob/foto-dispositivi/tahoe-intel/primo-avvio/schermo-gatekeeper.png) | 93e6936 |
