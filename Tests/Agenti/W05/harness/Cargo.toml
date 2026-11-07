@@ -1,0 +1,11 @@
+[package]
+name = "w05"
+version = "0.1.0"
+edition = "2021"
+description = "W05: prove del motore Windows (video e audio) con percorsi difficili"
+
+[dependencies]
+orbit_engine = { path = "../../../../Windows/engine" }
+serde_json = "1"
+
+[workspace]

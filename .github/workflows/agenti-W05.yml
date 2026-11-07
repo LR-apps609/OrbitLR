@@ -1,0 +1,188 @@
+# W05 · motore Windows (video e audio) con percorsi difficili. Solo prove: niente rilasci, niente segreti.
+name: agenti W05
+
+on:
+  push:
+    branches: ['agenti/W05']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: agenti-W05
+  cancel-in-progress: false
+
+jobs:
+  percorsi:
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - gruppo: A
+            runner: windows-2025
+          - gruppo: B
+            runner: windows-2025
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Motori (ffmpeg LGPL e whisper.cpp) con impronta controllata
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release download motori-win-1 -p motori-win-1.zip -R "$GITHUB_REPOSITORY"
+          echo "$(cut -d' ' -f1 Windows/motori.sha256)  motori-win-1.zip" | sha256sum -c -
+          unzip -q motori-win-1.zip -d motori-tmp
+          mkdir -p motori/voce
+          cp motori-tmp/Motori/ffmpeg.exe motori-tmp/Motori/ffprobe.exe motori/
+          gh release download motori-win-voce-1 -p motori-win-voce-1.zip -R "$GITHUB_REPOSITORY"
+          echo "$(cut -d' ' -f1 Windows/motori-voce.sha256)  motori-win-voce-1.zip" | sha256sum -c -
+          unzip -q motori-win-voce-1.zip -d voce-tmp
+          cp voce-tmp/Voce/* motori/voce/
+          ls -la motori motori/voce
+          sha256sum motori/*.exe motori/voce/* > motori-impronte.txt
+          ./motori/ffmpeg.exe -hide_banner -version | head -n 1
+
+      - name: Modello della voce
+        shell: bash
+        run: |
+          mkdir -p modello-voce
+          curl -fL --retry 3 -o modello-voce/ggml-small-q5_1.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-q5_1.bin"
+          echo "ae85e4a935d7a567bd102fe55afc16bb595bdb618e11b2fc7591bc08120411bb  modello-voce/ggml-small-q5_1.bin" | sha256sum -c -
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: Tests/Agenti/W05/harness
+
+      - name: Compila il motore (ramo prove-windows) e il banco di prova
+        shell: bash
+        working-directory: Tests/Agenti/W05/harness
+        run: |
+          cp ../../../../Windows/Cargo.lock .
+          cargo build --release 2>&1 | tail -n 20
+
+      - name: Ambiente
+        shell: pwsh
+        run: |
+          $r = "$env:RUNNER_TEMP\w05\report"; New-Item -ItemType Directory -Force $r | Out-Null
+          $lp = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem).LongPathsEnabled
+          $acp = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Nls\CodePage).ACP
+          $os = (Get-CimInstance Win32_OperatingSystem).Caption + " " + [Environment]::OSVersion.Version
+          "LongPathsEnabled=$lp`nACP=$acp`nOS=$os`nTEMP=$env:TEMP" | Tee-Object "$r\ambiente.txt"
+          Get-SmbShare -ErrorAction SilentlyContinue | Format-Table -AutoSize | Out-String | Tee-Object -Append "$r\ambiente.txt"
+          Copy-Item motori-impronte.txt $r\
+          & .\motori\voce\whisper-cli.exe --help 2>&1 | Select-Object -First 5 | Tee-Object -Append "$r\ambiente.txt"
+
+      - name: Gruppo A · normale, lettere non latine, OneDrive, rete
+        if: matrix.gruppo == 'A'
+        timeout-minutes: 30
+        continue-on-error: true
+        shell: pwsh
+        env:
+          ORBIT_MOTORI: ${{ github.workspace }}\motori
+          ORBIT_WHISPER: ${{ github.workspace }}\motori\voce\whisper-cli.exe
+          ORBIT_WHISPER_MODEL: ${{ github.workspace }}\modello-voce\ggml-small-q5_1.bin
+          W05_TAG: A
+          W05_LOCS: ascii,unicode,onedrive,unc
+        run: |
+          $env:W05_WORK = "$env:RUNNER_TEMP\w05"; $env:W05_REPORT = "$env:RUNNER_TEMP\w05\report"
+          & .\Tests\Agenti\W05\harness\target\release\w05.exe suite
+
+      - name: Gruppo B1 · percorso lungo (LongPathsEnabled=0, come su un PC normale)
+        if: matrix.gruppo == 'B'
+        timeout-minutes: 14
+        continue-on-error: true
+        shell: pwsh
+        env:
+          ORBIT_MOTORI: ${{ github.workspace }}\motori
+          ORBIT_WHISPER: ${{ github.workspace }}\motori\voce\whisper-cli.exe
+          ORBIT_WHISPER_MODEL: ${{ github.workspace }}\modello-voce\ggml-small-q5_1.bin
+          W05_TAG: B1-lungo-lpe0
+          W05_LOCS: long
+        run: |
+          Set-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem LongPathsEnabled 0 -Type DWord
+          "LongPathsEnabled ora: " + (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem).LongPathsEnabled
+          $env:W05_WORK = "$env:RUNNER_TEMP\w05"; $env:W05_REPORT = "$env:RUNNER_TEMP\w05\report"
+          & .\Tests\Agenti\W05\harness\target\release\w05.exe suite
+
+      - name: Gruppo B2 · percorso lungo (LongPathsEnabled=1)
+        if: matrix.gruppo == 'B'
+        timeout-minutes: 14
+        continue-on-error: true
+        shell: pwsh
+        env:
+          ORBIT_MOTORI: ${{ github.workspace }}\motori
+          ORBIT_WHISPER: ${{ github.workspace }}\motori\voce\whisper-cli.exe
+          ORBIT_WHISPER_MODEL: ${{ github.workspace }}\modello-voce\ggml-small-q5_1.bin
+          W05_TAG: B2-lungo-lpe1
+          W05_LOCS: long
+        run: |
+          Set-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem LongPathsEnabled 1 -Type DWord
+          $env:W05_WORK = "$env:RUNNER_TEMP\w05"; $env:W05_REPORT = "$env:RUNNER_TEMP\w05\report"
+          & .\Tests\Agenti\W05\harness\target\release\w05.exe suite
+
+      - name: Gruppo B3 · sola lettura, TEMP e modello con lettere non latine, rete con lettere non latine
+        if: matrix.gruppo == 'B'
+        timeout-minutes: 16
+        continue-on-error: true
+        shell: pwsh
+        env:
+          ORBIT_MOTORI: ${{ github.workspace }}\motori
+          ORBIT_WHISPER: ${{ github.workspace }}\motori\voce\whisper-cli.exe
+          ORBIT_WHISPER_MODEL: ${{ github.workspace }}\modello-voce\ggml-small-q5_1.bin
+          W05_TAG: B3
+          W05_LOCS: ro_out,ro_in,temp_unicode,model_unicode,unc_unicode
+        run: |
+          $env:W05_WORK = "$env:RUNNER_TEMP\w05"; $env:W05_REPORT = "$env:RUNNER_TEMP\w05\report"
+          & .\Tests\Agenti\W05\harness\target\release\w05.exe suite
+
+      - name: whisper-cli da solo con percorsi non latini (per capire dove si rompe)
+        if: matrix.gruppo == 'B'
+        timeout-minutes: 8
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $r = "$env:RUNNER_TEMP\w05\report"; $w = "$env:RUNNER_TEMP\w05"
+          $exe = ".\motori\voce\whisper-cli.exe"; $m = "$pwd\modello-voce\ggml-small-q5_1.bin"
+          $src = "$w\src\parla.wav"
+          if (!(Test-Path $src)) { "manca parla.wav" | Tee-Object -Append "$r\whisper-diretto.txt"; exit 0 }
+          & .\motori\ffmpeg.exe -hide_banner -loglevel error -y -i $src -ac 1 -ar 16000 -c:a pcm_s16le "$w\a16.wav"
+          $d = "$w\Видео 视频 فيديو 🎬\diretto"; New-Item -ItemType Directory -Force $d | Out-Null
+          Copy-Item "$w\a16.wav" "$d\voce.wav"
+          New-Item -ItemType Directory -Force "$d\modello Иван" | Out-Null
+          Copy-Item $m "$d\modello Иван\m.bin"
+          $casi = @(
+            @{n="ascii"; m=$m; f="$w\a16.wav"; o="$w\out-ascii"},
+            @{n="audio non latino"; m=$m; f="$d\voce.wav"; o="$w\out-a2"},
+            @{n="modello non latino"; m="$d\modello Иван\m.bin"; f="$w\a16.wav"; o="$w\out-a3"},
+            @{n="uscita non latina"; m=$m; f="$w\a16.wav"; o="$d\risultato"}
+          )
+          foreach ($c in $casi) {
+            $t = Measure-Command { $out = & $exe -m $c.m -f $c.f -l en -t 2 -oj -of $c.o 2>&1 | Out-String; $code = $LASTEXITCODE }
+            $json = Test-Path ($c.o + ".json")
+            $tail = ($out -split "`n" | Where-Object { $_ -match 'error|fail|open|load' } | Select-Object -Last 4) -join ' / '
+            ("{0}: uscita={1} json={2} tempo={3:N1}s · {4}" -f $c.n, $code, $json, $t.TotalSeconds, $tail) | Tee-Object -Append "$r\whisper-diretto.txt"
+          }
+
+      - name: Copia gli avanzi e i risultati
+        if: always()
+        shell: pwsh
+        run: |
+          $r = "$env:RUNNER_TEMP\w05\report"; New-Item -ItemType Directory -Force $r | Out-Null
+          Get-ChildItem "$r" | Format-Table Name, Length | Out-String | Write-Output
+          Get-ChildItem "$r\riassunto-*.md" -ErrorAction SilentlyContinue | ForEach-Object { Get-Content $_ | Select-Object -First 8 | ForEach-Object { Write-Output "::notice::$_" } }
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: w05-rapporto-${{ matrix.gruppo }}
+          path: ${{ runner.temp }}\w05\report
+          retention-days: 7
