@@ -45,10 +45,14 @@ ff -f lavfi -i "sine=f=440:d=3" -c:a pcm_s16le corto3s.wav
 # 2 ore quasi muto: un bip ogni 10 minuti, mono 16 kHz AAC basso
 ff -f lavfi -i "aevalsrc='if(lt(mod(t,600),0.5),0.3*sin(2*PI*880*t),0)':s=16000:d=7200" -ac 1 -c:a aac -b:a 16k lungo2h.m4a
 ff -f lavfi -i anullsrc=r=44100:cl=mono -t 20 tutto_muto.wav
+ff -i tutto_muto.wav -c:a flac tutto_muto.flac
+if "$FF" -hide_banner -encoders 2>/dev/null | grep -q libvorbis; then ff -i tutto_muto.wav -c:a libvorbis tutto_muto.ogg
+else ff -i tutto_muto.wav -c:a vorbis -strict -2 -ac 2 tutto_muto.ogg; fi
+ff -i tutto_muto.wav -c:a aac tutto_muto.m4a
 # Nomi con accenti e simboli
 cp voce_it.wav "Caffè città — è già.wav"
 cp voce.m4a "L'ultima nota (versione 2).m4a"
-[[ -f voce_vbr.mp3 ]] && cp voce_vbr.mp3 "-trattino iniziale.mp3"
+[[ -f voce_vbr.mp3 ]] && cp -- voce_vbr.mp3 "-trattino iniziale.mp3"
 cp voce.flac "Ciao 🎵 musica.flac"
 python3 -c "import unicodedata,shutil; shutil.copy('voce_it.wav', unicodedata.normalize('NFD','Perché così.wav'))"
 # File rotti

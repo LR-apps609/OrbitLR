@@ -56,7 +56,8 @@ for f in corto3s.wav voce_vbr.mp3; do
   run taglio cut "0.000|30.000" "$FX/$f"
 done
 # 4. Silenzi
-run silenzi silence "" "$FX/tutto_muto.wav"
+for f in tutto_muto.wav tutto_muto.flac tutto_muto.ogg tutto_muto.m4a; do run silenzi silence "" "$FX/$f"; done
+for f in voce.flac voce.ogg voce.m4a; do run taglio cut "50.000|60.000" "$FX/$f"; done
 run silenzi silence "" "$FX/pause.wav"
 # 5. Nomi con accenti e simboli
 for f in "Caffè città — è già.wav" "L'ultima nota (versione 2).m4a" "-trattino iniziale.mp3" "Ciao 🎵 musica.flac" "$FX"/Perch*.wav(N:t); do
