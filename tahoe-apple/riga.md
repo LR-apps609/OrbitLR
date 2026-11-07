@@ -1,0 +1,1 @@
+| tahoe-apple | 26.7.2 | arm64 | sì | si apre |  [finestra](https://github.com/LR-apps609/OrbitLR/blob/foto-dispositivi/tahoe-apple/finestra.png) [schermo-gatekeeper](https://github.com/LR-apps609/OrbitLR/blob/foto-dispositivi/tahoe-apple/primo-avvio/schermo-gatekeeper.png) | 93e6936 |

@@ -1,6 +1,8 @@
-finestra bassa: 45 1024 672
 ProductName:		macOS
-ProductVersion:		26.6.2
-BuildVersion:		25G83
+ProductVersion:		26.7.2
+BuildVersion:		25G332
 arm64
-finestra: 34 1024 674
+Apple M1 (Virtual)
+VirtualMac2,1
+commit: 93e6936
+finestra: 35 1024 677

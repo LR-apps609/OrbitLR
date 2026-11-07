@@ -1,0 +1,56 @@
+Gatekeeper prima: assessments enabled
+Gatekeeper dopo averlo acceso: assessments enabled
+--- quarantena sull'app: 0081;6aefa961;Safari;
+--- spctl --assess -vv
+/Applications/OrbitLR.app: rejected
+--- codesign -dv
+CodeDirectory v=20500 size=129298 flags=0x10002(adhoc,runtime) hashes=4030+7 location=embedded
+Signature=adhoc
+TeamIdentifier=not set
+--- syspolicy_check distribution
+    Full Error: This app is adhoc signed. While it may run locally, adhoc 
+        signed apps are not suitable for distribution. 
+    Type: Distribution Error 
+    Suggested Fix: Sign the app with a valid Developer ID certificate for 
+        distribution. 
+    Documentation: 
+        https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution 
+
+Notary Ticket Missing
+    File: OrbitLR.app 
+    Severity: Fatal 
+    Full Error: A Notarization ticket is not stapled to this application. 
+    Type: Distribution Error 
+    Suggested Fix: If this application has already been uploaded to the Apple 
+        notary service, please make sure to attach the ticket with the `stapler 
+        staple` command. If not, please upload to the Apple notary service 
+        using Xcode or via `notarytool`. 
+    Documentation: 
+        https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution. 
+
+Internal Xprotect Error
+    Severity: Fatal 
+    Full Error: One or more files in your application triggered an Xprotect 
+        error. 
+    Type: Distribution Error 
+    Suggested Fix: Please take a sysdiagnose and file a Feedback using Feedback 
+        Assistant.app. 
+    Documentation: 
+
+---------------------------------------------------------------
+--- open: uscita 142
+processo vivo dopo 15 s: sì
+--- finestre sullo schermo
+CoreServicesUIAgent · livello 8 · 260×268 · 
+--- registro di sistema (Gatekeeper)
+2026-11-07 22:42:41.544 Df syspolicyd[182:2bfa] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-07 22:42:41.629 Df syspolicyd[182:2cc4] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-07 22:42:41.725 Df syspolicyd[182:2bfa] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-07 22:42:41.987 Df syspolicyd[182:2bfa] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-07 22:42:42.054 Df syspolicyd[182:2cc4] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-07 22:42:42.125 Df syspolicyd[182:2bfa] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-07 22:42:45.134 Df syspolicyd[182:28df] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-07 22:42:45.249 Df syspolicyd[182:2cc4] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-07 22:42:45.369 Df syspolicyd[182:28df] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-07 22:42:47.951 Df syspolicyd[182:28df] [com.apple.syspolicy.exec:default] Fast Gatekeeper overrides are: inactive
+--- finestra di benvenuto: nessuna
