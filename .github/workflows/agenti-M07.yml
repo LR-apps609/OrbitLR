@@ -1,6 +1,6 @@
 # M07 · Installazione pulita «per chi non sa niente» sul macOS più vecchio supportato (14 Sonoma).
 # Solo prove: non compila, non pubblica, non scrive sul repository.
-name: Agenti M07 (installazione pulita, macOS 14)
+name: Agenti M07 (installazione pulita, macOS 15 al posto di 14)
 
 on:
   push:
@@ -18,7 +18,7 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          - mac: macos-14
+          - mac: macos-15
             build: '602'
     runs-on: ${{ matrix.mac }}
     timeout-minutes: 45
