@@ -1,0 +1,105 @@
+# W04 · prova diretta del motore Windows (foto e PDF) su windows-2025, senza finestra.
+name: agenti W04
+
+on:
+  push:
+    branches: ['agenti/W04']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build:
+    runs-on: windows-2025
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Motori (ffmpeg LGPL) con impronta controllata, come windows.yml
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release download motori-win-1 -p motori-win-1.zip -R "$GITHUB_REPOSITORY"
+          echo "$(cut -d' ' -f1 Windows/motori.sha256)  motori-win-1.zip" | sha256sum -c -
+          unzip -q motori-win-1.zip -d motori-tmp
+          mkdir -p pacco/motori
+          cp motori-tmp/Motori/ffmpeg.exe motori-tmp/Motori/ffprobe.exe pacco/motori/
+          ./pacco/motori/ffmpeg.exe -hide_banner -version | head -n 1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: Windows
+          key: agenti-w04
+      - name: Compila il motore e il programma di prova
+        env:
+          CARGO_PROFILE_RELEASE_LTO: "false"
+          CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "16"
+        run: |
+          set -euo pipefail
+          cp Tests/Agenti/W04/w04_harness.rs Windows/engine/examples/
+          cd Windows
+          time cargo build -p orbit_engine --release --example w04_harness 2>&1 | tail -n 30
+          cp target/release/examples/w04_harness.exe ../pacco/
+          ls -la ../pacco
+      - uses: actions/upload-artifact@v4
+        with:
+          name: w04-pacco
+          path: pacco
+          retention-days: 7
+
+  prova:
+    needs: build
+    runs-on: windows-2025
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        gruppo: ["img", "pdf", "huge", "ai"]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: w04-pacco
+          path: pacco
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Strumenti Python
+        run: pip install -q Pillow pillow-heif pypdf reportlab cryptography
+      - name: Prova (${{ matrix.gruppo }})
+        timeout-minutes: 38
+        env:
+          ORBIT_MOTORI: ${{ github.workspace }}\pacco\motori
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: "1"
+        run: |
+          set -uo pipefail
+          systeminfo | grep -E "OS Name|OS Version|Total Physical" || true
+          python Tests/Agenti/W04/w04_test.py --harness "$GITHUB_WORKSPACE/pacco/w04_harness.exe" --ffmpeg "$GITHUB_WORKSPACE/pacco/motori/ffmpeg.exe" --work "$RUNNER_TEMP/w04" --group "${{ matrix.gruppo }}" 2>&1 | tee "$RUNNER_TEMP/w04-log-${{ matrix.gruppo }}.txt"
+      - name: Raccogli
+        if: always()
+        run: |
+          mkdir -p raccolta
+          cp "$RUNNER_TEMP"/w04/risultati-* raccolta/ 2>/dev/null || true
+          cp "$RUNNER_TEMP"/w04-log-* raccolta/ 2>/dev/null || true
+          # un campione dei risultati piccoli (per guardarli)
+          find "$RUNNER_TEMP/w04/out" -type f -size -400k 2>/dev/null | head -n 300 | while read -r f; do d="raccolta/campioni/$(basename "$(dirname "$f")")"; mkdir -p "$d"; cp "$f" "$d/" 2>/dev/null || true; done
+          ls "$TEMP" | grep -i orbit > raccolta/temp-orbit.txt 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: w04-risultati-${{ matrix.gruppo }}
+          path: raccolta
+          retention-days: 7
