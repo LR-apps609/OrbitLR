@@ -157,9 +157,10 @@ pub struct Watcher {
     states: HashMap<String, RuleState>,
 }
 
-fn listing(dir: &Path, exts: &[&str]) -> HashMap<PathBuf, Sig> {
+/// `None` se la cartella non si legge (scollegata, rinominata per un attimo, disco di rete assente).
+fn listing(dir: &Path, exts: &[&str]) -> Option<HashMap<PathBuf, Sig>> {
     let mut out = HashMap::new();
-    let Ok(rd) = std::fs::read_dir(dir) else { return out };
+    let rd = std::fs::read_dir(dir).ok()?;
     for e in rd.flatten().take(20_000) {
         let name = e.file_name().to_string_lossy().to_string();
         // Nascosti, file temporanei di Office e i file a metà di OrbitLR
@@ -176,7 +177,7 @@ fn listing(dir: &Path, exts: &[&str]) -> HashMap<PathBuf, Sig> {
         }
         out.insert(e.path(), (md.len(), md.modified().ok()));
     }
-    out
+    Some(out)
 }
 
 impl Watcher {
@@ -186,7 +187,9 @@ impl Watcher {
         self.states.retain(|id, _| rules.iter().any(|r| &r.id == id && r.enabled));
         for r in rules.iter().filter(|r| r.enabled) {
             let Some(p) = preset_of(r) else { continue };
-            let now = listing(&r.path, p.exts);
+            // 2.0.1 · Cartella sparita per un attimo: si salta il giro e si ricorda cosa c'era
+            // (prima l'elenco vuoto cancellava la memoria e al ritorno si rifacevano tutti i file)
+            let Some(now) = listing(&r.path, p.exts) else { continue };
             let st = self.states.entry(r.id.clone()).or_default();
             if st.path != r.path || st.kind != r.kind {
                 // Regola nuova (o cambiata): quello che c'è già non si tocca
@@ -271,6 +274,26 @@ mod tests {
         assert!(w.scan(&off).is_empty());
         assert!(w.scan(&rules).is_empty());
         assert!(w.scan(&rules).is_empty());
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[test]
+    fn cartella_sparita_per_un_attimo_non_rifa_tutto() {
+        let d = dir("sparita");
+        std::fs::write(d.join("a.heic"), b"uno").unwrap();
+        std::fs::write(d.join("b.heic"), b"due").unwrap();
+        let rules = vec![rule("foto", &d)];
+        let mut w = Watcher::default();
+        assert!(w.scan(&rules).is_empty());
+        let away = d.with_file_name(format!("{}-via", d.file_name().unwrap().to_string_lossy()));
+        let _ = std::fs::remove_dir_all(&away);
+        std::fs::rename(&d, &away).unwrap();
+        assert!(w.scan(&rules).is_empty());
+        assert!(w.scan(&rules).is_empty());
+        std::fs::rename(&away, &d).unwrap();
+        for _ in 0..3 {
+            assert!(w.scan(&rules).is_empty(), "al ritorno i file già visti non si rifanno");
+        }
         let _ = std::fs::remove_dir_all(&d);
     }
 
