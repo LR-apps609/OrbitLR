@@ -1,6 +1,10 @@
 // Dizionario inglese di OrbitLR per Windows (chiave = testo italiano, con {0}, {1}… al posto dei valori).
 // Generato da Tools/testi-windows.mjs e tradotto con lo stesso glossario dell'app per Mac. Non modificare a mano: rigenerare.
 export const EN = {
+ "il motore della voce non riesce ad aprire il modello o l'audio: riprova; se continua, reinstalla OrbitLR": "the voice engine can't open the model or the audio: try again; if it keeps happening, reinstall OrbitLR",
+ "memoria insufficiente per la trascrizione: chiudi altre app e riprova": "not enough memory to transcribe: close other apps and try again",
+ "il motore della voce si è chiuso all'improvviso: riprova; se continua, reinstalla OrbitLR": "the voice engine closed unexpectedly: try again; if it keeps happening, reinstall OrbitLR",
+ "la trascrizione si è fermata: riprova; se continua, reinstalla OrbitLR": "the transcription stopped: try again; if it keeps happening, reinstall OrbitLR",
  "Scarico da OneDrive un file che è solo nel cloud…": "Downloading from OneDrive a file that is only in the cloud…",
  "Scarico da OneDrive {0} file che sono solo nel cloud…": "Downloading from OneDrive {0} files that are only in the cloud…",
  "Leggo {0} file…": "Reading {0} files…",
@@ -1146,6 +1150,7 @@ export const EN = {
 };
 // Messaggi che arrivano dal motore (con nomi di file e numeri dentro): [modello, testo inglese con $1, $2…]
 export const EN_PATTERNS = [
+  [new RegExp("^non posso scrivere nella cartella \u00ab(.+?)\u00bb: \u00e8 in sola lettura o senza permesso\. Scegli un'altra cartella in Opzioni$", "i"), "can't write to the folder “$1”: it is read-only or you don't have permission. Choose another folder in Settings"],
   [new RegExp("^la\\ pagina\\ (.+?)\\ \u00e8\\ ruotata:\\ raddrizzala\\ prima\\ con\\ \u00abRuota\\ le\\ pagine\u00bb,\\ poi\\ scrivi\\ o\\ firma$", "i"), "page $1 is rotated: straighten it first with “Rotate Pages”, then write or sign"],
   [new RegExp("^il\\ modello\\ per\\ lo\\ sfondo\\ non\\ si\\ apre\\ \\((.+?)\\):\\ cancellalo\\ dalle\\ Opzioni\\ e\\ riprova$", "i"), "the background model won't open ($1): delete it in Settings and try again"],
   [new RegExp("^il\\ modello\\ per\\ i\\ loghi\\ non\\ si\\ apre\\ \\((.+?)\\):\\ cancellalo\\ dalle\\ Opzioni\\ e\\ riprova$", "i"), "the logo model won't open ($1): delete it from Options and try again"],

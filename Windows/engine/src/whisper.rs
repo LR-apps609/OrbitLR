@@ -234,6 +234,20 @@ pub fn ascii_model(model: &Path, work: &Path) -> Result<PathBuf> {
     Ok(m)
 }
 
+/// Una frase chiara per quando whisper-cli si ferma (mai le righe del suo aiuto o un codice esadecimale).
+pub fn whisper_failure(code: Option<i32>, tail: &str) -> String {
+    let low = tail.to_lowercase();
+    if low.contains("failed to open") || low.contains("failed to load model") || low.contains("no such file") || low.contains("usage:") || low.contains("error: unknown argument") {
+        "il motore della voce non riesce ad aprire il modello o l'audio: riprova; se continua, reinstalla OrbitLR".into()
+    } else if low.contains("not enough memory") || low.contains("failed to allocate") || low.contains("bad_alloc") {
+        "memoria insufficiente per la trascrizione: chiudi altre app e riprova".into()
+    } else if matches!(code, Some(c) if c < 0 || c > 255) {
+        "il motore della voce si è chiuso all'improvviso: riprova; se continua, reinstalla OrbitLR".into()
+    } else {
+        "la trascrizione si è fermata: riprova; se continua, reinstalla OrbitLR".into()
+    }
+}
+
 /// Trascrive un file (anche l'audio di un video). `exe` = whisper-cli.exe; `lang` = «auto», «it», «en»…
 #[allow(clippy::too_many_arguments)]
 pub fn transcribe(tools: &Tools, exe: &Path, model: &Path, src: &Path, info: &FileInfo, lang: &str, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<Vec<Segment>> {
@@ -314,8 +328,9 @@ pub fn transcribe_in(tmp: &Path, tools: &Tools, exe: &Path, model: &Path, src: &
     };
     let tail = reader.join().unwrap_or_default();
     if !status.success() {
-        let last = tail.lines().rev().find(|l| !l.trim().is_empty()).unwrap_or("errore sconosciuto");
-        return Err(EngineError::new(format!("la trascrizione si è fermata: {}", last.chars().take(200).collect::<String>())));
+        // 2.0.1 · Niente righe dell'aiuto di whisper nel messaggio: una frase chiara (il resto va nel registro)
+        eprintln!("whisper-cli: {status:?}\n{}", tail.chars().rev().take(2000).collect::<String>().chars().rev().collect::<String>());
+        return Err(EngineError::new(whisper_failure(status.code(), &tail)));
     }
     let json = std::fs::read(base.with_extension("json")).map_err(|_| EngineError::new("la trascrizione non ha prodotto risultati"))?;
     // Le lettere accentate a volte arrivano spezzate: si legge comunque
@@ -332,6 +347,8 @@ pub fn transcribe_in(tmp: &Path, tools: &Tools, exe: &Path, model: &Path, src: &
 /// «Trascrivi»: testo (.txt) e sottotitoli (.srt) accanto al file.
 #[allow(clippy::too_many_arguments)]
 pub fn transcribe_files(tools: &Tools, exe: &Path, model: &Path, src: &Path, info: &FileInfo, lang: &str, dir: &Path, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<Vec<PathBuf>> {
+    // 2.0.1 · Prima di minuti di lavoro: si potrà scrivere il risultato?
+    names::check_writable(dir)?;
     let segs = transcribe(tools, exe, model, src, info, lang, cancel, progress)?;
     let txt = names::OutFile::new(dir, &format!("{} ({})", names::stem(src), crate::names::tag("trascrizione")), "txt")?;
     std::fs::write(&txt.tmp, to_text(&segs))?;
@@ -376,6 +393,13 @@ mod tests {
         assert_eq!(std::fs::read(&m).unwrap(), b"finto");
         let _ = std::fs::remove_dir_all(&work);
         let _ = std::fs::remove_dir_all(&base);
+    }
+
+    #[test]
+    fn errori_chiari() {
+        assert!(whisper_failure(Some(1), "usage: whisper-cli [options] file0 file1 ...\n  -h, --help").contains("non riesce ad aprire"));
+        assert!(whisper_failure(Some(-1073740791), "").contains("chiuso all'improvviso"));
+        assert!(!whisper_failure(Some(1), "--help [default]").contains("--help"));
     }
 
     #[test]

@@ -77,6 +77,26 @@ pub fn unique(dir: &Path, base: &str, ext: &str) -> PathBuf {
     make(&format!("{base} {}", std::process::id()))
 }
 
+fn no_write(dir: &Path) -> crate::error::EngineError {
+    let name = dir.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| dir.display().to_string());
+    crate::error::EngineError::new(format!("non posso scrivere nella cartella «{name}»: è in sola lettura o senza permesso. Scegli un'altra cartella in Opzioni"))
+}
+
+/// 2.0.1 · Si può scrivere in `dir`? (prima di un lavoro lungo come Trascrivi, e quando un nome non si riserva)
+pub fn check_writable(dir: &Path) -> crate::error::Result<()> {
+    std::fs::create_dir_all(dir).map_err(|_| no_write(dir))?;
+    let n = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or(0);
+    let probe = dir.join(format!(".orbitlr-prova-{}-{n}", std::process::id()));
+    match std::fs::OpenOptions::new().write(true).create_new(true).open(&probe) {
+        Ok(f) => {
+            drop(f);
+            let _ = std::fs::remove_file(&probe);
+            Ok(())
+        }
+        Err(_) => Err(no_write(dir)),
+    }
+}
+
 /// Un file da creare: si scrive su un temporaneo accanto e alla fine si rinomina sul nome riservato.
 /// Se qualcosa va storto (o si interrompe) non resta niente: né il temporaneo né il nome riservato.
 pub struct OutFile {
@@ -87,8 +107,12 @@ pub struct OutFile {
 
 impl OutFile {
     pub fn new(dir: &Path, base: &str, ext: &str) -> crate::error::Result<OutFile> {
-        std::fs::create_dir_all(dir)?;
+        std::fs::create_dir_all(dir).map_err(|_| no_write(dir))?;
         let path = unique(dir, base, ext);
+        // 2.0.1 · Il nome non si è potuto riservare: cartella in sola lettura o senza permesso? Lo si dice subito
+        if !path.exists() {
+            check_writable(dir)?;
+        }
         let e = self::ext(&path);
         let tmp = temp_beside(&path, if e.is_empty() { "tmp" } else { &e });
         Ok(OutFile { path, tmp, done: false })
