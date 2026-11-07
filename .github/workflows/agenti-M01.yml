@@ -1,0 +1,133 @@
+name: agenti-M01 (immagini, motore Mac e app)
+on:
+  push:
+    branches: ['agenti/M01']
+  workflow_dispatch:
+    inputs:
+      build603:
+        description: 'prova anche la 6.0.3 (pacchetto della corsa 42406653535)'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: agenti-M01
+  cancel-in-progress: false
+
+jobs:
+  mac602:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Sorgenti della 6.0.2 (solo le due parti delle immagini)
+        run: |
+          mkdir -p "$RUNNER_TEMP/src602"
+          curl -fsSL -o "$RUNNER_TEMP/src602/NativeEngine.swift" https://raw.githubusercontent.com/LR-apps609/OrbitLR/v6.0.2/Sources/NativeEngine.swift
+          curl -fsSL -o "$RUNNER_TEMP/src602/SmartImage.swift" https://raw.githubusercontent.com/LR-apps609/OrbitLR/v6.0.2/Sources/SmartImage.swift
+      - name: Installo OrbitLR 6.0.2 (pubblicata)
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/app.orbitlr" https://github.com/LR-apps609/OrbitLR/releases/download/v6.0.2/OrbitLR.6.0.2.orbitlr
+          ditto -x -k "$RUNNER_TEMP/app.orbitlr" "$RUNNER_TEMP/x"
+          sudo rm -rf /Applications/OrbitLR.app
+          cp -R "$RUNNER_TEMP/x/Prebuilt/OrbitLR.app" /Applications/
+          xattr -dr com.apple.quarantine /Applications/OrbitLR.app
+          { sw_vers; uname -m; defaults read /Applications/OrbitLR.app/Contents/Info.plist CFBundleShortVersionString; } | tee "$RUNNER_TEMP/mac.txt"
+          ls /Applications/OrbitLR.app/Contents/Resources/Motori || true
+          for x in magick exiftool convert rsvg-convert; do echo "$x: $(command -v $x || echo no)"; done | tee -a "$RUNNER_TEMP/mac.txt"
+      - name: Strumenti di prova e foto
+        run: |
+          set -e
+          M=Tests/Agenti/M01
+          swiftc -O -o "$RUNNER_TEMP/ispeziona" $M/ispeziona.swift
+          swiftc -O -o "$RUNNER_TEMP/finestra" Tools/finestra.swift
+          zsh $M/nativo/prepara.sh "$RUNNER_TEMP/src602" "$RUNNER_TEMP/nativo602"
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" -q install pillow piexif numpy tifffile
+          FX="$RUNNER_TEMP/fx"
+          "$RUNNER_TEMP/venv/bin/python" $M/genera.py "$FX"
+          "$RUNNER_TEMP/ispeziona" --heic "$FX/gps.jpg" "$FX/gps.heic"
+          "$RUNNER_TEMP/ispeziona" --heic "$FX/orient6.jpg" "$FX/orient6.heic"
+          "$RUNNER_TEMP/ispeziona" "$FX"/*(.N) "$FX/bloccata/dentro.jpg" > "$RUNNER_TEMP/fixtures.jsonl" || \
+            ( cd "$FX" && for f in *; do [ -f "$f" ] && "$RUNNER_TEMP/ispeziona" "$FX/$f"; done ) > "$RUNNER_TEMP/fixtures.jsonl"
+          head -c 3000 "$RUNNER_TEMP/fixtures.jsonl"
+        shell: zsh {0}
+      - name: Motore classico 6.0.2 senza ImageMagick
+        timeout-minutes: 25
+        run: |
+          E=/Applications/OrbitLR.app/Contents/Resources/LRConverter.zsh
+          ls -la "$E"
+          zsh Tests/Agenti/M01/prova.zsh A602 engine "$E" "$RUNNER_TEMP/fx" "$RUNNER_TEMP/r"
+      - name: Motore nativo dell'app 6.0.2 (ImageIO, codice vero)
+        timeout-minutes: 10
+        run: zsh Tests/Agenti/M01/prova.zsh N602 nativo "$RUNNER_TEMP/nativo602" "$RUNNER_TEMP/fx" "$RUNNER_TEMP/r"
+      - name: Controllo
+        if: always()
+        run: |
+          "$RUNNER_TEMP/venv/bin/python" Tests/Agenti/M01/controlla.py "$RUNNER_TEMP/ispeziona" "$RUNNER_TEMP/r" A602 N602 | tee "$RUNNER_TEMP/r/_log/controllo.txt"
+          tail -n 80 ~/Library/Logs/LRConverter.log > "$RUNNER_TEMP/r/_log/LRConverter-coda.log" 2>/dev/null || true
+      - name: App aperta con i file, foto delle finestre
+        if: always()
+        timeout-minutes: 12
+        run: zsh Tests/Agenti/M01/app.zsh "$RUNNER_TEMP/fx" "$RUNNER_TEMP/r/_app602" "$RUNNER_TEMP/finestra"
+      - name: Pacchetto dei risultati
+        if: always()
+        run: |
+          cp "$RUNNER_TEMP/mac.txt" "$RUNNER_TEMP/fixtures.jsonl" "$RUNNER_TEMP/r/_log/" 2>/dev/null || true
+          cp -R ~/Library/Logs/DiagnosticReports "$RUNNER_TEMP/r/_log/crash" 2>/dev/null || true
+          cp ~/Library/Logs/LRConverter.log "$RUNNER_TEMP/r/_log/" 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: M01-mac602
+          retention-days: 7
+          path: |
+            ${{ runner.temp }}/r/_log
+            ${{ runner.temp }}/r/_app602
+
+  magick602:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Installo OrbitLR 6.0.2 e ImageMagick + ExifTool (come chi li ha già con Homebrew)
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/app.orbitlr" https://github.com/LR-apps609/OrbitLR/releases/download/v6.0.2/OrbitLR.6.0.2.orbitlr
+          ditto -x -k "$RUNNER_TEMP/app.orbitlr" "$RUNNER_TEMP/x"
+          sudo rm -rf /Applications/OrbitLR.app
+          cp -R "$RUNNER_TEMP/x/Prebuilt/OrbitLR.app" /Applications/
+          xattr -dr com.apple.quarantine /Applications/OrbitLR.app
+          export HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1
+          brew install imagemagick exiftool >/dev/null 2>&1 || brew install imagemagick exiftool
+          magick -version | head -n 3; exiftool -ver
+      - name: Strumenti di prova e foto
+        shell: zsh {0}
+        run: |
+          set -e
+          M=Tests/Agenti/M01
+          swiftc -O -o "$RUNNER_TEMP/ispeziona" $M/ispeziona.swift
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" -q install pillow piexif numpy tifffile
+          FX="$RUNNER_TEMP/fx"
+          "$RUNNER_TEMP/venv/bin/python" $M/genera.py "$FX"
+          "$RUNNER_TEMP/ispeziona" --heic "$FX/gps.jpg" "$FX/gps.heic"
+          "$RUNNER_TEMP/ispeziona" --heic "$FX/orient6.jpg" "$FX/orient6.heic"
+      - name: Motore classico 6.0.2 con ImageMagick ed ExifTool
+        timeout-minutes: 30
+        run: zsh Tests/Agenti/M01/prova.zsh C602 engine /Applications/OrbitLR.app/Contents/Resources/LRConverter.zsh "$RUNNER_TEMP/fx" "$RUNNER_TEMP/r"
+      - name: Controllo
+        if: always()
+        run: |
+          "$RUNNER_TEMP/venv/bin/python" Tests/Agenti/M01/controlla.py "$RUNNER_TEMP/ispeziona" "$RUNNER_TEMP/r" C602 | tee "$RUNNER_TEMP/r/_log/controllo.txt"
+          cp ~/Library/Logs/LRConverter.log "$RUNNER_TEMP/r/_log/" 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: M01-magick602
+          retention-days: 7
+          path: ${{ runner.temp }}/r/_log
