@@ -189,3 +189,73 @@ mod tests {
         assert_eq!(exif(&rotto), None);
     }
 }
+
+/// 2.0.1 · Le misure che si vedono di un HEIC/HEIF/AVIF: quelle dell'elemento principale («ispe»), con il ritaglio
+/// («clap») e la rotazione («irot»). ffprobe dà le misure prima del ritaglio (un 64×48 diventava 64×64).
+pub fn display_size(d: &[u8]) -> Option<(u32, u32)> {
+    let top = boxes(d, 0, d.len());
+    let &(_, ms, me) = top.iter().find(|b| &b.0 == b"meta")?;
+    let inner = boxes(d, ms + 4, me);
+    let &(_, ps, _) = inner.iter().find(|b| &b.0 == b"pitm")?;
+    let primary = if *d.get(ps)? == 0 { be16(d, ps + 4)? } else { be32(d, ps + 4)? };
+    let &(_, rs, re) = inner.iter().find(|b| &b.0 == b"iprp")?;
+    let props = boxes(d, rs, re);
+    let &(_, cs, ce) = props.iter().find(|b| &b.0 == b"ipco")?;
+    let list = boxes(d, cs, ce);
+    let &(_, as_, ae) = props.iter().find(|b| &b.0 == b"ipma")?;
+    let (ver, flags) = (*d.get(as_)?, *d.get(as_ + 3)?);
+    let count = be32(d, as_ + 4)?;
+    let mut i = as_ + 8;
+    let mut mine: Vec<usize> = Vec::new();
+    for _ in 0..count.min(10_000) {
+        let id = if ver < 1 { let v = be16(d, i)?; i += 2; v } else { let v = be32(d, i)?; i += 4; v };
+        let n = *d.get(i)? as usize;
+        i += 1;
+        for _ in 0..n {
+            let idx = if flags & 1 == 1 { let v = be16(d, i)? & 0x7fff; i += 2; v as usize } else { let v = (*d.get(i)? & 0x7f) as usize; i += 1; v };
+            if id == primary && idx > 0 {
+                mine.push(idx - 1);
+            }
+        }
+        if i > ae {
+            return None;
+        }
+    }
+    let (mut w, mut h) = (0u32, 0u32);
+    let (mut clap, mut turn) = (None, false);
+    for k in mine {
+        let &(ty, s, _) = list.get(k)?;
+        match &ty {
+            b"ispe" => {
+                w = be32(d, s + 4)? as u32;
+                h = be32(d, s + 8)? as u32;
+            }
+            b"clap" => {
+                let r = |o: usize| -> Option<f64> {
+                    let (n, dd) = (be32(d, s + o)? as i32 as f64, be32(d, s + o + 4)? as i32 as f64);
+                    (dd > 0.0 && n > 0.0).then(|| n / dd)
+                };
+                clap = Some((r(0)?, r(8)?));
+            }
+            b"irot" => turn = d.get(s)? & 1 == 1,
+            _ => {}
+        }
+    }
+    if w == 0 || h == 0 {
+        return None;
+    }
+    if let Some((cw, ch)) = clap {
+        w = (cw.round() as u32).clamp(1, w);
+        h = (ch.round() as u32).clamp(1, h);
+    }
+    Some(if turn { (h, w) } else { (w, h) })
+}
+
+#[cfg(test)]
+mod prove_misure {
+    #[test]
+    fn heic_ritagliato_64_per_48() {
+        let d = std::fs::read(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/iphone-gps.heic")).unwrap();
+        assert_eq!(super::display_size(&d), Some((64, 48)));
+    }
+}

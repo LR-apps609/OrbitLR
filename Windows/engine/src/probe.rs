@@ -87,6 +87,17 @@ pub fn probe(tools: Option<&Tools>, path: &Path) -> Result<FileInfo> {
                 // HEIC, AVIF: le misure le sa ffprobe
                 let _ = fill_from_ffprobe(t, path, &mut info);
             }
+            // 2.0.1 · HEIC/HEIF/AVIF: le misure vere (ritaglio e rotazione) dal contenitore, non quelle di ffprobe
+            if matches!(ext.as_str(), "heic" | "heif" | "hif" | "avif") {
+                use std::io::Read;
+                let mut head = Vec::new();
+                if std::fs::File::open(path).and_then(|f| f.take(4 << 20).read_to_end(&mut head)).is_ok() {
+                    if let Some((w, h)) = crate::heif::display_size(&head) {
+                        info.width = w;
+                        info.height = h;
+                    }
+                }
+            }
         }
         Some(Kind::Video) | Some(Kind::Audio) | Some(Kind::Other) => {
             if let Some(t) = tools {
