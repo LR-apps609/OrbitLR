@@ -1,0 +1,143 @@
+# W03 · OrbitLR per Windows 2.0 sulla base Windows piu' vecchia (windows-2022, come Windows 10),
+# confrontata con windows-2025: installazione, avvio, foto, registro, Ctrl+Alt+C, icona, clic destro,
+# WebView2 tolto; e le prove del motore con l'ffmpeg vero dell'app.
+name: agenti-W03
+
+on:
+  push:
+    branches: ['agenti/W03']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  app:
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        os: [windows-2022, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Installazione pubblicata 2.0
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download windows-anteprima -p "OrbitLR-Windows-2.0.0-Setup.exe" -R "$env:GITHUB_REPOSITORY"
+          Move-Item OrbitLR-Windows-2.0.0-Setup.exe OrbitLR-Setup.exe
+          Get-FileHash OrbitLR-Setup.exe | Format-List | Out-String | Write-Output
+          (Get-Item OrbitLR-Setup.exe).VersionInfo | Format-List | Out-String | Write-Output
+      - name: Installa, apri, fotografa (come prove-windows)
+        timeout-minutes: 22
+        shell: pwsh
+        run: |
+          $out = "$env:RUNNER_TEMP\uscita\${{ matrix.os }}\dispositivo"
+          pwsh -File Tools/dispositivo-windows.ps1 -Nome "${{ matrix.os }} · 2.0 pubblicata" -Setup OrbitLR-Setup.exe -Out $out
+          Get-Content "$out\windows.txt" | ForEach-Object { Write-Output "::notice::$_" }
+      - name: Prove in piu' (registro, Ctrl+Alt+C, icona, clic destro, caratteri, WebView2 tolto)
+        if: always()
+        timeout-minutes: 18
+        shell: pwsh
+        run: |
+          $out = "$env:RUNNER_TEMP\uscita\${{ matrix.os }}\extra"
+          pwsh -File Tests/Agenti/W03/extra-windows.ps1 -Out $out -Setup OrbitLR-Setup.exe -TogliWebView2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: W03-app-${{ matrix.os }}
+          path: ${{ runner.temp }}/uscita
+          retention-days: 7
+
+  motore:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Motori (ffmpeg LGPL e voce) con impronta controllata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release download motori-win-1 -p motori-win-1.zip -R "$GITHUB_REPOSITORY"
+          echo "$(cut -d' ' -f1 Windows/motori.sha256)  motori-win-1.zip" | sha256sum -c -
+          unzip -q motori-win-1.zip -d motori-tmp
+          mkdir -p Windows/src-tauri/motori/voce
+          cp motori-tmp/Motori/ffmpeg.exe motori-tmp/Motori/ffprobe.exe Windows/src-tauri/motori/
+          gh release download motori-win-voce-1 -p motori-win-voce-1.zip -R "$GITHUB_REPOSITORY"
+          echo "$(cut -d' ' -f1 Windows/motori-voce.sha256)  motori-win-voce-1.zip" | sha256sum -c -
+          unzip -q motori-win-voce-1.zip -d voce-tmp
+          cp voce-tmp/Voce/* Windows/src-tauri/motori/voce/
+          ./Windows/src-tauri/motori/ffmpeg.exe -hide_banner -version | head -n 1
+          ./Windows/src-tauri/motori/ffmpeg.exe -hide_banner -loglevel error -f lavfi -i "color=c=gray:s=320x240:d=0.2:r=10" -pix_fmt nv12 -c:v h264_mf -b:v 500k -f null - && echo "::notice::h264_mf funziona su windows-2022" || echo "::warning::h264_mf NON funziona su windows-2022"
+          ./Windows/src-tauri/motori/voce/whisper-cli.exe --help >/dev/null 2>&1; echo "::notice::whisper-cli --help codice $?"
+      - name: Modelli (voce, sfondo, loghi)
+        run: |
+          set -euo pipefail
+          mkdir -p modelli/modelli
+          curl -fsSL --retry 3 -o modelli/ggml-small-q5_1.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-q5_1.bin"
+          echo "ae85e4a935d7a567bd102fe55afc16bb595bdb618e11b2fc7591bc08120411bb  modelli/ggml-small-q5_1.bin" | sha256sum -c -
+          curl -fsSL --retry 3 -o modelli/modelli/isnet-general-use.onnx "https://github.com/danielgatis/rembg/releases/download/v0.0.0/isnet-general-use.onnx"
+          echo "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a  modelli/modelli/isnet-general-use.onnx" | sha256sum -c -
+          curl -fsSL --retry 3 -o modelli/modelli/lama-512.onnx "https://github.com/LR-apps609/OrbitLR/releases/download/modelli-1/lama-512.onnx"
+          echo "a39706cebe71e29d5d20add5ea7ada9fb63f7368fd4b7f691fa67667bad69f02  modelli/modelli/lama-512.onnx" | sha256sum -c -
+      - name: LibreOffice (per Word, Excel e PowerPoint)
+        continue-on-error: true
+        timeout-minutes: 12
+        shell: pwsh
+        run: |
+          choco install libreoffice-fresh -y --no-progress | Out-Null
+          Write-Output "soffice: $(Test-Path "$env:ProgramFiles\LibreOffice\program\soffice.exe")"
+      - name: Prove del motore (con l'ffmpeg dell'app)
+        working-directory: Windows
+        timeout-minutes: 30
+        env:
+          ORBIT_MOTORI: ${{ github.workspace }}\Windows\src-tauri\motori
+          ORBIT_WHISPER: ${{ github.workspace }}\Windows\src-tauri\motori\voce\whisper-cli.exe
+          ORBIT_WHISPER_MODEL: ${{ github.workspace }}\modelli\ggml-small-q5_1.bin
+        run: |
+          set +e
+          rustc --version
+          mkdir -p ../uscita
+          cargo test -p orbit_engine -p vettore --release --no-fail-fast -- --test-threads=2 2>&1 | tee ../uscita/test.log
+          st=${PIPESTATUS[0]}
+          echo "::notice::$(grep -E '^test result' ../uscita/test.log | tr '\n' ' ')"
+          for t in $(grep -E '^test .* FAILED$' ../uscita/test.log | awk '{print $2}'); do echo "::error::Prova fallita: $t"; done
+          echo "codice $st" >> ../uscita/test.log
+          exit 0
+      - name: Esempi del motore (sfondo, logo, nascondi logo)
+        if: always()
+        working-directory: Windows
+        timeout-minutes: 12
+        run: |
+          set +e
+          mkdir -p ../uscita/esempi
+          m="$GITHUB_WORKSPACE/modelli"
+          for ex in "prova_sfondo $m/modelli/isnet-general-use.onnx" "prova_logo $m/modelli/lama-512.onnx ../uscita/esempi" "prova_hidemark $m ../uscita/esempi"; do
+            set -- $ex; n=$1; shift
+            s=$(date +%s)
+            cargo run -q --release -p orbit_engine --example $n -- "$@" > ../uscita/esempi/$n.txt 2>&1
+            c=$?
+            echo "::notice::esempio $n: codice $c in $(( $(date +%s) - s )) s · $(tail -n 3 ../uscita/esempi/$n.txt | tr '\n' ' ')"
+          done
+          ls -la ../uscita/esempi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: W03-motore-windows-2022
+          path: uscita
+          retention-days: 7
