@@ -138,10 +138,10 @@ export function settingsPage(app) {
           h("div.opts", { style: { marginTop: "8px" } }, [[true, t("Suoni accesi")], [false, t("Senza suoni")]].map(([v, l]) =>
             h("button.opt" + (v === soundsOn() ? ".on" : ""), { onclick: () => { setSounds(v); if (v) play("select"); render(); } }, l))),
           h("div.opts", { style: { marginTop: "8px" } }, [[true, t("Consigli all'avvio")], [false, t("Senza consigli")]].map(([v, l]) =>
-            h("button.opt" + (v === tipsOn() ? ".on" : ""), { onclick: () => { setTips(v); render(); } }, l))),
+            h("button.opt" + (v === tipsOn() ? ".on" : ""), { title: t("«Lo sapevi?» si vede solo nei primi 3 giorni dopo l’installazione"), onclick: () => { setTips(v); render(); } }, l))),
           h("p", { style: { margin: "12px 0 4px", fontSize: "13px", color: "var(--quiet)" } }, t("Linguetta sul bordo destro dello schermo: ci lasci cadere i file e si aprono in OrbitLR.")),
           h("div.opts", [[true, t("Linguetta accesa")], [false, t("Senza linguetta")]].map(([v, l]) =>
-            h("button.opt" + (v === (store.get("shelf", true) !== false) ? ".on" : ""), { onclick: () => { store.set("shelf", v); invoke("shelf_show", { on: v }).catch(() => {}); render(); } }, l)))),
+            h("button.opt" + (v === (store.get("shelf", false) === true) ? ".on" : ""), { onclick: () => { store.set("shelf", v); invoke("shelf_show", { on: v }).catch(() => {}); render(); } }, l)))),
         h("div.set", h("h3", t("Componenti")),
           h("p", eng.office ? t("LibreOffice è installato: Word, Excel e PowerPoint si convertono in PDF e negli altri formati.") : t("LibreOffice (facoltativo, gratuito, circa 350 MB) serve solo per Word, Excel e PowerPoint.")),
           eng.office ? null : h("div", h("button.btn.fix", { disabled: isInstalling() || null, onclick: async () => { await installOffice(app); await officeReady(app); render(); } }, ico("download", 15), isInstalling() ? t("Installazione in corso…") : t("Installa LibreOffice")))),

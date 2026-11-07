@@ -1,9 +1,10 @@
 // Benvenuto al primo avvio (tre schermate) e «Lo sapevi?» agli avvii successivi, come sul Mac.
-// I consigli si spengono con «Non mostrare più» o dalle Opzioni.
+// I consigli si spengono con «Non mostrare più» o dalle Opzioni; dalla 2.0.1 si vedono solo nei primi 3 giorni.
 
 import { env, h, ico, store } from "./util.js";
 import { t } from "./i18n.js";
 import { play } from "./sounds.js";
+import { tipAllowed } from "./primavolta.js";
 
 const STEPS = () => [
   { icon: "circle-arrow-down", title: t("Trascina un file, scegli uno spicchio"), text: t("Lascia cadere foto, video, audio o PDF nella scheda Converti: intorno al file si apre la torta con quello che puoi farne. Il file nuovo finisce accanto all'originale.") },
@@ -93,5 +94,6 @@ export function startWelcome(skipTip = false) {
     setTimeout(() => welcome(), 700);
     return;
   }
-  if (!skipTip && tipsOn()) setTimeout(tip, 2500);
+  // 2.0.1 · «Lo sapevi?» solo nei primi 3 giorni dall'installazione, mai dopo
+  if (!skipTip && tipsOn() && tipAllowed(store)) setTimeout(tip, 2500);
 }

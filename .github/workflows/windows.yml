@@ -96,7 +96,7 @@ jobs:
           exit $st
 
       - name: Prove dell'interfaccia (senza browser)
-        run: node --test Tools/prova-tempi-windows.mjs Tools/prova-parole-windows.mjs Tools/prova-attese-windows.mjs
+        run: node --test Tools/prova-tempi-windows.mjs Tools/prova-parole-windows.mjs Tools/prova-attese-windows.mjs Tools/prova-avvio-windows.mjs
 
       - name: Codificatori di questo computer
         working-directory: Windows
@@ -281,7 +281,7 @@ jobs:
         with:
           node-version: 22
       - name: Niente attese infinite (prova sul codice)
-        run: node --test Tools/prova-attese-windows.mjs
+        run: node --test Tools/prova-attese-windows.mjs Tools/prova-avvio-windows.mjs
       - name: Playwright e Chromium
         run: |
           npm i --no-save --no-audit --no-fund playwright@1.56.0

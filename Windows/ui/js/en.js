@@ -1,6 +1,8 @@
 // Dizionario inglese di OrbitLR per Windows (chiave = testo italiano, con {0}, {1}… al posto dei valori).
 // Generato da Tools/testi-windows.mjs e tradotto con lo stesso glossario dell'app per Mac. Non modificare a mano: rigenerare.
 export const EN = {
+ "«Lo sapevi?» si vede solo nei primi 3 giorni dopo l’installazione": "“Did you know?” only appears during the first 3 days after installing",
+ "In {0}": "To {0}",
  " a ": " to ",
  " · HEVC disponibile": " · HEVC available",
  " · prova": " · demo",

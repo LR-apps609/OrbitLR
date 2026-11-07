@@ -7,6 +7,7 @@ import { audioPage } from "./audio.js";
 import { convertPage } from "./convert.js";
 import { getDrawer, getHistory, running, savedThisMonth, subscribe } from "./jobs.js";
 import { startWelcome } from "./welcome.js";
+import { firstRunDefaults, shelfOn } from "./primavolta.js";
 import { mediaPage } from "./media.js";
 import { videoTab } from "./video.js";
 import { activityPage, helpPage, report, settingsPage } from "./pages.js";
@@ -205,6 +206,10 @@ function newer(a, b) {
 }
 
 async function boot() {
+  // 2.0.1 · Chi installa adesso: linguetta spenta e «Lo sapevi?» solo i primi 3 giorni. Chi usava già OrbitLR tiene le sue scelte.
+  const existing = !!(store.get("welcomed", false) || getHistory().length || store.get("updateCheck", 0));
+  firstRunDefaults(store, existing);
+  invoke("shelf_show", { on: shelfOn(store) }).catch(() => {});
   invoke("set_lang", { lang: LANG }).catch(() => {});
   app.applyTheme();
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => app.applyTheme());

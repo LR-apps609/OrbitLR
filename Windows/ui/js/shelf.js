@@ -10,7 +10,8 @@
     document.getElementById("tab").title = "OrbitLR · drop files here";
   }
   if (T) {
-    if (get("shelf", true) !== false) T.core.invoke("shelf_show", { on: true });
+    // 2.0.1 · Spenta se non è stata accesa (chi installa adesso parte senza linguetta)
+    if (get("shelf", false) === true) T.core.invoke("shelf_show", { on: true });
     let open = false;
     const setOpen = (v) => { if (v === open) return; open = v; document.body.classList.toggle("open", v); T.core.invoke("shelf_expand", { open: v }); };
     T.webview.getCurrentWebview().onDragDropEvent((ev) => {
@@ -21,5 +22,5 @@
     });
     document.getElementById("tab").addEventListener("click", () => T.core.invoke("shelf_drop", { paths: [] }));
     // Spenta o riaccesa dalle Opzioni della finestra principale
-    window.addEventListener("storage", (e) => { if (e.key === "orbitlr.shelf") T.core.invoke("shelf_show", { on: get("shelf", true) !== false }); });
+    window.addEventListener("storage", (e) => { if (e.key === "orbitlr.shelf") T.core.invoke("shelf_show", { on: get("shelf", false) === true }); });
   }
