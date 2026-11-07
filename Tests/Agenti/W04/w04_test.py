@@ -223,6 +223,13 @@ def make_images():
     from PIL import ImageCms
     srgb = ImageCms.ImageCmsProfile(ImageCms.createProfile("sRGB")).tobytes()
     asym(500, 400).save(add("icc.jpg", "img", w=500, h=400, icc=True), quality=92, icc_profile=srgb)
+    def patched(space):
+        b = bytearray(srgb)
+        b[16:20] = space
+        return bytes(b)
+    # 28b CMYK con profilo CMYK, grigio con profilo grigio (il profilo deve seguire i pixel)
+    asym(500, 400).convert("CMYK").save(add("cmyk-icc.jpg", "img", w=500, h=400, cmyk=True, icc_space="CMYK"), quality=92, icc_profile=patched(b"CMYK"))
+    asym(500, 400).convert("L").save(add("grigio-icc.jpg", "img", w=500, h=400, icc_space="GRAY"), quality=92, icc_profile=patched(b"GRAY"))
     # 29 tre scatti uguali (per «stack»)
     for i in range(3):
         b = photo_like(800, 600, seed=11)
@@ -274,6 +281,17 @@ def make_pdfs():
     c.drawImage(big_png, 0, 0, width=595, height=446)
     c.showPage()
     c.save()
+    # come sopra ma senza ASCII85 (filtri semplici), e foto messe da Pillow (DCT diretto)
+    from reportlab import rl_config
+    rl_config.useA85 = 0
+    c = canvas.Canvas(add("foto-grandi-noa85.pdf", "pdf", pages=2))
+    c.drawImage(FIX["foto.jpg"]["path"], 0, 0, width=595, height=446)
+    c.showPage()
+    c.drawImage(big_png, 0, 0, width=595, height=446)
+    c.showPage()
+    c.save()
+    rl_config.useA85 = 1
+    Image.open(FIX["foto.jpg"]["path"]).save(add("foto-pillow.pdf", "pdf", pages=2), "PDF", resolution=300, quality=95, save_all=True, append_images=[photo_like(3000, 2000, seed=8)])
     # PDF con immagine CMYK
     c = canvas.Canvas(add("cmyk.pdf", "pdf", pages=1))
     c.drawImage(FIX["cmyk.jpg"]["path"], 50, 300, width=400, height=266)
@@ -570,6 +588,12 @@ def group_img():
                         note(r, "profilo ICC copiato")
                 if fx.get("icc") and to in ("jpg", "png") and not im.info.get("icc_profile"):
                     note(r, f"profilo ICC perso in {to}")
+                icc = im.info.get("icc_profile")
+                if icc and len(icc) > 20:
+                    space = bytes(icc[16:20])
+                    pix = {"RGB": b"RGB ", "RGBA": b"RGB ", "L": b"GRAY", "LA": b"GRAY", "CMYK": b"CMYK", "P": b"RGB "}.get(im.mode)
+                    if pix and space != pix:
+                        prob(r, f"profilo colore {space.decode(errors='replace').strip()} dentro un'immagine {im.mode}: i programmi mostrano colori sbagliati o la rifiutano")
         if broken:
             for act, par in [("icompress", "best"), ("resize", "50%"), ("rotate", 90), ("strip", ""), ("vector", "auto")]:
                 r = run(act, par, [p])
@@ -649,14 +673,17 @@ def group_img():
         else:
             note(r, "strip: " + (r["res"] or {}).get("error", "?"))
     if CUR[0] == "huge":
-        r = run("to:avif", "", [FIX["enorme.jpg"]["path"]], env={"W04_CANCEL_AFTER_MS": "1500"})
+      for act in ["to:avif", "to:webp", "to:png", "icompress"]:
+        r = run(act, 50 if act == "icompress" else "", [FIX["enorme.jpg"]["path"]], env={"W04_CANCEL_AFTER_MS": "1500"}, tag="interrompi")
         if ok(r):
             note(r, "finito prima dell'interruzione")
         elif r["res"] and not r["res"].get("cancelled"):
             prob(r, f"interrotto ma l'errore non dice «interrotto»: {r['res'].get('error')}")
-        if r["wall"] > 60:
-            prob(r, f"«Interrompi» non ferma: finito dopo {r['wall']} s")
-        return
+        if r["wall"] > 20:
+            prob(r, f"«Interrompi» dopo 1,5 s non ferma: finito dopo {r['wall']} s")
+        if ok(r):
+            prob(r, f"«Interrompi» dopo 1,5 s ma il file è stato creato lo stesso: {outs(r)}")
+      return
     # più foto in un PDF, con ordine
     imgs = [FIX[n]["path"] for n in ["orient6.jpg", "alpha.png", "iphone.heic", "Città già è perché ñ 日本 😀.jpg"]]
     r = run("merge", "", imgs, timeout=600)
@@ -673,6 +700,17 @@ def group_img():
     r = run("merge", "", [FIX["foto.jpg"]["path"], FIX["troncata.jpg"]["path"]])
     if ok(r):
         prob(r, "con una foto rotta il PDF è stato creato lo stesso")
+    for act, fs in [("merge", ["orient6.jpg", "alpha.png"]), ("stack", ["scatto1.jpg", "scatto2.jpg"]), ("straighten", ["documento.jpg"]), ("to:pdf", ["foto.bmp", "alpha.png"])]:
+        r = run(act, "", [FIX[x]["path"] for x in fs], env={"W04_LANG": "en"}, tag="en")
+        if ok(r):
+            nm = [os.path.basename(x) for x in outs(r)]
+            note(r, f"nomi in inglese: {nm}")
+            ita = [w for w in [" e altre ", "scatti", "raddrizzato"] if any(w in x for x in nm)]
+            if ita:
+                prob(r, f"app in inglese, ma il file creato si chiama {nm[0]!r} (parole italiane «{ita[0].strip()}»)")
+            if act == "to:pdf":
+                k = pdf_pages(outs(r)[0])
+                note(r, f"«Converti in PDF» con 2 foto: {len(outs(r))} file, {k} pagine")
     # stack
     r = run("stack", "", [FIX[f"scatto{i}.jpg"]["path"] for i in (1, 2, 3)])
     if ok(r):
@@ -755,6 +793,10 @@ def group_pdf():
             if broken or locked:
                 if ok(r):
                     prob(r, "un PDF rotto/protetto ha dato immagini")
+                elif locked and "password" not in ((r["res"] or {}).get("error", "")).lower():
+                    prob(r, f"PDF con password: il messaggio non lo dice: {(r['res'] or {}).get('error')!r}")
+                elif broken and (r["res"] or {}).get("error", "").rstrip().endswith(":"):
+                    prob(r, f"messaggio vuoto per un PDF rotto: {(r['res'] or {}).get('error')!r}")
                 continue
             if not ok(r):
                 prob(r, "PDF in immagini non riuscito: " + (r["res"] or {}).get("error", "?"))
@@ -779,6 +821,8 @@ def group_pdf():
         if broken or locked:
             if ok(r):
                 prob(r, "testo da un PDF rotto/protetto")
+            elif locked and "password" not in ((r["res"] or {}).get("error", "")).lower():
+                prob(r, f"PDF con password, «Estrai il testo»: il messaggio non lo dice: {(r['res'] or {}).get('error')!r}")
         elif ok(r):
             t = open(outs(r)[0], encoding="utf-8", errors="replace").read()
             note(r, "testo: " + t[:100].replace("\n", " | "))
@@ -852,6 +896,8 @@ def group_pdf():
             r3 = run("to:png", "", [o])
             if ok(r3):
                 prob(r3, "PDF protetto trasformato in immagini senza password")
+            elif "password" not in ((r3["res"] or {}).get("error", "")).lower():
+                prob(r3, f"il PDF appena protetto dall'app, trasformato in immagini, non dice «password»: {(r3['res'] or {}).get('error')!r}")
         else:
             prob(r, "proteggi non riuscito: " + (r["res"] or {}).get("error", "?"))
         r = run("protect", {"password": "ab"}, [p])
@@ -934,6 +980,8 @@ def group_pdf():
                         prob(r, "i campi del modulo sono spariti")
             else:
                 note(r, f"comprimi {lev}: " + (r["res"] or {}).get("error", "?"))
+                if n.startswith("foto-") and os.path.getsize(p) > 3_000_000:
+                    prob(r, f"PDF di {os.path.getsize(p)//1_000_000} MB con foto grandi: «{lev}» non comprime: {(r['res'] or {}).get('error')!r}")
         # editor
         if np_:
             ed = {"texts": [{"page": 1, "x": 60, "y": 60, "size": 14, "text": "Città è già € — ok"}]}
@@ -968,6 +1016,20 @@ def group_pdf():
         r = run("pdfedit", {"texts": [{"page": 99, "x": 1, "y": 1, "text": "x"}]}, [p])
         if ok(r):
             note(r, "testo su pagina 99: nessun errore, creato comunque un PDF")
+    # App in inglese: i nomi dei file creati non devono avere parole italiane
+    en = {"W04_LANG": "en"}
+    for act, par, fs in [("pdfedit", {"texts": [{"page": 1, "x": 50, "y": 50, "text": "hello"}]}, ["testo3.pdf"]),
+                         ("pdfedit", {"redactions": [{"page": 1, "x": 0, "y": 0, "w": 100, "h": 100}]}, ["testo3.pdf"]),
+                         ("pdfedit", {"fields": {"nome": "Bob"}}, ["modulo.pdf"]),
+                         ("split", "", ["testo3.pdf"]), ("extract", "1", ["testo3.pdf"]), ("pdfmerge", "", ["testo3.pdf", "ruotato.pdf"]),
+                         ("protect", {"password": "abcd1234"}, ["testo3.pdf"]), ("pdftext", "", ["testo3.pdf"]), ("to:png", "", ["testo3.pdf"])]:
+        r = run(act, par, [FIX[x]["path"] for x in fs], env=en, tag="en")
+        if ok(r):
+            nm = [os.path.basename(x) for x in outs(r)]
+            note(r, f"nomi in inglese: {nm[:3]}")
+            ita = [w for w in ["compilato", "oscurato", "firmato", "pagina", "pagine", "uniti", "protetto", "testo", " e altre "] if any(w in x for x in nm)]
+            if ita:
+                prob(r, f"app in inglese, ma il file creato si chiama {nm[0]!r} (parola italiana «{ita[0]}»)")
     # unisci
     groups = [
         ["testo3.pdf", "Relazione è già (finale) 日本.pdf", "ruotato.pdf"],
@@ -1171,4 +1233,12 @@ with open(os.path.join(WORK, f"risultati-{args.group}.md"), "w", encoding="utf-8
     for r in RESULTS:
         if r["notes"]:
             f.write(f"- [{r['id']}] {r['action']} {r['param'][:40]} {r['files']}: {' · '.join(r['notes'])[:500]}\n")
+log("\n===== PROBLEMI =====")
+for r in RESULTS:
+    if r.get("problems"):
+        log(f"P [{r['id']}] {r['action']} {r['param'][:70]} {r['files']} ({r['wall']} s): {' · '.join(r['problems'])} || risposta: {json.dumps(r['res'], ensure_ascii=False)[:300]}")
+log("\n===== NOTE =====")
+for r in RESULTS:
+    if r.get("notes"):
+        log(f"N [{r['id']}] {r['action']} {r['param'][:50]} {r['files']}: {' · '.join(r['notes'])[:600]}")
 log(json.dumps(summary, ensure_ascii=False))
