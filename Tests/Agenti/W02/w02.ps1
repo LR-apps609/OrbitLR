@@ -162,7 +162,18 @@ Salva
 
 # ── Avvio con DevTools; misura finestra e interfaccia pronta
 $Base = @{ WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=9222 --lang=it" }
-function Avvia([hashtable]$vars, [string]$nome) {
+# Anche come criterio di WebView2 (vale per l'exe, sopra quello che passa l'app)
+$pol = "HKCU:\Software\Policies\Microsoft\Edge\WebView2\AdditionalBrowserArguments"
+New-Item -Path $pol -Force | Out-Null
+New-ItemProperty -Path $pol -Name "orbitlr.exe" -Value "--remote-debugging-port=9222" -PropertyType String -Force | Out-Null
+function DiagCdp() {
+  $cl = Get-CimInstance Win32_Process -Filter "Name='msedgewebview2.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -notmatch '--type=' } | ForEach-Object { $_.CommandLine -replace [regex]::Escape($env:USERPROFILE), '~' }
+  Log "WebView2 processo principale: $($cl -join ' ;; ')"
+  Log "porta 9222: $((Get-NetTCPConnection -LocalPort 9222 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { "$($_.LocalAddress) pid $($_.OwningProcess)" }) -join ', ')"
+  $dap = Get-ChildItem "$env:LOCALAPPDATA\it.ledion.orbitlr" -Recurse -Filter DevToolsActivePort -ErrorAction SilentlyContinue | Select-Object -First 1
+  Log "DevToolsActivePort: $(if ($dap) { (Get-Content $dap.FullName) -join ' ' } else { 'non c''è' })"
+}
+function Avvia([hashtable]$vars, [string]$nome, [switch]$Pronta) {
   Ferma
   $all = $Base + $vars; $old = @{}
   foreach ($k in $all.Keys) { $old[$k] = [Environment]::GetEnvironmentVariable($k); [Environment]::SetEnvironmentVariable($k, $all[$k]) }
@@ -172,7 +183,7 @@ function Avvia([hashtable]$vars, [string]$nome) {
   $h = [IntPtr]::Zero; $tw = $null
   for ($i = 0; $i -lt 600 -and $h -eq [IntPtr]::Zero; $i++) { $h = [U]::Main([uint32]$app.Id); if ($h -eq [IntPtr]::Zero) { Start-Sleep -Milliseconds 100 } }
   if ($h -ne [IntPtr]::Zero) { $tw = [math]::Round(((Get-Date) - $t0).TotalSeconds, 2) }
-  $ready = (& node $Cdp ready 60000 2>&1 | Select-Object -Last 1)
+  $ready = if ($Pronta) { (& node $Cdp ready 30000 2>&1 | Select-Object -Last 1) } else { "" }
   $tu = if ("$ready" -match '^\d+$') { [math]::Round(([int64]$ready - $t0ms) / 1000, 2) } else { $null }
   $mach = [U]::Machine([uint32]$app.Id)
   $wv = Get-CimInstance Win32_Process -Filter "Name='msedgewebview2.exe'" -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -183,7 +194,8 @@ function Avvia([hashtable]$vars, [string]$nome) {
 }
 
 # ── 2. Primo avvio (profilo nuovo) e secondo avvio
-$a = Avvia @{} "primo-avvio"
+$a = Avvia @{} "primo-avvio" -Pronta
+DiagCdp
 $Res.tempi.primo_avvio_finestra_s = $a.finestra_s; $Res.tempi.primo_avvio_pronta_s = $a.pronta_s
 $Res.esecuzione = "orbitlr.exe come $($a.macchina) · msedgewebview2 come $($a.webview)"
 Start-Sleep -Seconds 3
@@ -193,7 +205,7 @@ FotoCdp "02-primo-avvio-devtools"
 $Res.errori_primo_avvio = (& node $Cdp logs 2>&1 | Select-Object -Last 1)
 Salva
 
-$a = Avvia @{} "secondo-avvio"
+$a = Avvia @{} "secondo-avvio" -Pronta
 $Res.tempi.secondo_avvio_finestra_s = $a.finestra_s; $Res.tempi.secondo_avvio_pronta_s = $a.pronta_s
 Start-Sleep -Seconds 2
 FotoSchermo "03-secondo-avvio-schermo"
@@ -213,7 +225,7 @@ function Fai([string[]]$a) { $r = & $Ff -hide_banner -loglevel error -y @a 2>&1 
 $tf = Get-Date
 Fai @("-f", "lavfi", "-i", "testsrc2=size=1280x720:rate=30:duration=8", "-f", "lavfi", "-i", "sine=frequency=440:duration=8", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", "$casa\Gita al lago.mp4")
 if (-not (Test-Path "$casa\Gita al lago.mp4")) { Fai @("-f", "lavfi", "-i", "testsrc2=size=1280x720:rate=30:duration=8", "-f", "lavfi", "-i", "sine=frequency=440:duration=8", "-c:v", "mpeg4", "-q:v", "3", "-c:a", "aac", "-shortest", "$casa\Gita al lago.mp4") }
-Fai @("-f", "lavfi", "-i", "testsrc2=size=3000x2000", "-frames:v", "1", "-q:v", "2", "$casa\Foto grande.jpg")
+Fai @("-f", "lavfi", "-i", "testsrc2=size=3000x2000", "-vf", "noise=alls=60:allf=t", "-frames:v", "1", "-q:v", "1", "$casa\Foto grande.jpg")
 Fai @("-f", "lavfi", "-i", "sine=frequency=330:duration=30", "-f", "lavfi", "-i", "anoisesrc=d=30:a=0.05", "-filter_complex", "amix=inputs=2", "-ar", "44100", "-ac", "2", "$casa\Nota vocale.wav")
 for ($k = 1; $k -le 3; $k++) { Fai @("-f", "lavfi", "-i", "testsrc2=size=1500x1000", "-frames:v", "1", "-q:v", "1", "$casa\pag$k.jpg") }
 Copy-Item (Join-Path $PSScriptRoot "..\..\..\Windows\engine\tests\fixtures\iphone-gps.heic") "$casa\Dall iPhone.heic" -ErrorAction SilentlyContinue
@@ -267,6 +279,20 @@ function Verifica([string]$f) {
   return InfoMedia $f
 }
 
+# ── 4b. Se DevTools non risponde: ogni scheda aperta dalle variabili di prova, foto con PrintWindow
+if ("$sez" -notmatch '^\{') {
+  $perScheda = [ordered]@{ convert = "$casa\Foto grande.jpg"; image = "$casa\Foto grande.jpg"; video = "$casa\Gita al lago.mp4"; audio = "$casa\Nota vocale.wav"; pdf = "$casa\Contratto prova.pdf"; activity = "$casa\Foto grande.jpg"; auto = "$casa\Foto grande.jpg"; settings = "$casa\Foto grande.jpg"; help = "$casa\Foto grande.jpg" }
+  $i = 10
+  foreach ($k in $perScheda.Keys) {
+    $a = Avvia @{ ORBIT_PROVA_FILE = $perScheda[$k]; ORBIT_PROVA_SCHEDA = $k } "scheda $k"
+    Start-Sleep -Seconds 4
+    if ($a.h -ne [IntPtr]::Zero) { [U]::SetForegroundWindow($a.h) | Out-Null; Start-Sleep -Milliseconds 300; [System.Windows.Forms.SendKeys]::SendWait("{ESC}"); Start-Sleep -Milliseconds 700 }
+    FotoFinestra $a.h "$i-scheda-$k"
+    $i++
+  }
+  FotoSchermo "19-schermo-ultima-scheda"
+}
+
 # ── 5. Un lavoro vero dentro l'app (variabili di prova ORBIT_PROVA_*): attesa del file nuovo, controllo
 function Lavoro([string]$nome, [string]$file, [string]$scheda, [string]$azione, [string]$param, [int]$max = 180) {
   $prima = @(Get-ChildItem $casa -Recurse | ForEach-Object FullName)
@@ -290,7 +316,7 @@ function Lavoro([string]$nome, [string]$file, [string]$scheda, [string]$azione, 
   $barra = (& node $Cdp eval "(document.querySelector('.resultbar, .result-bar, .rbar')?.innerText || [...document.querySelectorAll('.toast')].map(t=>t.innerText).join(' | ') || '').replace(/\s+/g,' ').slice(0,300)" 2>&1 | Select-Object -Last 1)
   $src = Get-Item $file
   $r = [ordered]@{ nome = $nome; azione = $azione; parametro = $param; sorgente = "$($src.Name) $($src.Length) byte · $(Verifica $file)"
-    pronta_s = $a.pronta_s; file_pronto_dopo_avvio_s = $sec; lavoro_s = $(if ($sec -and $a.pronta_s) { [math]::Round($sec - $a.pronta_s, 2) } else { $null })
+    pronta_s = $a.pronta_s; file_pronto_dopo_avvio_s = $sec; lavoro_s = $(if ($sec -and $Res.tempi.secondo_avvio_pronta_s) { [math]::Round($sec - $Res.tempi.secondo_avvio_pronta_s, 2) } else { $null })
     uscite = @($nuovi | ForEach-Object { "$($_.FullName.Substring($casa.Length + 1)) $($_.Length) byte · $(Verifica $_.FullName)" }); barra = $barra; errori_console = $err }
   Log "LAVORO $nome · $(if ($nuovi.Count) { 'RIUSCITO' } else { 'NESSUN FILE' }) · $sec s dall'avvio ($($r.lavoro_s) s dopo l'interfaccia pronta) · $($r.uscite -join ' ;; ') · barra: $barra · errori: $err"
   $Res.lavori += $r; Salva
@@ -314,4 +340,17 @@ Get-WinEvent -FilterHashtable @{ LogName = "Application"; Level = 1, 2; StartTim
   Where-Object { $_.Message -match "orbitlr|msedgewebview2|ffmpeg" } | Select-Object -First 20 |
   ForEach-Object { "$($_.TimeCreated) $($_.ProviderName) $($_.Id): $(($_.Message -split "`n" | Select-Object -First 6) -join ' ')" } | Set-Content (Join-Path $Out "errori-windows.txt") -Encoding utf8
 Salva
+# Le foto nel registro del lavoro (gli artifact non si possono scaricare da qui): JPEG piccoli in base64, a pezzi
+$enc = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq "image/jpeg" }
+$ep = New-Object System.Drawing.Imaging.EncoderParameters 1
+$ep.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter ([System.Drawing.Imaging.Encoder]::Quality), ([long]62)
+foreach ($f in Get-ChildItem $Out -Recurse -Filter *.png) {
+  try {
+    $img = [System.Drawing.Image]::FromFile($f.FullName); $k = [Math]::Min(1.0, 1044 / $img.Width)
+    $bmp = New-Object System.Drawing.Bitmap $img, ([int]($img.Width * $k)), ([int]($img.Height * $k)); $img.Dispose()
+    $ms = New-Object IO.MemoryStream; $bmp.Save($ms, $enc, $ep); $bmp.Dispose()
+    $b64 = [Convert]::ToBase64String($ms.ToArray()); $n = [Math]::Ceiling($b64.Length / 6000)
+    for ($i = 0; $i -lt $n; $i++) { Write-Host "W02IMG|$($f.Name)|$i|$n|$($b64.Substring($i * 6000, [Math]::Min(6000, $b64.Length - $i * 6000)))" }
+  } catch { Log "foto $($f.Name) non pubblicata: $_" }
+}
 Log "fine"
