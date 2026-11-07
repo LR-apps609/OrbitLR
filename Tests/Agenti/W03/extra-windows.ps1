@@ -43,6 +43,20 @@ public static class X {
     System.Threading.Thread.Sleep(80);
     keybd_event(0x43, 0, 2, UIntPtr.Zero); keybd_event(0x12, 0, 2, UIntPtr.Zero); keybd_event(0x11, 0, 2, UIntPtr.Zero);
   }
+  [DllImport("kernel32.dll")] public static extern uint SetErrorMode(uint m);
+  public delegate bool ChildProc(IntPtr h, IntPtr l);
+  [DllImport("user32.dll")] public static extern bool EnumChildWindows(IntPtr p, ChildProc f, IntPtr l);
+  public static string Texts(IntPtr top) {
+    var sb = new StringBuilder(); var t0 = new StringBuilder(512); GetWindowText(top, t0, 512); sb.Append("«" + t0 + "»: ");
+    EnumChildWindows(top, (h, l) => { var t = new StringBuilder(1024); GetWindowText(h, t, 1024); if (t.Length > 0) sb.Append(t.ToString().Replace("\r", " ").Replace("\n", " ") + " | "); return true; }, IntPtr.Zero);
+    return sb.ToString();
+  }
+  public static string Dialogs() {
+    var sb = new StringBuilder();
+    EnumWindows((h, l) => { if (!IsWindowVisible(h)) return true; var c = new StringBuilder(64); GetClassName(h, c, 64);
+      if (c.ToString() == "#32770") sb.Append("[" + Texts(h) + "] "); return true; }, IntPtr.Zero);
+    return sb.ToString();
+  }
   public static void AltTap() { keybd_event(0x12, 0, 0, UIntPtr.Zero); keybd_event(0x12, 0, 2, UIntPtr.Zero); }
 }
 "@
@@ -74,6 +88,8 @@ function Hotkey([string]$quando) {
   Note "Ctrl+Alt+C ($quando): un'altra app $(if ($ok) { 'PUO'' prenderla (libera)' } else { "NON puo' prenderla (codice $err, 1409 = gia' registrata)" })"
 }
 function Pagina([string]$nome, [int]$attesa = 3000) {
+  $cl = Get-CimInstance Win32_Process -Filter "Name='msedgewebview2.exe'" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty CommandLine
+  Note "cdp $nome · porta 9222 in ascolto: $([bool](Get-NetTCPConnection -LocalPort 9222 -State Listen -ErrorAction SilentlyContinue)) · WebView2 ha --remote-debugging-port: $([bool]($cl -match 'remote-debugging-port'))"
   $j = Join-Path $Out "$nome.json"
   & node $Cdp $j (Join-Path $Out "$nome-pagina.png") $attesa 2>&1 | ForEach-Object { Note "cdp $nome · $_" }
   if (Test-Path $j) { return (Get-Content $j -Raw | ConvertFrom-Json) }
@@ -104,6 +120,34 @@ Note "ffmpeg dell'app: $((& $ff -hide_banner -version 2>&1 | Select-Object -Firs
 & $ff -hide_banner -loglevel error -f lavfi -i "color=c=gray:s=320x240:d=0.2:r=10" -pix_fmt nv12 -c:v h264_mf -b:v 500k -f null - 2>&1 | Select-Object -First 3 | ForEach-Object { Note "h264_mf: $_" }
 Note "h264_mf: codice $LASTEXITCODE"
 foreach ($e in "hevc_mf", "aac_mf") { & $ff -hide_banner -loglevel error -f lavfi -i "color=c=gray:s=320x240:d=0.2:r=10" -f lavfi -i "sine=d=0.2" -pix_fmt nv12 -c:v $(if ($e -eq 'aac_mf') { 'mpeg4' } else { $e }) -c:a $(if ($e -eq 'aac_mf') { 'aac_mf' } else { 'aac' }) -f null - 2>&1 | Out-Null; Note "${e}: codice $LASTEXITCODE" }
+
+# ── Vulkan e il motore dell'IA (realesrgan) scaricato dall'app nella prova 3 dello script di prove-windows
+Note "vulkan-1.dll in System32: $(Test-Path "$env:windir\System32\vulkan-1.dll") · in SysWOW64: $(Test-Path "$env:windir\SysWOW64\vulkan-1.dll")"
+Note "driver Vulkan registrati: $((Get-ItemProperty 'HKLM:\SOFTWARE\Khronos\Vulkan\Drivers' -ErrorAction SilentlyContinue).PSObject.Properties | Where-Object Name -notmatch '^PS' | ForEach-Object Name)"
+Note "finestre di errore aperte adesso: $([X]::Dialogs())"
+$re = Get-ChildItem "$env:LOCALAPPDATA\it.ledion.orbitlr" -Recurse -Filter realesrgan-ncnn-vulkan.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+Note "realesrgan dell'app: $($re.FullName)"
+Get-Process realesrgan-ncnn-vulkan -ErrorAction SilentlyContinue | ForEach-Object { Note "realesrgan ancora acceso dalla prova 3: pid $($_.Id) partito $($_.StartTime) ($([math]::Round(((Get-Date) - $_.StartTime).TotalMinutes, 1)) min fa)" }
+Get-Process realesrgan-ncnn-vulkan -ErrorAction SilentlyContinue | Stop-Process -Force
+Start-Sleep -Seconds 2
+if ($re) {
+  & ($ff) -hide_banner -loglevel error -y -f lavfi -i "color=c=white:s=64x64" -frames:v 1 "$env:TEMP\w03-in.png" 2>&1 | Out-Null
+  # a) come lo lancia OrbitLR (modalita' errori normale): si blocca su una finestra?
+  $t0 = Get-Date
+  $pp = Start-Process $re.FullName -ArgumentList "-i", "$env:TEMP\w03-in.png", "-o", "$env:TEMP\w03-out.png", "-n", "realesrgan-x4plus", "-s", "4", "-f", "png", "-m", (Join-Path $re.DirectoryName "models") -WorkingDirectory $re.DirectoryName -WindowStyle Hidden -PassThru
+  $fin = $pp.WaitForExit(25000)
+  Note "realesrgan a) come da OrbitLR: $(if ($fin) { "finito, codice $($pp.ExitCode) ($('0x{0:X8}' -f $pp.ExitCode)) in $([math]::Round(((Get-Date)-$t0).TotalSeconds)) s · uscita $(Test-Path "$env:TEMP\w03-out.png")" } else { 'ANCORA FERMO dopo 25 s' }) · finestre di errore: $([X]::Dialogs())"
+  Foto "e0-realesrgan-errore"
+  if (-not $fin) { $pp | Stop-Process -Force }
+  # b) con SetErrorMode(SEM_FAILCRITICALERRORS|SEM_NOGPFAULTERRORBOX|SEM_NOOPENFILEERRORBOX), ereditata dal figlio
+  $old = [X]::SetErrorMode(0x8003)
+  $t0 = Get-Date
+  $pp = Start-Process $re.FullName -ArgumentList "-i", "$env:TEMP\w03-in.png", "-o", "$env:TEMP\w03-out2.png", "-n", "realesrgan-x4plus", "-s", "4", "-f", "png", "-m", (Join-Path $re.DirectoryName "models") -WorkingDirectory $re.DirectoryName -WindowStyle Hidden -PassThru
+  $fin = $pp.WaitForExit(25000)
+  [X]::SetErrorMode($old) | Out-Null
+  Note "realesrgan b) con SetErrorMode: $(if ($fin) { "finito, codice $($pp.ExitCode) ($('0x{0:X8}' -f $pp.ExitCode)) in $([math]::Round(((Get-Date)-$t0).TotalSeconds)) s" } else { 'ANCORA FERMO dopo 25 s' })"
+  if (-not $fin) { $pp | Stop-Process -Force }
+}
 
 # ── Registro
 foreach ($k in 'HKCU:\Software\Classes\*\shell\OrbitLR', 'HKCU:\Software\Classes\*\shell\OrbitLR\command', 'HKCU:\Software\Classes\Directory\shell\OrbitLR', 'HKCU:\Software\Classes\Directory\shell\OrbitLR\command') {
@@ -256,6 +300,7 @@ Note "7 · OrbitLR senza WebView2: $(if ($vivo) { "VIVA dopo 15 s · finestre: $
 # Finestre di messaggio aperte da qualcuno (errore di avvio)?
 $msg = @(); foreach ($pp in Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle }) { $msg += "$($pp.ProcessName): «$($pp.MainWindowTitle)»" }
 Note "7 · finestre con titolo: $($msg -join ' · ')"
+Note "7 · testo delle finestre di errore: $([X]::Dialogs())"
 Foto "e7-senza-webview2"
 Get-WinEvent -FilterHashtable @{ LogName = "Application"; StartTime = $t0.AddSeconds(-5) } -ErrorAction SilentlyContinue | Where-Object { $_.Message -match 'orbitlr' } | Select-Object -First 5 | ForEach-Object { Note "7 · evento $($_.ProviderName) $($_.Id): $(($_.Message -split "`n" | Select-Object -First 4) -join ' ')" }
 Ferma

@@ -50,7 +50,7 @@ jobs:
         shell: pwsh
         run: |
           $out = "$env:RUNNER_TEMP\uscita\${{ matrix.os }}\extra"
-          pwsh -File Tests/Agenti/W03/extra-windows.ps1 -Out $out -Setup OrbitLR-Setup.exe -TogliWebView2
+          pwsh -STA -File Tests/Agenti/W03/extra-windows.ps1 -Out $out -Setup OrbitLR-Setup.exe -TogliWebView2
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -59,6 +59,8 @@ jobs:
           retention-days: 7
 
   motore:
+    # fatto nella corsa 42407416357 (tutto verde)
+    if: ${{ false }}
     runs-on: windows-2022
     timeout-minutes: 45
     defaults:
