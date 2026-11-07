@@ -8,7 +8,7 @@ F="$RUNNER_TEMP/m08"          # file di prova
 SUP="$HOME/Library/Application Support/LRConverter"
 mkdir -p "$OUT" "$F"
 PROBE="python3 $HERE/probe.py"
-SCEN="${*:-s01 s02 s03 s04 s05 s06 s07 s08 s09 s10 s11 s12}"
+SCEN="${*:-s01 s02 s03 s04 s05 s06 s07 s08 s09 s10 s11 s12 s13}"
 
 note() { echo "== $*"; echo "$(date +%H:%M:%S) $*" >> "$OUT/diario.txt"; }
 
@@ -166,6 +166,23 @@ run_s11() { # uscire durante un lavoro
 run_s12() { # cartella sorvegliata con 5.000 file (scansione ogni 3 s) + apertura di 300 foto insieme
   rm -rf "$F/sorv5k"; cp -R "$F/cinquemila/sotto0" "$F/sorv5k"; for s in 1 2 3 4; do for f in "$F"/cinquemila/sotto$s/*.jpg; do cp "$f" "$F/sorv5k/s${s}_$(basename "$f")"; done; done
   watchrule "$F/sorv5k"; launch; openfiles "$F"/trecento/*.heic; $PROBE s12 40 "$OUT"; shot s12-sorveglia-5000; }
+
+run_s13() { # progetto video aperto le cui clip stanno su un'immagine disco poi scollegata (pista C01)
+  local PID_ UUID_ MNT
+  rm -f "$F/clip.dmg"; mkdir -p "$F/clipsrc"; for i in $(seq 1 20); do head -c 200000 /dev/urandom > "$F/clipsrc/clip$i.mp4"; done
+  hdiutil create -size 50m -fs HFS+ -volname M08Clip -srcfolder "$F/clipsrc" "$F/clip.dmg" >/dev/null
+  MNT=$(hdiutil attach -nobrowse "$F/clip.dmg" | awk -F'\t' '/\/Volumes\//{print $NF}' | tail -1); note "s13: clip in $MNT"
+  UUID_=$(uuidgen); mkdir -p "$SUP/Progetti video"
+  swift "$HERE/segnalibri.swift" "$SUP/Progetti video/$UUID_.json" "$MNT"/clip*.mp4 | tee -a "$OUT/diario.txt"
+  defaults write it.ledion.OrbitLR video.openProject -string "$UUID_"; defaults write it.ledion.OrbitLR video.cleanExit -bool true
+  hdiutil detach "$MNT" >/dev/null; note "s13a: disco scollegato, immagine ancora presente"
+  launch; $PROBE s13a 25 "$OUT"; shot s13a-progetto-disco-scollegato
+  note "s13a: immagine rimontata dall'app? $(mount | grep -c M08Clip)"; mount | grep M08Clip >> "$OUT/diario.txt"
+  quitapp; for m in $(mount | awk '/M08Clip/{print $3}'); do hdiutil detach "$m" -force >/dev/null; done
+  defaults write it.ledion.OrbitLR video.openProject -string "$UUID_"; rm -f "$F/clip.dmg"
+  note "s13b: anche l'immagine disco cancellata"
+  launch; $PROBE s13b 20 "$OUT"; shot s13b-progetto-disco-sparito
+  defaults delete it.ledion.OrbitLR video.openProject 2>/dev/null; rm -rf "$SUP/Progetti video"; }
 
 for s in $SCEN; do
   CUR=$s; note "---- inizio $s"

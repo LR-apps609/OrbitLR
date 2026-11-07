@@ -23,12 +23,22 @@ jobs:
         id: sel
         run: |
           if grep -qx "${{ matrix.build }}" Tests/Agenti/M08/build.txt; then echo "go=1" >> $GITHUB_OUTPUT; else echo "build ${{ matrix.build }} non richiesta"; fi
+      - name: Quale run della 6.0.3
+        id: rid
+        if: steps.sel.outputs.go == '1' && matrix.build == '603'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # l'ultima compilazione riuscita di prove-mac (la 42406653535 e' stata sostituita)
+          R=$(gh api "repos/${{ github.repository }}/actions/runs?branch=prove-mac&per_page=20" --jq '[.workflow_runs[]|select(.name=="Compila OrbitLR" and .created_at >= "2026-11-07")]|.[].id' | while read id; do
+                c=$(gh api "repos/${{ github.repository }}/actions/runs/$id/jobs" --jq '.jobs[]|select(.name=="build")|.conclusion'); [ "$c" = "success" ] && { echo $id; break; }; done)
+          echo "run della 6.0.3: ${R:-42406653535}"; echo "id=${R:-42406653535}" >> $GITHUB_OUTPUT
       - name: Scarico 6.0.3
         if: steps.sel.outputs.go == '1' && matrix.build == '603'
         uses: actions/download-artifact@v5
         with:
           name: pacchetto
-          run-id: 42406653535
+          run-id: ${{ steps.rid.outputs.id }}
           github-token: ${{ github.token }}
       - name: Installo
         if: steps.sel.outputs.go == '1'
