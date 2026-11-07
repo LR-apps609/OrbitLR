@@ -3,6 +3,7 @@
 
 import { t, tr } from "./i18n.js";
 import { waitNotice } from "./attese.js";
+import { toast } from "./util.js";
 
 const T = window.__TAURI__;
 export const DEMO = !T;
@@ -27,11 +28,38 @@ export function onJob(fn) {
   return () => listeners.delete(fn);
 }
 
+// 2.0.1 · Le attese brevi che però possono durare (disco lento, rete): dopo un attimo una riga piccola dice cosa succede
+const QUICK = {
+  pdf_info: () => t("Apro il PDF…"),
+  phone_share: () => t("Preparo il codice per il telefono…"),
+  undo_result: () => t("Mando il risultato nel Cestino…"),
+  office_ready: () => t("Controllo se LibreOffice è installato…"),
+  places: () => t("Cerco le cartelle di Windows…"),
+  watch_get: () => t("Leggo le cartelle automatiche…"),
+  watch_set: () => t("Salvo le cartelle automatiche…"),
+  open_result: () => t("Apro il file…"),
+};
+
 export async function invoke(cmd, args = {}) {
   // 2.0.1 · Leggere i file può durare (OneDrive li scarica prima): dopo un attimo lo si dice, con «Interrompi»
   if (cmd === "probe_files") return waitNotice(T ? T.core.invoke(cmd, args) : demo(cmd, args), () => probeReason(args.paths || []), { onStop: () => T?.core.invoke("probe_stop").catch(() => {}), stopped: [] });
-  if (T) return T.core.invoke(cmd, args);
-  return demo(cmd, args);
+  const call = T ? T.core.invoke(cmd, args) : demo(cmd, args);
+  if (QUICK[cmd]) return waitNotice(call, QUICK[cmd], { canStop: false });
+  return call;
+}
+
+/**
+ * 2.0.1 · Leggere i file trascinati o scelti: se il motore dà errore lo si dice (mai un errore muto).
+ * Restituisce l'elenco di probe_files, oppure null se la lettura non è riuscita (l'avviso è già a schermo).
+ */
+export async function probeFiles(paths) {
+  try {
+    return await invoke("probe_files", { paths });
+  } catch (e) {
+    const why = tr(String(e?.message || e || "")) || t("errore sconosciuto");
+    toast(paths.length > 1 ? t`Non riesco a leggere i file: ${why}` : t`Non riesco a leggere il file: ${why}`, 6000);
+    return null;
+  }
 }
 
 async function probeReason(paths) {
@@ -65,7 +93,7 @@ export async function reveal(path) {
 }
 
 export async function openPath(path) {
-  if (T) return T.core.invoke("open_result", { path }).catch((e) => import("./util.js").then((u) => u.toast(tr(String(e)))));
+  if (T) return invoke("open_result", { path }).catch((e) => toast(tr(String(e))));
 }
 
 export async function openUrl(url) {

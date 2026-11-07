@@ -1123,7 +1123,26 @@ export const EN = {
  "≈ {0} (dipende dal video)": "≈ {0} (depends on the video)",
  "≈ {0} (dipende dalla foto)": "≈ {0} (depends on the photo)",
  "◀ Sposta": "◀ Move",
- "★ Salva come mia azione": "★ Save as My Action"
+ "★ Salva come mia azione": "★ Save as My Action",
+ "Apro il PDF…": "Opening the PDF…",
+ "Preparo il codice per il telefono…": "Preparing the code for your phone…",
+ "Mando il risultato nel Cestino…": "Moving the result to the Recycle Bin…",
+ "Controllo se LibreOffice è installato…": "Checking whether LibreOffice is installed…",
+ "Cerco le cartelle di Windows…": "Looking for the Windows folders…",
+ "Leggo le cartelle automatiche…": "Reading the Watch Folders…",
+ "Salvo le cartelle automatiche…": "Saving the Watch Folders…",
+ "Apro il file…": "Opening the file…",
+ "Non riesco a leggere i file: {0}": "Can’t read the files: {0}",
+ "Non riesco a leggere il file: {0}": "Can’t read the file: {0}",
+ "errore sconosciuto": "unknown error",
+ "il motore non risponde": "the engine isn’t responding",
+ "Non si è interrotto: {0}": "It didn’t stop: {0}",
+ "Non riesco a controllare il motore video: {0}": "Can’t check the video engine: {0}",
+ "Controllo il motore video…": "Checking the video engine…",
+ "Non riesco a salvare le cartelle automatiche: {0}": "Can’t save the Watch Folders: {0}",
+ "Non trovo la cartella «{0}»: scegline una tu. ({1})": "Can’t find the “{0}” folder: choose one yourself. ({1})",
+ "Non trovo la cartella Download: {0}": "Can’t find the Downloads folder: {0}",
+ "Non trovo la cartella Download: scegli «In una cartella che scelgo».": "Can’t find the Downloads folder: choose “In a folder I choose”."
 };
 // Messaggi che arrivano dal motore (con nomi di file e numeri dentro): [modello, testo inglese con $1, $2…]
 export const EN_PATTERNS = [

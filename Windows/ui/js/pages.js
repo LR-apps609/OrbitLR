@@ -53,8 +53,8 @@ export function activityPage() {
         h("b", title), h("span", { style: { color: "var(--quiet)" } }, j.files.length === 1 ? j.files[0].name : j.files.length ? t`${j.files.length} file` : ""),
         state, h("span.when", when),
         again,
-        live ? h("button.btn", { onclick: () => cancel(j.id) }, t("Interrompi")) : h("button.btn.icon.ghost", { "aria-label": t("Togli dalla cronologia"), title: t("Togli dalla cronologia"), onclick: drop }, ico("x", 14))),
-      live && stageText(j) ? h("div.stage", stageText(j)) : null,
+        live ? h("button.btn", { disabled: j.stopping || null, onclick: () => cancel(j.id) }, j.stopping ? t("Interrompo…") : t("Interrompi")) : h("button.btn.icon.ghost", { "aria-label": t("Togli dalla cronologia"), title: t("Togli dalla cronologia"), onclick: drop }, ico("x", 14))),
+      live && j.stopError ? h("div.stage", { style: { color: "var(--err)" } }, t`Non si è interrotto: ${j.stopError}`) : live && stageText(j) ? h("div.stage", stageText(j)) : null,
       live ? h("div.tuner", h("div.fill", { style: { width: Math.max(2, j.progress * 100) + "%" } }), h("div.scale")) : null,
       outs.map((o) => h("div.out", ico("file", 15), h("span.n", { title: o.path }, o.name), o.before ? h("span.g", gainText(o.before, o.size)) : h("span.g", fmtBytes(o.size)),
         h("button.btn", { onclick: () => reveal(o.path) }, t("Mostra")), h("button.btn", { onclick: () => openPath(o.path) }, t("Apri")))),
@@ -115,7 +115,12 @@ export function settingsPage(app) {
       h("div.page-scroll", h("div.list",
         h("div.set", h("h3", t("Dove salvare i file creati")),
           radio("where", "same", where, t("Accanto all'originale"), t("Nella stessa cartella, con un nome nuovo: l'originale non si tocca mai"), () => store.set("where", "same")),
-          radio("where", "downloads", where, t("Nella cartella Download"), null, async () => { const p = await invoke("places"); store.set("downloadsDir", p.downloads); store.set("where", "downloads"); render(); }),
+          radio("where", "downloads", where, t("Nella cartella Download"), null, async () => {
+            // 2.0.1 · Se Windows non dice dov'è la cartella Download, lo si dice (prima non succedeva niente)
+            let p = null;
+            try { p = await invoke("places"); } catch (e) { return toast(t`Non trovo la cartella Download: ${tr(String(e))}`, 6000); }
+            if (!p?.downloads) return toast(t("Non trovo la cartella Download: scegli «In una cartella che scelgo»."), 6000);
+            store.set("downloadsDir", p.downloads); store.set("where", "downloads"); render(); }),
           radio("where", "folder", where, t("In una cartella che scelgo"), folder || t("Nessuna cartella scelta"), async () => { const f = await pickFolder(); if (f) { store.set("folder", f); store.set("where", "folder"); } render(); })),
         h("div.set", h("h3", t("Lingua del parlato")), h("p", t("Per «Trascrivi» e i sottotitoli automatici. «Automatica» la riconosce da sola.")),
           h("div.opts", [["auto", t("Automatica")], ["it", "Italiano"], ["en", "English"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["pt", "Português"], ["sq", "Shqip"]].map(([v, l]) =>
@@ -148,7 +153,8 @@ export function settingsPage(app) {
           h("p", eng.office ? t("LibreOffice è installato: Word, Excel e PowerPoint si convertono in PDF e negli altri formati.") : t("LibreOffice (facoltativo, gratuito, circa 350 MB) serve solo per Word, Excel e PowerPoint.")),
           eng.office ? null : h("div", h("button.btn.fix", { disabled: isInstalling() || null, onclick: async () => { await installOffice(app); await officeReady(app); render(); } }, ico("download", 15), isInstalling() ? t("Installazione in corso…") : t("Installa LibreOffice")))),
         h("div.set", h("h3", t("Motore")),
-          h("p", eng.ready ? t`Pronto · ${String(eng.version || "").replace(/^ffmpeg version /, "ffmpeg ").split(" Copyright")[0]}` : t("Il motore video non si è avviato: reinstalla OrbitLR.")),
+          // 2.0.1 · Mentre il controllo è in corso si dice «Controllo…», non «non si è avviato»
+          h("p", !app.engine ? t("Controllo il motore video…") : eng.ready ? t`Pronto · ${String(eng.version || "").replace(/^ffmpeg version /, "ffmpeg ").split(" Copyright")[0]}` : eng.error ? t`Non riesco a controllare il motore video: ${eng.error}` : t("Il motore video non si è avviato: reinstalla OrbitLR.")),
           eng.ready ? h("p", t`Per comprimere usa: ${gpuText}${eng.hevc?.length ? t(" · HEVC disponibile") : ""}`) : null,
         ),
         // 1.0 · La promessa sulla privacy, scritta con precisione

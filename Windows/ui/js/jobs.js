@@ -3,7 +3,7 @@
 import { invoke, onAutoJob, onJob } from "./api.js";
 import { actionName } from "./catalog.js";
 import { store } from "./util.js";
-import { t } from "./i18n.js";
+import { t, tr } from "./i18n.js";
 import { AI_ACTIONS } from "./attese.js";
 
 const jobs = new Map(); // id → lavoro
@@ -125,8 +125,35 @@ export async function run(action, files, param, origin) {
   return job;
 }
 
+/** Quanto si aspetta che un lavoro si fermi dopo «Interrompi» (le prove lo accorciano). */
+const stopWait = () => (typeof window !== "undefined" && window.__orbitStopWait) || 15000;
+
+/**
+ * «Interrompi». 2.0.1 · Se il motore dà errore o non risponde (né conferma né «interrotto» entro 15 s),
+ * il lavoro non resta su «Interrompo…»: `stopError` dice perché e si può riprovare o chiudere la barra.
+ */
 export function cancel(id) {
-  invoke("cancel_job", { id });
+  const job = jobs.get(id);
+  if (job) {
+    job.stopping = true;
+    job.stopError = null;
+    notify(job);
+  }
+  let over = false;
+  const fail = (why) => {
+    if (over) return;
+    over = true;
+    const j = jobs.get(id);
+    if (!j || j.state !== "running") return;
+    j.stopping = false;
+    j.stopError = why;
+    notify(j);
+  };
+  const timer = setTimeout(() => fail(t("il motore non risponde")), stopWait());
+  invoke("cancel_job", { id }).catch((e) => {
+    clearTimeout(timer);
+    fail(tr(String(e?.message || e || "")) || t("errore sconosciuto"));
+  });
 }
 
 function finish(job) {

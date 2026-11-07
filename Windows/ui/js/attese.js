@@ -57,6 +57,9 @@ export function waitNotice(promise, why, { after = 900, onStop, stopped, canStop
       const sp = document.createElement("span");
       sp.className = "wait-spin";
       box.append(sp, document.createTextNode(text), canStop ? btn : "");
+      // Più attese insieme: una sopra l'altra, mai una sopra la scritta dell'altra
+      const others = document.querySelectorAll(".wait-row").length;
+      if (others) box.style.bottom = `${66 + others * 46}px`;
       document.body.append(box);
     }, after);
     promise.then((v) => finish(resolve, v), (e) => finish(reject, e));

@@ -18,6 +18,7 @@ export function resultBar(origin) {
   const el = h("div");
   let current = null;
   let hideTimer, tick;
+  let dismissed = null;
 
   function render(job) {
     clearTimeout(hideTimer);
@@ -30,7 +31,7 @@ export function resultBar(origin) {
       const left = job.action === "vproject" ? timeLeft(job) : "";
       // 2.0.1 · Le attese lunghe (IA, motore che parte) dicono cosa succede e da quanto
       const stage = job.action === "vproject" ? null : stageText(job);
-      const what = job.stopping ? t("Interrompo…") : job.action === "vproject" ? (pct > 0 ? t`Esporto… ${pct}%` : t("Preparo…")) + (left ? " · " + left : "") : stage || (pct > 0 ? `${pct}%` : t("Preparo…"));
+      const what = job.stopping ? t("Interrompo…") : job.stopError ? capital(t`Non si è interrotto: ${job.stopError}`) : job.action === "vproject" ? (pct > 0 ? t`Esporto… ${pct}%` : t("Preparo…")) + (left ? " · " + left : "") : stage || (pct > 0 ? `${pct}%` : t("Preparo…"));
       clearTimeout(tick);
       tick = setTimeout(() => { if (current === job && job.state === "running" && el.isConnected) render(job); }, 1000);
       el.append(
@@ -38,9 +39,11 @@ export function resultBar(origin) {
           h("div.ic.run", ico("loader-circle", 20, "spin")),
           h("div.tx",
             h("b", n > 1 ? t`${job.title} · ${n} file` : n === 1 ? `${job.title} · ${job.files[0].name}` : job.title),
-            h("span", what),
+            h("span", job.stopError ? { style: { color: "var(--err)" } } : null, what),
             h("div.tuner", h("div.fill", { style: { width: Math.max(2, pct) + "%" } }), h("div.scale"))),
-          h("button.btn", { disabled: job.stopping || null, onclick: () => { job.stopping = true; cancel(job.id); render(job); } }, t("Interrompi"))));
+          h("button.btn", { disabled: job.stopping || null, onclick: () => cancel(job.id) }, t("Interrompi")),
+          // Non si ferma: la barra si può chiudere (il lavoro resta in Attività)
+          job.stopError ? closeBtn() : null));
       return;
     }
     const outs = job.results.flatMap((r) => r.outputs);
@@ -116,11 +119,13 @@ export function resultBar(origin) {
   }
 
   function closeBtn() {
-    return h("button.btn.icon.ghost", { title: t("Chiudi"), "aria-label": t("Chiudi"), onclick: () => { current = null; render(null); } }, ico("x", 16));
+    return h("button.btn.icon.ghost", { title: t("Chiudi"), "aria-label": t("Chiudi"), onclick: () => { dismissed = current?.state === "running" ? current.id : null; current = null; render(null); } }, ico("x", 16));
   }
 
   subscribe((job) => {
     if (!job || job.origin !== origin) return;
+    // Chiusa con la ✕ mentre non si fermava: torna solo quando il lavoro finisce
+    if (job.id === dismissed && job.state === "running") return;
     current = job;
     render(job);
   });
@@ -128,13 +133,22 @@ export function resultBar(origin) {
   return { el, clear: () => render(null), get job() { return current; } };
 }
 
+// 2.0.1 · «Al telefono» cliccato più volte: una finestra sola (mentre il codice si prepara, i clic in più non contano)
+let phoneBusy = false;
 async function sendToPhone(file) {
+  const open = document.querySelector(".modal.phone");
+  if (open) return open.querySelector(".row button.primary")?.focus();
+  if (phoneBusy) return;
+  phoneBusy = true;
   let r;
   try {
     r = await invoke("phone_share", { path: file.path, en: isEn });
   } catch (e) {
     return toast(tr(String(e)));
+  } finally {
+    phoneBusy = false;
   }
+  if (document.querySelector(".modal.phone")) return;
   const qr = h("div.qr");
   const urlEl = h("p.fb-note", { style: { userSelect: "text" } });
   const expired = h("div", { hidden: true, style: { display: "grid", gap: "8px", justifyItems: "center" } });
@@ -160,7 +174,10 @@ async function sendToPhone(file) {
     } }, ico("rotate-ccw", 15), t("Rigenera")));
   showCode(r);
   const bg = h("div.modal-bg");
-  const close = () => { clearTimeout(timer); invoke("phone_stop").catch(() => {}); bg.remove(); };
+  const close = () => { clearTimeout(timer); invoke("phone_stop").catch(() => {}); bg.remove(); document.removeEventListener("keydown", esc, true); };
+  // Esc chiude, come le altre finestre
+  const esc = (e) => { if (e.key === "Escape" && bg.isConnected && [...document.querySelectorAll(".modal-bg")].pop() === bg) { e.preventDefault(); e.stopImmediatePropagation(); close(); } };
+  document.addEventListener("keydown", esc, true);
   bg.append(h("div.modal.phone", { role: "dialog", "aria-modal": "true" },
     h("h3", t("Manda al telefono")),
     h("p", t`Inquadra il codice con la fotocamera del telefono e tocca «Scarica». Il telefono deve essere sulla stessa rete Wi-Fi del computer.`),
@@ -171,6 +188,7 @@ async function sendToPhone(file) {
     h("div.row", h("button.btn.primary", { onclick: close }, t("Fatto")))));
   bg.addEventListener("click", (e) => e.target === bg && close());
   document.body.append(bg);
+  bg.querySelector(".row button.primary")?.focus();
 }
 
 /** «circa 2 min», «meno di un minuto»: dal ritmo fin qui (dopo qualche secondo, quando è affidabile). */

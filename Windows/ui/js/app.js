@@ -1,7 +1,7 @@
 // OrbitLR per Windows: la finestra con la barra laterale e le schede.
 
 import { play, prepareSounds } from "./sounds.js";
-import { DEMO, invoke, onDrop, openPath, openUrl, reveal } from "./api.js";
+import { DEMO, invoke, onDrop, openPath, openUrl, probeFiles, reveal } from "./api.js";
 import { kindOfExt } from "./catalog.js";
 import { audioPage } from "./audio.js";
 import { convertPage } from "./convert.js";
@@ -279,8 +279,13 @@ async function boot() {
   if (!DEMO) document.addEventListener("contextmenu", (e) => { if (!(e.target instanceof Element && e.target.closest("input, textarea"))) e.preventDefault(); });
   // 2.0.1 · La prima volta Windows controlla il motore video (anche l'antivirus): può volerci un po', e lo si dice
   waitNotice(invoke("engine_status"), () => t("Preparo il motore video: la prima volta può volerci fino a un minuto…"), { after: 2500, canStop: false }).then((s) => {
-    app.engine = s;
-    if (!s.ready) toast(t("Il motore video non si è avviato: reinstalla OrbitLR."));
+    app.engine = s || { ready: false };
+    if (!app.engine.ready) toast(t("Il motore video non si è avviato: reinstalla OrbitLR."));
+    if (app.current === "settings") app.pages.settings.show();
+  }, (e) => {
+    // 2.0.1 · Il controllo stesso non è riuscito: lo si dice (nelle Opzioni resta il motivo)
+    app.engine = { ready: false, error: tr(String(e?.message || e || "")) || t("errore sconosciuto") };
+    toast(t`Non riesco a controllare il motore video: ${app.engine.error}`, 6000);
     if (app.current === "settings") app.pages.settings.show();
   });
   // Chiudere OrbitLR (✕, Alt+F4, «Esci» vicino all'orologio): prima si salva il montaggio; si chiede solo
@@ -336,7 +341,8 @@ async function boot() {
     }
     if (st.action) {
       const { run } = await import("./jobs.js");
-      const probed = await invoke("probe_files", { paths: st.files });
+      const probed = await probeFiles(st.files);
+      if (!probed) return;
       const files = probed.filter((p) => p.ok).map((p) => ({ path: p.info.path, name: p.info.name, size: p.info.size }));
       let param = st.param ?? null;
       try { param = JSON.parse(param); } catch {}

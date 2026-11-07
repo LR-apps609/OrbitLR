@@ -2,7 +2,7 @@
 // nella sua scheda. Con tipi diversi insieme, una torta piccola per tipo. Tasti 1–9; Invio = ultima scelta.
 
 import { play } from "./sounds.js";
-import { invoke, pickFiles, setDemoPick } from "./api.js";
+import { invoke, pickFiles, probeFiles, setDemoPick } from "./api.js";
 import { CONVERT, KINDS, docTargets, fmtIcon } from "./catalog.js";
 import { askOffice } from "./office.js";
 import { run } from "./jobs.js";
@@ -22,7 +22,8 @@ export function convertPage(app) {
   let moreFor = null;
 
   async function add(paths) {
-    const probed = await invoke("probe_files", { paths });
+    const probed = await probeFiles(paths);
+    if (!probed) return;
     for (const p of probed) {
       if (!p.ok) {
         toast(tr(p.error));

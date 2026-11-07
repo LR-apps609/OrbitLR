@@ -1,6 +1,6 @@
 // Scheda Audio: come su Mac. A sinistra la forma d'onda con le maniglie, a destra gli strumenti.
 
-import { invoke, pickFiles, setDemoPick } from "./api.js";
+import { invoke, pickFiles, probeFiles, setDemoPick } from "./api.js";
 import { run } from "./jobs.js";
 import { resultBar } from "./resultbar.js";
 import { createTrim } from "./trim.js";
@@ -40,7 +40,8 @@ export function audioPage(app) {
   const dl = downloaderBar({ video: false, onFile: (p) => { if (tool === "tts") tool = "ringtone"; add([p]); } });
 
   async function add(paths) {
-    const probed = await invoke("probe_files", { paths });
+    const probed = await probeFiles(paths);
+    if (!probed) return;
     const ok = probed.filter((p) => p.ok && p.info.has_audio !== false && (p.info.kind === "audio" || p.info.kind === "video"));
     const bad = probed.filter((p) => !p.ok);
     if (bad.length) toast(tr(bad[0].error));

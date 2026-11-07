@@ -1,7 +1,7 @@
 // L'editor video (come su Mac): Progetti, anteprima, sequenza con clip, testi e musica,
 // pannello con Clip, Filtri, Effetti, Testi, Audio, Formato. ⌘Z/Ctrl+Z annulla, si salva da solo.
 
-import { DEMO, fileUrl, invoke, pickFiles, setDemoPick } from "./api.js";
+import { DEMO, fileUrl, invoke, pickFiles, probeFiles, setDemoPick } from "./api.js";
 import { dec, t, tr, tc, LOCALE } from "./i18n.js";
 import { outDir, run } from "./jobs.js";
 import { PRESETS, emptyLook, feMatrix, isIdentity, resolve } from "./look.js";
@@ -184,7 +184,7 @@ export function editorPage(app, onBack) {
     // I file del progetto: esistono ancora? (1.1: quelli che mancano restano nel progetto)
     const paths0 = [...new Set([...(p.clips || []).map((c) => c.path), p.music?.path].filter(Boolean))];
     if (paths0.length) {
-      const probed = await invoke("probe_files", { paths: paths0 });
+      const probed = (await probeFiles(paths0)) || [];
       for (const r of probed) {
         if (r.ok) infos[r.info.path] = r.info;
         else missing.add(r.path);
@@ -218,7 +218,8 @@ export function editorPage(app, onBack) {
     if (lost.length === 1 && picked.length === 1 && !map.has(key(lost[0]))) map.set(key(lost[0]), picked[0]);
     const relink = new Map(lost.filter((x) => map.has(key(x))).map((x) => [x, map.get(key(x))]));
     if (!relink.size) return toast(t("Tra i file scelti non c’è nessuno di quelli che mancano: scegli i file con lo stesso nome."), 6000);
-    const probed = await invoke("probe_files", { paths: [...new Set(relink.values())] });
+    const probed = await probeFiles([...new Set(relink.values())]);
+    if (!probed) return;
     const good = new Set();
     for (const r of probed) if (r.ok) { infos[r.info.path] = r.info; good.add(r.info.path); }
     change((pp) => {
@@ -257,7 +258,8 @@ export function editorPage(app, onBack) {
   }
 
   async function addClips(paths) {
-    const probed = await invoke("probe_files", { paths });
+    const probed = await probeFiles(paths);
+    if (!probed) return;
     const ok = probed.filter((r) => r.ok && (r.info.kind === "video" || (r.info.kind === "image")));
     if (!ok.length) return toast(t("Aggiungi dei video."));
     change((pp) => {
@@ -1190,7 +1192,7 @@ export function editorPage(app, onBack) {
     } else if (tool === "text") {
       const tx = sel.kind === "text" ? p.texts[sel.index] : null;
       box.push(h("div.btns", h("button.btn.primary", { onclick: addText }, ico("plus", 14), t("Aggiungi un testo")),
-        subsBusy ? h("button.btn", { onclick: () => subsJob && invoke("cancel_job", { id: subsJob }) }, t("Interrompi"))
+        subsBusy ? h("button.btn", { onclick: () => subsJob && invoke("cancel_job", { id: subsJob }).catch((e) => toast(t`Non si è interrotto: ${tr(String(e))}`)) }, t("Interrompi"))
           : h("button.btn", { onclick: autoSubtitles }, ico("message-circle", 14), t("Sottotitoli automatici"))),
         subsStatus,
         h("p.hint", t("Il testo compare all'indicatore per 3 secondi. Trascinalo sull'anteprima per spostarlo, e nella riga «Testi» per cambiare quando si vede.")));
@@ -1380,7 +1382,9 @@ export function editorPage(app, onBack) {
     setDemoPick("audio");
     const paths = await pickFiles([{ name: t("Musica"), extensions: ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aac", "mp4", "mov"] }]);
     if (!paths.length) return;
-    const r = (await invoke("probe_files", { paths: [paths[0]] }))[0];
+    const got = await probeFiles([paths[0]]);
+    if (!got) return;
+    const r = got[0];
     if (!r?.ok || !r.info.has_audio) return toast(t("In questo file non c'è audio."));
     infos[r.info.path] = r.info;
     change((pp) => (pp.music = { path: r.info.path, offset: 0, in: 0, looped: false, volume: 0.8, fadeIn: 1, fadeOut: 2, duck: true }));
