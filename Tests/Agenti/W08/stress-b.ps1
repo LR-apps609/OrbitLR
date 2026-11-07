@@ -106,6 +106,13 @@ function Menu([IntPtr]$hwnd, [string]$nome) {
   foreach ($m in $root.FindAll([System.Windows.Automation.TreeScope]::Children, (New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ClassNameProperty, "#32768")))) {
     foreach ($v in $m.FindAll([System.Windows.Automation.TreeScope]::Descendants, [System.Windows.Automation.Condition]::TrueCondition)) { try { if ($v.Current.Name) { $voci += $v.Current.Name } } catch {} }
   }
+  if (-not $voci.Count) {
+    $top = @(); foreach ($x in $root.FindAll([System.Windows.Automation.TreeScope]::Children, [System.Windows.Automation.Condition]::TrueCondition)) { try { $top += "$($x.Current.ClassName)='$($x.Current.Name)'" } catch {} }
+    Log "menu $nome : finestre in cima: $($top -join ' | ')"
+    foreach ($x in $root.FindAll([System.Windows.Automation.TreeScope]::Children, [System.Windows.Automation.Condition]::TrueCondition)) {
+      try { if ($x.Current.ClassName -match "Popup|Xaml|Menu|DropDown|Bridge") { foreach ($v in $x.FindAll([System.Windows.Automation.TreeScope]::Descendants, [System.Windows.Automation.Condition]::TrueCondition)) { if ($v.Current.Name) { $voci += "[" + $x.Current.ClassName + "] " + $v.Current.Name } } } } catch {}
+    }
+  }
   $voci | Set-Content (Join-Path $Out "menu-$nome.txt") -Encoding utf8
   Log "menu $nome : $($voci.Count) voci: $($voci -join ' | ')"
   return $e

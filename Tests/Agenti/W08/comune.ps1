@@ -19,7 +19,7 @@ public static class W8 {
   [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
   [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern int GetWindowText(IntPtr h, System.Text.StringBuilder s, int n);
   [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
-  public static IntPtr Main(uint pid) {
+  public static IntPtr MainWin(uint pid) {
     IntPtr found = IntPtr.Zero;
     EnumWindows((h, l) => { uint p; GetWindowThreadProcessId(h, out p); if (p != pid || !IsWindowVisible(h)) return true;
       var sb = new System.Text.StringBuilder(256); GetWindowText(h, sb, 256); if (sb.ToString() == "OrbitLR") { found = h; return false; } return true; }, IntPtr.Zero);
@@ -95,7 +95,7 @@ function Avvia([hashtable]$vars = @{}, [string[]]$argomenti = @()) {
 }
 
 function Finestra() {
-  foreach ($p in Get-Process orbitlr -ErrorAction SilentlyContinue) { $h = [W8]::Main([uint32]$p.Id); if ($h -ne [IntPtr]::Zero) { return $h } }
+  foreach ($p in Get-Process orbitlr -ErrorAction SilentlyContinue) { $h = [W8]::MainWin([uint32]$p.Id); if ($h -ne [IntPtr]::Zero) { return $h } }
   return [IntPtr]::Zero
 }
 
@@ -196,6 +196,7 @@ function TestiApp([string]$nome, [int]$max = 600) {
     $seen = New-Object System.Collections.Generic.List[string]
     foreach ($e in $all) { try { $n = $e.Current.Name; if ($n -and $n.Trim() -and $seen.Count -lt $max) { $seen.Add(($e.Current.ControlType.ProgrammaticName -replace "ControlType\.", "") + ": " + $n.Trim()) } } catch {} }
     $seen | Set-Content (Join-Path $Out "testi-$nome.txt") -Encoding utf8
+    Log "testi $nome ($($seen.Count)): $((($seen | Where-Object { $_ -notmatch '^(Image|Group|Pane|Custom): ' } | Select-Object -First 70) | ForEach-Object { if ($_.Length -gt 140) { $_.Substring(0,140) } else { $_ } }) -join ' # ')"
     return $seen
   } catch { Log "testi $nome : $_"; return @() }
 }
