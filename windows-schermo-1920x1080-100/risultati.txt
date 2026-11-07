@@ -2,3 +2,4 @@
 1920x1080@100 iniziale 1200×800 (scala 1): ok · pulsanti laterali 11
 1920x1080@100 oggi 1200×800 (scala 1): ok · pulsanti laterali 11
 1920x1080@100 bassa 1200×480 (scala 1): ok · pulsanti laterali 11
+1920x1080@100 stretta 1024×700 (scala 1): ok · pulsanti laterali 11
