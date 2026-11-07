@@ -1,0 +1,118 @@
+# M07 · Installazione pulita «per chi non sa niente» sul macOS più vecchio supportato (14 Sonoma).
+# Solo prove: non compila, non pubblica, non scrive sul repository.
+name: Agenti M07 (installazione pulita, macOS 14)
+
+on:
+  push:
+    branches: ['agenti/M07']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  pulita:
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - mac: macos-14
+            build: '602'
+    runs-on: ${{ matrix.mac }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: OrbitLR 6.0.2 (pubblicata)
+        if: matrix.build == '602'
+        run: |
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/o.orbitlr" https://github.com/LR-apps609/OrbitLR/releases/download/v6.0.2/OrbitLR.6.0.2.orbitlr
+          ditto -x -k "$RUNNER_TEMP/o.orbitlr" "$RUNNER_TEMP/x"
+          cp -R "$RUNNER_TEMP/x/OrbitLR/Prebuilt/OrbitLR.app" /Applications/
+
+      - uses: actions/download-artifact@v5
+        if: matrix.build == '603'
+        with:
+          name: pacchetto
+          run-id: 42406653535
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/p603
+      - name: OrbitLR 6.0.3 (candidata)
+        if: matrix.build == '603'
+        run: |
+          mkdir -p "$RUNNER_TEMP/x" && tar -C "$RUNNER_TEMP/x" -xf "$RUNNER_TEMP/p603/pacchetto.tar"
+          cp -R "$RUNNER_TEMP/x/OrbitLR/Prebuilt/OrbitLR.app" /Applications/
+
+      - name: Preparo gli strumenti e i file di prova (prima di togliere Homebrew)
+        run: |
+          xattr -dr com.apple.quarantine /Applications/OrbitLR.app || true
+          plutil -p /Applications/OrbitLR.app/Contents/Info.plist | grep -E "CFBundleShortVersionString|CFBundleVersion"
+          B="$RUNNER_TEMP/bin"; mkdir -p "$B"
+          swiftc -O -o "$B/finestre" Tests/Agenti/M07/finestre.swift
+          swiftc -O -o "$B/simboli" Tests/Agenti/M07/simboli.swift
+          zsh Tests/Agenti/M07/fixture.sh "$RUNNER_TEMP/fixture" /Applications/OrbitLR.app/Contents/Resources/Motori/ffmpeg
+          mkdir -p "$RUNNER_TEMP/esito"
+          zsh Tests/Agenti/M07/simboli.sh . > "$RUNNER_TEMP/esito/simboli-nomi.txt"
+          "$B/simboli" < "$RUNNER_TEMP/esito/simboli-nomi.txt" > "$RUNNER_TEMP/esito/simboli-${{ matrix.mac }}.txt"
+          grep -E "MANCA|TOTALE" "$RUNNER_TEMP/esito/simboli-${{ matrix.mac }}.txt"
+
+      - name: Un Mac «da negozio» (Homebrew nascosto, come chi non ha mai installato niente)
+        run: |
+          for x in ffmpeg ffprobe magick convert gs pandoc soffice exiftool whisper-cli rsvg-convert brew; do echo "$x prima: $(command -v $x || echo -)"; done
+          [ -d /opt/homebrew ] && sudo mv /opt/homebrew /opt/homebrew.nascosto
+          sudo mkdir -p /usr/local/nascosti
+          for x in ffmpeg ffprobe magick convert gs pandoc soffice exiftool whisper-cli whisper-cpp rsvg-convert brew; do
+            [ -e /usr/local/bin/$x ] && sudo mv /usr/local/bin/$x /usr/local/nascosti/ || true
+          done
+          hash -r
+          for x in ffmpeg magick gs pandoc soffice exiftool brew; do echo "$x dopo: $(command -v $x || echo -)"; done
+
+      - name: Primo avvio, benvenuto, sezioni, misure della finestra, link
+        timeout-minutes: 20
+        run: zsh Tests/Agenti/M07/giro.sh "$RUNNER_TEMP/esito" "$RUNNER_TEMP/bin"
+
+      - name: Motore (un'azione per categoria)
+        timeout-minutes: 12
+        run: zsh Tests/Agenti/M07/motore.sh "$RUNNER_TEMP/esito" "$RUNNER_TEMP/fixture"
+
+      - name: Riepilogo
+        if: always()
+        run: |
+          cd "$RUNNER_TEMP/esito" || exit 0
+          echo "## M07 · ${{ matrix.mac }} · build ${{ matrix.build }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY; cat esiti.tsv >> $GITHUB_STEP_SUMMARY 2>/dev/null; echo '```' >> $GITHUB_STEP_SUMMARY
+          awk -F'\t' '$2=="FALLITO" {print "::warning::" $1 ": " $3}' esiti.tsv || true
+          cp ~/Library/Logs/LRConverter.log . 2>/dev/null || true
+          mkdir -p arresti; cp ~/Library/Logs/DiagnosticReports/* arresti/ 2>/dev/null || true
+          log show --last 40m --style compact --predicate 'process == "OrbitLR"' 2>/dev/null | grep -iE "fault|error|crash|exception" | tail -n 300 > log-sistema.txt || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m07-${{ matrix.mac }}-${{ matrix.build }}
+          path: ${{ runner.temp }}/esito
+          retention-days: 7
+
+  simboli-15:
+    # Confronto: gli stessi simboli su macOS 15 (quelli che mancano solo su 14 sono il problema)
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - run: |
+          swiftc -O -o simboli Tests/Agenti/M07/simboli.swift
+          mkdir -p out
+          zsh Tests/Agenti/M07/simboli.sh . > out/simboli-nomi.txt
+          ./simboli < out/simboli-nomi.txt > out/simboli-macos-15.txt
+          grep -E "MANCA|TOTALE" out/simboli-macos-15.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m07-simboli-15
+          path: out
+          retention-days: 7
