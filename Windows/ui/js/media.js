@@ -1,7 +1,7 @@
 // Schede Immagini, Video e File: i file a sinistra, a destra «Cosa vuoi fare?».
 // Un clic su uno strumento senza scelte lo fa partire subito; con le scelte apre il riquadro sotto.
 
-import { invoke, pickFiles, reveal, setDemoPick } from "./api.js";
+import { invoke, pickFiles, probeFiles, reveal, setDemoPick } from "./api.js";
 import { AI_LOGO, CONVERT, GROUPS, KINDS, TOOLS, fmtIcon } from "./catalog.js";
 import { run } from "./jobs.js";
 import { imageEstimate, knobPanel, videoEstimate } from "./params.js";
@@ -45,10 +45,20 @@ export function mediaPage(kind, app, opts = {}) {
     return selected.size ? files.filter((f) => selected.has(f.path)) : files;
   }
 
+  // 2.0.1 · I file che si stanno ancora leggendo: trascinati di nuovo non compaiono due volte
+  const reading = new Set();
+  let visits = 0;
   async function add(paths) {
-    const fresh = paths.filter((p) => !files.some((f) => f.path === p));
+    const fresh = [...new Set(paths)].filter((p) => !files.some((f) => f.path === p) && !reading.has(p));
     if (!fresh.length) return;
-    const probed = await invoke("probe_files", { paths: fresh });
+    fresh.forEach((p) => reading.add(p));
+    let probed;
+    try {
+      probed = await probeFiles(fresh);
+    } finally {
+      fresh.forEach((p) => reading.delete(p));
+    }
+    if (!probed) return;
     let skipped = 0;
     for (const p of probed) {
       if (!p.ok) {
@@ -60,6 +70,7 @@ export function mediaPage(kind, app, opts = {}) {
         skipped++;
         continue;
       }
+      if (files.some((f) => f.path === p.info.path)) continue;
       files.push({ path: p.info.path, name: p.info.name, size: p.info.size, info: p.info, thumb: null });
     }
     if (skipped) toast(t`${skipped} file non ${kind === "image" ? t("sono foto") : kind === "video" ? t("sono video") : t("sono PDF")}: li trovi nella scheda giusta.`);
@@ -189,10 +200,16 @@ export function mediaPage(kind, app, opts = {}) {
     return fmtBytes(f.size);
   }
 
+  // 2.0.1 · Un doppio clic (o clic + Invio) non fa partire due volte lo stesso lavoro, come in Converti
+  let lastGo = { key: "", at: 0 };
   function go(action, param) {
     const t = targets();
     if (action === "transcribe") param = { lang: store.get("voiceLang", "auto") };
     if (!t.length) return pick();
+    let key;
+    try { key = action + "|" + JSON.stringify(param ?? null) + "|" + t.map((f) => f.path).join("|"); } catch { key = ""; }
+    if (key && key === lastGo.key && Date.now() - lastGo.at < 1500) return;
+    lastGo = { key, at: Date.now() };
     run(action, t, param, kind);
   }
 
@@ -208,7 +225,9 @@ export function mediaPage(kind, app, opts = {}) {
     if (tool.params === "zones") return openZones(id);
     if (tool.params === "pdfedit") {
       const one = tg.length === 1 ? tg[0] : files.length === 1 ? files[0] : null;
-      return one ? openPdfEditor(one) : toast(t("Scegli un PDF solo (clic sulla miniatura) e poi «Editor PDF»."));
+      // 2.0.1 · Se nel frattempo si è andati in un'altra scheda, l'editor non si apre più da solo sopra di lei
+      const visit = visits;
+      return one ? openPdfEditor(one, () => el.isConnected && visits === visit) : toast(t("Scegli un PDF solo (clic sulla miniatura) e poi «Editor PDF»."));
     }
     openTool = openTool === id ? null : id;
     renderTools();
@@ -283,7 +302,7 @@ export function mediaPage(kind, app, opts = {}) {
     const more = Math.max(0, total - tiles.length);
     right.append(h("div.simple-grid", tiles), slot,
       more ? h("button.more", { type: "button", onclick: async () => { if (!(await mayLeavePanel())) return; level = "complete"; store.set("level." + kind, "complete"); openTool = null; closeTrim(); render(); } },
-        more === 1 ? t("1 altra funzione in Completo") : t`Altre ${more} funzioni in Completo`, ico("arrow-right", 14)) : null);
+        more === 1 ? t("1 altra funzione in Completo") : t`Altre ${more} funzioni in Completo`, ico("arrow-right", 14)) : "");
   }
 
   function paramsFor(id, actionId, tool) {
@@ -412,5 +431,5 @@ export function mediaPage(kind, app, opts = {}) {
   }
 
   render();
-  return { el, add, kind, show() {}, refresh() { level = getLevel(kind); render(); }, get count() { return files.length; } };
+  return { el, add, kind, show() { visits++; }, refresh() { level = getLevel(kind); render(); }, get count() { return files.length; } };
 }
