@@ -760,20 +760,27 @@ helper_ok() {  # prepara il programma nativo la prima volta (o dopo un aggiornam
   # Già fallita con questo stesso codice: non riprovare a ogni uso (il controllo automatico riprova sempre)
   if [[ -z $SELFTEST && -f $failed ]] && cmp -s "$failed" "$new"; then HELPER_STATE=2; return 1; fi
   # Un'altra finestra di LRConverter sta già compilando: aspetta lei
+  # 6.0.3 · Il lucchetto porta il numero del processo che compila: se quel processo non c'è più
+  # (chiusura forzata, Mac spento), il lucchetto è vecchio e si toglie subito, senza aspettare 3 minuti.
+  # E «Interrompi» funziona anche durante l'attesa.
   while ! mkdir "$lock" 2>/dev/null; do
+    local owner=""; [[ -f "$lock/pid" ]] && owner=$(<"$lock/pid")
+    if [[ $owner == <-> ]] && ! kill -0 $owner 2>/dev/null; then rm -rf -- "$lock"; continue; fi
+    [[ -e $CANCEL ]] && return 1
     sleep 1; (( waited += 1 ))
-    if (( waited > 180 )); then rmdir "$lock" 2>/dev/null; waited=0; fi
+    if (( waited > 90 )); then rm -rf -- "$lock"; waited=0; fi
   done
-  if [[ -x $HELPER && -f $src ]] && cmp -s "$src" "$new"; then rmdir "$lock"; HELPER_STATE=1; return 0; fi
+  print -r -- $$ > "$lock/pid"
+  if [[ -x $HELPER && -f $src ]] && cmp -s "$src" "$new"; then rm -rf -- "$lock"; HELPER_STATE=1; return 0; fi
   if [[ -n $RUN_MODE ]]; then progress_set -1 "Preparazione iniziale (solo la prima volta, circa un minuto)…"
   elif [[ -z $SELFTEST ]]; then notify "Preparazione iniziale: solo la prima volta, circa un minuto…"
   fi
   log "compilo il programma nativo"
   if swiftc -O -o "$HELPER.tmp" "$new" >>"$LOG" 2>&1 && mv -f -- "$HELPER.tmp" "$HELPER"; then
-    cp -f -- "$new" "$src"; rm -f -- "$failed"; rmdir "$lock"
+    cp -f -- "$new" "$src"; rm -f -- "$failed"; rm -rf -- "$lock"
     HELPER_STATE=1; return 0
   fi
-  rm -f -- "$HELPER.tmp"; cp -f -- "$new" "$failed"; rmdir "$lock"
+  rm -f -- "$HELPER.tmp"; cp -f -- "$new" "$failed"; rm -rf -- "$lock"
   log "compilazione del programma nativo non riuscita"
   HELPER_STATE=2; return 1
 }

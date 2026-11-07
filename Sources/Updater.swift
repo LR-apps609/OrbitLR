@@ -187,7 +187,17 @@ final class Updater: ObservableObject, @unchecked Sendable {
         DispatchQueue.global(qos: .userInitiated).async { [self] in
             enter(.project)
             let exe = app.appendingPathComponent("Contents/MacOS/OrbitLR").path
-            let archOK = shOut("/usr/bin/lipo", ["-archs", exe]).contains(shOut("/usr/bin/uname", ["-m"]).trimmingCharacters(in: .whitespacesAndNewlines))
+            // 6.0.3 · Le architetture si leggono dall'app stessa: /usr/bin/lipo ha bisogno degli strumenti per
+            // sviluppatori e, se mancano o non sono pronti (dopo un aggiornamento di macOS), non stampava niente
+            // e l'aggiornamento diceva «non è adatto a questo Mac» su Mac giusti.
+            _ = exe
+            #if arch(arm64)
+            let need = NSBundleExecutableArchitectureARM64
+            #else
+            let need = NSBundleExecutableArchitectureX86_64
+            #endif
+            let archs = (Bundle(url: app)?.executableArchitectures ?? []).map { $0.intValue }
+            let archOK = archs.isEmpty || archs.contains(need)   // se non si legge, decide la firma qui sotto
             // L'integrità del pacchetto dell'app (nessun file cambiato dopo la firma del codice)
             let signOK = sh("/usr/bin/codesign", ["--verify", "--deep", "--strict", app.path]) == 0
             guard archOK, signOK else {

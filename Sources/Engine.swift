@@ -635,7 +635,9 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
             // Solo se c'è davvero un file creato da questo originale (stesso nome di partenza)
             let stem = f.deletingPathExtension().lastPathComponent
             return job.outputs.contains { o in
-                o.path != f.path && fm.fileExists(atPath: o.path) && o.deletingPathExtension().lastPathComponent.hasPrefix(stem)
+                // 6.0.3 · Solo «nome.ext», «nome (1).ext» o «nome (compresso).ext»: «canzone live» non è un risultato di «canzone»
+                let oStem = o.deletingPathExtension().lastPathComponent
+                return o.path != f.path && fm.fileExists(atPath: o.path) && (oStem == stem || oStem.hasPrefix(stem + " ("))
             }
         }
     }
