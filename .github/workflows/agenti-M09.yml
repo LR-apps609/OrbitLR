@@ -21,7 +21,7 @@ jobs:
         with: { persist-credentials: false }
       - uses: actions/download-artifact@v5
         if: env.BUILD == '6.0.3'
-        with: { name: pacchetto, run-id: 42406653535, github-token: "${{ github.token }}" }
+        with: { name: pacchetto, run-id: 42407890132, github-token: "${{ github.token }}" }
       - name: Installa
         run: zsh Tests/Agenti/M09/install.sh "$BUILD"
       - name: Fixture
@@ -59,7 +59,7 @@ jobs:
         with: { persist-credentials: false }
       - uses: actions/download-artifact@v5
         if: env.BUILD == '6.0.3'
-        with: { name: pacchetto, run-id: 42406653535, github-token: "${{ github.token }}" }
+        with: { name: pacchetto, run-id: 42407890132, github-token: "${{ github.token }}" }
       - name: Installa
         run: zsh Tests/Agenti/M09/install.sh "$BUILD"
       - name: Cartelle automatiche e orbitlr://
