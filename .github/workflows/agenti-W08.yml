@@ -1,0 +1,51 @@
+name: agenti W08 - carico su Windows (2.0 installata)
+on:
+  push:
+    branches: ['agenti/W08']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  parte-a:
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          sparse-checkout: Tests/Agenti/W08
+      - name: A - riposo, 300 file, 3 GB, chiusura durante il lavoro
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File Tests\Agenti\W08\stress-a.ps1 -Out "$env:RUNNER_TEMP\w08-a"
+      - name: Esiti
+        if: always()
+        shell: powershell
+        run: Get-Content "$env:RUNNER_TEMP\w08-a\esiti.txt" -ErrorAction SilentlyContinue
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: w08-a
+          path: ${{ runner.temp }}/w08-a
+          retention-days: 7
+  parte-b:
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          sparse-checkout: Tests/Agenti/W08
+      - name: B - due avvii, 50 file da Esplora file, disco pieno, file bloccati
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File Tests\Agenti\W08\stress-b.ps1 -Out "$env:RUNNER_TEMP\w08-b"
+      - name: Esiti
+        if: always()
+        shell: powershell
+        run: Get-Content "$env:RUNNER_TEMP\w08-b\esiti.txt" -ErrorAction SilentlyContinue
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: w08-b
+          path: ${{ runner.temp }}/w08-b
+          retention-days: 7
