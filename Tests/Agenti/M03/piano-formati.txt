@@ -1,0 +1,210 @@
+to:mp4		clip.mov
+to:mov		clip.mov
+to:mkv		clip.mov
+to:webm		clip.mov
+to:gif		clip.mov
+to:mp3		clip.mov
+to:m4a		clip.mov
+vcompress	1	clip.mov
+cut	1.000|4.000	clip.mov
+cut	1.500|	clip.mov
+gifcut	0.000|2.000	clip.mov
+vresize	720	clip.mov
+vresize	hevc	clip.mov
+speed	2	clip.mov
+speed	0.5	clip.mov
+normalize		clip.mov
+voiceclean		clip.mov
+strip		clip.mov
+to:mp4		clip.mkv
+to:mov		clip.mkv
+to:mkv		clip.mkv
+to:webm		clip.mkv
+to:gif		clip.mkv
+to:mp3		clip.mkv
+to:m4a		clip.mkv
+vcompress	1	clip.mkv
+cut	1.000|4.000	clip.mkv
+cut	1.500|	clip.mkv
+gifcut	0.000|2.000	clip.mkv
+vresize	720	clip.mkv
+vresize	hevc	clip.mkv
+speed	2	clip.mkv
+speed	0.5	clip.mkv
+normalize		clip.mkv
+voiceclean		clip.mkv
+strip		clip.mkv
+to:mp4		clip.avi
+to:mov		clip.avi
+to:mkv		clip.avi
+to:webm		clip.avi
+to:gif		clip.avi
+to:mp3		clip.avi
+to:m4a		clip.avi
+vcompress	1	clip.avi
+cut	1.000|4.000	clip.avi
+cut	1.500|	clip.avi
+gifcut	0.000|2.000	clip.avi
+vresize	720	clip.avi
+vresize	hevc	clip.avi
+speed	2	clip.avi
+speed	0.5	clip.avi
+normalize		clip.avi
+voiceclean		clip.avi
+strip		clip.avi
+to:mp4		clip.webm
+to:mov		clip.webm
+to:mkv		clip.webm
+to:webm		clip.webm
+to:gif		clip.webm
+to:mp3		clip.webm
+to:m4a		clip.webm
+vcompress	1	clip.webm
+cut	1.000|4.000	clip.webm
+cut	1.500|	clip.webm
+gifcut	0.000|2.000	clip.webm
+vresize	720	clip.webm
+vresize	hevc	clip.webm
+speed	2	clip.webm
+speed	0.5	clip.webm
+normalize		clip.webm
+voiceclean		clip.webm
+strip		clip.webm
+to:mp4		verticale.mov
+to:mov		verticale.mov
+to:mkv		verticale.mov
+to:webm		verticale.mov
+to:gif		verticale.mov
+to:mp3		verticale.mov
+to:m4a		verticale.mov
+vcompress	1	verticale.mov
+cut	1.000|4.000	verticale.mov
+cut	1.500|	verticale.mov
+gifcut	0.000|2.000	verticale.mov
+vresize	720	verticale.mov
+vresize	hevc	verticale.mov
+speed	2	verticale.mov
+speed	0.5	verticale.mov
+normalize		verticale.mov
+voiceclean		verticale.mov
+strip		verticale.mov
+to:mp4		hdr10bit.mov
+to:mov		hdr10bit.mov
+to:mkv		hdr10bit.mov
+to:webm		hdr10bit.mov
+to:gif		hdr10bit.mov
+to:mp3		hdr10bit.mov
+to:m4a		hdr10bit.mov
+vcompress	1	hdr10bit.mov
+cut	1.000|4.000	hdr10bit.mov
+cut	1.500|	hdr10bit.mov
+gifcut	0.000|2.000	hdr10bit.mov
+vresize	720	hdr10bit.mov
+vresize	hevc	hdr10bit.mov
+speed	2	hdr10bit.mov
+speed	0.5	hdr10bit.mov
+normalize		hdr10bit.mov
+voiceclean		hdr10bit.mov
+strip		hdr10bit.mov
+to:mp4		vfr.mp4
+to:mov		vfr.mp4
+to:mkv		vfr.mp4
+to:webm		vfr.mp4
+to:gif		vfr.mp4
+to:mp3		vfr.mp4
+to:m4a		vfr.mp4
+vcompress	1	vfr.mp4
+cut	1.000|4.000	vfr.mp4
+cut	1.500|	vfr.mp4
+gifcut	0.000|2.000	vfr.mp4
+vresize	720	vfr.mp4
+vresize	hevc	vfr.mp4
+speed	2	vfr.mp4
+speed	0.5	vfr.mp4
+normalize		vfr.mp4
+voiceclean		vfr.mp4
+strip		vfr.mp4
+to:mp4		senza-audio.mp4
+to:mov		senza-audio.mp4
+to:mkv		senza-audio.mp4
+to:webm		senza-audio.mp4
+to:gif		senza-audio.mp4
+to:mp3		senza-audio.mp4
+to:m4a		senza-audio.mp4
+vcompress	1	senza-audio.mp4
+cut	1.000|4.000	senza-audio.mp4
+cut	1.500|	senza-audio.mp4
+gifcut	0.000|2.000	senza-audio.mp4
+vresize	720	senza-audio.mp4
+vresize	hevc	senza-audio.mp4
+speed	2	senza-audio.mp4
+speed	0.5	senza-audio.mp4
+normalize		senza-audio.mp4
+voiceclean		senza-audio.mp4
+strip		senza-audio.mp4
+to:mp4		solo-audio.mp4
+to:mov		solo-audio.mp4
+to:mkv		solo-audio.mp4
+to:webm		solo-audio.mp4
+to:gif		solo-audio.mp4
+to:mp3		solo-audio.mp4
+to:m4a		solo-audio.mp4
+vcompress	1	solo-audio.mp4
+cut	1.000|4.000	solo-audio.mp4
+cut	1.500|	solo-audio.mp4
+gifcut	0.000|2.000	solo-audio.mp4
+vresize	720	solo-audio.mp4
+vresize	hevc	solo-audio.mp4
+speed	2	solo-audio.mp4
+speed	0.5	solo-audio.mp4
+normalize		solo-audio.mp4
+voiceclean		solo-audio.mp4
+strip		solo-audio.mp4
+to:mp4		breve-2s.mp4
+to:mov		breve-2s.mp4
+to:mkv		breve-2s.mp4
+to:webm		breve-2s.mp4
+to:gif		breve-2s.mp4
+to:mp3		breve-2s.mp4
+to:m4a		breve-2s.mp4
+vcompress	1	breve-2s.mp4
+cut	1.000|4.000	breve-2s.mp4
+cut	1.500|	breve-2s.mp4
+gifcut	0.000|2.000	breve-2s.mp4
+vresize	720	breve-2s.mp4
+vresize	hevc	breve-2s.mp4
+speed	2	breve-2s.mp4
+speed	0.5	breve-2s.mp4
+normalize		breve-2s.mp4
+voiceclean		breve-2s.mp4
+strip		breve-2s.mp4
+cut	5.000|9.000	breve-2s.mp4
+vresize	1080	verticale.mov
+vresize	480	verticale.mov
+vresize	1080	hdr10bit.mov
+subembed		clip.mov	clip.srt
+subembed		verticale.mov	clip.srt
+to:mp4		Città già perché — vídeo 🎬.mov
+to:gif		Città già perché — vídeo 🎬.mov
+to:mp3		Città già perché — vídeo 🎬.mov
+cut	1.000|4.000	Città già perché — vídeo 🎬.mov
+vcompress	1	Città già perché — vídeo 🎬.mov
+speed	2	Città già perché — vídeo 🎬.mov
+strip		Città già perché — vídeo 🎬.mov
+vresize	720	Città già perché — vídeo 🎬.mov
+to:mp4		emoji 😀🇮🇹 #1 & 'apice'.mp4
+to:gif		emoji 😀🇮🇹 #1 & 'apice'.mp4
+to:mp3		emoji 😀🇮🇹 #1 & 'apice'.mp4
+cut	1.000|4.000	emoji 😀🇮🇹 #1 & 'apice'.mp4
+vcompress	1	emoji 😀🇮🇹 #1 & 'apice'.mp4
+speed	2	emoji 😀🇮🇹 #1 & 'apice'.mp4
+strip		emoji 😀🇮🇹 #1 & 'apice'.mp4
+vresize	720	emoji 😀🇮🇹 #1 & 'apice'.mp4
+to:mp4		Caffè NFD é.mov
+to:gif		Caffè NFD é.mov
+to:mp3		Caffè NFD é.mov
+cut	1.000|4.000	Caffè NFD é.mov
+vcompress	1	Caffè NFD é.mov
+speed	2	Caffè NFD é.mov
+strip		Caffè NFD é.mov
+vresize	720	Caffè NFD é.mov

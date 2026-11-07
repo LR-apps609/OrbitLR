@@ -1,0 +1,24 @@
+to:mp4		clip.webm
+to:mov		clip.webm
+vcompress	1	clip.webm
+vresize	720	clip.webm
+vresize	hevc	clip.webm
+speed	2	clip.webm
+cut	1.000|4.000	clip.webm
+to:gif		clip.webm
+to:mp4		verticale.mov
+to:mov		verticale.mov
+vcompress	1	verticale.mov
+vresize	720	verticale.mov
+vresize	hevc	verticale.mov
+speed	2	verticale.mov
+cut	1.000|4.000	verticale.mov
+to:gif		verticale.mov
+to:mp4		hdr10bit.mov
+to:mov		hdr10bit.mov
+vcompress	1	hdr10bit.mov
+vresize	720	hdr10bit.mov
+vresize	hevc	hdr10bit.mov
+speed	2	hdr10bit.mov
+cut	1.000|4.000	hdr10bit.mov
+to:gif		hdr10bit.mov

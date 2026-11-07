@@ -1,0 +1,40 @@
+to:mp4		rotto.mp4
+to:mov		rotto.mp4
+to:gif		rotto.mp4
+to:mp3		rotto.mp4
+vcompress	1	rotto.mp4
+cut	1.000|3.000	rotto.mp4
+speed	2	rotto.mp4
+strip		rotto.mp4
+normalize		rotto.mp4
+vresize	720	rotto.mp4
+to:mp4		rotto-casuale.mkv
+to:mov		rotto-casuale.mkv
+to:gif		rotto-casuale.mkv
+to:mp3		rotto-casuale.mkv
+vcompress	1	rotto-casuale.mkv
+cut	1.000|3.000	rotto-casuale.mkv
+speed	2	rotto-casuale.mkv
+strip		rotto-casuale.mkv
+normalize		rotto-casuale.mkv
+vresize	720	rotto-casuale.mkv
+to:mp4		troncato.mkv
+to:mov		troncato.mkv
+to:gif		troncato.mkv
+to:mp3		troncato.mkv
+vcompress	1	troncato.mkv
+cut	1.000|3.000	troncato.mkv
+speed	2	troncato.mkv
+strip		troncato.mkv
+normalize		troncato.mkv
+vresize	720	troncato.mkv
+to:mp4		vuoto.mp4
+to:mov		vuoto.mp4
+to:gif		vuoto.mp4
+to:mp3		vuoto.mp4
+vcompress	1	vuoto.mp4
+cut	1.000|3.000	vuoto.mp4
+speed	2	vuoto.mp4
+strip		vuoto.mp4
+normalize		vuoto.mp4
+vresize	720	vuoto.mp4

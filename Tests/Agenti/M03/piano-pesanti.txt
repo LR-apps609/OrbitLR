@@ -1,0 +1,28 @@
+to:mov		4k60.mp4
+to:mkv		4k60.mp4
+to:mp3		4k60.mp4
+to:gif		4k60.mp4
+gifcut	0.000|2.000	4k60.mp4
+cut	1.000|3.000	4k60.mp4
+vcompress	8	4k60.mp4
+vcompress	25	4k60.mp4
+vresize	1080	4k60.mp4
+vresize	hevc	4k60.mp4
+speed	2	4k60.mp4
+strip		4k60.mp4
+normalize		4k60.mp4
+to:webm		4k60.mp4
+vcompress	8	lungo-20min.mp4
+vcompress	50	lungo-20min.mp4
+cut	60.000|120.000	lungo-20min.mp4
+cut	1190.000|	lungo-20min.mp4
+to:mp3		lungo-20min.mp4
+to:mov		lungo-20min.mp4
+to:mkv		lungo-20min.mp4
+strip		lungo-20min.mp4
+vresize	480	lungo-20min.mp4
+speed	2	lungo-20min.mp4
+normalize		lungo-20min.mp4
+gifcut	600.000|605.000	lungo-20min.mp4
+to:webm		lungo-20min.mp4
+to:gif		lungo-20min.mp4

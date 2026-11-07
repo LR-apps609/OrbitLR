@@ -1,0 +1,89 @@
+name: agenti-M03 video su Mac
+on:
+  push:
+    branches: ['agenti/M03']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  video:
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        gruppo: [formati, pesanti, rotti]
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Quale build
+        id: b
+        run: echo "build=$(cat Tests/Agenti/M03/build.txt)" >> "$GITHUB_OUTPUT"
+      - name: Scarico 6.0.2 pubblicata
+        if: steps.b.outputs.build == '6.0.2'
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/o.orbitlr" https://github.com/LR-apps609/OrbitLR/releases/download/v6.0.2/OrbitLR.6.0.2.orbitlr
+          mkdir -p "$RUNNER_TEMP/x" && ditto -x -k "$RUNNER_TEMP/o.orbitlr" "$RUNNER_TEMP/x"
+          APP=$(find "$RUNNER_TEMP/x" -maxdepth 4 -name OrbitLR.app -type d | head -n1); echo "app: $APP"
+          cp -R "$APP" /Applications/ && xattr -dr com.apple.quarantine /Applications/OrbitLR.app || true
+      - uses: actions/download-artifact@v5
+        if: steps.b.outputs.build == '6.0.3'
+        with:
+          name: pacchetto
+          run-id: 42406653535
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/p
+      - name: Installo 6.0.3 candidata
+        if: steps.b.outputs.build == '6.0.3'
+        run: |
+          mkdir -p "$RUNNER_TEMP/d" && tar -C "$RUNNER_TEMP/d" -xf "$RUNNER_TEMP/p/pacchetto.tar"
+          ditto "$RUNNER_TEMP/d/OrbitLR/Prebuilt/OrbitLR.app" /Applications/OrbitLR.app
+          xattr -dr com.apple.quarantine /Applications/OrbitLR.app || true
+      - name: Mac e motori inclusi
+        run: |
+          sw_vers; uname -m; sysctl -n hw.ncpu machdep.cpu.brand_string || true
+          /usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' /Applications/OrbitLR.app/Contents/Info.plist
+          M=/Applications/OrbitLR.app/Contents/Resources/Motori; ls -la "$M"
+          "$M/ffmpeg" -hide_banner -version | head -n 3
+          "$M/ffmpeg" -hide_banner -encoders 2>/dev/null | grep -E 'x264|x265|videotoolbox|vpx|opus|mp3|aac' || true
+          echo "ffmpeg già presenti:"; which -a ffmpeg || echo "nessuno"
+      - name: ffmpeg completo solo per creare i file di prova
+        run: |
+          brew install ffmpeg >/dev/null 2>&1 || brew install ffmpeg
+          echo "FULL=$(brew --prefix ffmpeg)/bin" >> "$GITHUB_ENV"
+          brew unlink ffmpeg
+          if which -a ffmpeg; then echo "::error::ffmpeg ancora nel PATH dopo unlink"; exit 1; fi
+          echo "ok: nel PATH del motore resta solo l'ffmpeg dell'app"
+      - name: File di prova
+        run: zsh Tests/Agenti/M03/genera.zsh "$FULL/ffmpeg" "$RUNNER_TEMP/fix" ${{ matrix.gruppo }}
+      - name: Motore con l'ffmpeg dell'app (senza libx264)
+        run: |
+          zsh Tests/Agenti/M03/prova.zsh /Applications/OrbitLR.app/Contents/Resources/LRConverter.zsh /Applications/OrbitLR.app/Contents/Resources/Motori \
+            "$RUNNER_TEMP/fix" Tests/Agenti/M03/piano-${{ matrix.gruppo }}.txt "$RUNNER_TEMP/esiti/${{ matrix.gruppo }}-motori" 600
+      - name: Controllo delle uscite
+        if: always()
+        run: python3 Tests/Agenti/M03/controlla.py "$RUNNER_TEMP/esiti/${{ matrix.gruppo }}-motori" "$RUNNER_TEMP/fix" "$FULL/ffprobe" "$FULL/ffmpeg" "${{ steps.b.outputs.build }} ${{ matrix.gruppo }} motori-app"
+      - name: Stesso motore con ffmpeg di Homebrew (libx264)
+        if: always() && matrix.gruppo == 'rotti'
+        run: |
+          brew link ffmpeg; which ffmpeg
+          zsh Tests/Agenti/M03/prova.zsh /Applications/OrbitLR.app/Contents/Resources/LRConverter.zsh - \
+            "$RUNNER_TEMP/fix" Tests/Agenti/M03/piano-brew.txt "$RUNNER_TEMP/esiti/brew" 600
+          python3 Tests/Agenti/M03/controlla.py "$RUNNER_TEMP/esiti/brew" "$RUNNER_TEMP/fix" "$FULL/ffprobe" "$FULL/ffmpeg" "${{ steps.b.outputs.build }} brew-libx264"
+      - name: Raccolgo log e rapporti
+        if: always()
+        run: |
+          D="$RUNNER_TEMP/esiti/log"; mkdir -p "$D"
+          cp ~/Library/Logs/LRConverter.log "$D/" 2>/dev/null || true
+          cp ~/Library/Logs/DiagnosticReports/* "$D/" 2>/dev/null || true
+          ls -la ~/Library/Caches/LRConverter/ > "$D/cache.txt" 2>&1 || true
+          find "$RUNNER_TEMP/esiti" -path '*/out/*' -type f -size +3M -delete
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: M03-${{ steps.b.outputs.build }}-${{ matrix.gruppo }}
+          path: ${{ runner.temp }}/esiti
+          retention-days: 7
