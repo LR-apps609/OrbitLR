@@ -1,0 +1,52 @@
+name: agenti-M06
+on:
+  push:
+    branches: ['agenti/M06']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  intel:
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        mac: [macos-15-intel, macos-26-intel]
+    runs-on: ${{ matrix.mac }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Quale build
+        id: b
+        run: echo "build=$(cat Tests/Agenti/M06/build.txt)" >> "$GITHUB_OUTPUT"
+      - name: Scarico 6.0.2 (pubblicata)
+        if: steps.b.outputs.build == '6.0.2'
+        run: |
+          curl -fsSL --retry 3 -o o.orbitlr https://github.com/LR-apps609/OrbitLR/releases/download/v6.0.2/OrbitLR.6.0.2.orbitlr
+          mkdir -p x && ditto -x -k o.orbitlr x
+          ls x; echo "APPSRC=$PWD/x/OrbitLR/Prebuilt/OrbitLR.app" >> "$GITHUB_ENV"
+      - name: Scarico 6.0.3 (candidata)
+        if: steps.b.outputs.build == '6.0.3'
+        uses: actions/download-artifact@v5
+        with:
+          name: pacchetto
+          run-id: 42406653535
+          github-token: ${{ github.token }}
+      - name: Estraggo 6.0.3
+        if: steps.b.outputs.build == '6.0.3'
+        run: |
+          mkdir -p dist && tar -C dist -xf pacchetto.tar
+          echo "APPSRC=$PWD/dist/OrbitLR/Prebuilt/OrbitLR.app" >> "$GITHUB_ENV"
+      - name: Prova Intel
+        timeout-minutes: 38
+        run: zsh Tests/Agenti/M06/prova.zsh "$RUNNER_TEMP/m06" "$APPSRC"
+      - name: Risultati
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m06-${{ matrix.mac }}-${{ steps.b.outputs.build }}
+          path: ${{ runner.temp }}/m06
+          retention-days: 7
