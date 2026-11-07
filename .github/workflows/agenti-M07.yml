@@ -90,29 +90,36 @@ jobs:
           mkdir -p arresti; cp ~/Library/Logs/DiagnosticReports/* arresti/ 2>/dev/null || true
           log show --last 40m --style compact --predicate 'process == "OrbitLR"' 2>/dev/null | grep -iE "fault|error|crash|exception" | tail -n 300 > log-sistema.txt || true
 
+      - name: Testi nel registro (gli artifact non si possono scaricare da fuori)
+        if: always()
+        run: |
+          cd "$RUNNER_TEMP/esito" || exit 0
+          echo "=== ESITI"; cat esiti.tsv
+          echo "=== MAC"; cat mac.txt
+          echo "=== FINESTRE"; cat finestre.txt 2>/dev/null | head -n 200
+          for f in ax/*.txt; do echo "=== AX $f"; head -n 70 "$f"; done
+          for f in motore/*.out; do echo "=== MOTORE $f"; tail -n 12 "$f"; done
+          echo "=== PREFERENZE"; cat preferenze-dopo-primo-avvio.txt 2>/dev/null | head -n 60
+          echo "=== LOG APP"; tail -n 60 LRConverter-app.log 2>/dev/null; tail -n 80 LRConverter.log 2>/dev/null
+          echo "=== LOG SISTEMA"; tail -n 80 log-sistema.txt 2>/dev/null
+          echo "=== ARRESTI"; ls arresti 2>/dev/null | grep -i orbit; for f in arresti/*OrbitLR*; do [ -f "$f" ] && head -c 6000 "$f"; done
+          echo "=== SCRIVANIA"; cat scrivania.txt 2>/dev/null
+      - name: Foto nel registro (piccole, in base64)
+        if: always()
+        run: |
+          cd "$RUNNER_TEMP/esito/foto" || exit 0
+          ls -la
+          mkdir -p ../piccole
+          for f in *.png; do
+            case "$f" in *-schermo.png) sips -Z 900 -s format jpeg -s formatOptions 45 "$f" --out "../piccole/${f%.png}.jpg" >/dev/null 2>&1 ;;
+                         *) sips -Z 1000 -s format jpeg -s formatOptions 55 "$f" --out "../piccole/${f%.png}.jpg" >/dev/null 2>&1 ;; esac
+          done
+          cd ../piccole
+          for f in *.jpg; do echo "@@FOTO $f"; base64 -i "$f" | fold -w 4000; echo "@@FINE"; done
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: m07-${{ matrix.mac }}-${{ matrix.build }}
           path: ${{ runner.temp }}/esito
-          retention-days: 7
-
-  simboli-15:
-    # Confronto: gli stessi simboli su macOS 15 (quelli che mancano solo su 14 sono il problema)
-    runs-on: macos-15
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-      - run: |
-          swiftc -O -o simboli Tests/Agenti/M07/simboli.swift
-          mkdir -p out
-          zsh Tests/Agenti/M07/simboli.sh . > out/simboli-nomi.txt
-          ./simboli < out/simboli-nomi.txt > out/simboli-macos-15.txt
-          grep -E "MANCA|TOTALE" out/simboli-macos-15.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: m07-simboli-15
-          path: out
           retention-days: 7
