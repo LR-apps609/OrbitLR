@@ -286,6 +286,9 @@ jobs:
         run: |
           npm i --no-save --no-audit --no-fund playwright@1.56.0
           npx playwright install --with-deps chromium
+      - name: Motore che sbaglia, è lento o non risponde (prova dell'interfaccia con un finto Tauri)
+        if: matrix.schermo == '1920x1080@100'
+        run: node --test Tools/prova-errori-windows.mjs
       - name: Foto e controllo
         run: |
           N=$(echo "${{ matrix.schermo }}" | tr '@' '-')
