@@ -1,0 +1,161 @@
+name: agenti-M04 (audio sul Mac)
+on:
+  push:
+    branches: ['agenti/M04']
+  workflow_dispatch:
+    inputs:
+      build:
+        description: "602, 603 o entrambe"
+        default: "entrambe"
+      nativo:
+        description: "anche i test nativi (1/0)"
+        default: "1"
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: agenti-M04
+  cancel-in-progress: false
+
+jobs:
+  motore:
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        build: ['602', '603']
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Scelta
+        id: scelta
+        run: |
+          B="${{ github.event.inputs.build }}"; [ -z "$B" ] && B=entrambe
+          if [ "$B" = entrambe ] || [ "$B" = "${{ matrix.build }}" ]; then echo "go=1" >> $GITHUB_OUTPUT; else echo "go=0" >> $GITHUB_OUTPUT; fi
+      - name: Scarico 6.0.2
+        if: steps.scelta.outputs.go == '1' && matrix.build == '602'
+        run: |
+          curl -sSL --fail -o app.orbitlr https://github.com/LR-apps609/OrbitLR/releases/download/v6.0.2/OrbitLR.6.0.2.orbitlr
+          ditto -x -k app.orbitlr x && mkdir -p dist/OrbitLR && mv x/Prebuilt dist/OrbitLR/
+      - name: Scarico 6.0.3
+        if: steps.scelta.outputs.go == '1' && matrix.build == '603'
+        uses: actions/download-artifact@v5
+        with:
+          name: pacchetto
+          run-id: 42406653535
+          github-token: ${{ github.token }}
+      - name: Installo
+        if: steps.scelta.outputs.go == '1'
+        run: |
+          sw_vers; uname -m
+          [ -f pacchetto.tar ] && mkdir -p dist && tar -C dist -xf pacchetto.tar
+          ditto dist/OrbitLR/Prebuilt/OrbitLR.app /Applications/OrbitLR.app
+          xattr -dr com.apple.quarantine /Applications/OrbitLR.app || true
+          defaults read /Applications/OrbitLR.app/Contents/Info.plist CFBundleShortVersionString
+          ls /Applications/OrbitLR.app/Contents/Resources/Motori/
+          M=/Applications/OrbitLR.app/Contents/Resources/Motori
+          $M/ffmpeg -hide_banner -version | head -n 3
+          $M/ffmpeg -hide_banner -encoders 2>/dev/null | grep -E " (libmp3lame|libvorbis|libopus|aac|flac|vorbis|opus|pcm_s24le|alac) " || true
+          echo "ffmpeg di sistema: $(command -v ffmpeg || echo nessuno)"; ls /opt/homebrew/bin | grep -E 'ffmpeg|ffprobe|whisper' || true
+          # L'utente tipo non ha Homebrew ffmpeg: si prova con i motori dentro l'app
+          if [ -x /opt/homebrew/bin/ffmpeg ]; then brew uninstall --ignore-dependencies ffmpeg || true; fi
+      - name: File di prova
+        if: steps.scelta.outputs.go == '1'
+        run: |
+          zsh Tests/Agenti/M04/fixtures.zsh /Applications/OrbitLR.app/Contents/Resources/Motori/ffmpeg /tmp/m04fx 2>&1 | tail -n 60
+      - name: Motore, tutte le azioni audio
+        if: steps.scelta.outputs.go == '1'
+        timeout-minutes: 30
+        run: |
+          export PATH="$PATH:/Applications/OrbitLR.app/Contents/Resources/Motori"
+          S=/Applications/OrbitLR.app/Contents/Resources/LRConverter.zsh
+          test -f "$S"
+          zsh Tests/Agenti/M04/motore.zsh "$S" /tmp/m04fx "$RUNNER_TEMP/r" 2>&1 | tee "$RUNNER_TEMP/motore.txt" | cut -c1-600
+      - name: Trascrizione senza Whisper
+        if: steps.scelta.outputs.go == '1'
+        run: zsh Tests/Agenti/M04/trascrivi.zsh /Applications/OrbitLR.app/Contents/Resources/LRConverter.zsh /tmp/m04fx "$RUNNER_TEMP/r" senza 2>&1 | tee "$RUNNER_TEMP/trascrivi0.txt"
+      - name: Trascrizione con Whisper
+        if: steps.scelta.outputs.go == '1'
+        timeout-minutes: 25
+        run: |
+          brew install whisper-cpp >/dev/null 2>&1 || brew install whisper-cpp
+          echo "ffmpeg dopo whisper-cpp: $(command -v ffmpeg || echo nessuno)"
+          zsh Tests/Agenti/M04/trascrivi.zsh /Applications/OrbitLR.app/Contents/Resources/LRConverter.zsh /tmp/m04fx "$RUNNER_TEMP/r" con 2>&1 | tee "$RUNNER_TEMP/trascrivi.txt"
+      - name: Raccolgo
+        if: always() && steps.scelta.outputs.go == '1'
+        run: |
+          mkdir -p "$RUNNER_TEMP/up"
+          cp "$RUNNER_TEMP"/*.txt "$RUNNER_TEMP/up/" 2>/dev/null || true
+          cp "$RUNNER_TEMP/r/risultati.tsv" "$RUNNER_TEMP/up/" 2>/dev/null || true
+          cp -R "$RUNNER_TEMP/r/out" "$RUNNER_TEMP/up/righe" 2>/dev/null || true
+          find "$RUNNER_TEMP/up/righe" -type f ! -name '*.txt' -size +200k -delete 2>/dev/null || true
+          cp ~/Library/Logs/LRConverter.log "$RUNNER_TEMP/up/" 2>/dev/null || true
+          ls ~/Library/Logs/DiagnosticReports/ > "$RUNNER_TEMP/up/crash-elenco.txt" 2>/dev/null || true
+          cp ~/Library/Logs/DiagnosticReports/*{zsh,ffmpeg,whisper,OrbitLR}* "$RUNNER_TEMP/up/" 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.scelta.outputs.go == '1'
+        with:
+          name: m04-motore-${{ matrix.build }}
+          path: ${{ runner.temp }}/up
+          retention-days: 7
+
+  nativo:
+    needs: motore
+    if: always() && github.event.inputs.nativo != '0'
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        src: ['main', 'prove-mac']
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Sorgenti della build
+        run: |
+          if [ "${{ matrix.src }}" = prove-mac ]; then
+            git fetch origin prove-mac
+            git checkout origin/prove-mac -- Sources Resources project.yml version.txt
+          fi
+          cat version.txt
+          # Solo i test di M04 (e i file di prova comuni) nel bersaglio dei test
+          mkdir -p /tmp/altri && mv Tests/*.swift /tmp/altri/
+          ls Tests Tests/Agenti/M04
+      - name: Motori (per ffmpeg e i file di prova)
+        run: |
+          curl -sSL --fail -o app.orbitlr https://github.com/LR-apps609/OrbitLR/releases/download/v6.0.2/OrbitLR.6.0.2.orbitlr
+          ditto -x -k app.orbitlr x && ditto x/Prebuilt/OrbitLR.app /Applications/OrbitLR.app
+          xattr -dr com.apple.quarantine /Applications/OrbitLR.app || true
+          zsh Tests/Agenti/M04/fixtures.zsh /Applications/OrbitLR.app/Contents/Resources/Motori/ffmpeg /tmp/m04fx 2>&1 | tail -n 5
+      - name: Test nativi
+        timeout-minutes: 38
+        run: |
+          brew install xcodegen >/dev/null
+          xcodegen generate >/dev/null
+          set +e
+          perl -e 'alarm shift; exec @ARGV' 2100 xcodebuild test -project OrbitLR.xcodeproj -scheme OrbitLRTests -destination 'platform=macOS' \
+            -only-testing:OrbitLRTests/M04AudioTests \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 1500 -maximum-test-execution-time-allowance 1600 \
+            -derivedDataPath build-test CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= > test.log 2>&1
+          echo "codice: $?"
+          grep -E "error:|Test Case|Executed|\*\* TEST" test.log | tail -n 60
+          echo "------"; cat /tmp/m04-nativo.tsv | cut -c1-700
+      - name: Raccolgo
+        if: always()
+        run: |
+          mkdir -p up; cp test.log /tmp/m04-nativo.tsv up/ 2>/dev/null || true
+          ls ~/Library/Logs/DiagnosticReports/ > up/crash-elenco.txt 2>/dev/null || true
+          cp ~/Library/Logs/DiagnosticReports/*xctest* up/ 2>/dev/null || true
+          find /tmp/m04-nativo-out -type f -size -300k -exec cp {} up/ \; 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m04-nativo-${{ matrix.src }}
+          path: up
+          retention-days: 7
