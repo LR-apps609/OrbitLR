@@ -1,0 +1,75 @@
+name: agenti-M08
+on:
+  push:
+    branches: ['agenti/M08']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  stress:
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        build: ['602', '603']
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Quale build
+        id: sel
+        run: |
+          if grep -qx "${{ matrix.build }}" Tests/Agenti/M08/build.txt; then echo "go=1" >> $GITHUB_OUTPUT; else echo "build ${{ matrix.build }} non richiesta"; fi
+      - name: Scarico 6.0.3
+        if: steps.sel.outputs.go == '1' && matrix.build == '603'
+        uses: actions/download-artifact@v5
+        with:
+          name: pacchetto
+          run-id: 42406653535
+          github-token: ${{ github.token }}
+      - name: Installo
+        if: steps.sel.outputs.go == '1'
+        run: |
+          sw_vers; uname -m; sysctl -n machdep.cpu.brand_string hw.ncpu hw.memsize
+          if [ "${{ matrix.build }}" = "602" ]; then
+            curl -fsSL -o o.orbitlr https://github.com/LR-apps609/OrbitLR/releases/download/v6.0.2/OrbitLR.6.0.2.orbitlr
+            ditto -x -k o.orbitlr x && ditto x/Prebuilt/OrbitLR.app /Applications/OrbitLR.app
+          else
+            mkdir -p dist && tar -C dist -xf pacchetto.tar && ditto dist/OrbitLR/Prebuilt/OrbitLR.app /Applications/OrbitLR.app
+          fi
+          xattr -dr com.apple.quarantine /Applications/OrbitLR.app || true
+          defaults read /Applications/OrbitLR.app/Contents/Info.plist CFBundleShortVersionString
+          D=it.ledion.OrbitLR
+          V=$(defaults read /Applications/OrbitLR.app/Contents/Info.plist CFBundleShortVersionString)
+          defaults write $D welcomeDone -bool true
+          defaults write $D launchScreen -bool false
+          defaults write $D tips -bool false
+          defaults write $D lastLaunchVersion -string "$V"
+          open /Applications/OrbitLR.app; sleep 20; pgrep -x OrbitLR || echo "::warning::non partita"
+          osascript -e 'tell application id "it.ledion.OrbitLR" to count windows' || true
+          osascript -e 'with timeout of 8 seconds' -e 'tell application id "it.ledion.OrbitLR" to quit' -e 'end timeout' || pkill -9 -x OrbitLR; sleep 3
+      - name: Sequenze
+        if: steps.sel.outputs.go == '1'
+        timeout-minutes: 38
+        run: bash Tests/Agenti/M08/stress.sh "$RUNNER_TEMP/esiti" $(cat Tests/Agenti/M08/scenari.txt 2>/dev/null)
+      - name: Raccolgo log e rapporti
+        if: always() && steps.sel.outputs.go == '1'
+        run: |
+          O="$RUNNER_TEMP/esiti"; mkdir -p "$O/rapporti" "$O/scrivania"
+          cp ~/Library/Logs/LRConverter.log "$O/" 2>/dev/null || true
+          cp ~/Library/Logs/DiagnosticReports/*rbit* "$O/rapporti/" 2>/dev/null || true
+          sudo cp /Library/Logs/DiagnosticReports/*rbit* "$O/rapporti/" 2>/dev/null || true
+          cp ~/Desktop/*.txt "$O/scrivania/" 2>/dev/null || true
+          cp "$HOME/Library/Application Support/LRConverter/"*.txt "$O/" 2>/dev/null || true
+          sudo chown -R $(id -u) "$O" || true
+          ls -la "$O" "$O/rapporti"
+          tail -n 80 "$O/LRConverter.log" || true
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.sel.outputs.go == '1'
+        with:
+          name: M08-esiti-${{ matrix.build }}
+          path: ${{ runner.temp }}/esiti
+          retention-days: 7
