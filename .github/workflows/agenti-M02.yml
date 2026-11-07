@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       build:
-        description: '602 (pubblicata) oppure 603 (candidata, run 42406653535)'
+        description: '602 (pubblicata) oppure 603 (candidata, run 42407890132)'
         default: '602'
 permissions:
   contents: read
@@ -30,12 +30,12 @@ jobs:
         with:
           persist-credentials: false
       - run: echo "W=$RUNNER_TEMP/m02" >> $GITHUB_ENV
-      - name: Scarico la 6.0.3 (pacchetto della run 42406653535)
+      - name: Scarico la 6.0.3 (pacchetto della run 42407890132)
         if: env.BUILD == '603'
         uses: actions/download-artifact@v5
         with:
           name: pacchetto
-          run-id: 42406653535
+          run-id: 42407890132
           github-token: ${{ github.token }}
           path: pk
       - name: Installo OrbitLR
