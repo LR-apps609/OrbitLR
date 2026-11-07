@@ -50,19 +50,23 @@ export function autoPage() {
     h("div.page-scroll", list));
   let rules = [];
 
+  /** Salva le regole. 2.0.1 · Restituisce false se il salvataggio non è riuscito (l'avviso d'errore resta a schermo). */
   async function save(next) {
+    let ok = true;
     try {
       rules = await invoke("watch_set", { rules: next });
     } catch (e) {
-      toast(tr(String(e)));
+      ok = false;
+      toast(t`Non riesco a salvare le cartelle automatiche: ${tr(String(e))}`, 6000);
     }
     render();
+    return ok;
   }
 
   /** 1.1 · Togliere una cartella automatica si annulla («Annulla» per 6 secondi, o Ctrl+Z). */
   async function drop(match, name) {
     const before = rules.slice();
-    await save(rules.filter((x) => !match(x)));
+    if (!(await save(rules.filter((x) => !match(x))))) return;
     undoToast(t`Tolta «${name}».`, () => save(before));
   }
 
@@ -76,11 +80,16 @@ export function autoPage() {
       body.push(h("div.acts",
         h("button.btn.brass", {
           onclick: async () => {
-            const places = await invoke("places");
+            let places = {};
+            try {
+              places = (await invoke("places")) || {};
+            } catch (e) {
+              // 2.0.1 · Non si trovano le cartelle di Windows: lo si dice e si sceglie a mano
+              toast(t`Non trovo la cartella «${k.whereLabel}»: scegline una tu. (${tr(String(e))})`, 6000);
+            }
             const path = k.where(places) || (await pickFolder());
             if (!path) return;
-            await save([...rules, { id: k.kind, kind: k.kind, path, param: k.options?.[0][0] || "", enabled: true }]);
-            toast(t`Attiva: ${k.title}`);
+            if (await save([...rules, { id: k.kind, kind: k.kind, path, param: k.options?.[0][0] || "", enabled: true }])) toast(t`Attiva: ${k.title}`);
           },
         }, ico("check", 15), t`Attiva su «${k.whereLabel}»`),
         h("button.btn", {
@@ -120,8 +129,7 @@ export function autoPage() {
           const path = await pickFolder();
           if (!path) return;
           const id = ("m" + p.id).slice(0, 40);
-          await save([...rules.filter((x) => x.id !== id), { id, kind: "mia", path, param: p.param == null ? "" : String(p.param), enabled: true, action: p.action, media: p.kind, name: p.name }]);
-          toast(t`Attiva: «${p.name}» su ${path}`);
+          if (await save([...rules.filter((x) => x.id !== id), { id, kind: "mia", path, param: p.param == null ? "" : String(p.param), enabled: true, action: p.action, media: p.kind, name: p.name }])) toast(t`Attiva: «${p.name}» su ${path}`);
         },
       }, ico("folder-open", 15), t("Usa su una cartella…"))));
     return h("div.set", h("h3", t("Con una delle mie azioni")),
