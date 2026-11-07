@@ -21,9 +21,7 @@ jobs:
       max-parallel: 2
       matrix:
         include:
-          - gruppo: A
-            runner: windows-2025
-          - gruppo: B
+          - gruppo: C
             runner: windows-2025
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
@@ -58,99 +56,36 @@ jobs:
           curl -fL --retry 3 -o modello-voce/ggml-small-q5_1.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-q5_1.bin"
           echo "ae85e4a935d7a567bd102fe55afc16bb595bdb618e11b2fc7591bc08120411bb  modello-voce/ggml-small-q5_1.bin" | sha256sum -c -
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: Tests/Agenti/W05/harness
-
-      - name: Compila il motore (ramo prove-windows) e il banco di prova
-        shell: bash
-        working-directory: Tests/Agenti/W05/harness
-        run: |
-          cp ../../../../Windows/Cargo.lock .
-          cargo build --release 2>&1 | tail -n 20
-
-      - name: Ambiente
-        shell: pwsh
-        run: |
-          $r = "$env:RUNNER_TEMP\w05\report"; New-Item -ItemType Directory -Force $r | Out-Null
-          $lp = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem).LongPathsEnabled
-          $acp = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Nls\CodePage).ACP
-          $os = (Get-CimInstance Win32_OperatingSystem).Caption + " " + [Environment]::OSVersion.Version
-          "LongPathsEnabled=$lp`nACP=$acp`nOS=$os`nTEMP=$env:TEMP" | Tee-Object "$r\ambiente.txt"
-          Get-SmbShare -ErrorAction SilentlyContinue | Format-Table -AutoSize | Out-String | Tee-Object -Append "$r\ambiente.txt"
-          Copy-Item motori-impronte.txt $r\
-          & .\motori\voce\whisper-cli.exe --help 2>&1 | Select-Object -First 5 | Tee-Object -Append "$r\ambiente.txt"
-
-      - name: Gruppo A · GIF e AAC rimisurati (normale e lettere non latine)
-        if: matrix.gruppo == 'A'
-        timeout-minutes: 10
-        continue-on-error: true
-        shell: pwsh
-        env:
-          ORBIT_MOTORI: ${{ github.workspace }}\motori
-          W05_TAG: A2
-          W05_LOCS: ascii,unicode,long
-          W05_ONLY: "v to:gif;gifcut 0-1,5;a to:aac"
-        run: |
-          $env:W05_WORK = "$env:RUNNER_TEMP\w05"; $env:W05_REPORT = "$env:RUNNER_TEMP\w05\report"
-          & .\Tests\Agenti\W05\harness\target\release\w05.exe suite
-
-      - name: Gruppo A · uscita in cartella non latina, rete che non risponde
-        if: matrix.gruppo == 'A'
-        timeout-minutes: 15
-        continue-on-error: true
-        shell: pwsh
-        env:
-          ORBIT_MOTORI: ${{ github.workspace }}\motori
-          ORBIT_WHISPER: ${{ github.workspace }}\motori\voce\whisper-cli.exe
-          ORBIT_WHISPER_MODEL: ${{ github.workspace }}\modello-voce\ggml-small-q5_1.bin
-          W05_TAG: A3
-          W05_LOCS: unc_dead,out_unicode
-        run: |
-          $env:W05_WORK = "$env:RUNNER_TEMP\w05"; $env:W05_REPORT = "$env:RUNNER_TEMP\w05\report"
-          & .\Tests\Agenti\W05\harness\target\release\w05.exe suite
-
-      - name: Gruppo B · trascrizione con nomi utente diversi (TEMP e modello sotto C:\Users\<nome>)
-        if: matrix.gruppo == 'B'
+      - name: Gruppo C · OrbitLR 2.0 pubblicata, il suo whisper-cli con un nome utente accentato
         timeout-minutes: 20
         continue-on-error: true
         shell: pwsh
         env:
-          ORBIT_MOTORI: ${{ github.workspace }}\motori
-          ORBIT_WHISPER: ${{ github.workspace }}\motori\voce\whisper-cli.exe
-          ORBIT_WHISPER_MODEL: ${{ github.workspace }}\modello-voce\ggml-small-q5_1.bin
-          W05_TAG: B4
-          W05_LOCS: whisper_temp_ascii,whisper_temp_it,whisper_temp_pl,whisper_temp_ru,whisper_temp_zh,whisper_temp_ar,whisper_temp_emoji,whisper_model_it,whisper_model_pl,whisper_model_ru,whisper_model_zh
+          GH_TOKEN: ${{ github.token }}
         run: |
-          $env:W05_WORK = "$env:RUNNER_TEMP\w05"; $env:W05_REPORT = "$env:RUNNER_TEMP\w05\report"
-          & .\Tests\Agenti\W05\harness\target\release\w05.exe suite
-
-      - name: whisper-cli da solo con percorsi non latini (per capire dove si rompe)
-        if: matrix.gruppo == 'B'
-        timeout-minutes: 8
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          $r = "$env:RUNNER_TEMP\w05\report"; $w = "$env:RUNNER_TEMP\w05"
-          $exe = ".\motori\voce\whisper-cli.exe"; $m = "$pwd\modello-voce\ggml-small-q5_1.bin"
-          $src = "$w\src\parla.wav"
-          if (!(Test-Path $src)) { "manca parla.wav" | Tee-Object -Append "$r\whisper-diretto.txt"; exit 0 }
-          & .\motori\ffmpeg.exe -hide_banner -loglevel error -y -i $src -ac 1 -ar 16000 -c:a pcm_s16le "$w\a16.wav"
-          $d = "$w\Видео 视频 فيديو 🎬\diretto"; New-Item -ItemType Directory -Force $d | Out-Null
-          Copy-Item "$w\a16.wav" "$d\voce.wav"
-          New-Item -ItemType Directory -Force "$d\modello Иван" | Out-Null
-          Copy-Item $m "$d\modello Иван\m.bin"
-          $casi = @(
-            @{n="ascii"; m=$m; f="$w\a16.wav"; o="$w\out-ascii"},
-            @{n="audio non latino"; m=$m; f="$d\voce.wav"; o="$w\out-a2"},
-            @{n="modello non latino"; m="$d\modello Иван\m.bin"; f="$w\a16.wav"; o="$w\out-a3"},
-            @{n="uscita non latina"; m=$m; f="$w\a16.wav"; o="$d\risultato"}
-          )
-          foreach ($c in $casi) {
-            $t = Measure-Command { $out = & $exe -m $c.m -f $c.f -l en -t 2 -oj -of $c.o 2>&1 | Out-String; $code = $LASTEXITCODE }
-            $json = Test-Path ($c.o + ".json")
-            $tail = ($out -split "`n" | Where-Object { $_ -match 'error|fail|open|load' } | Select-Object -Last 4) -join ' / '
-            ("{0}: uscita={1} json={2} tempo={3:N1}s · {4}" -f $c.n, $code, $json, $t.TotalSeconds, $tail) | Tee-Object -Append "$r\whisper-diretto.txt"
+          $r = "$env:RUNNER_TEMP\w05\report"; New-Item -ItemType Directory -Force $r | Out-Null
+          $log = "$r\versione-2.0.txt"
+          gh release download windows-anteprima -p "OrbitLR-Windows-2.0.0-Setup.exe" -R "$env:GITHUB_REPOSITORY"
+          $inst = Start-Process .\OrbitLR-Windows-2.0.0-Setup.exe -ArgumentList "/S" -PassThru
+          $inst.WaitForExit(240000) | Out-Null
+          Start-Sleep 5
+          $voce = Get-ChildItem "$env:LOCALAPPDATA\OrbitLR" -Recurse -Filter whisper-cli.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+          "installato: $([bool]$voce) $($voce.FullName -replace [regex]::Escape($env:USERPROFILE),'%USERPROFILE%')" | Tee-Object -Append $log
+          if (-not $voce) { Get-ChildItem "$env:LOCALAPPDATA\OrbitLR" -Recurse -Depth 3 | Select-Object -First 40 FullName | Out-String | Tee-Object -Append $log; exit 0 }
+          $h1 = (Get-FileHash $voce.FullName).Hash; $h2 = (Get-FileHash .\motori\voce\whisper-cli.exe).Hash
+          "whisper-cli 2.0 = $h1 · motori-win-voce-1 = $h2 · uguali: $($h1 -eq $h2)" | Tee-Object -Append $log
+          $ff = Get-ChildItem "$env:LOCALAPPDATA\OrbitLR" -Recurse -Filter ffmpeg.exe | Select-Object -First 1
+          "ffmpeg 2.0 uguale a motori-win-1: $((Get-FileHash $ff.FullName).Hash -eq (Get-FileHash .\motori\ffmpeg.exe).Hash)" | Tee-Object -Append $log
+          $w = "$env:RUNNER_TEMP\w05"; New-Item -ItemType Directory -Force $w | Out-Null
+          & .\motori\ffmpeg.exe -hide_banner -loglevel error -y -f lavfi -i "sine=f=440:d=3" -ac 1 -ar 16000 -c:a pcm_s16le "$w\a16.wav"
+          $m = "$pwd\modello-voce\ggml-small-q5_1.bin"
+          foreach ($nome in @("Mario Rossi", "Niccolò", "Łukasz")) {
+            $d = "$w\Users\$nome\AppData\Local\it.ledion.orbitlr\modelli"; New-Item -ItemType Directory -Force $d | Out-Null
+            Copy-Item $m "$d\ggml-small-q5_1.bin"
+            $out = & $voce.FullName -m "$d\ggml-small-q5_1.bin" -f "$w\a16.wav" -l en -t 2 -oj -of "$w\r" 2>&1 | Out-String; $code = $LASTEXITCODE
+            $tail = ($out -split "`n" | Where-Object { $_ -match 'failed|error' } | Select-Object -Last 2) -join ' / '
+            "2.0 · modello in C:\Users\$nome\AppData\Local\it.ledion.orbitlr: uscita=$code · $tail" | Tee-Object -Append $log
+            Remove-Item "$d\ggml-small-q5_1.bin"
           }
 
       - name: Copia gli avanzi e i risultati
