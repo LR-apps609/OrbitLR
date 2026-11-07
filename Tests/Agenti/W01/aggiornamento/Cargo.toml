@@ -1,0 +1,26 @@
+[package]
+name = "w01-aggiornamento"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[dependencies]
+orbit_engine = { path = "../../../../Windows/engine" }
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+serde_json = "1"
+base64 = "0.22"
+getrandom = "0.3"
+
+[[bin]]
+name = "w01-aggiornamento"
+path = "src/main.rs"
+
+[[bin]]
+name = "finto-setup"
+path = "src/bin/finto-setup.rs"
+
+[[bin]]
+name = "finta-app"
+path = "src/bin/finta-app.rs"
