@@ -141,6 +141,7 @@ corri() {
   (( rc == 124 )) && esito=SCADUTO
   [[ -n $fails || -z $outs ]] && [[ $esito == OK ]] && esito=FALLITO
   rec "giro-$FASE" "$nome" "$esito" "rc=$rc" "${s}s" "END=$end" "${fails:-}" "$info"
+  [[ $esito != OK ]] && { print "   uscita di $nome:"; sed 's/^/     | /' "$d/uscita.txt" | cut -c1-260 | head -12 }
   print -r -- "$outs" > "$d/uscite.lst"
 }
 giro_av() {
@@ -200,7 +201,11 @@ avvio() {  # nome, modo (diretto|open)
   if (( alive )); then
     sample $pid 3 -file "$d/sample.txt" >/dev/null 2>&1
     # Il filo principale: dove sta?
-    awk '/Thread_.*DispatchQueue_1: com.apple.main-thread/{f=1} f&&NR<400{print} /^ *$/{if(f)exit}' "$d/sample.txt" | head -40 > "$d/filo-principale.txt"
+    awk '/com.apple.main-thread/{f=1} f{print} /^ *$/{if(f)exit}' "$d/sample.txt" | head -40 > "$d/filo-principale.txt"
+    print "   filo principale ($nome):"; sed 's/^/     | /' "$d/filo-principale.txt" | cut -c1-200 | head -30
+    print "   cima delle pile ($nome):"; sed -n '/Sort by top of stack/,/^ *$/p' "$d/sample.txt" | head -14 | sed 's/^/     | /'
+    print "   stdout ($nome):"; sed 's/^/     | /' "$d/stdout.txt" 2>/dev/null | cut -c1-200 | head -20
+    print "   finestra: $(cat "$d/finestra.txt" 2>/dev/null)"
     # Chiusura gentile: «Esci»
     t=$(now)
     to 20 osascript -e 'tell application id "it.ledion.OrbitLR" to quit' > "$d/quit.txt" 2>&1; local qrc=$?
@@ -208,6 +213,11 @@ avvio() {  # nome, modo (diretto|open)
     if kill -0 $pid 2>/dev/null; then
       rec "chiusura-$nome" "NON SI CHIUDE con Esci" "osascript rc=$qrc" "$(secs $t)s"
       sample $pid 3 -file "$d/sample-dopo-esci.txt" >/dev/null 2>&1
+      print "   osascript: $(cat "$d/quit.txt")"
+      print "   filo principale dopo Esci:"
+      awk '/com.apple.main-thread/{f=1} f{print} /^ *$/{if(f)exit}' "$d/sample-dopo-esci.txt" | cut -c1-200 | head -45 | sed 's/^/     | /'
+      sed -n '/Sort by top of stack/,/^ *$/p' "$d/sample-dopo-esci.txt" | head -14 | sed 's/^/     top| /'
+      log show --last 1m --style compact --predicate 'process == "tccd" OR process == "OrbitLR"' 2>/dev/null | grep -i -E "osascript|AppleEvent|quit|terminat|deny|prompt" | tail -15 | cut -c1-220 | sed 's/^/     tcc| /'
       kill -TERM $pid; for i in {1..10}; do kill -0 $pid 2>/dev/null || break; sleep 1; done
       if kill -0 $pid 2>/dev/null; then rec "chiusura-$nome" "NON SI CHIUDE neanche con TERM"; kill -9 $pid; else rec "chiusura-$nome" "chiusa con TERM"; fi
     else
@@ -216,6 +226,10 @@ avvio() {  # nome, modo (diretto|open)
   fi
 }
 phase "Avvio dell'app (Mac pulito)"
+open -a TextEdit; sleep 5; t=$(now)
+to 20 osascript -e 'tell application id "com.apple.TextEdit" to quit' > "$R/quit-textedit.txt" 2>&1; rc=$?
+sleep 2; rec "controllo-esci TextEdit" "osascript rc=$rc" "$(secs $t)s" "ancora aperta: $(pgrep -x TextEdit >/dev/null && echo si || echo no)" "$(head -1 "$R/quit-textedit.txt")"
+pkill -x TextEdit
 D=it.ledion.OrbitLR
 defaults delete $D 2>/dev/null
 avvio "primo-diretto" diretto          # primo avvio vero: benvenuto
