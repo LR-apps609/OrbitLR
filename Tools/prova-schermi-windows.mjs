@@ -30,9 +30,9 @@ await new Promise((ok) => srv.listen(0, ok));
 const base = `http://127.0.0.1:${srv.address().port}/`;
 
 /** Elementi che devono stare dentro la finestra, con il testo intero. */
-function check() {
+function check(onlySide = false) {
   const vw = innerWidth, vh = window.__visibleH || innerHeight, bad = [];
-  const sel = ["aside .nav button", "aside .foot button", "aside .brand", "[data-test]", "main .dl", "main .dl-go", "main .seg button", "main .btn.primary"];
+  const sel = onlySide ? ["aside .nav button", "aside .foot button", "aside .brand"] : ["aside .nav button", "aside .foot button", "aside .brand", "[data-test]", "main .dl", "main .dl-go", "main .seg button", "main .btn.primary"];
   const seen = new Set();
   for (const s of sel) {
     for (const el of document.querySelectorAll(s)) {
@@ -50,6 +50,14 @@ function check() {
       if (box.left < -1 || box.top < -1 || box.right > vw + 1 || box.bottom > vh + 1 || e.width < 1 || e.height < 1) {
         bad.push(`fuori dalla finestra: «${name}» (${Math.round(e.left)},${Math.round(e.top)} ${Math.round(e.width)}×${Math.round(e.height)}; finestra ${vw}×${vh})`);
         continue;
+      }
+      // 2.0.1 · Dentro un'area che scorre: portato in vista, deve essere lui sotto il puntatore (non il Cassetto sopra)
+      if (scroller && scroller !== document.body && scroller !== document.documentElement) {
+        el.scrollIntoView({ block: "nearest" });
+        const f = el.getBoundingClientRect();
+        const hit = document.elementFromPoint(Math.min(vw - 1, Math.max(0, f.left + f.width / 2)), Math.min(vh - 1, Math.max(0, f.top + f.height / 2)));
+        if (f.bottom > vh + 1 || f.top < -1) bad.push(`non si raggiunge scorrendo: «${name}»`);
+        else if (hit && !el.contains(hit) && !hit.contains(el) && !hit.closest(".modal-bg, .tip-card, .toast")) bad.push(`coperto: «${name}» da ${hit.tagName.toLowerCase()}.${String(hit.className).split(" ")[0]}`);
       }
       if (!scroller || scroller === document.body) {
         // Coperto da qualcos'altro (per esempio tagliato da un contenitore con overflow nascosto)
@@ -77,7 +85,9 @@ for (const spec of wanted) {
   const s = S / 100;
   const availW = Math.floor(W / s), availH = Math.floor(H / s) - TASKBAR - TITLE;
   // «oggi» (2.0.0): la finestra resta 1200×800 anche se lo schermo è più basso; si vede solo la parte sopra la barra delle applicazioni
-  const windows = [["massima", availW, availH, availH], ["iniziale", Math.min(1200, availW), Math.min(800, availH), Math.min(800, availH)], ["oggi", Math.min(1200, availW), 800, Math.min(800, availH)]];
+  const windows = [["massima", availW, availH, availH], ["iniziale", Math.min(1200, availW), Math.min(800, availH), Math.min(800, availH)], ["oggi", Math.min(1200, availW), 800, Math.min(800, availH)],
+    // 2.0.1 · Finestra bassa (ridimensionata a mano o mezzo schermo): la barra laterale scorre, Opzioni e Aiuto si raggiungono
+    ["bassa", Math.min(1200, availW), 480, 480]];
   for (const [kind, vw, vh, visible] of windows) {
     const ctx = await b.newContext({ viewport: { width: vw, height: vh }, deviceScaleFactor: s, locale: "it-IT" });
     await ctx.addInitScript((v) => { window.__visibleH = v; }, visible);
@@ -98,7 +108,7 @@ for (const spec of wanted) {
       await btn.click({ force: true, timeout: 3000 }).catch(() => {});
       await pg.waitForTimeout(350);
       for (const m of await pg.$$(".modal-bg")) await m.evaluate((n) => n.remove());
-      const bad = await pg.evaluate(check);
+      const bad = await pg.evaluate(check, kind === "bassa");
       bad.forEach((x) => probs.push(`${tabs[i]}: ${x}`));
       if (i < 5 || bad.length) await pg.screenshot({ path: `${out}/${W}x${H}-${S}-${kind}-${tabs[i]}.png`, clip: { x: 0, y: 0, width: vw, height: visible } });
     }

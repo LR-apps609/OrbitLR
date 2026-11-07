@@ -84,7 +84,11 @@ input, textarea, select, button { font: inherit; color: inherit; }
   background: var(--side); color: var(--side-text);
   border-right: 1px solid var(--side-line);
   display: flex; flex-direction: column; padding: 14px 12px 10px; gap: 4px; min-height: 0;
+  /* 2.0.1 · Finestra bassa: la barra scorre (prima il Cassetto copriva Opzioni e Aiuto) */
+  overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: thin;
+  scrollbar-color: var(--side-line) transparent;
 }
+.side > * { flex-shrink: 0; }
 .brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 14px; }
 .brand img { width: 34px; height: 34px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
 .brand b { font-family: var(--font-d); font-weight: 800; font-size: 19px; letter-spacing: -.01em; }
@@ -105,13 +109,14 @@ input, textarea, select, button { font: inherit; color: inherit; }
 .side :focus-visible { outline-color: color-mix(in srgb, var(--gold) 80%, transparent); }
 .nav .badge { margin-left: auto; background: var(--gold); color: #13201A; border-radius: 99px; font-size: 11px; padding: 0 7px; font-weight: 800; }
 .side-fill { flex: 1; min-height: 8px; }
-.drawer { background: var(--side-hover); color: var(--side-text); border-radius: var(--radius); padding: 10px 10px 8px; margin-bottom: 8px; max-height: 260px; display: flex; flex-direction: column; min-height: 0; }
+.drawer { background: var(--side-hover); color: var(--side-text); border-radius: var(--radius); padding: 10px 10px 8px; margin-bottom: 8px; max-height: 260px; display: flex; flex-direction: column; min-height: 96px; flex-shrink: 1 !important; overflow: hidden; }
+@media (max-height: 640px) { .drawer { max-height: 150px; } }
 .drawer h4 { margin: 0 0 4px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
 .drawer h4 .ico { color: var(--gold); }
 .drawer p.saved { margin: 0 0 6px; display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--gold); }
 .drawer p.saved .ico { flex: none; }
 .drawer p { margin: 0; font-size: 12px; color: var(--side-text-2); }
-.drawer ul { list-style: none; margin: 4px 0 0; padding: 0; overflow: auto; }
+.drawer ul { list-style: none; margin: 4px 0 0; padding: 0; overflow: auto; min-height: 0; }
 .drawer li { display: flex; align-items: center; gap: 8px; padding: 5px 4px; border-radius: 6px; cursor: pointer; font-size: 12.5px; }
 .drawer li:hover { background: var(--side-hover); }
 .drawer li .n { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
