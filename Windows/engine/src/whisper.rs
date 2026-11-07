@@ -159,17 +159,98 @@ pub fn to_text(segs: &[Segment]) -> String {
     s
 }
 
+// ── 2.0.1 · Percorsi con lettere non latine (cirillico, cinese, emoji)
+// whisper.cpp apre modello e audio con le funzioni «strette» di Windows (fopen): un percorso fuori dalla
+// tabella di caratteri del sistema non si apre. A whisper si passano solo percorsi ASCII: la cartella di
+// lavoro (con il nome corto 8.3 di Windows, o una cartella di riserva) e il modello (nome corto, oppure un
+// collegamento o una copia nella cartella di lavoro). Il file da trascrivere lo legge ffmpeg, che li sa aprire.
+
+fn is_ascii_path(p: &Path) -> bool {
+    p.to_str().is_some_and(|s| s.is_ascii())
+}
+
+/// Il nome corto (8.3) di un percorso che esiste, se è tutto ASCII.
+#[cfg(windows)]
+fn short_ascii(p: &Path) -> Option<PathBuf> {
+    use std::os::windows::ffi::{OsStrExt, OsStringExt};
+    use windows_sys::Win32::Storage::FileSystem::GetShortPathNameW;
+    let wide: Vec<u16> = p.as_os_str().encode_wide().chain(Some(0)).collect();
+    let mut buf = vec![0u16; 2048];
+    let n = unsafe { GetShortPathNameW(wide.as_ptr(), buf.as_mut_ptr(), buf.len() as u32) } as usize;
+    if n == 0 || n >= buf.len() {
+        return None;
+    }
+    let s = PathBuf::from(std::ffi::OsString::from_wide(&buf[..n]));
+    is_ascii_path(&s).then_some(s)
+}
+
+#[cfg(not(windows))]
+fn short_ascii(_: &Path) -> Option<PathBuf> {
+    None
+}
+
+/// Una cartella di lavoro nuova con un percorso ASCII: dentro `base` se si può, altrimenti in una di riserva.
+pub fn ascii_work_dir(base: &Path, name: &str) -> Result<PathBuf> {
+    let mut places = vec![base.to_path_buf()];
+    for var in ["ProgramData", "PUBLIC"] {
+        if let Some(v) = std::env::var_os(var) {
+            places.push(PathBuf::from(v).join("OrbitLR"));
+        }
+    }
+    if let Some(d) = std::env::var_os("SystemDrive") {
+        places.push(PathBuf::from(format!("{}\\OrbitLR-temp", d.to_string_lossy())));
+    }
+    if !cfg!(windows) {
+        places.push(PathBuf::from("/tmp"));
+    }
+    for p in places {
+        let dir = p.join(name);
+        if std::fs::create_dir_all(&dir).is_err() {
+            continue;
+        }
+        if is_ascii_path(&dir) {
+            return Ok(dir);
+        }
+        if let Some(s) = short_ascii(&dir) {
+            return Ok(s);
+        }
+        let _ = std::fs::remove_dir(&dir);
+    }
+    Err(EngineError::new("non trovo una cartella senza lettere speciali per il motore della voce"))
+}
+
+/// Il modello con un percorso ASCII: com'è, con il nome corto, oppure collegato (o copiato) nella cartella di lavoro.
+pub fn ascii_model(model: &Path, work: &Path) -> Result<PathBuf> {
+    if is_ascii_path(model) {
+        return Ok(model.to_path_buf());
+    }
+    if let Some(s) = short_ascii(model) {
+        return Ok(s);
+    }
+    let m = work.join("modello.bin");
+    if std::fs::hard_link(model, &m).is_err() {
+        std::fs::copy(model, &m)?;
+    }
+    Ok(m)
+}
+
 /// Trascrive un file (anche l'audio di un video). `exe` = whisper-cli.exe; `lang` = «auto», «it», «en»…
 #[allow(clippy::too_many_arguments)]
 pub fn transcribe(tools: &Tools, exe: &Path, model: &Path, src: &Path, info: &FileInfo, lang: &str, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<Vec<Segment>> {
+    transcribe_in(&std::env::temp_dir(), tools, exe, model, src, info, lang, cancel, progress)
+}
+
+/// Come `transcribe`, con la cartella temporanea scelta (per le prove con percorsi non latini).
+#[allow(clippy::too_many_arguments)]
+pub fn transcribe_in(tmp: &Path, tools: &Tools, exe: &Path, model: &Path, src: &Path, info: &FileInfo, lang: &str, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<Vec<Segment>> {
     if !info.has_audio {
         return Err(EngineError::new("il file non contiene audio"));
     }
     if !exe.is_file() {
         return Err(EngineError::new("manca il motore della voce: reinstalla OrbitLR"));
     }
-    let work = std::env::temp_dir().join(format!("orbitlr-voce-{}-{}", std::process::id(), std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or(0)));
-    std::fs::create_dir_all(&work)?;
+    let name = format!("orbitlr-voce-{}-{}", std::process::id(), std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or(0));
+    let work = ascii_work_dir(tmp, &name)?;
     struct Clean(PathBuf);
     impl Drop for Clean {
         fn drop(&mut self) {
@@ -184,8 +265,9 @@ pub fn transcribe(tools: &Tools, exe: &Path, model: &Path, src: &Path, info: &Fi
     let base = work.join("risultato");
     let threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).clamp(1, 8);
     let lang = if lang.chars().all(|c| c.is_ascii_alphabetic()) && (lang.len() == 2 || lang == "auto") { lang } else { "auto" };
+    let model = ascii_model(model, &work)?;
     let mut cmd = quiet(std::process::Command::new(exe));
-    cmd.arg("-m").arg(model).arg("-f").arg(&wav).args(["-l", lang, "-t", &threads.to_string(), "-ml", "1", "-sow", "-oj", "-pp", "-of"]).arg(&base);
+    cmd.current_dir(&work).arg("-m").arg(&model).arg("-f").arg(&wav).args(["-l", lang, "-t", &threads.to_string(), "-ml", "1", "-sow", "-oj", "-pp", "-of"]).arg(&base);
     cmd.stdout(Stdio::null()).stderr(Stdio::piped());
     let mut child = cmd.spawn().map_err(|e| EngineError::new(format!("non riesco ad avviare il motore della voce: {e}")))?;
     crate::tools::bind_to_app(&child);
@@ -278,6 +360,22 @@ mod tests {
         assert!((s[0].words[2].end - 1.4).abs() < 1e-9);
         assert_eq!(to_srt(&s).lines().nth(1), Some("00:00:00,000 --> 00:00:02,400"));
         assert_eq!(to_text(&s), "Ciao a tutti.\n\nSeconda frase\n");
+    }
+
+    #[test]
+    fn percorsi_ascii_per_whisper() {
+        let base = std::env::temp_dir().join(format!("orbit voce Привет 你好 🎤 {}", std::process::id()));
+        std::fs::create_dir_all(&base).unwrap();
+        let work = ascii_work_dir(&base, "lavoro").unwrap();
+        assert!(is_ascii_path(&work), "{work:?}");
+        assert!(work.is_dir());
+        let model = base.join("modello ggml.bin");
+        std::fs::write(&model, b"finto").unwrap();
+        let m = ascii_model(&model, &work).unwrap();
+        assert!(is_ascii_path(&m), "{m:?}");
+        assert_eq!(std::fs::read(&m).unwrap(), b"finto");
+        let _ = std::fs::remove_dir_all(&work);
+        let _ = std::fs::remove_dir_all(&base);
     }
 
     #[test]

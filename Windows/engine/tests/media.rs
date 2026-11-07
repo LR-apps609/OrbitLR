@@ -345,6 +345,22 @@ fn trascrivi_una_voce() {
     assert!(text.contains("test") && text.contains("transcription"), "{text}");
     let srt = std::fs::read_to_string(&outs[1]).unwrap();
     assert!(srt.contains("-->"));
+    // 2.0.1 · Lo stesso con percorsi non latini: file, modello e cartella temporanea in cirillico, cinese ed emoji
+    // (come per chi ha il nome utente di Windows in cirillico o in cinese)
+    let strano = work().join("Голос 语音 🎙");
+    std::fs::create_dir_all(&strano).unwrap();
+    let wav2 = strano.join("Привет 你好 🎤.wav");
+    std::fs::copy(&wav, &wav2).unwrap();
+    let model2 = strano.join("модель 模型.bin");
+    if std::fs::hard_link(&model, &model2).is_err() {
+        std::fs::copy(&model, &model2).unwrap();
+    }
+    let tmp2 = strano.join("temp Ёж 临时");
+    std::fs::create_dir_all(&tmp2).unwrap();
+    let info2 = orbit_engine::probe::probe(Some(&tools()), &wav2).unwrap_or_else(|e| panic!("{e}"));
+    let segs = orbit_engine::whisper::transcribe_in(&tmp2, &tools(), std::path::Path::new(&exe), &model2, &wav2, &info2, "en", &Cancel::new(), &mut |_| {}).unwrap_or_else(|e| panic!("percorsi non latini: {e}"));
+    let text2 = orbit_engine::whisper::to_text(&segs).to_lowercase();
+    assert!(text2.contains("test"), "{text2}");
 }
 
 #[test]
