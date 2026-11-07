@@ -10,6 +10,7 @@ import { contextMenu, env, fmtBytes, gainText, h, ico, modal, store, toast, undo
 import { fixButton } from "./resultbar.js";
 import { install as installOffice, isInstalling, officeReady } from "./office.js";
 import { t, tr, LOCALE } from "./i18n.js";
+import { stageText } from "./attese.js";
 
 // ── Attività: in corso in cima, poi la cronologia giorno per giorno
 export function activityPage() {
@@ -53,6 +54,7 @@ export function activityPage() {
         state, h("span.when", when),
         again,
         live ? h("button.btn", { onclick: () => cancel(j.id) }, t("Interrompi")) : h("button.btn.icon.ghost", { "aria-label": t("Togli dalla cronologia"), title: t("Togli dalla cronologia"), onclick: drop }, ico("x", 14))),
+      live && stageText(j) ? h("div.stage", stageText(j)) : null,
       live ? h("div.tuner", h("div.fill", { style: { width: Math.max(2, j.progress * 100) + "%" } }), h("div.scale")) : null,
       outs.map((o) => h("div.out", ico("file", 15), h("span.n", { title: o.path }, o.name), o.before ? h("span.g", gainText(o.before, o.size)) : h("span.g", fmtBytes(o.size)),
         h("button.btn", { onclick: () => reveal(o.path) }, t("Mostra")), h("button.btn", { onclick: () => openPath(o.path) }, t("Apri")))),

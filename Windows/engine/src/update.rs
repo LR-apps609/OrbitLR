@@ -164,9 +164,46 @@ pub fn download(m: &Manifest, dir: &Path, cancel: &Cancel, progress: &mut dyn Fn
     Ok(dest)
 }
 
+/// L'argomento con cui OrbitLR si riapre quando l'installatore non è riuscito (2.0.1: prima non si riapriva affatto).
+pub const FAILED_ARG: &str = "--aggiornamento-non-riuscito";
+
+/// Il passaggio all'installatore: aspetta che OrbitLR sia chiusa, installa in silenzio (/S), poi riapre OrbitLR;
+/// se l'installatore non riesce, OrbitLR si riapre lo stesso e lo dice (`FAILED_ARG`).
+/// 2.0.1 · La riga va a cmd.exe così com'è (`raw_arg`): con `.args()` Rust scriveva ogni « " » come « \" »,
+/// cmd non la capiva e né l'installatore né OrbitLR ripartivano.
+#[cfg(windows)]
+pub fn handoff(setup: &Path, exe: &Path, wait_secs: u32) -> std::process::Command {
+    use std::os::windows::process::CommandExt;
+    let script = handoff_script(setup, exe, wait_secs);
+    let mut c = std::process::Command::new("cmd");
+    // /S: cmd toglie solo le virgolette esterne e lascia intatte quelle dei percorsi
+    c.args(["/D", "/S", "/C"]).raw_arg(format!("\"{script}\""));
+    c
+}
+
+/// Il testo del passaggio (anche fuori da Windows, per le prove).
+pub fn handoff_script(setup: &Path, exe: &Path, wait_secs: u32) -> String {
+    format!(
+        "ping -n {} 127.0.0.1 >nul & \"{}\" /S && start \"\" \"{}\" || start \"\" \"{}\" {FAILED_ARG}",
+        wait_secs + 1,
+        setup.display(),
+        exe.display(),
+        exe.display()
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn passaggio_all_installatore() {
+        let s = handoff_script(Path::new(r"C:\Users\Иван\AppData\Local\it.ledion.orbitlr\aggiornamento\OrbitLR-Setup.exe"), Path::new(r"C:\Programmi\OrbitLR\orbitlr.exe"), 2);
+        assert!(s.starts_with("ping -n 3 127.0.0.1 >nul & \"C:\\Users\\Иван"));
+        assert!(s.contains("OrbitLR-Setup.exe\" /S && start \"\" \"C:\\Programmi\\OrbitLR\\orbitlr.exe\" || start"));
+        assert!(s.ends_with(FAILED_ARG));
+        assert!(!s.contains("\\\""), "niente \\\" (cmd non lo capisce)");
+    }
     use ed25519_dalek::{Signer, SigningKey};
 
     fn man(v: &str, b: u64) -> Manifest {

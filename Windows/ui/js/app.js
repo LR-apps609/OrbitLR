@@ -8,6 +8,7 @@ import { convertPage } from "./convert.js";
 import { getDrawer, getHistory, running, savedThisMonth, subscribe } from "./jobs.js";
 import { startWelcome } from "./welcome.js";
 import { firstRunDefaults, shelfOn } from "./primavolta.js";
+import { waitNotice } from "./attese.js";
 import { mediaPage } from "./media.js";
 import { videoTab } from "./video.js";
 import { activityPage, helpPage, report, settingsPage } from "./pages.js";
@@ -62,7 +63,7 @@ const drawerEmpty = h("p", t("I file che crei finiscono qui: un clic per vederli
 const drawerSaved = h("p.saved", { hidden: true });
 const updateLink = h("button.btn.brass", { hidden: true, style: { width: "100%", marginBottom: "8px" }, onclick: () => askUpdate() });
 // Come sul Mac: in alto a destra, appena c'è un aggiornamento
-const updateCorner = h("button.update-corner", { hidden: true, onclick: () => askUpdate() }, ico("circle-arrow-down", 15), t("Nuovo aggiornamento disponibile"));
+const updateCorner = h("button.update-corner", { hidden: true, onclick: () => (updateCorner.classList.contains("failed") ? retryUpdate() : askUpdate()) }, ico("circle-arrow-down", 15), t("Nuovo aggiornamento disponibile"));
 let pendingUpdate = null;
 
 function show(id) {
@@ -182,21 +183,56 @@ async function askUpdate() {
 }
 
 /** Scarica e installa; se non riesce, una riga con «Riprova» che riprova davvero (1.1). */
+// 2.0.1 · Mentre scarica: avanzamento e «Interrompi». Se non riesce, il motivo resta in alto a destra con «Riprova»
+// (non solo per 15 secondi). Prima di chiudersi dice che installa e che OrbitLR si riapre da sola.
+const updateStop = h("button.update-stop", { hidden: true, onclick: () => { stoppingUpdate = true; invoke("update_cancel").catch(() => {}); } }, t("Interrompi"));
+let stoppingUpdate = false;
 async function installUpdate() {
+  stoppingUpdate = false;
   updateCorner.disabled = true;
   updateLink.disabled = true;
+  updateCorner.classList.remove("failed");
+  updateStop.hidden = false;
+  updateCorner.after(updateStop);
   const show = (p) => { updateCorner.textContent = t`Scarico l’aggiornamento… ${Math.round(p * 100)}%`; };
   show(0);
-  const off = window.__TAURI__?.event?.listen ? await window.__TAURI__.event.listen("update-progress", (e) => show(Number(e.payload) || 0)) : null;
+  const ev = window.__TAURI__?.event;
+  const off = ev?.listen ? await ev.listen("update-progress", (e) => show(Number(e.payload) || 0)) : null;
+  const off2 = ev?.listen ? await ev.listen("update-installing", () => {
+    updateStop.hidden = true;
+    updateCorner.textContent = t("Installo l’aggiornamento: OrbitLR si chiude e si riapre da sola tra poco…");
+  }) : null;
   try {
     await invoke("update_install", { version: VERSION, build: BUILD });
   } catch (e) {
     off?.();
+    off2?.();
+    updateStop.hidden = true;
     updateCorner.disabled = false;
     updateLink.disabled = false;
-    updateCorner.replaceChildren(ico("circle-arrow-down", 15), t("Nuovo aggiornamento disponibile"));
-    actionToast(t`L’aggiornamento non è riuscito: ${tr(String(e))}`, t("Riprova"), () => installUpdate(), 15000);
+    if (stoppingUpdate) {
+      updateCorner.replaceChildren(ico("circle-arrow-down", 15), t("Nuovo aggiornamento disponibile"));
+      toast(t("Aggiornamento interrotto: puoi riprovare quando vuoi."));
+      return;
+    }
+    updateFailed(t`L’aggiornamento non è riuscito: ${tr(String(e))}`);
   }
+}
+
+/** Il motivo resta visibile (in alto a destra) finché non si riprova. */
+function updateFailed(msg) {
+  updateCorner.hidden = false;
+  updateCorner.classList.add("failed");
+  updateCorner.title = msg;
+  updateCorner.replaceChildren(ico("triangle-alert", 15), t("Aggiornamento non riuscito · Riprova"));
+  actionToast(msg, t("Riprova"), () => retryUpdate(), 15000);
+}
+
+async function retryUpdate() {
+  updateCorner.classList.remove("failed");
+  if (!pendingUpdate) await checkUpdate(true);
+  if (pendingUpdate) installUpdate();
+  else updateFailed(t("L’aggiornamento non è riuscito: non trovo la versione nuova, controlla la connessione."));
 }
 
 function newer(a, b) {
@@ -213,8 +249,10 @@ async function boot() {
   invoke("set_lang", { lang: LANG }).catch(() => {});
   app.applyTheme();
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => app.applyTheme());
-  const splash = h("div.splash", h("img", { src: "img/icona.png", alt: "OrbitLR" }));
-  document.body.append(h("div.app", sidebar(), main), updateCorner, splash);
+  // 2.0.1 · La pagina d'avvio è già nella pagina (index.html), così non si vede mai una finestra vuota
+  const splash = document.getElementById("avvio") || h("div.avvio", h("img", { src: "img/icona.png", alt: "OrbitLR" }));
+  document.body.prepend(h("div.app", sidebar(), main), updateCorner);
+  if (!splash.isConnected) document.body.append(splash);
   const saved = store.get("tab", "convert");
   show(TABS.some((t) => t.id === saved) || EXTRA[saved] ? saved : "convert");
   renderDrawer();
@@ -239,7 +277,8 @@ async function boot() {
   window.addEventListener("dragover", (e) => e.preventDefault());
   window.addEventListener("drop", (e) => e.preventDefault());
   if (!DEMO) document.addEventListener("contextmenu", (e) => { if (!(e.target instanceof Element && e.target.closest("input, textarea"))) e.preventDefault(); });
-  invoke("engine_status").then((s) => {
+  // 2.0.1 · La prima volta Windows controlla il motore video (anche l'antivirus): può volerci un po', e lo si dice
+  waitNotice(invoke("engine_status"), () => t("Preparo il motore video: la prima volta può volerci fino a un minuto…"), { after: 2500, canStop: false }).then((s) => {
     app.engine = s;
     if (!s.ready) toast(t("Il motore video non si è avviato: reinstalla OrbitLR."));
     if (app.current === "settings") app.pages.settings.show();
@@ -277,6 +316,11 @@ async function boot() {
       store.set("videoMode", "editor");
       show("video");
       app.pages.video.restore?.(true);
+    }
+    // 2.0.1 · L'installatore non è riuscito: OrbitLR si è riaperta da sola, e lo dice
+    if (st?.update_failed) {
+      store.set("newsPending", null);
+      setTimeout(() => updateFailed(t`L’aggiornamento non è riuscito: OrbitLR è rimasta alla ${VERSION}.`), 1500);
     }
     // 1.1 · Ctrl+Alt+C già presa da un'altra app: lo si dice (una volta per versione)
     if (st?.shortcut_taken && store.get("shortcutWarned", "") !== VERSION) {

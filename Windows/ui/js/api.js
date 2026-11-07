@@ -1,7 +1,8 @@
 // Il ponte con il motore. Dentro l'app usa Tauri; aperto in un browser normale (per le prove e le foto)
 // risponde con dati di esempio, così ogni schermata si può vedere anche senza Windows.
 
-import { tr } from "./i18n.js";
+import { t, tr } from "./i18n.js";
+import { waitNotice } from "./attese.js";
 
 const T = window.__TAURI__;
 export const DEMO = !T;
@@ -27,8 +28,17 @@ export function onJob(fn) {
 }
 
 export async function invoke(cmd, args = {}) {
+  // 2.0.1 · Leggere i file può durare (OneDrive li scarica prima): dopo un attimo lo si dice, con «Interrompi»
+  if (cmd === "probe_files") return waitNotice(T ? T.core.invoke(cmd, args) : demo(cmd, args), () => probeReason(args.paths || []), { onStop: () => T?.core.invoke("probe_stop").catch(() => {}), stopped: [] });
   if (T) return T.core.invoke(cmd, args);
   return demo(cmd, args);
+}
+
+async function probeReason(paths) {
+  const n = T ? await T.core.invoke("cloud_files", { paths }).catch(() => 0) : 0;
+  if (n === 1) return t("Scarico da OneDrive un file che è solo nel cloud…");
+  if (n > 1) return t`Scarico da OneDrive ${n} file che sono solo nel cloud…`;
+  return paths.length > 1 ? t`Leggo ${paths.length} file…` : t("Leggo il file…");
 }
 
 /** Indirizzo per mostrare un file locale in <video>, <audio> o <img>. */

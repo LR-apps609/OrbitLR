@@ -624,3 +624,18 @@ textarea.tts:focus { border-color: var(--acc); }
 .stage .miss { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: 80%; text-align: center; color: #fff; font-weight: 800; font-size: 13px; text-shadow: 0 1px 2px rgba(0,0,0,.7); pointer-events: none; }
 .trim-row input.t { font: inherit; font-variant-numeric: tabular-nums; font-weight: 800; color: var(--ink); background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 1px 3px; width: 8.5ch; }
 .trim-row input.t:hover, .trim-row input.t:focus { border-color: var(--line-2); background: var(--card); outline: none; }
+
+/* 2.0.1 · Attese che non restano mute: una riga in basso con il motivo e «Interrompi» (non la copre un altro avviso) */
+.wait-row { position: fixed; bottom: 66px; left: 50%; transform: translateX(-50%); z-index: 51; display: flex; align-items: center; gap: 12px;
+  background: var(--ink); color: var(--card); padding: 9px 12px 9px 14px; border-radius: 12px; font-weight: 800; font-size: 13px;
+  box-shadow: var(--shadow-up); animation: up .25s ease-out; max-width: min(640px, calc(100vw - 32px)); }
+.wait-row .toast-btn { min-height: 24px; white-space: nowrap; }
+.wait-spin { flex: none; width: 14px; height: 14px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--card) 35%, transparent); border-top-color: var(--card); animation: spin 1s linear infinite; }
+/* Prima apertura: la pagina d'avvio c'è subito, prima che parta l'app */
+.avvio { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; align-content: center; gap: 14px; background: var(--bg); color: var(--quiet); font: 700 13px/1.4 var(--font, system-ui), system-ui, sans-serif; text-align: center; padding: 16px; transition: opacity .35s; }
+.avvio img { width: 96px; height: 96px; border-radius: 16px; box-shadow: var(--shadow-up); }
+.avvio.out { opacity: 0; pointer-events: none; }
+.job .stage, .stage { font-size: 12.5px; color: var(--quiet); font-weight: 700; margin: 2px 0 4px; }
+/* 2.0.1 · Aggiornamento: «Interrompi» sotto l'avanzamento; se non riesce il motivo resta in alto a destra */
+.update-stop { position: fixed; top: 48px; right: 14px; z-index: 50; min-height: 24px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+.update-corner.failed { background: var(--brass); color: var(--on-brass); }

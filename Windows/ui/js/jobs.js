@@ -4,6 +4,7 @@ import { invoke, onAutoJob, onJob } from "./api.js";
 import { actionName } from "./catalog.js";
 import { store } from "./util.js";
 import { t } from "./i18n.js";
+import { AI_ACTIONS } from "./attese.js";
 
 const jobs = new Map(); // id → lavoro
 const subs = new Set();
@@ -111,6 +112,8 @@ export async function run(action, files, param, origin) {
   };
   jobs.set(id, job);
   notify(job);
+  // 2.0.1 · L'IA la prima volta scarica motore o modello: lo si sa prima, così la barra lo dice
+  if (AI_ACTIONS.includes(action)) job.fetch = await invoke("ai_pending", { action }).catch(() => null);
   try {
     await invoke("start_job", { id, action, files: job.files.map((f) => f.path), param: param ?? null, outDir: outDir() });
     param = null;
@@ -161,6 +164,7 @@ onAutoJob((a) => {
 onJob((ev) => {
   const job = jobs.get(ev.id);
   if (!job) return;
+  if (ev.progress !== job.progress) job.lastMove = Date.now();
   if (ev.kind === "progress") {
     job.progress = ev.progress;
   } else if (ev.kind === "file") {

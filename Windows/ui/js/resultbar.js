@@ -9,6 +9,7 @@ import { install as installOffice } from "./office.js";
 import { askFeedbackOnce } from "./feedback.js";
 import { fmtBytes, gainText, h, ico, toast } from "./util.js";
 import { t, tr, tc, isEn } from "./i18n.js";
+import { stageText } from "./attese.js";
 
 const IMG = ["jpg", "jpeg", "png", "webp", "avif", "bmp", "gif", "tif", "tiff", "jfif"];
 const isImg = (p) => IMG.includes(String(p || "").split(".").pop().toLowerCase());
@@ -16,7 +17,7 @@ const isImg = (p) => IMG.includes(String(p || "").split(".").pop().toLowerCase()
 export function resultBar(origin) {
   const el = h("div");
   let current = null;
-  let hideTimer;
+  let hideTimer, tick;
 
   function render(job) {
     clearTimeout(hideTimer);
@@ -27,7 +28,11 @@ export function resultBar(origin) {
       const n = job.files.length;
       // 1.1 · Esportando il montaggio: anche quanto manca («Esporto… 42% · circa 2 min»)
       const left = job.action === "vproject" ? timeLeft(job) : "";
-      const what = job.stopping ? t("Interrompo…") : job.action === "vproject" ? (pct > 0 ? t`Esporto… ${pct}%` : t("Preparo…")) + (left ? " · " + left : "") : pct > 0 ? `${pct}%` : t("Preparo…");
+      // 2.0.1 · Le attese lunghe (IA, motore che parte) dicono cosa succede e da quanto
+      const stage = job.action === "vproject" ? null : stageText(job);
+      const what = job.stopping ? t("Interrompo…") : job.action === "vproject" ? (pct > 0 ? t`Esporto… ${pct}%` : t("Preparo…")) + (left ? " · " + left : "") : stage || (pct > 0 ? `${pct}%` : t("Preparo…"));
+      clearTimeout(tick);
+      tick = setTimeout(() => { if (current === job && job.state === "running" && el.isConnected) render(job); }, 1000);
       el.append(
         h("div.resultbar", { role: "status" },
           h("div.ic.run", ico("loader-circle", 20, "spin")),

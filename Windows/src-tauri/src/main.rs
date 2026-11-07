@@ -125,10 +125,76 @@ struct Probed {
     path: String,
 }
 
+/// 2.0.1 · «Interrompi» mentre si leggono i file (per esempio da OneDrive): i file non ancora letti si saltano.
+static PROBE_GEN: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+#[tauri::command]
+fn probe_stop() {
+    PROBE_GEN.fetch_add(1, Ordering::SeqCst);
+}
+
+/// 2.0.1 · Quanti dei file scelti sono solo nel cloud (OneDrive «disponibile online»): leggerli vuol dire scaricarli.
+/// Guarda solo gli attributi (non scarica niente); nelle cartelle un livello, come probe_files.
+#[tauri::command]
+async fn cloud_files(paths: Vec<String>) -> Result<usize, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut n = 0usize;
+        let mut seen = 0usize;
+        for p in paths.iter().take(2000) {
+            let pb = PathBuf::from(p);
+            if pb.is_dir() {
+                if let Ok(rd) = std::fs::read_dir(&pb) {
+                    for e in rd.flatten().take(2000) {
+                        seen += 1;
+                        n += e.metadata().map(|m| is_cloud_only(&m)).unwrap_or(false) as usize;
+                    }
+                }
+            } else if let Ok(m) = std::fs::symlink_metadata(&pb) {
+                seen += 1;
+                n += is_cloud_only(&m) as usize;
+            }
+            if seen > 4000 {
+                break;
+            }
+        }
+        n
+    })
+    .await
+    .map_err(|e| e.to_string())
+}
+
+#[cfg(windows)]
+fn is_cloud_only(m: &std::fs::Metadata) -> bool {
+    use std::os::windows::fs::MetadataExt;
+    // FILE_ATTRIBUTE_OFFLINE | FILE_ATTRIBUTE_RECALL_ON_OPEN | FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS
+    m.is_file() && m.file_attributes() & (0x1000 | 0x4_0000 | 0x40_0000) != 0
+}
+
+#[cfg(not(windows))]
+fn is_cloud_only(_: &std::fs::Metadata) -> bool {
+    false
+}
+
+#[derive(Serialize)]
+struct AiPending {
+    what: String,
+    mb: u64,
+}
+
+/// 2.0.1 · Cosa scaricherà un'azione con l'IA prima di lavorare (la barra lo dice invece di restare muta).
+#[tauri::command]
+async fn ai_pending(state: State<'_, Shared>, action: String) -> Result<Option<AiPending>, String> {
+    let st = state.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || orbit_engine::ai::pending_download(&action, &st.data_dir).map(|(what, mb)| AiPending { what: what.into(), mb }))
+        .await
+        .map_err(|e| e.to_string())
+}
+
 /// Legge i file trascinati. Le cartelle si aprono (un livello) e si prendono i file dentro.
 #[tauri::command]
 async fn probe_files(app: tauri::AppHandle, state: State<'_, Shared>, paths: Vec<String>) -> Result<Vec<Probed>, String> {
     let st = state.inner().clone();
+    let gen = PROBE_GEN.load(Ordering::SeqCst);
     tauri::async_runtime::spawn_blocking(move || {
         let mut list: Vec<PathBuf> = Vec::new();
         for p in paths.iter().take(2000) {
@@ -145,6 +211,7 @@ async fn probe_files(app: tauri::AppHandle, state: State<'_, Shared>, paths: Vec
         }
         list.into_iter()
             .take(2000)
+            .take_while(|_| PROBE_GEN.load(Ordering::SeqCst) == gen)
             .map(|p| {
                 let path = p.to_string_lossy().to_string();
                 match checked_file(&path).and_then(|f| probe(st.tools.as_ref(), &f).map_err(|e| e.0)) {
@@ -223,7 +290,8 @@ struct JobEvent {
 }
 
 /// Avvia un lavoro: per ogni file (o una volta sola per «unisci»). Torna subito; l'avanzamento arriva come eventi «job».
-#[tauri::command]
+// 2.0.1 · Fuori dal thread della finestra (dischi, rete: la finestra non si blocca)
+#[tauri::command(async)]
 fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action: String, files: Vec<String>, param: Value, out_dir: Option<String>) -> Result<(), String> {
     if files.is_empty() && action != "tts" && action != "link" {
         return Err("nessun file".into());
@@ -432,7 +500,8 @@ fn watch_get(state: State<'_, Shared>) -> Vec<orbit_engine::watch::Rule> {
 }
 
 /// Cartelle automatiche: salva l'elenco (le cartelle che mancano si creano).
-#[tauri::command]
+// 2.0.1 · Fuori dal thread della finestra (dischi, rete: la finestra non si blocca)
+#[tauri::command(async)]
 fn watch_set(state: State<'_, Shared>, rules: Vec<orbit_engine::watch::Rule>) -> Result<Vec<orbit_engine::watch::Rule>, String> {
     let rules = orbit_engine::watch::sanitize(rules);
     for r in &rules {
@@ -544,7 +613,8 @@ struct PhoneShare {
 }
 
 /// «Manda al telefono»: un codice QR per scaricare il file sul telefono (stessa rete Wi-Fi, 15 minuti).
-#[tauri::command]
+// 2.0.1 · Fuori dal thread della finestra (dischi, rete: la finestra non si blocca)
+#[tauri::command(async)]
 fn phone_share(state: State<'_, Shared>, path: String, en: bool) -> Result<PhoneShare, String> {
     if !state.made.lock().unwrap().contains(&path) {
         return Err("si possono mandare al telefono solo i file appena creati da OrbitLR".into());
@@ -661,6 +731,9 @@ async fn update_install(app: tauri::AppHandle, state: State<'_, Shared>, version
     }
     let st = state.inner().clone();
     let app2 = app.clone();
+    // 2.0.1 · Lo scaricamento si può interrompere («Interrompi» accanto all'avanzamento)
+    let cancel = Cancel::new();
+    *UPDATE_CANCEL.lock().unwrap() = Some(cancel.clone());
     let setup = tauri::async_runtime::spawn_blocking(move || -> Result<PathBuf, String> {
         let m = orbit_engine::update::check().map_err(|e| e.0)?.ok_or("nessun aggiornamento disponibile")?;
         if !orbit_engine::update::is_newer(&m, &version, build) {
@@ -668,7 +741,7 @@ async fn update_install(app: tauri::AppHandle, state: State<'_, Shared>, version
         }
         let dir = st.data_dir.join("aggiornamento");
         let mut last = std::time::Instant::now();
-        orbit_engine::update::download(&m, &dir, &Cancel::new(), &mut |p| {
+        orbit_engine::update::download(&m, &dir, &cancel, &mut |p| {
             if last.elapsed().as_millis() >= 200 || p >= 1.0 {
                 last = std::time::Instant::now();
                 let _ = app2.emit("update-progress", p);
@@ -677,15 +750,16 @@ async fn update_install(app: tauri::AppHandle, state: State<'_, Shared>, version
         .map_err(|e| e.0)
     })
     .await
-    .map_err(|e| e.to_string())??;
+    .map_err(|e| e.to_string());
+    *UPDATE_CANCEL.lock().unwrap() = None;
+    let setup = setup??;
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
         // L'installatore aspetta che OrbitLR sia chiusa, installa in silenzio (/S), poi OrbitLR si riapre
-        let script = format!("ping -n 3 127.0.0.1 >nul & \"{}\" /S & start \"\" \"{}\"", setup.display(), exe.display());
-        std::process::Command::new("cmd")
-            .args(["/C", &script])
+        // (anche se l'installatore non riesce: allora lo dice)
+        orbit_engine::update::handoff(&setup, &exe, 2)
             .creation_flags(0x0800_0000 | 0x0000_0008) // CREATE_NO_WINDOW | DETACHED_PROCESS
             .spawn()
             .map_err(|e| format!("non riesco ad avviare l'aggiornamento: {e}"))?;
@@ -697,14 +771,28 @@ async fn update_install(app: tauri::AppHandle, state: State<'_, Shared>, version
     }
     #[allow(unreachable_code)]
     {
+        // 2.0.1 · Un attimo per dire «Installo… OrbitLR si riapre da sola», poi si chiude
+        let _ = app.emit("update-installing", ());
+        tauri::async_runtime::spawn_blocking(|| std::thread::sleep(std::time::Duration::from_millis(1800))).await.ok();
         app.exit(0);
         Ok(())
     }
 }
 
-/// «Interrompi e chiudi»: ferma tutto, cancella i file a metà, poi chiude.
+/// 2.0.1 · Lo scaricamento dell'aggiornamento in corso (per «Interrompi»).
+static UPDATE_CANCEL: Mutex<Option<Cancel>> = Mutex::new(None);
+
 #[tauri::command]
-fn quit_now(app: tauri::AppHandle, state: State<'_, Shared>) {
+fn update_cancel() {
+    if let Some(c) = UPDATE_CANCEL.lock().unwrap().as_ref() {
+        c.cancel();
+    }
+}
+
+/// «Interrompi e chiudi»: ferma tutto, cancella i file a metà, poi chiude.
+// 2.0.1 · Fuori dal thread della finestra (dischi, rete: la finestra non si blocca)
+#[tauri::command(async)]
+fn quit_now(app: tauri::AppHandle, state: State<'_, Shared>) -> Result<(), String> {
     let jobs: Vec<Cancel> = state.jobs.lock().unwrap().values().cloned().collect();
     for c in &jobs {
         c.cancel();
@@ -715,6 +803,7 @@ fn quit_now(app: tauri::AppHandle, state: State<'_, Shared>) {
         std::thread::sleep(std::time::Duration::from_millis(50));
     }
     app.exit(0);
+    Ok(())
 }
 
 #[tauri::command]
@@ -730,7 +819,8 @@ async fn voices() -> Result<Vec<orbit_engine::speech::Voice>, String> {
 }
 
 /// Un testo del montaggio disegnato dalla finestra (PNG in base64): si salva nella cartella dell'app.
-#[tauri::command]
+// 2.0.1 · Fuori dal thread della finestra (dischi, rete: la finestra non si blocca)
+#[tauri::command(async)]
 fn save_overlay(app: tauri::AppHandle, png_base64: String) -> Result<String, String> {
     if png_base64.len() > 60_000_000 {
         return Err("immagine troppo grande".into());
@@ -882,6 +972,8 @@ struct Startup {
     crashed: bool,
     /// 1.1 · Ctrl+Alt+C è già usata da un'altra app
     shortcut_taken: bool,
+    /// 2.0.1 · Riaperta dal passaggio all'aggiornamento perché l'installatore non è riuscito
+    update_failed: bool,
 }
 
 /// L'app gira come pacchetto MSIX (Microsoft Store)?
@@ -915,6 +1007,7 @@ fn startup(state: State<'_, Shared>) -> Startup {
         store: is_store(),
         crashed: state.crashed,
         shortcut_taken: state.shortcut_taken.load(Ordering::SeqCst),
+        update_failed: std::env::args().any(|a| a == orbit_engine::update::FAILED_ARG),
     }
 }
 
@@ -1253,7 +1346,7 @@ fn main() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![engine_status, probe_files, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install, update_check, update_install, undo_result, allow_made, set_lang, pdf_info, pdf_page, silences, phone_share, phone_stop, shelf_show, shelf_expand, shelf_drop, ui_ready, close_seen, export_room, trash_project])
+        .invoke_handler(tauri::generate_handler![engine_status, probe_files, probe_stop, cloud_files, ai_pending, thumbnail, waveform, start_job, cancel_job, files_exist, places, startup, quit_now, voices, save_overlay, open_result, transcribe_words, watch_get, watch_set, office_ready, office_install, update_check, update_install, update_cancel, undo_result, allow_made, set_lang, pdf_info, pdf_page, silences, phone_share, phone_stop, shelf_show, shelf_expand, shelf_drop, ui_ready, close_seen, export_room, trash_project])
         .build(tauri::generate_context!())
         .expect("OrbitLR non è riuscita ad avviarsi")
         .run(|app, ev| {

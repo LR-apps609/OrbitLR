@@ -39,3 +39,30 @@ test("la finestra principale non esce dallo schermo", () => {
   assert.equal(w.preventOverflow, true);
   assert.match(main, /fit_main_window\(app\)/);
 });
+
+// 2.0.1 · Le attese mute
+test("leggere i file da OneDrive e l'IA: comandi in sottofondo, «Interrompi» per la lettura", () => {
+  for (const name of ["cloud_files", "ai_pending"]) {
+    assert.match(main, new RegExp(`#\\[tauri::command\\]\\s*async fn ${name}\\b`), `${name} deve essere async`);
+    assert.match(body(main, name), /spawn_blocking/, `${name} deve lavorare in sottofondo`);
+  }
+  assert.match(body(main, "probe_files"), /take_while\(\|_\| PROBE_GEN/, "probe_files deve fermarsi con «Interrompi»");
+  for (const c of ["probe_stop", "cloud_files", "ai_pending", "update_cancel"]) assert.match(main, new RegExp(`generate_handler!\\[[^\\]]*\\b${c}\\b`), `${c} non registrato`);
+  const api = fs.readFileSync(new URL("../Windows/ui/js/api.js", import.meta.url), "utf8");
+  assert.match(api, /cmd === "probe_files"\) return waitNotice/);
+});
+
+test("aggiornamento: cmd riceve la riga così com'è, si interrompe, e se non riesce OrbitLR si riapre", () => {
+  const upd = fs.readFileSync(new URL("../Windows/engine/src/update.rs", import.meta.url), "utf8");
+  assert.match(body(upd, "handoff"), /raw_arg\(/, "senza raw_arg Rust scrive \\\" e cmd non capisce");
+  assert.doesNotMatch(body(main, "update_install"), /\.args\(\["\/C"/);
+  assert.match(body(main, "update_install"), /update::handoff\(/);
+  assert.match(body(main, "update_install"), /&cancel/);
+  assert.match(main, /update_failed: std::env::args\(\)\.any\(\|a\| a == orbit_engine::update::FAILED_ARG\)/);
+});
+
+test("i comandi che toccano dischi o rete non girano nel thread della finestra", () => {
+  for (const name of ["start_job", "watch_set", "phone_share", "save_overlay", "quit_now"]) {
+    assert.match(main, new RegExp(`#\\[tauri::command\\(async\\)\\]\\s*fn ${name}\\b|#\\[tauri::command\\]\\s*async fn ${name}\\b`), `${name}: fuori dal thread della finestra`);
+  }
+});

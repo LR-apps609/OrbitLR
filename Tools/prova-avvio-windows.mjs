@@ -50,3 +50,18 @@ test("ogni testo dell'interfaccia ha l'inglese", async () => {
   const missing = Object.keys(keys).filter((k) => !(k in EN));
   assert.deepEqual(missing, [], "manca l'inglese in en.js:\n" + missing.join("\n"));
 });
+
+test("le attese lunghe dell'IA dicono cosa succede (e da quanto)", async () => {
+  // (i testi in italiano, qualunque sia la lingua del computer di prova)
+  globalThis.localStorage ??= { getItem: (k) => (k === "orbitlr.appLang" ? '"it"' : null), setItem() {} };
+  const { stageText } = await import("../Windows/ui/js/attese.js");
+  const t0 = 1_000_000;
+  const job = (action, progress, extra = {}) => ({ action, progress, state: "running", started: t0, lastMove: t0, ...extra });
+  assert.match(stageText(job("removebg", 0.2, { fetch: { what: "il modello per togliere lo sfondo", mb: 179 } }), t0 + 1000), /Scarico il modello per togliere lo sfondo \(una volta sola, 179 MB\)… 40%/);
+  assert.match(stageText(job("removebg", 0.05), t0 + 30000), /L’IA cerca il soggetto.*ancora al lavoro da 0:30/);
+  assert.match(stageText(job("aienhance", 0.3), t0 + 1000), /Avvio l’IA/);
+  assert.match(stageText(job("upscale", 0.6), t0 + 1000), /L’IA migliora la foto… 60%/);
+  assert.match(stageText(job("upscale", 0.95), t0 + 1000), /Salvo il risultato/);
+  assert.equal(stageText(job("compress", 0.5), t0 + 1000), null, "un lavoro che va avanti non cambia");
+  assert.match(stageText(job("compress", 0.5), t0 + 65000), /50% · ancora al lavoro da 1:05/);
+});

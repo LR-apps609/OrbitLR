@@ -1,6 +1,23 @@
 // Dizionario inglese di OrbitLR per Windows (chiave = testo italiano, con {0}, {1}… al posto dei valori).
 // Generato da Tools/testi-windows.mjs e tradotto con lo stesso glossario dell'app per Mac. Non modificare a mano: rigenerare.
 export const EN = {
+ "Scarico da OneDrive un file che è solo nel cloud…": "Downloading from OneDrive a file that is only in the cloud…",
+ "Scarico da OneDrive {0} file che sono solo nel cloud…": "Downloading from OneDrive {0} files that are only in the cloud…",
+ "Leggo {0} file…": "Reading {0} files…",
+ "Leggo il file…": "Reading the file…",
+ "Leggo i file…": "Reading the files…",
+ "Installo l’aggiornamento: OrbitLR si chiude e si riapre da sola tra poco…": "Installing the update: OrbitLR will close and reopen by itself shortly…",
+ "Aggiornamento interrotto: puoi riprovare quando vuoi.": "Update stopped: you can try again whenever you like.",
+ "Aggiornamento non riuscito · Riprova": "Update failed · Try Again",
+ "L’aggiornamento non è riuscito: non trovo la versione nuova, controlla la connessione.": "The update failed: can’t find the new version, check your connection.",
+ "Preparo il motore video: la prima volta può volerci fino a un minuto…": "Getting the video engine ready: the first time it can take up to a minute…",
+ "L’aggiornamento non è riuscito: OrbitLR è rimasta alla {0}.": "The update failed: OrbitLR is still on {0}.",
+ "ancora al lavoro da {0}": "still working, {0} so far",
+ "Scarico {0} (una volta sola, {1} MB)… {2}%": "Downloading {0} (only once, {1} MB)… {2}%",
+ "L’IA cerca il soggetto e lo ritaglia: può volerci fino a un minuto": "The AI is finding the subject and cutting it out: it can take up to a minute",
+ "Salvo il risultato…": "Saving the result…",
+ "Avvio l’IA sulla scheda video (la prima volta può volerci un minuto)…": "Starting the AI on the graphics card (the first time it can take a minute)…",
+ "L’IA migliora la foto… {0}%": "The AI is enhancing the photo… {0}%",
  "«Lo sapevi?» si vede solo nei primi 3 giorni dopo l’installazione": "“Did you know?” only appears during the first 3 days after installing",
  "In {0}": "To {0}",
  " a ": " to ",
