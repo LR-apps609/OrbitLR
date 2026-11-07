@@ -18,6 +18,7 @@ public static class W {
   [DllImport("user32.dll")] public static extern bool SetProcessDpiAwarenessContext(IntPtr v);
   [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr h, int a, out RECT r, int s);
   [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
+  [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr hdc, uint f);
   [DllImport("user32.dll")] public static extern uint GetDpiForWindow(IntPtr h);
   [DllImport("user32.dll")] public static extern uint GetDpiForSystem();
   [DllImport("user32.dll")] public static extern IntPtr MonitorFromWindow(IntPtr h, uint f);
@@ -76,7 +77,27 @@ function Schermo() {
   "schermo $($mi.rcMonitor.R - $mi.rcMonitor.L)x$($mi.rcMonitor.B - $mi.rcMonitor.T) · area utile $($mi.rcWork.R - $mi.rcWork.L)x$($mi.rcWork.B - $mi.rcWork.T) (in alto $($mi.rcWork.T)) · scala di sistema $([math]::Round($dpi / 96 * 100))%"
 }
 
+# La foto della finestra di OrbitLR (PrintWindow con PW_RENDERFULLCONTENT): su Windows 11 ARM la foto dello schermo
+# mostra spesso la prima configurazione o il menu Start sopra la finestra. Senza finestra: la foto dello schermo.
 function Foto([string]$nome) {
+  $h = [IntPtr]::Zero
+  foreach ($p in Get-Process orbitlr -ErrorAction SilentlyContinue) { $h = [W]::Main([uint32]$p.Id); if ($h -ne [IntPtr]::Zero) { break } }
+  if ($h -ne [IntPtr]::Zero) {
+    try {
+      $r = New-Object W+RECT; [W]::GetWindowRect($h, [ref]$r) | Out-Null
+      $bmp = New-Object System.Drawing.Bitmap ($r.R - $r.L), ($r.B - $r.T)
+      $g = [System.Drawing.Graphics]::FromImage($bmp); $dc = $g.GetHdc()
+      $ok = [W]::PrintWindow($h, $dc, 2); $g.ReleaseHdc($dc)
+      if ($ok) { $bmp.Save((Join-Path $Out "$nome.png"), [System.Drawing.Imaging.ImageFormat]::Png) }
+      $g.Dispose(); $bmp.Dispose()
+      if ($ok) { return }
+      Log "foto $nome · PrintWindow non riuscito: foto dello schermo"
+    } catch { Log "foto finestra $nome non riuscita ($_): foto dello schermo" }
+  }
+  FotoSchermo $nome
+}
+
+function FotoSchermo([string]$nome) {
   try {
     $vs = [System.Windows.Forms.SystemInformation]::VirtualScreen
     $bmp = New-Object System.Drawing.Bitmap $vs.Width, $vs.Height
@@ -217,6 +238,20 @@ Set-Culture it-IT
 # ── 5. Scala della pagina con WebView2 (solo il contenuto, non la finestra)
 foreach ($f in "1.25", "1.5", "1.75", "2") {
   Prova "5-webview2-scala-$f" @{ WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--lang=it --force-device-scale-factor=$f" } 18 | Out-Null
+}
+# 2.0.1 · La prova cambia davvero la scala? Se le foto a 1,25 e a 2 sono uguali, WebView2 ha ignorato l'argomento
+$a5 = Join-Path $Out "5-webview2-scala-1.25.png"; $b5 = Join-Path $Out "5-webview2-scala-2.png"
+if ((Test-Path $a5) -and (Test-Path $b5)) {
+  # Punti a griglia (40×40): con la scala applicata la pagina è disegnata più grande e quasi tutti i punti cambiano
+  $ia = [System.Drawing.Bitmap]::FromFile($a5); $ib = [System.Drawing.Bitmap]::FromFile($b5); $diff = 0; $tot = 0
+  if ($ia.Width -eq $ib.Width -and $ia.Height -eq $ib.Height) {
+    for ($x = 1; $x -le 40; $x++) { for ($y = 1; $y -le 40; $y++) {
+      $px = [int]($ia.Width * $x / 41); $py = [int]($ia.Height * $y / 41); $tot++
+      if ($ia.GetPixel($px, $py).ToArgb() -ne $ib.GetPixel($px, $py).ToArgb()) { $diff++ } } }
+  }
+  $ia.Dispose(); $ib.Dispose()
+  $pct = if ($tot) { [math]::Round(100 * $diff / $tot) } else { 100 }
+  Note "scala WebView2 (--force-device-scale-factor): $pct% dei punti diversi tra 1,25 e 2 · $(if ($pct -lt 15) { 'NESSUN EFFETTO: le prove 5 non cambiano la scala, contano le 7 (scala di Windows)' } else { 'la scala sembra applicata' })"
 }
 
 # ── 6. Risoluzioni dello schermo (se la scheda video del computer di prova le accetta)
