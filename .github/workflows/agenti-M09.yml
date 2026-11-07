@@ -1,0 +1,78 @@
+name: agenti-M09
+on:
+  push:
+    branches: ['agenti/M09']
+  workflow_dispatch:
+    inputs:
+      build:
+        description: "6.0.2 o 6.0.3"
+        default: "6.0.2"
+permissions:
+  contents: read
+  actions: read
+env:
+  BUILD: ${{ github.event.inputs.build || '6.0.2' }}
+jobs:
+  downloader:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with: { persist-credentials: false }
+      - uses: actions/download-artifact@v5
+        if: env.BUILD == '6.0.3'
+        with: { name: pacchetto, run-id: 42406653535, github-token: "${{ github.token }}" }
+      - name: Installa
+        run: zsh Tests/Agenti/M09/install.sh "$BUILD"
+      - name: Fixture
+        run: |
+          O="$RUNNER_TEMP/m09"; mkdir -p "$O/fx"; FF=/Applications/OrbitLR.app/Contents/Resources/Motori/ffmpeg
+          { sw_vers; uname -m; } > "$O/mac.txt"
+          "$FF" -v error -y -f lavfi -i testsrc2=size=1280x720:rate=30 -f lavfi -i sine=frequency=440:sample_rate=48000 -t 20 \
+            -c:v h264_videotoolbox -b:v 2500k -c:a aac -b:a 128k -shortest "$O/fx/video.mp4"
+          ls -la "$O/fx"
+      - name: Motore (argomenti dell'app)
+        timeout-minutes: 15
+        run: zsh Tests/Agenti/M09/engine-downloader.sh "$RUNNER_TEMP/m09" "$RUNNER_TEMP/m09/fx" 8765 /Applications/OrbitLR.app || true
+      - name: Finestra vera
+        timeout-minutes: 20
+        run: |
+          defaults write it.ledion.OrbitLR lastTab -string "Audio"
+          open /Applications/OrbitLR.app; sleep 20; pgrep -x OrbitLR || echo "::error::non partita"
+          zsh Tests/Agenti/M09/ui-downloader.sh "$RUNNER_TEMP/m09" "$RUNNER_TEMP/m09/fx" 8766 || true
+          pgrep -x OrbitLR >/dev/null && echo "app viva alla fine" || echo "APP CHIUSA alla fine"
+      - name: Raccogli
+        if: always()
+        run: |
+          O="$RUNNER_TEMP/m09"; cp ~/Library/Logs/LRConverter.log "$O/" 2>/dev/null || true
+          mkdir -p "$O/crash"; cp ~/Library/Logs/DiagnosticReports/OrbitLR* "$O/crash/" 2>/dev/null || true
+          cp ~/Desktop/*.txt "$O/crash/" 2>/dev/null || true
+          rm -rf "$O/motore/w" "$O/motore/yt-dlp" "$O/fx"; ls -R "$O" | head -n 80
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: "m09-downloader-${{ env.BUILD }}", path: "${{ runner.temp }}/m09", retention-days: 7 }
+  automazione:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with: { persist-credentials: false }
+      - uses: actions/download-artifact@v5
+        if: env.BUILD == '6.0.3'
+        with: { name: pacchetto, run-id: 42406653535, github-token: "${{ github.token }}" }
+      - name: Installa
+        run: zsh Tests/Agenti/M09/install.sh "$BUILD"
+      - name: Cartelle automatiche e orbitlr://
+        timeout-minutes: 25
+        run: |
+          mkdir -p "$HOME/Library/Application Support/LRConverter"
+          zsh Tests/Agenti/M09/auto.sh "$RUNNER_TEMP/m09" /Applications/OrbitLR.app || true
+      - name: Raccogli
+        if: always()
+        run: |
+          O="$RUNNER_TEMP/m09"; cp ~/Library/Logs/LRConverter.log "$O/" 2>/dev/null || true
+          mkdir -p "$O/crash"; cp ~/Library/Logs/DiagnosticReports/OrbitLR* "$O/crash/" 2>/dev/null || true
+          rm -rf "$O/auto/fx"; ls -R "$O" | head -n 60
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: "m09-automazione-${{ env.BUILD }}", path: "${{ runner.temp }}/m09", retention-days: 7 }
