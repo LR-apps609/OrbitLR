@@ -1,3 +1,4 @@
 2560x1440@150 massima 1706×880 (scala 1.5): ok · pulsanti laterali 11
 2560x1440@150 iniziale 1200×800 (scala 1.5): ok · pulsanti laterali 11
 2560x1440@150 oggi 1200×800 (scala 1.5): ok · pulsanti laterali 11
+2560x1440@150 bassa 1200×480 (scala 1.5): ok · pulsanti laterali 11
