@@ -111,3 +111,4 @@
    help: fuori dalla finestra: «Idea» (121,712 103×50; finestra 1200×640)
    help: fuori dalla finestra: «OrbitLRper Windows» (12,14 211×59; finestra 1200×640)
 2560x1440@200 bassa 1200×480 (scala 2): ok · pulsanti laterali 11
+2560x1440@200 stretta 1024×640 (scala 2): ok · pulsanti laterali 11
