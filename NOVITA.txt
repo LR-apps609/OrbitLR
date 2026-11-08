@@ -5,6 +5,12 @@ Novità della 6.0.3 «Rapporti»:
 • Una cartella enorme, di rete o in iCloud non ancora scaricata non blocca più la torta: OrbitLR prende i file trovati in pochi secondi e lo dice
 • ⌥⌘C nel Finder: se il Finder è occupato (per esempio con iCloud) OrbitLR aspetta al massimo 10 secondi, invece di restare bloccata fino a 2 minuti
 • «Segnala» allega anche i rapporti di macOS sui blocchi, non solo sugli arresti
+• Gli aggiornamenti funzionano anche sui Mac senza gli strumenti per sviluppatori: prima si fermavano con «Questo aggiornamento non è adatto a questo Mac»
+• Sui Mac Intel la conversione di video e audio funziona anche senza Homebrew: il motore video non chiede più librerie che mancano
+• L’avvio non si blocca più se il progetto video che era aperto usa file su un disco di rete o esterno staccato
+• Doppio clic su un file .orbitlr: arriva subito la domanda «Installare OrbitLR?», non più l’avviso «OrbitLR resta pronta»
+• Le miniature rispondono sempre entro pochi secondi, anche con il disco occupato
+• L’opzione «originale nel Cestino» mette nel Cestino solo l’originale vero, mai un altro file con un nome simile
 
 Novità della 6.0.2 «Sonoma»:
 • Su MacBook e finestre basse la barra a sinistra non finisce più sotto i pallini della finestra: logo, schede e Cassetto restano sempre visibili (si accorcia la lista)
