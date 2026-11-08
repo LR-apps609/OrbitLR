@@ -1578,7 +1578,7 @@ speed_run() {  # audio o video, velocità (0.5 · 0.75 · 1.25 · 1.5 · 2)
   fi
   local out="$JD/out/$base ($(sx 'velocità') $lbl).mp4"
   local -a fc
-  if [[ -n $(probe a "$src") ]]; then fc=(-filter_complex "[0:v:0]setpts=PTS/$sp[v];[0:a:0]atempo=$sp[a]" -map "[v]" -map "[a]")
+  if [[ -n $(probe a "$src") ]]; then fc=(-filter_complex "[0:v:0]setpts=PTS/${sp}[v];[0:a:0]atempo=${sp}[a]" -map "[v]" -map "[a]")
   else fc=(-map 0:v:0 -vf "setpts=PTS/$sp")
   fi
   local -a a=(-c:a aac -b:a 160k -movflags +faststart)

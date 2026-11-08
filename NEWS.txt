@@ -10,6 +10,7 @@ What’s new in 6.0.3 “Reports”:
 • Launch no longer freezes if the video project that was open uses files on a disconnected network or external drive
 • Double-clicking an .orbitlr file: the “Install OrbitLR?” question comes right away, no more “OrbitLR stays ready” notice
 • Thumbnails always answer within a few seconds, even when the disk is busy
+• “Change speed” works again on videos with sound: before, it stopped with an error
 • The “original to Trash” option only moves the real original, never another file with a similar name
 
 What’s new in 6.0.2 “Sonoma”:

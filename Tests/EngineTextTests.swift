@@ -14,4 +14,16 @@ final class EngineTextTests: XCTestCase {
         XCTAssertEqual(EngineText.english("3/7 · Unisco 4 file in un PDF"), "3/7 · Merging 4 files into a PDF")
         XCTAssertEqual(EngineText.english("qualcosa di sconosciuto"), "qualcosa di sconosciuto")
     }
+
+    /// 6.0.3 · In zsh "$sp[v]" dentro una stringa è un pezzo della variabile, non «2[v]»: «Cambia la velocità»
+    /// non funzionava su nessun video con l'audio. Nei filtri di ffmpeg le variabili vanno scritte ${sp}.
+    func testFiltriSenzaIndiciZsh() throws {
+        let script = try String(contentsOf: URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("Resources/LRConverter.zsh"), encoding: .utf8)
+        let re = try NSRegularExpression(pattern: #"\$[a-z_][a-z0-9_]*\[[a-z]+\]"#)
+        for line in script.split(separator: "\n") where line.contains("filter_complex") || line.contains("-af ") || line.contains("-vf ") {
+            let s = String(line)
+            XCTAssertNil(re.firstMatch(in: s, range: NSRange(s.startIndex..., in: s)), "variabile seguita da [etichetta] in un filtro: \(s)")
+        }
+    }
 }

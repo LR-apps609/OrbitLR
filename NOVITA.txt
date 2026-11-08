@@ -10,6 +10,7 @@ Novità della 6.0.3 «Rapporti»:
 • L’avvio non si blocca più se il progetto video che era aperto usa file su un disco di rete o esterno staccato
 • Doppio clic su un file .orbitlr: arriva subito la domanda «Installare OrbitLR?», non più l’avviso «OrbitLR resta pronta»
 • Le miniature rispondono sempre entro pochi secondi, anche con il disco occupato
+• «Cambia la velocità» funziona di nuovo sui video con l’audio: prima si fermava con un errore
 • L’opzione «originale nel Cestino» mette nel Cestino solo l’originale vero, mai un altro file con un nome simile
 
 Novità della 6.0.2 «Sonoma»:
