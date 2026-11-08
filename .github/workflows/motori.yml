@@ -1,7 +1,7 @@
 # (avvio: 24 ottobre 2026)
 # 3.8 · Motori dentro l'app: ffmpeg compilato in versione LGPL (si può distribuire con un'app a pagamento),
 # per Apple Silicon e Intel insieme. Si costruisce una volta sola e si conserva tra i file scaricabili
-# (versione «motori-1»); la compilazione dell'app lo prende da lì, controllando l'impronta.
+# (versione «motori-2»; la «motori-1» chiedeva librerie di Homebrew sui Mac Intel); la compilazione dell'app lo prende da lì, controllando l'impronta.
 # Parte solo a mano o con una modifica a questo file sul ramo «motori».
 name: Motori
 
@@ -89,7 +89,8 @@ jobs:
               --disable-gpl --disable-nonfree --disable-debug --disable-doc --disable-ffplay --disable-network \
               --enable-static --disable-shared \
               --enable-libmp3lame --enable-libopus --enable-libvpx --enable-libwebp \
-              --enable-videotoolbox --enable-audiotoolbox
+              --enable-videotoolbox --enable-audiotoolbox \
+              --disable-lzma --disable-xlib --disable-libxcb --disable-sdl2
             make -j4
             make install
             file $P/bin/ffmpeg
@@ -103,6 +104,14 @@ jobs:
             lipo -create out/x86_64/bin/$b out/arm64/bin/$b -output Motori/$b
             lipo -archs Motori/$b
           done
+          # 6.0.3 · Nessuna libreria fuori dal sistema: la «motori-1» chiedeva /usr/local/opt/xz e libX11 di Homebrew
+          # e sui Mac Intel senza Homebrew ffmpeg non partiva (rapporto M06).
+          for b in ffmpeg ffprobe; do
+            for a in x86_64 arm64; do
+              bad=$(otool -arch $a -L Motori/$b | tail -n +2 | awk '{print $1}' | grep -v -E '^(/usr/lib/|/System/Library/)' || true)
+              [ -z "$bad" ] || { echo "::error::$b ($a) chiede librerie fuori dal sistema: $bad"; exit 1; }
+            done
+          done
           ./Motori/ffmpeg -hide_banner -version | head -n 3
           ./Motori/ffmpeg -hide_banner -buildconf | tr ' ' '\n' | grep -E "enable-gpl|enable-nonfree" && { echo "::error::non deve essere GPL"; exit 1; } || true
           # Prove: MP3, WebM, WebP, Opus
@@ -112,15 +121,15 @@ jobs:
           ls -la prova.*
           cp src/ffmpeg-$FFMPEG/COPYING.LGPLv2.1 Motori/LICENZA-ffmpeg-LGPL.txt
           echo "ffmpeg $FFMPEG (LGPL), lame $LAME, opus $OPUS, libvpx $VPX, libwebp $WEBP. Sorgenti: https://ffmpeg.org/releases/ffmpeg-$FFMPEG.tar.xz" > Motori/LEGGIMI.txt
-          ditto -c -k --keepParent Motori motori-1.zip
-          shasum -a 256 motori-1.zip | tee motori-1.sha256
-          du -h motori-1.zip
+          ditto -c -k --keepParent Motori motori-2.zip
+          shasum -a 256 motori-2.zip | tee motori-2.sha256
+          du -h motori-2.zip
 
       - name: Tra i file scaricabili
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view motori-1 -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
-            gh release create motori-1 -R "$GITHUB_REPOSITORY" --prerelease --title "Motori di OrbitLR (non è un aggiornamento)" \
+          gh release view motori-2 -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create motori-2 -R "$GITHUB_REPOSITORY" --prerelease --title "Motori di OrbitLR (non è un aggiornamento)" \
               --notes "ffmpeg in versione LGPL per Apple Silicon e Intel, incluso dentro OrbitLR. Non serve scaricarlo a mano."
-          gh release upload motori-1 motori-1.zip motori-1.sha256 --clobber -R "$GITHUB_REPOSITORY"
+          gh release upload motori-2 motori-2.zip motori-2.sha256 --clobber -R "$GITHUB_REPOSITORY"
