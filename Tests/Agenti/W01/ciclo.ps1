@@ -200,6 +200,9 @@ Set-Content -Path "$Setup" -Stream Zone.Identifier -Value "[ZoneTransfer]`r`nZon
 Log "FASE 1: Installazione per l'utente, senza amministratore, in silenzio"
 $ok = Installa "1-installazione" "runas"
 Esito "installazione silenziosa per l'utente" $ok
+# Start-Process (ShellExecute) su un file «da internet» apre l'avviso di sicurezza e si ferma: da qui in poi senza Zone.Identifier
+Unblock-File $Setup
+Info "Zone.Identifier tolto dopo la prima installazione" "$(-not (Get-Item $Setup -Stream Zone.Identifier -ErrorAction SilentlyContinue))"
 $s = Stato "1-installata"
 Esito "voce «Apri con OrbitLR» sui file e sulle cartelle" (($s -match "shell\\OrbitLR: C'È").Count -eq 2) (($s | Select-String "shell\\OrbitLR") -join " ; ")
 Esito "nessun avvio automatico con Windows" (-not ($s -match "avvio automatico.*: (?!no)")) (($s | Select-String "avvio automatico") -join " ; ")
