@@ -648,14 +648,21 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     }
 
     /// 2.7.3 · Riapre un progetto salvato, ritrovando i file spostati.
-    func openProject(_ id: UUID, undo: UndoManager?) {
+    func openProject(_ id: UUID, undo: UndoManager?, prepared: (VideoProject, String?)? = nil) {
         closeProject(undo)
-        guard var p = VideoProjectLibrary.read(VideoProjectLibrary.url(for: id, in: folder)) else {
-            notice = String(localized: "Questo progetto non si apre più.")
-            refreshLibrary()
-            return
+        var p: VideoProject
+        if let prepared {
+            p = prepared.0
+            notice = prepared.1
+        } else {
+            guard var r = VideoProjectLibrary.read(VideoProjectLibrary.url(for: id, in: folder)) else {
+                notice = String(localized: "Questo progetto non si apre più.")
+                refreshLibrary()
+                return
+            }
+            notice = Self.relink(&r)
+            p = r
         }
-        notice = Self.relink(&p)
         currentID = id
         if folder == VideoProjectLibrary.folder { Self.rememberOpen(id) }
         project = p
@@ -929,7 +936,8 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     static func resolve(_ data: Data?) -> String? {
         guard let data else { return nil }
         var stale = false
-        guard let u = try? URL(resolvingBookmarkData: data, options: [.withoutUI], bookmarkDataIsStale: &stale),
+        // 6.0.3 · .withoutMounting: un file che era su un disco di rete o esterno staccato non fa aspettare il collegamento
+        guard let u = try? URL(resolvingBookmarkData: data, options: [.withoutUI, .withoutMounting], bookmarkDataIsStale: &stale),
               FileManager.default.fileExists(atPath: u.path) else { return nil }
         return u.path
     }
@@ -1009,12 +1017,22 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         guard currentID == nil, folder == VideoProjectLibrary.folder,
               let s = d.string(forKey: Self.openKey), let id = UUID(uuidString: s),
               FileManager.default.fileExists(atPath: VideoProjectLibrary.url(for: id, in: folder).path) else { return }
-        openProject(id, undo: nil)
-        AppState.shared.videoMode = .montage
-        if crashed, let at = savedAt {
-            let name = VideoProjectLibrary.displayName(project)
-            let time = at.formatted(date: .omitted, time: .shortened)
-            notice = String(localized: "OrbitLR si è chiusa all’improvviso. «\(name)» è com’era alle \(time).")
+        // 6.0.3 · Lettura del progetto e ricerca dei file spostati fuori dal thread principale: un disco di rete lento
+        // o staccato non blocca più l'avvio dell'app (prima i segnalibri si risolvevano qui, a finestra ferma)
+        let url = VideoProjectLibrary.url(for: id, in: folder)
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard var p = VideoProjectLibrary.read(url) else { return }
+            let note = Self.relink(&p)
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.currentID == nil else { return }   // nel frattempo hai aperto altro: si lascia stare
+                self.openProject(id, undo: nil, prepared: (p, note))
+                AppState.shared.videoMode = .montage
+                if crashed, let at = self.savedAt {
+                    let name = VideoProjectLibrary.displayName(self.project)
+                    let time = at.formatted(date: .omitted, time: .shortened)
+                    self.notice = String(localized: "OrbitLR si è chiusa all’improvviso. «\(name)» è com’era alle \(time).")
+                }
+            }
         }
     }
 }
