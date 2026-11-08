@@ -81,6 +81,7 @@ jobs:
 
       - name: Prove del motore (con l'ffmpeg di Windows)
         working-directory: Windows
+        timeout-minutes: 35
         env:
           ORBIT_MOTORI: ${{ github.workspace }}\Windows\src-tauri\motori
           ORBIT_WHISPER: ${{ github.workspace }}\Windows\src-tauri\motori\voce\whisper-cli.exe

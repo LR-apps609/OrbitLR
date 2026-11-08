@@ -178,6 +178,9 @@ pub fn handoff(setup: &Path, exe: &Path, wait_secs: u32) -> std::process::Comman
     let mut c = std::process::Command::new("cmd");
     // /S: cmd toglie solo le virgolette esterne e lascia intatte quelle dei percorsi
     c.args(["/D", "/S", "/C"]).raw_arg(format!("\"{script}\""));
+    // 2.0.1 · Nessun canale ereditato: OrbitLR riaperta (o chi la chiama) non tiene aperti i flussi di chi l'ha avviata
+    // (nelle prove automatiche teneva aperta la pipe di «tee» e la prova restava ferma 90 minuti).
+    c.stdin(std::process::Stdio::null()).stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null());
     c
 }
 

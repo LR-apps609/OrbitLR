@@ -12,9 +12,16 @@ fn dir(name: &str) -> PathBuf {
     d
 }
 
-/// Un .cmd che scrive i suoi argomenti in `segno` e poi esce con `code`.
+/// Un .cmd che scrive i suoi argomenti in `segno` e poi esce con `code` (finto installatore, chiamato e atteso).
 fn script(at: &Path, segno: &str, code: i32) -> PathBuf {
     std::fs::write(at, format!("@echo off\r\necho %* > \"%~dp0{segno}\"\r\nexit /b {code}\r\n")).unwrap();
+    at.to_path_buf()
+}
+
+/// Finta OrbitLR, aperta con «start»: deve chiudere del tutto la sua finestra di cmd (`exit`, non `exit /b`),
+/// altrimenti resta un cmd aperto per sempre e la prova automatica non finisce.
+fn finta_app(at: &Path, segno: &str) -> PathBuf {
+    std::fs::write(at, format!("@echo off\r\necho %* > \"%~dp0{segno}\"\r\nexit\r\n")).unwrap();
     at.to_path_buf()
 }
 
@@ -35,7 +42,7 @@ fn wait_for(p: &Path, secs: u64) -> Option<String> {
 fn installatore_riuscito_poi_orbitlr_si_riapre() {
     let d = dir("ok");
     let setup = script(&d.join("OrbitLR Setup.cmd"), "installato.txt", 0);
-    let exe = script(&d.join("orbitlr finta.cmd"), "riaperta.txt", 0);
+    let exe = finta_app(&d.join("orbitlr finta.cmd"), "riaperta.txt");
     let st = orbit_engine::update::handoff(&setup, &exe, 0).status().unwrap();
     assert!(st.success(), "cmd: {st:?}");
     assert!(wait_for(&d.join("installato.txt"), 20).expect("l'installatore non è partito").contains("/S"));
@@ -48,7 +55,7 @@ fn installatore_riuscito_poi_orbitlr_si_riapre() {
 fn installatore_non_riuscito_orbitlr_si_riapre_e_lo_dice() {
     let d = dir("errore");
     let setup = script(&d.join("OrbitLR Setup.cmd"), "installato.txt", 2);
-    let exe = script(&d.join("orbitlr finta.cmd"), "riaperta.txt", 0);
+    let exe = finta_app(&d.join("orbitlr finta.cmd"), "riaperta.txt");
     let _ = orbit_engine::update::handoff(&setup, &exe, 0).status().unwrap();
     assert!(wait_for(&d.join("installato.txt"), 20).is_some(), "l'installatore non è partito");
     let args = wait_for(&d.join("riaperta.txt"), 20).expect("OrbitLR non si è riaperta");
