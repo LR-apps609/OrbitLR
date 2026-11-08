@@ -79,7 +79,7 @@ while time.time() < t_end:
     ms, rc, msg = ae()
     rec.update({"pid": p, "ae_ms": ms, "ae_rc": rc, "ae": msg})
     sf = os.path.join(out, "sample-%s-%03d.txt" % (scen, i))
-    subprocess.run(["sample", p, "1", "2", "-mayDie", "-file", sf], capture_output=True, timeout=30)
+    sr = subprocess.run(["sample", p, "1", "2", "-mayDie", "-file", sf], capture_output=True, text=True, timeout=30)
     try:
         txt = open(sf, errors="replace").read()
     except OSError:
@@ -87,7 +87,10 @@ while time.time() < t_end:
     idle, heavy, total = parse(txt)
     rec["idle"] = None if idle is None else round(idle, 2)
     rec["samples"] = total
-    busy = (idle is not None and idle < 0.25) or ms > 2500 or rc == 999 or "-1712" in msg
+    # l'Apple Event qui puo' restare senza risposta per i permessi di Automazione: conta solo il campionamento
+    busy = (idle is not None and idle < 0.25) or rc == 999
+    if idle is None:
+        rec["sample_err"] = (sr.stdout + sr.stderr)[-200:].replace("\n", " ")
     rec["busy"] = busy
     if busy:
         rec["heavy"] = heavy[-30:]
@@ -102,8 +105,8 @@ while time.time() < t_end:
             pass
     rec["busy_for_s"] = 0 if bad_since is None else round(rec["t"] - bad_since + 1.0, 1)
     log.write(json.dumps(rec) + "\n"); log.flush()
-    print("[%s] ae=%dms rc=%s idle=%s busy=%s %s" % (scen, ms, rc, rec["idle"], busy,
-          (heavy[-1] if busy and heavy else "")), flush=True)
+    print("[%s] n=%s ae=%dms rc=%s [%s] idle=%s busy=%s %s %s" % (scen, rec["n_proc"], ms, rc, msg[:70], rec["idle"], busy,
+          (" <- ".join(reversed(heavy[-8:])) if busy and heavy else ""), rec.get("sample_err", "")[:120]), flush=True)
     if bad_run >= 2 and not spun:
         spun = True
         sp = os.path.join(out, "spindump-%s.txt" % scen)

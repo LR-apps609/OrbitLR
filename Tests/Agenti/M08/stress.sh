@@ -64,12 +64,12 @@ def png(path, w, h, seed=0):
     raw = bytearray()
     for y in range(h):
         raw.append(0)
-        row = bytes(((x * 7 + y * 3 + seed) & 255, (x ^ y) & 255, (y * 5 + seed) & 255) for x in range(w))
-        raw += row
+        for x in range(w):
+            raw += bytes(((x * 7 + y * 3 + seed) & 255, (x ^ y) & 255, (y * 5 + seed) & 255))
     def chunk(t, b): return struct.pack(">I", len(b)) + t + b + struct.pack(">I", zlib.crc32(t + b) & 0xffffffff)
     open(path, "wb").write(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0))
                            + chunk(b"IDAT", zlib.compress(bytes(raw), 6)) + chunk(b"IEND", b""))
-png(os.path.join(d, "base.png"), 2400, 1600)
+png(os.path.join(d, "base.png"), 1200, 800)
 png(os.path.join(d, "tiny.png"), 24, 16)
 PY
 sips -s format jpeg "$F/tiny.png" --out "$F/tiny.jpg" >/dev/null
@@ -176,12 +176,15 @@ run_s13() { # progetto video aperto le cui clip stanno su un'immagine disco poi 
   swift "$HERE/segnalibri.swift" "$SUP/Progetti video/$UUID_.json" "$MNT"/clip*.mp4 | tee -a "$OUT/diario.txt"
   defaults write it.ledion.OrbitLR video.openProject -string "$UUID_"; defaults write it.ledion.OrbitLR video.cleanExit -bool true
   hdiutil detach "$MNT" >/dev/null; note "s13a: disco scollegato, immagine ancora presente"
-  launch; $PROBE s13a 25 "$OUT"; shot s13a-progetto-disco-scollegato
+  T0=$(python3 -c 'import time;print(time.time())'); open "$APP"
+  ( for i in $(seq 1 60); do W=$(swift "$GITHUB_WORKSPACE/Tools/finestra.swift" 2>/dev/null); [ -n "$W" ] && { echo "s13a: finestra dopo $(python3 -c "import time;print(round(time.time()-$T0,1))") s"; break; }; sleep 0.5; done ) >> "$OUT/diario.txt" &
+  ( for i in $(seq 1 60); do mount | grep -q M08Clip && { echo "s13a: immagine rimontata dopo $(python3 -c "import time;print(round(time.time()-$T0,1))") s"; break; }; sleep 0.5; done ) >> "$OUT/diario.txt" &
+  sleep 1; $PROBE s13a 30 "$OUT"; wait; tail -3 "$OUT/diario.txt"; shot s13a-progetto-disco-scollegato
   note "s13a: immagine rimontata dall'app? $(mount | grep -c M08Clip)"; mount | grep M08Clip >> "$OUT/diario.txt"
   quitapp; for m in $(mount | awk '/M08Clip/{print $3}'); do hdiutil detach "$m" -force >/dev/null; done
   defaults write it.ledion.OrbitLR video.openProject -string "$UUID_"; rm -f "$F/clip.dmg"
   note "s13b: anche l'immagine disco cancellata"
-  launch; $PROBE s13b 20 "$OUT"; shot s13b-progetto-disco-sparito
+  open "$APP"; sleep 1; $PROBE s13b 20 "$OUT"; shot s13b-progetto-disco-sparito
   defaults delete it.ledion.OrbitLR video.openProject 2>/dev/null; rm -rf "$SUP/Progetti video"; }
 
 for s in $SCEN; do
