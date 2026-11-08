@@ -269,11 +269,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 
     /// 3.5 · La prima volta che chiudi la finestra: OrbitLR resta pronta in alto, e lo dice (una volta sola).
-    static func windowClosed() {
+    /// 6.0.3 · Non durante l'avvio per un aggiornamento (doppio clic sul .orbitlr): lì la finestra si chiude da sola,
+    /// e l'avviso prendeva il posto della domanda «Installare OrbitLR?». Né per una finestra mai mostrata.
+    static func windowClosed(_ w: NSWindow? = nil) {
         let key = "closeNoticeShown"
-        guard !UserDefaults.standard.bool(forKey: key), !Updater.shared.busy else { return }
-        UserDefaults.standard.set(true, forKey: key)
+        guard !UserDefaults.standard.bool(forKey: key), !Updater.shared.busy, !LaunchGate.holding,
+              (w?.alphaValue ?? 1) > 0.5 else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            // Nel frattempo è partito un aggiornamento, o la finestra è tornata: niente avviso (e resta da mostrare)
+            guard !Updater.shared.busy, !Updater.shared.hasWindow, !(w?.isVisible ?? false),
+                  !UserDefaults.standard.bool(forKey: key) else { return }
+            UserDefaults.standard.set(true, forKey: key)
             let a = NSAlert()
             a.messageText = String(localized: "OrbitLR resta pronta")
             a.informativeText = String(localized: "La trovi nella barra in alto: ⌥⌘C sui file nel Finder, o trascinali sull’icona. Per chiuderla del tutto: ⌘Q.")
