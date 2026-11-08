@@ -10,6 +10,8 @@ Novità per Windows 2.0.1:
 • Cartelle automatiche: se la cartella sparisce per un attimo (disco di rete, chiavetta, sincronizzazione) i file già fatti non vengono rifatti
 • La finestra resta pronta anche mentre parte un lavoro, si salvano le Cartelle automatiche o si manda un file al telefono
 • Per chi installa adesso: la linguetta sul bordo dello schermo è spenta (si accende in Opzioni → Aspetto) e «Lo sapevi?» compare solo nei primi 3 giorni. Chi usava già OrbitLR tiene le sue scelte
+• Le prime schermate di benvenuto e le altre finestre di dialogo non escono più dallo schermo su portatili piccoli o con la scala alta: i pulsanti si vedono sempre
+• Con la tastiera: Tab resta dentro la finestra di dialogo aperta; la firma del PDF si chiude con Esc
 
 What’s new in Windows 2.0.1:
 • The window always fits on the screen: on laptops and displays with Windows scaling at 125%, 150%, 175% or 200% it opened taller than the free space, and Settings, Help and Report ended up under the taskbar
@@ -23,6 +25,8 @@ What’s new in Windows 2.0.1:
 • Watch folders: if the folder disappears for a moment (network drive, USB stick, syncing), files already done aren’t done again
 • The window stays responsive while a job starts, watch folders are saved or a file is sent to the phone
 • For new installs: the tab on the edge of the screen is off (turn it on in Settings → Appearance) and “Did you know?” only appears during the first 3 days. Existing users keep their settings
+• The welcome screens and other dialogs no longer run off the screen on small laptops or high scaling: the buttons are always visible
+• Keyboard: Tab stays inside the open dialog; the PDF signature closes with Esc
 
 Novità per Windows 2.0 «Notte e oro»:
 • Un volto nuovo, lo stesso dell'app per Mac 6.0: verde foresta, carta chiara e oro. La barra laterale è foresta anche di giorno e la sezione scelta si accende d'oro
