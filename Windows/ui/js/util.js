@@ -129,6 +129,20 @@ if (typeof document !== "undefined") document.addEventListener("keydown", (e) =>
   u.fn();
 }, true);
 
+// 2.0.1 · Tab resta dentro il dialogo aperto (quello più in alto): il fuoco non finisce più sugli elementi coperti dietro
+const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+if (typeof document !== "undefined") document.addEventListener("keydown", (e) => {
+  if (e.key !== "Tab") return;
+  const top = [...document.querySelectorAll(".modal-bg")].pop();
+  if (!top) return;
+  const list = [...top.querySelectorAll(FOCUSABLE)].filter((el) => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden");
+  if (!list.length) { e.preventDefault(); return; }
+  const first = list[0], last = list[list.length - 1], a = document.activeElement;
+  if (!top.contains(a)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+  else if (e.shiftKey && a === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && a === last) { e.preventDefault(); first.focus(); }
+}, true);
+
 /**
  * Una domanda. Pulsanti: { label, value, primary, danger, focus }.
  * Il pulsante scelto con Invio non è mai quello che butta via qualcosa (danger); Esc risponde null.

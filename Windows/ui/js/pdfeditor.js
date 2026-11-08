@@ -228,8 +228,12 @@ async function openEditor(file, stillHere) {
     cv.addEventListener("pointermove", (e) => { if (!drawing) return; const p = pos(e); ctx.beginPath(); ctx.moveTo(...last); ctx.lineTo(...p); ctx.stroke(); last = p; any = true; });
     cv.addEventListener("pointerup", () => (drawing = false));
     const wrap = h("div.modal-bg");
+    // 2.0.1 · Esc chiude (come «Annulla») e il fuoco entra nel dialogo
+    const esc = (e) => { if (e.key === "Escape" && wrap.isConnected && [...document.querySelectorAll(".modal-bg")].pop() === wrap) { e.preventDefault(); e.stopImmediatePropagation(); done(false); } };
+    document.addEventListener("keydown", esc, true);
     const done = (ok) => {
       wrap.remove();
+      document.removeEventListener("keydown", esc, true);
       if (!ok || !any) return;
       // Solo la parte disegnata, con lo sfondo trasparente
       const d = ctx.getImageData(0, 0, cv.width, cv.height).data;
@@ -248,6 +252,7 @@ async function openEditor(file, stillHere) {
       h("div.row", h("button.btn", { onclick: () => { ctx.clearRect(0, 0, cv.width, cv.height); any = false; } }, t("Cancella")), h("div", { style: { flex: 1 } }),
         h("button.btn", { onclick: () => done(false) }, t("Annulla")), h("button.btn.primary", { onclick: () => done(true) }, t("Usa questa firma")))));
     document.body.append(wrap);
+    wrap.querySelector(".btn.primary")?.focus();
   }
 
   function setMode(m) {
