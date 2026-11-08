@@ -1,6 +1,6 @@
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView 1
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\modelli 1
-C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\in-uso 4
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\in-uso 3
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\AutoLaunchProtocolsComponent 1
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\CertificateRevocation 1
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\component_crx_cache 1
@@ -19,11 +19,11 @@ C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Trust Protection 
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\TrustTokenKeyCommitments 1
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\WidevineCdm 1
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Last Version 13
-C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Local State 9182
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Local State 9954
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Variations 85
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\VariationsRuntimeSeedV2 333
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\VariationsSafeSeedV2 11
-C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\VariationsSeedV2 1400
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\VariationsSeedV2 1402
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\component_crx_cache\metadata.json 13
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Crashpad\attachments 1
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Crashpad\reports 1
@@ -62,7 +62,7 @@ C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\BookmarkM
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\declarative_performance_observer.db 32768
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\declarative_performance_observer.db-journal 0
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\DIPS 36864
-C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\DIPS-wal 263712
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\DIPS-wal 131872
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\ExtensionActivityEdge 32768
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\ExtensionActivityEdge-journal 0
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Favicons 20480
@@ -79,12 +79,12 @@ C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Login Dat
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Login Data-journal 0
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Network Action Predictor 53248
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Network Action Predictor-journal 0
-C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Preferences 10632
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Preferences 10631
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\README 182
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Secure Preferences 9856
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\ServerCertificate 20480
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\ServerCertificate-journal 0
-C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\settings_diagnostic.log 165670
+C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\settings_diagnostic.log 166056
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Top Sites 20480
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Top Sites-journal 0
 C:\Users\runneradmin\AppData\Local\it.ledion.orbitlr\EBWebView\Default\Vpn Tokens 28672
