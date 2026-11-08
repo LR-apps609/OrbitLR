@@ -350,7 +350,7 @@ jobs:
           t 20 screencapture -x "$OUT/primo-avvio/benvenuto-schermo.png"
           W=$(t 20 /tmp/finestra --tutte); say "--- finestra di benvenuto: ${W:-nessuna}"
           [ -n "$W" ] && t 20 screencapture -x -o -l"${W%% *}" "$OUT/primo-avvio/benvenuto.png"
-          pgrep -x OrbitLR >/dev/null && t 15 osascript -e 'quit app "OrbitLR"'; sleep 3; pkill -x OrbitLR; sleep 1
+          pgrep -x OrbitLR >/dev/null && t 15 osascript -e 'quit app "OrbitLR"'; sleep 3; pkill -x OrbitLR || true; sleep 1
           xattr -dr com.apple.quarantine /Applications/OrbitLR.app
           exit 0
 
@@ -386,7 +386,7 @@ jobs:
             local W; W=$(/tmp/finestra || true); echo "$1: ${W:-nessuna finestra}" | tee -a "$OUT/mac.txt"
             [ -n "$W" ] && screencapture -x -o -l"${W%% *}" "$OUT/$1.png"
           }
-          reopen() { t 20 osascript -e 'quit app "OrbitLR"' || pkill -x OrbitLR || true; sleep 3; pkill -x OrbitLR; open /Applications/OrbitLR.app; sleep 15; }
+          reopen() { t 20 osascript -e 'quit app "OrbitLR"' || pkill -x OrbitLR || true; sleep 3; pkill -x OrbitLR || true; open /Applications/OrbitLR.app; sleep 15; }
           frame() { for k in "NSWindow Frame main" "NSWindow Frame SwiftUI.main" "NSWindow Frame OrbitLR"; do defaults write $D "$k" "$1"; done; }
           shot finestra
           screencapture -x "$OUT/schermo.png" || true
@@ -401,7 +401,7 @@ jobs:
           screencapture -x "$OUT/schermo-dock-sinistra.png" || true
           defaults write com.apple.dock orientation bottom; killall Dock || true
           # 6.0.3 · L'avviso dopo un problema: si finge una chiusura di colpo (il file «in-corso» resta) e si riapre
-          t 20 osascript -e 'quit app "OrbitLR"' || pkill -x OrbitLR || true; sleep 3; pkill -x OrbitLR
+          t 20 osascript -e 'quit app "OrbitLR"' || pkill -x OrbitLR || true; sleep 3; pkill -x OrbitLR || true
           S="$HOME/Library/Application Support/LRConverter"; mkdir -p "$S"
           printf 'avviata: prova · OrbitLR prova · avvio normale\nstava facendo: scheda: Conversione\n' > "$S/in-corso.txt"
           open /Applications/OrbitLR.app; sleep 15
