@@ -34,12 +34,12 @@ jobs:
       - name: Motori dentro l'app (ffmpeg LGPL)
         run: |
           # Sempre lo stesso file, controllato con l'impronta scritta nel progetto: se cambia, ci si ferma
-          curl -fL --retry 3 -o motori-1.zip https://github.com/LR-apps609/OrbitLR/releases/download/motori-1/motori-1.zip
+          curl -fL --retry 3 -o motori-2.zip https://github.com/LR-apps609/OrbitLR/releases/download/motori-2/motori-2.zip
           shasum -a 256 -c Tools/motori.sha256
-          rm -rf Resources/Motori && ditto -x -k motori-1.zip Resources
+          rm -rf Resources/Motori && ditto -x -k motori-2.zip Resources
           for b in Resources/Motori/ffmpeg Resources/Motori/ffprobe; do codesign -f -s - --options runtime "$b"; done
           ./Resources/Motori/ffmpeg -hide_banner -version | head -n 1
-          rm -f motori-1.zip
+          rm -f motori-2.zip
 
       - name: Motore del vettoriale (orbit-vector, lo stesso di Windows; Apple Silicon e Intel)
         run: |
