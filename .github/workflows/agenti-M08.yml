@@ -46,7 +46,7 @@ jobs:
           sw_vers; uname -m; sysctl -n machdep.cpu.brand_string hw.ncpu hw.memsize
           if [ "${{ matrix.build }}" = "602" ]; then
             curl -fsSL -o o.orbitlr https://github.com/LR-apps609/OrbitLR/releases/download/v6.0.2/OrbitLR.6.0.2.orbitlr
-            ditto -x -k o.orbitlr x && ditto x/Prebuilt/OrbitLR.app /Applications/OrbitLR.app
+            ditto -x -k o.orbitlr x && A=$(find x -maxdepth 4 -name OrbitLR.app -type d -path "*Prebuilt*" | head -1) && echo "app: $A" && ditto "$A" /Applications/OrbitLR.app
           else
             mkdir -p dist && tar -C dist -xf pacchetto.tar && ditto dist/OrbitLR/Prebuilt/OrbitLR.app /Applications/OrbitLR.app
           fi
