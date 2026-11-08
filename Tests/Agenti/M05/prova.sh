@@ -116,6 +116,7 @@ installa() { # installa <versione>: come un utente che ha già usato l'app (nien
   defaults write $D lastLaunchVersion -string "$v"
   defaults write $D updateAutoCheck -bool false
   defaults write $D AppleLanguages -array it-IT it
+  defaults write $D closeNoticeShown -bool true   # l'avviso «OrbitLR resta pronta» già visto (come un utente vero)
   : > ~/Library/Logs/LRConverter.log 2>/dev/null
   rm -f ~/Library/Logs/OrbitLR-aggiornamento.log
   say "installata $(versione) in $APP"
@@ -239,6 +240,8 @@ seq_file() { # file <da> <a> <aperta|chiusa>: doppio clic sul file .orbitlr scar
     shot "$n-1-domanda"; mini "$n-1-domanda"; clicca "Installa" "Install"
   else
     shot "$n-1-nessuna-domanda"; mini "$n-1-nessuna-domanda"; diag "$n-1-nessuna-domanda"
+    clicca "Va bene" "OK"
+    if aspetta_testo "Installare OrbitLR|Install OrbitLR|<Installa>|<Install>" 40; then shot "$n-1b-domanda"; mini "$n-1b-domanda"; clicca "Installa" "Install"; fi
     sample OrbitLR 2 -file "$OUT/$n-sample.txt" >/dev/null 2>&1; grep -A25 -m1 "Thread_.*DispatchQueue_1\|com.apple.main-thread" "$OUT/$n-sample.txt" | cut -c1-200 | sed 's/^/  main: /'
   fi
   sleep 4; shot "$n-2-schedina"; mini "$n-2-schedina"; diag "$n-2-schedina"

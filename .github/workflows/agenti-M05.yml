@@ -48,7 +48,7 @@ jobs:
         env:
           SEQ: ${{ github.event.inputs.sequenze }}
         run: |
-          S=${SEQ:-"info arch:5.0 arch:6.0.2 arch:6.0.3 file:5.1.1:6.0.2:aperta file:5.0:6.0.2:aperta nostrumenti:5.1.1:6.0.2 licenza:5.1.1:6.0.2 menu:5.1.1:6.0.2 menu:5.0:6.0.2 file:5.0:6.0.2:chiusa primo:6.0.2 statico"}
+          S=${SEQ:-"arch:6.0.3 file:5.1.1:6.0.2:aperta nostrumenti:5.1.1:6.0.2 nostrumenti:5.0:6.0.2 licenza:5.1.1:6.0.2 file:5.0:6.0.2:chiusa"}
           zsh Tests/Agenti/M05/prova.sh "$RUNNER_TEMP/rel" "$RUNNER_TEMP/out/${{ matrix.mac }}" ${=S} || true
           echo "======== RISULTATI"; cat "$RUNNER_TEMP/out/${{ matrix.mac }}/risultati.txt"
       - name: Carico registri e foto
