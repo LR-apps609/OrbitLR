@@ -290,6 +290,9 @@ jobs:
       - name: Motore che sbaglia, è lento o non risponde (prova dell'interfaccia con un finto Tauri)
         if: matrix.schermo == '1920x1080@100'
         run: node --test Tools/prova-errori-windows.mjs
+      - name: Benvenuto su schermi piccoli e scala alta (pulsanti dentro la finestra)
+        if: matrix.schermo == '1920x1080@100'
+        run: node Tools/prova-benvenuto-windows.mjs
       - name: Foto e controllo
         run: |
           N=$(echo "${{ matrix.schermo }}" | tr '@' '-')
