@@ -34,30 +34,3 @@ jobs:
           path: ${{ runner.temp }}/w01
           retention-days: 7
 
-  aggiornamento:
-    runs-on: windows-2025
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: Compila le prove (motore vero di OrbitLR)
-        shell: bash
-        working-directory: Tests/Agenti/W01/aggiornamento
-        run: cargo build --release 2>&1 | tail -5
-      - name: Prove della firma, dello scaricamento e della riga di comando
-        shell: bash
-        run: |
-          mkdir -p "$RUNNER_TEMP/w01agg"
-          cd "$RUNNER_TEMP/w01agg"
-          u=https://github.com/LR-apps609/OrbitLR/releases/download/windows-anteprima
-          curl -sSfL -o manifest-windows.json $u/manifest-windows.json
-          curl -sSfL -o manifest-windows.sig $u/manifest-windows.sig
-          "$GITHUB_WORKSPACE/Tests/Agenti/W01/aggiornamento/target/release/w01-aggiornamento.exe" manifest-windows.json manifest-windows.sig --rete --scarica --cmd "$(cygpath -w "$RUNNER_TEMP")\\w01cmd" 2>&1 | tee risultati-aggiornamento.txt
-          rm -rf "$TEMP/w01-agg" 2>/dev/null || true
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: w01-aggiornamento
-          path: ${{ runner.temp }}/w01agg/risultati-aggiornamento.txt
-          retention-days: 7

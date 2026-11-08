@@ -158,6 +158,7 @@ function EsciDalVassoio([string]$nome) {
 function AspettaChiusura([int]$sec) { for ($i = 0; $i -lt $sec * 2; $i++) { if (-not (Procs).Count) { return [math]::Round($i / 2, 1) }; Start-Sleep -Milliseconds 500 }; return -1 }
 
 function Installa([string]$nome, [string]$modo = "diretto") {
+  Log "Installa $nome ($modo) · orbitlr vivi: $((Procs).Count)"
   $t0 = Get-Date
   if ($modo -eq "runas") {
     & runas.exe /trustlevel:0x20000 "`"$Setup`" /S" 2>&1 | ForEach-Object { Log "runas: $_" }
@@ -169,9 +170,14 @@ function Installa([string]$nome, [string]$modo = "diretto") {
   }
   if ($modo -ne "runas") {
     $p = Start-Process -FilePath $Setup -ArgumentList "/S" -PassThru
-    $fin = $p.WaitForExit(300000)
-    $code = if ($fin) { $p.ExitCode } else { "FERMO dopo 5 min" }
-    if (-not $fin) { Foto "$nome-installazione-ferma"; $p | Stop-Process -Force }
+    $fin = $false
+    for ($i = 0; $i -lt 120; $i++) {
+      Start-Sleep -Seconds 1
+      if ($p.HasExited) { $fin = $true; break }
+      if ($i -eq 20 -or $i -eq 60) { Foto "$nome-installazione-$($i)s"; Log "$nome · installatore ancora aperto dopo $i s · finestre: $([W]::Titles([uint32]$p.Id)) · orbitlr vivi: $((Procs).Count)" }
+    }
+    $code = if ($fin) { $p.ExitCode } else { "FERMO dopo 120 s" }
+    if (-not $fin) { Foto "$nome-installazione-ferma"; Log "$nome · FERMO · finestre: $([W]::Titles([uint32]$p.Id))"; Get-Process OrbitLR-Setup -ErrorAction SilentlyContinue | Stop-Process -Force }
     for ($i = 0; $i -lt 30 -and (Get-Process OrbitLR-Setup -ErrorAction SilentlyContinue); $i++) { Start-Sleep -Seconds 2 }
   }
   $sec = [math]::Round(((Get-Date) - $t0).TotalSeconds, 1)
@@ -181,6 +187,7 @@ function Installa([string]$nome, [string]$modo = "diretto") {
 }
 
 # ════════ 0. Il computer e WebView2
+Log "FASE 0: Il computer e WebView2"
 $os = Get-CimInstance Win32_OperatingSystem
 Info "sistema" "$($os.Caption) $($os.Version) · $env:PROCESSOR_ARCHITECTURE · cultura $((Get-Culture).Name) · interfaccia $((Get-UICulture).Name)"
 $wvKeys = "HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}", "HKLM:\SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}", "HKCU:\SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
@@ -190,6 +197,7 @@ Stato "0-prima" | Out-Null
 Set-Content -Path "$Setup" -Stream Zone.Identifier -Value "[ZoneTransfer]`r`nZoneId=3`r`nHostUrl=https://github.com/LR-apps609/OrbitLR/releases/" -Encoding ascii
 
 # ════════ 1. Installazione per l'utente, senza amministratore, in silenzio
+Log "FASE 1: Installazione per l'utente, senza amministratore, in silenzio"
 $ok = Installa "1-installazione" "runas"
 Esito "installazione silenziosa per l'utente" $ok
 $s = Stato "1-installata"
@@ -200,6 +208,7 @@ if (Test-Path $Dove) { Get-ChildItem $Dove -Recurse | ForEach-Object { "$($_.Ful
 if (-not $ok) { Foto "installazione-fallita"; exit 1 }
 
 # ════════ 2. Primo avvio
+Log "FASE 2: Primo avvio"
 $p = Apri "2-primo-avvio" 40
 Esito "primo avvio: finestra OrbitLR aperta" ([W]::Main([uint32]$p.Id) -ne [IntPtr]::Zero)
 Esito "primo avvio: segno «in uso» creato" (Test-Path $Segno)
@@ -208,6 +217,7 @@ Foto "2-primo-avvio-50s"
 Get-ChildItem $Dati -Recurse -Depth 1 -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName.Replace($env:USERPROFILE, '%USERPROFILE%') } | Set-Content (Join-Path $Out "dati-dopo-primo-avvio.txt") -Encoding utf8
 
 # ════════ 3. Chiudi dal vassoio («Esci»)
+Log "FASE 3: Chiudi dal vassoio («Esci»)"
 $trovata = EsciDalVassoio "3-vassoio"
 $t = AspettaChiusura 12
 Foto "3-vassoio-3-dopo"
@@ -223,6 +233,7 @@ Esito "chiusura dal vassoio: segno «in uso» tolto" (-not (Test-Path $Segno))
 Ferma
 
 # ════════ 4. Riapertura e chiusura con la ✕ (WM_CLOSE)
+Log "FASE 4: Riapertura e chiusura con la ✕ (WM_CLOSE)"
 $p = Apri "4-riapertura" 30
 Esito "riapertura: finestra OrbitLR" ([W]::Main([uint32]$p.Id) -ne [IntPtr]::Zero)
 $h = [W]::Main([uint32]$p.Id)
@@ -234,6 +245,7 @@ Info "chiusura con la ✕" "chiusa dopo $t s · segno in-uso $(Test-Path $Segno)
 Ferma
 
 # ════════ 5. Chiusura improvvisa (processo ucciso) e riapertura
+Log "FASE 5: Chiusura improvvisa (processo ucciso) e riapertura"
 $p = Apri "5a-prima-di-uccidere" 30
 Stop-Process -Id $p.Id -Force; Start-Sleep -Seconds 2
 Esito "dopo un'uccisione il segno «in uso» resta (rilevamento chiusura improvvisa)" (Test-Path $Segno)
@@ -241,25 +253,16 @@ $p = Apri "5b-dopo-uccisione" 30
 Esito "si riapre dopo una chiusura improvvisa" ([W]::Main([uint32]$p.Id) -ne [IntPtr]::Zero)
 
 # ════════ 6. Una sola OrbitLR: seconda apertura con un file
+Log "FASE 6: Una sola OrbitLR: seconda apertura con un file"
 $f = Join-Path $env:USERPROFILE "Documents\Prova è W01.txt"; "ciao" | Set-Content $f -Encoding utf8
 Start-Process -FilePath $Exe -ArgumentList "`"$f`"" | Out-Null
 Start-Sleep -Seconds 6
 Foto "6-seconda-apertura"
 Esito "una sola OrbitLR aperta dopo la seconda apertura" ((Procs).Count -eq 1) "$((Procs).Count) processi orbitlr"
 
-# ════════ 7. Reinstallazione sopra sé stessa con OrbitLR APERTA
-$prima = (Get-Item $Exe).LastWriteTime
-$ok = Installa "7-reinstallazione-con-app-aperta" "diretto"
-Start-Sleep -Seconds 3
-Foto "7-dopo-reinstallazione-aperta"
-Info "reinstallazione con app aperta" "processi orbitlr dopo: $((Procs).Count) · exe riscritto: $((Get-Item $Exe -ErrorAction SilentlyContinue).LastWriteTime -ne $prima)"
-Esito "reinstallazione con OrbitLR aperta: exe al suo posto" $ok
-Ferma
-$p = Apri "7b-apre-dopo-reinstallazione" 30
-Esito "si apre dopo la reinstallazione (con app aperta)" ([W]::Main([uint32]$p.Id) -ne [IntPtr]::Zero)
-Ferma
-
 # ════════ 8. Reinstallazione con OrbitLR chiusa
+Log "FASE 8: Reinstallazione con OrbitLR chiusa"
+Ferma
 $ok = Installa "8-reinstallazione-app-chiusa" "diretto"
 Esito "reinstallazione con OrbitLR chiusa" $ok
 $p = Apri "8b-apre" 30
@@ -267,6 +270,7 @@ Esito "si apre dopo la reinstallazione (app chiusa)" ([W]::Main([uint32]$p.Id) -
 Ferma
 
 # ════════ 9. Disinstallazione silenziosa e residui
+Log "FASE 9: Disinstallazione silenziosa e residui"
 $un = Get-ChildItem HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall | Get-ItemProperty | Where-Object { $_.DisplayName -like "OrbitLR*" } | Select-Object -First 1
 Info "disinstallatore" "$($un.UninstallString.Replace($env:USERPROFILE, '%USERPROFILE%')) · QuietUninstallString $(if ($un.QuietUninstallString) { 'sì' } else { 'no' }) · EstimatedSize $($un.EstimatedSize) KB"
 $uexe = ($un.UninstallString -replace '^"([^"]+)".*', '$1')
@@ -284,6 +288,7 @@ Esito "disinstallazione: collegamenti tolti" (($s -match "^collegamenti: no").Co
 Info "residui dopo la disinstallazione" (($s | Where-Object { $_ -match "C'È|chiavi" }) -join " ; ")
 
 # ════════ 10. Reinstallazione dopo la disinstallazione
+Log "FASE 10: Reinstallazione dopo la disinstallazione"
 $ok = Installa "10-reinstallazione-dopo-disinstallazione" "runas"
 $p = Apri "10b-apre" 30
 Esito "reinstallata e aperta dopo la disinstallazione" ($ok -and [W]::Main([uint32]$p.Id) -ne [IntPtr]::Zero)
@@ -291,6 +296,7 @@ Ferma
 $ff = Join-Path $Dove "motori\ffmpeg.exe"
 
 # ════════ 11. Utente con spazi e accenti
+Log "FASE 11: Utente con spazi e accenti"
 $nomeU = "Nicolò De Santis"
 $pw = "W1!" + [guid]::NewGuid().ToString("N").Substring(0, 16) + "aZ"
 $sec = ConvertTo-SecureString $pw -AsPlainText -Force
@@ -344,6 +350,7 @@ try {
 } catch { Info "utente con accenti" "non riuscito: $_" }
 
 # ════════ 12. WebView2 «mancante»: l'installatore lo va a prendere?
+Log "FASE 12: WebView2 «mancante»: l'installatore lo va a prendere?"
 $bk = Join-Path $Out "webview2-chiavi"
 New-Item -ItemType Directory -Force -Path $bk | Out-Null
 $i = 0
@@ -369,6 +376,24 @@ Ferma
 # Rimette le chiavi se il programma di Microsoft non le ha ricreate
 foreach ($r in Get-ChildItem $bk -Filter *.reg) { & reg.exe import $r.FullName 2>&1 | Out-Null }
 
+Ferma
+Installa "7-0-prima" "diretto" | Out-Null
+$p = Apri "7-0-app-aperta" 30
+# ════════ 7. Reinstallazione sopra sé stessa con OrbitLR APERTA
+Log "FASE 7: Reinstallazione sopra sé stessa con OrbitLR APERTA"
+$prima = (Get-Item $Exe).LastWriteTime
+$ok = Installa "7-reinstallazione-con-app-aperta" "diretto"
+Start-Sleep -Seconds 3
+Foto "7-dopo-reinstallazione-aperta"
+Info "reinstallazione con app aperta" "processi orbitlr dopo: $((Procs).Count) · exe riscritto: $((Get-Item $Exe -ErrorAction SilentlyContinue).LastWriteTime -ne $prima)"
+Esito "reinstallazione con OrbitLR aperta: exe al suo posto" $ok
+Ferma
+Get-Process OrbitLR-Setup -ErrorAction SilentlyContinue | Stop-Process -Force
+$p = Apri "7b-apre-dopo-reinstallazione" 30
+Esito "si apre dopo la reinstallazione (con app aperta)" ([W]::Main([uint32]$p.Id) -ne [IntPtr]::Zero)
+Ferma
+
+Ferma
 Get-WinEvent -FilterHashtable @{ LogName = "Application"; Level = 1, 2; StartTime = (Get-Date).AddHours(-1) } -ErrorAction SilentlyContinue |
   Where-Object { $_.Message -match "orbitlr|msedgewebview2|OrbitLR" } | Select-Object -First 20 |
   ForEach-Object { "$($_.TimeCreated) $($_.ProviderName) $($_.Id): $(($_.Message -split "`n" | Select-Object -First 6) -join ' ')" } | Set-Content (Join-Path $Out "errori-windows.txt") -Encoding utf8
