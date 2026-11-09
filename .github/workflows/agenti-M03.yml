@@ -33,7 +33,7 @@ jobs:
         if: steps.b.outputs.build == '6.0.3'
         with:
           name: pacchetto
-          run-id: 42406653535
+          run-id: 42536443588
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/p
       - name: Installo 6.0.3 candidata
