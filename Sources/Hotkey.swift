@@ -91,9 +91,10 @@ final class Hotkey {
 }
 
 enum FinderSelection {
-    /// I file selezionati nel Finder (la prima volta macOS chiede il permesso di controllare il Finder).
-    static func current() -> [URL] {
-        let source = """
+    /// 6.0.3 · Al massimo 10 secondi di attesa (prima: i 2 minuti di macOS, con la torta e la finestra bloccate).
+    static let timeoutSeconds = 10
+    static let source = """
+    with timeout of \(timeoutSeconds) seconds
         tell application "Finder"
             set out to ""
             repeat with i in (get selection)
@@ -101,10 +102,17 @@ enum FinderSelection {
             end repeat
             return out
         end tell
-        """
+    end timeout
+    """
+    /// I file selezionati nel Finder (la prima volta macOS chiede il permesso di controllare il Finder).
+    static func current() -> [URL] {
         var err: NSDictionary?
+        // 6.0.3 · Se il Finder è occupato (per esempio con iCloud) non si aspetta più fino a 2 minuti con la finestra ferma
         guard let script = NSAppleScript(source: source),
-              let text = script.executeAndReturnError(&err).stringValue else { return [] }
+              let text = MainActivity.during("selezione del Finder (⌥⌘C)", { script.executeAndReturnError(&err).stringValue }) else {
+            if let e = err { AppLog.write("Finder", "selezione non letta: \(e[NSAppleScript.errorNumber] ?? "?")") }
+            return []
+        }
         return text.split(separator: "\n").map { URL(fileURLWithPath: String($0)) }
     }
 }

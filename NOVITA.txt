@@ -1,3 +1,18 @@
+Novità della 6.0.3 «Rapporti»:
+• Se qualcosa va storto (la finestra non risponde per qualche secondo, un lavoro resta fermo, OrbitLR si chiude di colpo), al prossimo avvio OrbitLR chiede se salvare il rapporto sulla Scrivania: un file di testo da mandare con WhatsApp o per email, senza usare «Segnala»
+• Il rapporto dice tutto quello che serve per capire il problema: Mac, chip, macOS, memoria, spazio libero, schermi, lingua, motori, cosa stavi facendo e le ultime righe del registro
+• Nei rapporti e in «Segnala» il nome dell’utente sparisce da tutti i percorsi (/Users/***/), anche quando ha uno spazio
+• Una cartella enorme, di rete o in iCloud non ancora scaricata non blocca più la torta: OrbitLR prende i file trovati in pochi secondi e lo dice
+• ⌥⌘C nel Finder: se il Finder è occupato (per esempio con iCloud) OrbitLR aspetta al massimo 10 secondi, invece di restare bloccata fino a 2 minuti
+• «Segnala» allega anche i rapporti di macOS sui blocchi, non solo sugli arresti
+• Gli aggiornamenti funzionano anche sui Mac senza gli strumenti per sviluppatori: prima si fermavano con «Questo aggiornamento non è adatto a questo Mac»
+• Sui Mac Intel la conversione di video e audio funziona anche senza Homebrew: il motore video non chiede più librerie che mancano
+• L’avvio non si blocca più se il progetto video che era aperto usa file su un disco di rete o esterno staccato
+• Doppio clic su un file .orbitlr: arriva subito la domanda «Installare OrbitLR?», non più l’avviso «OrbitLR resta pronta»
+• Le miniature rispondono sempre entro pochi secondi, anche con il disco occupato
+• «Cambia la velocità» funziona di nuovo sui video con l’audio: prima si fermava con un errore
+• L’opzione «originale nel Cestino» mette nel Cestino solo l’originale vero, mai un altro file con un nome simile
+
 Novità della 6.0.2 «Sonoma»:
 • Su MacBook e finestre basse la barra a sinistra non finisce più sotto i pallini della finestra: logo, schede e Cassetto restano sempre visibili (si accorcia la lista)
 • Downloader: quando YouTube chiede di confermare che non sei un robot, lo dice chiaramente (prima parlava di contenuto privato). L’errore vero finisce in «Segnala», così si capisce cosa è successo

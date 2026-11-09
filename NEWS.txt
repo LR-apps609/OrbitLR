@@ -1,3 +1,18 @@
+What’s new in 6.0.3 “Reports”:
+• If something goes wrong (the window stops responding for a few seconds, a job gets stuck, OrbitLR closes suddenly), at the next launch OrbitLR asks whether to save the report on the Desktop: a text file to send via WhatsApp or email, without using “Report”
+• The report says everything needed to understand the problem: Mac, chip, macOS, memory, free space, screens, language, engines, what you were doing and the last lines of the log
+• In reports and in “Report” the user name disappears from every path (/Users/***/), even when it has a space
+• A huge folder, a network folder or one in iCloud not yet downloaded no longer freezes the pie: OrbitLR takes the files found in a few seconds and says so
+• ⌥⌘C in Finder: if Finder is busy (for example with iCloud) OrbitLR waits at most 10 seconds, instead of staying frozen for up to 2 minutes
+• “Report” also attaches macOS reports about freezes, not only crashes
+• Updates work on Macs without the developer tools too: before, they stopped with “This update is not suitable for this Mac”
+• On Intel Macs video and audio conversion works without Homebrew: the video engine no longer asks for missing libraries
+• Launch no longer freezes if the video project that was open uses files on a disconnected network or external drive
+• Double-clicking an .orbitlr file: the “Install OrbitLR?” question comes right away, no more “OrbitLR stays ready” notice
+• Thumbnails always answer within a few seconds, even when the disk is busy
+• “Change speed” works again on videos with sound: before, it stopped with an error
+• The “original to Trash” option only moves the real original, never another file with a similar name
+
 What’s new in 6.0.2 “Sonoma”:
 • On MacBooks and short windows the left sidebar no longer slides under the window buttons: logo, tabs and Drawer always stay visible (the list gets shorter)
 • Downloader: when YouTube asks to confirm you’re not a robot, it says so clearly (before it talked about private content). The real error goes into “Report”, so it’s clear what happened

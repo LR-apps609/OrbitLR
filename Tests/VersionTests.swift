@@ -21,6 +21,10 @@ final class VersionTests: XCTestCase {
         let builds = Set(values("CFBundleVersion") + values("CURRENT_PROJECT_VERSION"))
         XCTAssertEqual(builds.count, 1, "numeri di build diversi: \(builds)")
         let news = try String(contentsOf: root.appendingPathComponent("NOVITA.txt"), encoding: .utf8)
-        XCTAssertTrue(news.hasPrefix("Novità della \(version) "), "NOVITA.txt deve iniziare dalla \(version)")
+        // 6.0.3 · In cima può esserci già la versione in preparazione (più nuova), mai una più vecchia
+        let first = news.split(separator: "\n").first.map(String.init) ?? ""
+        let top = first.replacingOccurrences(of: "Novità della ", with: "").split(separator: " ").first.map(String.init) ?? ""
+        XCTAssertTrue(first.hasPrefix("Novità della "), "NOVITA.txt deve iniziare con «Novità della …»")
+        XCTAssertNotEqual(top.compare(version, options: .numeric), .orderedAscending, "NOVITA.txt inizia dalla \(top), più vecchia della \(version)")
     }
 }

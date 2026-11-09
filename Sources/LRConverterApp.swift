@@ -48,6 +48,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             AppDelegate.handle(urls)
         }
 
+        // 6.0.3 · Il guardiano: blocchi della finestra, lavori fermi, chiusure di colpo (prima della schedina, che cambia la versione)
+        Watchdog.shared.launch(previousVersion: UserDefaults.standard.string(forKey: "lastLaunchVersion"),
+                               firstLaunch: WelcomeController.isFirstLaunch)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { ProblemReport.askIfNeeded() }
         Paths.installScript()
         WatchStore.shared.start()            // cartelle automatiche
         DropShelf.shared.start()             // 3.9.1 · il ripiano al bordo dello schermo quando trascini dei file
@@ -265,11 +269,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 
     /// 3.5 · La prima volta che chiudi la finestra: OrbitLR resta pronta in alto, e lo dice (una volta sola).
-    static func windowClosed() {
+    /// 6.0.3 · Non durante l'avvio per un aggiornamento (doppio clic sul .orbitlr): lì la finestra si chiude da sola,
+    /// e l'avviso prendeva il posto della domanda «Installare OrbitLR?». Né per una finestra mai mostrata.
+    static func windowClosed(_ w: NSWindow? = nil) {
         let key = "closeNoticeShown"
-        guard !UserDefaults.standard.bool(forKey: key), !Updater.shared.busy else { return }
-        UserDefaults.standard.set(true, forKey: key)
+        guard !UserDefaults.standard.bool(forKey: key), !Updater.shared.busy, !LaunchGate.holding,
+              (w?.alphaValue ?? 1) > 0.5 else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            // Nel frattempo è partito un aggiornamento, o la finestra è tornata: niente avviso (e resta da mostrare)
+            guard !Updater.shared.busy, !Updater.shared.hasWindow, !(w?.isVisible ?? false),
+                  !UserDefaults.standard.bool(forKey: key) else { return }
+            UserDefaults.standard.set(true, forKey: key)
             let a = NSAlert()
             a.messageText = String(localized: "OrbitLR resta pronta")
             a.informativeText = String(localized: "La trovi nella barra in alto: ⌥⌘C sui file nel Finder, o trascinali sull’icona. Per chiuderla del tutto: ⌘Q.")
@@ -283,6 +293,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     /// 5.1 · Uscendo dall'app il progetto è già salvato; si scrive l'ultimo secondo, se manca.
     /// Il progetto resta segnato come aperto: al prossimo avvio torna dov'eri.
     func applicationWillTerminate(_ notification: Notification) {
+        if !duplicate { Watchdog.shared.cleanExit() }      // 6.0.3 · la copia doppia non tocca il guardiano della prima
         let s = VideoProjectStore.shared
         if s.currentID != nil { s.applyChanges(); s.rememberView() }
         UserDefaults.standard.set(true, forKey: VideoProjectStore.cleanExitKey)     // 5.1 · uscita normale

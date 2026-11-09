@@ -49,34 +49,42 @@ final class ThumbCache: @unchecked Sendable {
     func image(for url: URL, side: CGFloat, done: @escaping (NSImage?) -> Void) {
         let quick = "\(url.path)|\(Int(side))" as NSString
         let t0 = CACurrentMediaTime()
+        // 6.0.3 · Una risposta sempre, al massimo dopo 8 secondi: anche se la coda del disco è ferma
+        // (un video che non si apre su un Mac senza scheda grafica bloccava tutte le miniature dopo).
+        let answered = Once()
+        let reply: (NSImage?) -> Void = { img in
+            guard answered.claim() else { return }
+            DispatchQueue.main.async { done(img) }
+        }
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 8) { reply(nil) }
         // 3.5 · Tutto quello che tocca il disco (data del file, file sul disco) avviene in sottofondo
         disk.async { [weak self] in
             guard let self else { return }
             guard FileManager.default.fileExists(atPath: url.path) else {
                 self.latest.removeObject(forKey: quick)          // file sparito: niente miniatura vecchia al prossimo disegno
-                DispatchQueue.main.async { done(nil) }; return
+                reply(nil); return
             }
             let k = Self.key(url, side)
-            if let img = self.cache.object(forKey: k as NSString) { DispatchQueue.main.async { done(img) }; return }
+            if let img = self.cache.object(forKey: k as NSString) { reply(img); return }
             let file = Self.diskURL(k)
             if let img = NSImage(contentsOf: file) {
                 self.cache.setObject(img, forKey: k as NSString)
                 self.latest.setObject(img, forKey: quick)
                 Perf.record(.thumbnail, CACurrentMediaTime() - t0)
-                DispatchQueue.main.async { done(img) }
+                reply(img)
                 return
             }
             let req = QLThumbnailGenerator.Request(fileAt: url, size: CGSize(width: side, height: side),
                                                    scale: 2, representationTypes: .thumbnail)
             // 6.0.2 · Quick Look a volte non risponde mai (visto sui Mac di prova): dopo 5 secondi si fa la miniatura da sé.
-            // Una sola risposta, qualunque arrivi prima.
+            // Una sola risposta, qualunque arrivi prima. Il tempo scaduto non passa dalla coda del disco.
             let once = Once()
-            self.disk.asyncAfter(deadline: .now() + 5) { [weak self] in
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 5) { [weak self] in
                 guard once.claim() else { return }
                 let img = Self.fallback(url, side: side)
                 if let img, let self { self.cache.setObject(img, forKey: k as NSString); self.latest.setObject(img, forKey: quick) }
                 else { self?.latest.removeObject(forKey: quick) }
-                DispatchQueue.main.async { done(img) }
+                reply(img)
             }
             QLThumbnailGenerator.shared.generateBestRepresentation(for: req) { [weak self] rep, _ in
                 guard once.claim() else { return }
@@ -95,7 +103,7 @@ final class ThumbCache: @unchecked Sendable {
                         }
                     }
                 }
-                DispatchQueue.main.async { done(img) }
+                reply(img)
             }
         }
     }

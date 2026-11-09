@@ -7927,6 +7927,16 @@
         }
       }
     },
+    "La cartella è molto grande o non ancora scaricata da iCloud: ho preso i file trovati in pochi secondi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The folder is very large or not yet downloaded from iCloud: I took the files found in a few seconds."
+          }
+        }
+      }
+    },
     "La clip è già la prima.": {
       "localizations": {
         "en": {
@@ -8654,6 +8664,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The framing follows people (or whatever moves in the foreground) smoothly, without jerks. In crowded scenes it stays centered."
+          }
+        }
+      }
+    },
+    "L’ultima volta qualcosa è andato storto. Vuoi mandarmi il rapporto?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something went wrong last time. Do you want to send me the report?"
           }
         }
       }
@@ -9794,6 +9814,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Don’t Show Again"
+          }
+        }
+      }
+    },
+    "Non ora": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not now"
           }
         }
       }
@@ -11790,6 +11820,16 @@
         }
       }
     },
+    "Puoi mandare questo file con WhatsApp o per email. Non contiene i nomi dei tuoi file.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can send this file via WhatsApp or email. It doesn’t contain your file names."
+          }
+        }
+      }
+    },
     "Qualcosa non è andato con questo file. Riprova; se succede ancora, usa «Segnala» e lo sistemiamo.": {
       "localizations": {
         "en": {
@@ -12176,6 +12216,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Night Radio"
+          }
+        }
+      }
+    },
+    "Rapporto OrbitLR": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrbitLR report"
           }
         }
       }
@@ -13120,6 +13170,16 @@
         }
       }
     },
+    "Salva il rapporto sulla Scrivania": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save the report to the Desktop"
+          }
+        }
+      }
+    },
     "Salva progetto": {
       "localizations": {
         "en": {
@@ -13226,6 +13286,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sage (the classic radio)"
+          }
+        }
+      }
+    },
+    "Salvo sulla Scrivania un file di testo con le informazioni sul Mac e su OrbitLR, senza i nomi dei tuoi file. Puoi mandarlo con WhatsApp o per email.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I’ll save a text file on your Desktop with information about your Mac and OrbitLR, without your file names. You can send it via WhatsApp or email."
           }
         }
       }

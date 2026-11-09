@@ -576,26 +576,40 @@ final class PieController: @unchecked Sendable {
     }
 
     /// Le cartelle diventano l'elenco dei file che contengono (i pacchetti Pages/Numbers/Keynote restano interi).
-    static func expand(_ urls: [URL]) -> [URL] {
-        var out: [URL] = []
-        let fm = FileManager.default
-        let packages: Set<String> = ["pages", "numbers", "key", "rtfd"]
-        for u in urls {
-            var isDir: ObjCBool = false
-            _ = fm.fileExists(atPath: u.path, isDirectory: &isDir)
-            if isDir.boolValue && !packages.contains(u.pathExtension.lowercased()) {
-                if let en = fm.enumerator(at: u, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles]) {
-                    for case let f as URL in en {
-                        if AppLanguage.subfolders.contains(where: { f.path.contains("/\($0)/") }) { continue }
-                        if packages.contains(f.pathExtension.lowercased()) { out.append(f); en.skipDescendants(); continue }
-                        if (try? f.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true { out.append(f) }
-                    }
+    /// 6.0.3 · In sottofondo, con al massimo `timeout` secondi di attesa: una cartella enorme o in iCloud
+    /// non ancora scaricata non blocca più la torta. Se il tempo finisce si tengono i file trovati fin lì.
+    static func expand(_ urls: [URL], timeout: Double = PieController.expandTimeout,
+                       walk: @escaping (URL, (URL) -> Void, () -> Bool) -> Void = PieController.walkFolder) -> [URL] {
+        let packages = Self.packages
+        let r = MainActivity.during("elenco dei file delle cartelle") {
+            BoundedWalk<URL>.collect(timeout: timeout) { emit, stopped in
+                let fm = FileManager.default
+                for u in urls {
+                    if stopped() { return }
+                    var isDir: ObjCBool = false
+                    _ = fm.fileExists(atPath: u.path, isDirectory: &isDir)
+                    if isDir.boolValue && !packages.contains(u.pathExtension.lowercased()) { walk(u, emit, stopped) } else { emit(u) }
                 }
-            } else {
-                out.append(u)
             }
         }
-        return out
+        lastExpandIncomplete = !r.complete
+        if !r.complete { AppLog.write("cartelle", "elenco fermato dopo \(timeout) s: \(r.items.count) file trovati (cartella enorme, di rete o in iCloud)") }
+        return r.items
+    }
+
+    static var expandTimeout: Double = 3
+    /// 6.0.3 · Vero se l'ultimo elenco è stato fermato dal tempo massimo (per dirlo a chi usa l'app).
+    static var lastExpandIncomplete = false
+    private static let packages: Set<String> = ["pages", "numbers", "key", "rtfd"]
+
+    static func walkFolder(_ u: URL, emit: (URL) -> Void, stopped: () -> Bool) {
+        guard let en = FileManager.default.enumerator(at: u, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles]) else { return }
+        for case let f as URL in en {
+            if stopped() { return }
+            if AppLanguage.subfolders.contains(where: { f.path.contains("/\($0)/") }) { continue }
+            if packages.contains(f.pathExtension.lowercased()) { emit(f); en.skipDescendants(); continue }
+            if (try? f.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true { emit(f) }
+        }
     }
 
     private func showNext(at point: NSPoint) {
