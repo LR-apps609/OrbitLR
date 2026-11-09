@@ -62,7 +62,7 @@ function Ferma() {
 
 function Installa() {
   New-Item -ItemType Directory -Force -Path C:\Prova | Out-Null
-  $url = "https://github.com/LR-apps609/OrbitLR/releases/download/windows-anteprima/OrbitLR-Windows-2.0.0-Setup.exe"
+  $url = "https://github.com/LR-apps609/OrbitLR/releases/download/windows-anteprima/OrbitLR-Windows-2.0.1-Setup.exe"
   $ProgressPreference = "SilentlyContinue"
   Invoke-WebRequest -Uri $url -OutFile C:\Prova\OrbitLR-Setup.exe -UseBasicParsing
   Log "installazione scaricata: $((Get-Item C:\Prova\OrbitLR-Setup.exe).Length) byte"
