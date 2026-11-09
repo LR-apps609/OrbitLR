@@ -4,5 +4,17 @@ BuildVersion:		25G332
 arm64
 Apple M1 (Virtual)
 VirtualMac2,1
-commit: 93e6936
-finestra: 35 1024 677
+commit: 556c580
+finestra: 38 1024 677
+finestra-bassa: 49 1024 672
+finestra-minima: 60 880 672
+finestra-dock-sinistra: 73 975 737
+OrbitLR · livello 8 · 260×332 · 
+OrbitLR · livello 0 · 975×677 · Convert
+--- problema registrato:
+• 2026-11-09 01:04:13 · OrbitLR si è chiusa all’improvviso (o è stata chiusa a forza)
+    avviata: prova · OrbitLR prova · avvio normale
+    stava facendo: scheda: Conversione
+• 2026-11-09 01:04:21 · La finestra non risponde da 6 secondi
+    stava facendo: 
+    avviata: 2026-11-09 01:04:13 · OrbitLR 6.0.3 (85) · avvio normale
