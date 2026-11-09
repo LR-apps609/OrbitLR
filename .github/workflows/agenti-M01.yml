@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       build603:
-        description: 'prova anche la 6.0.3 (pacchetto della corsa 42406653535)'
+        description: 'prova anche la 6.0.3 (pacchetto della corsa 42536443588)'
         type: boolean
         default: false
 permissions:
