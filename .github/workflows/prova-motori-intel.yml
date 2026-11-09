@@ -1,0 +1,43 @@
+# Prova unica: ffmpeg e ffprobe dentro OrbitLR 6.0.3 (motori-2) partono sui Mac Intel senza Homebrew.
+name: Prova motori Intel
+on:
+  push:
+    branches: ['prova-motori-intel']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  intel:
+    strategy:
+      fail-fast: false
+      matrix:
+        mac: [macos-15-intel, macos-26-intel, macos-15]
+    runs-on: ${{ matrix.mac }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: pacchetto
+          run-id: 42536443588
+          github-token: ${{ github.token }}
+      - name: Senza Homebrew e senza librerie di /usr/local
+        run: |
+          set -x
+          uname -m; sw_vers -productVersion
+          sudo mv /usr/local/opt /usr/local/opt-nascosta 2>/dev/null || true
+          sudo mv /usr/local/lib /usr/local/lib-nascosta 2>/dev/null || true
+          sudo mv /opt/homebrew /opt/homebrew-nascosta 2>/dev/null || true
+          mkdir -p dist && tar -C dist -xf pacchetto.tar
+          A=dist/OrbitLR/Prebuilt/OrbitLR.app
+          defaults read "$PWD/$A/Contents/Info" CFBundleShortVersionString
+          M=$(find "$A" -path '*Motori/ffmpeg' -type f | head -1); P=$(find "$A" -path '*Motori/ffprobe' -type f | head -1)
+          echo "ffmpeg: $M"
+          otool -L "$M" | tee /dev/stderr | awk 'NR>1{print $1}' | grep -vE '^(/usr/lib/|/System/Library/)' && { echo "::error::librerie fuori dal sistema"; exit 1; } || true
+          "$M" -hide_banner -version | head -1
+          "$P" -hide_banner -version | head -1
+          "$M" -hide_banner -loglevel error -f lavfi -i testsrc=d=3:s=640x360 -f lavfi -i sine=d=3 -shortest -c:v libx264 -c:a aac prova.mp4 2>/dev/null \
+            || "$M" -hide_banner -loglevel error -f lavfi -i testsrc=d=3:s=640x360 -f lavfi -i sine=d=3 -shortest -c:v mpeg4 -c:a aac prova.mp4
+          "$M" -hide_banner -loglevel error -y -i prova.mp4 -filter_complex "[0:v:0]setpts=PTS/2[v];[0:a:0]atempo=2[a]" -map "[v]" -map "[a]" -c:a aac veloce.mp4
+          "$M" -hide_banner -loglevel error -y -i prova.mp4 -vn -c:a libmp3lame audio.mp3
+          for f in prova.mp4 veloce.mp4 audio.mp3; do echo "$f $("$P" -v error -show_entries format=duration -of csv=p=0 "$f")"; done
+          echo "MOTORI_OK"
