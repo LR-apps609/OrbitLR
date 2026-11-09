@@ -33,8 +33,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download windows-anteprima -p "OrbitLR-Windows-2.0.0-Setup.exe" -R "$env:GITHUB_REPOSITORY"
-          Move-Item OrbitLR-Windows-2.0.0-Setup.exe OrbitLR-Setup.exe
+          gh release download windows-anteprima -p "OrbitLR-Windows-2.0.1-Setup.exe" -R "$env:GITHUB_REPOSITORY"
+          Move-Item OrbitLR-Windows-2.0.1-Setup.exe OrbitLR-Setup.exe
           Get-FileHash OrbitLR-Setup.exe | Format-List | Out-String | Write-Output
           (Get-Item OrbitLR-Setup.exe).VersionInfo | Format-List | Out-String | Write-Output
       - name: Installa, apri, fotografa (come prove-windows)
