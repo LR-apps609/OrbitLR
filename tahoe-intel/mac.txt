@@ -4,7 +4,7 @@ BuildVersion:		25G76
 x86_64
 Intel(R) Core(TM) i7-8700B CPU @ 3.20GHz
 Macmini6,2
-commit: 556c580
+commit: 335d5de
       Chipset Model: Apple Paravirtualized Graphics Device
           Resolution: 1920 x 1080 (1080p FHD - Full High Definition)
           UI Looks like: 1920 x 1080 @ 30.00Hz
