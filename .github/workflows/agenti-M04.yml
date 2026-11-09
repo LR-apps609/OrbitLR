@@ -45,7 +45,7 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: pacchetto
-          run-id: 42407890132
+          run-id: 42536443588
           github-token: ${{ github.token }}
       - name: Installo
         if: steps.scelta.outputs.go == '1'
