@@ -19,6 +19,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     static let openNotification = Notification.Name("it.ledion.OrbitLR.open")
 
     func applicationWillFinishLaunching(_ notification: Notification) {
+        // 6.0.4 · «Apri documenti» (file trascinati sull'icona, «Apri con», open -a) lo riceve OrbitLR direttamente.
+        // Prima lo gestiva SwiftUI: a ogni evento (macOS ne manda più d'uno per molti file) riattivava e ridisegnava
+        // la finestra sul thread principale, e con 100–300 foto l'app restava ferma per decine di secondi e non usciva
+        // con ⌘Q. Ora gli eventi vicini si uniscono e i file si caricano una volta sola.
+        NSAppleEventManager.shared().setEventHandler(self, andSelector: #selector(openDocumentsEvent(_:reply:)),
+                                                     forEventClass: AEEventClass(kCoreEventClass), andEventID: AEEventID(kAEOpenDocuments))
         Perf.begin(.launch)                  // 3.4.1 · fino a quando la finestra è pronta
         let me = NSRunningApplication.current
         let others = NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "it.ledion.OrbitLR")
@@ -157,6 +163,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
                let text = try? String(contentsOf: Paths.log, encoding: .utf8) {
                 try? String(text.suffix(1_000_000)).write(to: Paths.log, atomically: true, encoding: .utf8)
             }
+        }
+    }
+
+    private var openBatch: [URL] = []
+    private var openBatchScheduled = false
+
+    @objc func openDocumentsEvent(_ event: NSAppleEventDescriptor, reply: NSAppleEventDescriptor) {
+        guard let list = event.paramDescriptor(forKeyword: keyDirectObject) else { return }
+        var urls: [URL] = []
+        if list.numberOfItems == 0, let u = list.fileURLValue { urls.append(u) }
+        if list.numberOfItems > 0 {
+            for i in 1...list.numberOfItems { if let u = list.atIndex(i)?.fileURLValue { urls.append(u) } }
+        }
+        guard !urls.isEmpty else { return }
+        openBatch += urls
+        guard !openBatchScheduled else { return }
+        openBatchScheduled = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            guard let self else { return }
+            let all = self.openBatch
+            self.openBatch = []
+            self.openBatchScheduled = false
+            var seen = Set<String>()
+            self.application(NSApp, open: all.filter { seen.insert($0.path).inserted })
         }
     }
 
