@@ -18,7 +18,9 @@ def giro(livello):
         attiva(); tasto(k); time.sleep(3)
         controlla_vista(es, "%s-%s" % (livello, nome.replace(" ", "_")), "scheda %s in %s" % (nome, "Semplice" if livello == "simple" else "Completo"))
     if livello == "complete":
-        for k, nome, ed in [("4", "Video", "Montaggio"), ("2", "PDF e documenti", "Editor PDF")]:
+        attiva(); tasto("n", "command down, shift down"); time.sleep(5)     # File → Nuovo progetto video (⌘⇧N): il Montaggio
+        controlla_vista(es, "editor-Montaggio", "Video → Montaggio (⌘⇧N)")
+        for k, nome, ed in [("2", "PDF e documenti", "Editor PDF")]:
             attiva(); tasto(k); time.sleep(2)
             if clicca(ed):
                 time.sleep(4)

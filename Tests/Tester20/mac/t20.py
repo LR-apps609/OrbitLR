@@ -352,7 +352,7 @@ def utente_esperto(extra=None):
     defaults("delete", BID)
     for k, t, v in [("welcomeDone", "-bool", "true"), ("launchScreen", "-bool", "false"), ("tips", "-bool", "false"),
                     ("updateAutoCheck", "-bool", "false"), ("closeNoticeShown", "-bool", "true"),
-                    ("lastLaunchVersion", "-string", versione())]:
+                    ("lastLaunchVersion", "-string", versione()), ("sidebarAdvanced", "-bool", "true")]:
         defaults("write", BID, k, t, v)
     defaults("write", BID, "AppleLanguages", "-array", "it-IT", "it")
     for k, t, v in (extra or []):
@@ -606,7 +606,11 @@ def clicca(nome, ruoli=("button", "radio button", "checkbox")):
         try
           set d to description of c as text
         end try
-        if n is "%s" or d is "%s" then
+        set v to ""
+        try
+          set v to value of c as text
+        end try
+        if n is "%s" or d is "%s" or v is "%s" then
           click c
           return "cliccato"
         end if
@@ -614,7 +618,7 @@ def clicca(nome, ruoli=("button", "radio button", "checkbox")):
     end try
   end repeat
   return "non trovato"
-end tell''' % (ruolo, nome, nome)], timeout=90)
+end tell''' % (ruolo, nome, nome, nome)], timeout=90)
         if "cliccato" in o:
             return True
     return False
@@ -693,7 +697,9 @@ def controlla_vista(es, nome, livello_cosa):
             ix = max(0, min(a["x"] + a["l"], b["x"] + b["l"]) - max(a["x"], b["x"]))
             iy = max(0, min(a["y"] + a["a"], b["y"] + b["a"]) - max(a["y"], b["y"]))
             small = min(a["l"] * a["a"], b["l"] * b["a"])
-            if small > 0 and ix * iy > 0.5 * small and a["percorso"] not in b["percorso"] and b["percorso"] not in a["percorso"]:
+            contiene = (a["x"] <= b["x"] and a["y"] <= b["y"] and a["x"] + a["l"] >= b["x"] + b["l"] and a["y"] + a["a"] >= b["y"] + b["a"]) or \
+                       (b["x"] <= a["x"] and b["y"] <= a["y"] and b["x"] + b["l"] >= a["x"] + a["l"] and b["y"] + b["a"] >= a["y"] + a["a"])
+            if small > 0 and ix * iy > 0.5 * small and not contiene and a["percorso"] not in b["percorso"] and b["percorso"] not in a["percorso"]:
                 sovr.append((a.get("titolo") or a.get("descrizione"), b.get("titolo") or b.get("descrizione"), a["x"], a["y"]))
     risultato.update(tagliati=len(tagli), sovrapposti=len(sovr))
     if tagli:

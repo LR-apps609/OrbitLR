@@ -128,6 +128,8 @@ jobs:
               json.dump({"profilo": os.environ["T20_PROFILO"], "runner": os.environ["T20_RUNNER"], "build": os.environ.get("T20_BUILD", "?"),
                          "passi_fatti": 0, "passati": 0, "non_eseguiti": [{"cosa": "tutto", "perche": "il profilo non è partito"}],
                          "bug": [], "confuso": []}, open(p, "w"), ensure_ascii=False, indent=1)
+          d = json.load(open(p)); d.pop("passi", None)
+          print("=====ESITO-T20=====" + json.dumps(d, ensure_ascii=False) + "=====FINE-T20=====")
           PY
           cp ~/Library/Logs/LRConverter.log "$T20_OUT/" 2>/dev/null || true
           mkdir -p "$T20_OUT/diag"; cp ~/Library/Logs/DiagnosticReports/*OrbitLR* /Library/Logs/DiagnosticReports/*OrbitLR* "$T20_OUT/diag/" 2>/dev/null || true
