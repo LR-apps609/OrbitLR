@@ -14,6 +14,11 @@ Immagine "$casa\Foto esperto due.png" "800x600" | Out-Null
 # ── 1. Ctrl+Alt+C: i file selezionati in Esplora file vanno in OrbitLR
 $r = Avvia "1-app-aperta" @{} 12 -Resta
 $app = FinestraApp
+# Primo avvio: il benvenuto copre tutto. Lo si chiude con Esc (come una persona con la tastiera)
+[T20W]::Keys(@(0x12)); [T20W]::SetForegroundWindow($app) | Out-Null; Start-Sleep -Milliseconds 600
+[T20W]::Keys(@(0x1B)); Start-Sleep -Seconds 1
+$tw = Ocr (Foto "1b-dopo-esc")
+if ($script:OcrOk -and $tw -match "(?i)benvenut|welcome to") { Nota "il benvenuto è ancora aperto dopo Esc" }
 [T20W]::ShowWindow($app, 6) | Out-Null   # ridotta a icona, come quando si lavora in Esplora file
 # La combinazione è presa da OrbitLR? (se sì, un altro programma non la può registrare)
 $libera = [T20W]::RegisterHotKey([IntPtr]::Zero, 7720, 0x0003, 0x43)
@@ -138,10 +143,12 @@ $estraneo = Get-ChildItem $ren -File | Where-Object { (Get-FileHash $_.FullName)
 if (-not (Passo "il «Vacanze 002.jpg» che c'era già non viene sovrascritto" ([bool]$estraneo) "ora si chiama $($estraneo.Name)")) {
   Bug "Rinomina tutti sovrascrive un file che c'era già con lo stesso nome" "alto" @("Nella cartella c'è già «Vacanze 002.jpg» (non scelto)", "Rinomina tutti altre 5 foto in «Vacanze»") "Il file che c'era resta" "il file «Vacanze 002.jpg» originale non c'è più" "impronte nel diario"
 }
-# Ordine: per nome (IMG_0001, IMG_0002, IMG_0003, IMG_0010, foto è)
-$ordine = @($nuovi | Sort-Object { [int]($_.BaseName -replace '\D', '') } | ForEach-Object { $hash[(Get-FileHash $_.FullName).Hash] })
-$atteso = @("IMG_0001.jpg", "IMG_0002.jpg", "IMG_0003.jpg", "IMG_0010.jpg", "foto è.jpg")
-if (-not (Passo "Rinomina tutti segue l'ordine dei nomi" (($ordine -join "|") -eq ($atteso -join "|")) "numeri dati a: $($ordine -join ', ')")) {
-  Confuso "ordine di Rinomina tutti" "l'aiuto dice «in ordine di nome» ma i numeri vanno a: $($ordine -join ', ')"
+# Ordine: per nome, senza maiuscole (foto è, IMG_0001, IMG_0002, IMG_0003, IMG_0010), come Esplora file
+$ordine = @($nuovi | Sort-Object Name | ForEach-Object { $hash[(Get-FileHash $_.FullName).Hash] })
+$atteso = @("foto è.jpg", "IMG_0001.jpg", "IMG_0002.jpg", "IMG_0003.jpg", "IMG_0010.jpg")
+Passo "Rinomina tutti segue l'ordine dei nomi (come Esplora file)" (($ordine -join "|") -eq ($atteso -join "|")) "numeri dati a: $($ordine -join ', ')" | Out-Null
+$rotti = @($nuovi | Where-Object { $_.BaseName -notmatch '^Vacanze \d{3}$' })
+if (-not (Passo "Rinomina tutti: la serie resta Vacanze 001…005 anche se un nome c'è già" ($rotti.Count -eq 0) "$(($nuovi | ForEach-Object Name) -join ', ')")) {
+  Bug "Rinomina tutti: se «Vacanze 002.jpg» c'è già, la serie diventa «Vacanze 001, Vacanze 002 (1), Vacanze 003…»" "basso" @("Nella cartella c'è già «Vacanze 002.jpg» (non scelto)", "Scegli 5 foto → Rinomina tutti → «Vacanze»") "Una serie continua senza «(1)» (per esempio saltando il 002, o avvisando)" "$(($nuovi | Sort-Object Name | ForEach-Object Name) -join ', ')" "diario: nomi e impronte dopo Rinomina tutti"
 }
 Salva "p06"

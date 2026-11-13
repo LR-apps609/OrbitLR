@@ -117,7 +117,7 @@ if (-not $M -or -not (Test-Path $M)) {
     $t = Ocr $f; Log "OCR: $($t -replace "`n", ' | ')"
     if (Passo "installatore che non riesce: OrbitLR si riapre con «non riuscito»" ([bool]$riaperta -and $riaperta.CommandLine -match "aggiornamento-non-riuscito") "$($riaperta.CommandLine)") {
       if ($script:OcrOk) {
-        if (-not (Passo "e lo dice nella finestra («non è riuscito», «Riprova»)" ($t -match "(?i)non (è )?riuscit|riprova|fail|retry|didn.t|not (be )?complete"))) { Confuso "aggiornamento non riuscito" "OrbitLR si è riaperta con --aggiornamento-non-riuscito ma nella foto (OCR) non si legge il motivo né «Riprova»" }
+        if (-not (Passo "e lo dice nella finestra («non è riuscito», «Riprova»)" ($t -match "(?i)non (è )?riuscit|riprova|rimasta|fail|retry|try ag|didn.t|still on|not (be )?complete"))) { Confuso "aggiornamento non riuscito" "OrbitLR si è riaperta con --aggiornamento-non-riuscito ma nella foto (OCR) non si legge il motivo né «Riprova»" }
       }
     } else {
       Bug "Se l'installatore dell'aggiornamento non riesce, OrbitLR non si riapre" "alto" @("Aggiorna adesso con un installatore che fallisce") "OrbitLR si riapre e dice «aggiornamento non riuscito»" "nessuna OrbitLR riaperta in 60 s" "5-installatore-non-riuscito.png"

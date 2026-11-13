@@ -102,7 +102,8 @@ if (-not $M -or -not (Test-Path $M)) { NonEseguito "messaggio d'errore esatto pe
 $ro = Join-Path $casa "Sola lettura"; New-Item -ItemType Directory -Force $ro | Out-Null
 Copy-Item "$casa\base.png" "$ro\Foto protetta.png"
 $leggibile = try { [IO.File]::ReadAllBytes("$ro\Foto protetta.png").Length } catch { 0 }
-& icacls $ro /deny "$($env:USERNAME):(OI)(CI)(W,AD,WD,DC)" 2>&1 | ForEach-Object { Log "icacls: $_" }
+# Solo la cartella: niente file nuovi né sottocartelle (i file dentro si leggono ancora)
+& icacls $ro /deny "$($env:USERNAME):(AD,WD)" 2>&1 | ForEach-Object { Log "icacls: $_" }
 $r = Lavoro "6-sola-lettura" "$ro\Foto protetta.png" "image" "to:jpg" "" $ro "*.jpg" 25
 $msg = Motore @("lavoro", "to:jpg", "null", $script:Motori, $dati, "$ro\Foto protetta.png")
 Passo "cartella in sola lettura: l'app resta aperta" $r.viva | Out-Null
@@ -113,7 +114,7 @@ if ($msg) {
   $leggibile2 = try { [IO.File]::ReadAllBytes("$ro\Foto protetta.png").Length } catch { "no: $_" }
   Nota "la foto nella cartella protetta si legge ancora: $leggibile2 byte"
   if (-not $msg.ok -and $msg.errore -match "non trovo" -and $leggibile2 -is [int] -and $leggibile2 -gt 0) {
-    Bug "Cartella in sola lettura: OrbitLR dice «non trovo il file (spostato o cancellato?)» ma il file c'è" "basso" @("Una foto in una cartella dove non si può scrivere (permessi di Windows)", "Immagini → Cambia formato → JPG (risultati accanto all'originale)") "Un messaggio che dice che nella cartella non si può scrivere (e di scegliere un'altra cartella)" "«$($msg.errore)»; il file si legge ($leggibile2 byte)" "diario (motore t20-motore lavoro to:jpg)"
+    Bug "Cartella in sola lettura: OrbitLR dice «non trovo il file (spostato o cancellato?)» ma il file c'è e si legge" "basso" @("Una foto in una cartella dove non si può scrivere (permessi di Windows)", "Immagini → Cambia formato → JPG (risultati accanto all'originale)") "Un messaggio che dice che nella cartella non si può scrivere (e di scegliere un'altra cartella)" "«$($msg.errore)»; il file si legge ($leggibile2 byte)" "diario (motore t20-motore lavoro to:jpg)"
   }
   if (-not $msg.ok -and $msg.errore -notmatch "(?i)permess|sola lettura|scriv") { Confuso "cartella in sola lettura" "il messaggio «$($msg.errore)» non dice che la cartella non si può scrivere" }
 }
