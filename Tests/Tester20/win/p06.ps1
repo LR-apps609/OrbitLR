@@ -15,10 +15,26 @@ Immagine "$casa\Foto esperto due.png" "800x600" | Out-Null
 $r = Avvia "1-app-aperta" @{} 12 -Resta
 $app = FinestraApp
 # Primo avvio: il benvenuto copre tutto. Lo si chiude con Esc (come una persona con la tastiera)
-[T20W]::Keys(@(0x12)); [T20W]::SetForegroundWindow($app) | Out-Null; Start-Sleep -Milliseconds 600
-[T20W]::Keys(@(0x1B)); Start-Sleep -Seconds 1
-$tw = Ocr (Foto "1b-dopo-esc")
-if ($script:OcrOk -and $tw -match "(?i)benvenut|welcome to") { Nota "il benvenuto è ancora aperto dopo Esc" }
+if (-not ("T20M" -as [type])) { Add-Type @"
+using System; using System.Runtime.InteropServices;
+public static class T20M {
+  [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
+  [DllImport("user32.dll")] public static extern void mouse_event(uint f, int x, int y, uint d, UIntPtr e);
+  public static void Click(int x, int y) { SetCursorPos(x, y); System.Threading.Thread.Sleep(100); mouse_event(2, 0, 0, 0, UIntPtr.Zero); mouse_event(4, 0, 0, 0, UIntPtr.Zero); }
+}
+"@ }
+$welcomeAperto = $true
+for ($k = 0; $k -lt 3 -and $welcomeAperto; $k++) {
+  [T20W]::Keys(@(0x12)); [T20W]::SetForegroundWindow($app) | Out-Null; Start-Sleep -Milliseconds 600
+  # Un clic dentro la finestra (sul testo del benvenuto, non su un pulsante) per dare la tastiera alla pagina, poi Esc
+  $rc = New-Object T20W+RECT; [T20W]::GetWindowRect($app, [ref]$rc) | Out-Null
+  [T20M]::Click([int](($rc.L + $rc.R) / 2), [int]($rc.T + ($rc.B - $rc.T) * 0.42))
+  Start-Sleep -Milliseconds 500
+  [T20W]::Keys(@(0x1B)); Start-Sleep -Seconds 1
+  $tw = Ocr (Foto "1b-dopo-esc-$k")
+  $welcomeAperto = $script:OcrOk -and $tw -match "(?i)benvenut|welcome to"
+}
+if ($welcomeAperto) { Nota "il benvenuto è ancora aperto dopo clic + Esc (3 volte): i nomi dei file dopo Ctrl+Alt+C non si possono controllare" }
 [T20W]::ShowWindow($app, 6) | Out-Null   # ridotta a icona, come quando si lavora in Esplora file
 # La combinazione è presa da OrbitLR? (se sì, un altro programma non la può registrare)
 $libera = [T20W]::RegisterHotKey([IntPtr]::Zero, 7720, 0x0003, 0x43)
@@ -59,7 +75,7 @@ if (-not $w) {
     if ($script:OcrOk) {
       $visti = ($t -match "(?i)esperto uno") -and ($t -match "(?i)esperto due")
       if (-not (Passo "Ctrl+Alt+C: i due file selezionati sono in OrbitLR" $visti)) {
-        if ($t -match "(?i)esperto") { Nota "Ctrl+Alt+C: l'OCR legge solo uno dei due nomi" } else {
+        if ($t -match "(?i)esperto") { Nota "Ctrl+Alt+C: l'OCR legge solo uno dei due nomi" } elseif ($t -match "(?i)benvenut|welcome to") { NonEseguito "Ctrl+Alt+C: i file nella finestra" "il benvenuto del primo avvio copre la finestra (non si chiude con clic + Esc inviati dallo script)" } else {
           Bug "Ctrl+Alt+C apre OrbitLR ma senza i file selezionati in Esplora file" "medio" @("In Esplora file seleziona due foto", "Premi Ctrl+Alt+C") "OrbitLR in primo piano con le due foto" "OrbitLR in primo piano, i nomi delle foto non si vedono (OCR)" "2-dopo-ctrl-alt-c.png, .ocr.txt"
         }
       }
