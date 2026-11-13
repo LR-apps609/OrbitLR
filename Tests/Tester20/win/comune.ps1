@@ -46,24 +46,25 @@ public static class T20W {
 [T20W]::SetProcessDpiAwarenessContext([IntPtr](-4)) | Out-Null
 
 # ── Diario ed esito (parte-<nome>.json, unita poi in esito.json)
-$script:R = [ordered]@{ passi_fatti = 0; passati = 0; non_eseguiti = [System.Collections.ArrayList]::new(); bug = [System.Collections.ArrayList]::new(); confuso = [System.Collections.ArrayList]::new(); note = [System.Collections.ArrayList]::new() }
+$script:T20E = [ordered]@{ passi_fatti = 0; passati = 0; non_eseguiti = [System.Collections.ArrayList]::new(); bug = [System.Collections.ArrayList]::new(); confuso = [System.Collections.ArrayList]::new(); note = [System.Collections.ArrayList]::new() }
 function Log([string]$m) { $l = "$(Get-Date -Format HH:mm:ss) [+$([int]((Get-Date) - $script:T0).TotalSeconds)s] $m"; Write-Host $l; Add-Content -Path (Join-Path $Out "diario.txt") -Value $l -Encoding utf8 }
-function Passo([string]$cosa, [bool]$ok, [string]$det = "") {
-  $script:R.passi_fatti++; if ($ok) { $script:R.passati++ }
+function Passo([string]$cosa, $ok, [string]$det = "") {
+  $ok = [bool]$ok
+  $script:T20E.passi_fatti++; if ($ok) { $script:T20E.passati++ }
   Log "PASSO $(if ($ok) { 'OK' } else { 'NO' }) · $cosa$(if ($det) { " · $det" })"
   return $ok
 }
 function Bug([string]$titolo, [string]$gravita, [string[]]$passi, [string]$atteso, [string]$visto, [string]$prova) {
-  [void]$script:R.bug.Add([ordered]@{ titolo = $titolo; gravita = $gravita; passi = @($passi); atteso = $atteso; visto = $visto; prova = $prova })
+  [void]$script:T20E.bug.Add([ordered]@{ titolo = $titolo; gravita = $gravita; passi = @($passi); atteso = $atteso; visto = $visto; prova = $prova })
   Log "BUG [$gravita] $titolo · $visto"
   Write-Host "::warning::BUG [$gravita] $titolo"
 }
-function NonEseguito([string]$cosa, [string]$perche) { [void]$script:R.non_eseguiti.Add([ordered]@{ cosa = $cosa; perche = $perche }); Log "NON ESEGUITO $cosa · $perche" }
-function Confuso([string]$cosa, [string]$perche) { [void]$script:R.confuso.Add([ordered]@{ cosa = $cosa; perche = $perche }); Log "CONFUSO $cosa · $perche" }
-function Nota([string]$t) { [void]$script:R.note.Add($t); Log "NOTA $t" }
+function NonEseguito([string]$cosa, [string]$perche) { [void]$script:T20E.non_eseguiti.Add([ordered]@{ cosa = $cosa; perche = $perche }); Log "NON ESEGUITO $cosa · $perche" }
+function Confuso([string]$cosa, [string]$perche) { [void]$script:T20E.confuso.Add([ordered]@{ cosa = $cosa; perche = $perche }); Log "CONFUSO $cosa · $perche" }
+function Nota([string]$t) { [void]$script:T20E.note.Add($t); Log "NOTA $t" }
 function Salva([string]$nome) {
-  $script:R | ConvertTo-Json -Depth 8 | Set-Content (Join-Path $Out "parte-$nome.json") -Encoding utf8
-  Log "salvato parte-$nome.json ($($script:R.passati)/$($script:R.passi_fatti) passi, $($script:R.bug.Count) bug)"
+  $script:T20E | ConvertTo-Json -Depth 8 | Set-Content (Join-Path $Out "parte-$nome.json") -Encoding utf8
+  Log "salvato parte-$nome.json ($($script:T20E.passati)/$($script:T20E.passi_fatti) passi, $($script:T20E.bug.Count) bug)"
 }
 
 # ── Foto della finestra di OrbitLR (PrintWindow) o dello schermo
@@ -264,4 +265,9 @@ function Info() {
   $os = Get-CimInstance Win32_OperatingSystem
   $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
   Nota "computer: $($os.Caption) $($os.Version) · $env:PROCESSOR_ARCHITECTURE · $($cpu.Name) · $($cpu.NumberOfLogicalProcessors) thread · $([math]::Round($os.TotalVisibleMemorySize / 1MB, 1)) GB · utente $env:USERNAME"
+}
+
+# Un messaggio per l'utente con dentro pezzi tecnici di Windows in inglese (os error, io:, codici)
+function Tecnico([string]$dove, [string]$msg) {
+  if ($msg -match "(?i)os error \d+|\bio: |An attempt was made|0x[0-9a-f]{6,}|panicked|ffmpeg exited") { Confuso "messaggio d'errore: $dove" "il messaggio per l'utente contiene un pezzo tecnico in inglese: «$msg»" }
 }

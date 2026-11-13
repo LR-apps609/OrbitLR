@@ -11,6 +11,14 @@ function Motore([string[]]$a) {
   $lines | ForEach-Object { Log "motore: $_" }
   @($lines | Where-Object { $_ -like "T20|*" } | ForEach-Object { $_.Substring(4) | ConvertFrom-Json })
 }
+# Il passaggio all'installatore: senza pipe (cmd, l'installatore e OrbitLR riaperta erediterebbero la pipe di questo script
+# e lo terrebbero fermo: run 43468215688 bloccato 38 minuti). Uscita in un file.
+function Passaggio([string]$setup) {
+  $f = Join-Path $Out "passaggio-$(Get-Random).txt"
+  $p = Start-Process -FilePath $M -ArgumentList @("passaggio", "`"$setup`"", "`"$exe`"") -RedirectStandardOutput $f -PassThru -WindowStyle Hidden
+  $p.WaitForExit(20000) | Out-Null
+  Get-Content $f -ErrorAction SilentlyContinue | ForEach-Object { Log "motore: $_" }
+}
 NonEseguito "aggiornamento da una 2.0 installata davvero" "l'installatore 2.0.0 non è più tra i file di windows-anteprima (solo 2.0.1): si prova il percorso con la 2.0.1 installata (motore vero, installatore vero, finta «versione vecchia» nel confronto delle versioni) come in agenti/W01"
 
 $exe = Installa $Setup
@@ -60,7 +68,8 @@ if (-not $M -or -not (Test-Path $M)) {
   if ($script:SetupScaricato) {
     $r = Avvia "2-prima-del-passaggio" @{} 12 -Resta
     $t0 = Get-Date
-    $pp = Motore @("passaggio", $script:SetupScaricato, $exe)
+    Passaggio $script:SetupScaricato
+    Nota "run 43468215688: lanciato con una pipe, il passaggio (cmd → installatore → OrbitLR riaperta) ha tenuto aperta la pipe di chi l'ha lanciato per 38 minuti: Stdio::null non basta, Rust eredita gli altri handle ereditabili (bInheritHandles). Per un utente (OrbitLR aperta da Esplora file) non dovrebbe contare; conta per chi la avvia da script o terminale"
     Log "chiusura dell'app (come app.exit dopo il passaggio): $(ChiudiBene)"
     $setupVisto = $false; $riaperta = $null
     for ($i = 0; $i -lt 90; $i++) {
@@ -99,7 +108,7 @@ if (-not $M -or -not (Test-Path $M)) {
     Copy-Item "$env:WINDIR\System32\where.exe" $rotto -Force   # «where /S» esce con errore: un installatore che non riesce
     $r = Avvia "4-prima-del-passaggio-rotto" @{} 12 -Resta
     $t0 = Get-Date
-    Motore @("passaggio", $rotto, $exe) | Out-Null
+    Passaggio $rotto
     Log "chiusura: $(ChiudiBene)"
     $riaperta = $null
     for ($i = 0; $i -lt 30 -and -not $riaperta; $i++) { Start-Sleep -Seconds 2; $riaperta = Get-CimInstance Win32_Process -Filter "Name='orbitlr.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CreationDate -gt $t0 } | Select-Object -First 1 }
@@ -108,7 +117,7 @@ if (-not $M -or -not (Test-Path $M)) {
     $t = Ocr $f; Log "OCR: $($t -replace "`n", ' | ')"
     if (Passo "installatore che non riesce: OrbitLR si riapre con «non riuscito»" ([bool]$riaperta -and $riaperta.CommandLine -match "aggiornamento-non-riuscito") "$($riaperta.CommandLine)") {
       if ($script:OcrOk) {
-        if (-not (Passo "e lo dice nella finestra («non è riuscito», «Riprova»)" ($t -match "(?i)non (è )?riuscit|riprova"))) { Confuso "aggiornamento non riuscito" "OrbitLR si è riaperta con --aggiornamento-non-riuscito ma nella foto (OCR) non si legge il motivo né «Riprova»" }
+        if (-not (Passo "e lo dice nella finestra («non è riuscito», «Riprova»)" ($t -match "(?i)non (è )?riuscit|riprova|fail|retry|didn.t|not (be )?complete"))) { Confuso "aggiornamento non riuscito" "OrbitLR si è riaperta con --aggiornamento-non-riuscito ma nella foto (OCR) non si legge il motivo né «Riprova»" }
       }
     } else {
       Bug "Se l'installatore dell'aggiornamento non riesce, OrbitLR non si riapre" "alto" @("Aggiorna adesso con un installatore che fallisce") "OrbitLR si riapre e dice «aggiornamento non riuscito»" "nessuna OrbitLR riaperta in 60 s" "5-installatore-non-riuscito.png"

@@ -25,7 +25,7 @@ for (const dev of ["iPhone 13", "Pixel 7", "iPhone SE"]) {
   const info = await pg.evaluate(() => {
     const vw = innerWidth;
     const larghi = [...document.querySelectorAll("body *")].filter((e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return r.width > 0 && r.right > vw + 2 && cs.position !== "fixed" && !e.closest("[style*='overflow']"); }).slice(0, 6)
-      .map((e) => `${e.tagName.toLowerCase()}.${String(e.className).split(" ")[0]} (${Math.round(e.getBoundingClientRect().right)} px)`);
+      .map((e) => `${e.tagName.toLowerCase()}.${String(e.getAttribute("class") || "").split(" ")[0]} (${Math.round(e.getBoundingClientRect().right)} px)`);
     const piccoli = [...document.querySelectorAll("a[href], button")].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && (r.height < 24 || r.width < 24) && getComputedStyle(e).visibility !== "hidden"; }).slice(0, 8).map((e) => `«${e.textContent.trim().slice(0, 25)}» ${Math.round(e.getBoundingClientRect().width)}×${Math.round(e.getBoundingClientRect().height)}`);
     const links = [...document.querySelectorAll("a[href]")].map((a) => ({ href: a.href, text: a.textContent.trim().replace(/\s+/g, " ").slice(0, 40) }));
     const scarica = links.filter((l) => /scarica|download|\.exe|\.dmg|releases/i.test(l.text + " " + l.href));

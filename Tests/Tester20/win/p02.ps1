@@ -35,7 +35,7 @@ if ($cdp) {
   NonEseguito "foto del benvenuto con il DevTools (CDP) di WebView2" "la porta $cdpPort non si apre: WebView2 di OrbitLR ignora --remote-debugging-port (come W02); usata la foto della finestra con l'OCR di Windows"
   $t = Ocr $r.foto
   Log "OCR primo avvio: $($t -replace "`n", ' | ')"
-  if ($script:OcrOk) { $benvenuto = $t -match "(?i)benvenut|cominciamo|avanti|salta" }
+  if ($script:OcrOk) { $benvenuto = $t -match "(?i)benvenut|cominciamo|avanti|salta|welcome|let.s start|next|skip" }
 }
 if ($null -eq $benvenuto) { NonEseguito "controllo del testo del benvenuto" "né CDP né OCR disponibili: c'è solo la foto 1-primo-avvio.png" }
 elseif (-not (Passo "primo avvio: si vede il benvenuto" $benvenuto)) {
@@ -47,7 +47,7 @@ Log "chiusura: $(ChiudiBene)"
 $r2 = Avvia "2-secondo-avvio" @{} 12
 $t2 = Ocr $r2.foto
 if ($script:OcrOk) {
-  if (-not (Passo "secondo avvio: niente benvenuto di nuovo" (-not ($t2 -match "(?i)benvenut")))) {
+  if (-not (Passo "secondo avvio: niente benvenuto di nuovo" (-not ($t2 -match "(?i)benvenut|welcome")))) {
     Bug "Il benvenuto ricompare a ogni avvio" "basso" @("Apri OrbitLR, chiudi con la ✕", "Riaprila") "Il benvenuto solo la prima volta" "c'è di nuovo il benvenuto" "2-secondo-avvio.png"
   }
 }

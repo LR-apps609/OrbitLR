@@ -93,6 +93,7 @@ foreach ($c in $casi) {
   }
   if ($r.nuovi.Count -and -not $vuoti.Count) { Nota "file rovinato «$($c.f)»: creato comunque $(($r.nuovi | ForEach-Object { "$($_.Name) $($_.Length)" }) -join ', ')" }
   if ($msg -and -not $msg.ok -and $msg.errore -match "(?i)ffmpeg|error|invalid|panic|stream|moov|0x") { Confuso "messaggio per «$($c.f)»" "il motore risponde «$($msg.errore)»: parole tecniche per chi non è pratico" }
+  if ($msg -and -not $msg.ok) { Tecnico "file rovinato «$($c.f)»" $msg.errore }
   if ($msg -and -not $msg.ok) { Nota "messaggio per «$($c.f)»: $($msg.errore)" }
 }
 if (-not $M -or -not (Test-Path $M)) { NonEseguito "messaggio d'errore esatto per i file rovinati" "manca t20-motore.exe: visto solo dall'OCR delle foto" }
@@ -100,6 +101,7 @@ if (-not $M -or -not (Test-Path $M)) { NonEseguito "messaggio d'errore esatto pe
 # ── 4. Cartella in sola lettura (risultati accanto all'originale: non si può scrivere)
 $ro = Join-Path $casa "Sola lettura"; New-Item -ItemType Directory -Force $ro | Out-Null
 Copy-Item "$casa\base.png" "$ro\Foto protetta.png"
+$leggibile = try { [IO.File]::ReadAllBytes("$ro\Foto protetta.png").Length } catch { 0 }
 & icacls $ro /deny "$($env:USERNAME):(OI)(CI)(W,AD,WD,DC)" 2>&1 | ForEach-Object { Log "icacls: $_" }
 $r = Lavoro "6-sola-lettura" "$ro\Foto protetta.png" "image" "to:jpg" "" $ro "*.jpg" 25
 $msg = Motore @("lavoro", "to:jpg", "null", $script:Motori, $dati, "$ro\Foto protetta.png")
@@ -107,9 +109,15 @@ Passo "cartella in sola lettura: l'app resta aperta" $r.viva | Out-Null
 Passo "cartella in sola lettura: nessun file creato altrove a sorpresa" ($r.nuovi.Count -eq 0) | Out-Null
 if ($msg) {
   Nota "sola lettura · motore: $(if ($msg.ok) { 'riuscito: ' + (($msg.uscite | ForEach-Object path) -join ',') } else { $msg.errore })"
+  if (-not $msg.ok) { Tecnico "cartella in sola lettura" $msg.errore }
+  $leggibile2 = try { [IO.File]::ReadAllBytes("$ro\Foto protetta.png").Length } catch { "no: $_" }
+  Nota "la foto nella cartella protetta si legge ancora: $leggibile2 byte"
+  if (-not $msg.ok -and $msg.errore -match "non trovo" -and $leggibile2 -is [int] -and $leggibile2 -gt 0) {
+    Bug "Cartella in sola lettura: OrbitLR dice «non trovo il file (spostato o cancellato?)» ma il file c'è" "basso" @("Una foto in una cartella dove non si può scrivere (permessi di Windows)", "Immagini → Cambia formato → JPG (risultati accanto all'originale)") "Un messaggio che dice che nella cartella non si può scrivere (e di scegliere un'altra cartella)" "«$($msg.errore)»; il file si legge ($leggibile2 byte)" "diario (motore t20-motore lavoro to:jpg)"
+  }
   if (-not $msg.ok -and $msg.errore -notmatch "(?i)permess|sola lettura|scriv") { Confuso "cartella in sola lettura" "il messaggio «$($msg.errore)» non dice che la cartella non si può scrivere" }
 }
-if ($script:OcrOk -and $r.ocr -notmatch "(?i)permess|scriv|cartella") { Nota "sola lettura: nella foto (OCR) non si legge un motivo chiaro: $($r.ocr -replace "`n", ' ')" }
+if ($script:OcrOk -and $r.ocr -notmatch "(?i)permess|scriv|cartella|permission|write|folder|access") { Nota "sola lettura: nella foto (OCR) non si legge un motivo chiaro: $($r.ocr -replace "`n", ' ')" }
 & icacls $ro /remove:d "$env:USERNAME" 2>&1 | Out-Null
 
 # ── 5. Un file tolto durante un lavoro su più file
@@ -145,16 +153,16 @@ $big = Join-Path $casa "Grande 3GB.mkv"
 $drive = (Get-PSDrive C).Free
 if ($drive -lt 12GB) { NonEseguito "file da 3 GB" "spazio libero su C: solo $([math]::Round($drive / 1GB, 1)) GB" } else {
   $t0 = Get-Date
-  FF @("-f", "lavfi", "-i", "testsrc2=size=1280x720:rate=30:duration=72", "-f", "lavfi", "-i", "sine=frequency=440:duration=72", "-c:v", "rawvideo", "-pix_fmt", "yuv420p", "-c:a", "pcm_s16le", $big)
+  FF @("-f", "lavfi", "-i", "testsrc2=size=1280x720:rate=30:duration=80", "-f", "lavfi", "-i", "sine=frequency=440:duration=80", "-c:v", "rawvideo", "-pix_fmt", "yuv420p", "-c:a", "pcm_s16le", $big)
   $gb = [math]::Round((Get-Item $big -ErrorAction SilentlyContinue).Length / 1GB, 2)
   Nota "file grande: $gb GB in $([math]::Round(((Get-Date) - $t0).TotalSeconds)) s"
   $r = Lavoro "8-grande-3GB" $big "video" "vcompress" "best" $casa "Grande 3GB *.mp4" 900
   $o = $r.nuovi | Where-Object { $_.Name -like "Grande 3GB *" -and $_.Name -notlike "*.orbitlr-*" } | Select-Object -First 1
   if (Passo "file da $gb GB: Comprimi riesce" ([bool]$o) "$(if ($o) { "$($o.Name) $([math]::Round($o.Length / 1MB, 1)) MB in $($r.finito_s) s" } else { 'nessun risultato in 15 minuti' })") {
     $po = Probe $o.FullName
-    Passo "file da 3 GB: durata giusta" ([math]::Abs([double]$po.format.duration - 72) -lt 1) "$($po.format.duration) s" | Out-Null
+    Passo "file da 3 GB: durata giusta" ([math]::Abs([double]$po.format.duration - 80) -lt 1) "$($po.format.duration) s" | Out-Null
   } else {
-    Bug "Un video da 3 GB non si comprime" "medio" @("Video da $gb GB (non compresso, 72 s)", "Video → Comprimi") "Il video compresso" "nessun risultato in 15 minuti; app $(if ($r.viva) { 'aperta' } else { 'chiusa' }); OCR: $($r.ocr -replace "`n", ' ')" "$($r.nome).png"
+    Bug "Un video da 3 GB non si comprime" "medio" @("Video da $gb GB (non compresso, 80 s)", "Video → Comprimi") "Il video compresso" "nessun risultato in 15 minuti; app $(if ($r.viva) { 'aperta' } else { 'chiusa' }); OCR: $($r.ocr -replace "`n", ' ')" "$($r.nome).png"
   }
   Remove-Item $big -Force -ErrorAction SilentlyContinue
 }

@@ -112,7 +112,8 @@ export function fuoriFinestra(sel) {
       const label = (b.getAttribute("aria-label") || b.textContent || b.value || b.tagName).trim().replace(/\s+/g, " ").slice(0, 40);
       if (e.right < 0 || e.bottom < 0 || e.left > vw || e.top > vh || e.bottom > vh + 1 || e.right > vw + 1) { bad.push(`«${name}»: «${label}» non si raggiunge (${Math.round(e.left)},${Math.round(e.top)})`); continue; }
       const hit = document.elementFromPoint(Math.min(vw - 1, Math.max(0, e.left + e.width / 2)), Math.min(vh - 1, Math.max(0, e.top + e.height / 2)));
-      if (hit && !b.contains(hit) && !hit.contains(b) && !hit.closest(".toast")) bad.push(`«${name}»: «${label}» coperto da ${hit.tagName.toLowerCase()}.${String(hit.className).split(" ")[0]}`);
+      // (.avvio: la schermata di avvio dopo un cambio di lingua, la pagina si ricarica)
+      if (hit && !b.contains(hit) && !hit.contains(b) && !hit.closest(".toast, .avvio")) { const own = hit.closest("button, a, [role]") || hit; bad.push(`«${name}»: «${label}» coperto da ${own.tagName.toLowerCase()}.${String(own.getAttribute("class") || "").split(" ")[0]}`); }
     }
   }
   se.scrollTop = 0; se.scrollLeft = 0;

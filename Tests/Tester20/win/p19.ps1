@@ -47,6 +47,7 @@ if ($script:OcrOk -and $t -match "(?i)aggiornamento non riuscito|errore|error") 
 Ferma
 $c = Motore @("controlla")
 if ($c) {
+  if (-not $c.ok) { Tecnico "controllo aggiornamenti senza rete" $c.errore }
   if (-not (Passo "controllo aggiornamenti senza rete: risponde presto con un errore" ((-not $c.ok) -and $c.secondi -lt 60) "$([math]::Round($c.secondi,1)) s · «$($c.errore)»")) {
     if ($c.ok) { NonEseguito "controllo aggiornamenti senza rete" "il controllo è riuscito: il blocco non ha fermato t20-motore" } else { Bug "Senza rete il controllo aggiornamenti resta appeso a lungo" "basso" @("Rete assente", "OrbitLR controlla gli aggiornamenti") "Risposta in pochi secondi" "$([math]::Round($c.secondi)) s" "diario (motore)" }
   }
@@ -65,6 +66,7 @@ Passo "downloader senza rete: nessun yt-dlp a metà nei dati" (-not ($yt | Where
 Ferma
 $l = Motore @("link", "https://www.youtube.com/watch?v=jNQXAC9IVRw", $dati, $dl, $script:Motori)
 if ($l) {
+  if (-not $l.ok) { Tecnico "downloader senza rete" $l.errore }
   Nota "downloader senza rete · motore: $(if ($l.ok) { 'RIUSCITO?' } else { "«$($l.errore)»" }) in $([math]::Round($l.secondi, 1)) s"
   if (-not $l.ok -and $l.secondi -gt 120) { Bug "Downloader senza rete: l'errore arriva dopo più di 2 minuti" "basso" @("Rete assente", "Audio/Video Downloader con un link") "Un messaggio in pochi secondi" "$([math]::Round($l.secondi)) s" "diario (motore)" }
   if (-not $l.ok -and $l.errore -notmatch "(?i)internet|rete|connession|collegat") { Confuso "downloader senza rete" "il messaggio «$($l.errore)» non dice che manca la connessione" }
@@ -84,6 +86,7 @@ if ($script:OcrOk) { Nota "IA senza rete, cosa dice la finestra (OCR): $($t -rep
 Ferma
 $m = Motore @("lavoro", "removebg", "null", $script:Motori, $dati, "$casa\Ritratto.png")
 if ($m) {
+  if (-not $m.ok) { Tecnico "IA senza rete (Rimuovi lo sfondo)" $m.errore }
   Nota "IA senza rete · motore: $(if ($m.ok) { 'RIUSCITO?' } else { "«$($m.errore)»" }) in $([math]::Round($m.secondi, 1)) s"
   if (-not $m.ok -and $m.errore -notmatch "(?i)internet|rete|connession|collegat|scaric") { Confuso "IA senza rete" "il messaggio «$($m.errore)» non dice che serve internet per il primo scaricamento" }
   if (-not $m.ok -and $m.secondi -gt 120) { Bug "Senza rete l'IA aspetta più di 2 minuti prima di dire che non riesce" "basso" @("Rete assente", "Rimuovi lo sfondo") "Un messaggio in pochi secondi" "$([math]::Round($m.secondi)) s" "diario (motore)" }

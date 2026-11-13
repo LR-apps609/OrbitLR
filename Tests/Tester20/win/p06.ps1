@@ -101,7 +101,7 @@ Start-Sleep -Seconds 8
 Rename-Item "$auto (spostata)" $auto
 Start-Sleep -Seconds 12
 $n2 = @(Get-ChildItem $auto -Filter *.jpg).Count
-if (-not (Passo "cartella sparita per un attimo: al ritorno non rifà le foto già fatte" ($n2 -eq $n1) "JPG prima $n1, dopo $n2: $((Get-ChildItem $auto | ForEach-Object Name) -join ', ')")) {
+if (-not (Passo "cartella sparita per un attimo: al ritorno non rifà le foto già fatte" ($n2 -eq $n1) "JPG prima $n1, dopo ${n2}: $((Get-ChildItem $auto | ForEach-Object Name) -join ', ')")) {
   Bug "Cartelle automatiche: quando la cartella sparisce per un attimo, al ritorno rifà le foto" "medio" @("Cartella automatica attiva con una foto già convertita", "Rinomina la cartella e rimettila com'era dopo 8 s") "Nessun file nuovo" "JPG da $n1 a $n2" "elenco nel diario"
 }
 Copy-Item $heic "$auto\Dal telefono 2.heic"
