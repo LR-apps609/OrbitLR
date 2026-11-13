@@ -133,7 +133,8 @@ if (typeof document !== "undefined") document.addEventListener("keydown", (e) =>
 const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 if (typeof document !== "undefined") document.addEventListener("keydown", (e) => {
   if (e.key !== "Tab") return;
-  const top = [...document.querySelectorAll(".modal-bg")].pop();
+  // 2.0.2 · Anche l'Editor PDF (.pe-bg): il fuoco non esce più verso la barra laterale dietro
+  const top = [...document.querySelectorAll(".modal-bg, .pe-bg")].pop();
   if (!top) return;
   const list = [...top.querySelectorAll(FOCUSABLE)].filter((el) => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden");
   if (!list.length) { e.preventDefault(); return; }
@@ -150,7 +151,6 @@ if (typeof document !== "undefined") document.addEventListener("keydown", (e) =>
   const el = e.target;
   if (!(el instanceof HTMLElement) || el.tagName === "BUTTON" || el.getAttribute("role") !== "button") return;
   e.preventDefault();
-  if (e.shiftKey && el.dataset.shiftActivate) { el.dispatchEvent(new MouseEvent("dblclick", { bubbles: true })); return; }
   el.click();
 });
 
@@ -168,7 +168,7 @@ export function modal(title, text, buttons) {
     };
     const els = buttons.map((b) => h("button.btn" + (b.primary ? ".primary" : "") + (b.danger ? ".danger" : ""), { type: "button", onclick: () => close(b.value) }, b.label));
     const row = h("div.row", els);
-    bg.append(h("div.modal", { role: "dialog", "aria-modal": "true" }, h("h3", title), text ? h("p", text) : null, row));
+    bg.append(h("div.modal", { role: "dialog", "aria-modal": "true", "aria-label": title }, h("h3", title), text ? h("p", text) : null, row));
     bg.addEventListener("click", (e) => e.target === bg && close(null));
     const esc = (e) => { if (e.key === "Escape" && bg.isConnected && [...document.querySelectorAll(".modal-bg")].pop() === bg) { e.preventDefault(); e.stopImmediatePropagation(); close(null); } };
     document.addEventListener("keydown", esc, true);

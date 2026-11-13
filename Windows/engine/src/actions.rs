@@ -92,8 +92,8 @@ fn out_dir(ctx: &Ctx, src: &Path) -> Result<PathBuf> {
 pub fn run_action(ctx: &Ctx, id: &str, files: &[PathBuf], param: &Value, cancel: &Cancel, progress: &mut dyn FnMut(f64)) -> Result<Vec<Output>> {
     let first = files.first().ok_or_else(|| EngineError::new("nessun file"))?;
     for f in files {
-        if !f.is_file() {
-            return Err(EngineError::new(format!("non trovo «{}» (spostato o cancellato?)", f.file_name().unwrap_or_default().to_string_lossy())));
+        if let Some(p) = crate::error::file_problem(f) {
+            return Err(EngineError::new(p));
         }
     }
     let dir = out_dir(ctx, first)?;

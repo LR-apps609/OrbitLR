@@ -79,7 +79,7 @@ export function askName(title, value, hint) {
     document.addEventListener("keydown", esc, true);
     const ok = h("button.btn.primary", { type: "button", onclick: () => close(input.value.trim() || null) }, t("Salva"));
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") ok.click(); });
-    bg.append(h("div.modal", { role: "dialog", "aria-modal": "true" }, h("h3", title), hint ? h("p", hint) : null, input,
+    bg.append(h("div.modal", { role: "dialog", "aria-modal": "true", "aria-label": title }, h("h3", title), hint ? h("p", hint) : null, input,
       h("div.row", h("button.btn", { type: "button", onclick: () => close(null) }, t("Annulla")), ok)));
     bg.addEventListener("click", (e) => e.target === bg && close(null));
     document.body.append(bg);

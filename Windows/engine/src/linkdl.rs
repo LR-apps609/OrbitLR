@@ -143,12 +143,12 @@ pub fn ensure(data_dir: &Path, force: bool, cancel: &Cancel, progress: &mut dyn 
             .get(&format!("{BASE}SHA2-256SUMS"))
             .call()
             .and_then(|mut r| r.body_mut().read_to_string())
-            .map_err(|e| EngineError::new(format!("non riesco a scaricare il motore del downloader (serve internet): {e}")))?;
+            .map_err(|e| EngineError::new(format!("non riesco a scaricare il motore del downloader (serve internet): {}", crate::error::net_reason(&e))))?;
         let want = expected_hash(&sums, ASSET).ok_or_else(|| EngineError::new("l’elenco ufficiale delle impronte non contiene il motore del downloader"))?;
         let mut resp = ag
             .get(&format!("{BASE}{ASSET}"))
             .call()
-            .map_err(|e| EngineError::new(format!("non riesco a scaricare il motore del downloader (serve internet): {e}")))?;
+            .map_err(|e| EngineError::new(format!("non riesco a scaricare il motore del downloader (serve internet): {}", crate::error::net_reason(&e))))?;
         let total = resp.headers().get("content-length").and_then(|v| v.to_str().ok()).and_then(|v| v.parse::<u64>().ok()).unwrap_or(20_000_000);
         std::fs::create_dir_all(exe.parent().unwrap_or(Path::new(".")))?;
         let part = exe.with_extension("parziale");

@@ -94,7 +94,7 @@ function sidebar() {
     (navButtons.help = h("button", { onclick: () => show("help") }, ico("circle-help", 17), t("Aiuto"))),
     h("button", { title: t("Segnala un problema: si apre un’email già pronta"), "aria-label": t("Segnala un problema"), onclick: () => report(app) }, ico("bug", 17), t("Segnala")),
     h("button", { title: t("Un’idea, una cosa che manca: mi arriva per email"), onclick: () => showFeedback(VERSION) }, ico("lightbulb", 17), t("Idea")));
-  return h("aside.side",
+  return h("aside.side", { "aria-label": t("Barra laterale") },
     h("div.brand", h("img", { src: "img/icona.png", alt: "" }), h("div", h("b", "OrbitLR"), h("small", t("per Windows")))),
     nav,
     h("div.side-fill"),
@@ -113,13 +113,14 @@ function renderDrawer() {
   drawerSaved.replaceChildren(ico("circle-arrow-down", 14), h("span", t`Questo mese hai risparmiato ${fmtBytes(saved)}`));
   let clickTimer;
   // 2.0.2 · Voci raggiungibili con Tab: Invio mostra nella cartella, Maiusc+Invio apre (come clic e doppio clic)
-  drawerList.replaceChildren(...items.map((d) => h("li", { title: t`${d.name}\nClic: mostra nella cartella · Doppio clic: apri`,
-    role: "button", tabindex: "0", "data-shift-activate": "1", "aria-label": t`${d.name}: Invio mostra nella cartella, Maiusc+Invio apre`,
+  drawerList.replaceChildren(...items.map((d) => h("li", h("button", { type: "button", title: t`${d.name}\nClic: mostra nella cartella · Doppio clic: apri`,
+    "aria-label": t`${d.name}: Invio mostra nella cartella, Maiusc+Invio apre`,
     onclick: () => { clearTimeout(clickTimer); clickTimer = setTimeout(() => reveal(d.path), 260); },
     ondblclick: () => { clearTimeout(clickTimer); openPath(d.path); },
+    onkeydown: (e) => { if (e.key === "Enter" && e.shiftKey) { e.preventDefault(); clearTimeout(clickTimer); openPath(d.path); } },
     // 1.1 · Clic destro: le stesse due cose
     oncontextmenu: (e) => contextMenu(e, [{ label: t("Mostra nella cartella"), icon: "folder-open", onclick: () => reveal(d.path) }, { label: t("Apri"), icon: "external-link", onclick: () => openPath(d.path) }]) },
-    ico(iconFor(d.name), 15), h("span.n", d.name), h("span.s", fmtBytes(d.size)))));
+    ico(iconFor(d.name), 15), h("span.n", d.name), h("span.s", fmtBytes(d.size))))));
 }
 
 function iconFor(name) {

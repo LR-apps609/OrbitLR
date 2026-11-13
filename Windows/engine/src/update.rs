@@ -101,7 +101,7 @@ fn agent() -> ureq::Agent {
 }
 
 fn get_small(ag: &ureq::Agent, url: &str, max: u64) -> Result<Vec<u8>> {
-    let mut resp = ag.get(url).call().map_err(|e| EngineError::new(format!("non riesco a controllare gli aggiornamenti: {e}")))?;
+    let mut resp = ag.get(url).call().map_err(|e| EngineError::new(format!("non riesco a controllare gli aggiornamenti: {}", crate::error::net_reason(&e))))?;
     let mut v = Vec::new();
     resp.body_mut().as_reader().take(max).read_to_end(&mut v).map_err(|e| EngineError::new(format!("aggiornamento interrotto: {e}")))?;
     Ok(v)
@@ -128,7 +128,7 @@ pub fn download(m: &Manifest, dir: &Path, cancel: &Cancel, progress: &mut dyn Fn
     let mut resp = agent()
         .get(&format!("{BASE}{}", m.file))
         .call()
-        .map_err(|e| EngineError::new(format!("non riesco a scaricare l'aggiornamento: {e}")))?;
+        .map_err(|e| EngineError::new(format!("non riesco a scaricare l'aggiornamento: {}", crate::error::net_reason(&e))))?;
     let mut reader = resp.body_mut().as_reader();
     let mut file = std::fs::File::create(&part)?;
     let mut hasher = Sha256::new();
