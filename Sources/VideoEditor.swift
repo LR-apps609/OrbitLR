@@ -650,7 +650,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     }
 
     /// 2.7.3 · Riapre un progetto salvato, ritrovando i file spostati.
-    func openProject(_ id: UUID, undo: UndoManager?, prepared: (VideoProject, String?)? = nil) {
+    func openProject(_ id: UUID, undo: UndoManager?, prepared: (VideoProject, String?)? = nil, done: (() -> Void)? = nil) {
         closeProject(undo)
         var p: VideoProject
         if let prepared {
@@ -665,14 +665,15 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             DispatchQueue.global(qos: .userInitiated).async {
                 let r: (VideoProject, String?)? = VideoProjectLibrary.read(url).map { var q = $0; let n = Self.relink(&q); return (q, n) }
                 DispatchQueue.main.async { [weak self] in
-                    guard let self, self.pendingOpen == token else { return }      // nel frattempo hai aperto altro
+                    guard let self, self.pendingOpen == token else { done?(); return }      // nel frattempo hai aperto altro
                     self.pendingOpen = nil
                     guard let r else {
                         self.notice = String(localized: "Questo progetto non si apre più.")
                         self.refreshLibrary()
+                        done?()
                         return
                     }
-                    self.openProject(id, undo: undo, prepared: r)
+                    self.openProject(id, undo: undo, prepared: r, done: done)
                 }
             }
             return
@@ -692,6 +693,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         ensureLoaded()
         ensureSpeech()
         scheduleRebuild()
+        done?()
     }
 
     /// 5.1 · Dove eri in un progetto (non fa parte del progetto: spostare l'indicatore non è una modifica).
@@ -708,7 +710,8 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     }
 
     /// 2.7.3 · Chiude il progetto (resta salvato) e torna alla schermata Progetti.
-    func closeProject(_ undo: UndoManager?) {
+    /// `done` arriva quando il salvataggio in sottofondo è finito e la lista dei Progetti è aggiornata.
+    func closeProject(_ undo: UndoManager?, done: (() -> Void)? = nil) {
         rememberView()
         pause()
         rebuildTask?.cancel()
@@ -724,6 +727,7 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
                 VideoProjectLibrary.trash(id, in: dir)
             }
             self?.refreshLibrary()
+            done?()
         }
         if folder == VideoProjectLibrary.folder { Self.rememberOpen(nil) }
         undo?.removeAllActions(withTarget: self)        // il ⌘Z di un progetto non deve toccare un altro

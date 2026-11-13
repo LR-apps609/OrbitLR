@@ -62,14 +62,14 @@ final class SafeTimesTests: XCTestCase {
         s.clock.time = 3
         s.timelineZoom = 4
         s.lastTool = VideoEditTool.texts.rawValue
-        s.closeProject(nil)
+        await s.closeAndWait(nil)
         XCTAssertEqual(s.timelineZoom, 1)
         XCTAssertEqual(s.lastTool, VideoEditTool.clip.rawValue)
-        s.openProject(id, undo: nil)
+        await s.openAndWait(id, undo: nil)
         XCTAssertEqual(s.timelineZoom, 4)
         XCTAssertEqual(s.lastTool, VideoEditTool.texts.rawValue)
         XCTAssertEqual(s.clock.time, 3, accuracy: 0.01)
-        s.closeProject(nil)
+        await s.closeAndWait(nil)
     }
 
     /// «Inizio qui», «Fine qui» e i tempi scritti si annullano con ⌘Z (prima solo le maniglie).
