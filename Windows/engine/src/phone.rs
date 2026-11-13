@@ -72,6 +72,23 @@ fn respond(mut s: TcpStream, status: &str, ctype: &str, body: &[u8], extra: &str
     let head = format!("HTTP/1.1 {status}\r\nContent-Type: {ctype}\r\nContent-Length: {}\r\nCache-Control: no-store\r\nConnection: close\r\n{extra}\r\n", body.len());
     let _ = s.write_all(head.as_bytes());
     let _ = s.write_all(body);
+    close_gently(s);
+}
+
+/// 2.0.2 · Chiusura «gentile»: prima si dice che non si scrive più, poi si legge quello che il telefono ha ancora
+/// mandato. Su Windows chiudere con dati non letti manda un RST e il telefono poteva perdere la fine del file
+/// («connessione chiusa dall'host remoto», visto anche nelle prove).
+fn close_gently(s: TcpStream) {
+    let _ = s.shutdown(std::net::Shutdown::Write);
+    let _ = s.set_read_timeout(Some(std::time::Duration::from_secs(2)));
+    let mut sink = [0u8; 4096];
+    let mut r = &s;
+    for _ in 0..256 {
+        match r.read(&mut sink) {
+            Ok(0) | Err(_) => break,
+            Ok(_) => {}
+        }
+    }
 }
 
 fn serve_file(mut s: TcpStream, path: &Path, name: &str) {
@@ -91,11 +108,12 @@ fn serve_file(mut s: TcpStream, path: &Path, name: &str) {
             Ok(0) | Err(_) => break,
             Ok(n) => {
                 if s.write_all(&buf[..n]).is_err() {
-                    break;
+                    return;
                 }
             }
         }
     }
+    close_gently(s);
 }
 
 /// Avvia la condivisione di `file`. `en`: la pagina sul telefono in inglese.

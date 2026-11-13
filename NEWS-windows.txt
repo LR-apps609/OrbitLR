@@ -9,6 +9,7 @@ Novità per Windows 2.0.2:
 • Editor PDF: testi e firme al posto giusto anche nei PDF ritagliati (CropBox); testi, campi e firme non restano più nella cronologia
 • Trascrivi su più file senza internet: dal secondo file riprova a scaricare il modello invece di dire «reinstalla»
 • Downloader: una copia interrotta verso un altro disco non lascia un file rotto; foto HEIC/AVIF oltre 178 megapixel si aprono
+• «Al telefono»: il file arriva intero anche quando Windows chiudeva la connessione troppo presto
 
 What’s new in Windows 2.0.2:
 • Editor on small laptops (for example 1366×768 at 150%): the preview no longer covers the timeline and the controls stay reachable
@@ -21,6 +22,7 @@ What’s new in Windows 2.0.2:
 • PDF Editor: text and signatures land in the right place in cropped PDFs (CropBox); text, fields and signatures no longer stay in the history
 • Transcribe on several files without internet: from the second file it tries the model download again instead of saying “reinstall”
 • Downloader: an interrupted copy to another drive no longer leaves a broken file; HEIC/AVIF photos over 178 megapixels open
+• “Send to Phone”: the file arrives complete even when Windows closed the connection too early
 
 Novità per Windows 2.0.1:
 • La finestra entra sempre nello schermo: su portatili e schermi con la scala di Windows al 125%, 150%, 175% o 200% si apriva più alta dello spazio libero e Opzioni, Aiuto e Segnala finivano sotto la barra delle applicazioni
