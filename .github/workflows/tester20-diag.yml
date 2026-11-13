@@ -51,11 +51,11 @@ jobs:
             open -a /Applications/OrbitLR.app set$n/*.heic
             for at in 3 10; do
               sleep 4
-              sample $P 3 -mayDie -file s$at.txt >/dev/null 2>&1
+              sudo sample $P 3 -mayDie -file s$at.txt 2>&1 | tail -2; sudo chmod a+r s$at.txt; ls -la s$at.txt; grep -n "main-thread\|Call graph" s$at.txt | head -3
               echo "--- campione a circa +$at s: thread principale (prime 140 righe dell'albero)"
-              awk '/Call graph:/{c=1} c&&/Thread_/{if(m)exit; if(/main-thread/)m=1} m' s$at.txt | sed -E 's/ +\[0x[0-9a-f,]+\]//; s/\(in ([^)]*)\)/[\1]/' | cut -c1-200 | head -140
+              awk '/main-thread/{m=1} m&&/Thread_/&&!/main-thread/{exit} m' s$at.txt | sed -E 's/ +\[0x[0-9a-f,]+\]//; s/\(in ([^)]*)\)/[\1]/' | cut -c1-200 | head -140
             done
             tail -n 8 ~/Library/Logs/LRConverter.log
             osascript -e 'with timeout of 10 seconds' -e 'tell application id "it.ledion.OrbitLR" to quit' -e 'end timeout' >/dev/null 2>&1 &
-            sleep 12; pgrep -x OrbitLR && { echo "NON SI CHIUDE con quit dopo 12 s"; sample $P 2 -mayDie -file sq.txt >/dev/null 2>&1; echo "--- campione dopo quit"; awk '/Call graph:/{c=1} c&&/Thread_/{if(m)exit; if(/main-thread/)m=1} m' sq.txt | sed -E 's/ +\[0x[0-9a-f,]+\]//' | cut -c1-200 | head -80; } || echo "chiusa con quit"
+            sleep 12; pgrep -x OrbitLR && { echo "NON SI CHIUDE con quit dopo 12 s"; sudo sample $P 2 -mayDie -file sq.txt >/dev/null 2>&1; sudo chmod a+r sq.txt; echo "--- campione dopo quit"; awk '/main-thread/{m=1} m&&/Thread_/&&!/main-thread/{exit} m' sq.txt | sed -E 's/ +\[0x[0-9a-f,]+\]//' | cut -c1-200 | head -80; } || echo "chiusa con quit"
           done
