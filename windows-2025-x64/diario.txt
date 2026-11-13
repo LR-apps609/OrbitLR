@@ -1,104 +1,104 @@
-19:23:48 Zone.Identifier: [ZoneTransfer] | ZoneId=3 | HostUrl=https://github.com/LR-apps609/OrbitLR/releases/
-19:23:48 installo senza amministratore (runas /trustlevel:0x20000)
-19:24:08 file di prova: Gita al lago è.mp4 10117167 · Logo piccolo è.png 1696
-19:24:10 ── 1-primo-avvio-it
-19:24:17 1-primo-avvio-it · figli a 6 s: msedgewebview2.exe×1
-19:25:14 ── 2-video-accenti
-19:25:20 2-video-accenti · figli a 6 s: msedgewebview2.exe×1
-19:25:23 file creati: Gita al lago è (compressed).mp4 · Gita al lago è.mp4 · Logo piccolo è.png
-19:25:25 ── 3-vettoriale-piccolo
-19:25:31 3-vettoriale-piccolo · figli a 6 s: msedgewebview2.exe×1
-19:25:35 vettoriale: SVG creato · motore IA ancora acceso: False · modelli: 9 file
-19:25:37 ── 4-inglese
-19:25:43 4-inglese · figli a 6 s: msedgewebview2.exe×1
-19:26:01 ── 5-webview2-scala-1.25
-19:26:07 5-webview2-scala-1.25 · figli a 6 s: msedgewebview2.exe×1
-19:26:22 ── 5-webview2-scala-1.5
-19:26:28 5-webview2-scala-1.5 · figli a 6 s: msedgewebview2.exe×1
-19:26:43 ── 5-webview2-scala-1.75
-19:26:49 5-webview2-scala-1.75 · figli a 6 s: msedgewebview2.exe×1
-19:27:03 ── 5-webview2-scala-2
-19:27:09 5-webview2-scala-2 · figli a 6 s: msedgewebview2.exe×1
-19:27:31 ── 6-risoluzione-1920x1080
-19:27:37 6-risoluzione-1920x1080 · figli a 6 s: msedgewebview2.exe×1
-19:27:52 ── 6-risoluzione-1366x768
-19:27:58 6-risoluzione-1366x768 · figli a 6 s: msedgewebview2.exe×1
-19:28:13 ── 6-risoluzione-1280x720
-19:28:19 6-risoluzione-1280x720 · figli a 6 s: msedgewebview2.exe×1
-19:28:33 ── 6-risoluzione-1280x1024
-19:28:40 6-risoluzione-1280x1024 · figli a 6 s: msedgewebview2.exe×1
-19:28:54 ── 7-scala-1024x768-passo1
-19:29:00 7-scala-1024x768-passo1 · figli a 6 s: msedgewebview2.exe×1
-19:29:15 ── 7-scala-1024x768-passo2
-19:29:21 7-scala-1024x768-passo2 · figli a 6 s: msedgewebview2.exe×1
-19:29:36 ── 7-scala-1024x768-passo3
-19:29:42 7-scala-1024x768-passo3 · figli a 6 s: msedgewebview2.exe×1
-19:29:57 ── 7-scala-1024x768-passo4
-19:30:03 7-scala-1024x768-passo4 · figli a 6 s: msedgewebview2.exe×1
-19:30:23 ── 7-scala-1920x1080-passo1
-19:30:29 7-scala-1920x1080-passo1 · figli a 6 s: msedgewebview2.exe×1
-19:30:44 ── 7-scala-1920x1080-passo2
-19:30:50 7-scala-1920x1080-passo2 · figli a 6 s: msedgewebview2.exe×1
-19:31:04 ── 7-scala-1920x1080-passo3
-19:31:11 7-scala-1920x1080-passo3 · figli a 6 s: msedgewebview2.exe×1
-19:31:25 ── 7-scala-1920x1080-passo4
-19:31:31 7-scala-1920x1080-passo4 · figli a 6 s: msedgewebview2.exe×1
-19:31:51 ── 7-scala-1366x768-passo1
-19:31:57 7-scala-1366x768-passo1 · figli a 6 s: msedgewebview2.exe×1
-19:32:12 ── 7-scala-1366x768-passo2
-19:32:18 7-scala-1366x768-passo2 · figli a 6 s: msedgewebview2.exe×1
-19:32:33 ── 7-scala-1366x768-passo3
-19:32:39 7-scala-1366x768-passo3 · figli a 6 s: msedgewebview2.exe×1
-19:32:54 ── 7-scala-1366x768-passo4
-19:33:00 7-scala-1366x768-passo4 · figli a 6 s: msedgewebview2.exe×1
-19:33:14 1-primo-avvio-it-6s.png 139047
-19:33:14 1-primo-avvio-it.png 139047
-19:33:14 2-video-accenti-6s.png 149028
-19:33:14 2-video-accenti.png 149028
-19:33:14 3-vettoriale-piccolo-6s.png 112923
-19:33:14 3-vettoriale-piccolo.png 120221
-19:33:14 4-inglese-6s.png 111307
-19:33:14 4-inglese.png 111307
-19:33:14 5-webview2-scala-1.25-6s.png 111437
-19:33:14 5-webview2-scala-1.25.png 111437
-19:33:14 5-webview2-scala-1.5-6s.png 111365
-19:33:14 5-webview2-scala-1.5.png 111365
-19:33:14 5-webview2-scala-1.75-6s.png 110200
-19:33:14 5-webview2-scala-1.75.png 110200
-19:33:14 5-webview2-scala-2-6s.png 111074
-19:33:14 5-webview2-scala-2.png 111074
-19:33:14 6-risoluzione-1280x1024-6s.png 120402
-19:33:14 6-risoluzione-1280x1024.png 120402
-19:33:14 6-risoluzione-1280x720-6s.png 105748
-19:33:14 6-risoluzione-1280x720.png 105748
-19:33:14 6-risoluzione-1366x768-6s.png 116238
-19:33:14 6-risoluzione-1366x768.png 116238
-19:33:14 6-risoluzione-1920x1080-6s.png 121426
-19:33:14 6-risoluzione-1920x1080.png 121426
-19:33:14 7-scala-1024x768-passo1-6s.png 109576
-19:33:14 7-scala-1024x768-passo1.png 109576
-19:33:14 7-scala-1024x768-passo2-6s.png 109655
-19:33:14 7-scala-1024x768-passo2.png 109655
-19:33:14 7-scala-1024x768-passo3-6s.png 110375
-19:33:14 7-scala-1024x768-passo3.png 110375
-19:33:14 7-scala-1024x768-passo4-6s.png 111135
-19:33:14 7-scala-1024x768-passo4.png 111135
-19:33:14 7-scala-1366x768-passo1-6s.png 116548
-19:33:14 7-scala-1366x768-passo1.png 116548
-19:33:14 7-scala-1366x768-passo2-6s.png 113429
-19:33:14 7-scala-1366x768-passo2.png 113429
-19:33:14 7-scala-1366x768-passo3-6s.png 114792
-19:33:14 7-scala-1366x768-passo3.png 114792
-19:33:14 7-scala-1366x768-passo4-6s.png 114278
-19:33:14 7-scala-1366x768-passo4.png 114278
-19:33:14 7-scala-1920x1080-passo1-6s.png 163323
-19:33:14 7-scala-1920x1080-passo1.png 163323
-19:33:14 7-scala-1920x1080-passo2-6s.png 178094
-19:33:14 7-scala-1920x1080-passo2.png 178094
-19:33:14 7-scala-1920x1080-passo3-6s.png 177651
-19:33:14 7-scala-1920x1080-passo3.png 177651
-19:33:14 7-scala-1920x1080-passo4-6s.png 178887
-19:33:14 7-scala-1920x1080-passo4.png 178887
-19:33:14 cartelle-app.txt 10080
-19:33:14 diario.txt 3077
-19:33:14 windows.txt 7871
+20:48:20 Zone.Identifier: [ZoneTransfer] | ZoneId=3 | HostUrl=https://github.com/LR-apps609/OrbitLR/releases/
+20:48:20 installo senza amministratore (runas /trustlevel:0x20000)
+20:48:37 file di prova: Gita al lago è.mp4 10117167 · Logo piccolo è.png 1696
+20:48:39 ── 1-primo-avvio-it
+20:48:45 1-primo-avvio-it · figli a 6 s: msedgewebview2.exe×1
+20:49:42 ── 2-video-accenti
+20:49:48 2-video-accenti · figli a 6 s: msedgewebview2.exe×1
+20:49:52 file creati: Gita al lago è (compressed).mp4 · Gita al lago è.mp4 · Logo piccolo è.png
+20:49:54 ── 3-vettoriale-piccolo
+20:50:00 3-vettoriale-piccolo · figli a 6 s: msedgewebview2.exe×1
+20:50:03 vettoriale: SVG creato · motore IA ancora acceso: False · modelli: 9 file
+20:50:05 ── 4-inglese
+20:50:12 4-inglese · figli a 6 s: msedgewebview2.exe×1
+20:50:29 ── 5-webview2-scala-1.25
+20:50:35 5-webview2-scala-1.25 · figli a 6 s: msedgewebview2.exe×1
+20:50:50 ── 5-webview2-scala-1.5
+20:50:56 5-webview2-scala-1.5 · figli a 6 s: msedgewebview2.exe×1
+20:51:11 ── 5-webview2-scala-1.75
+20:51:17 5-webview2-scala-1.75 · figli a 6 s: msedgewebview2.exe×1
+20:51:32 ── 5-webview2-scala-2
+20:51:38 5-webview2-scala-2 · figli a 6 s: msedgewebview2.exe×1
+20:51:59 ── 6-risoluzione-1920x1080
+20:52:05 6-risoluzione-1920x1080 · figli a 6 s: msedgewebview2.exe×1
+20:52:20 ── 6-risoluzione-1366x768
+20:52:26 6-risoluzione-1366x768 · figli a 6 s: msedgewebview2.exe×1
+20:52:40 ── 6-risoluzione-1280x720
+20:52:47 6-risoluzione-1280x720 · figli a 6 s: msedgewebview2.exe×1
+20:53:01 ── 6-risoluzione-1280x1024
+20:53:07 6-risoluzione-1280x1024 · figli a 6 s: msedgewebview2.exe×1
+20:53:22 ── 7-scala-1024x768-passo1
+20:53:28 7-scala-1024x768-passo1 · figli a 6 s: msedgewebview2.exe×1
+20:53:43 ── 7-scala-1024x768-passo2
+20:53:49 7-scala-1024x768-passo2 · figli a 6 s: msedgewebview2.exe×1
+20:54:04 ── 7-scala-1024x768-passo3
+20:54:10 7-scala-1024x768-passo3 · figli a 6 s: msedgewebview2.exe×1
+20:54:24 ── 7-scala-1024x768-passo4
+20:54:31 7-scala-1024x768-passo4 · figli a 6 s: msedgewebview2.exe×1
+20:54:50 ── 7-scala-1920x1080-passo1
+20:54:56 7-scala-1920x1080-passo1 · figli a 6 s: msedgewebview2.exe×1
+20:55:11 ── 7-scala-1920x1080-passo2
+20:55:17 7-scala-1920x1080-passo2 · figli a 6 s: msedgewebview2.exe×1
+20:55:32 ── 7-scala-1920x1080-passo3
+20:55:38 7-scala-1920x1080-passo3 · figli a 6 s: msedgewebview2.exe×1
+20:55:53 ── 7-scala-1920x1080-passo4
+20:55:59 7-scala-1920x1080-passo4 · figli a 6 s: msedgewebview2.exe×1
+20:56:19 ── 7-scala-1366x768-passo1
+20:56:25 7-scala-1366x768-passo1 · figli a 6 s: msedgewebview2.exe×1
+20:56:40 ── 7-scala-1366x768-passo2
+20:56:46 7-scala-1366x768-passo2 · figli a 6 s: msedgewebview2.exe×1
+20:57:00 ── 7-scala-1366x768-passo3
+20:57:07 7-scala-1366x768-passo3 · figli a 6 s: msedgewebview2.exe×1
+20:57:21 ── 7-scala-1366x768-passo4
+20:57:27 7-scala-1366x768-passo4 · figli a 6 s: msedgewebview2.exe×1
+20:57:44 1-primo-avvio-it-6s.png 139077
+20:57:44 1-primo-avvio-it.png 139077
+20:57:44 2-video-accenti-6s.png 149060
+20:57:44 2-video-accenti.png 149060
+20:57:44 3-vettoriale-piccolo-6s.png 120257
+20:57:44 3-vettoriale-piccolo.png 120257
+20:57:44 4-inglese-6s.png 111346
+20:57:44 4-inglese.png 111346
+20:57:44 5-webview2-scala-1.25-6s.png 111471
+20:57:44 5-webview2-scala-1.25.png 111471
+20:57:44 5-webview2-scala-1.5-6s.png 111403
+20:57:44 5-webview2-scala-1.5.png 111403
+20:57:44 5-webview2-scala-1.75-6s.png 110236
+20:57:44 5-webview2-scala-1.75.png 110236
+20:57:44 5-webview2-scala-2-6s.png 111108
+20:57:44 5-webview2-scala-2.png 111108
+20:57:44 6-risoluzione-1280x1024-6s.png 120440
+20:57:44 6-risoluzione-1280x1024.png 120440
+20:57:44 6-risoluzione-1280x720-6s.png 105782
+20:57:44 6-risoluzione-1280x720.png 105782
+20:57:44 6-risoluzione-1366x768-6s.png 116274
+20:57:44 6-risoluzione-1366x768.png 116274
+20:57:44 6-risoluzione-1920x1080-6s.png 121464
+20:57:44 6-risoluzione-1920x1080.png 121464
+20:57:44 7-scala-1024x768-passo1-6s.png 109576
+20:57:44 7-scala-1024x768-passo1.png 109576
+20:57:44 7-scala-1024x768-passo2-6s.png 109655
+20:57:44 7-scala-1024x768-passo2.png 109655
+20:57:44 7-scala-1024x768-passo3-6s.png 110375
+20:57:44 7-scala-1024x768-passo3.png 110375
+20:57:44 7-scala-1024x768-passo4-6s.png 111135
+20:57:44 7-scala-1024x768-passo4.png 111135
+20:57:44 7-scala-1366x768-passo1-6s.png 116548
+20:57:44 7-scala-1366x768-passo1.png 116548
+20:57:44 7-scala-1366x768-passo2-6s.png 113429
+20:57:44 7-scala-1366x768-passo2.png 113429
+20:57:44 7-scala-1366x768-passo3-6s.png 114792
+20:57:44 7-scala-1366x768-passo3.png 114792
+20:57:44 7-scala-1366x768-passo4-6s.png 114278
+20:57:44 7-scala-1366x768-passo4.png 114278
+20:57:44 7-scala-1920x1080-passo1-6s.png 163365
+20:57:44 7-scala-1920x1080-passo1.png 163365
+20:57:44 7-scala-1920x1080-passo2-6s.png 178087
+20:57:44 7-scala-1920x1080-passo2.png 178087
+20:57:44 7-scala-1920x1080-passo3-6s.png 177651
+20:57:44 7-scala-1920x1080-passo3.png 177651
+20:57:44 7-scala-1920x1080-passo4-6s.png 178887
+20:57:44 7-scala-1920x1080-passo4.png 178887
+20:57:44 cartelle-app.txt 10080
+20:57:44 diario.txt 3077
+20:57:44 windows.txt 7887
