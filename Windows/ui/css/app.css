@@ -117,8 +117,11 @@ input, textarea, select, button { font: inherit; color: inherit; }
 .drawer p.saved .ico { flex: none; }
 .drawer p { margin: 0; font-size: 12px; color: var(--side-text-2); }
 .drawer ul { list-style: none; margin: 4px 0 0; padding: 0; overflow: auto; min-height: 0; }
-.drawer li { display: flex; align-items: center; gap: 8px; padding: 5px 4px; border-radius: 6px; cursor: pointer; font-size: 12.5px; }
-.drawer li:hover { background: var(--side-hover); }
+.drawer li { display: flex; }
+/* 2.0.2 · Ogni voce è un vero pulsante: si raggiunge con Tab e si apre con Invio */
+.drawer li > button { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 5px 4px; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; border-radius: 6px; cursor: pointer; font-size: 12.5px; }
+.drawer li > button:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.drawer li > button:hover { background: var(--side-hover); }
 .drawer li .n { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .drawer li .s { color: var(--side-text-2); font-size: 11px; }
 .foot { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
@@ -208,6 +211,8 @@ input, textarea, select, button { font: inherit; color: inherit; }
 .slice .ico { color: var(--slice-text); }
 .slice .k { position: absolute; top: -4px; left: -4px; width: 18px; height: 18px; border-radius: 50%; background: var(--seg-on); color: var(--seg-on-text); font-size: 10.5px; display: grid; place-items: center; }
 .slice:hover, .slice:focus-visible { transform: scale(1.12); background: var(--slice-hot); color: var(--slice-hot-text); outline: none; }
+/* 2.0.2 · Da tastiera lo spicchio con il fuoco ha anche il contorno, non solo il colore (che arriva con l'animazione) */
+.slice:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 .slice:hover .ico, .slice:focus-visible .ico { color: var(--slice-hot-text); }
 .slice:hover .k, .slice:focus-visible .k { background: var(--gold); color: #13201A; }
 .slice.edit { background: var(--slice-more); }
@@ -346,6 +351,9 @@ input, textarea, select, button { font: inherit; color: inherit; }
 .faq p { margin: 0; padding: 0 16px 14px 42px; color: var(--ink-2); font-weight: 600; user-select: text; }
 .search { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--line-2); border-radius: 12px; padding: 8px 12px; max-width: 520px; margin-bottom: 14px; }
 .search input { border: 0; background: transparent; flex: 1; outline: none; font-weight: 700; }
+/* 2.0.2 · Il campo di ricerca mostra dove si scrive anche da tastiera */
+.search:focus-within { border-color: var(--acc); box-shadow: 0 0 0 3px color-mix(in srgb, var(--acc) 35%, transparent); }
+.search input:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; border-radius: 6px; }
 
 /* ── Avvisi */
 .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--card); padding: 9px 16px; border-radius: 12px; font-weight: 800; font-size: 13px; z-index: 50; box-shadow: var(--shadow-up); animation: up .25s ease-out; max-width: 70vw; }
@@ -402,6 +410,24 @@ textarea.tts:focus { border-color: var(--acc); }
 .lk .im { width: 100%; aspect-ratio: 16/10; border-radius: 6px; background: var(--bg-2) center/cover; box-shadow: inset 0 0 0 1px var(--line); }
 .lk.on .im { box-shadow: 0 0 0 2px var(--acc); }
 .timeline { display: grid; grid-template-columns: 54px minmax(0, 1fr); border-top: 1px solid var(--line); background: var(--panel); height: 186px; }
+/* 2.0.2 · Montaggio su schermi piccoli (1366×768 al 150%, finestre basse): l'anteprima non esce più sopra la linea del tempo
+   e i comandi restano raggiungibili; la parte sinistra scorre da sola invece della finestra intera */
+.ed-mid { overflow: hidden; }
+.ed-left { overflow: auto; }
+@media (max-height: 620px) {
+  .ed-top { padding: 6px 14px 4px; }
+  .stage { min-height: 90px; }
+  .ed-ctrl { padding: 4px 0; }
+  .timeline { height: 132px; }
+  .row.clips { height: 44px; }
+  .blk { height: 42px; }
+  .row.texts, .row.music { height: 24px; }
+  .tl-side { grid-template-rows: 22px 48px 28px 28px 1fr; }
+}
+@media (max-width: 1100px) {
+  .ed-mid { grid-template-columns: minmax(0, 1fr) 264px; }
+  .ed-tools { grid-template-columns: repeat(3, 1fr); }
+}
 .tl-side { display: grid; grid-template-rows: 22px 62px 34px 34px 1fr; align-items: center; justify-items: center; color: var(--quiet); border-right: 1px solid var(--line); padding-bottom: 6px; }
 .tl-side .zoom { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .tl-side .zoom input { width: 46px; accent-color: var(--acc); }
@@ -650,3 +676,6 @@ textarea.tts:focus { border-color: var(--acc); }
 /* 2.0.1 · Aggiornamento: «Interrompi» sotto l'avanzamento; se non riesce il motivo resta in alto a destra */
 .update-stop { position: fixed; top: 48px; right: 14px; z-index: 50; min-height: 24px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
 .update-corner.failed { background: var(--brass); color: var(--on-brass); }
+/* 2.0.2 · L'avviso in alto a destra copriva i pulsanti dei dialoghi (Editor PDF: «Chiudi», «Salva un PDF nuovo») e la barra
+   del Montaggio: lì si nasconde. Resta «Aggiorna alla …» nella barra laterale, che fa la stessa cosa. */
+body:has(.modal-bg) .update-corner, body:has(.pe-bg) .update-corner, body:has(.editor .ed) .update-corner { display: none; }

@@ -70,10 +70,16 @@ export function askName(title, value, hint) {
   return new Promise((resolve) => {
     const input = h("input", { type: "text", value, maxlength: "40", "aria-label": t("Nome"), style: { width: "100%", boxSizing: "border-box", padding: "8px 10px", borderRadius: "12px", border: "1px solid var(--line-2)", background: "var(--card)", color: "var(--ink)", font: "inherit" } });
     const bg = h("div.modal-bg");
-    const close = (v) => { bg.remove(); resolve(v); };
+    // 2.0.2 · Esc chiude da qualunque punto della finestrella (prima solo dal campo), solo se è quella più in alto
+    const esc = (e) => {
+      if (e.key !== "Escape" || [...document.querySelectorAll(".modal-bg")].pop() !== bg) return;
+      e.preventDefault(); e.stopPropagation(); close(null);
+    };
+    const close = (v) => { bg.remove(); document.removeEventListener("keydown", esc, true); resolve(v); };
+    document.addEventListener("keydown", esc, true);
     const ok = h("button.btn.primary", { type: "button", onclick: () => close(input.value.trim() || null) }, t("Salva"));
-    input.addEventListener("keydown", (e) => { if (e.key === "Enter") ok.click(); if (e.key === "Escape") close(null); });
-    bg.append(h("div.modal", { role: "dialog", "aria-modal": "true" }, h("h3", title), hint ? h("p", hint) : null, input,
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") ok.click(); });
+    bg.append(h("div.modal", { role: "dialog", "aria-modal": "true", "aria-label": title }, h("h3", title), hint ? h("p", hint) : null, input,
       h("div.row", h("button.btn", { type: "button", onclick: () => close(null) }, t("Annulla")), ok)));
     bg.addEventListener("click", (e) => e.target === bg && close(null));
     document.body.append(bg);

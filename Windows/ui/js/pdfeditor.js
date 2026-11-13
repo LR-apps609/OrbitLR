@@ -46,9 +46,10 @@ async function openEditor(file, stillHere) {
   img.addEventListener("load", () => (img.style.visibility = ""));
   const layer = h("div.pe-layer");
   const sheet = h("div.pe-sheet", img, layer);
-  const stage = h("div.pe-stage", sheet);
+  // 2.0.2 · La pagina scorre anche da tastiera (frecce, Pag su/giù) con il fuoco su di lei
+  const stage = h("div.pe-stage", { tabindex: "0", role: "region", "aria-label": t("Pagina del PDF") }, sheet);
   const pageLabel = h("span.pe-pn");
-  const side = h("aside.pe-side");
+  const side = h("aside.pe-side", { "aria-label": t("Strumenti dell’editor") });
   const countEl = h("p.hint");
   const bg = h("div.pe-bg", { role: "dialog", "aria-modal": "true", "aria-label": t("Editor PDF") });
 
@@ -248,7 +249,7 @@ async function openEditor(file, stillHere) {
       toast(t("Firma pronta: clicca sulla pagina dove metterla."));
       renderSide();
     };
-    wrap.append(h("div.modal", { role: "dialog", "aria-modal": "true" }, h("h3", t("Disegna la tua firma")), h("p", t("Con il mouse, il touchpad o la penna.")), cv,
+    wrap.append(h("div.modal", { role: "dialog", "aria-modal": "true", "aria-label": t("Disegna la tua firma") }, h("h3", t("Disegna la tua firma")), h("p", t("Con il mouse, il touchpad o la penna.")), cv,
       h("div.row", h("button.btn", { onclick: () => { ctx.clearRect(0, 0, cv.width, cv.height); any = false; } }, t("Cancella")), h("div", { style: { flex: 1 } }),
         h("button.btn", { onclick: () => done(false) }, t("Annulla")), h("button.btn.primary", { onclick: () => done(true) }, t("Usa questa firma")))));
     document.body.append(wrap);
@@ -327,10 +328,11 @@ async function openEditor(file, stillHere) {
 
   function onKey(e) {
     if (document.querySelector(".modal-bg")) return;
+    // 2.0.2 · Esc chiude (o chiede se salvare) anche con il fuoco in un campo del modulo
+    if (e.key === "Escape") { e.preventDefault(); close(); return; }
     if (e.target instanceof Element && e.target.closest("textarea, input")) return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !e.shiftKey) { e.preventDefault(); undo(); return; }
     if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === "y" || (e.shiftKey && e.key.toLowerCase() === "z"))) { e.preventDefault(); redo(); return; }
-    if (e.key === "Escape") close();
     if (e.key === "ArrowRight" && page < info.pages.length) { page++; loadPage(); }
     if (e.key === "ArrowLeft" && page > 1) { page--; loadPage(); }
   }
@@ -355,5 +357,12 @@ async function openEditor(file, stillHere) {
   window.addEventListener("resize", draw);
   render();
   document.body.append(bg);
+  // 2.0.2 · All'apertura il fuoco entra nell'editor (prima restava sulla scheda dietro)
+  const focusIn = () => {
+    if (bg.contains(document.activeElement)) return;
+    [...bg.querySelectorAll("button, [tabindex='0']")].find((el) => el.getClientRects().length && !el.disabled)?.focus();
+  };
+  focusIn();
+  requestAnimationFrame(focusIn);
   loadPage();
 }

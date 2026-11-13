@@ -143,12 +143,12 @@ pub fn ensure(data_dir: &Path, force: bool, cancel: &Cancel, progress: &mut dyn 
             .get(&format!("{BASE}SHA2-256SUMS"))
             .call()
             .and_then(|mut r| r.body_mut().read_to_string())
-            .map_err(|e| EngineError::new(format!("non riesco a scaricare il motore del downloader (serve internet): {e}")))?;
+            .map_err(|e| EngineError::new(format!("non riesco a scaricare il motore del downloader (serve internet): {}", crate::error::net_reason(&e))))?;
         let want = expected_hash(&sums, ASSET).ok_or_else(|| EngineError::new("l’elenco ufficiale delle impronte non contiene il motore del downloader"))?;
         let mut resp = ag
             .get(&format!("{BASE}{ASSET}"))
             .call()
-            .map_err(|e| EngineError::new(format!("non riesco a scaricare il motore del downloader (serve internet): {e}")))?;
+            .map_err(|e| EngineError::new(format!("non riesco a scaricare il motore del downloader (serve internet): {}", crate::error::net_reason(&e))))?;
         let total = resp.headers().get("content-length").and_then(|v| v.to_str().ok()).and_then(|v| v.parse::<u64>().ok()).unwrap_or(20_000_000);
         std::fs::create_dir_all(exe.parent().unwrap_or(Path::new(".")))?;
         let part = exe.with_extension("parziale");
@@ -331,10 +331,13 @@ pub fn download(exe: &Path, tools: Option<&Tools>, link: &str, mode: Mode, folde
     let stem = Path::new(&name).file_stem().map(|s| crate::names::safe_name(&s.to_string_lossy())).unwrap_or_else(|| "download".into());
     let ext = made.extension().map(|e| e.to_string_lossy().to_string()).unwrap_or_else(|| if video { "mp4".into() } else { "m4a".into() });
     std::fs::create_dir_all(folder)?;
-    let dest = crate::names::unique(folder, &stem, &ext);
-    if std::fs::rename(&made, &dest).is_err() {
-        std::fs::copy(&made, &dest)?;
+    // 2.0.2 · Verso un altro disco si copia su un temporaneo accanto e poi si rinomina: se la copia si interrompe
+    // non resta un file rotto con il nome vero (OutFile toglie temporaneo e nome riservato)
+    let out = crate::names::OutFile::new(folder, &stem, &ext)?;
+    if std::fs::rename(&made, &out.tmp).is_err() {
+        std::fs::copy(&made, &out.tmp)?;
     }
+    let dest = out.commit()?;
     progress(1.0);
     Ok(dest)
 }

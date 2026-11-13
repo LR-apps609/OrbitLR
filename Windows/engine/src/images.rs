@@ -62,7 +62,10 @@ pub fn open(tools: Option<&Tools>, path: &Path) -> Result<Photo> {
                 meta::exif_reset_orientation(&mut t);
                 (t.len() <= 60_000).then_some(t)
             });
-            Ok(Photo { img: image::load_from_memory_with_format(&out.stdout, ImageFormat::Png)?, exif, icc: None })
+            // 2.0.2 · Senza il limite di memoria predefinito (512 MB): le foto HEIC/AVIF oltre circa 178 megapixel non si aprivano
+            let mut r = image::ImageReader::with_format(std::io::Cursor::new(&out.stdout), ImageFormat::Png);
+            r.no_limits();
+            Ok(Photo { img: r.decode()?, exif, icc: None })
         }
     }
 }

@@ -108,6 +108,34 @@ fn media_box(doc: &Document, pid: ObjectId) -> [f64; 4] {
     [0.0, 0.0, 612.0, 792.0]
 }
 
+/// 2.0.2 · [x0, y0, x1, y1] dell'area che si vede: la CropBox (ereditata se serve) dentro la MediaBox.
+/// L'anteprima di Windows disegna la CropBox: misure e coordinate di testi e firme devono partire da lì,
+/// altrimenti con una CropBox diversa dalla MediaBox finivano spostati o fuori pagina.
+fn visible_box(doc: &Document, pid: ObjectId) -> [f64; 4] {
+    let mb = media_box(doc, pid);
+    let mut cur = Some(pid);
+    let mut guard = 0;
+    while let Some(id) = cur {
+        guard += 1;
+        if guard > 64 {
+            break;
+        }
+        let Ok(d) = doc.get_dictionary(id) else { break };
+        if let Ok(arr) = d.get(b"CropBox").and_then(|o| o.as_array()) {
+            let v: Vec<f64> = arr.iter().filter_map(num).collect();
+            if v.len() == 4 {
+                let c = [v[0].min(v[2]).max(mb[0]), v[1].min(v[3]).max(mb[1]), v[0].max(v[2]).min(mb[2]), v[1].max(v[3]).min(mb[3])];
+                if c[2] - c[0] > 1.0 && c[3] - c[1] > 1.0 {
+                    return c;
+                }
+            }
+            break;
+        }
+        cur = d.get(b"Parent").ok().and_then(|o| o.as_reference().ok());
+    }
+    mb
+}
+
 fn rotation(doc: &Document, pid: ObjectId) -> i64 {
     doc.get_dictionary(pid).ok().and_then(|d| d.get(b"Rotate").ok()).and_then(|o| o.as_i64().ok()).map(|r| ((r % 360) + 360) % 360).unwrap_or(0)
 }
@@ -117,7 +145,7 @@ pub fn info(src: &Path) -> Result<PdfInfo> {
     let doc = crate::pdf::load(src)?;
     let mut pages = Vec::new();
     for (_, pid) in doc.get_pages() {
-        let b = media_box(&doc, pid);
+        let b = visible_box(&doc, pid);
         let (w, h) = (b[2] - b[0], b[3] - b[1]);
         let r = rotation(&doc, pid);
         pages.push(if r == 90 || r == 270 { PageInfo { width: h, height: w } } else { PageInfo { width: w, height: h } });
@@ -408,7 +436,7 @@ pub fn apply(src: &Path, edits: &Edits, dir: &Path, cancel: &Cancel, progress: &
         });
         crate::pdf::flatten_inherited(&mut doc, pid);
         add_resource(&mut doc, pid, b"Font", "OrbF1", fid)?;
-        let b = media_box(&doc, pid);
+        let b = visible_box(&doc, pid);
         let size = t.size.clamp(4.0, 96.0);
         let buf = per_page.entry(t.page).or_default();
         for (i, line) in t.text.lines().enumerate() {
@@ -426,7 +454,7 @@ pub fn apply(src: &Path, edits: &Edits, dir: &Path, cancel: &Cancel, progress: &
         crate::pdf::flatten_inherited(&mut doc, pid);
         let name = format!("OrbIm{k}");
         add_resource(&mut doc, pid, b"XObject", &name, xid)?;
-        let b = media_box(&doc, pid);
+        let b = visible_box(&doc, pid);
         let (x, y) = to_pdf(b, im.x, im.y + im.h);
         per_page.entry(im.page).or_default().extend_from_slice(format!("q {:.2} 0 0 {:.2} {x:.2} {y:.2} cm /{name} Do Q\n", im.w.max(1.0), im.h.max(1.0)).as_bytes());
     }
@@ -534,7 +562,7 @@ fn rasterize(src: &Path, mut doc: Document, rects: &[Rect], cancel: &Cancel, pro
     })?;
     for (n, jpg, w, h) in images {
         let Some(&pid) = pages.get(&n) else { continue };
-        let b = media_box(&doc, pid);
+        let b = visible_box(&doc, pid);
         let mut d = Dictionary::new();
         d.set("Type", Object::Name(b"XObject".to_vec()));
         d.set("Subtype", Object::Name(b"Image".to_vec()));
@@ -614,6 +642,29 @@ mod tests {
         assert!(s.contains("/OrbF1") && s.contains("/OrbIm0 Do"), "{s}");
         assert!(content.windows(2).any(|w| w == [b'\\', b'(']), "parentesi protette");
         assert!(apply(&src, &Edits::default(), &d, &Cancel::new(), &mut |_| {}).is_err());
+    }
+
+    /// 2.0.2 · Con una CropBox più piccola della MediaBox misure e posizioni partono dall'area che si vede.
+    #[test]
+    fn crop_box() {
+        let d = tmp();
+        let src = sample(&d);
+        let mut doc = Document::load(&src).unwrap();
+        let pid = *doc.get_pages().get(&1).unwrap();
+        let mb = media_box(&doc, pid);
+        let crop = [mb[0] + 10.0, mb[1] + 20.0, mb[2] - 10.0, mb[3] - 5.0];
+        if let Ok(Object::Dictionary(pd)) = doc.get_object_mut(pid) {
+            pd.set("CropBox", Object::Array(crop.iter().map(|v| Object::Real(*v as f32)).collect()));
+        }
+        let p2 = d.join("ritagliato.pdf");
+        doc.save(&p2).unwrap();
+        let i = info(&p2).unwrap();
+        assert!((i.pages[0].width - (crop[2] - crop[0])).abs() < 0.01, "{:?}", i.pages[0].width);
+        assert!((i.pages[0].height - (crop[3] - crop[1])).abs() < 0.01);
+        let doc = Document::load(&p2).unwrap();
+        let b = visible_box(&doc, *doc.get_pages().get(&1).unwrap());
+        let (x, y) = to_pdf(b, 0.0, 0.0);
+        assert!((x - crop[0]).abs() < 0.01 && (y - crop[3]).abs() < 0.01, "{x} {y}");
     }
 
     #[test]

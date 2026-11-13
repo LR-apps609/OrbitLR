@@ -13,6 +13,9 @@ on:
       setup_url:
         description: "Installatore da provare (vuoto = l'ultimo di windows-anteprima)"
         default: ""
+      build_run:
+        description: "Run di prove-windows da cui prendere l'installatore candidato (artifact «windows»)"
+        default: ""
 
 permissions:
   contents: read
@@ -105,6 +108,14 @@ jobs:
         run: |
           npm i --no-save --no-audit --no-fund playwright@1.56.0 axe-core@4.10.3
           if [ "$RUNNER_OS" = "Linux" ]; then npx playwright install --with-deps chromium; else npx playwright install chromium; fi
+      - name: Installatore candidato
+        if: runner.os == 'Windows' && inputs.build_run != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: windows
+          path: candidato
+          run-id: ${{ inputs.build_run }}
+          github-token: ${{ github.token }}
       - name: L'installatore (scaricato come una persona)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -112,7 +123,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SETUP_URL: ${{ inputs.setup_url }}
         run: |
-          if ($env:SETUP_URL) {
+          $cand = Get-ChildItem -Recurse candidato -Filter "*Setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($cand) {
+            Copy-Item $cand.FullName OrbitLR-Setup.exe
+            $nome = "candidato $($cand.Name) (run ${{ inputs.build_run }})"; $atteso = ""
+          } elseif ($env:SETUP_URL) {
             Invoke-WebRequest $env:SETUP_URL -OutFile OrbitLR-Setup.exe
             $nome = Split-Path $env:SETUP_URL -Leaf; $atteso = ""
           } else {

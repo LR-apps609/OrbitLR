@@ -178,7 +178,7 @@ async function sendToPhone(file) {
   // Esc chiude, come le altre finestre
   const esc = (e) => { if (e.key === "Escape" && bg.isConnected && [...document.querySelectorAll(".modal-bg")].pop() === bg) { e.preventDefault(); e.stopImmediatePropagation(); close(); } };
   document.addEventListener("keydown", esc, true);
-  bg.append(h("div.modal.phone", { role: "dialog", "aria-modal": "true" },
+  bg.append(h("div.modal.phone", { role: "dialog", "aria-modal": "true", "aria-label": t("Manda al telefono") },
     h("h3", t("Manda al telefono")),
     h("p", t`Inquadra il codice con la fotocamera del telefono e tocca «Scarica». Il telefono deve essere sulla stessa rete Wi-Fi del computer.`),
     qr,

@@ -78,6 +78,17 @@ export function restoreHistory(list) {
   notify(null);
 }
 
+/** 2.0.2 · Le scelte che possono restare nella cronologia: mai l'Editor PDF, mai le password, mai oltre 2 KB. */
+export function keepParam(action, param) {
+  if (param == null) return true;
+  if (["pdfedit", "protect", "unprotect"].includes(action)) return false;
+  try {
+    return JSON.stringify(param).length <= 2048;
+  } catch {
+    return false;
+  }
+}
+
 /** 1.1 · «Riprova»: lo stesso lavoro, con gli stessi file e le stesse scelte. */
 export function retry(job) {
   return run(job.action, job.files, job.param, job.origin === "auto" ? "activity" : job.origin);
@@ -114,6 +125,21 @@ export async function run(action, files, param, origin) {
   notify(job);
   // 2.0.1 · L'IA la prima volta scarica motore o modello: lo si sa prima, così la barra lo dice
   if (AI_ACTIONS.includes(action)) job.fetch = await invoke("ai_pending", { action }).catch(() => null);
+  // 2.0.2 · Un file spostato o cancellato dopo averlo scelto non fa più fallire tutto il lotto (con l'errore sul primo file):
+  // si toglie, si dice quale manca, e gli altri partono
+  if (job.files.length) {
+    const exist = await invoke("files_exist", { paths: job.files.map((f) => f.path) }).catch(() => null);
+    if (Array.isArray(exist) && exist.length === job.files.length && exist.some((x) => !x)) {
+      const gone = job.files.filter((_, i) => !exist[i]);
+      job.files = job.files.filter((_, i) => exist[i]);
+      for (const f of gone) job.results.push({ source: f.name, outputs: [], error: t("il file non c'è più: è stato spostato o cancellato?") });
+      if (!job.files.length) {
+        job.state = "failed";
+        finish(job);
+        return job;
+      }
+    }
+  }
   try {
     await invoke("start_job", { id, action, files: job.files.map((f) => f.path), param: param ?? null, outDir: outDir() });
     param = null;
@@ -160,6 +186,10 @@ function finish(job) {
   job.ended = Date.now();
   jobs.delete(job.id);
   const record = { ...job };
+  // 2.0.2 · Nella cronologia salvata non restano dati personali o pesanti: testi, campi e firma dell'Editor PDF
+  // (prima ogni firma, in PNG, restava per sempre e riempiva lo spazio fino a non salvare più i progetti).
+  // Il lavoro in memoria li tiene: «Riprova» in questa sessione funziona come prima.
+  if (!keepParam(record.action, record.param)) record.param = null;
   history = [record, ...history].slice(0, 300);
   store.set("history", history);
   const made = job.results.flatMap((r) => r.outputs.map((o) => ({ ...o, at: job.ended, action: job.action })));

@@ -97,8 +97,8 @@ fn checked_file(p: &str) -> Result<PathBuf, String> {
     if !path.is_absolute() || device || p.contains('\0') {
         return Err("percorso non valido".into());
     }
-    if !path.is_file() {
-        return Err(format!("non trovo «{}» (spostato o cancellato?)", path.file_name().unwrap_or_default().to_string_lossy()));
+    if let Some(p) = orbit_engine::error::file_problem(&path) {
+        return Err(p);
     }
     Ok(path)
 }
@@ -390,11 +390,13 @@ fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action
                 let lang = param["lang"].as_str().unwrap_or("auto").to_string();
                 let n = files.len();
                 let (mut ok, mut failed) = (0, 0);
-                let need_model = !orbit_engine::whisper::model_ready(&st.data_dir);
                 for (i, f) in files.iter().enumerate() {
                     if cancel.is_cancelled() {
                         break;
                     }
+                    // 2.0.2 · Il modello si controlla a ogni file: se il primo scaricamento è fallito (senza internet)
+                    // il secondo file riprova a scaricarlo, invece di dire «reinstalla OrbitLR»
+                    let need_model = !orbit_engine::whisper::model_ready(&st.data_dir);
                     let mut last = std::time::Instant::now();
                     let mut prog = |p: f64| {
                         if last.elapsed().as_millis() >= 150 || p >= 1.0 {
@@ -405,12 +407,12 @@ fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action
                     let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| -> orbit_engine::error::Result<Vec<PathBuf>> {
                         let t = st.tools.as_ref().ok_or_else(|| orbit_engine::EngineError::new("manca il motore audio"))?;
                         let exe = st.voice_exe.clone().ok_or_else(|| orbit_engine::EngineError::new("manca il motore della voce: reinstalla OrbitLR"))?;
-                        let model = if need_model && i == 0 {
+                        let model = if need_model {
                             orbit_engine::whisper::download_model(&st.data_dir, &cancel, &mut |p| prog(p * 0.4))?
                         } else {
                             orbit_engine::whisper::model_path(&st.data_dir)
                         };
-                        let off = if need_model && i == 0 { 0.4 } else { 0.0 };
+                        let off = if need_model { 0.4 } else { 0.0 };
                         let info = probe(Some(t), f)?;
                         let dir = ctx.out_dir.clone().unwrap_or_else(|| f.parent().map(Path::to_path_buf).unwrap_or_default());
                         orbit_engine::whisper::transcribe_files(t, &exe, &model, f, &info, &lang, &dir, &cancel, &mut |p| prog(off + p * (1.0 - off)))
@@ -676,14 +678,24 @@ fn set_lang(lang: String) {
 }
 
 /// «Annulla» nella barra del risultato: i file appena creati vanno nel Cestino (solo file creati da OrbitLR).
+/// 2.0.2 · async: controllo dei file e Cestino fuori dal thread della finestra (un disco di rete lento la bloccava).
 #[tauri::command]
-fn undo_result(state: State<'_, Shared>, paths: Vec<String>) -> Result<usize, String> {
+async fn undo_result(state: State<'_, Shared>, paths: Vec<String>) -> Result<usize, String> {
+    let known: Vec<String> = {
+        let made = state.made.lock().unwrap();
+        paths.into_iter().filter(|p| made.contains(p)).collect()
+    };
+    let ok = tauri::async_runtime::spawn_blocking(move || {
+        let ok: Vec<String> = known.into_iter().filter(|p| Path::new(p).is_file()).collect();
+        if ok.is_empty() {
+            return Err("questi file non sono stati creati adesso da OrbitLR".to_string());
+        }
+        trash::delete_all(&ok).map_err(|e| format!("non riesco a spostarli nel Cestino: {e}"))?;
+        Ok(ok)
+    })
+    .await
+    .map_err(|e| e.to_string())??;
     let mut made = state.made.lock().unwrap();
-    let ok: Vec<String> = paths.into_iter().filter(|p| made.contains(p) && Path::new(p).is_file()).collect();
-    if ok.is_empty() {
-        return Err("questi file non sono stati creati adesso da OrbitLR".into());
-    }
-    trash::delete_all(&ok).map_err(|e| format!("non riesco a spostarli nel Cestino: {e}"))?;
     for p in &ok {
         made.remove(p);
     }
@@ -691,12 +703,15 @@ fn undo_result(state: State<'_, Shared>, paths: Vec<String>) -> Result<usize, St
 }
 
 /// «Confronta»: l'anteprima può leggere un file creato da OrbitLR.
+/// 2.0.2 · async: il controllo del file non ferma più la finestra.
 #[tauri::command]
-fn allow_made(app: tauri::AppHandle, state: State<'_, Shared>, path: String) -> bool {
-    if !state.made.lock().unwrap().contains(&path) || !Path::new(&path).is_file() {
-        return false;
+async fn allow_made(app: tauri::AppHandle, state: State<'_, Shared>, path: String) -> Result<bool, String> {
+    if !state.made.lock().unwrap().contains(&path) {
+        return Ok(false);
     }
-    app.asset_protocol_scope().allow_file(&path).is_ok()
+    let p = path.clone();
+    let exists = tauri::async_runtime::spawn_blocking(move || Path::new(&p).is_file()).await.map_err(|e| e.to_string())?;
+    Ok(exists && app.asset_protocol_scope().allow_file(&path).is_ok())
 }
 
 #[derive(Serialize)]
@@ -838,8 +853,9 @@ fn save_overlay(app: tauri::AppHandle, png_base64: String) -> Result<String, Str
 }
 
 /// Apre un file creato da OrbitLR con il suo programma (solo quelli: niente .exe o .bat a caso).
+/// 2.0.2 · async: il controllo del file (checked_file) non ferma più la finestra con un disco di rete lento.
 #[tauri::command]
-fn open_result(app: tauri::AppHandle, state: State<'_, Shared>, path: String) -> Result<(), String> {
+async fn open_result(app: tauri::AppHandle, state: State<'_, Shared>, path: String) -> Result<(), String> {
     let known = state.made.lock().unwrap().contains(&path);
     let ext = orbit_engine::names::ext(Path::new(&path));
     const SAFE: &[&str] = &["jpg", "jpeg", "png", "webp", "avif", "bmp", "tiff", "tif", "gif", "ico", "pdf", "mp4", "mov", "m4v", "mkv", "webm", "avi",
@@ -849,7 +865,8 @@ fn open_result(app: tauri::AppHandle, state: State<'_, Shared>, path: String) ->
     if !SAFE.contains(&ext.as_str()) {
         return Err("questo file non si apre da qui".into());
     }
-    checked_file(&path)?;
+    let p = path.clone();
+    tauri::async_runtime::spawn_blocking(move || checked_file(&p).map(|_| ())).await.map_err(|e| e.to_string())??;
     use tauri_plugin_opener::OpenerExt;
     app.opener().open_path(path, None::<&str>).map_err(|e| e.to_string())
 }
@@ -954,7 +971,10 @@ fn trash_project(app: tauri::AppHandle, name: String, json: String) -> Result<()
 /// disco di rete scollegato faceva aspettare Windows fino a mezzo minuto con la finestra bloccata («Non risponde»).
 #[tauri::command]
 async fn files_exist(paths: Vec<String>) -> Result<Vec<bool>, String> {
-    tauri::async_runtime::spawn_blocking(move || paths.iter().map(|p| Path::new(p).is_file()).collect())
+    // 2.0.2 · Un file protetto c'è: lo si lascia passare, il motore dirà che Windows non lascia leggerlo
+    tauri::async_runtime::spawn_blocking(move || {
+        paths.iter().map(|p| match std::fs::metadata(p) { Ok(m) => m.is_file(), Err(e) => e.kind() == std::io::ErrorKind::PermissionDenied }).collect()
+    })
         .await
         .map_err(|e| e.to_string())
 }
@@ -1199,6 +1219,18 @@ fn main() {
                 let _ = std::fs::create_dir_all(&data);
                 orbit_engine::names::set_temp_registry(data.join("temporanei.txt"));
                 std::thread::spawn(orbit_engine::names::cleanup_leftovers);
+                // 2.0.2 · L'installatore dell'aggiornamento già usato (circa 100 MB) non resta sul disco:
+                // all'avvio si tolgono i file della cartella «aggiornamento» più vecchi di 10 minuti
+                let upd = app.path().app_local_data_dir().unwrap_or_else(|_| std::env::temp_dir().join("OrbitLR")).join("aggiornamento");
+                std::thread::spawn(move || {
+                    let Ok(rd) = std::fs::read_dir(&upd) else { return };
+                    for e in rd.flatten() {
+                        let old = e.metadata().ok().and_then(|m| m.modified().ok()).and_then(|t| t.elapsed().ok()).is_some_and(|d| d.as_secs() > 600);
+                        if old && e.path().is_file() {
+                            let _ = std::fs::remove_file(e.path());
+                        }
+                    }
+                });
             }
             let res = app.path().resource_dir().ok();
             let voice_exe = res.map(|d| d.join("motori").join("voce").join(if cfg!(windows) { "whisper-cli.exe" } else { "whisper-cli" }))

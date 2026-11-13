@@ -54,7 +54,7 @@ pub fn fetch(item: &Item, dest: &Path, cancel: &Cancel, progress: &mut dyn FnMut
     let mut resp = agent
         .get(item.url)
         .call()
-        .map_err(|e| EngineError::new(format!("non riesco a scaricare {} (serve internet solo questa volta): {e}", item.what)))?;
+        .map_err(|e| EngineError::new(format!("non riesco a scaricare {} (serve internet solo questa volta): {}", item.what, crate::error::net_reason(&e))))?;
     let total = resp.headers().get("content-length").and_then(|v| v.to_str().ok()).and_then(|v| v.parse::<u64>().ok()).unwrap_or(item.bytes);
     let mut reader = resp.body_mut().as_reader();
     let mut file = std::fs::File::create(&part)?;
