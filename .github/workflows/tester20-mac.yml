@@ -1,0 +1,143 @@
+name: tester20-mac
+on:
+  push:
+    branches: ['tester20-mac']
+  workflow_dispatch:
+    inputs:
+      profili:
+        description: 'Profili separati da spazi (vuoto = quelli in Tests/Tester20/mac/profili.txt, cioè tutti)'
+        required: false
+        default: ''
+      run_id:
+        description: 'Run «Compila OrbitLR» con l artifact pacchetto da provare (se scaduto: release v6.0.3)'
+        required: false
+        default: '42536443588'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  profilo:
+    name: ${{ matrix.p }} (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - { p: P01, os: macos-15 }
+          - { p: P03, os: macos-26 }
+          - { p: P05, os: macos-26 }
+          - { p: P07, os: xcode-27 }
+          - { p: P08, os: macos-26 }
+          - { p: P09, os: macos-15 }
+          - { p: P10, os: macos-26 }
+          - { p: P11, os: macos-26 }
+          - { p: P12, os: macos-15 }
+          - { p: P13, os: macos-15 }
+          - { p: P14, os: xcode-27 }
+          - { p: P15, os: macos-26 }
+          - { p: P16, os: macos-15-intel }
+          - { p: P18, os: macos-15 }
+          - { p: P19, os: macos-26 }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    env:
+      T20_PROFILO: ${{ matrix.p }}
+      T20_RUNNER: ${{ matrix.os }}
+      RUN_ID: ${{ github.event.inputs.run_id || '42536443588' }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Questo profilo?
+        id: sel
+        env:
+          SCELTI: ${{ github.event.inputs.profili }}
+        run: |
+          L="${SCELTI:-$(cat Tests/Tester20/mac/profili.txt)}"
+          if echo " $L " | grep -q " ${{ matrix.p }} "; then echo "fai=1" >> "$GITHUB_OUTPUT"; else echo "fai=0" >> "$GITHUB_OUTPUT"; echo "profilo non scelto"; fi
+          echo "T20_OUT=$RUNNER_TEMP/t20/${{ matrix.p }}" >> "$GITHUB_ENV"
+          echo "T20_BIN=$RUNNER_TEMP/t20bin/strumenti" >> "$GITHUB_ENV"
+          echo "T20_REL=$RUNNER_TEMP/rel" >> "$GITHUB_ENV"
+      - name: Pacchetto della run ${{ env.RUN_ID }}
+        if: steps.sel.outputs.fai == '1'
+        continue-on-error: true
+        uses: actions/download-artifact@v5
+        with:
+          name: pacchetto
+          run-id: ${{ env.RUN_ID }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/p
+      - name: Installo OrbitLR
+        if: steps.sel.outputs.fai == '1'
+        run: |
+          set -x
+          sw_vers; uname -m
+          mkdir -p "$T20_REL" "$RUNNER_TEMP/x"
+          if [ -f "$RUNNER_TEMP/p/pacchetto.tar" ]; then
+            tar -C "$RUNNER_TEMP/x" -xf "$RUNNER_TEMP/p/pacchetto.tar"; FONTE="pacchetto run $RUN_ID"
+          else
+            curl -fsSL --retry 3 -o "$T20_REL/OrbitLR.6.0.3.orbitlr" https://github.com/LR-apps609/OrbitLR/releases/download/v6.0.3/OrbitLR.6.0.3.orbitlr
+            ditto -x -k "$T20_REL/OrbitLR.6.0.3.orbitlr" "$RUNNER_TEMP/x"; FONTE="release v6.0.3 (pacchetto della run $RUN_ID scaduto)"
+          fi
+          APPSRC=$(find "$RUNNER_TEMP/x" -maxdepth 4 -type d -name OrbitLR.app -path '*Prebuilt*' | head -n1)
+          echo "app: $APPSRC"
+          rm -rf /Applications/OrbitLR.app
+          ditto "$APPSRC" /Applications/OrbitLR.app
+          xattr -dr com.apple.quarantine /Applications/OrbitLR.app || true
+          V=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' /Applications/OrbitLR.app/Contents/Info.plist)
+          B=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' /Applications/OrbitLR.app/Contents/Info.plist)
+          echo "T20_BUILD=$V ($B) · $FONTE" >> "$GITHUB_ENV"
+          rm -rf "$RUNNER_TEMP/x" "$RUNNER_TEMP/p"
+          if [ "${{ matrix.p }}" = P03 ]; then
+            curl -fsSL --retry 3 -o "$T20_REL/OrbitLR.6.0.2.orbitlr" https://github.com/LR-apps609/OrbitLR/releases/download/v6.0.2/OrbitLR.6.0.2.orbitlr
+            [ -f "$T20_REL/OrbitLR.6.0.3.orbitlr" ] || curl -fsSL --retry 3 -o "$T20_REL/OrbitLR.6.0.3.orbitlr" https://github.com/LR-apps609/OrbitLR/releases/download/v6.0.3/OrbitLR.6.0.3.orbitlr
+            ls -la "$T20_REL"
+          fi
+          df -h / | tail -1
+      - name: Strumenti del banco di prova
+        if: steps.sel.outputs.fai == '1'
+        run: |
+          mkdir -p "$(dirname "$T20_BIN")"
+          swiftc -O -o "$T20_BIN" Tests/Tester20/mac/strumenti.swift
+          "$T20_BIN" schermo; "$T20_BIN" fiducia
+      - name: Mac Intel pulito (Homebrew nascosto)
+        if: steps.sel.outputs.fai == '1' && matrix.p == 'P16'
+        run: |
+          for p in /usr/local/opt /usr/local/Cellar /usr/local/lib /opt/homebrew; do [ -e "$p" ] && sudo mv "$p" "$p-nascosta-t20" || true; done
+          for x in ffmpeg ffprobe magick convert gs exiftool pandoc soffice whisper-cli yt-dlp brew; do [ -e /usr/local/bin/$x ] && sudo mv /usr/local/bin/$x /usr/local/bin/$x-nascosto-t20 || true; done
+          ls /usr/local; command -v ffmpeg || echo "nessun ffmpeg nel PATH"
+      - name: Profilo ${{ matrix.p }}
+        if: steps.sel.outputs.fai == '1'
+        timeout-minutes: 38
+        run: |
+          P=$(echo "${{ matrix.p }}" | tr 'P' 'p')
+          /usr/bin/python3 -u "Tests/Tester20/mac/profili/$P.py" 2>&1 | tee "$RUNNER_TEMP/console.txt"
+      - name: esito.json anche se il profilo si è fermato
+        if: always() && steps.sel.outputs.fai == '1'
+        run: |
+          mkdir -p "$T20_OUT"; cp "$RUNNER_TEMP/console.txt" "$T20_OUT/" 2>/dev/null || true
+          /usr/bin/python3 - <<'PY'
+          import json, os
+          p = os.path.join(os.environ["T20_OUT"], "esito.json")
+          if os.path.exists(p):
+              d = json.load(open(p))
+              if "secondi" not in d:
+                  d.setdefault("non_eseguiti", []).append({"cosa": "resto del profilo", "perche": "il profilo si è fermato prima della fine (tempo massimo o errore del banco)"})
+                  json.dump(d, open(p, "w"), ensure_ascii=False, indent=1)
+          else:
+              json.dump({"profilo": os.environ["T20_PROFILO"], "runner": os.environ["T20_RUNNER"], "build": os.environ.get("T20_BUILD", "?"),
+                         "passi_fatti": 0, "passati": 0, "non_eseguiti": [{"cosa": "tutto", "perche": "il profilo non è partito"}],
+                         "bug": [], "confuso": []}, open(p, "w"), ensure_ascii=False, indent=1)
+          PY
+          cp ~/Library/Logs/LRConverter.log "$T20_OUT/" 2>/dev/null || true
+          mkdir -p "$T20_OUT/diag"; cp ~/Library/Logs/DiagnosticReports/*OrbitLR* /Library/Logs/DiagnosticReports/*OrbitLR* "$T20_OUT/diag/" 2>/dev/null || true
+          rm -rf "$T20_OUT/fix" "$T20_OUT/fx" "$T20_OUT/dl" "$T20_OUT/../x-"* "$T20_OUT"/*.dmg "$T20_OUT/yt-dlp" "$T20_OUT/yt"
+          find "$T20_OUT" -type f -size +3M ! -name '*.png' -delete
+          find "$T20_OUT" -type f -name '*.png' -size +6M -delete
+          du -sh "$T20_OUT"
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.sel.outputs.fai == '1'
+        with:
+          name: t20-${{ matrix.p }}
+          path: ${{ env.T20_OUT }}
+          retention-days: 7
