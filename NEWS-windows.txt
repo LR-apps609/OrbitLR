@@ -1,3 +1,27 @@
+Novità per Windows 2.0.2:
+• Montaggio su portatili piccoli (per esempio 1366×768 al 150%): l'anteprima non copre più la linea del tempo e i comandi restano raggiungibili
+• L'avviso «Nuovo aggiornamento disponibile» non copre più i pulsanti dei dialoghi e del Montaggio (resta «Aggiorna alla…» nella barra laterale); l'installatore già usato non resta sul disco
+• Tastiera: Invio e Spazio aprono i riquadri «Trascina qui», i progetti, i file caricati e le voci del Cassetto (Maiusc+Invio apre il file); l'Editor PDF riceve il fuoco, lo tiene dentro e si chiude con Esc anche da un campo
+• Errori di rete in italiano: «nessuna connessione a internet», «un firewall o un antivirus blocca la connessione», al posto del testo tecnico di Windows
+• Un file che Windows non lascia leggere ora lo dice, invece di «spostato o cancellato?»; un file sparito dopo averlo scelto non ferma più gli altri
+• «Interrompi» funziona anche se premuto mentre il lavoro sta partendo; l'attesa massima del motore video dice i minuti veri
+• La finestra non si blocca più con dischi di rete o chiavette lente anche in «Annulla», «Confronta» e «Apri»
+• Editor PDF: testi e firme al posto giusto anche nei PDF ritagliati (CropBox); testi, campi e firme non restano più nella cronologia
+• Trascrivi su più file senza internet: dal secondo file riprova a scaricare il modello invece di dire «reinstalla»
+• Downloader: una copia interrotta verso un altro disco non lascia un file rotto; foto HEIC/AVIF oltre 178 megapixel si aprono
+
+What’s new in Windows 2.0.2:
+• Editor on small laptops (for example 1366×768 at 150%): the preview no longer covers the timeline and the controls stay reachable
+• The “New update available” notice no longer covers dialog and Editor buttons (“Update to…” stays in the sidebar); the used installer no longer stays on disk
+• Keyboard: Enter and Space open the “Drop here” areas, projects, loaded files and Drawer items (Shift+Enter opens the file); the PDF Editor takes focus, keeps it inside and closes with Esc even from a field
+• Network errors in plain words: “no internet connection”, “a firewall or antivirus is blocking the connection”, instead of Windows’ technical text
+• A file Windows won’t let OrbitLR read now says so, instead of “moved or deleted?”; a file that disappears after you chose it no longer stops the others
+• “Stop” works even when pressed while the job is starting; the video engine timeout shows the real minutes
+• The window no longer freezes with slow network drives or USB sticks in “Undo”, “Compare” and “Open” too
+• PDF Editor: text and signatures land in the right place in cropped PDFs (CropBox); text, fields and signatures no longer stay in the history
+• Transcribe on several files without internet: from the second file it tries the model download again instead of saying “reinstall”
+• Downloader: an interrupted copy to another drive no longer leaves a broken file; HEIC/AVIF photos over 178 megapixels open
+
 Novità per Windows 2.0.1:
 • La finestra entra sempre nello schermo: su portatili e schermi con la scala di Windows al 125%, 150%, 175% o 200% si apriva più alta dello spazio libero e Opzioni, Aiuto e Segnala finivano sotto la barra delle applicazioni
 • Un lavoro su video o audio non resta più «in corso» per sempre: se il motore video non risponde per 5 minuti (per esempio per il driver della scheda video) si ferma e lo dice
