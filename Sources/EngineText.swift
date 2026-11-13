@@ -35,6 +35,7 @@ enum EngineText {
         (#"^(\d+/\d+) · Unisco (\d+) file in un PDF$"#, "$1 · Merging $2 files into a PDF"),
         (#"^Seleziona il video insieme al file \.srt$"#, "Select the video together with the .srt file"),
         (#"^Nessun file supportato selezionato$"#, "No supported files selected"),
+        (#"^non sono riuscito a creare il file \(dettagli nel log\)$"#, "Couldn’t create the file (details in the log)"),
         // Messaggi del motore video di macOS (SmartVideo), che il codice riconosce in italiano
         (#"^spazio libero insufficiente: servono circa (.+), ce ne sono (.+)\. Libera un po' di spazio e riprova$"#,
          "Not enough free space: about $1 needed, $2 available. Free up some space and try again"),

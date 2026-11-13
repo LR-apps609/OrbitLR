@@ -324,7 +324,10 @@ enum SharedFiles {
         let fm = FileManager.default
         var out: [URL] = []
         for p in (c.queryItems ?? []).filter({ $0.name == "f" }).compactMap({ $0.value }) {
+            // 6.0.4 · Solo percorsi completi: «f=» vuoto diventava la cartella di lavoro dell'app («/», tutto il disco)
+            guard p.hasPrefix("/"), p.count > 1 else { continue }
             let u = URL(fileURLWithPath: p)
+            guard u.standardizedFileURL.path != "/" else { continue }
             guard fm.fileExists(atPath: u.path) else { continue }
             // 3.5.2 · Sicurezza: un link non può mai spostare file dai dati di altre app.
             // Solo lo spazio dell'estensione Condividi di OrbitLR viene copiato (mai spostato); gli altri si ignorano.

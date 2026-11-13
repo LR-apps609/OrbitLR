@@ -158,7 +158,13 @@ final class Watchdog: @unchecked Sendable {
         let (send, event) = detector.tick(now: Self.uptime)
         let what = doing
         lock.unlock()
-        if send { DispatchQueue.main.async { [weak self] in self?.pong() } }
+        if send {
+            // 6.0.4 · Nei modi «comuni» del ciclo principale, che comprendono gli avvisi aperti (runModal):
+            // con DispatchQueue.main un avviso lasciato aperto sembrava un blocco e al riavvio si chiedeva il rapporto
+            let rl = CFRunLoopGetMain()
+            CFRunLoopPerformBlock(rl, CFRunLoopMode.commonModes.rawValue) { [weak self] in self?.pong() }
+            CFRunLoopWakeUp(rl)
+        }
         if case .hang(let age) = event {
             let during = MainActivity.current
             let text = "La finestra non risponde da \(Int(age)) secondi" + (during.isEmpty ? "" : " · durante: \(during)")
@@ -418,12 +424,20 @@ enum ProblemReport {
         a.addButton(withTitle: String(localized: "Salva il rapporto sulla Scrivania"))
         a.addButton(withTitle: String(localized: "Non ora"))
         NSApp.activate()
-        let wantsSave = a.runModal() == .alertFirstButtonReturn
-        Watchdog.shared.settlePending()
-        AppLog.write("guardiano", wantsSave ? "rapporto: salvato" : "rapporto: non ora")
-        guard wantsSave else { return }
-        let text = Self.text(problems: problems, hangReport: latestSystemReport())
-        if let u = save(text) { NSWorkspace.shared.activateFileViewerSelecting([u]) }
+        let answered: (Bool) -> Void = { wantsSave in
+            Watchdog.shared.settlePending()
+            AppLog.write("guardiano", wantsSave ? "rapporto: salvato" : "rapporto: non ora")
+            guard wantsSave else { return }
+            let text = Self.text(problems: problems, hangReport: latestSystemReport())
+            if let u = save(text) { NSWorkspace.shared.activateFileViewerSelecting([u]) }
+        }
+        // 6.0.4 · Come foglio sulla finestra, non come avviso che ferma tutto: mentre la domanda è aperta
+        // le Cartelle automatiche e i lavori continuano (prima aspettavano il clic su «Non ora»)
+        if let w = AppState.shared.mainWindow, w.isVisible {
+            a.beginSheetModal(for: w) { answered($0 == .alertFirstButtonReturn) }
+        } else {
+            answered(a.runModal() == .alertFirstButtonReturn)
+        }
     }
 }
 

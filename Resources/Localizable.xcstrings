@@ -1435,6 +1435,16 @@
         }
       }
     },
+    "A questo link non c’è niente da scaricare: controlla che sia giusto e completo.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There’s nothing to download at this link: check that it’s right and complete."
+          }
+        }
+      }
+    },
     "A tutte le clip": {
       "localizations": {
         "en": {

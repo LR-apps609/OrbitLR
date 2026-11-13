@@ -179,7 +179,8 @@ struct VideoModeSwitch: View {
         .onReceive(AppState.shared.$videoMode.removeDuplicates()) { mode = $0 }
         .background(Button("") {
             if mode == .tools { Self.openEditor(undo: undo) } else { withAnimation(Motion.page) { app.videoMode = .tools } }
-        }.keyboardShortcut("e", modifiers: [.command, .shift]).opacity(0).allowsHitTesting(false))
+        }.keyboardShortcut("e", modifiers: [.command, .shift]).opacity(0).allowsHitTesting(false)
+            .accessibilityHidden(true))     // 6.0.4 · solo per ⇧⌘E: VoiceOver lo leggeva come un pulsante senza nome
     }
 
     /// I video già portati nell'editor: tornando avanti e indietro non si creano progetti doppi.

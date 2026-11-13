@@ -623,8 +623,11 @@ case "text":      // pdf uscita lingue — testo del PDF, con OCR per le pagine 
         autoreleasepool {
             guard let p = doc.page(at: i) else { return }
             var s = p.string ?? ""
+            // 6.0.4 · Pagina con poco testo: si prova anche l'OCR, ma si tiene il testo vero se l'OCR ne trova di meno
+            // (prima «Tre 1 di 3» spariva e il PDF risultava «senza testo leggibile»)
             if s.trimmingCharacters(in: .whitespacesAndNewlines).count < 15, let img = render(p, dpi: 300) {
-                s = recognize(img, .up, langs)
+                let ocr = recognize(img, .up, langs)
+                if ocr.trimmingCharacters(in: .whitespacesAndNewlines).count > s.trimmingCharacters(in: .whitespacesAndNewlines).count { s = ocr }
             }
             if !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { found = true }
             parts.append(n > 1 ? "──── Pagina \(i + 1) ────\n\(s)" : s)
@@ -1766,7 +1769,7 @@ explain() {  # file degli errori, codice → motivo comprensibile
   txt=$(tail -n 40 "$f" 2>/dev/null)
   case $txt in
     *"No space left"*)                                   print "spazio su disco esaurito" ;;
-    *"Operation not permitted"*|*"Permission denied"*)   print "macOS non ha dato il permesso di leggere o scrivere in quella cartella" ;;
+    *"Operation not permitted"*|*"Permission denied"*|*"Read-only file system"*) print "macOS non ha dato il permesso di leggere o scrivere in quella cartella" ;;
     *"Resource deadlock"*|*dataless*)                    print "il file è su iCloud ma non è scaricato sul Mac: aprilo una volta e riprova" ;;
     *[Pp]assword*|*[Ee]ncrypted*)                        print "il file è protetto da password" ;;
     *"Invalid data found"*|*"moov atom not found"*|*"could not find codec"*|*"no decode delegate"*|*"improper image header"*|*corrupt*)
@@ -1775,7 +1778,9 @@ explain() {  # file degli errori, codice → motivo comprensibile
     *"Unknown encoder"*|*"Encoder not found"*)           print "la versione installata di ffmpeg non supporta questo formato" ;;
     *)
       l=$(print -r -- "$txt" | grep -av '^[[:space:]]*$' | tail -n 1)
-      if [[ -n $l ]]; then print -r -- "${l[1,160]}"; else print "errore sconosciuto (dettagli nel log)"; fi ;;
+      # 6.0.4 · Una riga che è solo un percorso (spesso quello interno del lavoro) non spiega niente a chi la legge
+      if [[ ${l##[[:space:]]#} == /* && ${l##[[:space:]]#} != *": "* ]]; then l=""; fi
+      if [[ -n $l ]]; then print -r -- "${l[1,160]}"; else print "non sono riuscito a creare il file (dettagli nel log)"; fi ;;
   esac
 }
 
@@ -2392,7 +2397,9 @@ for j in {1..$#J_ACT}; do
       # prima il file nasceva con l'«a capo», l'app non lo trovava e segnava il lavoro come non riuscito
       nm=${it:t}; nm=${nm//[$'\n\r\t']/ }
       if [[ -d $it ]]; then tgt=$(unique_item "$dest" "$nm" dir); else tgt=$(unique_item "$dest" "$nm"); fi
-      if mv -f -- "$it" "$tgt"; then (( moved += 1 )); last_out=$tgt; rp OUT "$tgt"; fi
+      # 6.0.4 · L'errore dello spostamento finisce nel file degli errori: disco pieno o cartella in sola lettura
+      # si dicono così (prima: «errore sconosciuto», o il percorso interno del file di lavoro)
+      if mv -f -- "$it" "$tgt" 2>>"$JD/err"; then (( moved += 1 )); last_out=$tgt; rp OUT "$tgt"; else rm -f -- "$tgt" 2>/dev/null; fi
     done
     if (( moved )); then
       (( ok += 1 ))
