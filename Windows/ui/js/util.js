@@ -143,6 +143,17 @@ if (typeof document !== "undefined") document.addEventListener("keydown", (e) =>
   else if (!e.shiftKey && a === last) { e.preventDefault(); first.focus(); }
 }, true);
 
+// 2.0.2 · Gli elementi con role="button" che non sono veri pulsanti (riquadri «Trascina qui», progetti, voci del Cassetto)
+// si attivano anche con Invio e Spazio, come un pulsante: prima molti rispondevano solo al mouse.
+if (typeof document !== "undefined") document.addEventListener("keydown", (e) => {
+  if ((e.key !== "Enter" && e.key !== " ") || e.repeat || e.defaultPrevented || e.ctrlKey || e.altKey || e.metaKey) return;
+  const el = e.target;
+  if (!(el instanceof HTMLElement) || el.tagName === "BUTTON" || el.getAttribute("role") !== "button") return;
+  e.preventDefault();
+  if (e.shiftKey && el.dataset.shiftActivate) { el.dispatchEvent(new MouseEvent("dblclick", { bubbles: true })); return; }
+  el.click();
+});
+
 /**
  * Una domanda. Pulsanti: { label, value, primary, danger, focus }.
  * Il pulsante scelto con Invio non è mai quello che butta via qualcosa (danger); Esc risponde null.

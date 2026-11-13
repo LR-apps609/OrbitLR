@@ -676,14 +676,24 @@ fn set_lang(lang: String) {
 }
 
 /// «Annulla» nella barra del risultato: i file appena creati vanno nel Cestino (solo file creati da OrbitLR).
+/// 2.0.2 · async: controllo dei file e Cestino fuori dal thread della finestra (un disco di rete lento la bloccava).
 #[tauri::command]
-fn undo_result(state: State<'_, Shared>, paths: Vec<String>) -> Result<usize, String> {
+async fn undo_result(state: State<'_, Shared>, paths: Vec<String>) -> Result<usize, String> {
+    let known: Vec<String> = {
+        let made = state.made.lock().unwrap();
+        paths.into_iter().filter(|p| made.contains(p)).collect()
+    };
+    let ok = tauri::async_runtime::spawn_blocking(move || {
+        let ok: Vec<String> = known.into_iter().filter(|p| Path::new(p).is_file()).collect();
+        if ok.is_empty() {
+            return Err("questi file non sono stati creati adesso da OrbitLR".to_string());
+        }
+        trash::delete_all(&ok).map_err(|e| format!("non riesco a spostarli nel Cestino: {e}"))?;
+        Ok(ok)
+    })
+    .await
+    .map_err(|e| e.to_string())??;
     let mut made = state.made.lock().unwrap();
-    let ok: Vec<String> = paths.into_iter().filter(|p| made.contains(p) && Path::new(p).is_file()).collect();
-    if ok.is_empty() {
-        return Err("questi file non sono stati creati adesso da OrbitLR".into());
-    }
-    trash::delete_all(&ok).map_err(|e| format!("non riesco a spostarli nel Cestino: {e}"))?;
     for p in &ok {
         made.remove(p);
     }
@@ -691,12 +701,15 @@ fn undo_result(state: State<'_, Shared>, paths: Vec<String>) -> Result<usize, St
 }
 
 /// «Confronta»: l'anteprima può leggere un file creato da OrbitLR.
+/// 2.0.2 · async: il controllo del file non ferma più la finestra.
 #[tauri::command]
-fn allow_made(app: tauri::AppHandle, state: State<'_, Shared>, path: String) -> bool {
-    if !state.made.lock().unwrap().contains(&path) || !Path::new(&path).is_file() {
-        return false;
+async fn allow_made(app: tauri::AppHandle, state: State<'_, Shared>, path: String) -> Result<bool, String> {
+    if !state.made.lock().unwrap().contains(&path) {
+        return Ok(false);
     }
-    app.asset_protocol_scope().allow_file(&path).is_ok()
+    let p = path.clone();
+    let exists = tauri::async_runtime::spawn_blocking(move || Path::new(&p).is_file()).await.map_err(|e| e.to_string())?;
+    Ok(exists && app.asset_protocol_scope().allow_file(&path).is_ok())
 }
 
 #[derive(Serialize)]
@@ -838,8 +851,9 @@ fn save_overlay(app: tauri::AppHandle, png_base64: String) -> Result<String, Str
 }
 
 /// Apre un file creato da OrbitLR con il suo programma (solo quelli: niente .exe o .bat a caso).
+/// 2.0.2 · async: il controllo del file (checked_file) non ferma più la finestra con un disco di rete lento.
 #[tauri::command]
-fn open_result(app: tauri::AppHandle, state: State<'_, Shared>, path: String) -> Result<(), String> {
+async fn open_result(app: tauri::AppHandle, state: State<'_, Shared>, path: String) -> Result<(), String> {
     let known = state.made.lock().unwrap().contains(&path);
     let ext = orbit_engine::names::ext(Path::new(&path));
     const SAFE: &[&str] = &["jpg", "jpeg", "png", "webp", "avif", "bmp", "tiff", "tif", "gif", "ico", "pdf", "mp4", "mov", "m4v", "mkv", "webm", "avi",
@@ -849,7 +863,8 @@ fn open_result(app: tauri::AppHandle, state: State<'_, Shared>, path: String) ->
     if !SAFE.contains(&ext.as_str()) {
         return Err("questo file non si apre da qui".into());
     }
-    checked_file(&path)?;
+    let p = path.clone();
+    tauri::async_runtime::spawn_blocking(move || checked_file(&p).map(|_| ())).await.map_err(|e| e.to_string())??;
     use tauri_plugin_opener::OpenerExt;
     app.opener().open_path(path, None::<&str>).map_err(|e| e.to_string())
 }

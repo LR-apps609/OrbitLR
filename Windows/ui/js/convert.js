@@ -131,7 +131,7 @@ export function convertPage(app) {
   function render() {
     keyMap = [];
     if (!files.length) {
-      const dz = h("div.dropzone", { role: "button", tabindex: "0", onclick: pick, onkeydown: (e) => e.key === "Enter" && pick() },
+      const dz = h("div.dropzone", { role: "button", tabindex: "0", onclick: pick },
         h("div.dz-inner",
           logoRing(),
           h("h2", t("Trascina un file. Scegli cosa farne.")),

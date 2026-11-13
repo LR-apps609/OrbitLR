@@ -157,7 +157,7 @@ export function mediaPage(kind, app, opts = {}) {
 
   function renderGrid() {
     if (!files.length) {
-      const box = h("div.box", { role: "button", tabindex: "0", onclick: pick, onkeydown: (e) => e.key === "Enter" && pick() },
+      const box = h("div.box", { role: "button", tabindex: "0", onclick: pick },
         ico(KINDS[kind].icon, 44), h("h3", c.empty), h("div", t("oppure clicca per sceglierli")), h("div", { style: { fontSize: "12.5px" } }, c.emptySub));
       left.replaceChildren(head, h("div.empty", box), bar.el);
       return;

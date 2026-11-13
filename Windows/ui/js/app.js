@@ -112,7 +112,9 @@ function renderDrawer() {
   drawerSaved.hidden = saved <= 0;
   drawerSaved.replaceChildren(ico("circle-arrow-down", 14), h("span", t`Questo mese hai risparmiato ${fmtBytes(saved)}`));
   let clickTimer;
+  // 2.0.2 · Voci raggiungibili con Tab: Invio mostra nella cartella, Maiusc+Invio apre (come clic e doppio clic)
   drawerList.replaceChildren(...items.map((d) => h("li", { title: t`${d.name}\nClic: mostra nella cartella · Doppio clic: apri`,
+    role: "button", tabindex: "0", "data-shift-activate": "1", "aria-label": t`${d.name}: Invio mostra nella cartella, Maiusc+Invio apre`,
     onclick: () => { clearTimeout(clickTimer); clickTimer = setTimeout(() => reveal(d.path), 260); },
     ondblclick: () => { clearTimeout(clickTimer); openPath(d.path); },
     // 1.1 · Clic destro: le stesse due cose
