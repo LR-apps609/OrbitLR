@@ -46,7 +46,7 @@ jobs:
           for n in 10 100 300; do
             echo "======== $n file"
             pkill -9 -x OrbitLR; sleep 2
-            open -a /Applications/OrbitLR; sleep 15
+            open /Applications/OrbitLR.app; sleep 15
             P=$(pgrep -x OrbitLR); echo "pid $P"
             T0=$(date +%s)
             open -a /Applications/OrbitLR.app set$n/*.heic
