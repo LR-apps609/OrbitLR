@@ -158,6 +158,27 @@ case "ax": axAudit(pid: pid_t(Int32(args[2])!), out: args.count > 3 ? args[3] : 
 case "pagine":
     guard let d = PDFDocument(url: URL(fileURLWithPath: args[2])) else { print("-1"); exit(1) }
     print(d.isLocked ? -2 : d.pageCount)
+case "premi":
+    // premi <pid> <testo>: AXPress sul primo elemento con quel titolo/descrizione/valore; per le righe di un elenco: AXSelected
+    let app = AXUIElementCreateApplication(pid_t(Int32(args[2])!))
+    let want = args[3]
+    func at(_ e: AXUIElement, _ a: String) -> Any? { var v: CFTypeRef?; return AXUIElementCopyAttributeValue(e, a as CFString, &v) == .success ? v : nil }
+    var n = 0
+    func find(_ e: AXUIElement, _ parents: [AXUIElement]) -> Bool {
+        n += 1; if n > 8000 { return false }
+        let t = [at(e, kAXTitleAttribute), at(e, kAXDescriptionAttribute), at(e, kAXValueAttribute)].compactMap { $0 as? String }
+        if t.contains(want) {
+            if AXUIElementPerformAction(e, kAXPressAction as CFString) == .success { print("premuto \(at(e, kAXRoleAttribute) ?? "")"); return true }
+            for p in ([e] + parents.reversed()) where (at(p, kAXRoleAttribute) as? String) == "AXRow" {
+                if AXUIElementSetAttributeValue(p, kAXSelectedAttribute as CFString, kCFBooleanTrue) == .success { print("riga selezionata"); return true }
+            }
+        }
+        for k in (at(e, kAXChildrenAttribute) as? [AXUIElement]) ?? [] { if find(k, parents + [e]) { return true } }
+        return false
+    }
+    var done = false
+    for w in (at(app, kAXWindowsAttribute) as? [AXUIElement]) ?? [] where !done { done = find(w, []) }
+    if !done { print("non trovato"); exit(2) }
 case "fiducia": print(AXIsProcessTrusted() ? "si" : "no")
 case "servizio":
     // Come il menu Servizi del Finder: i file sulla «lavagna» e il servizio chiamato per nome (niente Automazione)

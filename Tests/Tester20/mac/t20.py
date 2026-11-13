@@ -590,7 +590,12 @@ def file_in(d, ext=None):
 
 
 def clicca(nome, ruoli=("button", "radio button", "checkbox")):
-    """Clic su un controllo di OrbitLR per nome o descrizione (Accessibilità di System Events)."""
+    """Clic su un controllo di OrbitLR per nome o descrizione: prima AXPress diretto, poi System Events."""
+    pid = pid_app()
+    if pid:
+        rc, o = sh([STRUM, "premi", str(pid), nome], timeout=60)
+        if rc == 0:
+            return True
     for ruolo in ruoli:
         rc, o = sh(["osascript", "-e", '''tell application "System Events" to tell process "OrbitLR"
   set frontmost to true

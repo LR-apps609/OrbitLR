@@ -22,27 +22,29 @@ jobs:
       fail-fast: false
       max-parallel: 3
       matrix:
+        # I Mac arm64 macos-15 e macos-26 non vengono assegnati (giri 1 e 2: «not acquired … capacity constraints»):
+        # tutti i profili Apple Silicon girano su xcode-27 (macOS 27), l'unico assegnato; il runner previsto resta in «voluto».
         include:
-          - { p: P01, os: macos-15 }
-          - { p: P03, os: macos-26 }
-          - { p: P05, os: macos-26 }
-          - { p: P07, os: xcode-27 }
-          - { p: P08, os: macos-26 }
-          - { p: P09, os: macos-15 }
-          - { p: P10, os: macos-26 }
-          - { p: P11, os: macos-26 }
-          - { p: P12, os: macos-15 }
-          - { p: P13, os: macos-15 }
-          - { p: P14, os: xcode-27 }
-          - { p: P15, os: macos-26 }
-          - { p: P16, os: macos-15-intel }
-          - { p: P18, os: macos-15 }
-          - { p: P19, os: macos-26 }
+          - { p: P03, os: xcode-27, voluto: macos-26 }
+          - { p: P08, os: xcode-27, voluto: macos-26 }
+          - { p: P18, os: xcode-27, voluto: macos-15 }
+          - { p: P16, os: macos-15-intel, voluto: macos-15-intel }
+          - { p: P09, os: xcode-27, voluto: macos-15 }
+          - { p: P01, os: xcode-27, voluto: macos-15 }
+          - { p: P05, os: xcode-27, voluto: macos-26 }
+          - { p: P12, os: xcode-27, voluto: macos-15 }
+          - { p: P10, os: xcode-27, voluto: macos-26 }
+          - { p: P11, os: xcode-27, voluto: macos-26 }
+          - { p: P19, os: xcode-27, voluto: macos-26 }
+          - { p: P15, os: xcode-27, voluto: macos-26 }
+          - { p: P14, os: xcode-27, voluto: xcode-27 }
+          - { p: P13, os: xcode-27, voluto: macos-15 }
+          - { p: P07, os: xcode-27, voluto: xcode-27 }
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     env:
       T20_PROFILO: ${{ matrix.p }}
-      T20_RUNNER: ${{ matrix.os }}
+      T20_RUNNER: ${{ matrix.os }} (previsto ${{ matrix.voluto }})
       RUN_ID: ${{ github.event.inputs.run_id || '42536443588' }}
     steps:
       - uses: actions/checkout@v5
