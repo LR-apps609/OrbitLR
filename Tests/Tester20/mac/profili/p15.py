@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # P15 · Tastiera e VoiceOver: controlli senza nome (AXUIElement), scorciatoie da tastiera, Tab tra i controlli.
-import os, sys, time, json
+import os, sys, time, json, re
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from t20 import *
 
@@ -24,7 +24,9 @@ def audit(livello):
             chiudi_app(); return False
         w = finestra_principale() or {"x": 0, "y": 0, "l": 99999, "a": 99999}
         vis = [c for c in ctr if c["l"] > 1 and c["a"] > 1 and w["y"] <= c["y"] <= w["y"] + w["a"]]
-        senza = [c for c in vis if c["senza_nome"] and c["ruolo"] in ("AXButton", "AXCheckBox", "AXRadioButton", "AXPopUpButton", "AXMenuButton", "AXSlider")]
+        # i tre pulsanti rossi/gialli/verdi della finestra (figli diretti di AXWindow, 16×16) li dà macOS: non contano
+        senza = [c for c in vis if c["senza_nome"] and c["ruolo"] in ("AXButton", "AXCheckBox", "AXRadioButton", "AXPopUpButton", "AXMenuButton", "AXSlider")
+                 and not re.fullmatch(r"W\d+/AXWindow\[\d+\]", c["percorso"])]
         tot[tab] = (len(vis), len(senza))
         if senza:
             es.bug("controlli con nome in %s (%s)" % (tab, livello), "%d controlli senza nome per VoiceOver nella scheda %s (%s)" % (len(senza), tab, livello),
@@ -46,7 +48,7 @@ def tastiera():
     visti = []
     for i in range(12):
         sh(["osascript", "-e", 'tell application "System Events" to key code 48'], timeout=10); time.sleep(0.6)
-        rc, o = sh(["osascript", "-e", 'tell application "System Events" to tell process "OrbitLR" to get {role, description, name} of (value of attribute "AXFocusedUIElement")'], timeout=15)
+        rc, o = sh(["osascript", "-e", 'tell application "System Events" to tell process "OrbitLR" to get {role, position, size} of (value of attribute "AXFocusedUIElement")'], timeout=15)
         visti.append(o.strip()[:120])
     open(os.path.join(OUT, "fuoco-tab.txt"), "w").write("\n".join(visti))
     diversi = len(set(v for v in visti if v and "error" not in v.lower()))

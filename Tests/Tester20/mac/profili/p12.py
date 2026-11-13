@@ -67,7 +67,7 @@ def lavori():
 
 def motore_grafica():
     logo = F + "/logo.png"
-    for t in ["svg", "ico", "webp", "pdf"]:
+    for t in ["ico", "webp", "pdf", "tiff"]:   # l'SVG è «vector» nell'app, non un formato del motore
         r = motore("to:" + t, "", [logo], nome="logo-" + t)
         esito_motore(es, "motore: logo.png → %s" % t, r, "file %s" % t, lambda p: (os.path.getsize(p) > 100, "%d byte" % os.path.getsize(p)))
 

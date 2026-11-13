@@ -58,7 +58,7 @@ def servizio():
     if rc != 0:
         es.skip("servizio del Finder «OrbitLR» (⌥⌘C / menu Servizi)", "NSPerformService non lo trova sul runner: %s (i servizi di un'app appena copiata possono non essere registrati)" % o[:200])
     else:
-        es.check("servizio del Finder «OrbitLR» porta il file nella finestra", "servizio" in tx, "Il servizio «OrbitLR» non mostra il file",
+        es.check("servizio del Finder «OrbitLR» porta il file nella finestra", "servizio" in tx or "Non" in tx and False, "Il servizio «OrbitLR» non mostra il file",
                  "medio", "il file «servizio.png» nella finestra", tx[:400], "foto servizio-finder.png")
     chiudi_app()
 
@@ -81,13 +81,21 @@ def link():
     sh(["open", "orbitlr://open?f=" + urllib.parse.quote(altra)], timeout=30); time.sleep(4)
     es.check("orbitlr:// non tocca i file di altre app", os.path.exists(altra), "Un link orbitlr:// sposta file dai dati di un'altra app",
              "alto", "il file resta dov'è", "il file è sparito", altra)
-    # link strani: nessun crash
+    # link strani: uno alla volta, l'app deve restare aperta (stesso processo)
     for u in ["orbitlr://", "orbitlr://open", "orbitlr://open?f=", "orbitlr://open?f=%2Fnon%2Fesiste.jpg", "orbitlr://altro?x=1",
               "orbitlr://open?f=" + urllib.parse.quote("/etc/passwd")]:
-        sh(["open", u], timeout=20); time.sleep(1.5)
-    time.sleep(2)
-    es.check("link orbitlr:// strani: l'app resta aperta", pid_app() is not None, "Un link orbitlr:// strano fa chiudere l'app", "alto",
-             "app ancora aperta", "processo assente", "log/, DiagnosticReports")
+        p0 = pid_app()
+        if not p0:
+            apri_app(); time.sleep(3); p0 = pid_app()
+        crash_prima = crash_elenco()
+        sh(["open", u], timeout=20); time.sleep(4)
+        p1 = pid_app()
+        nuovi_c = crash_nuovi(crash_prima)
+        coda = open(LOG, errors="replace").read()[-600:] if os.path.exists(LOG) else ""
+        es.check("link «%s»: l'app resta aperta" % u, p1 == p0, "Il link «%s» chiude OrbitLR" % u, "alto",
+                 "stesso processo aperto (pid %s)" % p0, "dopo il link: pid %s, rapporti di crash nuovi %s" % (p1, nuovi_c),
+                 "coda del registro app: %s" % coda.replace("\n", " ¶ ")[-400:],
+                 passi=["OrbitLR aperta", "nel Terminale: open '%s'" % u, "aspettare 4 s"])
     foto("link-strani")
     chiudi_app()
 

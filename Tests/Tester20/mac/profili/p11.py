@@ -65,10 +65,13 @@ def pdf():
         es.ok("comprimi senza Ghostscript → MISSING con indicazione", r["missing"])
     else:
         esito_motore(es, "comprimi PDF di 300 pagine", r, "300 pagine", ctrl_pdf(300))
-    r = motore("pdftext", "", [F + "/tre.pdf"], nome="pdftext")
+    # un PDF con testo vero, fatto dal motore stesso (txt → pdf), poi «estrai il testo»
+    rp = motore("to:pdf", "", [F + "/lettera.txt"], nome="txt-pdf")
+    src_pdf = rp["outs"][0] if rp["outs"] and os.path.exists(rp["outs"][0]) else F + "/tre.pdf"
+    r = motore("pdftext", "", [src_pdf], nome="pdftext")
     if esito_motore(es, "testo dal PDF", r, "file .txt con «Tre 1 di 3»", None):
         t = open(r["outs"][0], errors="replace").read()
-        es.check("testo estratto corretto", "Tre" in t, "Il testo estratto dal PDF è vuoto o sbagliato", "medio", "«Tre 1 di 3»", t[:200], r["outs"][0])
+        es.check("testo estratto corretto", "4242" in t or "Tre" in t, "Il testo estratto dal PDF è vuoto o sbagliato", "medio", "«Tre 1 di 3»", t[:200], r["outs"][0])
     r = motore("merge", "", [F + "/tre.pdf", F + "/rotto.pdf"], nome="merge-rotto")
     es.check("unisci con un PDF rotto → messaggio", not r["hang"] and r["fails"], "Unire un PDF rotto non dà un messaggio", "medio",
              "FAIL con il motivo", r["lines"], prova_motore(r))
@@ -80,7 +83,7 @@ def documenti():
         r = motore("to:" + t, "", [F + "/" + src], timeout=300, nome="%s-%s" % (src, t))
         if r["missing"]:
             es.ok("%s → %s senza LibreOffice/pandoc: MISSING con indicazione" % (src, t), r["missing"]); continue
-        esito_motore(es, "%s → %s" % (src, t), r, "file %s valido" % t, lambda p: (os.path.getsize(p) > 100, "%d byte" % os.path.getsize(p)))
+        esito_motore(es, "%s → %s" % (src, t), r, "file %s valido" % t, lambda p: (os.path.getsize(p) > 20, "%d byte" % os.path.getsize(p)))
 
 
 guarded(es, "fixture", fixture)

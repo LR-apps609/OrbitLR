@@ -179,6 +179,20 @@ case "premi":
     var done = false
     for w in (at(app, kAXWindowsAttribute) as? [AXUIElement]) ?? [] where !done { done = find(w, []) }
     if !done { print("non trovato"); exit(2) }
+case "testi":
+    // testi <pid>: tutti i titoli, valori e descrizioni visibili nelle finestre (per sapere cosa mostra l'app)
+    let app = AXUIElementCreateApplication(pid_t(Int32(args[2])!))
+    func at(_ e: AXUIElement, _ a: String) -> Any? { var v: CFTypeRef?; return AXUIElementCopyAttributeValue(e, a as CFString, &v) == .success ? v : nil }
+    var n = 0
+    var seen = Set<String>()
+    func walk(_ e: AXUIElement) {
+        n += 1; if n > 8000 { return }
+        for a in [kAXTitleAttribute, kAXValueAttribute, kAXDescriptionAttribute] {
+            if let t = at(e, a) as? String, !t.isEmpty, seen.insert(t).inserted { print(t.replacingOccurrences(of: "\n", with: " ")) }
+        }
+        for k in (at(e, kAXChildrenAttribute) as? [AXUIElement]) ?? [] { walk(k) }
+    }
+    for w in (at(app, kAXWindowsAttribute) as? [AXUIElement]) ?? [] { print("[finestra \(at(w, kAXTitleAttribute) as? String ?? "")]"); walk(w) }
 case "fiducia": print(AXIsProcessTrusted() ? "si" : "no")
 case "servizio":
     // Come il menu Servizi del Finder: i file sulla «lavagna» e il servizio chiamato per nome (niente Automazione)

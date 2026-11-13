@@ -65,7 +65,7 @@ def pesanti():
 
 def rotti():
     for src in ["troncato.mp4", "casuale.mkv", "vuoto.mp4"]:
-        for act, prm in [("to:mp4", ""), ("to:mp3", ""), ("vcompress", "best"), ("speed", "2")]:
+        for act, prm in [("to:mov", ""), ("to:mp3", ""), ("vcompress", "best"), ("speed", "2")]:
             r = motore(act, prm, [F + "/" + src], timeout=180, nome="rotto-%s-%s" % (src, act))
             outs = [o for o in r["outs"] if os.path.exists(o)]
             cosa = "file rotto %s: %s" % (src, act)
@@ -90,7 +90,7 @@ def social():
     srcs = [F + "/clip.mp4", F + "/verticale.mp4"]
     cart = os.path.join(F, "social-916")
     res = lavoro_app(es, "social", [(regola(cart, "video", "social", "9x16|0"), srcs)], attesa=240)
-    out = res.get(cart, [])
+    out = [o for o in res.get(cart, []) if o.endswith(".mp4")]   # niente file temporanei di scrittura (.sb-…)
     foto("social")
     if not out:
         es.bug("app: formato social 9:16", "«Formato social» 9:16 non crea il video", "alto", "2 video 9:16", "nessun file in 4 minuti", "log/, foto social.png")

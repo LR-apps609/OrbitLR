@@ -481,7 +481,16 @@ def foto_png_vuota(p):
 
 
 def testi_ax():
-    """I testi visibili nelle finestre di OrbitLR via System Events (Accessibilità del runner)."""
+    """I testi visibili nelle finestre di OrbitLR: prima AXUIElement diretto (strumenti testi), poi System Events."""
+    pid = pid_app()
+    if pid:
+        rc, o = sh([STRUM, "testi", str(pid)], timeout=90)
+        if rc == 0 and o.strip():
+            return " | ".join(o.splitlines())
+    return testi_se()
+
+
+def testi_se():
     rc, o = sh(["osascript", "-e", '''tell application "System Events"
     if not (exists process "OrbitLR") then return "(OrbitLR non è aperta)"
     set r to ""

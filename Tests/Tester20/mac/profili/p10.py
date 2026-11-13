@@ -22,7 +22,7 @@ def fixture():
 
 def motore_audio():
     dv = probe(F + "/voce.m4a")["dur"] or 5
-    for t in ["mp3", "m4a", "wav", "flac", "aiff", "ogg", "opus"]:
+    for t in ["mp3", "wav", "flac", "ogg"]:   # formati che il motore offre per l'audio (OPTS[audio]), non lo stesso del file
         r = motore("to:" + t, "", [F + "/voce.m4a"], nome="voce-" + t)
         esito_motore(es, "voce.m4a → %s" % t, r, "audio %s di ~%.1f s" % (t, dv), ctrl_media(dur=dv, audio=True, video=False))
     for act, prm, src, c, d in [
@@ -30,7 +30,7 @@ def motore_audio():
         ("voiceclean", "", "voce.m4a", ctrl_media(dur=dv, audio=True), "voce pulita"),
         ("cut", "1.000|3.000", "tono.wav", ctrl_media(dur=2, audio=True), "2 s"),
         ("silence", "", "silenzi.wav", ctrl_media(audio=True), "senza la pausa di 4 s"),
-        ("to:mp3", "", "episodio.mp3", ctrl_media(dur=65, audio=True), "mp3 → mp3 (stesso formato)"),
+        ("to:wav", "", "episodio.mp3", ctrl_media(dur=65, audio=True), "mp3 → wav"),
     ]:
         r = motore(act, prm, [F + "/" + src], nome="%s-%s" % (act, src))
         ok = esito_motore(es, "%s %s su %s" % (act, prm, src), r, d, c)
@@ -38,7 +38,7 @@ def motore_audio():
             dd = probe(r["outs"][0])["dur"]
             es.check("silenzi tolti davvero", dd is not None and dd < 8.5, "«Togli i silenzi» non accorcia l'audio", "medio",
                      "meno di 8.5 s (era 10 s con 4 s di silenzio)", "durata %s" % dd, prova_motore(r))
-    r = motore("to:mp3", "", [F + "/rotto.mp3"], nome="rotto")
+    r = motore("to:wav", "", [F + "/rotto.mp3"], nome="rotto")
     if r["hang"]:
         es.bug("mp3 rotto", "Su un mp3 rotto il motore non finisce", "alto", "FAIL con un messaggio", "bloccato", prova_motore(r))
     elif r["fails"] and r["fails"][0][1].strip():
