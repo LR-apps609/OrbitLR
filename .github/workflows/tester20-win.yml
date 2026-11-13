@@ -1,0 +1,165 @@
+# Tester20 · Windows: 9 profili di persone vere su OrbitLR per Windows (installata con l'installatore vero) e sulla sua
+# interfaccia in Chromium. Solo prove: niente rilasci, niente segreti, niente push. Risultati: artifact t20-<profilo> (esito.json).
+name: tester20-win
+
+on:
+  push:
+    branches: ['tester20-win']
+  workflow_dispatch:
+    inputs:
+      profili:
+        description: "Profili da provare (all, oppure per esempio P02,P06)"
+        default: all
+      setup_url:
+        description: "Installatore da provare (vuoto = l'ultimo di windows-anteprima)"
+        default: ""
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: tester20-win
+  cancel-in-progress: true
+
+jobs:
+  piano:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      matrice: ${{ steps.m.outputs.matrice }}
+      motore: ${{ steps.m.outputs.motore }}
+    steps:
+      - id: m
+        env:
+          PROFILI: ${{ inputs.profili || 'all' }}
+        run: |
+          cat > tutti.json <<'EOF'
+          [
+            {"profilo":"P18W","runner":"windows-2025","script":"p18.ps1","pw":"no","motore":"si"},
+            {"profilo":"P04","runner":"windows-2025","script":"p04.ps1","pw":"si","motore":"si"},
+            {"profilo":"P19W","runner":"windows-2025","script":"p19.ps1","pw":"no","motore":"si"},
+            {"profilo":"P02","runner":"windows-2025","script":"p02.ps1","pw":"no","motore":"no"},
+            {"profilo":"P17","runner":"windows-11-arm","script":"p17.ps1","pw":"no","motore":"no"},
+            {"profilo":"P06","runner":"windows-2025","script":"p06.ps1","pw":"no","motore":"no"},
+            {"profilo":"P20","runner":"windows-2025","script":"p20.ps1","pw":"si","motore":"si"},
+            {"profilo":"P14W","runner":"ubuntu-24.04","script":"ui/p14-schermi.mjs","pw":"si","motore":"no"},
+            {"profilo":"P15W","runner":"ubuntu-24.04","script":"ui/p15-tastiera.mjs","pw":"si","motore":"no"}
+          ]
+          EOF
+          sel=$(echo "$PROFILI" | tr 'a-z' 'A-Z' | tr -d ' ')
+          if [ "$sel" = "ALL" ] || [ -z "$sel" ]; then m=$(jq -c . tutti.json); else m=$(jq -c --arg s ",$sel," '[.[] | select($s | contains("," + .profilo + ","))]' tutti.json); fi
+          echo "matrice={\"include\":$m}" >> "$GITHUB_OUTPUT"
+          echo "motore=$(echo "$m" | jq -r 'if any(.[]; .motore == "si") then "si" else "no" end')" >> "$GITHUB_OUTPUT"
+          echo "$m" | jq -r '.[].profilo'
+
+  # Il motore vero (Windows/engine) chiamato come lo chiama l'app: aggiornamento, «Al telefono», messaggi d'errore, link
+  motore:
+    needs: piano
+    if: needs.piano.outputs.motore == 'si'
+    runs-on: windows-2025
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            Tests/Tester20/win/motore/target
+          key: t20-motore-${{ hashFiles('Tests/Tester20/win/motore/Cargo.lock', 'Tests/Tester20/win/motore/src/*.rs', 'Windows/engine/src/*.rs') }}
+          restore-keys: t20-motore-
+      - name: Compila t20-motore
+        shell: pwsh
+        run: |
+          cargo build --release --locked --manifest-path Tests/Tester20/win/motore/Cargo.toml
+          if ($LASTEXITCODE) { cargo build --release --manifest-path Tests/Tester20/win/motore/Cargo.toml }
+          Get-Item Tests/Tester20/win/motore/target/release/t20-motore.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: t20-motore
+          path: Tests/Tester20/win/motore/target/release/t20-motore.exe
+          retention-days: 3
+
+  profilo:
+    needs: [piano, motore]
+    if: always() && needs.piano.result == 'success'
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix: ${{ fromJSON(needs.piano.outputs.matrice) }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    name: ${{ matrix.profilo }} (${{ matrix.runner }})
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Playwright, Chromium e axe-core
+        if: matrix.pw == 'si'
+        shell: bash
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.56.0 axe-core@4.10.3
+          if [ "$RUNNER_OS" = "Linux" ]; then npx playwright install --with-deps chromium; else npx playwright install chromium; fi
+      - name: L'installatore (scaricato come una persona)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SETUP_URL: ${{ inputs.setup_url }}
+        run: |
+          if ($env:SETUP_URL) {
+            Invoke-WebRequest $env:SETUP_URL -OutFile OrbitLR-Setup.exe
+            $nome = Split-Path $env:SETUP_URL -Leaf; $atteso = ""
+          } else {
+            gh release download windows-anteprima -R "$env:GITHUB_REPOSITORY" -p "OrbitLR-Windows-*-Setup.exe" -p "OrbitLR-Windows-*-Setup.sha256"
+            $f = Get-ChildItem OrbitLR-Windows-*-Setup.exe | Select-Object -First 1
+            $nome = $f.Name
+            $s = Get-ChildItem OrbitLR-Windows-*-Setup.sha256 | Select-Object -First 1
+            $atteso = if ($s) { ((Get-Content $s.FullName -Raw) -split '\s+')[0].ToLower() } else { "" }
+            Move-Item $f.FullName OrbitLR-Setup.exe
+          }
+          $vero = (Get-FileHash OrbitLR-Setup.exe -Algorithm SHA256).Hash.ToLower()
+          $build = "$nome sha256 $($vero.Substring(0,16))…$(if ($atteso) { if ($atteso -eq $vero) { ' (uguale al .sha256 pubblicato)' } else { ' (DIVERSO dal .sha256 pubblicato!)' } })"
+          "T20_BUILD=$build" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          Write-Output "::notice::$build"
+      - name: Build (interfaccia)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          echo "T20_BUILD=interfaccia Windows/ui $(grep -o '"version": *"[^"]*"' Windows/src-tauri/tauri.conf.json | head -1 | cut -d'"' -f4) (commit ${GITHUB_SHA::7}) in Chromium con finto Tauri" >> "$GITHUB_ENV"
+      - uses: actions/download-artifact@v4
+        if: matrix.motore == 'si' && needs.motore.result == 'success'
+        continue-on-error: true
+        with:
+          name: t20-motore
+          path: motore-bin
+      - name: Profilo ${{ matrix.profilo }}
+        timeout-minutes: 38
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP "t20"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          $m = Join-Path $env:GITHUB_WORKSPACE "motore-bin/t20-motore.exe"
+          if (Test-Path $m) { $env:T20_MOTORE = $m }
+          if ("${{ matrix.script }}".EndsWith(".ps1")) {
+            pwsh -NoProfile -File "Tests/Tester20/win/${{ matrix.script }}" -Setup OrbitLR-Setup.exe -Out $out
+          } else {
+            node "Tests/Tester20/win/${{ matrix.script }}" $out
+          }
+      - name: Esito
+        if: always()
+        shell: pwsh
+        run: node Tests/Tester20/win/unisci.mjs (Join-Path $env:RUNNER_TEMP "t20") "${{ matrix.profilo }}" "${{ matrix.runner }}" "$env:T20_BUILD"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: t20-${{ matrix.profilo }}
+          path: ${{ runner.temp }}/t20
+          retention-days: 7
+          if-no-files-found: warn

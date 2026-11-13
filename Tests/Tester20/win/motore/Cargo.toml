@@ -1,0 +1,17 @@
+[package]
+name = "t20-motore"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Tester20 Windows: il motore vero di OrbitLR (Windows/engine) chiamato come lo chiama l'app"
+
+[workspace]
+
+[dependencies]
+orbit_engine = { path = "../../../../Windows/engine" }
+serde_json = "1"
+sha2 = "0.11"
+
+[profile.release]
+debug = false
+incremental = true
