@@ -390,11 +390,13 @@ fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action
                 let lang = param["lang"].as_str().unwrap_or("auto").to_string();
                 let n = files.len();
                 let (mut ok, mut failed) = (0, 0);
-                let need_model = !orbit_engine::whisper::model_ready(&st.data_dir);
                 for (i, f) in files.iter().enumerate() {
                     if cancel.is_cancelled() {
                         break;
                     }
+                    // 2.0.2 · Il modello si controlla a ogni file: se il primo scaricamento è fallito (senza internet)
+                    // il secondo file riprova a scaricarlo, invece di dire «reinstalla OrbitLR»
+                    let need_model = !orbit_engine::whisper::model_ready(&st.data_dir);
                     let mut last = std::time::Instant::now();
                     let mut prog = |p: f64| {
                         if last.elapsed().as_millis() >= 150 || p >= 1.0 {
@@ -405,12 +407,12 @@ fn start_job(app: tauri::AppHandle, state: State<'_, Shared>, id: String, action
                     let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| -> orbit_engine::error::Result<Vec<PathBuf>> {
                         let t = st.tools.as_ref().ok_or_else(|| orbit_engine::EngineError::new("manca il motore audio"))?;
                         let exe = st.voice_exe.clone().ok_or_else(|| orbit_engine::EngineError::new("manca il motore della voce: reinstalla OrbitLR"))?;
-                        let model = if need_model && i == 0 {
+                        let model = if need_model {
                             orbit_engine::whisper::download_model(&st.data_dir, &cancel, &mut |p| prog(p * 0.4))?
                         } else {
                             orbit_engine::whisper::model_path(&st.data_dir)
                         };
-                        let off = if need_model && i == 0 { 0.4 } else { 0.0 };
+                        let off = if need_model { 0.4 } else { 0.0 };
                         let info = probe(Some(t), f)?;
                         let dir = ctx.out_dir.clone().unwrap_or_else(|| f.parent().map(Path::to_path_buf).unwrap_or_default());
                         orbit_engine::whisper::transcribe_files(t, &exe, &model, f, &info, &lang, &dir, &cancel, &mut |p| prog(off + p * (1.0 - off)))

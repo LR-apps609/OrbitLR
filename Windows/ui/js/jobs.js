@@ -125,6 +125,21 @@ export async function run(action, files, param, origin) {
   notify(job);
   // 2.0.1 · L'IA la prima volta scarica motore o modello: lo si sa prima, così la barra lo dice
   if (AI_ACTIONS.includes(action)) job.fetch = await invoke("ai_pending", { action }).catch(() => null);
+  // 2.0.2 · Un file spostato o cancellato dopo averlo scelto non fa più fallire tutto il lotto (con l'errore sul primo file):
+  // si toglie, si dice quale manca, e gli altri partono
+  if (job.files.length) {
+    const exist = await invoke("files_exist", { paths: job.files.map((f) => f.path) }).catch(() => null);
+    if (Array.isArray(exist) && exist.length === job.files.length && exist.some((x) => !x)) {
+      const gone = job.files.filter((_, i) => !exist[i]);
+      job.files = job.files.filter((_, i) => exist[i]);
+      for (const f of gone) job.results.push({ source: f.name, outputs: [], error: t("il file non c'è più: è stato spostato o cancellato?") });
+      if (!job.files.length) {
+        job.state = "failed";
+        finish(job);
+        return job;
+      }
+    }
+  }
   try {
     await invoke("start_job", { id, action, files: job.files.map((f) => f.path), param: param ?? null, outDir: outDir() });
     param = null;
