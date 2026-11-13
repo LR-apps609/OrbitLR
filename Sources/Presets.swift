@@ -137,9 +137,11 @@ final class PresetStore: ObservableObject, @unchecked Sendable {
     func run(hotkey n: Int) {
         guard let p = presets.first(where: { $0.hotkey == n }), let k = Kind(rawValue: p.kind),
               let base = Catalog.action(id: p.actionId, kind: k) else { NSSound.beep(); return }
-        let files = FinderSelection.current().filter { Catalog.kind(of: $0) == k }
-        guard !files.isEmpty else { NSSound.beep(); return }
-        QueueStore.shared.enqueue(files: files, action: base, param: p.param)
+        FinderSelection.current { all in             // 6.0.4 · in sottofondo, come ⌥⌘C
+            let files = all.filter { Catalog.kind(of: $0) == k }
+            guard !files.isEmpty else { NSSound.beep(); return }
+            QueueStore.shared.enqueue(files: files, action: base, param: p.param)
+        }
     }
 }
 

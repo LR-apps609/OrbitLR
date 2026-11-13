@@ -73,8 +73,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         Hotkey.shared.action = {
             // 4.1.5 · Solo dal Finder (la scorciatoia è attiva solo lì)
             guard NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.apple.finder" else { return }
-            let files = FinderSelection.current()
-            if files.isEmpty { AppDelegate.say(String(localized: "Nel Finder non c’è niente di selezionato.")) } else { PieController.shared.present(files: files) }
+            // 6.0.4 · La selezione si legge in sottofondo: un Finder occupato non ferma più la finestra fino a 10 s
+            FinderSelection.current { files in
+                if files.isEmpty { AppDelegate.say(String(localized: "Nel Finder non c’è niente di selezionato.")) } else { PieController.shared.present(files: files) }
+            }
         }
         Hotkey.shared.setEnabled(UserDefaults.standard.object(forKey: "hotkey") as? Bool ?? true)
         Hotkey.shared.presetAction = { n in PresetStore.shared.run(hotkey: n) }
