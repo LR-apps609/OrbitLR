@@ -42,6 +42,7 @@ struct OrbitLRApp: App {
                         .keyboardShortcut(KeyEquivalent(Character(String(i + 1))), modifiers: .command)
                 }
                 Button(SidebarItem.activity.title) { app.show(.activity) }.keyboardShortcut("0")
+                Button("Montaggio video") { VideoModeSwitch.toggle() }.keyboardShortcut("e", modifiers: [.command, .shift])
                 Divider()
             }
             CommandGroup(replacing: .help) {

@@ -1779,7 +1779,8 @@ explain() {  # file degli errori, codice → motivo comprensibile
     *)
       l=$(print -r -- "$txt" | grep -av '^[[:space:]]*$' | tail -n 1)
       # 6.0.4 · Una riga che è solo un percorso (spesso quello interno del lavoro) non spiega niente a chi la legge
-      if [[ ${l##[[:space:]]#} == /* && ${l##[[:space:]]#} != *": "* ]]; then l=""; fi
+      local lt=${l#"${l%%[![:space:]]*}"}
+      if [[ $lt == /* && $lt != *": "* ]]; then l=""; fi
       if [[ -n $l ]]; then print -r -- "${l[1,160]}"; else print "non sono riuscito a creare il file (dettagli nel log)"; fi ;;
   esac
 }

@@ -177,10 +177,19 @@ struct VideoModeSwitch: View {
             }
         }), editorTitle: Levels.editorTitle(.video))
         .onReceive(AppState.shared.$videoMode.removeDuplicates()) { mode = $0 }
-        .background(Button("") {
-            if mode == .tools { Self.openEditor(undo: undo) } else { withAnimation(Motion.page) { app.videoMode = .tools } }
-        }.keyboardShortcut("e", modifiers: [.command, .shift]).opacity(0).allowsHitTesting(false)
-            .accessibilityHidden(true))     // 6.0.4 · solo per ⇧⌘E: VoiceOver lo leggeva come un pulsante senza nome
+        // 6.0.4 · ⇧⌘E ora è nel menu Vista («Montaggio video»): il pulsante nascosto che lo faceva qui
+        // VoiceOver lo leggeva come un pulsante senza nome
+    }
+
+    /// ⇧⌘E dal menu: dagli strumenti al montaggio e ritorno (da un'altra scheda apre il montaggio).
+    static func toggle() {
+        let app = AppState.shared
+        if app.selection != .video || app.videoMode == .tools {
+            if app.selection != .video { app.show(.video) }
+            openEditor(undo: nil)
+        } else {
+            withAnimation(Motion.page) { app.videoMode = .tools }
+        }
     }
 
     /// I video già portati nell'editor: tornando avanti e indietro non si creano progetti doppi.

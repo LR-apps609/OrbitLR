@@ -1,3 +1,20 @@
+What’s new in 6.0.4:
+• Opening many photos at once (100, 300…) from the Finder or the Dock no longer freezes the window, and OrbitLR always quits with ⌘Q
+• “Move original to Trash” never touches a skipped or failed file, even if a result has a similar name
+• Full disk or read-only folder: the message says the real reason, not “unknown error” or an internal path
+• Video projects on slow or disconnected network drives: opening, closing and quitting no longer freeze the window
+• ⌥⌘C and the ⌃⌥1…9 shortcuts read the Finder selection without freezing the window
+• File sizes and icons are read in the background: with many files the pie opens right away
+• Names with line breaks or tabs: the created file is found and the job counts as done
+• Names with “%d” (for example “sale 100%d.png”) stay as they were with ImageMagick
+• An old setup lock no longer adds a 90-second wait after a job ends
+• Extract Text: pages with few words keep their text
+• Downloader: for a link that leads nowhere (404) it says to check the link, not the internet
+• The report after a problem is asked in a sheet on the window: Watch Folders keep working meanwhile; an alert left open no longer counts as a freeze
+• Empty or invalid orbitlr:// links are ignored (they used to open the whole disk)
+• VoiceOver: no more unnamed buttons in the Video tab; ⇧⌘E is in the View menu (“Video Editing”)
+• Temporary job files no longer stay in your folder after a sudden quit
+
 What’s new in 6.0.3 “Reports”:
 • If something goes wrong (the window stops responding for a few seconds, a job gets stuck, OrbitLR closes suddenly), at the next launch OrbitLR asks whether to save the report on the Desktop: a text file to send via WhatsApp or email, without using “Report”
 • The report says everything needed to understand the problem: Mac, chip, macOS, memory, free space, screens, language, engines, what you were doing and the last lines of the log

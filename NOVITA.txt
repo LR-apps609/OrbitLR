@@ -1,3 +1,20 @@
+Novità della 6.0.4:
+• Aprire tante foto insieme (100, 300…) dal Finder o dal Dock non blocca più la finestra e OrbitLR si chiude sempre con ⌘Q
+• «Originale nel Cestino» non tocca mai un file saltato o non riuscito, anche se un risultato ha un nome simile
+• Disco pieno o cartella in sola lettura: il messaggio dice il motivo vero, non «errore sconosciuto» o un percorso interno
+• Progetti video su dischi di rete lenti o staccati: aprirli, chiuderli e uscire non ferma più la finestra
+• ⌥⌘C e le scorciatoie ⌃⌥1…9 leggono la selezione del Finder senza fermare la finestra
+• Pesi e icone dei file si leggono in sottofondo: con molti file la torta si apre subito
+• Nomi con «a capo» o tabulazioni: il file creato si trova e il lavoro risulta riuscito
+• Nomi con «%d» (per esempio «sale 100%d.png») restano com’erano con ImageMagick
+• Un vecchio lucchetto di preparazione non fa più aspettare 90 secondi dopo la fine del lavoro
+• Estrai il testo: le pagine con poche parole tengono il loro testo
+• Downloader: per un link che non porta a niente (404) dice di controllare il link, non internet
+• Il rapporto dopo un problema si chiede in un foglio sulla finestra: intanto le Cartelle automatiche continuano; un avviso lasciato aperto non conta più come blocco
+• Link orbitlr:// vuoti o non validi vengono ignorati (prima aprivano tutto il disco)
+• VoiceOver: niente più pulsanti senza nome nella scheda Video; ⇧⌘E è nel menu Vista («Montaggio video»)
+• I file temporanei dei lavori non restano più nella tua cartella dopo una chiusura improvvisa
+
 Novità della 6.0.3 «Rapporti»:
 • Se qualcosa va storto (la finestra non risponde per qualche secondo, un lavoro resta fermo, OrbitLR si chiude di colpo), al prossimo avvio OrbitLR chiede se salvare il rapporto sulla Scrivania: un file di testo da mandare con WhatsApp o per email, senza usare «Segnala»
 • Il rapporto dice tutto quello che serve per capire il problema: Mac, chip, macOS, memoria, spazio libero, schermi, lingua, motori, cosa stavi facendo e le ultime righe del registro
