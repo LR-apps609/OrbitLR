@@ -1,25 +1,26 @@
 # Diagnosi mirata (coordinatore): 300 HEIC aperte insieme, campione del thread principale stampato nel registro.
 name: tester20-diag
 on:
-  workflow_dispatch:
-    inputs:
-      run_id:
-        description: "Run «Compila OrbitLR» con l'artifact pacchetto (vuoto = release v6.0.3)"
-        default: ""
+  push:
+    branches: ['tester20-diag']
 permissions:
   contents: read
   actions: read
 jobs:
   heic:
+    strategy:
+      fail-fast: false
+      matrix:
+        run_id: ['', '43474125874']
     runs-on: xcode-27
     timeout-minutes: 40
     steps:
       - uses: actions/download-artifact@v5
-        if: inputs.run_id != ''
+        if: matrix.run_id != ''
         continue-on-error: true
         with:
           name: pacchetto
-          run-id: ${{ inputs.run_id }}
+          run-id: ${{ matrix.run_id }}
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/p
       - name: Installo
