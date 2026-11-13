@@ -105,14 +105,17 @@ enum FinderSelection {
     end timeout
     """
     /// I file selezionati nel Finder (la prima volta macOS chiede il permesso di controllare il Finder).
-    static func current() -> [URL] {
-        var err: NSDictionary?
-        // 6.0.3 · Se il Finder è occupato (per esempio con iCloud) non si aspetta più fino a 2 minuti con la finestra ferma
-        guard let script = NSAppleScript(source: source),
-              let text = MainActivity.during("selezione del Finder (⌥⌘C)", { script.executeAndReturnError(&err).stringValue }) else {
-            if let e = err { AppLog.write("Finder", "selezione non letta: \(e[NSAppleScript.errorNumber] ?? "?")") }
-            return []
+    /// 6.0.4 · Lo script gira su una coda in sottofondo (AppleScript è sicuro fuori dal thread principale da macOS 10.6),
+    /// con lo stesso permesso di prima: se il Finder è occupato la finestra di OrbitLR resta libera.
+    /// `done` arriva sul thread principale con i file (vuoto se non si leggono).
+    static func current(_ done: @escaping ([URL]) -> Void) {
+        queue.async {
+            var err: NSDictionary?
+            let text = NSAppleScript(source: source)?.executeAndReturnError(&err).stringValue
+            if text == nil, let e = err { AppLog.write("Finder", "selezione non letta: \(e[NSAppleScript.errorNumber] ?? "?")") }
+            let urls = (text ?? "").split(separator: "\n").map { URL(fileURLWithPath: String($0)) }
+            DispatchQueue.main.async { done(urls) }
         }
-        return text.split(separator: "\n").map { URL(fileURLWithPath: String($0)) }
     }
+    private static let queue = DispatchQueue(label: "orbitlr.finder-selection", qos: .userInitiated)
 }

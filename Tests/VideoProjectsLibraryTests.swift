@@ -88,19 +88,19 @@ final class VideoProjectsLibraryTests: XCTestCase {
         um.endUndoGrouping()
         XCTAssertTrue(um.canUndo)
 
-        s.closeProject(um)
+        await s.closeAndWait(um)
         XCTAssertNil(s.currentID)
         XCTAssertFalse(um.canUndo, "⌘Z non deve toccare un progetto chiuso")
         XCTAssertEqual(s.library.map { $0.id }, [id], "chiuso ma salvato")
 
-        s.openProject(id, undo: um)
+        await s.openAndWait(id, undo: um)
         XCTAssertEqual(s.currentID, id)
         XCTAssertEqual(s.project.clips.count, 1)
         XCTAssertEqual(s.project.duration, 2, accuracy: 0.01)
 
         // Un progetto nuovo lasciato vuoto non finisce tra i Progetti
         s.newProject(um)
-        s.closeProject(um)
+        await s.closeAndWait(um)
         XCTAssertEqual(s.library.count, 1)
 
         s.duplicateProject(id)

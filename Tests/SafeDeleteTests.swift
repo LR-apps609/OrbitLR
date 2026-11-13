@@ -105,12 +105,33 @@ final class SafeDeleteTests: XCTestCase {
         let a = try make("a.png"), b = try make("b.png"), aOut = try make("a.jpg")
         let job = Job(files: [a, b], action: Catalog.conv("jpg", kind: .img), param: "")
         job.outputs = [aOut]
+        job.producedFrom = [Job.key(a)]
         XCTAssertEqual(QueueStore.originalsToTrash(job), [a], "solo l'originale che ha davvero il suo risultato")
         let v = try make("film.mp4"), vOut = try make("film.mp3")
         let audio = Job(files: [v], action: Catalog.conv("mp3", kind: .video), param: "")
         audio.outputs = [vOut]
+        audio.producedFrom = [Job.key(v)]
         XCTAssertTrue(QueueStore.originalsToTrash(audio).isEmpty, "l'audio di un video non sostituisce il video")
         XCTAssertEqual(QueueStore.trashAskLimit, 20)
+    }
+
+    /// 6.0.4 · «canzone.mp3» viene saltato (è già MP3) mentre «canzone.wav» diventa «canzone (1).mp3»:
+    /// il file saltato non deve finire nel Cestino, anche se il nome del risultato gli somiglia.
+    func testFileSaltatoNonVaNelCestino() throws {
+        let dir = folder("saltati")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        func make(_ n: String) throws -> URL {
+            let u = dir.appendingPathComponent(n)
+            try Data([1, 2, 3]).write(to: u)
+            return u
+        }
+        let mp3 = try make("canzone.mp3"), wav = try make("canzone.wav"), out = try make("canzone (1).mp3")
+        let job = Job(files: [mp3, wav], action: Catalog.conv("mp3", kind: .audio), param: "")
+        job.outputs = [out]
+        job.producedFrom = [Job.key(wav)]           // il motore ha detto OK solo per il WAV
+        XCTAssertEqual(QueueStore.originalsToTrash(job), [wav])
+        job.producedFrom = []                       // nessuna riga OK: nessun originale nel Cestino
+        XCTAssertTrue(QueueStore.originalsToTrash(job).isEmpty)
     }
 
     // MARK: Progetti audio

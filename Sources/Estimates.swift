@@ -169,9 +169,11 @@ extension PieModel {
         estimateTask?.cancel()
         estimates = [:]
         let actions = all
-        let total = files.reduce(Int64(0)) { $0 + Job.size(of: $1) }
-        currentBytes = total
         estimateTask = Task.detached(priority: .utility) { [weak self] in
+            // 6.0.4 · Il peso dei file si legge qui, in sottofondo, non più sul thread principale
+            let total = files.reduce(Int64(0)) { $0 + Job.size(of: $1) }
+            guard !Task.isCancelled else { return }
+            await MainActor.run { self?.currentBytes = total }
             let e = await SizeEstimate.estimates(actions: actions, files: files, kind: kind)
             guard !Task.isCancelled, !e.isEmpty, let model = self else { return }
             await MainActor.run { model.estimates = e }

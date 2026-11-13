@@ -623,8 +623,11 @@ case "text":      // pdf uscita lingue — testo del PDF, con OCR per le pagine 
         autoreleasepool {
             guard let p = doc.page(at: i) else { return }
             var s = p.string ?? ""
+            // 6.0.4 · Pagina con poco testo: si prova anche l'OCR, ma si tiene il testo vero se l'OCR ne trova di meno
+            // (prima «Tre 1 di 3» spariva e il PDF risultava «senza testo leggibile»)
             if s.trimmingCharacters(in: .whitespacesAndNewlines).count < 15, let img = render(p, dpi: 300) {
-                s = recognize(img, .up, langs)
+                let ocr = recognize(img, .up, langs)
+                if ocr.trimmingCharacters(in: .whitespacesAndNewlines).count > s.trimmingCharacters(in: .whitespacesAndNewlines).count { s = ocr }
             }
             if !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { found = true }
             parts.append(n > 1 ? "──── Pagina \(i + 1) ────\n\(s)" : s)
@@ -766,6 +769,12 @@ helper_ok() {  # prepara il programma nativo la prima volta (o dopo un aggiornam
   while ! mkdir "$lock" 2>/dev/null; do
     local owner=""; [[ -f "$lock/pid" ]] && owner=$(<"$lock/pid")
     if [[ $owner == <-> ]] && ! kill -0 $owner 2>/dev/null; then rm -rf -- "$lock"; continue; fi
+    # 6.0.4 · Lucchetto senza numero di processo (lasciato da una versione ≤ 6.0.2, o chiusura tra mkdir e pid):
+    # se ha più di 10 secondi nessuno lo sta usando, si toglie subito invece di aspettare 90 secondi dopo la fine del lavoro
+    if [[ -z $owner ]]; then
+      local born=$(stat -f %m "$lock" 2>/dev/null)
+      if [[ $born == <-> ]] && (( $(date +%s) - born > 10 )); then rm -rf -- "$lock"; continue; fi
+    fi
     [[ -e $CANCEL ]] && return 1
     sleep 1; (( waited += 1 ))
     if (( waited > 90 )); then rm -rf -- "$lock"; waited=0; fi
@@ -1242,6 +1251,12 @@ pandoc_run() {  # sorgente, formato, uscita, cartella finale (per le immagini es
   ( cd -- "$dest" && pandoc "$src" $a -o "$out" )
 }
 
+# 6.0.4 · ImageMagick legge «%d», «%03d»… nel nome d'uscita come numero di fotogramma («sale 100%d.png» diventava
+# «sale 1000.png»): scrive su un nome fisso nella cartella del lavoro, poi si sposta al nome vero.
+mgk() {  # come magick; l'ultimo argomento è il file d'uscita
+  local o=${@[-1]}; local tmp="$JD/_mgk.${o:e}"
+  magick "${@[1,-2]}" "$tmp" && mv -f -- "$tmp" "$o"
+}
 img_run() {  # sorgente, formato, uscita
   local src=$1 t=$2 out=$3 e=$(norm "${1:e}")
   if (( ${RAW_EXTS[(Ie)$e]} )); then
@@ -1276,7 +1291,7 @@ img_run() {  # sorgente, formato, uscita
   esac
   # Se l'estensione non corrisponde al contenuto (capita con le foto scaricate), si riprova lasciando decidere a ImageMagick
   # (le regole di sicurezza bloccano comunque i formati pericolosi)
-  if have magick && { magick "$in" $o "$out" 2>/dev/null || magick "$raw" $o "$out"; }; then return 0; fi
+  if have magick && { mgk "$in" $o "$out" 2>/dev/null || mgk "$raw" $o "$out"; }; then return 0; fi
   # 3.8 · Senza ImageMagick: WebP e ICO con l'ffmpeg che viaggia dentro l'app (macOS legge già tutto il resto)
   if [[ $t == (webp|ico) ]] && have ffmpeg; then
     local png="$JD/_ff.png"
@@ -1319,7 +1334,7 @@ resize_run() {  # sorgente, preset (half | 3840 | 1920 | 1280 | web)
       webp|heic) o+=(-quality 85) ;;
     esac
     [[ $p == web ]] && o+=(-strip -interlace Plane)
-    { magick "$(mk_src "$in")" $o "$out" 2>/dev/null || magick "$in" $o "$out"; } && return 0
+    { mgk "$(mk_src "$in")" $o "$out" 2>/dev/null || mgk "$in" $o "$out"; } && return 0
   fi
   # Ripiego nativo (senza ImageMagick): non ingrandisce mai
   local w h f
@@ -1353,7 +1368,7 @@ strip_run() {  # sorgente → copia senza metadati
       local -a o=(-auto-orient -strip)
       [[ $e == jpg ]] && o+=(-quality 95)
       [[ $e == (heic|webp) ]] && o+=(-quality 90)
-      magick "$(mk_src "$src")" $o "$out" 2>/dev/null || magick "$src" $o "$out" ;;
+      mgk "$(mk_src "$src")" $o "$out" 2>/dev/null || mgk "$src" $o "$out" ;;
     *) return 1 ;;
   esac
 }
@@ -1754,7 +1769,7 @@ explain() {  # file degli errori, codice → motivo comprensibile
   txt=$(tail -n 40 "$f" 2>/dev/null)
   case $txt in
     *"No space left"*)                                   print "spazio su disco esaurito" ;;
-    *"Operation not permitted"*|*"Permission denied"*)   print "macOS non ha dato il permesso di leggere o scrivere in quella cartella" ;;
+    *"Operation not permitted"*|*"Permission denied"*|*"Read-only file system"*) print "macOS non ha dato il permesso di leggere o scrivere in quella cartella" ;;
     *"Resource deadlock"*|*dataless*)                    print "il file è su iCloud ma non è scaricato sul Mac: aprilo una volta e riprova" ;;
     *[Pp]assword*|*[Ee]ncrypted*)                        print "il file è protetto da password" ;;
     *"Invalid data found"*|*"moov atom not found"*|*"could not find codec"*|*"no decode delegate"*|*"improper image header"*|*corrupt*)
@@ -1763,7 +1778,10 @@ explain() {  # file degli errori, codice → motivo comprensibile
     *"Unknown encoder"*|*"Encoder not found"*)           print "la versione installata di ffmpeg non supporta questo formato" ;;
     *)
       l=$(print -r -- "$txt" | grep -av '^[[:space:]]*$' | tail -n 1)
-      if [[ -n $l ]]; then print -r -- "${l[1,160]}"; else print "errore sconosciuto (dettagli nel log)"; fi ;;
+      # 6.0.4 · Una riga che è solo un percorso (spesso quello interno del lavoro) non spiega niente a chi la legge
+      local lt=${l#"${l%%[![:space:]]*}"}
+      if [[ $lt == /* && $lt != *": "* ]]; then l=""; fi
+      if [[ -n $l ]]; then print -r -- "${l[1,160]}"; else print "non sono riuscito a creare il file (dettagli nel log)"; fi ;;
   esac
 }
 
@@ -2376,8 +2394,13 @@ for j in {1..$#J_ACT}; do
     mkdir -p -- "$dest" 2>/dev/null
     moved=0
     for it in $items; do
-      if [[ -d $it ]]; then tgt=$(unique_item "$dest" "${it:t}" dir); else tgt=$(unique_item "$dest" "${it:t}"); fi
-      if mv -f -- "$it" "$tgt"; then (( moved += 1 )); last_out=$tgt; rp OUT "$tgt"; fi
+      # 6.0.4 · «a capo» e tabulazioni nel nome diventano spazi anche nel file vero, come nella riga OUT per l'app:
+      # prima il file nasceva con l'«a capo», l'app non lo trovava e segnava il lavoro come non riuscito
+      nm=${it:t}; nm=${nm//[$'\n\r\t']/ }
+      if [[ -d $it ]]; then tgt=$(unique_item "$dest" "$nm" dir); else tgt=$(unique_item "$dest" "$nm"); fi
+      # 6.0.4 · L'errore dello spostamento finisce nel file degli errori: disco pieno o cartella in sola lettura
+      # si dicono così (prima: «errore sconosciuto», o il percorso interno del file di lavoro)
+      if mv -f -- "$it" "$tgt" 2>>"$JD/err"; then (( moved += 1 )); last_out=$tgt; rp OUT "$tgt"; else rm -f -- "$tgt" 2>/dev/null; fi
     done
     if (( moved )); then
       (( ok += 1 ))

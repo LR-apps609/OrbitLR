@@ -290,7 +290,7 @@ struct FinderSelectionIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let files = await MainActor.run { FinderSelection.current() }
+        let files: [URL] = await withCheckedContinuation { c in FinderSelection.current { c.resume(returning: $0) } }
         guard !files.isEmpty else { throw OrbitIntentError(message: String(localized: "Nel Finder non c’è nessun file selezionato.")) }
         let act = action
         let outs = try await IntentRunner.run(files) { kind in

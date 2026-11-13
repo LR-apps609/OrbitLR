@@ -27,7 +27,7 @@ enum FriendlyError {
         if has("no space left", "spazio su disco esaurito", "out of space", "nsfilewriteoutofspaceerror", "error 640", "errore 640") {
             return String(localized: "Spazio su disco esaurito: libera un po’ di spazio e riprova.")
         }
-        if has("operation not permitted", "non hai il permesso", "permission", "error 513", "errore 513", "not permitted") {
+        if has("operation not permitted", "non hai il permesso", "permission", "error 513", "errore 513", "not permitted", "read-only file system", "permesso di leggere o scrivere") {
             return String(localized: "OrbitLR non può scrivere in quella cartella: spostala altrove o scegli un’altra cartella nelle Opzioni.")
         }
         if has("no such file", "doesn’t exist", "doesn't exist", "non esiste", "error 260", "errore 260", "error 4)", "errore 4)") {

@@ -115,6 +115,10 @@ enum MusicLink {
         if s.contains("private") || s.contains("sign in") || s.contains("login") || s.contains("members") {
             return String(localized: "Il contenuto è privato o richiede l’accesso: non si può scaricare.")
         }
+        // 6.0.4 · «HTTP Error 404»/«410»: il link porta a una pagina che non c'è (prima: «controlla internet»)
+        if s.contains("http error 404") || s.contains("http error 410") || s.contains("404: not found") {
+            return String(localized: "A questo link non c’è niente da scaricare: controlla che sia giusto e completo.")
+        }
         if s.contains("not available") || s.contains("unavailable") || s.contains("removed") { return String(localized: "Il contenuto non è più disponibile.") }
         if s.contains("403") || s.contains("429") { return String(localized: "Il sito ha rifiutato la richiesta. Riprova tra un po’: intanto aggiorno il motore.") }
         if s.contains("unable to download") || s.contains("network") || s.contains("timed out") || s.contains("resolve") {

@@ -19,6 +19,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     static let openNotification = Notification.Name("it.ledion.OrbitLR.open")
 
     func applicationWillFinishLaunching(_ notification: Notification) {
+        // 6.0.4 · «Apri documenti» (file trascinati sull'icona, «Apri con», open -a) lo riceve OrbitLR direttamente.
+        // Prima lo gestiva SwiftUI: a ogni evento (macOS ne manda più d'uno per molti file) riattivava e ridisegnava
+        // la finestra sul thread principale, e con 100–300 foto l'app restava ferma per decine di secondi e non usciva
+        // con ⌘Q. Ora gli eventi vicini si uniscono e i file si caricano una volta sola.
+        NSAppleEventManager.shared().setEventHandler(self, andSelector: #selector(openDocumentsEvent(_:reply:)),
+                                                     forEventClass: AEEventClass(kCoreEventClass), andEventID: AEEventID(kAEOpenDocuments))
         Perf.begin(.launch)                  // 3.4.1 · fino a quando la finestra è pronta
         let me = NSRunningApplication.current
         let others = NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "it.ledion.OrbitLR")
@@ -73,8 +79,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         Hotkey.shared.action = {
             // 4.1.5 · Solo dal Finder (la scorciatoia è attiva solo lì)
             guard NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.apple.finder" else { return }
-            let files = FinderSelection.current()
-            if files.isEmpty { AppDelegate.say(String(localized: "Nel Finder non c’è niente di selezionato.")) } else { PieController.shared.present(files: files) }
+            // 6.0.4 · La selezione si legge in sottofondo: un Finder occupato non ferma più la finestra fino a 10 s
+            FinderSelection.current { files in
+                if files.isEmpty { AppDelegate.say(String(localized: "Nel Finder non c’è niente di selezionato.")) } else { PieController.shared.present(files: files) }
+            }
         }
         Hotkey.shared.setEnabled(UserDefaults.standard.object(forKey: "hotkey") as? Bool ?? true)
         Hotkey.shared.presetAction = { n in PresetStore.shared.run(hotkey: n) }
@@ -155,6 +163,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
                let text = try? String(contentsOf: Paths.log, encoding: .utf8) {
                 try? String(text.suffix(1_000_000)).write(to: Paths.log, atomically: true, encoding: .utf8)
             }
+        }
+    }
+
+    private var openBatch: [URL] = []
+    private var openBatchScheduled = false
+
+    @objc func openDocumentsEvent(_ event: NSAppleEventDescriptor, reply: NSAppleEventDescriptor) {
+        guard let list = event.paramDescriptor(forKeyword: keyDirectObject) else { return }
+        var urls: [URL] = []
+        if list.numberOfItems == 0, let u = list.fileURLValue { urls.append(u) }
+        if list.numberOfItems > 0 {
+            for i in 1...list.numberOfItems { if let u = list.atIndex(i)?.fileURLValue { urls.append(u) } }
+        }
+        guard !urls.isEmpty else { return }
+        openBatch += urls
+        guard !openBatchScheduled else { return }
+        openBatchScheduled = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            guard let self else { return }
+            let all = self.openBatch
+            self.openBatch = []
+            self.openBatchScheduled = false
+            var seen = Set<String>()
+            self.application(NSApp, open: all.filter { seen.insert($0.path).inserted })
         }
     }
 
@@ -295,7 +327,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     func applicationWillTerminate(_ notification: Notification) {
         if !duplicate { Watchdog.shared.cleanExit() }      // 6.0.3 · la copia doppia non tocca il guardiano della prima
         let s = VideoProjectStore.shared
-        if s.currentID != nil { s.applyChanges(); s.rememberView() }
+        if s.currentID != nil { s.saveBeforeQuit(); s.rememberView() }      // 6.0.4 · al massimo 3 s
         UserDefaults.standard.set(true, forKey: VideoProjectStore.cleanExitKey)     // 5.1 · uscita normale
     }
 
@@ -322,7 +354,10 @@ enum SharedFiles {
         let fm = FileManager.default
         var out: [URL] = []
         for p in (c.queryItems ?? []).filter({ $0.name == "f" }).compactMap({ $0.value }) {
+            // 6.0.4 · Solo percorsi completi: «f=» vuoto diventava la cartella di lavoro dell'app («/», tutto il disco)
+            guard p.hasPrefix("/"), p.count > 1 else { continue }
             let u = URL(fileURLWithPath: p)
+            guard u.standardizedFileURL.path != "/" else { continue }
             guard fm.fileExists(atPath: u.path) else { continue }
             // 3.5.2 · Sicurezza: un link non può mai spostare file dai dati di altre app.
             // Solo lo spazio dell'estensione Condividi di OrbitLR viene copiato (mai spostato); gli altri si ignorano.
