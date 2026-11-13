@@ -154,6 +154,12 @@ def motore(act, param, files, dest=None, timeout=600, env_extra=None, secret=Non
     return r
 
 
+def motivo_strano(msg):
+    """Un motivo d'errore che non spiega niente all'utente: solo un percorso interno, o vuoto."""
+    m = (msg or "").strip()
+    return (not m) or m.startswith("/") or "/Library/Caches/LRConverter/job." in m
+
+
 def prova_motore(r):
     """Testo breve da mettere in «prova» di un bug."""
     return "motore --run %s %s %s → rc=%s, %.1fs, righe: %s ; stderr: %s ; cartella %s" % (
@@ -225,10 +231,11 @@ def near(a, b, tol_abs=0.5, tol_rel=0.04):
 
 def meta(p):
     rc, o = sh([STRUM, "meta", p], timeout=60)
+    righe = [l for l in o.splitlines() if l.startswith("{")]   # stderr di ImageIO può aggiungere righe
     try:
-        return json.loads(o.strip().splitlines()[-1])
+        return json.loads(righe[-1])
     except Exception:
-        return {"errore": o[:200]}
+        return {"errore": o[-300:]}
 
 
 def ctrl_media(dur=None, video=None, audio=None, minsize=1000, w=None, h=None, fmt=None):
@@ -338,10 +345,9 @@ def crea_pdf(path, pagine=3, testo="Pagina"):
 
 def pdf_pagine(p):
     rc, o = sh([STRUM, "pagine", p])
-    try:
-        return int(o.strip().splitlines()[-1])
-    except Exception:
-        pass
+    nums = [l.strip() for l in o.splitlines() if re.fullmatch(r"-?\d+", l.strip())]
+    if nums and int(nums[-1]) >= 0:
+        return int(nums[-1])
     # conto «/Type /Page» (non «/Pages») come ripiego
     try:
         data = open(p, "rb").read()
@@ -358,6 +364,11 @@ def defaults(*a):
 def utente_esperto(extra=None):
     """Preferenze come un utente che ha già usato l'app (niente benvenuto, niente controllo aggiornamenti)."""
     defaults("delete", BID)
+    for f in ["problema.txt", "in-corso.txt", "ultimo-problema.txt"]:   # niente domanda del guardiano da un profilo precedente
+        try:
+            os.remove(os.path.join(SUP, f))
+        except OSError:
+            pass
     for k, t, v in [("welcomeDone", "-bool", "true"), ("launchScreen", "-bool", "false"), ("tips", "-bool", "false"),
                     ("updateAutoCheck", "-bool", "false"), ("closeNoticeShown", "-bool", "true"),
                     ("lastLaunchVersion", "-string", versione()), ("sidebarAdvanced", "-bool", "true")]:
@@ -667,6 +678,23 @@ def lavoro_app(es, cosa, regole_file, attesa=120, atteso_n=None, uscita_ext=None
     time.sleep(3)
     if not pronto():
         diagnosi_regole(regole_file)
+        tx = testi_ax()
+        if "Non ora" in tx:
+            # la domanda del guardiano («L'ultima volta qualcosa è andato storto…») è aperta: la chiudo e aspetto ancora
+            foto("modale-guardiano-%d" % int(time.time()), finestra=False)
+            say("MODALE del guardiano aperta da %d s senza risultati: clic su «Non ora»" % attesa)
+            clicca("Non ora")
+            aspetta(pronto, attesa, 2)
+            time.sleep(3)
+            res["_modale"] = {"risultati_dopo_non_ora": sum(len(v) for k, v in res.items() if not k.startswith("_"))}
+            say("dopo «Non ora»:", res["_modale"])
+            if res["_modale"]["risultati_dopo_non_ora"]:
+                es.bug(cosa + ": domanda del guardiano aperta", "Con la domanda «L'ultima volta qualcosa è andato storto…» aperta le Cartelle automatiche non lavorano",
+                       "medio", "i file nella cartella sorvegliata vengono convertiti anche mentre la domanda aspetta una risposta",
+                       "nessun risultato per %d s con la domanda aperta; %d file subito dopo il clic su «Non ora»" % (attesa, res["_modale"]["risultati_dopo_non_ora"]),
+                       "registro: DIAGNOSI (watch.json caricato, watch-seen.json assente, cronologia vuota), foto modale-guardiano-*.png",
+                       passi=["OrbitLR chiusa di colpo (o bloccata e chiusa)", "riaprire OrbitLR: compare la domanda del guardiano",
+                              "senza rispondere, copiare file in una cartella automatica", "aspettare 90 s: nessun file", "clic su «Non ora»: i file arrivano"])
     return res
 
 

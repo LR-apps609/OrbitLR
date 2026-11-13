@@ -81,6 +81,9 @@ def rotti():
             es.bug(cosa, "File rotto: il motore non finisce (%s)" % nome, "alto", "FAIL con motivo", "bloccato", prova_motore(r))
         elif r["missing"] and not buoni:
             es.skip(cosa, "MISSING %s" % r["missing"])
+        elif r["fails"] and any(motivo_strano(m) for _, m in r["fails"]) and not buoni:
+            es.bug(cosa, "Il messaggio d'errore per un file rotto è solo un percorso interno, non un motivo", "basso",
+                   "un motivo comprensibile (es. «il file sembra danneggiato»)", r["fails"], prova_motore(r))
         elif r["fails"] and all(m.strip() for _, m in r["fails"]) and not buoni:
             es.ok(cosa, r["fails"][0][1][:120])
         elif buoni and nome == "troncato.png":
@@ -119,7 +122,10 @@ def sola_lettura():
     msg = " ".join(x[1] for x in r["fails"])
     es.check("cartella in sola lettura → messaggio", r["fails"] and not r["hang"], "Destinazione in sola lettura: nessun messaggio", "medio",
              "FAIL con il motivo (permesso)", r["lines"], prova_motore(r))
-    if r["fails"] and "permess" not in msg:
+    if r["fails"] and motivo_strano(msg):
+        es.bug("messaggio sola lettura", "Destinazione in sola lettura: il messaggio è solo un percorso interno", "basso",
+               "«macOS non ha dato il permesso di scrivere in quella cartella»", msg, prova_motore(r))
+    elif r["fails"] and "permess" not in msg:
         es.confuso("messaggio sola lettura", "il motivo non parla di permessi: «%s»" % msg)
     os.chmod(d, 0o755)
     # originale in una cartella senza permesso di scrittura, destinazione «accanto all'originale» (come l'app di base)

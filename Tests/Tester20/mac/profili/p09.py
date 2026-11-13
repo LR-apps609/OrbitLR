@@ -78,6 +78,8 @@ def rotti():
                 else:
                     es.bug(cosa, "Da un video rotto esce un file vuoto o illeggibile (%s %s)" % (src, act), "medio", "FAIL con un messaggio, nessun file",
                            [(os.path.basename(o), probe(o)) for o in outs], prova_motore(r))
+            elif r["fails"] and any(motivo_strano(m) for _, m in r["fails"]):
+                es.bug(cosa, "Il messaggio d'errore per un video rotto è solo un percorso interno", "basso", "un motivo comprensibile", r["fails"], prova_motore(r))
             elif r["fails"] and all(m.strip() for _, m in r["fails"]):
                 es.ok(cosa, "FAIL: %s" % r["fails"][0][1][:120])
             else:
