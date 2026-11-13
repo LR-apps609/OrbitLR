@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        run_id: ['', '43474125874']
+        run_id: ['43474125874']
     runs-on: xcode-27
     timeout-minutes: 40
     steps:
@@ -43,19 +43,19 @@ jobs:
           for n in 10 100 300; do
             rm -rf set$n; mkdir set$n; for i in $(seq 1 $n); do cp base.heic "set$n/foto $i.heic"; done
           done
-          for n in 10 100 300; do
+          for n in 100; do
             echo "======== $n file"
             pkill -9 -x OrbitLR; sleep 2
-            open /Applications/OrbitLR.app; sleep 15
+            open /Applications/OrbitLR.app; sleep 20
             P=$(pgrep -x OrbitLR); echo "pid $P"
-            T0=$(date +%s)
             open -a /Applications/OrbitLR.app set$n/*.heic
-            sleep 3
-            sample $P 4 -file s$n.txt >/dev/null 2>&1
-            echo "--- campione a +3 s (thread principale, righe con OrbitLR o le più pesanti)"
-            awk '/Thread_.*DispatchQueue_1: com.apple.main-thread/{m=1} m&&/^ *[0-9]+ Thread_/&&!/main-thread/{m=0} m' s$n.txt | grep -E "OrbitLR|SwiftUI|AppKit|LaunchServices|ImageIO|QuickLook|CoreFoundation" | sed -E 's/\(in [^)]*\) *//; s/ +\[0x[0-9a-f]+\]//' | awk '{c=$1; $1=""; print c" "$0}' | sort -rn | head -40
-            for s in 6 12 20 30; do sleep $(( s - $(date +%s) + T0 > 0 ? s - $(date +%s) + T0 : 0 )); sample $P 1 -file q.txt >/dev/null 2>&1; tot=$(awk '/main-thread/{getline; print $1; exit}' q.txt); idle=$(grep -m1 -E "mach_msg2_trap|mach_msg_trap" q.txt | awk '{print $1}'); echo "+${s}s campioni $tot · a riposo $idle"; done
-            tail -n 15 ~/Library/Logs/LRConverter.log
+            for at in 3 10; do
+              sleep 4
+              sample $P 3 -mayDie -file s$at.txt >/dev/null 2>&1
+              echo "--- campione a circa +$at s: thread principale (prime 140 righe dell'albero)"
+              awk '/Call graph:/{c=1} c&&/Thread_/{if(m)exit; if(/main-thread/)m=1} m' s$at.txt | sed -E 's/ +\[0x[0-9a-f,]+\]//; s/\(in ([^)]*)\)/[\1]/' | cut -c1-200 | head -140
+            done
+            tail -n 8 ~/Library/Logs/LRConverter.log
             osascript -e 'with timeout of 10 seconds' -e 'tell application id "it.ledion.OrbitLR" to quit' -e 'end timeout' >/dev/null 2>&1 &
-            sleep 12; pgrep -x OrbitLR && echo "NON SI CHIUDE con quit dopo 12 s" || echo "chiusa con quit"
+            sleep 12; pgrep -x OrbitLR && { echo "NON SI CHIUDE con quit dopo 12 s"; sample $P 2 -mayDie -file sq.txt >/dev/null 2>&1; echo "--- campione dopo quit"; awk '/Call graph:/{c=1} c&&/Thread_/{if(m)exit; if(/main-thread/)m=1} m' sq.txt | sed -E 's/ +\[0x[0-9a-f,]+\]//' | cut -c1-200 | head -80; } || echo "chiusa con quit"
           done
