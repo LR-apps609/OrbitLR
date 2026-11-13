@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        run_id: ['43474125874']
+        run_id: ['43510807857', '']
     runs-on: xcode-27
     timeout-minutes: 40
     steps:
@@ -43,7 +43,7 @@ jobs:
           for n in 10 100 300; do
             rm -rf set$n; mkdir set$n; for i in $(seq 1 $n); do cp base.heic "set$n/foto $i.heic"; done
           done
-          for n in 100; do
+          for n in 100 300; do
             echo "======== $n file"
             pkill -9 -x OrbitLR; sleep 2
             open /Applications/OrbitLR.app; sleep 20
