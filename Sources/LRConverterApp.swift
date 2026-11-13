@@ -295,7 +295,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     func applicationWillTerminate(_ notification: Notification) {
         if !duplicate { Watchdog.shared.cleanExit() }      // 6.0.3 · la copia doppia non tocca il guardiano della prima
         let s = VideoProjectStore.shared
-        if s.currentID != nil { s.applyChanges(); s.rememberView() }
+        if s.currentID != nil { s.saveBeforeQuit(); s.rememberView() }      // 6.0.4 · al massimo 3 s
         UserDefaults.standard.set(true, forKey: VideoProjectStore.cleanExitKey)     // 5.1 · uscita normale
     }
 

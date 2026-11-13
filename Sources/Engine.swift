@@ -35,6 +35,10 @@ final class Job: ObservableObject, Identifiable, @unchecked Sendable {
     }
     @Published var notes: [String] = []
     @Published var info = ""
+    /// 6.0.4 · Gli originali da cui è nato davvero un file (righe «OK» del motore, o un risultato del motore di macOS).
+    /// Solo questi possono finire nel Cestino con l'opzione «originale nel Cestino»: mai uno saltato o non riuscito.
+    var producedFrom: Set<String> = []
+    static func key(_ u: URL) -> String { u.standardizedFileURL.path }
 
     var process: Process?
     var cancelRequested = false
@@ -425,7 +429,7 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
                     let out = try await NativeEngine.run(job: job, file: f) { p in
                         DispatchQueue.main.async { job.progress = (Double(i) + min(1, max(0, p))) / Double(max(files.count, 1)) }
                     }
-                    await MainActor.run { job.outputs.append(out) }
+                    await MainActor.run { job.outputs.append(out); job.producedFrom.insert(Job.key(f)) }
                 } catch {
                     let msg = error.localizedDescription
                     await MainActor.run { if msg != "annullato" { job.failures.append("\(f.lastPathComponent): \(msg)") } }
@@ -521,6 +525,7 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
                 job.outputs.append(URL(fileURLWithPath: path))
             }
         case "OK":
+            if field(1).hasPrefix("/") { job.producedFrom.insert(Job.key(URL(fileURLWithPath: field(1)))) }
             if !field(2).isEmpty { job.info = field(2) }
         case "NOTE":
             job.notes.append(EngineText.localized(field(2)))
@@ -632,6 +637,9 @@ final class QueueStore: ObservableObject, @unchecked Sendable {
             if kind == .video, ["to:mp3", "to:m4a", "to:wav", "to:gif", "to:aac", "to:flac"].contains(id) { return false }
             if kind == .pdf, ["to:png", "to:jpg", "to:jpeg", "to:heic", "to:webp", "to:tiff"].contains(id) { return false }
             guard fm.fileExists(atPath: f.path) else { return false }
+            // 6.0.4 · Il motore deve aver detto che da questo originale è nato un file: un file saltato («già MP3»)
+            // o non riuscito non si tocca, anche se nella cartella c'è un risultato con un nome simile.
+            guard job.producedFrom.contains(Job.key(f)) else { return false }
             // Solo se c'è davvero un file creato da questo originale (stesso nome di partenza)
             let stem = f.deletingPathExtension().lastPathComponent
             return job.outputs.contains { o in

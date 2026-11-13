@@ -39,6 +39,8 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     /// 2.9.9 · il testo che si sta modificando
     @Published var selectedText: UUID? = nil
     @Published var notice: String? = nil
+    /// 6.0.4 · Il progetto che si sta leggendo in sottofondo (un altro clic lo sostituisce).
+    private var pendingOpen: UUID? = nil
     @Published var lastJob: Job? = nil
     /// 2.7.3 · Il progetto aperto (nil = si vede la schermata Progetti) e l'elenco dei progetti salvati.
     @Published private(set) var currentID: UUID? = nil
@@ -655,13 +657,25 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
             p = prepared.0
             notice = prepared.1
         } else {
-            guard var r = VideoProjectLibrary.read(VideoProjectLibrary.url(for: id, in: folder)) else {
-                notice = String(localized: "Questo progetto non si apre più.")
-                refreshLibrary()
-                return
+            // 6.0.4 · Lettura e ricerca dei file spostati in sottofondo, come all'avvio: clip su un disco di rete lento
+            // o staccato non fermano più la finestra quando apri il progetto da Progetti
+            let url = VideoProjectLibrary.url(for: id, in: folder)
+            let token = UUID()
+            pendingOpen = token
+            DispatchQueue.global(qos: .userInitiated).async {
+                let r: (VideoProject, String?)? = VideoProjectLibrary.read(url).map { var q = $0; let n = Self.relink(&q); return (q, n) }
+                DispatchQueue.main.async { [weak self] in
+                    guard let self, self.pendingOpen == token else { return }      // nel frattempo hai aperto altro
+                    self.pendingOpen = nil
+                    guard let r else {
+                        self.notice = String(localized: "Questo progetto non si apre più.")
+                        self.refreshLibrary()
+                        return
+                    }
+                    self.openProject(id, undo: undo, prepared: r)
+                }
             }
-            notice = Self.relink(&r)
-            p = r
+            return
         }
         currentID = id
         if folder == VideoProjectLibrary.folder { Self.rememberOpen(id) }
@@ -702,10 +716,14 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
         // 5.1 · Chiudere tiene tutto (il salvataggio è continuo); un progetto chiuso vuoto va nel Cestino
         saved = project
         showingBefore = false
-        saveNow()
-        if let id = currentID, project.clips.isEmpty, project.music == nil, (project.missing ?? []).isEmpty,
-           FileManager.default.fileExists(atPath: VideoProjectLibrary.url(for: id, in: folder).path) {
-            VideoProjectLibrary.trash(id, in: folder)
+        // 6.0.4 · Il progetto vuoto va nel Cestino dopo il salvataggio in sottofondo, e la lista si rinfresca dopo
+        let emptyID: UUID? = (project.clips.isEmpty && project.music == nil && (project.missing ?? []).isEmpty) ? currentID : nil
+        let dir = folder
+        saveNow { [weak self] in
+            if let id = emptyID, FileManager.default.fileExists(atPath: VideoProjectLibrary.url(for: id, in: dir).path) {
+                VideoProjectLibrary.trash(id, in: dir)
+            }
+            self?.refreshLibrary()
         }
         if folder == VideoProjectLibrary.folder { Self.rememberOpen(nil) }
         undo?.removeAllActions(withTarget: self)        // il ⌘Z di un progetto non deve toccare un altro
@@ -738,9 +756,12 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     }
 
     func duplicateProject(_ id: UUID) {
-        if id == currentID { saveNow() }
-        _ = VideoProjectLibrary.duplicate(id, in: folder, existing: library.map { $0.name })
-        refreshLibrary()
+        let names = library.map { $0.name }, dir = folder
+        let copy = { [weak self] in
+            _ = VideoProjectLibrary.duplicate(id, in: dir, existing: names)
+            self?.refreshLibrary()
+        }
+        if id == currentID { saveNow(then: copy) } else { copy() }
     }
 
     func deleteProject(_ id: UUID, undo: UndoManager?) {
@@ -916,13 +937,27 @@ final class VideoProjectStore: ObservableObject, @unchecked Sendable {
     }
 
 
-    /// Salva subito (alla chiusura del progetto).
-    func saveNow() {
+    /// Salva subito (alla chiusura del progetto). 6.0.4 · In sottofondo, in coda dopo eventuali salvataggi in corso:
+    /// i segnalibri di clip su un disco di rete lento o staccato non bloccano più la finestra. `then` arriva a salvataggio finito.
+    func saveNow(then: (() -> Void)? = nil) {
+        guard let url = saveURL else { then?(); return }
+        saveWork?.cancel()
+        let p = saved
+        VideoProjectLibrary.queue.async {
+            VideoProjectLibrary.save(p, to: url)
+            DispatchQueue.main.async { [weak self] in self?.savedAt = Date(); then?() }
+        }
+    }
+
+    /// 6.0.4 · All'uscita dall'app: si aspetta il salvataggio, ma al massimo 3 secondi (un disco staccato non tiene l'app aperta).
+    func saveBeforeQuit() {
+        saved = project
         guard let url = saveURL else { return }
         saveWork?.cancel()
         let p = saved
-        VideoProjectLibrary.queue.sync { VideoProjectLibrary.save(p, to: url) }   // in coda dopo eventuali salvataggi in corso
-        savedAt = Date()
+        let done = DispatchSemaphore(value: 0)
+        VideoProjectLibrary.queue.async { VideoProjectLibrary.save(p, to: url); done.signal() }
+        _ = done.wait(timeout: .now() + 3)
     }
 
     /// Aggiunge (o rinfresca) i segnalibri prima di salvare.

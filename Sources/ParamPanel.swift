@@ -162,6 +162,8 @@ struct ParamView: View {
     @State var digits = 3
     @State var error = ""
     @State var savePreset = false
+    /// 6.0.4 · Peso totale dei file, letto una volta in sottofondo (prima a ogni ridisegno, sul thread principale).
+    @State var totalBytes: Int64? = nil
     @State var choice = ""          // manopole delle azioni della 2.5 (sfondo, raddrizza, ingrandisci, scatti)
     @State var aiSize = "2"         // Migliora con IA: dimensione
     @State var aiStrength = "0"     // Migliora con IA: quanto «Più nitido» mescolare (0 = tutto Fedele)
@@ -315,6 +317,14 @@ struct ParamView: View {
         if s > 0 { videoSeconds = s }
     }
 
+    private func loadTotalBytes() async {
+        let list = files
+        let total = await Task.detached(priority: .userInitiated) {
+            list.reduce(Int64(0)) { $0 + Job.size(of: $1) }
+        }.value
+        totalBytes = total
+    }
+
     private func note(_ t: String) -> some View {
         Text(t).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
     }
@@ -341,6 +351,7 @@ struct ParamView: View {
             Knob(title: String(localized: "Come"), options: (ParamChoices.options(for: .vcompress) ?? []) + [
                 KnobOption(value: "custom", short: String(localized: "param.custom", defaultValue: "Altro", comment: "Un valore scelto a mano"), label: String(localized: "Un altro peso massimo, a scelta")),
             ], selection: $mb, tint: tint)
+            .task(id: files) { await loadTotalBytes() }
             if mb == "custom" {
                 HStack {
                     TextField("MB", text: $customMB).frame(width: 80)
@@ -351,8 +362,10 @@ struct ParamView: View {
                 note(String(localized: "Stessa misura e stessa qualità a occhio, con il formato moderno dei video (HEVC): di solito pesa la metà. Funziona anche con film lunghi."))
             } else {
                 note(String(localized: "Prima si tengono qualità e misura; la risoluzione scende solo se il peso scelto non basta."))
-                estimateLine(SizeEstimate.compressText(current: files.reduce(Int64(0)) { $0 + Job.size(of: $1) },
-                                                       targetMB: Int(mb == "custom" ? customMB : mb), files: files.count))
+                if let total = totalBytes {
+                    estimateLine(SizeEstimate.compressText(current: total,
+                                                           targetMB: Int(mb == "custom" ? customMB : mb), files: files.count))
+                }
             }
         case .icompress:
             Knob(title: String(localized: "Come"), options: (ParamChoices.options(for: .icompress) ?? []) + [
@@ -370,11 +383,11 @@ struct ParamView: View {
             EmptyView()
         case .social:
             Knob(title: String(localized: "Formato"), options: ParamChoices.options(for: .social) ?? [], selection: $choice, tint: tint)
-                .task(id: files) { await loadVideoSeconds() }
+                .task(id: files) { await loadVideoSeconds(); await loadTotalBytes() }
             Toggle("Inquadra le persone", isOn: $follow)
-            if let sec = videoSeconds {
+            if let sec = videoSeconds, let total = totalBytes {
                 let predicted: String = SizeEstimate.label(SizeEstimate.socialBytes(seconds: sec, aspect: choice.isEmpty ? "9x16" : choice))
-                let current: String = Fmt.bytes(files.reduce(Int64(0)) { $0 + Job.size(of: $1) })
+                let current: String = Fmt.bytes(total)
                 estimateLine(String(localized: "\(predicted) · ora \(current)"))
             }
             note(String(localized: "L’inquadratura segue le persone (o ciò che si muove in primo piano) con calma, senza scatti. Con scene affollate resta al centro."))

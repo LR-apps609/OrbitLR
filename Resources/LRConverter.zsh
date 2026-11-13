@@ -766,6 +766,12 @@ helper_ok() {  # prepara il programma nativo la prima volta (o dopo un aggiornam
   while ! mkdir "$lock" 2>/dev/null; do
     local owner=""; [[ -f "$lock/pid" ]] && owner=$(<"$lock/pid")
     if [[ $owner == <-> ]] && ! kill -0 $owner 2>/dev/null; then rm -rf -- "$lock"; continue; fi
+    # 6.0.4 · Lucchetto senza numero di processo (lasciato da una versione ≤ 6.0.2, o chiusura tra mkdir e pid):
+    # se ha più di 10 secondi nessuno lo sta usando, si toglie subito invece di aspettare 90 secondi dopo la fine del lavoro
+    if [[ -z $owner ]]; then
+      local born=$(stat -f %m "$lock" 2>/dev/null)
+      if [[ $born == <-> ]] && (( $(date +%s) - born > 10 )); then rm -rf -- "$lock"; continue; fi
+    fi
     [[ -e $CANCEL ]] && return 1
     sleep 1; (( waited += 1 ))
     if (( waited > 90 )); then rm -rf -- "$lock"; waited=0; fi
@@ -1242,6 +1248,12 @@ pandoc_run() {  # sorgente, formato, uscita, cartella finale (per le immagini es
   ( cd -- "$dest" && pandoc "$src" $a -o "$out" )
 }
 
+# 6.0.4 · ImageMagick legge «%d», «%03d»… nel nome d'uscita come numero di fotogramma («sale 100%d.png» diventava
+# «sale 1000.png»): scrive su un nome fisso nella cartella del lavoro, poi si sposta al nome vero.
+mgk() {  # come magick; l'ultimo argomento è il file d'uscita
+  local o=${@[-1]}; local tmp="$JD/_mgk.${o:e}"
+  magick "${@[1,-2]}" "$tmp" && mv -f -- "$tmp" "$o"
+}
 img_run() {  # sorgente, formato, uscita
   local src=$1 t=$2 out=$3 e=$(norm "${1:e}")
   if (( ${RAW_EXTS[(Ie)$e]} )); then
@@ -1276,7 +1288,7 @@ img_run() {  # sorgente, formato, uscita
   esac
   # Se l'estensione non corrisponde al contenuto (capita con le foto scaricate), si riprova lasciando decidere a ImageMagick
   # (le regole di sicurezza bloccano comunque i formati pericolosi)
-  if have magick && { magick "$in" $o "$out" 2>/dev/null || magick "$raw" $o "$out"; }; then return 0; fi
+  if have magick && { mgk "$in" $o "$out" 2>/dev/null || mgk "$raw" $o "$out"; }; then return 0; fi
   # 3.8 · Senza ImageMagick: WebP e ICO con l'ffmpeg che viaggia dentro l'app (macOS legge già tutto il resto)
   if [[ $t == (webp|ico) ]] && have ffmpeg; then
     local png="$JD/_ff.png"
@@ -1319,7 +1331,7 @@ resize_run() {  # sorgente, preset (half | 3840 | 1920 | 1280 | web)
       webp|heic) o+=(-quality 85) ;;
     esac
     [[ $p == web ]] && o+=(-strip -interlace Plane)
-    { magick "$(mk_src "$in")" $o "$out" 2>/dev/null || magick "$in" $o "$out"; } && return 0
+    { mgk "$(mk_src "$in")" $o "$out" 2>/dev/null || mgk "$in" $o "$out"; } && return 0
   fi
   # Ripiego nativo (senza ImageMagick): non ingrandisce mai
   local w h f
@@ -1353,7 +1365,7 @@ strip_run() {  # sorgente → copia senza metadati
       local -a o=(-auto-orient -strip)
       [[ $e == jpg ]] && o+=(-quality 95)
       [[ $e == (heic|webp) ]] && o+=(-quality 90)
-      magick "$(mk_src "$src")" $o "$out" 2>/dev/null || magick "$src" $o "$out" ;;
+      mgk "$(mk_src "$src")" $o "$out" 2>/dev/null || mgk "$src" $o "$out" ;;
     *) return 1 ;;
   esac
 }
@@ -2376,7 +2388,10 @@ for j in {1..$#J_ACT}; do
     mkdir -p -- "$dest" 2>/dev/null
     moved=0
     for it in $items; do
-      if [[ -d $it ]]; then tgt=$(unique_item "$dest" "${it:t}" dir); else tgt=$(unique_item "$dest" "${it:t}"); fi
+      # 6.0.4 · «a capo» e tabulazioni nel nome diventano spazi anche nel file vero, come nella riga OUT per l'app:
+      # prima il file nasceva con l'«a capo», l'app non lo trovava e segnava il lavoro come non riuscito
+      nm=${it:t}; nm=${nm//[$'\n\r\t']/ }
+      if [[ -d $it ]]; then tgt=$(unique_item "$dest" "$nm" dir); else tgt=$(unique_item "$dest" "$nm"); fi
       if mv -f -- "$it" "$tgt"; then (( moved += 1 )); last_out=$tgt; rp OUT "$tgt"; fi
     done
     if (( moved )); then

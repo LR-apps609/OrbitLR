@@ -17,6 +17,18 @@ import Vision
 // ════════════════════════════════════════════════════════════════════
 
 enum Media {
+    /// 6.0.4 · File temporaneo sullo stesso disco del risultato (così lo spostamento finale è immediato), ma in una
+    /// cartella di sistema che macOS pulisce da sola: dopo una chiusura forzata non restano file nascosti
+    /// «.orbitlr-…» nella cartella dell'utente. Se il sistema non la dà, si torna accanto al risultato.
+    static func tempFile(near out: URL, ext: String) -> URL {
+        let name = ".orbitlr-\(UUID().uuidString).\(ext)"
+        if let dir = try? FileManager.default.url(for: .itemReplacementDirectory, in: .userDomainMask,
+                                                   appropriateFor: out.deletingLastPathComponent(), create: true) {
+            return dir.appendingPathComponent(name)
+        }
+        return out.deletingLastPathComponent().appendingPathComponent(name)
+    }
+
     static let ids: Set<String> = ["social", "vmerge", "music", "ringtone", "whatsapp", "amerge", "tts", "vproject"]
     /// Azioni che usano tutti i file insieme e danno un solo risultato.
     static let multi: Set<String> = ["vmerge", "amerge", "vproject"]
@@ -497,7 +509,7 @@ enum Media {
                         AVLinearPCMBitDepthKey: 16, AVLinearPCMIsFloatKey: false,
                         AVLinearPCMIsBigEndianKey: outFormat == .aiff, AVLinearPCMIsNonInterleaved: false]
         }
-        let tmp = out.deletingLastPathComponent().appendingPathComponent(".orbitlr-\(UUID().uuidString).\(ext)")
+        let tmp = Media.tempFile(near: out, ext: ext)
         try? FileManager.default.removeItem(at: tmp)
         let writer = try AVAssetWriter(outputURL: tmp, fileType: fileType)
         var asbd = AudioStreamBasicDescription(mSampleRate: rate, mFormatID: kAudioFormatLinearPCM,
@@ -962,7 +974,7 @@ final class SpeechFileWriter: NSObject, AVSpeechSynthesizerDelegate, @unchecked 
 
     init(out: URL, total: Int, progress: @escaping (Double) -> Void, job: Job?) {
         self.out = out
-        self.tmp = out.deletingLastPathComponent().appendingPathComponent(".orbitlr-\(UUID().uuidString).caf")
+        self.tmp = Media.tempFile(near: out, ext: "caf")
         self.total = max(1, total)
         self.progress = progress
         self.job = job

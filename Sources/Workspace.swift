@@ -184,10 +184,19 @@ final class Workspace: ObservableObject, @unchecked Sendable {
         pie.lastId = UserDefaults.standard.string(forKey: "last_" + gr.kind.rawValue)
         pie.fileName = gr.files[0].lastPathComponent
         if gr.builtFiles != gr.files {
-            let bytes = gr.files.reduce(Int64(0)) { $0 + Job.size(of: $1) }
-            let size = Fmt.bytes(bytes)
-            pie.subtitle = gr.files.count > 1 ? String(localized: "e altri \(gr.files.count - 1) · \(size)") : size
-            pie.icon = NSWorkspace.shared.icon(forFile: gr.files[0].path)
+            // 6.0.4 · Peso e icona si leggono in sottofondo: con 100 file o un disco lento la finestra non si ferma
+            let files = gr.files
+            pie.subtitle = files.count > 1 ? String(localized: "e altri \(files.count - 1)") : ""
+            Task.detached(priority: .userInitiated) { [weak pie, weak gr] in
+                let bytes = files.reduce(Int64(0)) { $0 + Job.size(of: $1) }
+                let icon = NSWorkspace.shared.icon(forFile: files[0].path)
+                await MainActor.run {
+                    guard let pie, let gr, gr.files == files else { return }
+                    let size = Fmt.bytes(bytes)
+                    pie.subtitle = files.count > 1 ? String(localized: "e altri \(files.count - 1) · \(size)") : size
+                    pie.icon = icon
+                }
+            }
             loadThumbnail(gr.files[0], into: pie)
             gr.builtFiles = gr.files
         }

@@ -26,4 +26,16 @@ final class EngineTextTests: XCTestCase {
             XCTAssertNil(re.firstMatch(in: s, range: NSRange(s.startIndex..., in: s)), "variabile seguita da [etichetta] in un filtro: \(s)")
         }
     }
+
+    /// 6.0.4 · ImageMagick non deve mai scrivere direttamente sul nome dell'utente («%d» diventerebbe un numero):
+    /// le uscite verso "$out" passano da mgk, che usa un nome fisso e poi sposta il file.
+    func testMagickNonScriveSulNomeDellUtente() throws {
+        let script = try String(contentsOf: URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("Resources/LRConverter.zsh"), encoding: .utf8)
+        let re = try NSRegularExpression(pattern: #"(^|[^a-z_])magick [^;|&]*"\$out""#)
+        for line in script.split(separator: "\n") where !line.trimmingCharacters(in: .whitespaces).hasPrefix("#") {
+            let s = String(line)
+            XCTAssertNil(re.firstMatch(in: s, range: NSRange(s.startIndex..., in: s)), "magick scrive su $out: \(s)")
+        }
+    }
 }
