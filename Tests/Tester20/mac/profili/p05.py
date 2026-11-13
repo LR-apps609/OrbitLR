@@ -92,6 +92,9 @@ def link():
         p1 = pid_app()
         nuovi_c = crash_nuovi(crash_prima)
         coda = open(LOG, errors="replace").read()[-600:] if os.path.exists(LOG) else ""
+        if p1 != p0:
+            rc_, lg = sh("log show --last 1m --style compact --predicate 'process == \"OrbitLR\" OR eventMessage CONTAINS[c] \"OrbitLR\"' 2>/dev/null | tail -n 60", timeout=90)
+            say("registro di sistema dopo «%s»:" % u, lg[-4000:].replace("\n", " ¶ "))
         es.check("link «%s»: l'app resta aperta" % u, p1 == p0, "Il link «%s» chiude OrbitLR" % u, "alto",
                  "stesso processo aperto (pid %s)" % p0, "dopo il link: pid %s, rapporti di crash nuovi %s" % (p1, nuovi_c),
                  "coda del registro app: %s" % coda.replace("\n", " ¶ ")[-400:],

@@ -65,13 +65,23 @@ def pdf():
         es.ok("comprimi senza Ghostscript → MISSING con indicazione", r["missing"])
     else:
         esito_motore(es, "comprimi PDF di 300 pagine", r, "300 pagine", ctrl_pdf(300))
-    # un PDF con testo vero, fatto dal motore stesso (txt → pdf), poi «estrai il testo»
-    rp = motore("to:pdf", "", [F + "/lettera.txt"], nome="txt-pdf")
-    src_pdf = rp["outs"][0] if rp["outs"] and os.path.exists(rp["outs"][0]) else F + "/tre.pdf"
-    r = motore("pdftext", "", [src_pdf], nome="pdftext")
-    if esito_motore(es, "testo dal PDF", r, "file .txt con «Tre 1 di 3»", None):
-        t = open(r["outs"][0], errors="replace").read()
-        es.check("testo estratto corretto", "4242" in t or "Tre" in t, "Il testo estratto dal PDF è vuoto o sbagliato", "medio", "«Tre 1 di 3»", t[:200], r["outs"][0])
+    # testo corto (meno di 15 caratteri per pagina) e testo lungo: il motore usa l'OCR sotto i 15 caratteri
+    crea_pdf(F + "/lungo-testo.pdf", 2, "Fattura numero 4242 per il cliente Mario Rossi, pagina")
+    for nome, atteso in [("lungo-testo.pdf", "4242"), ("tre.pdf", "Tre")]:
+        r = motore("pdftext", "", [F + "/" + nome], nome="pdftext-" + nome)
+        outs = [o for o in r["outs"] if os.path.exists(o)]
+        txt = open(outs[0], errors="replace").read() if outs else ""
+        es.nota("pdftext-" + nome, {"fails": r["fails"], "testo": txt[:200]})
+        if nome == "tre.pdf" and not outs and r["fails"] and "4242" in es.d["note"].get("pdftext-lungo-testo.pdf", {}).get("testo", ""):
+            es.bug("estrai il testo da un PDF con poco testo per pagina", "«Estrai il testo»: le pagine con meno di 15 caratteri perdono il loro testo (rimpiazzato dall'OCR)",
+                   "basso", "il testo vero «Tre 1 di 3» di ogni pagina (PDFPage.string lo ha)",
+                   "FAIL «%s»; con testo lungo invece funziona (%s)" % (r["fails"][0][1] if r["fails"] else "", es.d["note"]["pdftext-lungo-testo.pdf"]["testo"][:80]),
+                   prova_motore(r) + " · LRConverter.zsh lrhelper «text»: if s.count < 15 { s = recognize(img) } — il testo vero si butta anche se l'OCR non trova niente",
+                   passi=["PDF di 3 pagine con «Tre 1 di 3» su ogni pagina (testo vero, non scansione)", "Estrai il testo", "messaggio «nel PDF non ho trovato testo leggibile»"])
+        elif atteso in txt:
+            es.ok("estrai il testo da %s" % nome, txt[:60])
+        else:
+            es.bug("estrai il testo da %s" % nome, "«Estrai il testo» non trova il testo di un PDF", "medio", "il testo «%s»" % atteso, "fails %s, testo %r" % (r["fails"], txt[:100]), prova_motore(r))
     r = motore("merge", "", [F + "/tre.pdf", F + "/rotto.pdf"], nome="merge-rotto")
     es.check("unisci con un PDF rotto → messaggio", not r["hang"] and r["fails"], "Unire un PDF rotto non dà un messaggio", "medio",
              "FAIL con il motivo", r["lines"], prova_motore(r))
