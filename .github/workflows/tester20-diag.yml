@@ -1,0 +1,60 @@
+# Diagnosi mirata (coordinatore): 300 HEIC aperte insieme, campione del thread principale stampato nel registro.
+name: tester20-diag
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Run «Compila OrbitLR» con l'artifact pacchetto (vuoto = release v6.0.3)"
+        default: ""
+permissions:
+  contents: read
+  actions: read
+jobs:
+  heic:
+    runs-on: xcode-27
+    timeout-minutes: 40
+    steps:
+      - uses: actions/download-artifact@v5
+        if: inputs.run_id != ''
+        continue-on-error: true
+        with:
+          name: pacchetto
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/p
+      - name: Installo
+        run: |
+          mkdir -p "$RUNNER_TEMP/x"
+          if [ -f "$RUNNER_TEMP/p/pacchetto.tar" ]; then tar -C "$RUNNER_TEMP/x" -xf "$RUNNER_TEMP/p/pacchetto.tar"
+          else curl -fsSL -o o.orbitlr https://github.com/LR-apps609/OrbitLR/releases/download/v6.0.3/OrbitLR.6.0.3.orbitlr && ditto -x -k o.orbitlr "$RUNNER_TEMP/x"; fi
+          A=$(find "$RUNNER_TEMP/x" -maxdepth 4 -type d -name OrbitLR.app -path '*Prebuilt*' | head -n1)
+          ditto "$A" /Applications/OrbitLR.app; xattr -dr com.apple.quarantine /Applications/OrbitLR.app || true
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' /Applications/OrbitLR.app/Contents/Info.plist
+          D=it.ledion.OrbitLR; V=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' /Applications/OrbitLR.app/Contents/Info.plist)
+          defaults write $D welcomeDone -bool true; defaults write $D launchScreen -bool false; defaults write $D tips -bool false; defaults write $D lastLaunchVersion -string "$V"
+      - name: 300 HEIC
+        run: |
+          set +e
+          mkdir -p "$RUNNER_TEMP/h"; cd "$RUNNER_TEMP/h"
+          sips -s format heic /System/Library/Desktop\ Pictures/*.heic -o base.heic >/dev/null 2>&1 || true
+          [ -s base.heic ] || { sips -z 1200 1600 -s format heic "$(ls /System/Library/Desktop\ Pictures/*.{jpg,png,heic} 2>/dev/null | head -1)" --out base.heic >/dev/null; }
+          ls -la base.heic
+          for n in 10 100 300; do
+            rm -rf set$n; mkdir set$n; for i in $(seq 1 $n); do cp base.heic "set$n/foto $i.heic"; done
+          done
+          for n in 10 100 300; do
+            echo "======== $n file"
+            pkill -9 -x OrbitLR; sleep 2
+            open -a /Applications/OrbitLR; sleep 15
+            P=$(pgrep -x OrbitLR); echo "pid $P"
+            T0=$(date +%s)
+            open -a /Applications/OrbitLR.app set$n/*.heic
+            sleep 3
+            sample $P 4 -file s$n.txt >/dev/null 2>&1
+            echo "--- campione a +3 s (thread principale, righe con OrbitLR o le più pesanti)"
+            awk '/Thread_.*DispatchQueue_1: com.apple.main-thread/{m=1} m&&/^ *[0-9]+ Thread_/&&!/main-thread/{m=0} m' s$n.txt | grep -E "OrbitLR|SwiftUI|AppKit|LaunchServices|ImageIO|QuickLook|CoreFoundation" | sed -E 's/\(in [^)]*\) *//; s/ +\[0x[0-9a-f]+\]//' | awk '{c=$1; $1=""; print c" "$0}' | sort -rn | head -40
+            for s in 6 12 20 30; do sleep $(( s - $(date +%s) + T0 > 0 ? s - $(date +%s) + T0 : 0 )); sample $P 1 -file q.txt >/dev/null 2>&1; tot=$(awk '/main-thread/{getline; print $1; exit}' q.txt); idle=$(grep -m1 -E "mach_msg2_trap|mach_msg_trap" q.txt | awk '{print $1}'); echo "+${s}s campioni $tot · a riposo $idle"; done
+            tail -n 15 ~/Library/Logs/LRConverter.log
+            osascript -e 'with timeout of 10 seconds' -e 'tell application id "it.ledion.OrbitLR" to quit' -e 'end timeout' >/dev/null 2>&1 &
+            sleep 12; pgrep -x OrbitLR && echo "NON SI CHIUDE con quit dopo 12 s" || echo "chiusa con quit"
+          done
