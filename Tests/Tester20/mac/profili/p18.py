@@ -83,6 +83,8 @@ def rotti():
             es.skip(cosa, "MISSING %s" % r["missing"])
         elif r["fails"] and all(m.strip() for _, m in r["fails"]) and not buoni:
             es.ok(cosa, r["fails"][0][1][:120])
+        elif buoni and nome == "troncato.png":
+            es.confuso(cosa, "da un'immagine troncata esce un file (la parte leggibile, il resto grigio): %s" % [(os.path.basename(o), os.path.getsize(o)) for o in buoni])
         elif buoni:
             es.bug(cosa, "Da un file rotto (%s) esce un file «riuscito»" % nome, "medio", "FAIL con motivo, nessun file",
                    [(os.path.basename(o), os.path.getsize(o)) for o in buoni], prova_motore(r))

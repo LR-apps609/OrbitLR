@@ -137,6 +137,7 @@ jobs:
           mkdir -p "$T20_OUT/diag"; cp ~/Library/Logs/DiagnosticReports/*OrbitLR* /Library/Logs/DiagnosticReports/*OrbitLR* "$T20_OUT/diag/" 2>/dev/null || true
           rm -rf "$T20_OUT/fix" "$T20_OUT/fx" "$T20_OUT/dl" "$T20_OUT/../x-"* "$T20_OUT"/*.dmg "$T20_OUT/yt-dlp" "$T20_OUT/yt"
           find "$T20_OUT" -type f -size +3M ! -name '*.png' -delete
+          find "$T20_OUT" -depth \( -name $'*\n*' -o -name $'*\t*' -o -name $'*\r*' -o -name '*"*' -o -name '*:*' -o -name '*<*' -o -name '*>*' -o -name '*|*' -o -name '*[*?]*' \) -exec rm -rf {} + 2>/dev/null || true
           find "$T20_OUT" -type f -name '*.png' -size +6M -delete
           du -sh "$T20_OUT"
       - uses: actions/upload-artifact@v4

@@ -16,6 +16,12 @@ def trecento():
     for i in range(300):
         shutil.copy(base, os.path.join(d, "foto%03d.heic" % i))
     apri_app(); time.sleep(5)
+    base = [campiona(1)[0] for _ in range(3)]
+    es.nota("riposo_prima_di_aprire", base)
+    say("campioni a riposo prima delle 300 foto:", base)
+    if not any(b is not None and b >= 0.5 for b in base):
+        es.skip("300 HEIC: thread principale", "il campionamento non riconosce l'app a riposo (%s): misura non affidabile" % base)
+        chiudi_app(cortese=False); return
     t = time.time()
     sh(["open", "-a", APP] + sorted(glob.glob(d + "/*.heic")), timeout=120)
     campioni = []
@@ -24,6 +30,12 @@ def trecento():
         campioni.append((round(time.time() - t, 1), q))
         time.sleep(1)
     es.nota("riposo_thread_principale_300_heic", campioni)
+    say("campioni dopo le 300 foto:", campioni)
+    ult = sorted(glob.glob(OUT + "/sample-*.txt"))
+    if ult:
+        txt = open(ult[-1], errors="replace").read()
+        i = txt.find("com.apple.main-thread")
+        say("STACK principale (ultimo campione):", txt[i:i + 2500].replace("\n", " ¶ ") if i >= 0 else txt[:800])
     foto("300-heic")
     occupati = [c for c in campioni if c[1] is not None and c[1] < 0.25]
     tard = [c for c in campioni if c[0] > 15 and c[1] is not None and c[1] < 0.25]
@@ -42,8 +54,9 @@ def trecento():
 def gps():
     src = os.path.join(F, "gps.heic"); crea_foto(src, 2000, 1500, gps=True)
     jsrc = os.path.join(F, "gps.jpg"); crea_foto(jsrc, 2000, 1500, gps=True)
-    if not meta(src).get("gps"):
-        es.skip("GPS tolto", "la foto di prova non ha il GPS"); return
+    say("meta heic:", meta(src)); say("meta jpg:", meta(jsrc))
+    if not meta(src).get("gps") and not meta(jsrc).get("gps"):
+        es.skip("GPS tolto", "le foto di prova non hanno il GPS (%s)" % meta(jsrc)); return
     for f in [src, jsrc]:
         r = motore("strip", "", [f], nome="strip-" + os.path.basename(f))
         esito_motore(es, "motore: togli i metadati da %s" % os.path.basename(f), r, "copia senza GPS né modello", ctrl_img(gps=False),

@@ -146,7 +146,8 @@ def motore(act, param, files, dest=None, timeout=600, env_extra=None, secret=Non
          "missing": [l[1] for l in lines if l[0] == "MISSING" and len(l) > 1],
          "notes": [l[2] if len(l) > 2 else "" for l in lines if l[0] == "NOTE"],
          "end": [l for l in lines if l[0] == "END"]}
-    with open(os.path.join(d, "motore.json"), "w") as f:
+    jd = os.path.join(OUT, "motore-json"); os.makedirs(jd, exist_ok=True)
+    with open(os.path.join(jd, "%03d.json" % N[0]), "w") as f:
         json.dump(r, f, ensure_ascii=False, indent=1)
     say("motore", act, param, r["files"][:3], "rc=%s %.1fs outs=%d fails=%s miss=%s notes=%s" %
         (r["rc"], r["secs"], len(r["outs"]), [x[1][:80] for x in r["fails"]], r["missing"], [n[:60] for n in r["notes"]]))
@@ -171,6 +172,13 @@ def esito_motore(es, cosa, r, atteso_desc, controllo=None, gravita="alto", titol
                "fermato dopo il tempo massimo", prova_motore(r))
         return False
     outs = [o for o in r["outs"] if os.path.exists(o)]
+    if not outs and r["outs"] and not r["fails"]:
+        reali = file_in(r["dest"])
+        if reali:
+            es.bug(cosa, "Il motore annuncia un percorso che non esiste: il file vero ha un nome diverso (%s)" % r["act"], "basso",
+                   "la riga OUT con il percorso del file creato (l'app la usa per Cassetto, cronologia, «Mostra nel Finder»)",
+                   "OUT: %r ; file veri nella cartella: %r" % (r["outs"], [os.path.basename(x) for x in reali]), prova_motore(r))
+            return False
     if not outs:
         es.bug(cosa, titolo or ("%s %s non crea il file" % (r["act"], r["param"])), gravita, atteso_desc,
                "nessun file creato; FAIL: %s" % r["fails"], prova_motore(r))
@@ -355,6 +363,7 @@ def utente_esperto(extra=None):
                     ("lastLaunchVersion", "-string", versione()), ("sidebarAdvanced", "-bool", "true")]:
         defaults("write", BID, k, t, v)
     defaults("write", BID, "AppleLanguages", "-array", "it-IT", "it")
+    defaults("write", BID, "appLanguage", "-string", "it")
     for k, t, v in (extra or []):
         defaults("write", BID, k, t, v)
 
@@ -647,8 +656,8 @@ def lavoro_app(es, cosa, regole_file, attesa=120, atteso_n=None, uscita_ext=None
     def pronto():
         tutto = True
         for r, files in regole_file:
-            out = os.path.join(r["folder"], "Convertiti")
-            fatti = [x for x in file_in(out) if not x.endswith((".tmp", ".part", ".download"))]
+            fatti = [x for sub in ("Convertiti", "Converted") for x in file_in(os.path.join(r["folder"], sub))
+                     if not x.endswith((".tmp", ".part", ".download"))]
             res[r["folder"]] = fatti
             n = atteso_n if atteso_n is not None else len(files)
             if len(fatti) < n:
@@ -656,8 +665,28 @@ def lavoro_app(es, cosa, regole_file, attesa=120, atteso_n=None, uscita_ext=None
         return tutto
     aspetta(pronto, attesa, 2)
     time.sleep(3)
-    pronto()
+    if not pronto():
+        diagnosi_regole(regole_file)
     return res
+
+
+def diagnosi_regole(regole_file):
+    """Nel registro: cosa c'è nelle cartelle, regole, cronologia, registro dell'app (per capire un «non crea niente»)."""
+    say("DIAGNOSI cartelle automatiche: app aperta=%s" % pid_app())
+    for r, files in regole_file:
+        say("  cartella", r["folder"], "->", sh(["ls", "-laR", r["folder"]])[1][-600:].replace("\n", " ¶ "))
+    for n in ["watch.json", "watch-seen.json"]:
+        try:
+            say("  " + n, open(SUP + "/" + n).read()[:600])
+        except Exception as e:
+            say("  " + n, e)
+    say("  cronologia", json.dumps(cronologia()[:3], ensure_ascii=False)[:800])
+    try:
+        say("  log app", open(LOG, errors="replace").read()[-1500:].replace("\n", " ¶ "))
+    except Exception as e:
+        say("  log app", e)
+    say("  testi", testi_ax()[:800].replace("\n", " ¶ "))
+    say("  defaults", sh("defaults read %s | head -c 1200" % BID)[1].replace("\n", " "))
 
 
 def ax_controlli(nome):
