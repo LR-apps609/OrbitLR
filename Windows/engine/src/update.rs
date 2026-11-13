@@ -55,7 +55,12 @@ pub fn verify_with(manifest: &[u8], sig: &[u8], keys: &[VerifyingKey]) -> Result
         return Err(EngineError::new("l'aggiornamento non è firmato da OrbitLR: non lo installo"));
     }
     let m: Manifest = serde_json::from_slice(manifest).map_err(|_| EngineError::new("manifesto dell'aggiornamento non valido"))?;
-    let name_ok = !m.file.is_empty() && m.file.len() < 120 && m.file.ends_with(".exe") && m.file.chars().all(|c| c.is_ascii_alphanumeric() || "-_.".contains(c));
+    // 2.0.2 · Un nome vero prima di «.exe» (prima bastava «.exe» da solo), che comincia con una lettera o una cifra
+    let name_ok = m.file.len() > 4
+        && m.file.len() < 120
+        && m.file.ends_with(".exe")
+        && m.file.chars().next().is_some_and(|c| c.is_ascii_alphanumeric())
+        && m.file.chars().all(|c| c.is_ascii_alphanumeric() || "-_.".contains(c));
     let hash_ok = m.sha256.len() == 64 && m.sha256.chars().all(|c| c.is_ascii_hexdigit());
     if !name_ok || !hash_ok || m.size == 0 || m.size > MAX_BYTES || version_parts(&m.version).is_none() {
         return Err(EngineError::new("manifesto dell'aggiornamento non valido"));
@@ -235,6 +240,12 @@ mod tests {
         m.file = "..\\..\\evil.exe".into();
         let body = serde_json::to_vec(&m).unwrap();
         assert!(verify_with(&body, &sk.sign(&body).to_bytes(), &[sk.verifying_key()]).is_err());
+        // 2.0.2 · «.exe» senza nome, o un nome che comincia con un punto o un trattino
+        for bad in [".exe", "-x.exe", "..exe"] {
+            m.file = bad.into();
+            let body = serde_json::to_vec(&m).unwrap();
+            assert!(verify_with(&body, &sk.sign(&body).to_bytes(), &[sk.verifying_key()]).is_err(), "{bad}");
+        }
     }
 
     #[test]

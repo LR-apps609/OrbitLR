@@ -331,10 +331,13 @@ pub fn download(exe: &Path, tools: Option<&Tools>, link: &str, mode: Mode, folde
     let stem = Path::new(&name).file_stem().map(|s| crate::names::safe_name(&s.to_string_lossy())).unwrap_or_else(|| "download".into());
     let ext = made.extension().map(|e| e.to_string_lossy().to_string()).unwrap_or_else(|| if video { "mp4".into() } else { "m4a".into() });
     std::fs::create_dir_all(folder)?;
-    let dest = crate::names::unique(folder, &stem, &ext);
-    if std::fs::rename(&made, &dest).is_err() {
-        std::fs::copy(&made, &dest)?;
+    // 2.0.2 · Verso un altro disco si copia su un temporaneo accanto e poi si rinomina: se la copia si interrompe
+    // non resta un file rotto con il nome vero (OutFile toglie temporaneo e nome riservato)
+    let out = crate::names::OutFile::new(folder, &stem, &ext)?;
+    if std::fs::rename(&made, &out.tmp).is_err() {
+        std::fs::copy(&made, &out.tmp)?;
     }
+    let dest = out.commit()?;
     progress(1.0);
     Ok(dest)
 }

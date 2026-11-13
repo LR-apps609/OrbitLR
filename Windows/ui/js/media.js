@@ -36,7 +36,7 @@ export function mediaPage(kind, app, opts = {}) {
   let level = getLevel(kind);
   let openGroup = null; // in Completo: il gruppo aperto (null: il primo)
   const head = h("div.head");
-  const grid = h("div.grid");
+  const grid = h("div.grid", { role: "listbox", "aria-multiselectable": "true", "aria-label": t("File caricati") });
   const left = h("div.files");
   const right = h("div.tools-scroll");
   const el = h("div.page", h("div.split", left, h("div.tools", right)));
@@ -164,6 +164,13 @@ export function mediaPage(kind, app, opts = {}) {
     }
     grid.replaceChildren(...files.map((f) => {
       const tile = h("div.tile" + (selected.has(f.path) ? ".sel" : ""), { "data-path": f.path, tabindex: "0", role: "option", "aria-selected": selected.has(f.path) ? "true" : "false",
+        // 2.0.2 · Invio o Spazio sceglie il file come il clic; Ctrl+Spazio lo aggiunge alla scelta
+        onkeydown: (e) => {
+          if (e.key !== "Enter" && e.key !== " ") return;
+          e.preventDefault();
+          tile.dispatchEvent(new MouseEvent("click", { bubbles: true, ctrlKey: e.ctrlKey }));
+          requestAnimationFrame(() => grid.querySelector(`[data-path="${CSS.escape(f.path)}"]`)?.focus());
+        },
         onclick: (e) => {
           if (e.ctrlKey || e.metaKey || e.shiftKey) selected.has(f.path) ? selected.delete(f.path) : selected.add(f.path);
           else selected = selected.size === 1 && selected.has(f.path) ? new Set() : new Set([f.path]);
@@ -403,7 +410,7 @@ export function mediaPage(kind, app, opts = {}) {
       forceLabel.style.display = force.style.display = ai ? "none" : "";
       aiHint.style.display = ai ? "" : "none";
     };
-    const force = h("input", { type: "range", min: 0.2, max: 1, step: 0.05, value: strength, style: { width: "100%", accentColor: "var(--sage-deep)" }, oninput: (e) => (strength = Number(e.target.value)) });
+    const force = h("input", { type: "range", "aria-label": t("Forza"), min: 0.2, max: 1, step: 0.05, value: strength, style: { width: "100%", accentColor: "var(--sage-deep)" }, oninput: (e) => (strength = Number(e.target.value)) });
     drawModes();
     const panel = h("div.params", h("p.hint", t("Disegna le zone sull'immagine a sinistra.")), modes, aiHint,
       forceLabel, force,

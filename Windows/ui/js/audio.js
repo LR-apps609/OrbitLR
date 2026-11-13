@@ -147,11 +147,11 @@ export function audioPage(app) {
         voices = [];
         invoke("voices").then((v) => { voices = v || []; render(); }).catch(() => {});
       }
-      const sel = h("select", { style: { width: "100%", padding: "7px", borderRadius: "12px", border: "1px solid var(--line-2)", background: "var(--card)", fontWeight: 700 } },
+      const sel = h("select", { "aria-label": t("Voce"), style: { width: "100%", padding: "7px", borderRadius: "12px", border: "1px solid var(--line-2)", background: "var(--card)", fontWeight: 700 } },
         h("option", { value: "" }, t("La voce predefinita di Windows")),
         voices.map((v) => h("option", { value: v.name, selected: v.name === opts.voice || null }, `${v.name.replace(/^Microsoft /, "").replace(/ Desktop$/, "")} · ${v.culture}`)));
       sel.addEventListener("change", () => (opts.voice = sel.value));
-      const rate = h("input", { type: "range", min: -5, max: 5, step: 1, value: opts.rate, style: { width: "100%", accentColor: "var(--sage-deep)" } });
+      const rate = h("input", { type: "range", "aria-label": t("Velocità"), min: -5, max: 5, step: 1, value: opts.rate, style: { width: "100%", accentColor: "var(--sage-deep)" } });
       rate.addEventListener("input", () => (opts.rate = Number(rate.value)));
       box.push(h("div", { style: { fontSize: "12.5px", color: "var(--quiet)" } }, t("Voce")), sel,
         h("div", { style: { fontSize: "12.5px", color: "var(--quiet)" } }, t("Velocità")), rate,

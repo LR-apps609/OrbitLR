@@ -346,6 +346,8 @@ input, textarea, select, button { font: inherit; color: inherit; }
 .faq p { margin: 0; padding: 0 16px 14px 42px; color: var(--ink-2); font-weight: 600; user-select: text; }
 .search { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--line-2); border-radius: 12px; padding: 8px 12px; max-width: 520px; margin-bottom: 14px; }
 .search input { border: 0; background: transparent; flex: 1; outline: none; font-weight: 700; }
+/* 2.0.2 · Il campo di ricerca mostra dove si scrive anche da tastiera */
+.search:focus-within { border-color: var(--acc); box-shadow: 0 0 0 3px color-mix(in srgb, var(--acc) 35%, transparent); }
 
 /* ── Avvisi */
 .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--card); padding: 9px 16px; border-radius: 12px; font-weight: 800; font-size: 13px; z-index: 50; box-shadow: var(--shadow-up); animation: up .25s ease-out; max-width: 70vw; }

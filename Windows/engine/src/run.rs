@@ -75,6 +75,10 @@ pub(crate) fn ffmpeg_watched(
     let stdout = child.stdout.take();
     let stderr = child.stderr.take();
     *cancel.0.child.lock().unwrap() = Some(child);
+    // 2.0.2 · «Interrompi» premuto mentre ffmpeg partiva: il processo non era ancora registrato e non veniva fermato
+    if cancel.is_cancelled() {
+        kill_child(cancel);
+    }
 
     // L'errore si legge a parte, così ffmpeg non si blocca mai su un tubo pieno
     let err_thread = std::thread::spawn(move || {
@@ -96,7 +100,7 @@ pub(crate) fn ffmpeg_watched(
             }
         })
     });
-    let mut stalled = false;
+    let mut stalled: Option<Duration> = None;
     if out_thread.is_some() {
         let mut last = -1.0;
         let mut heard = Instant::now();
@@ -121,16 +125,13 @@ pub(crate) fn ffmpeg_watched(
                 }
                 Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
                     if cancel.is_cancelled() {
+                        kill_child(cancel); // 2.0.2 · prima si usciva dal ciclo e si aspettava la fine di ffmpeg
                         break;
                     }
                     let limit = if last >= 0.98 { stall_at_end } else { stall };
                     if heard.elapsed() > limit {
-                        stalled = true;
-                        if let Ok(mut g) = cancel.0.child.lock() {
-                            if let Some(ch) = g.as_mut() {
-                                let _ = ch.kill();
-                            }
-                        }
+                        stalled = Some(limit);
+                        kill_child(cancel);
                         break;
                     }
                 }
@@ -165,8 +166,9 @@ pub(crate) fn ffmpeg_watched(
     if cancel.is_cancelled() {
         return Err(EngineError::cancelled());
     }
-    if stalled {
-        let min = (stall.as_secs() + 59) / 60;
+    if let Some(limit) = stalled {
+        // 2.0.2 · I minuti veri dell'attesa (30 alla fine del file, non sempre 5)
+        let min = (limit.as_secs() + 59) / 60;
         return Err(EngineError::new(format!("il motore video non risponde da {min} minut{}: l'ho fermato. Riprova; se succede ancora, riavvia il computer (può essere il driver della scheda video)", if min == 1 { "o" } else { "i" })));
     }
     if !status.success() {
@@ -174,6 +176,14 @@ pub(crate) fn ffmpeg_watched(
     }
     progress(1.0);
     Ok(())
+}
+
+fn kill_child(cancel: &Cancel) {
+    if let Ok(mut g) = cancel.0.child.lock() {
+        if let Some(ch) = g.as_mut() {
+            let _ = ch.kill();
+        }
+    }
 }
 
 /// Comodo per scrivere gli argomenti: `args!["-i", path, "-c", "copy"]`.
