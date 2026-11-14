@@ -1,6 +1,6 @@
 Gatekeeper prima: assessments enabled
 Gatekeeper dopo averlo acceso: assessments enabled
---- quarantena sull'app: 0081;6af79d1d;Safari;
+--- quarantena sull'app: 0081;6af7a796;Safari;
 --- spctl --assess -vv
 /Applications/OrbitLR.app: rejected
 --- codesign -dv
@@ -28,14 +28,21 @@ processo vivo dopo 15 s: sì
 --- finestre sullo schermo
 CoreServicesUIAgent · livello 8 · 260×232 · 
 --- registro di sistema (Gatekeeper)
-2026-11-13 23:28:29.276 Df syspolicyd[184:23bd] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:28:29.336 Df syspolicyd[184:2b34] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:28:29.376 Df syspolicyd[184:23bd] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:28:29.589 Df syspolicyd[184:23bd] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:28:29.655 Df syspolicyd[184:2b39] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:28:29.722 Df syspolicyd[184:23bd] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:28:31.788 Df syspolicyd[184:2ab9] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:28:31.854 Df syspolicyd[184:2b2d] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:28:31.923 Df syspolicyd[184:2ab9] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:28:33.511 Df syspolicyd[184:2b34] [com.apple.syspolicy.exec:default] Fast Gatekeeper overrides are: inactive
+2026-11-14 00:12:04.849 Df syspolicyd[180:81a] [com.apple.xpc.activity:Client] xpc_activity_set_criteria, lower half: com.apple.security.syspolicy.gatekeeper.policy-metrics (0xbae0ad540), check-in
+2026-11-14 00:12:16.670 Df syspolicyd[180:81a] [com.apple.xpc.activity:Client] _xpc_activity_set_criteria: com.apple.security.syspolicy.gatekeeper.policy-metrics (0xbae0ad540), check-in
+2026-11-14 00:12:16.685 Df syspolicyd[180:81a] [com.apple.xpc.activity:Client] xpc_activity_set_criteria: com.apple.security.syspolicy.gatekeeper.policy-metrics (0xbae0ad540), setting state now to 0
+2026-11-14 00:12:16.685 Df syspolicyd[180:81a] [com.apple.xpc.activity:Client] _xpc_activity_set_state: com.apple.security.syspolicy.gatekeeper.policy-metrics (0xbae0ad540), 0
+2026-11-14 00:12:16.685 Df syspolicyd[180:81a] [com.apple.xpc.activity:Client] __XPC_ACTIVITY_CALLING_HANDLER__: com.apple.security.syspolicy.gatekeeper.policy-metrics (0xbae0ad540), current state 0, pending state 0
+2026-11-14 00:12:16.685 Df syspolicyd[180:81a] [com.apple.xpc.activity:Client] __XPC_ACTIVITY_CALLING_HANDLER__ returned from handler: com.apple.security.syspolicy.gatekeeper.policy-metrics (0xbae0ad540), current state 0, pending state 0
+2026-11-14 00:12:16.685 Df syspolicyd[180:81a] [com.apple.xpc.activity:Client] _xpc_activity_set_state: com.apple.security.syspolicy.gatekeeper.policy-metrics (0xbae0ad540), 1
+2026-11-14 00:13:10.909 Df syspolicyd[180:1a4d] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:13:10.979 Df syspolicyd[180:1ac1] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:13:11.038 Df syspolicyd[180:1a4d] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:13:11.324 Df syspolicyd[180:14e0] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:13:11.394 Df syspolicyd[180:1aca] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:13:11.472 Df syspolicyd[180:14e0] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:13:13.884 Df syspolicyd[180:1a4d] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:13:13.960 Df syspolicyd[180:1aca] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:13:14.030 Df syspolicyd[180:1a4d] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:13:15.828 Df syspolicyd[180:1ac0] [com.apple.syspolicy.exec:default] Fast Gatekeeper overrides are: inactive
 --- finestra di benvenuto: nessuna
