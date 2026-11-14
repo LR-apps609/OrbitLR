@@ -1,6 +1,6 @@
 Gatekeeper prima: assessments enabled
 Gatekeeper dopo averlo acceso: assessments enabled
---- quarantena sull'app: 0081;6af79cad;Safari;
+--- quarantena sull'app: 0081;6af7a877;Safari;
 --- spctl --assess -vv
 /Applications/OrbitLR.app: rejected
 --- codesign -dv
@@ -43,20 +43,24 @@ processo vivo dopo 15 s: sì
 --- finestre sullo schermo
 CoreServicesUIAgent · livello 8 · 260×268 · 
 --- registro di sistema (Gatekeeper)
-2026-11-13 23:26:00.523 Df syspolicyd[225:5c7a] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:26:00.523 Df syspolicyd[225:5c7a] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:26:37.715 Df syspolicyd[225:6e40] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:26:37.765 Df syspolicyd[225:6efe] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:26:37.842 Df syspolicyd[225:6e40] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:26:38.151 Df syspolicyd[225:5c7a] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:26:38.182 Df syspolicyd[225:6ef6] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:26:38.258 Df syspolicyd[225:5c7a] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:26:40.568 Df syspolicyd[225:6e40] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:26:40.699 Df syspolicyd[225:6efe] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:26:40.788 Df syspolicyd[225:6e40] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:26:42.506 Df CoreServicesUIAgent[354:7031] [com.apple.launchservices:uiagent] -[GKQuarantineResolver malwareCheckEnded:result:forURL:]: XProtect finished executable analysis {
+2026-11-14 00:16:11.483 Df syspolicyd[246:50d] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:16:11.483 Df syspolicyd[246:50d] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:16:18.272 Df syspolicyd[246:50d] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:16:18.273 Df syspolicyd[246:50d] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:16:28.968 Df syspolicyd[246:17d9] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:16:28.969 Df syspolicyd[246:17d9] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:16:56.286 Df syspolicyd[246:1e5a] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:16:56.445 Df syspolicyd[246:2488] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:16:56.491 Df syspolicyd[246:1e5a] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:16:56.863 Df syspolicyd[246:23a1] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:16:56.895 Df syspolicyd[246:24b7] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:16:57.008 Df syspolicyd[246:23a1] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:16:58.655 Df syspolicyd[246:1e5a] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:16:58.688 Df syspolicyd[246:2488] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:16:58.743 Df syspolicyd[246:1e5a] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:17:00.144 Df CoreServicesUIAgent[340:2548] [com.apple.launchservices:uiagent] -[GKQuarantineResolver malwareCheckEnded:result:forURL:]: XProtect finished executable analysis {
     XProtectMalwareType = 7;
-2026-11-13 23:26:42.826 Df syspolicyd[225:703e] [com.apple.syspolicy.exec:default] Fast Gatekeeper overrides are: inactive
-2026-11-13 23:26:43.650 Df syspolicyd[225:6ef7] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
-2026-11-13 23:26:43.651 Df syspolicyd[225:6ef7] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:17:00.318 Df syspolicyd[246:23a1] [com.apple.syspolicy.exec:default] Fast Gatekeeper overrides are: inactive
+2026-11-14 00:17:00.483 Df syspolicyd[246:24b7] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
+2026-11-14 00:17:00.483 Df syspolicyd[246:24b7] [com.apple.securityd:SecError] Error checking with notarization daemon: 3
 --- finestra di benvenuto: nessuna
